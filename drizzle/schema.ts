@@ -181,8 +181,16 @@ export const applications = mysqlTable("applications", {
   // Destination & formule
   destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]).notNull(),
   formulaChosen: mysqlEnum("formulaChosen", ["integral", "echelonne", "garanti"]).default("integral").notNull(),
-  // Documents (URLs S3 séparés par virgule)
+  // Documents (URLs S3 — JSON array {type, url, key, name})
   documentsUrls: text("documentsUrls"),
+  // URLs individuelles des documents principaux
+  passportUrl: text("passportUrl"),
+  cvUrl: text("cvUrl"),
+  diplomaUrl: text("diplomaUrl"),
+  // Scoring automatique sur 100 points
+  scoringTotal: int("scoringTotal"),
+  scoringDetails: text("scoringDetails"),  // JSON {education, experience, language, sector, age}
+  scoringBadge: mysqlEnum("scoringBadge", ["eligible", "admissible", "faible"]),
   // Paiement CinetPay
   paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("PENDING").notNull(),
   paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),

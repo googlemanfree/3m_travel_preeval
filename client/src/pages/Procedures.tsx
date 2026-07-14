@@ -2,17 +2,20 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect, useRef } from "react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import ProcedureDetailModal from "@/components/ProcedureDetailModal";
+import ScoringForm from "@/components/ScoringForm";
+import type { ProcedureInfo } from "@/components/ProcedureDetailModal";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import React, { useState, useEffect, useRef } from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import {
-  MapPin, Phone, MessageCircle, ChevronDown, ChevronUp,
+  MessageCircle, ChevronDown, ChevronUp,
   FileText, Globe, Star, Clock, DollarSign, CheckCircle,
   ArrowRight, Briefcase, GraduationCap, Eye, Home,
   Search, X,
@@ -897,11 +900,27 @@ const TYPE_CONFIG = {
 };
 
 // ─── ProcedureCard ────────────────────────────────────────────────────────────
-function ProcedureCard({ proc }: { proc: Procedure }) {
+function ProcedureCard({ proc, dest, onStartProcedure }: {
+  proc: Procedure;
+  dest: Destination;
+  onStartProcedure: (info: ProcedureInfo) => void;
+}) {
   const [open, setOpen] = useState(false);
   const cfg = TYPE_CONFIG[proc.type];
   const Icon = cfg.icon;
-  const waUrl = `https://wa.me/237698104832?text=${encodeURIComponent(proc.whatsappMsg)}`;
+
+  const handleStart = () => {
+    onStartProcedure({
+      id: proc.id,
+      type: proc.type,
+      title: proc.title,
+      budget: proc.budget,
+      delai: proc.delai,
+      points: proc.points,
+      destination: dest.pays,
+      flag: dest.flag,
+    });
+  };
 
   return (
     <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
@@ -939,22 +958,23 @@ function ProcedureCard({ proc }: { proc: Procedure }) {
           </ul>
         )}
 
-        <a
-          href={waUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 w-full py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors"
+        <button
+          onClick={handleStart}
+          className="flex items-center justify-center gap-1.5 w-full py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-all duration-200 active:scale-[0.97]"
         >
-          <MessageCircle className="w-3.5 h-3.5" />
+          <ArrowRight className="w-3.5 h-3.5" />
           Démarrer ma procédure
-        </a>
+        </button>
       </CardContent>
     </Card>
   );
 }
 
 // ─── DestinationSection ───────────────────────────────────────────────────────
-function DestinationSection({ dest }: { dest: Destination }) {
+function DestinationSection({ dest, onStartProcedure }: {
+  dest: Destination;
+  onStartProcedure: (info: ProcedureInfo) => void;
+}) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -984,7 +1004,7 @@ function DestinationSection({ dest }: { dest: Destination }) {
       {expanded && (
         <div className="p-4 bg-gray-50 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {dest.procedures.map(proc => (
-            <ProcedureCard key={proc.id} proc={proc} />
+            <ProcedureCard key={proc.id} proc={proc} dest={dest} onStartProcedure={onStartProcedure} />
           ))}
         </div>
       )}
@@ -1083,6 +1103,27 @@ export default function Procedures() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+
+  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showScoringForm, setShowScoringForm] = useState(false);
+
+  const handleStartProcedure = (info: ProcedureInfo) => {
+    setSelectedProcedure(info);
+    setShowDetailModal(true);
+  };
+
+  const handleContinueToScoring = () => {
+    setShowDetailModal(false);
+    setShowScoringForm(true);
+  };
+
+  const handleCloseTunnel = () => {
+    setShowDetailModal(false);
+    setShowScoringForm(false);
+    setSelectedProcedure(null);
+  };
 
   const selectedRegion = REGIONS.find(r => r.id === activeRegion);
   const totalProcedures = REGIONS.reduce((s, r) => s + r.destinations.reduce((ss, d) => ss + d.procedures.length, 0), 0);
@@ -1312,7 +1353,7 @@ export default function Procedures() {
             {/* Destinations */}
             <div className="space-y-3">
               {selectedRegion.destinations.map(dest => (
-                <DestinationSection key={dest.id} dest={dest} />
+                <DestinationSection key={dest.id} dest={dest} onStartProcedure={handleStartProcedure} />
               ))}
             </div>
 
@@ -1443,6 +1484,19 @@ export default function Procedures() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Tunnel de conversion : Fiche détail + Formulaire scoring ── */}
+      <ProcedureDetailModal
+        procedure={selectedProcedure}
+        open={showDetailModal}
+        onClose={handleCloseTunnel}
+        onContinue={handleContinueToScoring}
+      />
+      <ScoringForm
+        procedure={selectedProcedure}
+        open={showScoringForm}
+        onClose={handleCloseTunnel}
+      />
 
       <Footer />
     </div>

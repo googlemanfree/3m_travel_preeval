@@ -16,6 +16,13 @@ import {
 
 type DossierStatus = "nouveau" | "paye" | "en_cours" | "documents_requis" | "soumis" | "approuve" | "refuse";
 type PaymentStatus = "ALL" | "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
+type ScoreFilter = "ALL" | "eligible" | "admissible" | "faible" | "unscored";
+
+const SCORE_BADGE: Record<string, { label: string; color: string; dot: string }> = {
+  eligible:   { label: "Très favorable", color: "bg-green-900/50 text-green-300 border-green-700",  dot: "bg-green-400" },
+  admissible: { label: "Admissible",     color: "bg-yellow-900/50 text-yellow-300 border-yellow-700", dot: "bg-yellow-400" },
+  faible:     { label: "A renforcer",    color: "bg-red-900/50 text-red-300 border-red-700",       dot: "bg-red-400" },
+};
 
 const STATUS_CONFIG: Record<DossierStatus, { label: string; color: string; bg: string }> = {
   nouveau: { label: "Nouveau", color: "text-slate-300", bg: "bg-slate-700" },
@@ -124,6 +131,26 @@ function printDossierPDF(app: Record<string, unknown>) {
       </div>
     </div>
 
+    ${app.scoringTotal != null ? `
+    <div class="section">
+      <div class="section-title">Score d'éligibilité automatique</div>
+      <div class="grid">
+        <div class="field"><div class="label">Score global</div><div class="value" style="font-size:20px;font-weight:900;color:${app.scoringBadge === 'eligible' ? '#166534' : app.scoringBadge === 'admissible' ? '#854d0e' : '#991b1b'}">${app.scoringTotal}/100</div></div>
+        <div class="field"><div class="label">Profil</div><div class="value"><span class="status-badge ${app.scoringBadge === 'eligible' ? 'status-paye' : app.scoringBadge === 'admissible' ? 'status-pending' : 'status-failed'}">${app.scoringBadge === 'eligible' ? 'TRÈS FAVORABLE' : app.scoringBadge === 'admissible' ? 'ADMISSIBLE' : 'À RENFORCER'}</span></div></div>
+        ${(() => { try { const d = JSON.parse(String(app.scoringDetails ?? '{}')); return `<div class="field"><div class="label">Formation</div><div class="value">${d.education ?? '—'}/25</div></div><div class="field"><div class="label">Expérience</div><div class="value">${d.experience ?? '—'}/25</div></div><div class="field"><div class="label">Langues</div><div class="value">${d.language ?? '—'}/20</div></div><div class="field"><div class="label">Secteur</div><div class="value">${d.sector ?? '—'}/20</div></div><div class="field"><div class="label">Âge</div><div class="value">${d.age ?? '—'}/10</div></div>`; } catch { return ''; } })()}
+      </div>
+    </div>
+    ` : ""}
+    ${(app.passportUrl || app.cvUrl || app.diplomaUrl) ? `
+    <div class="section">
+      <div class="section-title">Documents fournis</div>
+      <div class="grid">
+        ${app.passportUrl ? '<div class="field"><div class="label">Passeport</div><div class="value" style="color:#1d4ed8">✓ Téléversé</div></div>' : ''}
+        ${app.cvUrl ? '<div class="field"><div class="label">CV</div><div class="value" style="color:#1d4ed8">✓ Téléversé</div></div>' : ''}
+        ${app.diplomaUrl ? '<div class="field"><div class="label">Diplôme</div><div class="value" style="color:#1d4ed8">✓ Téléversé</div></div>' : ''}
+      </div>
+    </div>
+    ` : ""}
     ${app.adminNote ? `
     <div class="section">
       <div class="section-title">Notes Administrateur</div>
@@ -150,6 +177,7 @@ export default function Admin() {
   const { user, isAuthenticated, loading } = useAuth();
   const [search, setSearch] = useState("");
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus>("ALL");
+  const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("ALL");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({});
@@ -189,11 +217,19 @@ export default function Admin() {
     );
   }
 
+  // Filtrage par score (côté frontend)
+  const filteredApplications = (applications ?? []).filter(app => {
+    if (scoreFilter === "ALL") return true;
+    if (scoreFilter === "unscored") return app.scoringTotal == null;
+    return app.scoringBadge === scoreFilter;
+  });
+
   const stats = {
     total: applications?.length ?? 0,
     paid: applications?.filter(a => a.paymentStatus === "SUCCESS").length ?? 0,
     pending: applications?.filter(a => a.paymentStatus === "PENDING").length ?? 0,
     revenue: (applications?.filter(a => a.paymentStatus === "SUCCESS").length ?? 0) * 65000,
+    eligible: applications?.filter(a => a.scoringBadge === "eligible").length ?? 0,
   };
 
   return (
@@ -218,7 +254,7 @@ export default function Admin() {
           {[
             { label: "Total dossiers", value: stats.total, icon: FileText, color: "text-blue-400" },
             { label: "Dossiers payés", value: stats.paid, icon: CheckCircle, color: "text-green-400" },
-            { label: "En attente paiement", value: stats.pending, icon: Clock, color: "text-yellow-400" },
+            { label: "Profils éligibles", value: stats.eligible, icon: TrendingUp, color: "text-purple-400" },
             { label: "Revenus générés", value: `${stats.revenue.toLocaleString("fr-FR")} FCFA`, icon: DollarSign, color: "text-emerald-400" },
           ].map(stat => {
             const Icon = stat.icon;
@@ -246,7 +282,7 @@ export default function Admin() {
             />
           </div>
           <Select value={paymentFilter} onValueChange={v => setPaymentFilter(v as PaymentStatus)}>
-            <SelectTrigger className="w-48 bg-white/10 border-white/20 text-white">
+            <SelectTrigger className="w-44 bg-white/10 border-white/20 text-white">
               <Filter className="w-4 h-4 mr-2 text-slate-400" />
               <SelectValue />
             </SelectTrigger>
@@ -256,6 +292,19 @@ export default function Admin() {
               <SelectItem value="SUCCESS">Payés</SelectItem>
               <SelectItem value="FAILED">Échoués</SelectItem>
               <SelectItem value="CANCELLED">Annulés</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={scoreFilter} onValueChange={v => setScoreFilter(v as ScoreFilter)}>
+            <SelectTrigger className="w-44 bg-white/10 border-white/20 text-white">
+              <TrendingUp className="w-4 h-4 mr-2 text-slate-400" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Tous les profils</SelectItem>
+              <SelectItem value="eligible">✅ Très favorable</SelectItem>
+              <SelectItem value="admissible">⚠️ Admissible</SelectItem>
+              <SelectItem value="faible">🔴 À renforcer</SelectItem>
+              <SelectItem value="unscored">— Non évalué</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -272,10 +321,11 @@ export default function Admin() {
           </div>
         ) : (
           <div className="space-y-3">
-            {applications.map(app => {
+            {filteredApplications.map(app => {
               const isExpanded = expandedId === app.id;
               const payBadge = PAYMENT_BADGE[app.paymentStatus] ?? PAYMENT_BADGE.PENDING;
               const statusConf = STATUS_CONFIG[app.dossierStatus as DossierStatus] ?? STATUS_CONFIG.nouveau;
+              const scoreBadge = app.scoringBadge ? SCORE_BADGE[app.scoringBadge] : null;
 
               return (
                 <div key={app.id} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
@@ -286,6 +336,12 @@ export default function Admin() {
                         <span className="font-mono text-blue-300 font-bold text-sm">{app.dossierNumber}</span>
                         <Badge className={`text-xs border ${payBadge.color}`}>{payBadge.label}</Badge>
                         <Badge className={`text-xs ${statusConf.bg} ${statusConf.color} border-0`}>{statusConf.label}</Badge>
+                        {scoreBadge && (
+                          <Badge className={`text-xs border ${scoreBadge.color}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${scoreBadge.dot} mr-1 inline-block`} />
+                            {app.scoringTotal}/100 · {scoreBadge.label}
+                          </Badge>
+                        )}
                       </div>
                       <div className="text-white font-semibold mt-0.5">{app.fullName}</div>
                       <div className="text-slate-400 text-xs mt-0.5">{app.email} · {app.destination?.toUpperCase()} · {app.createdAt ? new Date(app.createdAt).toLocaleDateString("fr-FR") : ""}</div>
@@ -338,6 +394,50 @@ export default function Admin() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Scoring et documents */}
+                      {(app.scoringTotal != null || app.passportUrl || app.cvUrl || app.diplomaUrl) && (
+                        <div className="space-y-2">
+                          {app.scoringTotal != null && (
+                            <div>
+                              <p className="text-slate-400 text-xs mb-2">Score d'éligibilité</p>
+                              <div className="flex items-center gap-3">
+                                <div className={`text-2xl font-black ${
+                                  app.scoringBadge === "eligible" ? "text-green-400" :
+                                  app.scoringBadge === "admissible" ? "text-yellow-400" : "text-red-400"
+                                }`}>{app.scoringTotal}/100</div>
+                                {app.scoringBadge && SCORE_BADGE[app.scoringBadge] && (
+                                  <Badge className={`text-xs border ${SCORE_BADGE[app.scoringBadge].color}`}>
+                                    {SCORE_BADGE[app.scoringBadge].label}
+                                  </Badge>
+                                )}
+                              </div>
+                              {app.scoringDetails && (() => {
+                                try {
+                                  const d = JSON.parse(app.scoringDetails as string);
+                                  return (
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                      {[{k:"education",l:"Formation",m:25},{k:"experience",l:"Expérience",m:25},{k:"language",l:"Langues",m:20},{k:"sector",l:"Secteur",m:20},{k:"age",l:"Âge",m:10}].map(({k,l,m}) => (
+                                        <span key={k} className="text-xs bg-white/10 rounded px-2 py-1">{l}: <strong>{d[k] ?? 0}/{m}</strong></span>
+                                      ))}
+                                    </div>
+                                  );
+                                } catch { return null; }
+                              })()}
+                            </div>
+                          )}
+                          {(app.passportUrl || app.cvUrl || app.diplomaUrl) && (
+                            <div>
+                              <p className="text-slate-400 text-xs mb-2">Documents fournis</p>
+                              <div className="flex flex-wrap gap-2">
+                                {app.passportUrl && <a href={app.passportUrl as string} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-900/40 text-blue-300 border border-blue-700 rounded px-2 py-1 hover:bg-blue-800/50 transition-colors">📷 Passeport</a>}
+                                {app.cvUrl && <a href={app.cvUrl as string} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-900/40 text-blue-300 border border-blue-700 rounded px-2 py-1 hover:bg-blue-800/50 transition-colors">📄 CV</a>}
+                                {app.diplomaUrl && <a href={app.diplomaUrl as string} target="_blank" rel="noopener noreferrer" className="text-xs bg-blue-900/40 text-blue-300 border border-blue-700 rounded px-2 py-1 hover:bg-blue-800/50 transition-colors">🎓 Diplôme</a>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Changer le statut */}
                       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">

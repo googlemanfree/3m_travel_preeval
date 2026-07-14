@@ -40,6 +40,39 @@ function verifyCandidateToken(token: string): number {
   }
 }
 
+/**
+ * Route d'upload publique (sans authentification) pour les candidats du tunnel de conversion.
+ * POST /api/candidate/upload-public
+ * Body: multipart/form-data avec "file" et "fileType"
+ */
+export function registerPublicUploadRoute(app: import("express").Express) {
+  app.post(
+    "/api/candidate/upload-public",
+    upload.single("file"),
+    async (req: MulterRequest, res: Response) => {
+      try {
+        if (!req.file) {
+          res.status(400).json({ error: "Aucun fichier reçu" });
+          return;
+        }
+        const fileType = (req.body.fileType as string) || "autre";
+        const fileKey = `applications/public/${fileType}/${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { url } = await storagePut(fileKey, req.file.buffer, req.file.mimetype);
+        res.json({
+          fileUrl: url,
+          fileKey,
+          fileName: req.file.originalname,
+          fileSizeBytes: req.file.size,
+          mimeType: req.file.mimetype,
+        });
+      } catch (err: any) {
+        console.error("[PublicUpload] Error:", err);
+        res.status(500).json({ error: err.message || "Erreur lors de l'upload" });
+      }
+    }
+  );
+}
+
 export function registerCandidateUploadRoute(app: import("express").Express) {
   app.post(
     "/api/candidate/upload",

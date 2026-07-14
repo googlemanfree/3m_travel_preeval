@@ -92,6 +92,17 @@ export const applicationRouter = router({
       destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
       formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
       candidateId: z.number().int().optional(),
+      // Documents uploadés
+      passportUrl: z.string().url().optional(),
+      cvUrl: z.string().url().optional(),
+      diplomaUrl: z.string().url().optional(),
+      // Scoring automatique
+      scoringTotal: z.number().int().min(0).max(100).optional(),
+      scoringDetails: z.string().optional(),  // JSON string
+      scoringBadge: z.enum(["eligible", "admissible", "faible"]).optional(),
+      // Informations complémentaires
+      procedureId: z.string().optional(),
+      procedureTitle: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -129,6 +140,14 @@ export const applicationRouter = router({
         paymentAmount: 65000,
         paymentCurrency: "XAF",
         dossierStatus: "nouveau",
+        // Documents uploadés
+        passportUrl: input.passportUrl ?? null,
+        cvUrl: input.cvUrl ?? null,
+        diplomaUrl: input.diplomaUrl ?? null,
+        // Scoring
+        scoringTotal: input.scoringTotal ?? null,
+        scoringDetails: input.scoringDetails ?? null,
+        scoringBadge: input.scoringBadge ?? null,
       });
 
       // Envoyer les emails de confirmation (en arrière-plan, sans bloquer la réponse)

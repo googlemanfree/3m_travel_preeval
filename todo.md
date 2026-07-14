@@ -141,3 +141,19 @@
 - [x] Sécurité admin : protectedProcedure + vérification ctx.user.role === 'admin' côté backend, useAuth().user?.role === 'admin' côté frontend
 - [x] Promotion du propriétaire en admin via SQL (openId = VgxUFTC4ywmuDrGzDmfJRT)
 - [x] Navbar mise à jour : bouton "Ouvrir un dossier" + lien "Admin" visible uniquement pour les admins
+
+## Tunnel de Conversion — Scoring Automatique & Upload Documents (v4)
+- [x] Moteur de scoring partagé (client/src/lib/scoring.ts) : 5 critères, 100 points (formation 25, expérience 25, langues 20, secteur 20, âge 10)
+- [x] Composant ProcedureDetailModal : fiche informative complète par procédure avec prérequis, documents requis, délais, budget, bouton "Continuer"
+- [x] Composant ScoringForm : formulaire multi-étapes (Infos perso → Profil pro avec score temps réel → Upload documents → Résultat + Paiement)
+- [x] Upload de documents publique (passeport, CV, diplôme) via route POST /api/candidate/upload-public (sans authentification)
+- [x] Remplacement des boutons WhatsApp "Démarrer ma procédure" par le tunnel bleu "Démarrer ma procédure" → ProcedureDetailModal → ScoringForm
+- [x] Schéma DB étendu : colonnes passportUrl, cvUrl, diplomaUrl, scoringTotal, scoringDetails (JSON), scoringBadge
+- [x] Procédure createApplication étendue : accepte les URLs de documents et le scoring
+- [x] Panneau Admin : filtre par score (Très favorable / Admissible / À renforcer / Non évalué)
+- [x] Panneau Admin : badge de score coloré sur chaque carte de dossier
+- [x] Panneau Admin : détail du scoring (barres par critère) dans la section expandable
+- [x] Panneau Admin : liens cliquables vers les documents (Passeport, CV, Diplôme) dans la section expandable
+- [x] Fiche PDF : section "Score d'éligibilité" avec score/100, badge profil et détail par critère
+- [x] Fiche PDF : section "Documents fournis" avec liste des documents téléversés
+- [x] Statistique "Profils éligibles" dans le tableau de bord admin (remplace "En attente paiement")
