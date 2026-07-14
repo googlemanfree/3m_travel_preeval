@@ -300,6 +300,7 @@ export default function Home() {
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#services" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Services</a>
+            <a href="/flights" className="text-[#2563EB] hover:text-[#1e3a8a] font-bold transition-colors text-sm flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</a>
             <a href="#evaluation" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Pré-évaluation</a>
             <a href="#contact" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Contact</a>
           </nav>

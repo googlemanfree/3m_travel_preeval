@@ -34,3 +34,14 @@
 - [x] Ajouter le CTA "Évaluer mon éligibilité en 2 minutes" dans le header et le hero
 - [x] Créer la modal d'auto-évaluation express avec 6 champs
 - [x] Implémenter la redirection WhatsApp avec message pré-rempli à la soumission
+- [ ] Configurer les credentials Travelport API (OAuth2)
+- [ ] Créer les routes backend : auth Travelport, recherche de vols (Low Fare Shopping), pricing, booking
+- [ ] Créer la page /flights avec moteur de recherche avancé (aller simple/retour/multi)
+- [ ] Autocomplétion IATA des aéroports (YAO, CDG, etc.)
+- [ ] Sélecteur de dates avec calendrier (dates passées bloquées)
+- [ ] Dropdowns passagers & classes (Adultes, Enfants, Bébés, Éco, Affaires, 1ère)
+- [ ] Tableau des résultats de vols avec cartes (logo compagnie, horaires, prix)
+- [ ] Filtres dynamiques (escales, compagnies, prix slider, horaires)
+- [ ] Marge bénéficiaire configurable pour les prix affichés
+- [ ] Bouton WhatsApp "Envoyer cet itinéraire à un conseiller" sur chaque vol
+- [ ] Système de cache temporaire pour optimiser les requêtes API
