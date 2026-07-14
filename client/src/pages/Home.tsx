@@ -20,6 +20,7 @@ import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
+import Navbar from "@/components/Navbar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -363,54 +364,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/97 backdrop-blur-md border-b border-[#dbeafe] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-          <div className="flex items-center gap-3">
-            <img
-              src="/manus-storage/logo_3m_d0e23210.jpeg"
-              alt="3M Travel & Services"
-              className="w-11 h-11 rounded-full object-cover shadow-md ring-2 ring-[#1e3a8a]/20"
-            />
-            <div>
-              <div className="font-extrabold text-[#1e3a8a] text-base leading-tight">3M Travel & Services</div>
-              <div className="text-xs text-[#2563eb] font-semibold">Votre mobilité, notre expertise</div>
-            </div>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#services" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Services</a>
-            <a href="/flights" className="text-[#2563EB] hover:text-[#1e3a8a] font-bold transition-colors text-sm flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</a>
-            <a href="/procedures" className="text-[#2563EB] hover:text-[#1e3a8a] font-bold transition-colors text-sm flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</a>
-            <a href="#evaluation" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Pré-évaluation</a>
-            <a href="/login" className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold transition-colors text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg"><User className="w-3.5 h-3.5" />Mon Espace</a>
-            <a href="#contact" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Contact</a>
-          </nav>
-          <div className="hidden md:flex items-center gap-2">
-            <a href="tel:+237620996045">
-              <Button className="bg-[#1e3a8a] hover:bg-[#2563eb] text-white text-sm font-semibold shadow-md transition-colors">
-                <Phone className="w-4 h-4 mr-2" />+237 620-996-045
-              </Button>
-            </a>
-            <a href="tel:+237698104832">
-              <Button variant="outline" className="border-[#1e3a8a] text-[#1e3a8a] hover:bg-[#eff6ff] text-sm font-semibold shadow-sm transition-colors">
-                <Phone className="w-4 h-4 mr-2" />+237 698-104-832
-              </Button>
-            </a>
-          </div>
-          {/* CTA évaluation dans le header (desktop md+) */}
-          <button
-            onClick={() => setShowEvalModal(true)}
-            className="hidden md:flex items-center gap-2 bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg transition-all active:scale-[0.97] whitespace-nowrap"
-          >
-            <Star className="w-4 h-4 flex-shrink-0" />
-            <span className="hidden lg:inline">Évaluer mon éligibilité en 2 min</span>
-            <span className="lg:hidden">Évaluer</span>
-          </button>
-          {/* Mobile : bouton compact */}
-          <Button onClick={() => setShowEvalModal(true)} className="md:hidden bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white text-xs font-bold shadow-md transition-colors px-3 py-2">
-            <Star className="w-3.5 h-3.5 mr-1" />Évaluer
-          </Button>
-        </div>
-      </header>
+      <Navbar activePage="home" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <section className="relative py-14 md:py-20 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 40%, #2563eb 75%, #7cb9e8 100%)' }}>
@@ -466,11 +420,9 @@ export default function Home() {
 
               {/* CTAs */}
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
-                <button onClick={() => setShowEvalModal(true)}>
-                  <Button size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-7 active:scale-[0.97] transition-transform gap-2">
-                    <Star className="w-5 h-5" />Évaluer mon éligibilité
-                  </Button>
-                </button>
+                <Button onClick={() => setShowEvalModal(true)} size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-7 active:scale-[0.97] transition-transform gap-2">
+                  <Star className="w-5 h-5" />Évaluer mon éligibilité
+                </Button>
                 <a href="#evaluation">
                   <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-7 active:scale-[0.97] transition-transform">
                     Pré-évaluation <ArrowRight className="w-5 h-5 ml-2" />
@@ -478,19 +430,7 @@ export default function Home() {
                 </a>
               </motion.div>
 
-              {/* Téléphones */}
-              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start">
-                <a href="tel:+237620996045">
-                  <Button size="sm" variant="outline" className="border-white/50 text-white hover:bg-white/15 font-medium text-sm px-4 active:scale-[0.97] transition-transform w-full sm:w-auto">
-                    <Phone className="w-3.5 h-3.5 mr-2" />+237 620-996-045
-                  </Button>
-                </a>
-                <a href="tel:+237698104832">
-                  <Button size="sm" variant="outline" className="border-white/50 text-white hover:bg-white/15 font-medium text-sm px-4 active:scale-[0.97] transition-transform w-full sm:w-auto">
-                    <Phone className="w-3.5 h-3.5 mr-2" />+237 698-104-832
-                  </Button>
-                </a>
-              </motion.div>
+
             </motion.div>
 
             {/* ── Colonne droite : images visuelles ── */}

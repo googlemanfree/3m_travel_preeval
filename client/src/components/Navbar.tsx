@@ -1,0 +1,137 @@
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Plane, BookOpen, User, Menu, X, Star } from "lucide-react";
+import { useState } from "react";
+
+const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
+
+interface NavbarProps {
+  /** Highlight the CTA eval button — pass an onClick to open the eval modal */
+  onEvalClick?: () => void;
+  /** Active page for underline indicator */
+  activePage?: "home" | "flights" | "procedures" | "dashboard";
+}
+
+export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [location] = useLocation();
+
+  const active = activePage ?? (
+    location === "/" ? "home" :
+    location.startsWith("/flights") ? "flights" :
+    location.startsWith("/procedures") ? "procedures" :
+    location.startsWith("/dashboard") ? "dashboard" : undefined
+  );
+
+  const linkClass = (page: string) =>
+    `text-sm font-semibold transition-colors ${
+      active === page
+        ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
+        : "text-gray-600 hover:text-blue-700"
+    }`;
+
+  return (
+    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+
+        {/* ── Logo ── */}
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
+          <img
+            src={LOGO_URL}
+            alt="3M Travel & Services"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-200 flex-shrink-0"
+            onError={e => {
+              const t = e.target as HTMLImageElement;
+              t.style.display = "none";
+              const fallback = t.nextElementSibling as HTMLElement | null;
+              if (fallback) fallback.style.display = "flex";
+            }}
+          />
+          {/* Fallback si logo indisponible */}
+          <div
+            className="w-10 h-10 rounded-full bg-blue-700 items-center justify-center text-white font-black text-sm flex-shrink-0"
+            style={{ display: "none" }}
+          >
+            3M
+          </div>
+          <div className="min-w-0">
+            <div className="font-black text-blue-800 text-sm leading-tight truncate">3M Travel & Services</div>
+            <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
+          </div>
+        </Link>
+
+        {/* ── Nav desktop ── */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className={linkClass("home")}>Accueil</Link>
+          <Link href="/flights" className={linkClass("flights")}>
+            <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
+          </Link>
+          <Link href="/procedures" className={linkClass("procedures")}>
+            <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
+          </Link>
+        </nav>
+
+        {/* ── Actions desktop ── */}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          {onEvalClick && (
+            <Button
+              onClick={onEvalClick}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-4 shadow-md"
+            >
+              <Star className="w-4 h-4 mr-1.5" />
+              Évaluation gratuite
+            </Button>
+          )}
+          <Link href="/dashboard">
+            <Button
+              variant="outline"
+              className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
+            >
+              <User className="w-4 h-4 mr-1.5" />
+              Mon Espace
+            </Button>
+          </Link>
+        </div>
+
+        {/* ── Mobile burger ── */}
+        <button
+          className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Menu"
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* ── Mobile menu ── */}
+      {mobileOpen && (
+        <div className="md:hidden bg-white border-t border-blue-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
+          <Link href="/" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            Accueil
+          </Link>
+          <Link href="/flights" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Plane className="w-4 h-4 text-blue-600" /> Vols
+          </Link>
+          <Link href="/procedures" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <BookOpen className="w-4 h-4 text-blue-600" /> Procédures
+          </Link>
+          <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+            <User className="w-4 h-4" /> Mon Espace
+          </Link>
+          {onEvalClick && (
+            <Button
+              onClick={() => { setMobileOpen(false); onEvalClick(); }}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold mt-1"
+            >
+              <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+            </Button>
+          )}
+        </div>
+      )}
+    </header>
+  );
+}

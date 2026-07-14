@@ -9,6 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import React, { useState, useEffect, useRef } from "react";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import {
   MapPin, Phone, MessageCircle, ChevronDown, ChevronUp,
   FileText, Globe, Star, Clock, DollarSign, CheckCircle,
@@ -1137,29 +1139,7 @@ export default function Procedures() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ── Navigation ── */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="3M Travel" className="w-8 h-8 rounded-full" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-            <span className="font-black text-blue-700 text-lg">3M Travel</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <Link href="/" className="hover:text-blue-600 transition-colors">Accueil</Link>
-            <Link href="/flights" className="hover:text-blue-600 transition-colors">Vols</Link>
-            <Link href="/procedures" className="text-blue-700 border-b-2 border-blue-700 pb-0.5">Procédures</Link>
-            <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Mon Espace</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <a href="tel:+237698104832" className="hidden sm:flex items-center gap-1 text-xs text-gray-600 hover:text-blue-600">
-              <Phone className="w-3.5 h-3.5" /> +237 698-104-832
-            </a>
-            <Button size="sm" onClick={() => setShowEvalModal(true)} className="bg-blue-700 hover:bg-blue-800 text-white text-xs">
-              Évaluation gratuite
-            </Button>
-          </div>
-        </div>
-      </nav>
+      <Navbar activePage="procedures" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">
@@ -1464,21 +1444,7 @@ export default function Procedures() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Footer ── */}
-      <footer className="bg-blue-900 text-white mt-16 py-8 px-4 text-center">
-        <p className="text-blue-200 text-sm">
-          <strong>3M Travel & Services SARL</strong> — Biyem-Assi, Yaoundé, Cameroun
-        </p>
-        <p className="text-blue-300 text-xs mt-1">
-          RC/YAO/2019/A/2567 | NIU : M112417203369H | +237 698 104 832 / +237 620 996 045
-        </p>
-        <div className="flex justify-center gap-4 mt-3">
-          <Link href="/" className="text-blue-300 hover:text-white text-xs transition-colors">Accueil</Link>
-          <Link href="/flights" className="text-blue-300 hover:text-white text-xs transition-colors">Vols</Link>
-          <Link href="/register" className="text-blue-300 hover:text-white text-xs transition-colors">Créer un compte</Link>
-          <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-white text-xs transition-colors">WhatsApp</a>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

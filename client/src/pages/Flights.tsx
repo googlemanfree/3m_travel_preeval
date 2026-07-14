@@ -11,6 +11,8 @@ import {
   Luggage, RefreshCw, SlidersHorizontal,
 } from "lucide-react";
 import { Link } from "wouter";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Airport = { iata: string; name: string; city: string; country: string };
@@ -441,35 +443,9 @@ export default function Flights() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/">
-            <a className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] flex items-center justify-center">
-                <Plane className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <div className="text-sm font-black text-[#1E3A8A]">3M Travel</div>
-                <div className="text-xs text-gray-500">Recherche de vols</div>
-              </div>
-            </a>
-          </Link>
-          <div className="hidden md:flex items-center gap-3">
-            <a href="/procedures" className="text-[#1E3A8A] hover:text-[#2563EB] font-semibold text-sm transition-colors">📚 Procédures</a>
-            <a href="/login" className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">👤 Mon Espace</a>
-            <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs font-semibold">
-              ⚡ Mode Démo
-            </Badge>
-          </div>
-          <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white font-bold text-xs gap-1">
-              <MessageCircle className="w-3.5 h-3.5" /> Assistance
-            </Button>
-          </a>
-        </div>
-      </header>
+      <Navbar activePage="flights" />
 
       {/* Search Panel */}
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] py-10 px-4">
@@ -690,6 +666,7 @@ export default function Flights() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

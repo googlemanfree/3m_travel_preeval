@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { Lock, LogIn, UserPlus, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -104,7 +104,7 @@ export default function AuthGuard({
               <ul className="space-y-1.5 text-sm text-blue-700">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                  Recherche de vols en temps réel vers 5 destinations
+                  Recherche de vols en temps réel vers 30+ pays
                 </li>
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />

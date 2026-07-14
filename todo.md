@@ -119,3 +119,9 @@
 - [x] Filtrage en temps réel des régions et destinations par mot-clé
 - [x] Affichage des résultats groupés par région avec navigation directe
 - [x] Raccourcis rapides (tags cliquables) : Canada, Schengen, UK, USA, Qatar, Australie...
+
+## Refonte Navigation — Uniformisation
+- [x] Composant Navbar réutilisable : logo propre, liens uniformes, sans numéros de téléphone
+- [x] Retirer les numéros de téléphone des headers de toutes les pages
+- [x] Consolider les numéros de téléphone uniquement dans les footers
+- [x] Boutons uniformes dans toutes les navbars (style cohérent)
