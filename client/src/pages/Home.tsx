@@ -413,74 +413,145 @@ export default function Home() {
       </header>
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative py-16 md:py-24 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 40%, #2563eb 75%, #7cb9e8 100%)' }}>
-        <div className="absolute inset-0 opacity-10">
+      <section className="relative py-14 md:py-20 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 40%, #2563eb 75%, #7cb9e8 100%)' }}>
+        {/* Blobs décoratifs */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
         </div>
+
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <motion.div
-            initial="hidden" animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-            className="max-w-3xl mx-auto text-center space-y-6"
-          >
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/30">
-              <Star className="w-4 h-4 text-yellow-300" />
-              Évaluation gratuite en 24h
-            </motion.div>
-            {/* Logo centré dans le hero */}
-            <motion.div variants={fadeUp} className="flex justify-center">
-              <div className="relative">
-                <div className="absolute inset-0 rounded-full bg-white/20 blur-xl scale-125" />
-                <img
-                  src="/manus-storage/logo_3m_d0e23210.jpeg"
-                  alt="3M Travel & Services"
-                  className="relative w-24 h-24 rounded-full object-cover shadow-2xl ring-4 ring-white/40"
-                />
-              </div>
-            </motion.div>
-            {/* Nom de l'agence en grand */}
-            <motion.div variants={fadeUp} className="text-center">
-              <span className="block text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white drop-shadow-2xl" style={{ letterSpacing: "-0.02em", textShadow: "0 4px 32px rgba(0,0,0,0.35)" }}>
-                3M Travel Agency
-              </span>
-              <span className="block w-24 h-1 bg-gradient-to-r from-[#7cb9e8] to-white rounded-full mx-auto mt-3 opacity-80" />
-            </motion.div>
-            <motion.h1 variants={fadeUp} className="text-2xl md:text-3xl lg:text-4xl font-semibold text-blue-100 leading-tight">
-              Votre Pré-Évaluation{" "}
-              <span className="text-[#7cb9e8] font-bold">Visa & Immigration</span>
-            </motion.h1>
-            <motion.p variants={fadeUp} className="text-blue-100 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
-              Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
-            </motion.p>
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
-              {/* CTA principal : auto-évaluation express */}
-              <button onClick={() => setShowEvalModal(true)}>
-                <Button size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-8 active:scale-[0.97] transition-transform gap-2">
-                  <Star className="w-5 h-5" />Évaluer mon éligibilité en 2 minutes
-                </Button>
-              </button>
-              <a href="#evaluation">
-                <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
-                  Pré-évaluation complète <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </a>
-            </motion.div>
-            {/* Ligne téléphone */}
-            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
+          {/* Layout 2 colonnes sur desktop */}
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
+
+            {/* ── Colonne gauche : texte + CTA ── */}
+            <motion.div
+              initial="hidden" animate="visible"
+              variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
+              className="text-center lg:text-left space-y-5"
+            >
+              {/* Badge */}
+              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/30">
+                <Star className="w-4 h-4 text-yellow-300" />
+                Évaluation gratuite en 24h
+              </motion.div>
+
+              {/* Logo + Nom */}
+              <motion.div variants={fadeUp} className="flex flex-col items-center lg:items-start gap-4">
+                {/* Logo agrandi */}
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-white/30 blur-2xl scale-150" />
+                  <img
+                    src="/manus-storage/logo_3m_d0e23210.jpeg"
+                    alt="3M Travel & Services"
+                    className="relative w-36 h-36 md:w-44 md:h-44 rounded-full object-cover shadow-2xl ring-4 ring-white/50 ring-offset-2 ring-offset-transparent"
+                  />
+                </div>
+                {/* Nom en grand */}
+                <div>
+                  <span className="block text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-white drop-shadow-2xl" style={{ letterSpacing: "-0.02em", textShadow: "0 4px 32px rgba(0,0,0,0.4)" }}>
+                    3M Travel Agency
+                  </span>
+                  <span className="block w-20 h-1 bg-gradient-to-r from-[#7cb9e8] to-white rounded-full mt-3 opacity-80 mx-auto lg:mx-0" />
+                </div>
+              </motion.div>
+
+              <motion.h1 variants={fadeUp} className="text-xl md:text-2xl lg:text-3xl font-semibold text-blue-100 leading-tight">
+                Votre Pré-Évaluation{" "}
+                <span className="text-[#7cb9e8] font-bold">Visa & Immigration</span>
+              </motion.h1>
+              <motion.p variants={fadeUp} className="text-blue-100 text-base md:text-lg leading-relaxed max-w-xl">
+                Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
+              </motion.p>
+
+              {/* CTAs */}
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
+                <button onClick={() => setShowEvalModal(true)}>
+                  <Button size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-7 active:scale-[0.97] transition-transform gap-2">
+                    <Star className="w-5 h-5" />Évaluer mon éligibilité
+                  </Button>
+                </button>
+                <a href="#evaluation">
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-7 active:scale-[0.97] transition-transform">
+                    Pré-évaluation <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </a>
+              </motion.div>
+
+              {/* Téléphones */}
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-2 justify-center lg:justify-start">
                 <a href="tel:+237620996045">
-                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-sm px-5 active:scale-[0.97] transition-transform w-full sm:w-auto">
-                    <Phone className="w-4 h-4 mr-2" />+237 620-996-045
+                  <Button size="sm" variant="outline" className="border-white/50 text-white hover:bg-white/15 font-medium text-sm px-4 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                    <Phone className="w-3.5 h-3.5 mr-2" />+237 620-996-045
                   </Button>
                 </a>
                 <a href="tel:+237698104832">
-                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-sm px-5 active:scale-[0.97] transition-transform w-full sm:w-auto">
-                    <Phone className="w-4 h-4 mr-2" />+237 698-104-832
+                  <Button size="sm" variant="outline" className="border-white/50 text-white hover:bg-white/15 font-medium text-sm px-4 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                    <Phone className="w-3.5 h-3.5 mr-2" />+237 698-104-832
                   </Button>
                 </a>
+              </motion.div>
             </motion.div>
+
+            {/* ── Colonne droite : images visuelles ── */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
+              className="hidden lg:flex flex-col gap-4"
+            >
+              {/* Image principale : personnes avec passeports */}
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa-mRwrcvG24vYkd29VuhCyfY.webp"
+                  alt="Candidats heureux avec passeports et billets d'avion"
+                  className="w-full h-64 object-cover"
+                />
+                {/* Badge flottant */}
+                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-800">Visa approuvé !</p>
+                    <p className="text-xs text-gray-500">1 247 dossiers traités</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Image secondaire : passeport avec tampons */}
+              <div className="relative rounded-2xl overflow-hidden shadow-xl ring-1 ring-white/20">
+                <img
+                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa_v2-WSEoBNe8QxwhosdXQLgg2D.webp"
+                  alt="Passeport avec tampons de visa et carte du monde"
+                  className="w-full h-44 object-cover"
+                />
+                {/* Badge destinations */}
+                <div className="absolute top-3 right-3 bg-[#1e3a8a]/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg">
+                  <p className="text-xs font-bold text-white">5 destinations</p>
+                  <p className="text-xs text-blue-200">Canada • Luxembourg • Pologne</p>
+                </div>
+              </div>
+            </motion.div>
+
+          </div>
+
+          {/* Image mobile : affichée uniquement sur petits écrans, sous le texte */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="lg:hidden mt-8 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20"
+          >
+            <img
+              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa-mRwrcvG24vYkd29VuhCyfY.webp"
+              alt="Candidats heureux avec passeports et billets d'avion"
+              className="w-full h-52 object-cover"
+            />
           </motion.div>
+
         </div>
+
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M0 60L1440 60L1440 0C1440 0 1080 60 720 60C360 60 0 0 0 0L0 60Z" fill="white" />

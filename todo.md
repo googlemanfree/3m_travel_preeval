@@ -101,3 +101,8 @@
 ## Nom agence + Signature concepteur
 - [x] Afficher "3M Travel Agency" en grand dans le hero de Home.tsx
 - [x] Ajouter la signature Aureol Donfack avec CTA WhatsApp/email dans le footer
+
+## Visuels Hero — Logo et Image Passeport/Visa
+- [x] Générer une image hero de personnes avec passeport et visa (style professionnel, tons bleus)
+- [x] Agrandir et améliorer l'affichage du logo 3M dans le hero
+- [x] Uploader les visuels sur S3 et intégrer dans Home.tsx
