@@ -66,3 +66,16 @@
 - [x] Créer le composant CounterStats réutilisable avec animation de décompte au scroll (useIntersectionObserver)
 - [x] Intégrer le compteur dans Home.tsx (section chiffres clés)
 - [x] Intégrer le compteur dans Procedures.tsx (sous le hero)
+
+## Espace Candidat — Compte & Tableau de Bord
+- [x] Étendre le schéma DB : tables candidates, candidate_files, candidate_messages
+- [x] Appliquer la migration DB via pnpm db:push
+- [x] Procédures tRPC : register, login, logout, getProfile, updateProfile
+- [x] Procédures tRPC : getMyDossier, uploadDocument, listDocuments
+- [x] Procédures tRPC : sendMessage, getMessages (messagerie candidat ↔ conseiller)
+- [x] Page /register : formulaire d'inscription (nom, email, mot de passe, destination, téléphone)
+- [x] Page /login : formulaire de connexion avec gestion d'erreurs
+- [x] Page /dashboard : tableau de bord candidat (statut dossier, documents, messages)
+- [x] Protéger la route /dashboard (redirection vers /login si non connecté)
+- [x] Ajouter le lien "Mon Espace" dans la navigation de toutes les pages
+- [x] Intégrer l'upload de documents (CV, passeport, diplômes) via S3 via route Express multer

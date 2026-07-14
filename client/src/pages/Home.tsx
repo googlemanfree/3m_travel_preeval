@@ -8,7 +8,7 @@ import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
   Upload, CheckCircle2, ArrowRight, Users, FileText,
   Star, Clock, Shield, X, ChevronRight, ChevronLeft, Quote,
-  CheckCircle, AlertCircle, Info, BookOpen
+  CheckCircle, AlertCircle, Info, BookOpen, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -304,6 +304,7 @@ export default function Home() {
             <a href="/flights" className="text-[#2563EB] hover:text-[#1e3a8a] font-bold transition-colors text-sm flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</a>
             <a href="/procedures" className="text-[#2563EB] hover:text-[#1e3a8a] font-bold transition-colors text-sm flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</a>
             <a href="#evaluation" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Pré-évaluation</a>
+            <a href="/login" className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold transition-colors text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-lg"><User className="w-3.5 h-3.5" />Mon Espace</a>
             <a href="#contact" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Contact</a>
           </nav>
           <div className="hidden md:flex items-center gap-2">

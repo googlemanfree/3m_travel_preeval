@@ -43,7 +43,16 @@ const trpcClient = trpc.createClient({
       url: "/api/trpc",
       transformer: superjson,
       headers() {
-        // Preview auto-login fallback: when the browser blocks iframe cookies
+        // 1. Candidate JWT (email/password auth) — takes priority for candidate routes
+        try {
+          const candidateToken = localStorage.getItem("3m_candidate_token");
+          if (candidateToken) {
+            return { Authorization: `Bearer ${candidateToken}` };
+          }
+        } catch {
+          // localStorage unavailable
+        }
+        // 2. Preview auto-login fallback: when the browser blocks iframe cookies
         // (Safari ITP / private browsing / WebView), the runtime mirrors the
         // session into sessionStorage so we can forward it as a Bearer token.
         // The regular OAuth cookie flow keeps working and takes priority server-side.

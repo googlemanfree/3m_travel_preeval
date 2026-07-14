@@ -395,6 +395,10 @@ export default function Procedures() {
               className="text-yellow-300 hover:text-white text-sm font-semibold transition-colors flex items-center gap-1">
               <Star className="w-3.5 h-3.5" /> Nos Formules
             </button>
+            <a href="/login"
+              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-2 border border-white/30">
+              👤 Mon Espace
+            </a>
             <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur vos services d'immigration.")}
               target="_blank" rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2">

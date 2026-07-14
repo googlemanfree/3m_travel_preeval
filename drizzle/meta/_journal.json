@@ -15,6 +15,13 @@
       "when": 1783987272169,
       "tag": "0001_productive_aqueduct",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1784020071464,
+      "tag": "0002_rare_mentallo",
+      "breakpoints": true
     }
   ]
 }

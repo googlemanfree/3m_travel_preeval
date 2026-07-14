@@ -458,6 +458,7 @@ export default function Flights() {
           </Link>
           <div className="hidden md:flex items-center gap-3">
             <a href="/procedures" className="text-[#1E3A8A] hover:text-[#2563EB] font-semibold text-sm transition-colors">📚 Procédures</a>
+            <a href="/login" className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold text-sm px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5">👤 Mon Espace</a>
             <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs font-semibold">
               ⚡ Mode Démo
             </Badge>
