@@ -1074,6 +1074,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
+      <WhatsAppButton />
     </div>
   );
 }
@@ -1347,5 +1350,90 @@ function TestimonialsSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+// ─── Bouton WhatsApp Flottant ─────────────────────────────────────────────────
+function WhatsAppButton() {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [pulse, setPulse] = useState(true);
+
+  // Arrêter le pulse après 5 secondes
+  React.useEffect(() => {
+    const t = setTimeout(() => setPulse(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const phoneNumber = "237698104832";
+  const message = encodeURIComponent(
+    "Bonjour 3M Travel & Services ! Je souhaite obtenir des informations sur vos services de visa et immigration. Pouvez-vous m'aider ?"
+  );
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+      {/* Tooltip / bulle de message */}
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: "easeOut" as const }}
+            className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4 max-w-[220px] text-right"
+          >
+            <p className="text-sm font-bold text-gray-800 mb-0.5">Besoin d'aide ?</p>
+            <p className="text-xs text-gray-500 leading-relaxed">
+              Contactez-nous directement sur WhatsApp, nous répondons en moins de 30 min !
+            </p>
+            {/* Petite flèche */}
+            <div className="absolute bottom-[-6px] right-5 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bouton principal */}
+      <motion.a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contacter 3M Travel sur WhatsApp"
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        className="relative w-14 h-14 rounded-full shadow-2xl flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #25d366, #128c7e)" }}
+      >
+        {/* Cercle de pulse */}
+        {pulse && (
+          <motion.span
+            className="absolute inset-0 rounded-full"
+            style={{ background: "rgba(37,211,102,0.4)" }}
+            animate={{ scale: [1, 1.6, 1.6], opacity: [0.6, 0, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" as const }}
+          />
+        )}
+        {/* Icône WhatsApp SVG */}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 32 32"
+          className="w-7 h-7 fill-white"
+          aria-hidden="true"
+        >
+          <path d="M16.003 2.667C8.638 2.667 2.667 8.637 2.667 16c0 2.344.635 4.61 1.84 6.594L2.667 29.333l6.9-1.81A13.267 13.267 0 0 0 16.003 29.333c7.364 0 13.33-5.97 13.33-13.333S23.367 2.667 16.003 2.667zm0 24.267a11.02 11.02 0 0 1-5.617-1.538l-.403-.24-4.094 1.074 1.09-3.984-.263-.41A10.977 10.977 0 0 1 5.003 16c0-6.066 4.934-11 11-11s11 4.934 11 11-4.934 11-11 11zm6.03-8.23c-.33-.165-1.953-.963-2.256-1.073-.303-.11-.524-.165-.744.165-.22.33-.854 1.073-1.047 1.293-.193.22-.386.248-.716.083-.33-.165-1.394-.514-2.655-1.638-.982-.875-1.645-1.956-1.838-2.286-.193-.33-.02-.508.145-.672.149-.148.33-.386.495-.58.165-.193.22-.33.33-.55.11-.22.055-.413-.027-.578-.083-.165-.744-1.793-1.02-2.455-.268-.644-.54-.557-.744-.567l-.633-.011c-.22 0-.578.083-.881.413-.303.33-1.155 1.128-1.155 2.75s1.183 3.19 1.348 3.41c.165.22 2.328 3.556 5.642 4.988.789.34 1.404.543 1.884.695.79.252 1.51.216 2.079.131.634-.095 1.953-.798 2.228-1.568.275-.77.275-1.43.193-1.568-.083-.138-.303-.22-.633-.386z" />
+        </svg>
+      </motion.a>
+
+      {/* Label sous le bouton */}
+      <motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.5 }}
+        className="text-xs font-semibold text-gray-600 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full shadow-sm border border-gray-100"
+      >
+        WhatsApp
+      </motion.span>
+    </div>
   );
 }

@@ -28,3 +28,4 @@
 - [x] Compteur de caractères sur le champ message
 - [x] Validation du format email et téléphone en temps réel
 - [x] Indicateur de force du formulaire (% de complétion)
+- [x] Ajouter un bouton WhatsApp flottant en bas à droite avec animation et message pré-rempli
