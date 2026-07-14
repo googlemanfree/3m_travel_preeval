@@ -268,9 +268,22 @@ export default function Home() {
             <a href="#evaluation" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Pré-évaluation</a>
             <a href="#contact" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Contact</a>
           </nav>
-          <a href="tel:+237620996045">
+          <div className="hidden md:flex items-center gap-2">
+            <a href="tel:+237620996045">
+              <Button className="bg-[#1e3a8a] hover:bg-[#2563eb] text-white text-sm font-semibold shadow-md transition-colors">
+                <Phone className="w-4 h-4 mr-2" />+237 620-996-045
+              </Button>
+            </a>
+            <a href="tel:+237698104832">
+              <Button variant="outline" className="border-[#1e3a8a] text-[#1e3a8a] hover:bg-[#eff6ff] text-sm font-semibold shadow-sm transition-colors">
+                <Phone className="w-4 h-4 mr-2" />+237 698-104-832
+              </Button>
+            </a>
+          </div>
+          {/* Mobile : un seul bouton */}
+          <a href="tel:+237620996045" className="md:hidden">
             <Button className="bg-[#1e3a8a] hover:bg-[#2563eb] text-white text-sm font-semibold shadow-md transition-colors">
-              <Phone className="w-4 h-4 mr-2" />+237 620-996-045
+              <Phone className="w-4 h-4 mr-2" />Appeler
             </Button>
           </a>
         </div>
@@ -316,11 +329,18 @@ export default function Home() {
                   Commencer l'évaluation <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </a>
-              <a href="tel:+237620996045">
-                <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
-                  <Phone className="w-4 h-4 mr-2" />Nous appeler
-                </Button>
-              </a>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="tel:+237620996045">
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-6 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                    <Phone className="w-4 h-4 mr-2" />+237 620-996-045
+                  </Button>
+                </a>
+                <a href="tel:+237698104832">
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-6 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                    <Phone className="w-4 h-4 mr-2" />+237 698-104-832
+                  </Button>
+                </a>
+              </div>
             </motion.div>
           </motion.div>
         </div>
