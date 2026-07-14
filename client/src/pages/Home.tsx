@@ -327,11 +327,9 @@ export default function Home() {
             <span className="lg:hidden">Évaluer</span>
           </button>
           {/* Mobile : bouton compact */}
-          <button onClick={() => setShowEvalModal(true)} className="md:hidden">
-            <Button className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white text-xs font-bold shadow-md transition-colors px-3 py-2">
-              <Star className="w-3.5 h-3.5 mr-1" />Évaluer
-            </Button>
-          </button>
+          <Button onClick={() => setShowEvalModal(true)} className="md:hidden bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white text-xs font-bold shadow-md transition-colors px-3 py-2">
+            <Star className="w-3.5 h-3.5 mr-1" />Évaluer
+          </Button>
         </div>
       </header>
 

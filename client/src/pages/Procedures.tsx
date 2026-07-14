@@ -1,18 +1,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText, Download, ExternalLink, Search, Filter,
-  MapPin, GraduationCap, Briefcase, Globe, Star,
-  ChevronRight, CheckCircle, Clock, Users, Award,
+  Search, MapPin, Briefcase, Globe, Star,
+  CheckCircle, Clock, Users, Award,
   ArrowRight, Phone, MessageCircle, Shield, BookOpen,
-  Plane, Building, Flag
+  Plane, Building, ChevronDown, ChevronUp,
+  FileText, Download, X, Euro, DollarSign, Zap,
+  GraduationCap, TrendingUp, CheckCircle2, AlertCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
 
-// ─── LOGO URL ─────────────────────────────────────────────────────────────────
+// ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 const WA_NUMBER = "237698104832";
 
@@ -20,814 +21,357 @@ function waLink(msg: string) {
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
-// ─── CATALOGUE DES PROCÉDURES ─────────────────────────────────────────────────
+// ─── TYPES ────────────────────────────────────────────────────────────────────
+type DestinationId = "canada" | "luxembourg" | "pologne" | "europe" | "golfe";
+type PaymentOption = "integral" | "echelonne" | "garanti" | null;
+
 interface Procedure {
   id: string;
-  country: string;
-  flag: string;
-  region: string;
-  type: "etudes" | "travail" | "visiteur" | "rp" | "procedure" | "guide";
   title: string;
   description: string;
-  url: string;
-  featured?: boolean;
+  details: string[];
   badge?: string;
+  badgeColor?: string;
+  url?: string;
 }
 
-const PROCEDURES: Procedure[] = [
-  // ── CANADA ──────────────────────────────────────────────────────────────────
-  {
-    id: "ca-travail-contrat",
-    country: "Canada", flag: "🇨🇦", region: "Amérique du Nord", type: "travail",
-    title: "Contrat de Travail Canada",
-    description: "Procédure complète pour obtenir un contrat de travail au Canada — Entrée Express, LMIA et formalités employeur.",
-    url: "/manus-storage/pasted_file_8tZnY0_3MTravel_Procedure_ContratTravail_Canada_2026_1_3f7d5b2a.pdf",
-    featured: true, badge: "⭐ Notre Point Fort"
-  },
-  {
-    id: "ca-etudes",
-    country: "Canada", flag: "🇨🇦", region: "Amérique du Nord", type: "etudes",
-    title: "Visa Études Canada",
-    description: "Dossier complet pour le permis d'études canadien — lettre d'acceptation, preuves financières, biométrie.",
-    url: "/manus-storage/pasted_file_zuvtPx_3MTravel_Procedure_VisaEtudes_Canada_Complet_2026_c0316769.pdf",
-    featured: true
-  },
-  {
-    id: "ca-travail",
-    country: "Canada", flag: "🇨🇦", region: "Amérique du Nord", type: "travail",
-    title: "Visa Travail Canada",
-    description: "Permis de travail ouvert et fermé — procédure LMIA, Entrée Express, PCP (Programmes des Candidats des Provinces).",
-    url: "/manus-storage/pasted_file_SDkncU_3MTravel_VisaTravail_Canada_Complet_2026_6a8f3c1d.pdf",
-    featured: true
-  },
-  {
-    id: "ca-renseignements",
-    country: "Canada", flag: "🇨🇦", region: "Amérique du Nord", type: "guide",
-    title: "Renseignements Supplémentaires Canada",
-    description: "Guide complémentaire sur les exigences spécifiques, les délais et les frais pour l'immigration canadienne.",
-    url: "/manus-storage/pasted_file_8LsAMT_RENSEIGNEMENTSSUPPLÉMENTAIRESCanada_a2c9d4f8.pdf"
-  },
+interface Destination {
+  id: DestinationId;
+  flag: string;
+  country: string;
+  subtitle: string;
+  tagline: string;
+  color: string;
+  bgGradient: string;
+  procedures: Procedure[];
+  ctaLabel: string;
+  ctaAction: "form" | "whatsapp" | "popup";
+  ctaMessage?: string;
+  highlight?: string;
+}
 
-  // ── ALLEMAGNE ────────────────────────────────────────────────────────────────
-  {
-    id: "de-formation",
-    country: "Allemagne", flag: "🇩🇪", region: "Espace Schengen", type: "procedure",
-    title: "Formation Allemagne",
-    description: "Procédure pour intégrer un programme de formation professionnelle (Ausbildung) en Allemagne.",
-    url: "/manus-storage/pasted_file_L8R5vL_3MTravel_Procedure_Formation_Allemagne_2026_9e1f4a7b.pdf",
-    featured: true, badge: "Formation Pro"
-  },
-  {
-    id: "de-etudes",
-    country: "Allemagne", flag: "🇩🇪", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Allemagne",
-    description: "Visa national D pour études universitaires en Allemagne — lettre d'admission, APS, compte bloqué.",
-    url: "/manus-storage/pasted_file_qSaYym_3MTravel_VisaEtudes_Allemagne_2026_5cba121d.pdf"
-  },
-  {
-    id: "de-visiteur",
-    country: "Allemagne", flag: "🇩🇪", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Allemagne",
-    description: "Visa Schengen court séjour pour l'Allemagne — tourisme, visite familiale, affaires.",
-    url: "/manus-storage/pasted_file_6PNDP8_3MTravel_VisaVisiteur_Allemagne_2026_ae913c62.pdf"
-  },
-
-  // ── FRANCE ───────────────────────────────────────────────────────────────────
-  {
-    id: "fr-travail",
-    country: "France", flag: "🇫🇷", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail France",
-    description: "Procédure complète pour le visa de travail en France — contrat, autorisation de travail, OFII.",
-    url: "/manus-storage/pasted_file_YWIqci_3MTravel_VisaTravail_France_2026_7c3e9b5d.pdf",
-    featured: true
-  },
-  {
-    id: "fr-visiteur",
-    country: "France", flag: "🇫🇷", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur France",
-    description: "Visa Schengen court séjour pour la France — tourisme, visite familiale, affaires.",
-    url: "/manus-storage/pasted_file_EM5hFo_3MTravel_VisaVisiteur_France_2026_d4f2a8c1.pdf"
-  },
-
-  // ── BELGIQUE ─────────────────────────────────────────────────────────────────
-  {
-    id: "be-etudes",
-    country: "Belgique", flag: "🇧🇪", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Belgique",
-    description: "Procédure visa étudiant Belgique — inscription université, preuve financière, assurance.",
-    url: "/manus-storage/pasted_file_VFPILb_3MTravel_VisaEtudes_Belgique_2026_b3d7e2f9.pdf"
-  },
-  {
-    id: "be-visiteur",
-    country: "Belgique", flag: "🇧🇪", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Belgique",
-    description: "Visa Schengen court séjour pour la Belgique.",
-    url: "/manus-storage/pasted_file_aamwpp_3MTravel_VisaVisiteur_Belgique_2026_f1c5a3d8.pdf"
-  },
-
-  // ── LUXEMBOURG ───────────────────────────────────────────────────────────────
-  {
-    id: "lu-etudes",
-    country: "Luxembourg", flag: "🇱🇺", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Luxembourg",
-    description: "Procédure visa étudiant Luxembourg — MAEE, autorisation de séjour, reconnaissance des diplômes.",
-    url: "/manus-storage/pasted_file_Ewv8DD_3MTravel_VisaEtudes_Luxembourg_2026_c8f4b1a7.pdf",
-    featured: true, badge: "Sélection Élite"
-  },
-  {
-    id: "lu-etudes2",
-    country: "Luxembourg", flag: "🇱🇺", region: "Espace Schengen", type: "etudes",
-    title: "Études Luxembourg — Guide Complet",
-    description: "Guide détaillé pour les études au Luxembourg avec toutes les étapes administratives.",
-    url: "/manus-storage/pasted_file_ZL6rtP_Etude_LuxembourgEtudes_2026_2_e9a2c7f4.pdf"
-  },
-  {
-    id: "lu-etudes3",
-    country: "Luxembourg", flag: "🇱🇺", region: "Espace Schengen", type: "etudes",
-    title: "Études Luxembourg — Dossier 2026",
-    description: "Dossier complet 2026 pour l'admission aux universités luxembourgeoises.",
-    url: "/manus-storage/pasted_file_Z6zCnC_Luxembourg_ED2026_1b8d5e3c.pdf"
-  },
-  {
-    id: "lu-visiteur",
-    country: "Luxembourg", flag: "🇱🇺", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Luxembourg",
-    description: "Visa Schengen court séjour pour le Luxembourg.",
-    url: "/manus-storage/pasted_file_oLtpOx_3MTravel_VisaVisiteur_Luxembourg_2026_88e2476f.pdf"
-  },
-
-  // ── POLOGNE ──────────────────────────────────────────────────────────────────
-  {
-    id: "pl-travail",
-    country: "Pologne", flag: "🇵🇱", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Pologne",
-    description: "Permis de travail Type D Pologne — recrutement direct, logistique industrielle, logement inclus.",
-    url: "/manus-storage/pasted_file_TFxAuu_3MTravel_VisaTravail_Pologne_2026_a5e8c2d1.pdf",
-    featured: true, badge: "Recrutement Direct"
-  },
-  {
-    id: "pl-etudes",
-    country: "Pologne", flag: "🇵🇱", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Pologne",
-    description: "Procédure visa étudiant Pologne — universités publiques, frais réduits, bourse possible.",
-    url: "/manus-storage/pasted_file_wvC9wI_3MTravel_VisaEtudes_Pologne_2026_50997d30.pdf"
-  },
-  {
-    id: "pl-visiteur",
-    country: "Pologne", flag: "🇵🇱", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Pologne",
-    description: "Visa Schengen court séjour pour la Pologne.",
-    url: "/manus-storage/pasted_file_7iglnH_3MTravel_VisaVisiteur_Pologne_2026_862e5b95.pdf"
-  },
-
-  // ── ESPAGNE ──────────────────────────────────────────────────────────────────
-  {
-    id: "es-etudes",
-    country: "Espagne", flag: "🇪🇸", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Espagne",
-    description: "Visa étudiant Espagne — inscription université, NIE, assurance maladie.",
-    url: "/manus-storage/pasted_file_l0JeZn_3MTravel_VisaEtudes_Espagne_2026_8d686047.pdf"
-  },
-  {
-    id: "es-visiteur",
-    country: "Espagne", flag: "🇪🇸", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Espagne",
-    description: "Visa Schengen court séjour pour l'Espagne.",
-    url: "/manus-storage/pasted_file_ruSSYF_3MTravel_VisaVisiteur_Espagne_2026_545a6eb1.pdf"
-  },
-
-  // ── ITALIE ───────────────────────────────────────────────────────────────────
-  {
-    id: "it-etudes",
-    country: "Italie", flag: "🇮🇹", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Italie",
-    description: "Visa étudiant Italie — permesso di soggiorno, codice fiscale, inscription.",
-    url: "/manus-storage/pasted_file_qPk13v_3MTravel_VisaEtudes_Italie_2026_3486082d.pdf"
-  },
-  {
-    id: "it-visiteur",
-    country: "Italie", flag: "🇮🇹", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Italie",
-    description: "Visa Schengen court séjour pour l'Italie.",
-    url: "/manus-storage/pasted_file_BXZvkR_3MTravel_VisaVisiteur_Italie_2026_2e9f7a4c.pdf"
-  },
-
-  // ── AUTRICHE ─────────────────────────────────────────────────────────────────
-  {
-    id: "at-etudes",
-    country: "Autriche", flag: "🇦🇹", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Autriche",
-    description: "Visa étudiant Autriche — Aufenthaltstitel, inscription université, preuve financière.",
-    url: "/manus-storage/pasted_file_qEPVzq_3MTravel_VisaEtudes_Autriche_2026_159fb688.pdf"
-  },
-  {
-    id: "at-visiteur",
-    country: "Autriche", flag: "🇦🇹", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Autriche",
-    description: "Visa Schengen court séjour pour l'Autriche.",
-    url: "/manus-storage/pasted_file_qboepy_3MTravel_VisaVisiteur_Autriche_2026_e9b78b9d.pdf"
-  },
-
-  // ── PAYS-BAS ─────────────────────────────────────────────────────────────────
-  {
-    id: "nl-etudes",
-    country: "Pays-Bas", flag: "🇳🇱", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Pays-Bas",
-    description: "MVV et permis de séjour Pays-Bas pour étudiants — IND, assurance obligatoire.",
-    url: "/manus-storage/pasted_file_iAKOUZ_3MTravel_VisaEtudes_PaysBas_2026_0c653817.pdf"
-  },
-  {
-    id: "nl-visiteur",
-    country: "Pays-Bas", flag: "🇳🇱", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Pays-Bas",
-    description: "Visa Schengen court séjour pour les Pays-Bas.",
-    url: "/manus-storage/pasted_file_YXP29N_3MTravel_VisaVisiteur_PaysBas_2026_5c3a8f2e.pdf"
-  },
-
-  // ── PORTUGAL ─────────────────────────────────────────────────────────────────
-  {
-    id: "pt-etudes",
-    country: "Portugal", flag: "🇵🇹", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Portugal",
-    description: "Visa étudiant Portugal — SEF, NIF, inscription université, logement.",
-    url: "/manus-storage/pasted_file_D0UJC3_3MTravel_VisaEtudes_Portugal_2026_d7b3e9a1.pdf"
-  },
-  {
-    id: "pt-visiteur",
-    country: "Portugal", flag: "🇵🇹", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Portugal",
-    description: "Visa Schengen court séjour pour le Portugal.",
-    url: "/manus-storage/pasted_file_of4ga5_3MTravel_VisaVisiteur_Portugal_2026_98d2a032.pdf"
-  },
-
-  // ── DANEMARK ─────────────────────────────────────────────────────────────────
-  {
-    id: "dk-etudes",
-    country: "Danemark", flag: "🇩🇰", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Danemark",
-    description: "Permis de séjour étudiant Danemark — SIRI, CPR, assurance.",
-    url: "/manus-storage/pasted_file_s1dGNv_3MTravel_VisaEtudes_Danemark_2026_38e4737c.pdf"
-  },
-  {
-    id: "dk-visiteur",
-    country: "Danemark", flag: "🇩🇰", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Danemark",
-    description: "Visa Schengen court séjour pour le Danemark.",
-    url: "/manus-storage/pasted_file_vpc8G2_3MTravel_VisaVisiteur_Danemark_2026_43879c8d.pdf"
-  },
-
-  // ── FINLANDE ─────────────────────────────────────────────────────────────────
-  {
-    id: "fi-etudes",
-    country: "Finlande", flag: "🇫🇮", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Finlande",
-    description: "Permis de séjour étudiant Finlande — Migri, inscription, preuve financière.",
-    url: "/manus-storage/pasted_file_nwihYp_3MTravel_VisaEtudes_Finlande_2026_7dce05a0.pdf"
-  },
-  {
-    id: "fi-visiteur",
-    country: "Finlande", flag: "🇫🇮", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Finlande",
-    description: "Visa Schengen court séjour pour la Finlande.",
-    url: "/manus-storage/pasted_file_SblNbU_3MTravel_VisaVisiteur_Finlande_2026_c2f8b4d9.pdf"
-  },
-
-  // ── HONGRIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "hu-etudes",
-    country: "Hongrie", flag: "🇭🇺", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Hongrie",
-    description: "Visa étudiant Hongrie — OIF, inscription, bourse Stipendium Hungaricum.",
-    url: "/manus-storage/pasted_file_SymWgm_3MTravel_VisaEtudes_Hongrie_2026_4a7c1e9f.pdf"
-  },
-  {
-    id: "hu-travail",
-    country: "Hongrie", flag: "🇭🇺", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Hongrie",
-    description: "Permis de travail Hongrie — contrat employeur, autorisation de travail.",
-    url: "/manus-storage/pasted_file_SCbldS_3MTravel_VisaTravail_Hongrie_2026_8e3f2b7d.pdf"
-  },
-  {
-    id: "hu-visiteur",
-    country: "Hongrie", flag: "🇭🇺", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Hongrie",
-    description: "Visa Schengen court séjour pour la Hongrie.",
-    url: "/manus-storage/pasted_file_qcMEGq_3MTravel_VisaVisiteur_Hongrie_2026_1563c4ba.pdf"
-  },
-
-  // ── MALTE ────────────────────────────────────────────────────────────────────
-  {
-    id: "mt-etudes",
-    country: "Malte", flag: "🇲🇹", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Malte",
-    description: "Permis de séjour étudiant Malte — Identity Malta, inscription, assurance.",
-    url: "/manus-storage/pasted_file_mrImSL_3MTravel_VisaEtudes_Malte_2026_7e5ad27b.pdf"
-  },
-  {
-    id: "mt-travail",
-    country: "Malte", flag: "🇲🇹", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Malte",
-    description: "Permis de travail Malte — Single Permit, contrat employeur.",
-    url: "/manus-storage/pasted_file_4TRucx_3MTravel_VisaTravail_Malte_2026_2c47db8d.pdf"
-  },
-  {
-    id: "mt-visiteur",
-    country: "Malte", flag: "🇲🇹", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Malte",
-    description: "Visa Schengen court séjour pour Malte.",
-    url: "/manus-storage/pasted_file_kl8JTP_3MTravel_VisaVisiteur_Malte_2026_6d666587.pdf"
-  },
-
-  // ── GRÈCE ────────────────────────────────────────────────────────────────────
-  {
-    id: "gr-visiteur",
-    country: "Grèce", flag: "🇬🇷", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Grèce",
-    description: "Visa Schengen court séjour pour la Grèce.",
-    url: "/manus-storage/pasted_file_d3EYry_3MTravel_VisaVisiteur_Grece_2026_7f1a4c8b.pdf"
-  },
-  {
-    id: "gr-guide",
-    country: "Grèce", flag: "🇬🇷", region: "Espace Schengen", type: "guide",
-    title: "Guide Grèce 2026",
-    description: "Guide complet sur les procédures d'immigration en Grèce.",
-    url: "/manus-storage/pasted_file_8N87oz_3MTravel_Grece_2026_229ba902.pdf"
-  },
-
-  // ── SUISSE ───────────────────────────────────────────────────────────────────
-  {
-    id: "ch-visiteur",
-    country: "Suisse", flag: "🇨🇭", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Suisse",
-    description: "Visa court séjour pour la Suisse — tourisme, affaires, visite familiale.",
-    url: "/manus-storage/pasted_file_V58aqm_3MTravel_VisaVisiteur_Suisse_2026_3c9e7f2a.pdf"
-  },
-
-  // ── SUÈDE ────────────────────────────────────────────────────────────────────
-  {
-    id: "se-visiteur",
-    country: "Suède", flag: "🇸🇪", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Suède",
-    description: "Visa Schengen court séjour pour la Suède.",
-    url: "/manus-storage/pasted_file_U5ZxUP_3MTravel_VisaVisiteur_Suede_2026_b4f8d3c1.pdf"
-  },
-
-  // ── NORVÈGE ──────────────────────────────────────────────────────────────────
-  {
-    id: "no-travail",
-    country: "Norvège", flag: "🇳🇴", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Norvège",
-    description: "Permis de travail Norvège — UDI, contrat employeur, qualification professionnelle.",
-    url: "/manus-storage/pasted_file_ZXA57z_3MTravel_VisaTravail_Norvege_2026_9d2f5b8e.pdf"
-  },
-  {
-    id: "no-visiteur",
-    country: "Norvège", flag: "🇳🇴", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Norvège",
-    description: "Visa Schengen court séjour pour la Norvège.",
-    url: "/manus-storage/pasted_file_Rb9Wcw_3MTravel_VisaVisiteur_Norvege_2026_1a7e4c9f.pdf"
-  },
-
-  // ── ISLANDE ──────────────────────────────────────────────────────────────────
-  {
-    id: "is-travail",
-    country: "Islande", flag: "🇮🇸", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Islande",
-    description: "Permis de travail Islande — Directorate of Immigration, contrat.",
-    url: "/manus-storage/pasted_file_Qhkh5J_3MTravel_VisaTravail_Islande_2026_c3f7a2d8.pdf"
-  },
-  {
-    id: "is-visiteur",
-    country: "Islande", flag: "🇮🇸", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Islande",
-    description: "Visa Schengen court séjour pour l'Islande.",
-    url: "/manus-storage/pasted_file_8pTmxs_3MTravel_VisaVisiteur_Islande_2026_5e9b3d7f.pdf"
-  },
-
-  // ── LIECHTENSTEIN ────────────────────────────────────────────────────────────
-  {
-    id: "li-travail",
-    country: "Liechtenstein", flag: "🇱🇮", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Liechtenstein",
-    description: "Permis de travail Liechtenstein — Ausländeramt, quota annuel.",
-    url: "/manus-storage/pasted_file_a46Z2b_3MTravel_VisaTravail_Liechtenstein_2026_7b4e1f9c.pdf"
-  },
-  {
-    id: "li-visiteur",
-    country: "Liechtenstein", flag: "🇱🇮", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Liechtenstein",
-    description: "Visa Schengen court séjour pour le Liechtenstein.",
-    url: "/manus-storage/pasted_file_tMl9gJ_3MTravel_VisaVisiteur_Liechtenstein_2026_9571d148.pdf"
-  },
-
-  // ── LETTONIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "lv-travail",
-    country: "Lettonie", flag: "🇱🇻", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Lettonie",
-    description: "Permis de travail Lettonie — OCMA, contrat employeur.",
-    url: "/manus-storage/pasted_file_gJZCvY_3MTravel_VisaTravail_Lettonie_2026_0ad26cde.pdf"
-  },
-  {
-    id: "lv-visiteur",
-    country: "Lettonie", flag: "🇱🇻", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Lettonie",
-    description: "Visa Schengen court séjour pour la Lettonie.",
-    url: "/manus-storage/pasted_file_pUHvss_3MTravel_VisaVisiteur_Lettonie_2026_c5ed37bf.pdf"
-  },
-
-  // ── LITUANIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "lt-travail",
-    country: "Lituanie", flag: "🇱🇹", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Lituanie",
-    description: "Permis de travail Lituanie — Migration Department, contrat.",
-    url: "/manus-storage/pasted_file_xcvEVu_3MTravel_VisaTravail_Lituanie_2026_fc5d71ba.pdf"
-  },
-  {
-    id: "lt-visiteur",
-    country: "Lituanie", flag: "🇱🇹", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Lituanie",
-    description: "Visa Schengen court séjour pour la Lituanie.",
-    url: "/manus-storage/pasted_file_NjULT0_3MTravel_VisaVisiteur_Lituanie_2026_4d8f2c7a.pdf"
-  },
-
-  // ── SLOVAQUIE ────────────────────────────────────────────────────────────────
-  {
-    id: "sk-travail",
-    country: "Slovaquie", flag: "🇸🇰", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Slovaquie",
-    description: "Permis de travail Slovaquie — Bureau des migrations, contrat.",
-    url: "/manus-storage/pasted_file_yITCvS_3MTravel_VisaTravail_Slovaquie_2026_de996062.pdf"
-  },
-  {
-    id: "sk-visiteur",
-    country: "Slovaquie", flag: "🇸🇰", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Slovaquie",
-    description: "Visa Schengen court séjour pour la Slovaquie.",
-    url: "/manus-storage/pasted_file_uO1YKs_3MTravel_VisaVisiteur_Slovaquie_2026_5f04cfee.pdf"
-  },
-
-  // ── SLOVÉNIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "si-travail",
-    country: "Slovénie", flag: "🇸🇮", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Slovénie",
-    description: "Permis de travail Slovénie — MNZ, contrat employeur.",
-    url: "/manus-storage/pasted_file_eMRXR5_3MTravel_VisaTravail_Slovenie_2026_6a1c4f8b.pdf"
-  },
-  {
-    id: "si-visiteur",
-    country: "Slovénie", flag: "🇸🇮", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Slovénie",
-    description: "Visa Schengen court séjour pour la Slovénie.",
-    url: "/manus-storage/pasted_file_PcV45l_3MTravel_VisaVisiteur_Slovenie_2026_2d7f9e3c.pdf"
-  },
-
-  // ── TCHÉQUIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "cz-etudes",
-    country: "Rép. Tchèque", flag: "🇨🇿", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Rép. Tchèque",
-    description: "Visa étudiant République Tchèque — MVČR, inscription, assurance.",
-    url: "/manus-storage/pasted_file_Rb2czA_3MTravel_VisaEtudes_RepubliqueTcheque_2026_8e3a5c1f.pdf"
-  },
-  {
-    id: "cz-travail",
-    country: "Rép. Tchèque", flag: "🇨🇿", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Rép. Tchèque",
-    description: "Permis de travail République Tchèque — MVČR, contrat employeur.",
-    url: "/manus-storage/pasted_file_JOKGVF_3MTravel_VisaTravail_Tcheque_2026_b2f7d4e9.pdf"
-  },
-  {
-    id: "cz-visiteur",
-    country: "Rép. Tchèque", flag: "🇨🇿", region: "Espace Schengen", type: "visiteur",
-    title: "Visa Visiteur Rép. Tchèque",
-    description: "Visa Schengen court séjour pour la République Tchèque.",
-    url: "/manus-storage/pasted_file_f4rTNN_3MTravel_VisaVisiteur_Tcheque_2026_999bccac.pdf"
-  },
-
-  // ── BULGARIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "bg-travail",
-    country: "Bulgarie", flag: "🇧🇬", region: "Europe de l'Est", type: "travail",
-    title: "Visa Travail Bulgarie",
-    description: "Permis de travail Bulgarie — Agence pour l'emploi, contrat.",
-    url: "/manus-storage/pasted_file_qpTJPT_3MTravel_VisaTravail_Bulgarie_2026_4fcf4603.pdf"
-  },
-  {
-    id: "bg-guide",
-    country: "Bulgarie", flag: "🇧🇬", region: "Europe de l'Est", type: "guide",
-    title: "Guide Bulgarie 2026",
-    description: "Guide complet sur les procédures d'immigration en Bulgarie.",
-    url: "/manus-storage/pasted_file_iUD4yo_3MTravel_Bulgarie_2026_3429c3d1.pdf"
-  },
-
-  // ── ROUMANIE ─────────────────────────────────────────────────────────────────
-  {
-    id: "ro-travail",
-    country: "Roumanie", flag: "🇷🇴", region: "Europe de l'Est", type: "travail",
-    title: "Visa Travail Roumanie",
-    description: "Permis de travail Roumanie — IGI, contrat employeur, logement.",
-    url: "/manus-storage/pasted_file_s2iHUQ_3MTravel_VisaTravail_Roumanie_2026_402da8dc.pdf"
-  },
-  {
-    id: "ro-guide",
-    country: "Roumanie", flag: "🇷🇴", region: "Europe de l'Est", type: "guide",
-    title: "Guide Roumanie 2026",
-    description: "Guide complet sur les procédures d'immigration en Roumanie.",
-    url: "/manus-storage/pasted_file_PGZqhn_3MTravel_Roumanie_2026_7c4e2b9f.pdf"
-  },
-
-  // ── CROATIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "hr-travail",
-    country: "Croatie", flag: "🇭🇷", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Croatie",
-    description: "Permis de travail Croatie — MUP, contrat employeur.",
-    url: "/manus-storage/pasted_file_eBGVTi_3MTravel_VisaTravail_Croatie_2026_5f1a8c3d.pdf"
-  },
-
-  // ── CHYPRE ───────────────────────────────────────────────────────────────────
-  {
-    id: "cy-travail",
-    country: "Chypre", flag: "🇨🇾", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Chypre",
-    description: "Permis de travail Chypre — Civil Registry, contrat.",
-    url: "/manus-storage/pasted_file_b1941d_3MTravel_VisaTravail_Chypre_2026_9e4b7f2c.pdf"
-  },
-  {
-    id: "cy-guide",
-    country: "Chypre", flag: "🇨🇾", region: "Espace Schengen", type: "guide",
-    title: "Guide Chypre 2026",
-    description: "Guide complet sur les procédures d'immigration à Chypre.",
-    url: "/manus-storage/pasted_file_x9gYyS_3MTravel_Chypre_2026_e0bc85dc.pdf"
-  },
-
-  // ── ESTONIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "ee-etudes",
-    country: "Estonie", flag: "🇪🇪", region: "Espace Schengen", type: "etudes",
-    title: "Visa Études Estonie",
-    description: "Permis de séjour étudiant Estonie — PPA, inscription, assurance.",
-    url: "/manus-storage/pasted_file_xWOfuN_3MTravel_ProcedureComplete_VisaEtudes_Estonie_2026_ec912565.pdf"
-  },
-  {
-    id: "ee-travail",
-    country: "Estonie", flag: "🇪🇪", region: "Espace Schengen", type: "travail",
-    title: "Visa Travail Estonie",
-    description: "Permis de travail Estonie — PPA, contrat employeur.",
-    url: "/manus-storage/pasted_file_CsFm7h_3MTravel_VisaTravail_Estonie_2026_4b8e2f7c.pdf"
-  },
-  {
-    id: "ee-travail2",
-    country: "Estonie", flag: "🇪🇪", region: "Espace Schengen", type: "travail",
-    title: "Procédure Complète Visa Travail Estonie",
-    description: "Guide complet étape par étape pour le visa de travail en Estonie.",
-    url: "/manus-storage/pasted_file_fwPlwq_3MTravel_ProcedureComplete_VisaTravail_Estonie_2026_0f9c2746.pdf"
-  },
-
-  // ── ROYAUME-UNI ──────────────────────────────────────────────────────────────
-  {
-    id: "gb-travail",
-    country: "Royaume-Uni", flag: "🇬🇧", region: "Hors Schengen", type: "travail",
-    title: "Visa Travail Royaume-Uni",
-    description: "Skilled Worker Visa UK — Certificate of Sponsorship, points system.",
-    url: "/manus-storage/pasted_file_JFZ6yQ_3MTravel_VisaTravail_RoyaumeUni_2026_c7a3f9e2.pdf"
-  },
-
-  // ── AUSTRALIE ────────────────────────────────────────────────────────────────
-  {
-    id: "au-rp",
-    country: "Australie", flag: "🇦🇺", region: "Océanie", type: "rp",
-    title: "Résidence Permanente Australie",
-    description: "Visa de résidence permanente Australie — SkillSelect, points test, nomination d'État.",
-    url: "/manus-storage/pasted_file_9qm18O_3MTravel_RP_Australie_FR_1e4b8c5f.pdf",
-    featured: true
-  },
-  {
-    id: "au-rp-en",
-    country: "Australie", flag: "🇦🇺", region: "Océanie", type: "rp",
-    title: "Permanent Residency Australia (EN)",
-    description: "Complete guide for Australian Permanent Residency — SkillSelect, state nomination.",
-    url: "/manus-storage/pasted_file_AisVj2_3MTravel_PR_Australia_EN_2d9f7b4c.pdf"
-  },
-  {
-    id: "au-travail",
-    country: "Australie", flag: "🇦🇺", region: "Océanie", type: "travail",
-    title: "Visa Travail Australie",
-    description: "Visa de travail temporaire Australie — TSS 482, Skilled Worker.",
-    url: "/manus-storage/pasted_file_QLKR9n_3MTravel_VisaTravail_Australie_2026_f3c8a1e7.pdf"
-  },
-
-  // ── NOUVELLE-ZÉLANDE ─────────────────────────────────────────────────────────
-  {
-    id: "nz-rp",
-    country: "Nouvelle-Zélande", flag: "🇳🇿", region: "Océanie", type: "rp",
-    title: "Résidence Permanente Nouvelle-Zélande",
-    description: "Visa de résidence permanente Nouvelle-Zélande — Skilled Migrant, points system.",
-    url: "/manus-storage/pasted_file_sQOztt_3MTravel_RP_NouvelleZelande_FR_4974629e.pdf",
-    featured: true
-  },
-  {
-    id: "nz-rp-en",
-    country: "Nouvelle-Zélande", flag: "🇳🇿", region: "Océanie", type: "rp",
-    title: "Permanent Residency New Zealand (EN)",
-    description: "Complete guide for New Zealand Permanent Residency — Skilled Migrant Category.",
-    url: "/manus-storage/pasted_file_QrRf2x_3MTravel_PR_NewZealand_EN_9a5d3c8f.pdf"
-  },
-  {
-    id: "nz-travail",
-    country: "Nouvelle-Zélande", flag: "🇳🇿", region: "Océanie", type: "travail",
-    title: "Visa Travail Nouvelle-Zélande",
-    description: "Visa de travail temporaire Nouvelle-Zélande — Essential Skills, Accredited Employer.",
-    url: "/manus-storage/pasted_file_I2zRZ9_3MTravel_VisaTravail_NouvelleZelande_2026_b6e4f2a9.pdf"
-  },
-
-  // ── ÉTATS-UNIS ───────────────────────────────────────────────────────────────
-  {
-    id: "us-travail",
-    country: "États-Unis", flag: "🇺🇸", region: "Amérique du Nord", type: "travail",
-    title: "Visa Travail États-Unis",
-    description: "Visa de travail H-1B, L-1, O-1 — pétition USCIS, employeur sponsor.",
-    url: "/manus-storage/pasted_file_ObkKPy_3MTravel_VisaTravail_EtatsUnis_2026_3f7b2e9c.pdf"
-  },
-  {
-    id: "us-travail2",
-    country: "États-Unis", flag: "🇺🇸", region: "Amérique du Nord", type: "travail",
-    title: "Visa Travail États-Unis — Guide Complet",
-    description: "Guide complet sur les visas de travail américains — processus, délais, coûts.",
-    url: "/manus-storage/pasted_file_vsYL79_3MTravel_VisaTravail_EtatsUnis_2026_1_4ee27d9f.pdf"
-  },
-
-  // ── TURQUIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "tr-visa",
-    country: "Turquie", flag: "🇹🇷", region: "Hors Schengen", type: "visiteur",
-    title: "Visa Turquie 2026",
-    description: "Visa touristique et de travail pour la Turquie — e-Visa, consulat.",
-    url: "/manus-storage/pasted_file_rVjEdO_3MTravel_Visa_Turquie_2026_a3b8348f.pdf"
-  },
-
-  // ── QATAR ────────────────────────────────────────────────────────────────────
-  {
-    id: "qa-travail",
-    country: "Qatar", flag: "🇶🇦", region: "Moyen-Orient", type: "travail",
-    title: "Visa Travail Qatar",
-    description: "Visa de travail Qatar — sponsor employeur, QID, contrat.",
-    url: "/manus-storage/pasted_file_oFda1s_3MTravel_VisaTravail_Qatar_2026_49e6428e.pdf"
-  },
-
-  // ── DUBAI / EAU ──────────────────────────────────────────────────────────────
-  {
-    id: "ae-visiteur",
-    country: "Dubaï / EAU", flag: "🇦🇪", region: "Moyen-Orient", type: "visiteur",
-    title: "Visa Visiteur Dubaï",
-    description: "Visa touristique Dubaï — e-Visa, visa on arrival, visa de transit.",
-    url: "/manus-storage/pasted_file_bWPqcS_3MTravel_VisaVisiteur_Dubai_2026_3_d4e9b2f7.pdf"
-  },
-
-  // ── ÎLE MAURICE ──────────────────────────────────────────────────────────────
-  {
-    id: "mu-travail",
-    country: "Île Maurice", flag: "🇲🇺", region: "Afrique", type: "travail",
-    title: "Visa Travail Île Maurice",
-    description: "Occupation Permit Maurice — investisseur, professionnel, retraité.",
-    url: "/manus-storage/pasted_file_Obvkms_3MTravel_VisaTravail_Maurice_2026_1_c3f8a7d2.pdf"
-  },
-
-  // ── ARMÉNIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "am-etudes",
-    country: "Arménie", flag: "🇦🇲", region: "Caucase", type: "etudes",
-    title: "Visa Études Arménie",
-    description: "Procédure complète visa étudiant Arménie — inscription, résidence.",
-    url: "/manus-storage/pasted_file_c9nyRR_3MTravel_ProcedureComplete_VisaEtudes_Armenie_2026_f2a8c4e1.pdf"
-  },
-  {
-    id: "am-guide",
-    country: "Arménie", flag: "🇦🇲", region: "Caucase", type: "guide",
-    title: "Guide Arménie 2026",
-    description: "Guide complet sur les procédures d'immigration en Arménie.",
-    url: "/manus-storage/pasted_file_3c725t_3MTravel_Armenie_2026_b9af1586.pdf"
-  },
-  {
-    id: "am-schengen",
-    country: "Arménie", flag: "🇦🇲", region: "Caucase", type: "guide",
-    title: "Stratégie Visa Schengen via Arménie",
-    description: "Guide stratégique pour obtenir un visa Schengen via l'Arménie.",
-    url: "/manus-storage/pasted_file_b8PUpr_3MTravel_Guide_VisaSchengen_Strategie_Armenie_2026_7d3f5c9a.pdf"
-  },
-
-  // ── AZERBAÏDJAN ──────────────────────────────────────────────────────────────
-  {
-    id: "az-guide",
-    country: "Azerbaïdjan", flag: "🇦🇿", region: "Caucase", type: "guide",
-    title: "Guide Azerbaïdjan 2026",
-    description: "Guide complet sur les procédures d'immigration en Azerbaïdjan.",
-    url: "/manus-storage/pasted_file_LwKq1K_3MTravel_Azerbaidjan_2026_c5f9b3e8.pdf"
-  },
-
-  // ── GÉORGIE ──────────────────────────────────────────────────────────────────
-  {
-    id: "ge-guide",
-    country: "Géorgie", flag: "🇬🇪", region: "Caucase", type: "guide",
-    title: "Guide Géorgie 2026",
-    description: "Guide complet sur les procédures d'immigration en Géorgie.",
-    url: "/manus-storage/pasted_file_vNhpzC_3MTravel_Georgie_2026_48039c1b.pdf"
-  },
-
-  // ── FORMULAIRES COMPLÉMENTAIRES ──────────────────────────────────────────────
-  {
-    id: "form-mineur",
-    country: "Général", flag: "📋", region: "Formulaires", type: "guide",
-    title: "Formulaire Accompagnement Enfant Mineur",
-    description: "Formulaire officiel d'accompagnement pour enfant mineur voyageant seul ou avec un tiers.",
-    url: "/manus-storage/pasted_file_kWvPqu_formulaireaccompagnementenfantmineur_dc260fb8.pdf"
-  },
-  {
-    id: "form-assurance",
-    country: "Général", flag: "📋", region: "Formulaires", type: "guide",
-    title: "Guide Assurances Voyage",
-    description: "Information sur les assureurs et assurances répondant aux conditions requises pour les visas.",
-    url: "/manus-storage/pasted_file_cQ1xSw_Information_about_the_insurers_and_the_insurances_that_they_offer_which_meet_the_necessary_conditions_e7f4a2c9.pdf"
-  },
+// ─── DONNÉES DES DESTINATIONS ─────────────────────────────────────────────────
+const DESTINATIONS: Destination[] = [
+  {
+    id: "canada",
+    flag: "🇨🇦",
+    country: "Canada",
+    subtitle: "Option d'Élite — Résidence Permanente",
+    tagline: "Notre domaine d'excellence depuis 2019. Le chemin le plus sûr vers la résidence permanente.",
+    color: "#C8102E",
+    bgGradient: "from-red-700 to-red-900",
+    ctaLabel: "Évaluer mon éligibilité Canada",
+    ctaAction: "form",
+    highlight: "⭐ Notre Point Fort",
+    procedures: [
+      {
+        id: "ca-1",
+        title: "Entrée Express (Fédéral)",
+        description: "Programme phare pour les travailleurs qualifiés bilingues souhaitant obtenir la résidence permanente.",
+        details: [
+          "Score CRS calculé sur vos compétences, expérience et niveau de langue",
+          "Invitation à Présenter une Demande (ITA) envoyée par IRCC",
+          "Résidence permanente obtenue en 6 mois après l'ITA",
+          "3 volets : Travailleurs qualifiés fédéraux, Métiers spécialisés, Expérience canadienne",
+          "Français ou anglais requis (IELTS / TEF Canada)"
+        ],
+        badge: "Prioritaire",
+        badgeColor: "bg-red-100 text-red-700"
+      },
+      {
+        id: "ca-2",
+        title: "Programmes des Candidats des Provinces (PCP)",
+        description: "Immigration régionale ciblée — chaque province sélectionne des profils adaptés à ses besoins.",
+        details: [
+          "Ontario, Québec, Alberta, Colombie-Britannique, Manitoba et plus",
+          "Volets spécifiques par secteur (tech, santé, agriculture, transport)",
+          "Nomination provinciale = points supplémentaires dans Entrée Express",
+          "Certains volets ne nécessitent pas d'offre d'emploi préalable",
+          "Délais : 6 à 18 mois selon la province"
+        ],
+        badge: "Régional",
+        badgeColor: "bg-blue-100 text-blue-700"
+      },
+      {
+        id: "ca-3",
+        title: "Volet des Métiers Spécialisés",
+        description: "Demande élevée pour les corps de métiers essentiels — traitement accéléré garanti.",
+        details: [
+          "Soudure & Chaudronnerie (SCIAN 7237, 7238)",
+          "Vente B2B & Représentation commerciale",
+          "Logistique & Gestion de la chaîne d'approvisionnement",
+          "Chauffeurs poids lourds (classe 1) — pénurie critique",
+          "Certification des compétences via Red Seal ou équivalent"
+        ],
+        badge: "Métiers",
+        badgeColor: "bg-green-100 text-green-700"
+      },
+      {
+        id: "ca-4",
+        title: "Permis de Travail Temporaire",
+        description: "Voie d'accès progressive — études, stage coopératif ou visa jeune professionnel.",
+        details: [
+          "Permis d'études + autorisation de travail hors campus",
+          "Stage coopératif (co-op) intégré au cursus universitaire",
+          "Visa Jeune Professionnel (Expérience Internationale Canada)",
+          "Permis post-diplôme (PGWP) jusqu'à 3 ans",
+          "Passerelle vers la résidence permanente via Expérience Canadienne"
+        ],
+        badge: "Temporaire",
+        badgeColor: "bg-orange-100 text-orange-700"
+      }
+    ]
+  },
+  {
+    id: "luxembourg",
+    flag: "🇱🇺",
+    country: "Luxembourg",
+    subtitle: "Sélection Cadres & Profils Qualifiés",
+    tagline: "Salaire minimum légal garanti : 3 165 EUR/mois brut. Audit de conformité de votre dossier inclus.",
+    color: "#EF3340",
+    bgGradient: "from-red-600 to-blue-800",
+    ctaLabel: "Demander un Audit Luxembourg",
+    ctaAction: "whatsapp",
+    ctaMessage: "Bonjour 3M Travel, je souhaite un audit pour le Luxembourg. Voici mon profil : ",
+    highlight: "💼 Sélection Élite",
+    procedures: [
+      {
+        id: "lu-1",
+        title: "Visa Salarié Hautement Qualifié — Carte Bleue UE",
+        description: "Directive européenne réservée aux profils qualifiés avec contrat de travail supérieur au seuil légal.",
+        details: [
+          "Salaire brut minimum exigé : 3 165 EUR/mois (seuil légal 2026)",
+          "Contrat de travail visé par le Ministère des Affaires Étrangères (MAEE)",
+          "Diplôme universitaire ou expérience professionnelle équivalente (5 ans)",
+          "Autorisation de séjour et de travail délivrée par la Direction de l'Immigration",
+          "Voie d'accès à la résidence permanente après 5 ans"
+        ],
+        badge: "Carte Bleue UE",
+        badgeColor: "bg-blue-100 text-blue-700"
+      },
+      {
+        id: "lu-2",
+        title: "Visa Travailleur Salarié Standard — Validation ADEM",
+        description: "Procédure standard avec validation préalable par l'Agence pour le Développement de l'Emploi.",
+        details: [
+          "Offre d'emploi validée par l'ADEM (test du marché du travail)",
+          "Dossier déposé auprès de l'Ambassade du Luxembourg ou Direction de l'Immigration",
+          "Secteurs en tension : BTP, hôtellerie-restauration, services financiers, IT",
+          "Regroupement familial possible dès l'obtention du titre de séjour",
+          "Audit préalable de vos diplômes et certifications par 3M Travel"
+        ],
+        badge: "Standard",
+        badgeColor: "bg-gray-100 text-gray-700"
+      }
+    ]
+  },
+  {
+    id: "pologne",
+    flag: "🇵🇱",
+    country: "Pologne",
+    subtitle: "Recrutement Direct & Placement Rapide",
+    tagline: "Contrat garanti avec hébergement inclus. Salaire : 25,36 à 25,50 PLN/heure. Départ en 4-6 semaines.",
+    color: "#DC143C",
+    bgGradient: "from-red-700 to-gray-800",
+    ctaLabel: "Postuler pour la Pologne",
+    ctaAction: "whatsapp",
+    ctaMessage: "Bonjour 3M Travel, je souhaite postuler pour la Pologne (logistique/industrie). Voici mon profil : ",
+    highlight: "🏭 Recrutement Direct",
+    procedures: [
+      {
+        id: "pl-1",
+        title: "Permis de Travail National — Type D (Industrie & Logistique)",
+        description: "Permis de travail national polonais pour les secteurs en forte demande de main-d'œuvre.",
+        details: [
+          "Contrat de travail signé avant le départ du Cameroun",
+          "Secteurs : logistique lourde, manutention, production industrielle",
+          "Hébergement entièrement pris en charge par l'employeur",
+          "Délai d'obtention du permis : 4 à 6 semaines",
+          "Visa national D délivré par l'Ambassade de Pologne"
+        ],
+        badge: "Type D",
+        badgeColor: "bg-red-100 text-red-700"
+      },
+      {
+        id: "pl-2",
+        title: "Programme de Placement Direct — Plateformes Logistiques",
+        description: "Partenariat direct avec des opérateurs logistiques majeurs (ex : ID Logistics, Amazon Poland).",
+        details: [
+          "Salaire garanti : 25,36 à 25,50 PLN/heure (environ 5 500 PLN/mois brut)",
+          "Hébergement fourni et payé par l'employeur sur site",
+          "Contrat à durée déterminée renouvelable (12 à 24 mois)",
+          "Encadrement sur place à l'arrivée par un référent 3M Travel",
+          "Possibilité de renouvellement et de régularisation après 2 ans"
+        ],
+        badge: "Contrat Garanti",
+        badgeColor: "bg-green-100 text-green-700"
+      }
+    ]
+  },
+  {
+    id: "europe",
+    flag: "🇪🇺",
+    country: "Europe Zone Schengen",
+    subtitle: "Allemagne, France, Belgique & Plus",
+    tagline: "Visa de recherche d'emploi, Chancenkarte allemande, études et alternance. Accès à 27 pays.",
+    color: "#003399",
+    bgGradient: "from-blue-800 to-indigo-900",
+    ctaLabel: "Consulter les options Europe",
+    ctaAction: "popup",
+    highlight: "🌍 Zone Schengen",
+    procedures: [
+      {
+        id: "eu-1",
+        title: "Visa de Recherche d'Emploi — Allemagne",
+        description: "Opportunité unique : séjourner en Allemagne pour chercher un emploi qualifié sur place.",
+        details: [
+          "Durée : 6 mois non renouvelables pour chercher un emploi",
+          "Conditions : diplôme reconnu en Allemagne ou expérience équivalente",
+          "Secteurs prioritaires : IT, ingénierie, santé, BTP",
+          "Conversion en visa de travail dès l'obtention d'un contrat",
+          "Reconnaissance des diplômes via anabin / KMK"
+        ],
+        badge: "🇩🇪 Allemagne",
+        badgeColor: "bg-yellow-100 text-yellow-800"
+      },
+      {
+        id: "eu-2",
+        title: "Chancenkarte — Carte d'Opportunités Allemande",
+        description: "Nouveau visa basé sur un système de points pour les profils qualifiés hors UE.",
+        details: [
+          "Système de points : diplôme (4 pts), expérience (2 pts), langue (2 pts), âge (1 pt)",
+          "Score minimum requis : 6 points sur 10",
+          "Durée : 1 an pour chercher un emploi ou tester un poste",
+          "Travail partiel autorisé (jusqu'à 20h/semaine) pendant la recherche",
+          "Lancée en 2024 — forte demande, délais encore raisonnables"
+        ],
+        badge: "🇩🇪 Chancenkarte",
+        badgeColor: "bg-orange-100 text-orange-700"
+      },
+      {
+        id: "eu-3",
+        title: "Visa d'Études Supérieures & Alternance",
+        description: "Études universitaires ou formation en alternance dans les pays Schengen.",
+        details: [
+          "France : BTS, Licence Pro, Master avec contrat d'apprentissage",
+          "Belgique : universités francophones (UCLouvain, ULB, ULiège)",
+          "Allemagne : Ausbildung (formation duale 2-3 ans, salaire 600-1 200 EUR/mois)",
+          "Droit au travail pendant les études (20h/semaine en France)",
+          "Passerelle vers la résidence longue durée après le diplôme"
+        ],
+        badge: "Études & Alternance",
+        badgeColor: "bg-purple-100 text-purple-700"
+      }
+    ]
+  },
+  {
+    id: "golfe",
+    flag: "🇦🇪",
+    country: "Golfe & Moyen-Orient",
+    subtitle: "Émirats Arabes Unis, Qatar",
+    tagline: "Visa de travail par parrainage employeur. Hôtellerie, Sécurité, BTP. Salaire net exonéré d'impôt.",
+    color: "#00732F",
+    bgGradient: "from-green-700 to-teal-900",
+    ctaLabel: "En savoir plus sur le Golfe",
+    ctaAction: "whatsapp",
+    ctaMessage: "Bonjour 3M Travel, je souhaite des informations sur les opportunités au Golfe (EAU / Qatar). Mon profil : ",
+    highlight: "🌟 Salaire Net",
+    procedures: [
+      {
+        id: "ae-1",
+        title: "Visa de Travail par Parrainage Employeur",
+        description: "Système de parrainage (kafala) — l'employeur sponsor obtient le visa pour le travailleur.",
+        details: [
+          "Secteurs en forte demande : hôtellerie 5 étoiles, sécurité, BTP, restauration",
+          "Contrat de travail signé avant l'entrée dans le pays",
+          "Visa de résidence (Emirates ID / Qatar ID) inclus dans le package",
+          "Logement et transport souvent pris en charge par l'employeur",
+          "Salaire net exonéré d'impôt sur le revenu"
+        ],
+        badge: "🇦🇪 EAU / 🇶🇦 Qatar",
+        badgeColor: "bg-green-100 text-green-700"
+      },
+      {
+        id: "ae-2",
+        title: "Visa de Recherche d'Emploi & Freelance — Émirats",
+        description: "Les Émirats proposent un visa spécifique pour chercher un emploi ou exercer en freelance.",
+        details: [
+          "Visa de recherche d'emploi : 60 à 120 jours pour trouver un poste",
+          "Freelance Visa : exercer en indépendant dans les zones franches (DMCC, DIFC)",
+          "Visa Nomade Digital : résider aux EAU en travaillant pour un employeur étranger",
+          "Pas de taxe sur le revenu, pas de TVA sur les services personnels",
+          "Accès à un système bancaire international de premier rang"
+        ],
+        badge: "Freelance & Nomade",
+        badgeColor: "bg-teal-100 text-teal-700"
+      }
+    ]
+  }
 ];
-
-// ─── TYPES & CONSTANTES ───────────────────────────────────────────────────────
-type TabId = "canada" | "luxembourg" | "pologne" | "catalogue";
-
-const TYPE_LABELS: Record<string, { label: string; color: string }> = {
-  etudes:    { label: "Études",    color: "bg-blue-100 text-blue-700" },
-  travail:   { label: "Travail",   color: "bg-green-100 text-green-700" },
-  visiteur:  { label: "Visiteur",  color: "bg-orange-100 text-orange-700" },
-  rp:        { label: "Résidence", color: "bg-purple-100 text-purple-700" },
-  procedure: { label: "Procédure", color: "bg-indigo-100 text-indigo-700" },
-  guide:     { label: "Guide",     color: "bg-gray-100 text-gray-700" },
-};
 
 // ─── TIMELINE STEPS ───────────────────────────────────────────────────────────
 const TIMELINE_STEPS = [
   {
     number: "01", icon: Award, color: "from-blue-600 to-blue-800",
-    title: "Évaluation Initiale & Score",
+    title: "Évaluation & Score",
     subtitle: "65 000 FCFA",
-    description: "Audit complet de votre profil, traduction de vos justificatifs et soumission de votre rapport de scoring officiel.",
+    description: "Audit complet de votre profil, traduction de vos justificatifs et rapport de scoring officiel.",
     duration: "24-48h"
   },
   {
     number: "02", icon: Star, color: "from-amber-500 to-amber-700",
-    title: "Choix de Votre Formule",
-    subtitle: "3 options de paiement",
-    description: "Sélection de votre niveau de garantie : Règlement Intégral, Paiement Échelonné ou Option Permis Garanti.",
+    title: "Choix de Formule",
+    subtitle: "3 options",
+    description: "Sélection de votre niveau de garantie : Intégral, Échelonné ou Permis Garanti.",
     duration: "1 jour"
   },
   {
     number: "03", icon: BookOpen, color: "from-indigo-600 to-indigo-800",
-    title: "Préparation du Livret de Compétences",
-    subtitle: "Certification & dossier",
-    description: "Vérification et certification de vos diplômes, constitution de votre dossier professionnel, préparation linguistique.",
+    title: "Livret de Compétences",
+    subtitle: "Certification",
+    description: "Vérification des diplômes, constitution du dossier professionnel, préparation linguistique.",
     duration: "2-4 semaines"
   },
   {
     number: "04", icon: Users, color: "from-teal-600 to-teal-800",
-    title: "Recherche d'Employeur & Soumission",
-    subtitle: "Mise en avant du profil",
-    description: "Mise en avant de votre profil auprès de nos employeurs partenaires et soumission officielle dans les bassins de sélection étatiques.",
+    title: "Mise en Avant du Profil",
+    subtitle: "Employeurs partenaires",
+    description: "Soumission officielle dans les bassins de sélection étatiques et employeurs partenaires.",
     duration: "4-12 semaines"
   },
   {
     number: "05", icon: Plane, color: "from-green-600 to-green-800",
-    title: "Obtention du Visa & Départ",
-    subtitle: "Visa + billet d'avion",
-    description: "Réception de votre permis de travail ou visa de résidence, et organisation de votre vol via notre plateforme intégrée.",
+    title: "Visa & Départ",
+    subtitle: "Billet inclus",
+    description: "Réception de votre permis, organisation du vol via notre plateforme intégrée.",
     duration: "Variable"
   },
 ];
 
 // ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
 export default function Procedures() {
-  const [activeTab, setActiveTab] = useState<TabId>("canada");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [filterRegion, setFilterRegion] = useState<string>("all");
-  const [filterCountry, setFilterCountry] = useState<string>("all");
+  const [activeDestination, setActiveDestination] = useState<DestinationId>("canada");
+  const [expandedProcedure, setExpandedProcedure] = useState<string | null>(null);
+  const [showEuropePopup, setShowEuropePopup] = useState(false);
+  function scrollToFormules() {
+    document.getElementById("formules")?.scrollIntoView({ behavior: "smooth" });
+  }
+  const [selectedPayment, setSelectedPayment] = useState<PaymentOption>(null);
+  const [showEvalForm, setShowEvalForm] = useState(false);
+  const [evalDestination, setEvalDestination] = useState<string>("");
 
-  // Filtres pour le catalogue
-  const filteredProcedures = PROCEDURES.filter((p) => {
-    const matchSearch =
-      !searchQuery ||
-      p.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchType = filterType === "all" || p.type === filterType;
-    const matchRegion = filterRegion === "all" || p.region === filterRegion;
-    const matchCountry = filterCountry === "all" || p.country === filterCountry;
-    return matchSearch && matchType && matchRegion && matchCountry;
-  });
+  const currentDest = DESTINATIONS.find(d => d.id === activeDestination)!;
 
-  const regions = Array.from(new Set(PROCEDURES.map((p) => p.region))).sort();
-  const countries = Array.from(new Set(PROCEDURES.map((p) => p.country))).sort();
+  function handleCTA(dest: Destination) {
+    if (dest.ctaAction === "form") {
+      setEvalDestination(dest.country);
+      setShowEvalForm(true);
+    } else if (dest.ctaAction === "whatsapp") {
+      window.open(waLink(dest.ctaMessage ?? `Bonjour 3M Travel, je souhaite des informations sur ${dest.country}.`), "_blank");
+    } else if (dest.ctaAction === "popup") {
+      setShowEuropePopup(true);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -841,283 +385,357 @@ export default function Procedures() {
               <div className="text-xs text-blue-200">Votre mobilité, notre expertise</div>
             </div>
           </Link>
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-5">
             <Link href="/" className="text-blue-200 hover:text-white text-sm transition-colors">Accueil</Link>
-            <Link href="/flights" className="text-blue-200 hover:text-white text-sm transition-colors">Vols</Link>
-            <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur les procédures.")}
+            <Link href="/flights" className="text-blue-200 hover:text-white text-sm transition-colors flex items-center gap-1">
+              <Plane className="w-3.5 h-3.5" /> Vols
+            </Link>
+            <button onClick={scrollToFormules}
+              className="text-yellow-300 hover:text-white text-sm font-semibold transition-colors flex items-center gap-1">
+              <Star className="w-3.5 h-3.5" /> Nos Formules
+            </button>
+            <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur vos services d'immigration.")}
               target="_blank" rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2">
               <MessageCircle className="w-4 h-4" /> WhatsApp
             </a>
           </div>
+          {/* Mobile: bouton WhatsApp */}
+          <a href={waLink("Bonjour 3M Travel")} target="_blank" rel="noopener noreferrer"
+            className="md:hidden bg-green-500 text-white p-2 rounded-full">
+            <MessageCircle className="w-5 h-5" />
+          </a>
         </div>
       </header>
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#1E3A8A] via-[#1e4faa] to-[#2563EB] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#1E3A8A] via-[#1e4faa] to-[#2563EB] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-sm mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-sm mb-5">
               <Globe className="w-4 h-4 text-yellow-300" />
-              <span>Hub de Mobilité Internationale — 88 procédures disponibles</span>
+              <span>Encyclopédie Migratoire — 5 destinations mondiales · 88 procédures</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
-              Votre Guide Complet<br />
-              <span className="text-[#7CB9E8]">d'Immigration & Visa</span>
+              Immigration & Mobilité<br />
+              <span className="text-[#7CB9E8]">Internationale</span>
             </h1>
             <p className="text-blue-100 text-lg max-w-2xl mx-auto mb-8">
-              Accédez à toutes nos procédures officielles, téléchargez vos guides et démarrez votre dossier accompagné par nos experts.
+              Choisissez votre destination, découvrez toutes les procédures disponibles et démarrez votre dossier accompagné par nos experts certifiés.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
-              <button onClick={() => setActiveTab("catalogue")}
-                className="bg-white text-[#1E3A8A] px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition-colors flex items-center gap-2">
-                <Search className="w-4 h-4" /> Explorer le Catalogue
+              <button onClick={() => { setEvalDestination(""); setShowEvalForm(true); }}
+                className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2 shadow-lg">
+                <Star className="w-4 h-4" /> Évaluer mon éligibilité
               </button>
-              <a href={waLink("Bonjour 3M Travel, je souhaite faire mon évaluation d'éligibilité.")}
-                target="_blank" rel="noopener noreferrer"
-                className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2">
-                <MessageCircle className="w-4 h-4" /> Évaluation Gratuite
-              </a>
+              <button               onClick={scrollToFormules}
+                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2">
+                <Award className="w-4 h-4" /> Voir nos formules & tarifs
+              </button>
+
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* ── ONGLETS PRINCIPAUX ───────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        {/* Tab navigation */}
-        <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 pb-4">
-          {[
-            { id: "canada" as TabId, label: "Canada 🇨🇦", subtitle: "Notre Point Fort" },
-            { id: "luxembourg" as TabId, label: "Luxembourg 🇱🇺", subtitle: "Sélection Élite" },
-            { id: "pologne" as TabId, label: "Pologne & Europe 🇵🇱", subtitle: "Recrutement Direct" },
-            { id: "catalogue" as TabId, label: "Catalogue Complet 📚", subtitle: "88 procédures" },
-          ].map((tab) => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-3 rounded-xl font-semibold text-sm transition-all flex flex-col items-start ${
-                activeTab === tab.id
-                  ? "bg-[#1E3A8A] text-white shadow-lg scale-105"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+      {/* ── SÉLECTEUR DE DESTINATIONS ────────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        {/* Grille de sélection */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
+          {DESTINATIONS.map((dest) => (
+            <button key={dest.id} onClick={() => setActiveDestination(dest.id)}
+              className={`relative rounded-2xl p-4 text-left transition-all duration-300 border-2 ${
+                activeDestination === dest.id
+                  ? "border-[#1E3A8A] bg-[#1E3A8A] text-white shadow-xl scale-105"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-[#2563EB] hover:shadow-md"
               }`}>
-              <span>{tab.label}</span>
-              <span className={`text-xs font-normal ${activeTab === tab.id ? "text-blue-200" : "text-gray-400"}`}>{tab.subtitle}</span>
+              <div className="text-3xl mb-2">{dest.flag}</div>
+              <div className="font-bold text-sm leading-tight">{dest.country}</div>
+              <div className={`text-xs mt-1 ${activeDestination === dest.id ? "text-blue-200" : "text-gray-400"}`}>
+                {dest.highlight}
+              </div>
             </button>
           ))}
         </div>
 
+        {/* Contenu de la destination active */}
         <AnimatePresence mode="wait">
-          {/* ── ONGLET CANADA ─────────────────────────────────────────────────── */}
-          {activeTab === "canada" && (
-            <motion.div key="canada" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
+          <motion.div key={activeDestination}
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35 }}>
+
+            {/* En-tête destination */}
+            <div className={`bg-gradient-to-r ${currentDest.bgGradient} rounded-3xl p-8 text-white mb-8`}>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">🇨🇦</span>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-5xl">{currentDest.flag}</span>
                     <div>
-                      <h2 className="text-2xl font-black text-[#1E3A8A]">Immigration Économique & Résidence Permanente</h2>
-                      <p className="text-gray-500 text-sm">Notre domaine d'excellence depuis 2019</p>
+                      <h2 className="text-2xl md:text-3xl font-black">{currentDest.country}</h2>
+                      <p className="text-white/80 text-sm">{currentDest.subtitle}</p>
                     </div>
                   </div>
-                  <p className="text-gray-600 mb-6">Le Canada est notre destination phare. Grâce à notre réseau d'employeurs partenaires et notre maîtrise des programmes fédéraux et provinciaux, nous vous accompagnons de A à Z.</p>
-                  <a href={waLink("Bonjour 3M Travel, je souhaite faire mon évaluation pour le Canada.")}
+                  <p className="text-white/90 max-w-xl">{currentDest.tagline}</p>
+                </div>
+                <div className="flex flex-col gap-3 flex-shrink-0">
+                  <button onClick={() => handleCTA(currentDest)}
+                    className="bg-white text-[#1E3A8A] px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition-colors flex items-center gap-2 shadow-lg whitespace-nowrap">
+                    <ArrowRight className="w-4 h-4" /> {currentDest.ctaLabel}
+                  </button>
+                  <a href={waLink(`Bonjour 3M Travel, je souhaite des informations sur ${currentDest.country}.`)}
                     target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-full font-bold hover:bg-[#2563EB] transition-colors">
-                    <ArrowRight className="w-4 h-4" /> Faire mon évaluation Canada
+                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2 justify-center">
+                    <MessageCircle className="w-4 h-4" /> Parler à un conseiller
                   </a>
                 </div>
-                <div className="space-y-4">
-                  {[
-                    { icon: Star, title: "Entrée Express (Fédéral)", desc: "Travailleurs qualifiés — score CRS, invitation à présenter une demande (ITA), résidence permanente en 6 mois.", badge: "Prioritaire" },
-                    { icon: MapPin, title: "Programmes des Candidats des Provinces (PCP)", desc: "Volets régionaux sur-mesure — Ontario, Québec, Alberta, Colombie-Britannique et plus.", badge: "Régional" },
-                    { icon: Briefcase, title: "Volet Métiers Spécialisés", desc: "Soudure, Chaudronnerie, Vente B2B, Logistique — demande élevée, traitement accéléré.", badge: "Métiers" },
-                  ].map((item, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                      className="bg-blue-50 border border-blue-100 rounded-xl p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#1E3A8A] p-2 rounded-lg flex-shrink-0">
-                          <item.icon className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-[#1E3A8A] text-sm">{item.title}</h3>
-                            <span className="bg-[#1E3A8A] text-white text-xs px-2 py-0.5 rounded-full">{item.badge}</span>
-                          </div>
-                          <p className="text-gray-600 text-xs">{item.desc}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
               </div>
-              {/* Procédures Canada */}
-              <h3 className="font-bold text-[#1E3A8A] text-lg mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" /> Nos Procédures Canada
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {PROCEDURES.filter(p => p.country === "Canada").map((p, i) => (
-                  <ProcedureCard key={p.id} procedure={p} index={i} />
-                ))}
-              </div>
-            </motion.div>
-          )}
+            </div>
 
-          {/* ── ONGLET LUXEMBOURG ─────────────────────────────────────────────── */}
-          {activeTab === "luxembourg" && (
-            <motion.div key="luxembourg" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">🇱🇺</span>
-                    <div>
-                      <h2 className="text-2xl font-black text-[#1E3A8A]">Salariés Qualifiés & Cadres Supérieurs</h2>
-                      <p className="text-gray-500 text-sm">Sélection d'élite — Salaire minimum garanti</p>
+            {/* Procédures disponibles */}
+            <h3 className="text-xl font-black text-[#1E3A8A] mb-5 flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Procédures disponibles — {currentDest.country}
+              <span className="bg-[#1E3A8A] text-white text-xs px-2 py-0.5 rounded-full ml-1">
+                {currentDest.procedures.length} procédure{currentDest.procedures.length > 1 ? "s" : ""}
+              </span>
+            </h3>
+
+            <div className="space-y-4">
+              {currentDest.procedures.map((proc, i) => (
+                <motion.div key={proc.id}
+                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                  {/* En-tête de la procédure */}
+                  <button
+                    onClick={() => setExpandedProcedure(expandedProcedure === proc.id ? null : proc.id)}
+                    className="w-full p-5 text-left flex items-center justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="bg-[#1E3A8A] text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 mt-0.5">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h4 className="font-bold text-[#1E3A8A] text-base">{proc.title}</h4>
+                          {proc.badge && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${proc.badgeColor}`}>
+                              {proc.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-500 text-sm">{proc.description}</p>
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-gray-600 mb-6">Le Luxembourg offre les meilleures conditions salariales d'Europe pour les travailleurs qualifiés non-UE. Nous auditons votre dossier et vous positionnons auprès des employeurs luxembourgeois.</p>
-                  <a href={waLink("Bonjour 3M Travel, je souhaite soumettre mon dossier pour audit Luxembourg.")}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-full font-bold hover:bg-[#2563EB] transition-colors">
-                    <ArrowRight className="w-4 h-4" /> Soumettre mon dossier pour audit
-                  </a>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { icon: Building, title: "Introduction Main-d'Œuvre Qualifiée", desc: "Procédure MAEE — autorisation de travail pour ressortissants non-UE hautement qualifiés.", badge: "MAEE" },
-                    { icon: Award, title: "Salaire Minimum Légal Garanti", desc: "3 165 EUR/mois brut obligatoire — parmi les plus élevés d'Europe.", badge: "€€€" },
-                    { icon: CheckCircle, title: "Audit de Conformité des Diplômes", desc: "Vérification et reconnaissance officielle de vos diplômes et certifications locales.", badge: "Audit" },
-                  ].map((item, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                      className="bg-blue-50 border border-blue-100 rounded-xl p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#1E3A8A] p-2 rounded-lg flex-shrink-0">
-                          <item.icon className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-[#1E3A8A] text-sm">{item.title}</h3>
-                            <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full">{item.badge}</span>
-                          </div>
-                          <p className="text-gray-600 text-xs">{item.desc}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-              <h3 className="font-bold text-[#1E3A8A] text-lg mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" /> Nos Procédures Luxembourg
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {PROCEDURES.filter(p => p.country === "Luxembourg").map((p, i) => (
-                  <ProcedureCard key={p.id} procedure={p} index={i} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── ONGLET POLOGNE & EUROPE ───────────────────────────────────────── */}
-          {activeTab === "pologne" && (
-            <motion.div key="pologne" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">🇵🇱</span>
-                    <div>
-                      <h2 className="text-2xl font-black text-[#1E3A8A]">Placement Rapide & Logistique Industrielle</h2>
-                      <p className="text-gray-500 text-sm">Recrutement direct — Logement inclus</p>
+                    <div className="flex-shrink-0">
+                      {expandedProcedure === proc.id
+                        ? <ChevronUp className="w-5 h-5 text-[#1E3A8A]" />
+                        : <ChevronDown className="w-5 h-5 text-gray-400" />
+                      }
                     </div>
-                  </div>
-                  <p className="text-gray-600 mb-6">La Pologne et l'Europe de l'Est offrent des opportunités de placement rapide dans la logistique et l'industrie lourde. Contrats directs, logement pris en charge, permis accéléré.</p>
-                  <a href={waLink("Bonjour 3M Travel, je souhaite voir les offres d'emploi disponibles en Pologne et Europe.")}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#1E3A8A] text-white px-6 py-3 rounded-full font-bold hover:bg-[#2563EB] transition-colors">
-                    <ArrowRight className="w-4 h-4" /> Voir les offres d'emploi disponibles
-                  </a>
-                </div>
-                <div className="space-y-4">
-                  {[
-                    { icon: Briefcase, title: "Contrats d'Embauche Directe", desc: "Filière logistique et industrie lourde — contrats signés avant départ.", badge: "Direct" },
-                    { icon: Building, title: "Logement Entièrement Pris en Charge", desc: "Hébergement fourni par l'employeur et encadrement sur place à l'arrivée.", badge: "Logement" },
-                    { icon: Clock, title: "Permis de Travail Accéléré Type D", desc: "Procédure accélérée de permis de travail national — délai réduit à 4-6 semaines.", badge: "Rapide" },
-                  ].map((item, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
-                      className="bg-blue-50 border border-blue-100 rounded-xl p-4 hover:shadow-md transition-shadow">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#1E3A8A] p-2 rounded-lg flex-shrink-0">
-                          <item.icon className="w-4 h-4 text-white" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-[#1E3A8A] text-sm">{item.title}</h3>
-                            <span className="bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">{item.badge}</span>
+                  </button>
+
+                  {/* Détails expandables */}
+                  <AnimatePresence>
+                    {expandedProcedure === proc.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden">
+                        <div className="px-5 pb-5 border-t border-gray-100">
+                          <ul className="mt-4 space-y-2">
+                            {proc.details.map((detail, j) => (
+                              <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                <span>{detail}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <button onClick={() => handleCTA(currentDest)}
+                              className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
+                              <ArrowRight className="w-3.5 h-3.5" /> {currentDest.ctaLabel}
+                            </button>
+                            <a href={waLink(`Bonjour 3M Travel, je suis intéressé(e) par la procédure "${proc.title}" pour ${currentDest.country}. Mon profil : `)}
+                              target="_blank" rel="noopener noreferrer"
+                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
+                              <MessageCircle className="w-3.5 h-3.5" /> Discuter de cette procédure
+                            </a>
                           </div>
-                          <p className="text-gray-600 text-xs">{item.desc}</p>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Bouton principal CTA répété en bas */}
+            <div className="mt-8 flex flex-wrap gap-3 justify-center">
+              <button onClick={() => handleCTA(currentDest)}
+                className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-8 py-4 rounded-full font-bold text-lg transition-colors flex items-center gap-2 shadow-xl">
+                <ArrowRight className="w-5 h-5" /> {currentDest.ctaLabel}
+              </button>
+              <button onClick={scrollToFormules}
+                className="border-2 border-[#1E3A8A] text-[#1E3A8A] hover:bg-[#1E3A8A] hover:text-white px-8 py-4 rounded-full font-bold text-lg transition-colors flex items-center gap-2">
+                <Award className="w-5 h-5" /> Voir les formules & tarifs
+              </button>
+
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </section>
+
+      {/* ── SECTION FORMULES DE PAIEMENT ─────────────────────────────────────── */}
+      <section id="formules" className="bg-gradient-to-br from-gray-50 to-blue-50 py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
+              <AlertCircle className="w-4 h-4" />
+              Frais d'ouverture de dossier : 65 000 FCFA non remboursables
+            </div>
+            <h2 className="text-3xl md:text-4xl font-black text-[#1E3A8A] mb-3">
+              Choisissez Votre Formule de Garantie
+            </h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              L'ouverture, le traitement, la traduction et la soumission de tout dossier individuel exigent un règlement initial de <strong>65 000 FCFA non remboursables</strong>. Choisissez ensuite la formule adaptée à votre situation.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Formule 1 : Intégral */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              onClick={() => setSelectedPayment(selectedPayment === "integral" ? null : "integral")}
+              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all ${
+                selectedPayment === "integral"
+                  ? "border-[#1E3A8A] bg-[#1E3A8A] text-white shadow-2xl"
+                  : "border-gray-200 bg-white hover:border-[#1E3A8A] hover:shadow-lg"
+              }`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
+                selectedPayment === "integral" ? "bg-white/20" : "bg-blue-100"
+              }`}>
+                <Zap className={`w-7 h-7 ${selectedPayment === "integral" ? "text-white" : "text-[#1E3A8A]"}`} />
               </div>
-              <h3 className="font-bold text-[#1E3A8A] text-lg mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" /> Procédures Pologne & Europe de l'Est
-              </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {PROCEDURES.filter(p => ["Pologne", "Bulgarie", "Roumanie", "Croatie", "Chypre", "Estonie"].includes(p.country)).map((p, i) => (
-                  <ProcedureCard key={p.id} procedure={p} index={i} />
+              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                selectedPayment === "integral" ? "text-blue-200" : "text-[#2563EB]"
+              }`}>Option 1</div>
+              <h3 className="text-xl font-black mb-2">Règlement Intégral</h3>
+              <p className={`text-sm mb-4 ${selectedPayment === "integral" ? "text-blue-100" : "text-gray-500"}`}>
+                Traitement accéléré prioritaire — votre dossier passe en tête de file.
+              </p>
+              <ul className="space-y-2 text-sm">
+                {["Paiement unique à l'ouverture du dossier", "Traitement prioritaire immédiat", "Suivi dédié avec conseiller attitré", "Accès à toutes les destinations disponibles", "Rapport de scoring sous 24h"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "integral" ? "text-green-300" : "text-green-500"}`} />
+                    <span>{item}</span>
+                  </li>
                 ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── CATALOGUE COMPLET ─────────────────────────────────────────────── */}
-          {activeTab === "catalogue" && (
-            <motion.div key="catalogue" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-              {/* Filtres */}
-              <div className="bg-gray-50 rounded-2xl p-4 mb-6 flex flex-wrap gap-3 items-center">
-                <div className="relative flex-1 min-w-48">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input placeholder="Rechercher un pays, un visa..." value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 bg-white border-gray-200" />
-                </div>
-                <select value={filterType} onChange={(e) => setFilterType(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                  <option value="all">Tous les types</option>
-                  <option value="etudes">Études</option>
-                  <option value="travail">Travail</option>
-                  <option value="visiteur">Visiteur</option>
-                  <option value="rp">Résidence Permanente</option>
-                  <option value="procedure">Procédure</option>
-                  <option value="guide">Guide</option>
-                </select>
-                <select value={filterRegion} onChange={(e) => setFilterRegion(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                  <option value="all">Toutes les régions</option>
-                  {regions.map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-                <select value={filterCountry} onChange={(e) => setFilterCountry(e.target.value)}
-                  className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                  <option value="all">Tous les pays</option>
-                  {countries.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <span className="text-sm text-gray-500 font-medium">{filteredProcedures.length} résultat{filteredProcedures.length > 1 ? "s" : ""}</span>
-              </div>
-
-              {filteredProcedures.length === 0 ? (
-                <div className="text-center py-16 text-gray-400">
-                  <Search className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-lg">Aucune procédure trouvée pour "{searchQuery}"</p>
-                </div>
-              ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredProcedures.map((p, i) => (
-                    <ProcedureCard key={p.id} procedure={p} index={i} />
-                  ))}
-                </div>
+              </ul>
+              {selectedPayment === "integral" && (
+                <a href={waLink("Bonjour 3M Travel, je choisis la formule Règlement Intégral. Je souhaite ouvrir mon dossier.")}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-5 w-full bg-white text-[#1E3A8A] py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
+                  <MessageCircle className="w-4 h-4" /> Choisir cette formule
+                </a>
               )}
             </motion.div>
-          )}
-        </AnimatePresence>
+
+            {/* Formule 2 : Échelonné */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              onClick={() => setSelectedPayment(selectedPayment === "echelonne" ? null : "echelonne")}
+              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all relative ${
+                selectedPayment === "echelonne"
+                  ? "border-amber-500 bg-amber-500 text-white shadow-2xl"
+                  : "border-amber-200 bg-white hover:border-amber-500 hover:shadow-lg"
+              }`}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">Populaire</span>
+              </div>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
+                selectedPayment === "echelonne" ? "bg-white/20" : "bg-amber-100"
+              }`}>
+                <Clock className={`w-7 h-7 ${selectedPayment === "echelonne" ? "text-white" : "text-amber-600"}`} />
+              </div>
+              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                selectedPayment === "echelonne" ? "text-amber-100" : "text-amber-600"
+              }`}>Option 2</div>
+              <h3 className="text-xl font-black mb-2">Échelonné Flexible</h3>
+              <p className={`text-sm mb-4 ${selectedPayment === "echelonne" ? "text-amber-100" : "text-gray-500"}`}>
+                Paiement structuré sur 4 à 5 mois — adapté à votre budget.
+              </p>
+              <ul className="space-y-2 text-sm">
+                {["65 000 FCFA à l'ouverture (non remboursables)", "Solde réparti sur 4 à 5 mensualités", "Traitement standard avec suivi régulier", "Flexibilité en cas d'imprévus financiers", "Contrat de paiement signé et sécurisé"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "echelonne" ? "text-amber-200" : "text-green-500"}`} />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {selectedPayment === "echelonne" && (
+                <a href={waLink("Bonjour 3M Travel, je choisis la formule Échelonné Flexible. Je souhaite ouvrir mon dossier.")}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-5 w-full bg-white text-amber-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-50 transition-colors">
+                  <MessageCircle className="w-4 h-4" /> Choisir cette formule
+                </a>
+              )}
+            </motion.div>
+
+            {/* Formule 3 : Permis Garanti */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              onClick={() => setSelectedPayment(selectedPayment === "garanti" ? null : "garanti")}
+              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all ${
+                selectedPayment === "garanti"
+                  ? "border-green-600 bg-green-600 text-white shadow-2xl"
+                  : "border-green-200 bg-white hover:border-green-600 hover:shadow-lg"
+              }`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
+                selectedPayment === "garanti" ? "bg-white/20" : "bg-green-100"
+              }`}>
+                <Shield className={`w-7 h-7 ${selectedPayment === "garanti" ? "text-white" : "text-green-600"}`} />
+              </div>
+              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
+                selectedPayment === "garanti" ? "text-green-100" : "text-green-600"
+              }`}>Option 3</div>
+              <h3 className="text-xl font-black mb-2">Formule Permis Garanti</h3>
+              <p className={`text-sm mb-4 ${selectedPayment === "garanti" ? "text-green-100" : "text-gray-500"}`}>
+                Nos honoraires réglés <strong>uniquement après l'obtention du visa</strong>.
+              </p>
+              <ul className="space-y-2 text-sm">
+                {["65 000 FCFA à l'ouverture (non remboursables)", "Solde des honoraires après visa obtenu", "Engagement de résultat de 3M Travel", "Profils sélectionnés sur critères stricts", "Suivi premium jusqu'à l'arrivée à destination"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "garanti" ? "text-green-200" : "text-green-500"}`} />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              {selectedPayment === "garanti" && (
+                <a href={waLink("Bonjour 3M Travel, je choisis la Formule Permis Garanti. Je souhaite vérifier mon éligibilité.")}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="mt-5 w-full bg-white text-green-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-50 transition-colors">
+                  <MessageCircle className="w-4 h-4" /> Vérifier mon éligibilité
+                </a>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Rappel frais obligatoires */}
+          <div className="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-800 mb-1">Rappel important — Frais d'ouverture non remboursables</p>
+              <p className="text-amber-700 text-sm">
+                Quelle que soit la formule choisie, l'ouverture, le traitement, la traduction et la soumission de tout dossier individuel exigent un règlement initial de <strong>65 000 FCFA non remboursables</strong>. Ces frais couvrent l'audit de votre profil, la traduction certifiée de vos documents et la préparation de votre rapport de scoring officiel.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── TIMELINE DU PARCOURS CANDIDAT ───────────────────────────────────── */}
@@ -1127,17 +745,14 @@ export default function Procedures() {
             <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full text-blue-200 text-sm mb-4">
               <Clock className="w-4 h-4" /> Processus transparent et structuré
             </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
-              Votre Parcours Candidat
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">Votre Parcours Candidat</h2>
             <p className="text-blue-200 max-w-xl mx-auto">
               De l'évaluation initiale à l'obtention de votre visa — 5 étapes claires et rassurantes.
             </p>
           </div>
 
-          {/* Desktop: horizontal | Mobile: vertical */}
+          {/* Desktop horizontal */}
           <div className="hidden lg:flex items-start gap-0 relative">
-            {/* Ligne de connexion */}
             <div className="absolute top-12 left-[10%] right-[10%] h-0.5 bg-white/20 z-0" />
             {TIMELINE_STEPS.map((step, i) => (
               <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
@@ -1177,16 +792,15 @@ export default function Procedures() {
           </div>
 
           <div className="text-center mt-10">
-            <a href={waLink("Bonjour 3M Travel, je souhaite démarrer mon parcours candidat.")}
-              target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg transition-colors shadow-xl">
-              <MessageCircle className="w-5 h-5" /> Démarrer Mon Parcours
-            </a>
+            <button onClick={() => { setEvalDestination(""); setShowEvalForm(true); }}
+              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-full font-bold text-lg transition-colors shadow-xl">
+              <Star className="w-5 h-5" /> Démarrer Mon Parcours — Évaluation Gratuite
+            </button>
           </div>
         </div>
       </section>
 
-      {/* ── BANDEAU DE CONFORMITÉ JURIDIQUE ─────────────────────────────────── */}
+      {/* ── BANDEAU CONFORMITÉ JURIDIQUE ─────────────────────────────────────── */}
       <section className="bg-gray-50 border-t border-gray-200 py-8 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-start gap-4 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
@@ -1195,7 +809,7 @@ export default function Procedures() {
             </div>
             <div>
               <h3 className="font-bold text-[#1E3A8A] mb-2 flex items-center gap-2">
-                <span>Bandeau de Conformité Juridique & Éthique</span>
+                Bandeau de Conformité Juridique & Éthique
                 <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">Agence Agréée</span>
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
@@ -1217,75 +831,310 @@ export default function Procedures() {
             </div>
           </div>
           <div className="flex gap-4 text-sm text-blue-200">
-            <a href="tel:+237620996045" className="hover:text-white flex items-center gap-1"><Phone className="w-3 h-3" /> +237 620-996-045</a>
-            <a href="tel:+237698104832" className="hover:text-white flex items-center gap-1"><Phone className="w-3 h-3" /> +237 698-104-832</a>
+            <a href="tel:+237620996045" className="hover:text-white flex items-center gap-1">
+              <Phone className="w-3 h-3" /> +237 620-996-045
+            </a>
+            <a href="tel:+237698104832" className="hover:text-white flex items-center gap-1">
+              <Phone className="w-3 h-3" /> +237 698-104-832
+            </a>
           </div>
           <Link href="/" className="text-blue-200 hover:text-white text-sm">← Retour à l'accueil</Link>
         </div>
       </footer>
 
       {/* ── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────────── */}
-      <a href={waLink("Bonjour 3M Travel, j'ai une question sur les procédures.")}
+      <a href={waLink("Bonjour 3M Travel, j'ai une question sur les procédures d'immigration.")}
         target="_blank" rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center gap-2">
         <MessageCircle className="w-6 h-6" />
         <span className="hidden md:block text-sm font-bold">WhatsApp</span>
       </a>
+
+      {/* ── POP-UP EUROPE SCHENGEN ───────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showEuropePopup && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+            onClick={() => setShowEuropePopup(false)}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="bg-gradient-to-r from-blue-800 to-indigo-900 p-6 rounded-t-3xl text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-4xl">🇪🇺</span>
+                    <div>
+                      <h3 className="text-xl font-black">Europe Zone Schengen</h3>
+                      <p className="text-blue-200 text-sm">Allemagne · France · Belgique · 27 pays</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowEuropePopup(false)}
+                    className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-5">
+                {DESTINATIONS.find(d => d.id === "europe")?.procedures.map((proc, i) => (
+                  <div key={proc.id} className="border border-gray-100 rounded-2xl p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="bg-[#1E3A8A] text-white w-7 h-7 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0">
+                        {i + 1}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-[#1E3A8A]">{proc.title}</h4>
+                          {proc.badge && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${proc.badgeColor}`}>
+                              {proc.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-500 text-sm">{proc.description}</p>
+                      </div>
+                    </div>
+                    <ul className="space-y-1.5 ml-10">
+                      {proc.details.map((detail, j) => (
+                        <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span>{detail}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <div className="flex gap-3 pt-2">
+                  <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur les visas Europe Schengen (Allemagne, France, Belgique). Mon profil : ")}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex-1 bg-[#1E3A8A] hover:bg-[#2563EB] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
+                    <MessageCircle className="w-4 h-4" /> Consulter un conseiller Europe
+                  </a>
+                  <button onClick={() => setShowEuropePopup(false)}
+                    className="px-5 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors font-medium">
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── MODAL FORMULAIRE D'ÉVALUATION ───────────────────────────────────── */}
+      <AnimatePresence>
+        {showEvalForm && (
+          <EvaluationModal
+            destination={evalDestination}
+            onClose={() => setShowEvalForm(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// ─── COMPOSANT CARTE PROCÉDURE ────────────────────────────────────────────────
-function ProcedureCard({ procedure: p, index }: { procedure: Procedure; index: number }) {
-  const typeInfo = TYPE_LABELS[p.type] ?? { label: p.type, color: "bg-gray-100 text-gray-700" };
+// ─── MODAL D'ÉVALUATION ───────────────────────────────────────────────────────
+function EvaluationModal({ destination, onClose }: { destination: string; onClose: () => void }) {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    nom: "",
+    telephone: "",
+    email: "",
+    destination: destination || "",
+    niveauEtudes: "",
+    experience: "",
+    langue: "",
+    situation: "",
+    message: ""
+  });
+
+  const destinations = ["Canada", "Luxembourg", "Pologne", "Allemagne", "France", "Belgique", "Émirats Arabes Unis", "Qatar", "Autre"];
+  const niveauxEtudes = ["Baccalauréat", "BTS / DUT", "Licence / Bachelor", "Master / MBA", "Doctorat", "Formation professionnelle"];
+  const experiences = ["Moins de 2 ans", "2 à 5 ans", "5 à 10 ans", "Plus de 10 ans"];
+  const langues = ["Français uniquement", "Français + Anglais (intermédiaire)", "Français + Anglais (courant)", "Bilingue ou plus"];
+
+  function buildWAMessage() {
+    return `🌍 *NOUVELLE DEMANDE D'ÉVALUATION — 3M Travel*\n\n` +
+      `👤 *Nom :* ${form.nom}\n` +
+      `📞 *Téléphone :* ${form.telephone}\n` +
+      `📧 *Email :* ${form.email}\n` +
+      `🎯 *Destination souhaitée :* ${form.destination}\n` +
+      `🎓 *Niveau d'études :* ${form.niveauEtudes}\n` +
+      `💼 *Expérience professionnelle :* ${form.experience}\n` +
+      `🗣️ *Niveau de langue :* ${form.langue}\n` +
+      `📋 *Situation actuelle :* ${form.situation}\n` +
+      (form.message ? `💬 *Message :* ${form.message}\n` : "") +
+      `\n_Envoyé depuis le site 3mtravelagency.click_`;
+  }
+
+  function handleSubmit() {
+    window.open(waLink(buildWAMessage()), "_blank");
+    onClose();
+  }
+
+  const isStep1Valid = form.nom.trim() && form.telephone.trim();
+  const isStep2Valid = form.destination && form.niveauEtudes && form.experience;
+  const isStep3Valid = form.langue && form.situation;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.04, 0.5) }}
-      className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col"
-    >
-      {/* Card header */}
-      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-4 flex items-center gap-3">
-        <span className="text-3xl">{p.flag}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-white font-bold text-sm truncate">{p.country}</div>
-          <div className="text-blue-200 text-xs">{p.region}</div>
-        </div>
-        {p.featured && (
-          <Star className="w-4 h-4 text-yellow-300 flex-shrink-0" />
-        )}
-      </div>
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden">
 
-      {/* Card body */}
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-start gap-2 mb-2">
-          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${typeInfo.color}`}>
-            {typeInfo.label}
-          </span>
-          {p.badge && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold flex-shrink-0">
-              {p.badge}
-            </span>
-          )}
+        {/* Header */}
+        <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-black">Évaluation d'Éligibilité</h3>
+              <p className="text-blue-200 text-sm">Réponse de nos experts sous 24h</p>
+            </div>
+            <button onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          {/* Barre de progression */}
+          <div className="flex gap-2">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${s <= step ? "bg-white" : "bg-white/30"}`} />
+            ))}
+          </div>
+          <div className="flex justify-between text-xs text-blue-200 mt-1">
+            <span>Coordonnées</span>
+            <span>Profil</span>
+            <span>Finalisation</span>
+          </div>
         </div>
-        <h3 className="font-bold text-[#1E3A8A] text-sm mb-2 leading-tight">{p.title}</h3>
-        <p className="text-gray-500 text-xs leading-relaxed flex-1">{p.description}</p>
-      </div>
 
-      {/* Card footer */}
-      <div className="px-4 pb-4 flex gap-2">
-        <a href={p.url} target="_blank" rel="noopener noreferrer"
-          className="flex-1 bg-[#1E3A8A] hover:bg-[#2563EB] text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors">
-          <Download className="w-3 h-3" /> Télécharger
-        </a>
-        <a href={waLink(`Bonjour 3M Travel, je suis intéressé(e) par la procédure : ${p.title} (${p.country}). Pouvez-vous m'aider ?`)}
-          target="_blank" rel="noopener noreferrer"
-          className="bg-green-500 hover:bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-1 transition-colors">
-          <MessageCircle className="w-3 h-3" />
-        </a>
-      </div>
+        {/* Corps du formulaire */}
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 1 — Vos coordonnées</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Nom complet *</label>
+                    <Input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })}
+                      placeholder="Ex : Jean-Baptiste NKOMO" className="border-gray-200" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Numéro WhatsApp *</label>
+                    <Input value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })}
+                      placeholder="+237 6XX XXX XXX" className="border-gray-200" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Email (optionnel)</label>
+                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      placeholder="votre@email.com" type="email" className="border-gray-200" />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 2 — Votre profil</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Destination souhaitée *</label>
+                    <select value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
+                      <option value="">Choisir une destination</option>
+                      {destinations.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Niveau d'études *</label>
+                    <select value={form.niveauEtudes} onChange={(e) => setForm({ ...form, niveauEtudes: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
+                      <option value="">Sélectionner</option>
+                      {niveauxEtudes.map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Expérience professionnelle *</label>
+                    <select value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
+                      <option value="">Sélectionner</option>
+                      {experiences.map(e => <option key={e} value={e}>{e}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 3 — Finalisation</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Niveau de langue *</label>
+                    <select value={form.langue} onChange={(e) => setForm({ ...form, langue: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
+                      <option value="">Sélectionner</option>
+                      {langues.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Situation actuelle *</label>
+                    <select value={form.situation} onChange={(e) => setForm({ ...form, situation: e.target.value })}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
+                      <option value="">Sélectionner</option>
+                      <option value="Étudiant(e)">Étudiant(e)</option>
+                      <option value="Salarié(e) du secteur privé">Salarié(e) du secteur privé</option>
+                      <option value="Fonctionnaire / Secteur public">Fonctionnaire / Secteur public</option>
+                      <option value="Entrepreneur / Indépendant">Entrepreneur / Indépendant</option>
+                      <option value="En recherche d'emploi">En recherche d'emploi</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-1">Message complémentaire (optionnel)</label>
+                    <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      placeholder="Précisez votre domaine professionnel, vos certifications, vos questions..."
+                      rows={3}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] resize-none" />
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
+                    <strong>Rappel :</strong> Tout dossier ouvert requiert 65 000 FCFA non remboursables. Nos experts vous recontacteront sous 24h pour confirmer votre éligibilité.
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Navigation */}
+          <div className="flex gap-3 mt-6">
+            {step > 1 && (
+              <button onClick={() => setStep(step - 1)}
+                className="px-5 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors font-medium">
+                ← Retour
+              </button>
+            )}
+            {step < 3 ? (
+              <button
+                onClick={() => setStep(step + 1)}
+                disabled={step === 1 ? !isStep1Valid : !isStep2Valid}
+                className="flex-1 bg-[#1E3A8A] hover:bg-[#2563EB] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
+                Continuer <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!isStep3Valid}
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
+                <MessageCircle className="w-4 h-4" /> Envoyer via WhatsApp
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

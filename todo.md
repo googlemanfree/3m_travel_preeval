@@ -52,3 +52,12 @@
 - [x] Ajouter le bandeau de conformité juridique et éthique
 - [x] Uploader les PDFs sur S3 et créer les liens de téléchargement
 - [x] Ajouter le lien "Procédures" dans la navigation principale (header + footer + page Vols)
+
+## Refonte Immigration & Mobilité Internationale (v2)
+- [x] Refondre la page /procedures : 5 destinations (Canada, Luxembourg, Pologne, Europe Schengen, Golfe)
+- [x] Boutons CTA tous fonctionnels : formulaire multi-étapes, WhatsApp pré-rempli, pop-up Europe
+- [x] Section sélection de formule de paiement (Intégral / Échelonné / Permis Garanti) avec frais 65 000 FCFA
+- [x] Pop-up détails Europe Schengen (Allemagne, France, Belgique) avec procédures Chancenkarte
+- [x] Afficher les exigences Luxembourg (salaire 3 165 EUR/mois, contrat MAEE)
+- [x] Afficher les conditions Pologne (25,36-25,50 PLN/h, hébergement inclus)
+- [x] Intégrer le formulaire d'évaluation multi-étapes directement sur la page /procedures
