@@ -8,3 +8,7 @@
 - [x] Connecter le formulaire à la route backend tRPC
 - [x] Ajouter la notification WPS (email) lors de la soumission
 - [x] Tester le formulaire complet et la soumission
+- [x] Ajouter une barre de progression visuelle en 3 étapes (Destination / Visa / Profil)
+- [x] Animer les transitions entre étapes avec framer-motion (slide + fade)
+- [x] Animer l'apparition des cartes de visa lors de la sélection de destination
+- [x] Animer le formulaire complet avec entrée progressive des champs

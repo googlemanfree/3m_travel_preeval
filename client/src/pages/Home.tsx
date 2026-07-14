@@ -3,10 +3,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
-  Upload, CheckCircle2, ArrowRight, ChevronDown, Users, FileText,
-  Star, Clock, Shield, X
+  Upload, CheckCircle2, ArrowRight, Users, FileText,
+  Star, Clock, Shield, X, ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,7 +24,7 @@ type VisaType =
   | "canada_rp" | "canada_etude" | "canada_tourisme"
   | "autre";
 
-// ─── Schema de validation ─────────────────────────────────────────────────────
+// ─── Schema ───────────────────────────────────────────────────────────────────
 const formSchema = z.object({
   fullName: z.string().min(2, "Le nom complet est requis"),
   email: z.string().email("Email invalide"),
@@ -43,78 +44,148 @@ const formSchema = z.object({
   cvFileName: z.string().optional(),
   cvMimeType: z.string().optional(),
 });
-
 type FormValues = z.infer<typeof formSchema>;
 
-// ─── Données de configuration ─────────────────────────────────────────────────
-const VISA_OPTIONS: Record<DestinationCategory, { value: VisaType; label: string; icon: React.ElementType }[]> = {
+// ─── Config ───────────────────────────────────────────────────────────────────
+const VISA_OPTIONS: Record<DestinationCategory, { value: VisaType; label: string; desc: string; icon: React.ElementType }[]> = {
   schengen: [
-    { value: "schengen_etude", label: "Visa Étude", icon: GraduationCap },
-    { value: "schengen_tourisme", label: "Visa Tourisme", icon: Globe },
-    { value: "schengen_travail", label: "Visa Travail", icon: Briefcase },
+    { value: "schengen_etude",    label: "Visa Étude",    desc: "Études supérieures en Europe",        icon: GraduationCap },
+    { value: "schengen_tourisme", label: "Visa Tourisme", desc: "Voyage, vacances, visite familiale",  icon: Globe },
+    { value: "schengen_travail",  label: "Visa Travail",  desc: "Emploi, mission professionnelle",     icon: Briefcase },
   ],
   canada: [
-    { value: "canada_rp", label: "Résidence Permanente (RP)", icon: Star },
-    { value: "canada_etude", label: "Visa Étude", icon: GraduationCap },
-    { value: "canada_tourisme", label: "Visa Tourisme", icon: Globe },
+    { value: "canada_rp",        label: "Résidence Permanente", desc: "Immigration permanente au Canada", icon: Star },
+    { value: "canada_etude",     label: "Visa Étude",           desc: "Études dans une université canadienne", icon: GraduationCap },
+    { value: "canada_tourisme",  label: "Visa Tourisme",        desc: "Visite, tourisme, transit",      icon: Globe },
   ],
   autre: [
-    { value: "autre", label: "Autre type de visa", icon: FileText },
+    { value: "autre", label: "Autre type de visa", desc: "Précisez votre pays de destination", icon: FileText },
   ],
 };
 
 const DESTINATION_CATEGORIES = [
-  {
-    id: "schengen" as DestinationCategory,
-    label: "Espace Schengen",
-    flag: "🇪🇺",
-    description: "France, Allemagne, Espagne, Italie, Belgique...",
-    color: "from-blue-500 to-blue-700",
-    bgColor: "bg-blue-50 border-blue-200",
-    activeColor: "bg-blue-600 border-blue-600",
-  },
-  {
-    id: "canada" as DestinationCategory,
-    label: "Canada",
-    flag: "🇨🇦",
-    description: "Résidence permanente, études, tourisme",
-    color: "from-red-500 to-red-700",
-    bgColor: "bg-red-50 border-red-200",
-    activeColor: "bg-red-600 border-red-600",
-  },
-  {
-    id: "autre" as DestinationCategory,
-    label: "Autre Pays",
-    flag: "🌍",
-    description: "USA, Chine, Royaume-Uni, Australie...",
-    color: "from-emerald-500 to-emerald-700",
-    bgColor: "bg-emerald-50 border-emerald-200",
-    activeColor: "bg-emerald-600 border-emerald-600",
-  },
+  { id: "schengen" as DestinationCategory, label: "Espace Schengen", flag: "🇪🇺", description: "France, Allemagne, Espagne, Italie, Belgique..." },
+  { id: "canada"   as DestinationCategory, label: "Canada",          flag: "🇨🇦", description: "Résidence permanente, études, tourisme" },
+  { id: "autre"    as DestinationCategory, label: "Autre Pays",      flag: "🌍", description: "USA, Chine, Royaume-Uni, Australie..." },
 ];
+
+// ─── Variants d'animation ─────────────────────────────────────────────────────
+const slideVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+  center: { x: 0, opacity: 1, transition: { duration: 0.35, ease: "easeOut" as const } },
+  exit:  (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0, transition: { duration: 0.25, ease: "easeInOut" as const } }),
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.4, delay: i * 0.07, ease: "easeOut" as const },
+  }),
+};
+
+// ─── Composant barre de progression ──────────────────────────────────────────
+function ProgressBar({ step, total }: { step: number; total: number }) {
+  const steps = [
+    { label: "Destination", icon: Globe },
+    { label: "Type de visa", icon: FileText },
+    { label: "Votre profil", icon: Users },
+  ];
+  const pct = ((step - 1) / (total - 1)) * 100;
+
+  return (
+    <div className="mb-10">
+      {/* Barre de fond */}
+      <div className="relative flex items-center justify-between mb-4">
+        {/* Ligne de fond */}
+        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0" />
+        {/* Ligne de progression animée */}
+        <motion.div
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full z-0"
+          initial={{ width: "0%" }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" as const }}
+        />
+        {/* Cercles d'étapes */}
+        {steps.map((s, i) => {
+          const stepNum = i + 1;
+          const isCompleted = step > stepNum;
+          const isCurrent  = step === stepNum;
+          const Icon = s.icon;
+          return (
+            <div key={i} className="relative z-10 flex flex-col items-center gap-2">
+              <motion.div
+                animate={{
+                  scale: isCurrent ? 1.15 : 1,
+                  backgroundColor: isCompleted ? "#1d4ed8" : isCurrent ? "#2563eb" : "#e5e7eb",
+                }}
+                transition={{ duration: 0.3, ease: "easeOut" as const }}
+                className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"
+              >
+                {isCompleted ? (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    <CheckCircle2 className="w-5 h-5 text-white" />
+                  </motion.div>
+                ) : (
+                  <Icon className={`w-5 h-5 ${isCurrent ? "text-white" : "text-gray-400"}`} />
+                )}
+              </motion.div>
+              <span className={`text-xs font-semibold whitespace-nowrap transition-colors duration-300 ${
+                isCurrent ? "text-blue-700" : isCompleted ? "text-blue-500" : "text-gray-400"
+              }`}>
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      {/* Pourcentage */}
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-gray-500">
+          Étape <span className="font-bold text-blue-700">{step}</span> sur {total}
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full"
+              initial={{ width: "0%" }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" as const }}
+        />
+      </div>
+          <span className="text-xs font-bold text-blue-700">{Math.round(pct)}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
+  const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DestinationCategory | null>(null);
   const [selectedVisa, setSelectedVisa] = useState<VisaType | null>(null);
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvBase64, setCvBase64] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
+  const evalRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      destinationCategory: undefined,
-      visaType: undefined,
-    },
   });
 
   const submitMutation = trpc.evaluation.submit.useMutation({
     onSuccess: () => {
       setIsSubmitted(true);
       reset();
+      setStep(1);
+      setDirection(1);
       setSelectedCategory(null);
       setSelectedVisa(null);
       setCvFile(null);
@@ -125,69 +196,54 @@ export default function Home() {
     },
   });
 
+  const goTo = (next: number) => {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  };
+
   const handleCategorySelect = (cat: DestinationCategory) => {
     setSelectedCategory(cat);
     setSelectedVisa(null);
     setValue("destinationCategory", cat);
     setValue("visaType", undefined as any);
-    // Scroll vers le formulaire
-    setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    setTimeout(() => goTo(2), 150);
   };
 
   const handleVisaSelect = (visa: VisaType) => {
     setSelectedVisa(visa);
     setValue("visaType", visa);
+    setTimeout(() => {
+      goTo(3);
+      setTimeout(() => evalRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+    }, 150);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const maxSize = 5 * 1024 * 1024; // 5 MB
-    if (file.size > maxSize) {
-      toast.error("Le fichier ne doit pas dépasser 5 Mo");
-      return;
-    }
-
-    const allowedTypes = [
-      "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error("Format accepté : PDF, DOC, DOCX uniquement");
-      return;
-    }
-
+    if (file.size > 5 * 1024 * 1024) { toast.error("Le fichier ne doit pas dépasser 5 Mo"); return; }
+    const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
+    if (!allowed.includes(file.type)) { toast.error("Format accepté : PDF, DOC, DOCX uniquement"); return; }
     setCvFile(file);
     setValue("cvFileName", file.name);
     setValue("cvMimeType", file.type);
-
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const base64 = ev.target?.result as string;
-      setCvBase64(base64);
-      setValue("cvBase64", base64);
+      const b64 = ev.target?.result as string;
+      setCvBase64(b64);
+      setValue("cvBase64", b64);
     };
     reader.readAsDataURL(file);
   };
 
   const removeFile = () => {
-    setCvFile(null);
-    setCvBase64("");
-    setValue("cvBase64", "");
-    setValue("cvFileName", "");
-    setValue("cvMimeType", "");
+    setCvFile(null); setCvBase64("");
+    setValue("cvBase64", ""); setValue("cvFileName", ""); setValue("cvMimeType", "");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const onSubmit = (data: FormValues) => {
-    submitMutation.mutate({
-      ...data,
-      cvBase64: cvBase64 || undefined,
-    });
+    submitMutation.mutate({ ...data, cvBase64: cvBase64 || undefined });
   };
 
   return (
@@ -212,8 +268,7 @@ export default function Home() {
           </nav>
           <a href="tel:+237620996045">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md">
-              <Phone className="w-4 h-4 mr-2" />
-              +237 620-996-045
+              <Phone className="w-4 h-4 mr-2" />+237 620-996-045
             </Button>
           </a>
         </div>
@@ -226,33 +281,35 @@ export default function Home() {
           <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-blue-300 blur-3xl" />
         </div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/30">
+          <motion.div
+            initial="hidden" animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
+            className="max-w-3xl mx-auto text-center space-y-6"
+          >
+            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white text-sm font-semibold px-4 py-2 rounded-full border border-white/30">
               <Star className="w-4 h-4 text-yellow-300" />
               Évaluation gratuite en 24h
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
+            </motion.div>
+            <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
               Votre Pré-Évaluation<br />
               <span className="text-yellow-300">Visa & Immigration</span>
-            </h1>
-            <p className="text-blue-100 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p variants={fadeUp} className="text-blue-100 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
               Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+            </motion.p>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <a href="#evaluation">
-                <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold text-base shadow-xl px-8">
-                  Commencer l'évaluation
-                  <ArrowRight className="w-5 h-5 ml-2" />
+                <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold text-base shadow-xl px-8 active:scale-[0.97] transition-transform">
+                  Commencer l'évaluation <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </a>
               <a href="tel:+237620996045">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold text-base px-8">
-                  <Phone className="w-4 h-4 mr-2" />
-                  Nous appeler
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
+                  <Phone className="w-4 h-4 mr-2" />Nous appeler
                 </Button>
               </a>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -271,18 +328,20 @@ export default function Home() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Plane, title: "Billets d'avion", desc: "Meilleurs tarifs sur tous vols internationaux et domestiques", color: "bg-blue-100 text-blue-600" },
-              { icon: FileText, title: "Assistance Visa", desc: "Accompagnement complet pour vos demandes de visa vers 8 pays", color: "bg-indigo-100 text-indigo-600" },
-              { icon: Globe, title: "Tourisme & Hôtels", desc: "Packages touristiques et réservations d'hôtels personnalisés", color: "bg-sky-100 text-sky-600" },
-              { icon: Shield, title: "Assurance Voyage", desc: "Protection complète pour voyager l'esprit tranquille", color: "bg-cyan-100 text-cyan-600" },
+              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-blue-100 text-blue-600" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-indigo-100 text-indigo-600" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-sky-100 text-sky-600" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-cyan-100 text-cyan-600" },
             ].map((s, i) => (
-              <Card key={i} className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group">
-                <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                  <s.icon className="w-6 h-6" />
-                </div>
-                <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
-                <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-              </Card>
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
+                <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full">
+                  <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <s.icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -290,294 +349,343 @@ export default function Home() {
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-16 bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-12">
+        <div className="max-w-3xl mx-auto px-4">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
             <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Formulaire Gratuit</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Pré-Évaluation Gratuite</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
-              Choisissez votre destination, sélectionnez le type de visa, et remplissez le formulaire. Nos experts vous répondent sous 24h.
+              Suivez les 3 étapes ci-dessous. Nos experts vous répondent sous 24h.
             </p>
-          </div>
+          </motion.div>
 
-          {/* Étape 1 : Choisir la destination */}
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">1</div>
-              <h3 className="text-xl font-bold text-gray-900">Choisissez votre destination</h3>
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              {DESTINATION_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => handleCategorySelect(cat.id)}
-                  className={`relative p-6 rounded-2xl border-2 text-left transition-all duration-200 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    selectedCategory === cat.id
-                      ? "border-blue-600 bg-blue-600 text-white shadow-lg scale-105"
-                      : "border-gray-200 bg-white hover:border-blue-300 text-gray-900"
-                  }`}
+          {isSubmitted ? (
+            <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" as const }}
+            >
+              <Card className="p-12 text-center border-green-200 bg-green-50 shadow-xl">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+                  className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
                 >
-                  <div className="text-4xl mb-3">{cat.flag}</div>
-                  <div className="font-bold text-lg mb-1">{cat.label}</div>
-                  <div className={`text-sm ${selectedCategory === cat.id ? "text-blue-100" : "text-gray-500"}`}>
-                    {cat.description}
-                  </div>
-                  {selectedCategory === cat.id && (
-                    <div className="absolute top-3 right-3">
-                      <CheckCircle2 className="w-5 h-5 text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
+                <p className="text-green-700 mb-6 max-w-md mx-auto">
+                  Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
+                </p>
+                <Button onClick={() => setIsSubmitted(false)} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
+                  Faire une nouvelle demande
+                </Button>
+              </Card>
+            </motion.div>
+          ) : (
+            <Card className="p-6 md:p-10 border-blue-100 shadow-xl overflow-hidden">
+              {/* Barre de progression */}
+              <ProgressBar step={step} total={3} />
 
-          {/* Étape 2 : Choisir le type de visa */}
-          {selectedCategory && (
-            <div className="mb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">2</div>
-                <h3 className="text-xl font-bold text-gray-900">Sélectionnez le type de visa</h3>
-              </div>
-              <div className="grid sm:grid-cols-3 gap-4">
-                {VISA_OPTIONS[selectedCategory].map((visa) => {
-                  const Icon = visa.icon;
-                  return (
-                    <button
-                      key={visa.value}
-                      type="button"
-                      onClick={() => handleVisaSelect(visa.value)}
-                      className={`p-5 rounded-xl border-2 text-left transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        selectedVisa === visa.value
-                          ? "border-blue-600 bg-blue-50 text-blue-900"
-                          : "border-gray-200 bg-white hover:border-blue-300 text-gray-900"
-                      }`}
+              {/* Contenu animé par étape */}
+              <div className="relative overflow-hidden min-h-[320px]">
+                <AnimatePresence mode="wait" custom={direction}>
+
+                  {/* ── ÉTAPE 1 : Destination ── */}
+                  {step === 1 && (
+                    <motion.div
+                      key="step1"
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
                     >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
-                        selectedVisa === visa.value ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600"
-                      }`}>
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="font-semibold text-sm">{visa.label}</div>
-                      {selectedVisa === visa.value && (
-                        <div className="mt-2">
-                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Étape 3 : Formulaire complet */}
-          {selectedCategory && selectedVisa && (
-            <div ref={formRef} className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">3</div>
-                <h3 className="text-xl font-bold text-gray-900">Remplissez votre profil</h3>
-              </div>
-
-              {isSubmitted ? (
-                <Card className="p-12 text-center border-green-200 bg-green-50">
-                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
-                  <p className="text-green-700 mb-6 max-w-md mx-auto">
-                    Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
-                  </p>
-                  <Button
-                    onClick={() => { setIsSubmitted(false); setSelectedCategory(null); setSelectedVisa(null); }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    Faire une nouvelle demande
-                  </Button>
-                </Card>
-              ) : (
-                <Card className="p-8 md:p-10 border-blue-100 shadow-xl">
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
-                    {/* Informations personnelles */}
-                    <div>
-                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-blue-600" />
-                        Informations personnelles
-                      </h4>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <Label htmlFor="fullName" className="text-gray-700 font-semibold text-sm">Nom complet *</Label>
-                          <Input id="fullName" placeholder="Jean Dupont" {...register("fullName")} className="border-gray-200 focus:border-blue-500" />
-                          {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName.message}</p>}
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email *</Label>
-                          <Input id="email" type="email" placeholder="jean@example.com" {...register("email")} className="border-gray-200 focus:border-blue-500" />
-                          {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">Téléphone *</Label>
-                          <Input id="phone" placeholder="+237 620-996-045" {...register("phone")} className="border-gray-200 focus:border-blue-500" />
-                          {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="dateOfBirth" className="text-gray-700 font-semibold text-sm">Date de naissance</Label>
-                          <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} className="border-gray-200 focus:border-blue-500" />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="nationality" className="text-gray-700 font-semibold text-sm">Nationalité</Label>
-                          <Input id="nationality" placeholder="Camerounaise" {...register("nationality")} className="border-gray-200 focus:border-blue-500" />
-                        </div>
-                        {selectedCategory === "autre" && (
-                          <div className="space-y-1">
-                            <Label htmlFor="destinationCountry" className="text-gray-700 font-semibold text-sm">Pays de destination *</Label>
-                            <Input id="destinationCountry" placeholder="Ex: États-Unis, Australie..." {...register("destinationCountry")} className="border-gray-200 focus:border-blue-500" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Profil académique et professionnel */}
-                    <div>
-                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <GraduationCap className="w-5 h-5 text-blue-600" />
-                        Profil académique & professionnel
-                      </h4>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <Label className="text-gray-700 font-semibold text-sm">Niveau d'études</Label>
-                          <Select onValueChange={(v) => setValue("educationLevel", v)}>
-                            <SelectTrigger className="border-gray-200 focus:border-blue-500">
-                              <SelectValue placeholder="Sélectionnez votre niveau" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="bac">Baccalauréat</SelectItem>
-                              <SelectItem value="bac2">Bac+2 (BTS, DUT)</SelectItem>
-                              <SelectItem value="bac3">Bac+3 (Licence)</SelectItem>
-                              <SelectItem value="bac5">Bac+5 (Master)</SelectItem>
-                              <SelectItem value="bac8">Bac+8 (Doctorat)</SelectItem>
-                              <SelectItem value="autre">Autre</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-gray-700 font-semibold text-sm">Situation professionnelle</Label>
-                          <Select onValueChange={(v) => setValue("employmentStatus", v)}>
-                            <SelectTrigger className="border-gray-200 focus:border-blue-500">
-                              <SelectValue placeholder="Votre situation actuelle" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="etudiant">Étudiant(e)</SelectItem>
-                              <SelectItem value="employe">Employé(e)</SelectItem>
-                              <SelectItem value="independant">Travailleur indépendant</SelectItem>
-                              <SelectItem value="chomeur">En recherche d'emploi</SelectItem>
-                              <SelectItem value="retraite">Retraité(e)</SelectItem>
-                              <SelectItem value="autre">Autre</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Upload CV */}
-                    <div>
-                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <Upload className="w-5 h-5 text-blue-600" />
-                        Pièce jointe (CV)
-                      </h4>
-                      <div
-                        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-colors cursor-pointer hover:border-blue-400 hover:bg-blue-50 ${
-                          cvFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50"
-                        }`}
-                        onClick={() => !cvFile && fileInputRef.current?.click()}
-                      >
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                        {cvFile ? (
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
-                                <FileText className="w-5 h-5 text-green-600" />
-                              </div>
-                              <div className="text-left">
-                                <p className="font-semibold text-green-900 text-sm">{cvFile.name}</p>
-                                <p className="text-xs text-green-600">{(cvFile.size / 1024).toFixed(0)} Ko</p>
-                              </div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-blue-600" />
+                        Choisissez votre destination
+                      </h3>
+                      <div className="grid gap-4">
+                        {DESTINATION_CATEGORIES.map((cat, i) => (
+                          <motion.button
+                            key={cat.id}
+                            type="button"
+                            custom={i}
+                            variants={fadeUp}
+                            initial="hidden"
+                            animate="visible"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleCategorySelect(cat.id)}
+                            className={`flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              selectedCategory === cat.id
+                                ? "border-blue-600 bg-blue-50"
+                                : "border-gray-200 bg-white hover:border-blue-300"
+                            }`}
+                          >
+                            <span className="text-4xl leading-none">{cat.flag}</span>
+                            <div className="flex-1">
+                              <div className="font-bold text-gray-900 text-base">{cat.label}</div>
+                              <div className="text-sm text-gray-500 mt-0.5">{cat.description}</div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={(e) => { e.stopPropagation(); removeFile(); }}
-                              className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors"
-                            >
-                              <X className="w-4 h-4 text-red-600" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                            <p className="font-semibold text-gray-700 mb-1">Glissez votre CV ici ou cliquez pour parcourir</p>
-                            <p className="text-xs text-gray-400">PDF, DOC, DOCX — Max 5 Mo</p>
-                          </div>
-                        )}
+                            <ChevronRight className={`w-5 h-5 transition-colors ${selectedCategory === cat.id ? "text-blue-600" : "text-gray-300"}`} />
+                          </motion.button>
+                        ))}
                       </div>
-                    </div>
+                    </motion.div>
+                  )}
 
-                    {/* Message */}
-                    <div className="space-y-1">
-                      <Label htmlFor="message" className="text-gray-700 font-semibold text-sm">Message complémentaire</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="Décrivez votre projet, vos motivations ou toute information utile pour notre évaluation..."
-                        {...register("message")}
-                        rows={4}
-                        className="border-gray-200 focus:border-blue-500 resize-none"
-                      />
-                    </div>
+                  {/* ── ÉTAPE 2 : Type de visa ── */}
+                  {step === 2 && selectedCategory && (
+                    <motion.div
+                      key="step2"
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-blue-600" />
+                          Sélectionnez le type de visa
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => goTo(1)}
+                          className="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1"
+                        >
+                          ← Modifier
+                        </button>
+                      </div>
+                      {/* Destination choisie */}
+                      <div className="flex items-center gap-2 mb-6 bg-blue-50 rounded-xl px-4 py-3 border border-blue-100">
+                        <span className="text-2xl">{DESTINATION_CATEGORIES.find(c => c.id === selectedCategory)?.flag}</span>
+                        <span className="font-semibold text-blue-900 text-sm">{DESTINATION_CATEGORIES.find(c => c.id === selectedCategory)?.label}</span>
+                      </div>
+                      <div className="grid gap-4">
+                        {VISA_OPTIONS[selectedCategory].map((visa, i) => {
+                          const Icon = visa.icon;
+                          return (
+                            <motion.button
+                              key={visa.value}
+                              type="button"
+                              custom={i}
+                              variants={fadeUp}
+                              initial="hidden"
+                              animate="visible"
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => handleVisaSelect(visa.value)}
+                              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                selectedVisa === visa.value
+                                  ? "border-blue-600 bg-blue-50"
+                                  : "border-gray-200 bg-white hover:border-blue-300"
+                              }`}
+                            >
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                                selectedVisa === visa.value ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-500"
+                              }`}>
+                                <Icon className="w-6 h-6" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-bold text-gray-900">{visa.label}</div>
+                                <div className="text-sm text-gray-500 mt-0.5">{visa.desc}</div>
+                              </div>
+                              <ChevronRight className={`w-5 h-5 transition-colors ${selectedVisa === visa.value ? "text-blue-600" : "text-gray-300"}`} />
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
 
-                    {/* Récapitulatif */}
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                      <p className="text-sm font-semibold text-blue-900 mb-2">Récapitulatif de votre demande :</p>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                  {/* ── ÉTAPE 3 : Formulaire profil ── */}
+                  {step === 3 && (
+                    <motion.div
+                      key="step3"
+                      ref={evalRef as any}
+                      custom={direction}
+                      variants={slideVariants}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                    >
+                      <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                          <Users className="w-5 h-5 text-blue-600" />
+                          Remplissez votre profil
+                        </h3>
+                        <button
+                          type="button"
+                          onClick={() => goTo(2)}
+                          className="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1"
+                        >
+                          ← Modifier
+                        </button>
+                      </div>
+
+                      {/* Récapitulatif sélections */}
+                      <div className="flex flex-wrap gap-2 mb-6">
+                        <span className="inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
                           {DESTINATION_CATEGORIES.find(c => c.id === selectedCategory)?.flag} {DESTINATION_CATEGORIES.find(c => c.id === selectedCategory)?.label}
                         </span>
-                        <span className="inline-flex items-center gap-1 bg-white text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-200">
-                          {VISA_OPTIONS[selectedCategory!].find(v => v.value === selectedVisa)?.label}
+                        <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200">
+                          {VISA_OPTIONS[selectedCategory!]?.find(v => v.value === selectedVisa)?.label}
                         </span>
                       </div>
-                    </div>
 
-                    {/* Bouton de soumission */}
-                    <Button
-                      type="submit"
-                      disabled={submitMutation.isPending}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all"
-                    >
-                      {submitMutation.isPending ? (
-                        <span className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          Envoi en cours...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5" />
-                          Soumettre ma pré-évaluation
-                        </span>
-                      )}
-                    </Button>
-                    <p className="text-xs text-gray-400 text-center">
-                      * Champs obligatoires. Vos données sont traitées de manière confidentielle. Réponse sous 24h.
-                    </p>
-                  </form>
-                </Card>
-              )}
-            </div>
+                      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        {/* Infos personnelles */}
+                        <motion.div variants={fadeUp} custom={0} initial="hidden" animate="visible" className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <Label htmlFor="fullName" className="text-gray-700 font-semibold text-sm">Nom complet *</Label>
+                            <Input id="fullName" placeholder="Jean Dupont" {...register("fullName")} className="border-gray-200 focus:border-blue-500" />
+                            {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName.message}</p>}
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email *</Label>
+                            <Input id="email" type="email" placeholder="jean@example.com" {...register("email")} className="border-gray-200 focus:border-blue-500" />
+                            {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">Téléphone *</Label>
+                            <Input id="phone" placeholder="+237 620-996-045" {...register("phone")} className="border-gray-200 focus:border-blue-500" />
+                            {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="dateOfBirth" className="text-gray-700 font-semibold text-sm">Date de naissance</Label>
+                            <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} className="border-gray-200 focus:border-blue-500" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="nationality" className="text-gray-700 font-semibold text-sm">Nationalité</Label>
+                            <Input id="nationality" placeholder="Camerounaise" {...register("nationality")} className="border-gray-200 focus:border-blue-500" />
+                          </div>
+                          {selectedCategory === "autre" && (
+                            <div className="space-y-1">
+                              <Label htmlFor="destinationCountry" className="text-gray-700 font-semibold text-sm">Pays de destination *</Label>
+                              <Input id="destinationCountry" placeholder="Ex: États-Unis, Australie..." {...register("destinationCountry")} className="border-gray-200 focus:border-blue-500" />
+                            </div>
+                          )}
+                        </motion.div>
+
+                        {/* Profil académique */}
+                        <motion.div variants={fadeUp} custom={1} initial="hidden" animate="visible" className="grid md:grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <Label className="text-gray-700 font-semibold text-sm">Niveau d'études</Label>
+                            <Select onValueChange={(v) => setValue("educationLevel", v)}>
+                              <SelectTrigger className="border-gray-200 focus:border-blue-500">
+                                <SelectValue placeholder="Sélectionnez votre niveau" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="bac">Baccalauréat</SelectItem>
+                                <SelectItem value="bac2">Bac+2 (BTS, DUT)</SelectItem>
+                                <SelectItem value="bac3">Bac+3 (Licence)</SelectItem>
+                                <SelectItem value="bac5">Bac+5 (Master)</SelectItem>
+                                <SelectItem value="bac8">Bac+8 (Doctorat)</SelectItem>
+                                <SelectItem value="autre">Autre</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-gray-700 font-semibold text-sm">Situation professionnelle</Label>
+                            <Select onValueChange={(v) => setValue("employmentStatus", v)}>
+                              <SelectTrigger className="border-gray-200 focus:border-blue-500">
+                                <SelectValue placeholder="Votre situation actuelle" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="etudiant">Étudiant(e)</SelectItem>
+                                <SelectItem value="employe">Employé(e)</SelectItem>
+                                <SelectItem value="independant">Travailleur indépendant</SelectItem>
+                                <SelectItem value="chomeur">En recherche d'emploi</SelectItem>
+                                <SelectItem value="retraite">Retraité(e)</SelectItem>
+                                <SelectItem value="autre">Autre</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </motion.div>
+
+                        {/* Upload CV */}
+                        <motion.div variants={fadeUp} custom={2} initial="hidden" animate="visible">
+                          <Label className="text-gray-700 font-semibold text-sm mb-2 flex items-center gap-2">
+                            <Upload className="w-4 h-4 text-blue-600" />
+                            Pièce jointe (CV)
+                          </Label>
+                          <div
+                            className={`relative border-2 border-dashed rounded-xl p-5 text-center transition-colors cursor-pointer hover:border-blue-400 hover:bg-blue-50 ${
+                              cvFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50"
+                            }`}
+                            onClick={() => !cvFile && fileInputRef.current?.click()}
+                          >
+                            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
+                            {cvFile ? (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-green-600" />
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="font-semibold text-green-900 text-sm">{cvFile.name}</p>
+                                    <p className="text-xs text-green-600">{(cvFile.size / 1024).toFixed(0)} Ko</p>
+                                  </div>
+                                </div>
+                                <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(); }}
+                                  className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors">
+                                  <X className="w-3.5 h-3.5 text-red-600" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="font-semibold text-gray-700 text-sm mb-1">Glissez votre CV ici ou cliquez</p>
+                                <p className="text-xs text-gray-400">PDF, DOC, DOCX — Max 5 Mo</p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+
+                        {/* Message */}
+                        <motion.div variants={fadeUp} custom={3} initial="hidden" animate="visible" className="space-y-1">
+                          <Label htmlFor="message" className="text-gray-700 font-semibold text-sm">Message complémentaire</Label>
+                          <Textarea
+                            id="message"
+                            placeholder="Décrivez votre projet, vos motivations ou toute information utile..."
+                            {...register("message")}
+                            rows={3}
+                            className="border-gray-200 focus:border-blue-500 resize-none"
+                          />
+                        </motion.div>
+
+                        {/* Bouton soumettre */}
+                        <motion.div variants={fadeUp} custom={4} initial="hidden" animate="visible">
+                          <Button
+                            type="submit"
+                            disabled={submitMutation.isPending}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
+                          >
+                            {submitMutation.isPending ? (
+                              <span className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Envoi en cours...
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-2">
+                                <CheckCircle2 className="w-5 h-5" />
+                                Soumettre ma pré-évaluation
+                              </span>
+                            )}
+                          </Button>
+                          <p className="text-xs text-gray-400 text-center mt-3">
+                            * Champs obligatoires. Données traitées de manière confidentielle. Réponse sous 24h.
+                          </p>
+                        </motion.div>
+                      </form>
+                    </motion.div>
+                  )}
+
+                </AnimatePresence>
+              </div>
+            </Card>
           )}
         </div>
       </section>
@@ -591,18 +699,18 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield, title: "Expertise réglementée", desc: "Professionnels experts en visa et immigration internationale", color: "text-blue-600 bg-blue-100" },
-              { icon: Users, title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure", color: "text-indigo-600 bg-indigo-100" },
-              { icon: Clock, title: "Réponse rapide", desc: "Retour de nos experts sous 24h après soumission", color: "text-sky-600 bg-sky-100" },
-              { icon: CheckCircle2, title: "Taux de succès élevé", desc: "Des centaines de dossiers traités avec succès chaque année", color: "text-cyan-600 bg-cyan-100" },
+              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-blue-600 bg-blue-100" },
+              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-indigo-600 bg-indigo-100" },
+              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-sky-600 bg-sky-100" },
+              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-cyan-600 bg-cyan-100" },
             ].map((item, i) => (
-              <div key={i} className="text-center p-6">
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
                 <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
                   <item.icon className="w-7 h-7" />
                 </div>
                 <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -611,23 +719,17 @@ export default function Home() {
       {/* ─── CTA ─────────────────────────────────────────────────────────── */}
       <section className="py-16 bg-gradient-to-r from-blue-700 to-blue-900">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">
-            Prêt à réaliser votre projet ?
-          </h2>
-          <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">
-            Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.
-          </p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
+          <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#evaluation">
-              <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold shadow-xl px-8">
-                Pré-évaluation gratuite
-                <ArrowRight className="w-5 h-5 ml-2" />
+              <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
+                Pré-évaluation gratuite <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
             <a href="mailto:hello@3mtravelegency.com">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8">
-                <Mail className="w-4 h-4 mr-2" />
-                Nous écrire
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 active:scale-[0.97] transition-transform">
+                <Mail className="w-4 h-4 mr-2" />Nous écrire
               </Button>
             </a>
           </div>
