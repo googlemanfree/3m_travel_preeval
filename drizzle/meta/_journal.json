@@ -22,6 +22,13 @@
       "when": 1784020071464,
       "tag": "0002_rare_mentallo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1784021112310,
+      "tag": "0003_fresh_the_anarchist",
+      "breakpoints": true
     }
   ]
 }

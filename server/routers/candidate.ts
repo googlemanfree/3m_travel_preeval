@@ -16,6 +16,7 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
+import { sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -96,6 +97,10 @@ export const candidateRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
+      // Générer un OTP à 6 chiffres
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
       const result = await db.insert(candidates).values({
         fullName: input.fullName,
         email: input.email,
@@ -104,21 +109,21 @@ export const candidateRouter = router({
         destination: input.destination ?? "autre",
         nationality: input.nationality ?? null,
         dossierStatus: "nouveau",
-        emailVerified: true, // Simplifié : pas de vérification email pour l'instant
+        emailVerified: false,
+        emailOtp: otp,
+        emailOtpExpiresAt: otpExpiresAt,
       });
 
       const candidateId = (result as any).insertId as number;
-      const token = signCandidateToken(candidateId);
 
-      // Message de bienvenue automatique
-      await db.insert(candidateMessages).values({
-        candidateId,
-        senderRole: "advisor",
-        content: `Bienvenue ${input.fullName} ! 🎉 Votre compte 3M Travel & Services a bien été créé. Notre équipe va analyser votre profil et vous contacter sous 24h. En attendant, vous pouvez compléter votre profil et uploader vos documents.`,
-        isRead: false,
-      });
+      // Envoyer l'email OTP
+      try {
+        await sendVerificationOtp(input.email, input.fullName, otp);
+      } catch (err) {
+        console.error("[Register] Email OTP send error:", err);
+      }
 
-      return { token, candidateId, message: "Compte créé avec succès." };
+      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Veuillez vérifier votre email." };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -339,6 +344,85 @@ export const candidateRouter = router({
 
     return { count: msgs.length };
   }),
+
+
+  // ── Vérification email par OTP ────────────────────────────────────────────
+  verifyEmail: publicProcedure
+    .input(z.object({ candidateId: z.number(), otp: z.string().length(6) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+      const candidate = rows[0];
+      if (candidate.emailVerified) {
+        const token = signCandidateToken(input.candidateId);
+        return { success: true, token, message: "Email déjà vérifié." };
+      }
+      if (!candidate.emailOtp || candidate.emailOtp !== input.otp) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Code incorrect. Vérifiez votre email et réessayez." });
+      }
+      if (!candidate.emailOtpExpiresAt || new Date() > candidate.emailOtpExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce code a expiré. Demandez un nouveau code." });
+      }
+      await db.update(candidates).set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null }).where(eq(candidates.id, input.candidateId));
+      await db.insert(candidateMessages).values({
+        candidateId: input.candidateId,
+        senderRole: "advisor",
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
+        isRead: false,
+      });
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      const token = signCandidateToken(input.candidateId);
+      return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
+    }),
+
+  resendOtp: publicProcedure
+    .input(z.object({ candidateId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+      const candidate = rows[0];
+      if (candidate.emailVerified) return { success: true };
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
+      try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
+      return { success: true, message: "Nouveau code envoyé à votre adresse email." };
+    }),
+
+  requestPasswordReset: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
+      const candidate = rows[0];
+      const resetToken = crypto.randomUUID().replace(/-/g, "");
+      const resetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: resetExpiresAt }).where(eq(candidates.id, candidate.id));
+      try { await sendPasswordResetEmail(candidate.email, candidate.fullName, resetToken); } catch {}
+      return { success: true, message: "Si cet email existe, un lien a été envoyé." };
+    }),
+
+  resetPassword: publicProcedure
+    .input(z.object({ token: z.string().min(10), newPassword: z.string().min(8) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou expiré." });
+      const candidate = rows[0];
+      if (!candidate.passwordResetExpiresAt || new Date() > candidate.passwordResetExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez faire une nouvelle demande." });
+      }
+      const passwordHash = await bcrypt.hash(input.newPassword, 12);
+      await db.update(candidates).set({ passwordHash, passwordResetToken: null, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      return { success: true, message: "Mot de passe réinitialisé avec succès." };
+    }),
 
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
   getDossierSteps: publicProcedure.query(() => {

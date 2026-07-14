@@ -79,3 +79,21 @@
 - [x] Protéger la route /dashboard (redirection vers /login si non connecté)
 - [x] Ajouter le lien "Mon Espace" dans la navigation de toutes les pages
 - [x] Intégrer l'upload de documents (CV, passeport, diplômes) via S3 via route Express multer
+
+## Authentification Renforcée — Email OTP & Protection des Routes
+- [x] Ajouter colonnes emailVerified, emailVerificationOtp, otpExpiresAt, passwordResetToken, passwordResetExpiresAt dans la table candidates
+- [x] Procédure tRPC : verifyEmail(otp) — valider le code OTP
+- [x] Procédure tRPC : resendVerificationEmail — renvoyer l'OTP
+- [x] Procédure tRPC : requestPasswordReset(email) — envoyer un lien de réinitialisation
+- [x] Procédure tRPC : resetPassword(token, newPassword) — réinitialiser le mot de passe
+- [x] Envoyer l'OTP par email via Nodemailer/SMTP au moment de l'inscription
+- [x] Envoyer l'email de réinitialisation de mot de passe par email
+- [x] Page /verify-email : saisie du code OTP à 6 chiffres
+- [x] Page /forgot-password : formulaire email pour demander la réinitialisation
+- [x] Page /reset-password : formulaire nouveau mot de passe (avec token dans l'URL)
+- [x] Refondre /register : indicateur de force du mot de passe (8 car, 1 chiffre, 1 majuscule)
+- [x] Refondre /login : option "Se souvenir de moi", lien "Mot de passe oublié ?"
+- [x] Auth Guard sur /flights : écran d'accès refusé avec CTA connexion/inscription
+- [x] Auth Guard sur /procedures : écran d'accès refusé avec CTA connexion/inscription
+- [x] Message d'avertissement sur /login quand redirigé depuis une page protégée
+- [x] Améliorer /dashboard : message d'accueil personnalisé + raccourcis vers les services

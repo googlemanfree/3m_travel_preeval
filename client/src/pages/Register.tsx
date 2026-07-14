@@ -21,6 +21,24 @@ const DESTINATIONS = [
   { value: "autre",      label: "Autre destination" },
 ];
 
+function getPasswordStrength(password: string): { score: number; label: string; color: string; rules: { ok: boolean; text: string }[] } {
+  const rules = [
+    { ok: password.length >= 8,          text: "8 caractères minimum" },
+    { ok: /[A-Z]/.test(password),         text: "1 lettre majuscule" },
+    { ok: /[0-9]/.test(password),         text: "1 chiffre" },
+    { ok: /[^A-Za-z0-9]/.test(password),  text: "1 caractère spécial" },
+  ];
+  const score = rules.filter(r => r.ok).length;
+  const configs = [
+    { label: "Très faible", color: "#ef4444" },
+    { label: "Faible",      color: "#f97316" },
+    { label: "Moyen",       color: "#eab308" },
+    { label: "Fort",        color: "#22c55e" },
+    { label: "Très fort",   color: "#16a34a" },
+  ];
+  return { score, ...configs[score], rules };
+}
+
 export default function Register() {
   const [, navigate] = useLocation();
   const { login } = useCandidateAuth();
@@ -36,15 +54,9 @@ export default function Register() {
 
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
-      login(data.token, {
-        id: data.candidateId,
-        fullName: form.fullName,
-        email: form.email,
-        destination: form.destination,
-        dossierStatus: "nouveau",
-      });
-      toast.success("Compte créé avec succès ! Bienvenue dans votre espace candidat.");
-      navigate("/dashboard");
+      // Rediriger vers la page de vérification OTP
+      toast.success("Compte créé ! Un code de vérification a été envoyé à votre adresse email.");
+      navigate(`/verify-email?id=${data.candidateId}`);
     },
     onError: (err) => {
       toast.error(err.message);
@@ -59,6 +71,14 @@ export default function Register() {
     }
     if (form.password.length < 8) {
       toast.error("Le mot de passe doit contenir au moins 8 caractères.");
+      return;
+    }
+    if (!/[A-Z]/.test(form.password)) {
+      toast.error("Le mot de passe doit contenir au moins une lettre majuscule.");
+      return;
+    }
+    if (!/[0-9]/.test(form.password)) {
+      toast.error("Le mot de passe doit contenir au moins un chiffre.");
       return;
     }
     registerMutation.mutate({
@@ -191,7 +211,7 @@ export default function Register() {
 
             {/* Mot de passe */}
             <div>
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Mot de passe * <span className="text-gray-400 font-normal">(8 caractères min.)</span></Label>
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Mot de passe * <span className="text-gray-400 font-normal">(8 car. min.)</span></Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -211,6 +231,33 @@ export default function Register() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {/* Indicateur de force du mot de passe */}
+              {form.password && (() => {
+                const strength = getPasswordStrength(form.password);
+                return (
+                  <div className="mt-2">
+                    <div className="flex gap-1 mb-1">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-300"
+                          style={{ background: i <= strength.score ? strength.color : "#e5e7eb" }} />
+                      ))}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-semibold" style={{ color: strength.color }}>{strength.label}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                      {strength.rules.map(rule => (
+                        <span key={rule.text} className={`text-xs flex items-center gap-1 ${
+                          rule.ok ? "text-green-600" : "text-gray-400"
+                        }`}>
+                          <CheckCircle className={`w-3 h-3 ${rule.ok ? "text-green-500" : "text-gray-300"}`} />
+                          {rule.text}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Bouton */}

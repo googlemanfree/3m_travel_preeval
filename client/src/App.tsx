@@ -4,23 +4,45 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import AuthGuard from "./components/AuthGuard";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import Procedures from "./pages/Procedures";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
+      {/* Pages publiques */}
       <Route path={"/"} component={Home} />
-      <Route path={"/flights"} component={Flights} />
-      <Route path={"/procedures"} component={Procedures} />
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
-      <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/verify-email"} component={VerifyEmail} />
+      <Route path={"/forgot-password"} component={ForgotPassword} />
+      <Route path={"/reset-password"} component={ResetPassword} />
+
+      {/* Pages protégées — nécessitent un compte 3M Travel */}
+      <Route path={"/flights"}>
+        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
+          <Flights />
+        </AuthGuard>
+      </Route>
+      <Route path={"/procedures"}>
+        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder aux procédures d'immigration de 3M Travel.">
+          <Procedures />
+        </AuthGuard>
+      </Route>
+      <Route path={"/dashboard"}>
+        <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
+          <Dashboard />
+        </AuthGuard>
+      </Route>
+
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -28,18 +50,10 @@ function Router() {
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />

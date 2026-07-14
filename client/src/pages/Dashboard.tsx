@@ -252,7 +252,35 @@ export default function Dashboard() {
               {/* ── Onglet : Mon dossier ─────────────────────────────────────── */}
               {activeTab === "overview" && (
                 <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h1>
+                  {/* Message d'accueil personnalisé */}
+                  {(() => {
+                    const hour = new Date().getHours();
+                    const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+                    const name = candidate?.fullName ?? profile?.fullName ?? "";
+                    const firstName = name.split(" ")[0];
+                    return (
+                      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-2xl p-5 mb-6 text-white">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div>
+                            <h1 className="text-xl font-black">{greeting}, {firstName} ! 👋</h1>
+                            <p className="text-blue-200 text-sm mt-0.5">
+                              Bienvenue dans votre espace candidat 3M Travel & Services
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link href="/flights" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                              <Globe className="w-3.5 h-3.5" /> Vols
+                            </Link>
+                            <Link href="/procedures" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                              <FileText className="w-3.5 h-3.5" /> Procédures
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
 
                   {profileQuery.isLoading ? (
                     <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement de votre dossier...</div>

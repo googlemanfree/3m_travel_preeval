@@ -13,22 +13,32 @@ export interface CandidateInfo {
   email: string;
   destination?: string | null;
   dossierStatus?: string | null;
+  emailVerified?: boolean;
+}
+
+/** Lit le token depuis localStorage (persistant) ou sessionStorage (session) */
+function readToken(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
+  } catch { return null; }
+}
+
+function readCandidate(): CandidateInfo | null {
+  try {
+    const raw = localStorage.getItem(CANDIDATE_KEY) ?? sessionStorage.getItem(CANDIDATE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
 }
 
 export function useCandidateAuth() {
-  const [token, setToken] = useState<string | null>(() => {
-    try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
-  });
-  const [candidate, setCandidate] = useState<CandidateInfo | null>(() => {
-    try {
-      const raw = localStorage.getItem(CANDIDATE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
-  });
+  const [token, setToken] = useState<string | null>(readToken);
+  const [candidate, setCandidate] = useState<CandidateInfo | null>(readCandidate);
 
+  /**
+   * Appelé par Login.tsx qui gère lui-même l'écriture dans localStorage/sessionStorage
+   * selon le choix "Se souvenir de moi". Ici on se contente de mettre à jour le state.
+   */
   const login = useCallback((newToken: string, info: CandidateInfo) => {
-    localStorage.setItem(STORAGE_KEY, newToken);
-    localStorage.setItem(CANDIDATE_KEY, JSON.stringify(info));
     setToken(newToken);
     setCandidate(info);
   }, []);
@@ -36,6 +46,8 @@ export function useCandidateAuth() {
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(CANDIDATE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(CANDIDATE_KEY);
     setToken(null);
     setCandidate(null);
   }, []);
@@ -45,7 +57,9 @@ export function useCandidateAuth() {
   return { token, candidate, isAuthenticated, login, logout };
 }
 
-/** Récupère le token candidat depuis localStorage (pour les appels tRPC directs) */
+/** Récupère le token candidat depuis localStorage ou sessionStorage (pour les appels tRPC directs) */
 export function getCandidateToken(): string | null {
-  try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+  try {
+    return localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
+  } catch { return null; }
 }

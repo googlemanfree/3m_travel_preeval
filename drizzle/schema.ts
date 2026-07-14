@@ -91,9 +91,14 @@ export const candidates = mysqlTable("candidates", {
   educationLevel: varchar("educationLevel", { length: 100 }),
   employmentStatus: varchar("employmentStatus", { length: 100 }),
   languageLevel: varchar("languageLevel", { length: 100 }),
-  // Vérification email
+  // Vérification email (OTP à 6 chiffres)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
+  emailOtp: varchar("emailOtp", { length: 10 }),
+  emailOtpExpiresAt: timestamp("emailOtpExpiresAt"),
+  // Réinitialisation de mot de passe
+  passwordResetToken: varchar("passwordResetToken", { length: 128 }),
+  passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
