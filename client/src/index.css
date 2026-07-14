@@ -43,21 +43,32 @@
 }
 
 :root {
-  --primary: #1e40af; /* Blue-800 */
-  --primary-foreground: #f0f9ff; /* Blue-50 */
-  --sidebar-primary: #2563eb; /* Blue-600 */
-  --sidebar-primary-foreground: #f0f9ff; /* Blue-50 */
-  --chart-1: #93c5fd; /* Blue-300 */
-  --chart-2: #3b82f6; /* Blue-500 */
-  --chart-3: #2563eb; /* Blue-600 */
-  --chart-4: #1e40af; /* Blue-800 */
-  --chart-5: #1e3a8a; /* Blue-900 */
+  /* ── Palette 3M Travel & Services ─────────────────────────────────────────
+     Bleu royal foncé  : #1E3A8A  (anneau extérieur du logo)
+     Bleu moyen        : #2563EB  (couleur principale des éléments)
+     Bleu ciel         : #7CB9E8  (anneau intérieur / texte 3M clair)
+     Blanc             : #FFFFFF  (fond principal)
+  ── */
+  --brand-royal:  #1e3a8a;
+  --brand-mid:    #2563eb;
+  --brand-sky:    #7cb9e8;
+  --brand-light:  #dbeafe;
+
+  --primary: #1e3a8a;           /* bleu royal logo */
+  --primary-foreground: #ffffff;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --chart-1: #7cb9e8;
+  --chart-2: #3b82f6;
+  --chart-3: #2563eb;
+  --chart-4: #1e3a8a;
+  --chart-5: #0f2460;
   --radius: 0.65rem;
-  --background: #ffffff; /* White */
-  --foreground: #1f2937; /* Gray-900 */
-  --card: #ffffff; /* White */
-  --card-foreground: #1f2937; /* Gray-900 */
-  --popover: #ffffff; /* White */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
   --popover-foreground: #1f2937; /* Gray-900 */
   --secondary: #f3f4f6; /* Gray-100 */
   --secondary-foreground: #374151; /* Gray-700 */

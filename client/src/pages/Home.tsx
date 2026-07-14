@@ -101,7 +101,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1 bg-gray-200 rounded-full z-0" />
         {/* Ligne de progression animée */}
         <motion.div
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-gradient-to-r from-blue-500 to-blue-700 rounded-full z-0"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 rounded-full z-0" style={{ background: 'linear-gradient(90deg, #7cb9e8, #1e3a8a)' }}
           initial={{ width: "0%" }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: "easeOut" as const }}
@@ -117,7 +117,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
               <motion.div
                 animate={{
                   scale: isCurrent ? 1.15 : 1,
-                  backgroundColor: isCompleted ? "#1d4ed8" : isCurrent ? "#2563eb" : "#e5e7eb",
+                  backgroundColor: isCompleted ? "#1e3a8a" : isCurrent ? "#2563eb" : "#e5e7eb",
                 }}
                 transition={{ duration: 0.3, ease: "easeOut" as const }}
                 className="w-10 h-10 rounded-full flex items-center justify-center shadow-md"
@@ -135,7 +135,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
                 )}
               </motion.div>
               <span className={`text-xs font-semibold whitespace-nowrap transition-colors duration-300 ${
-                isCurrent ? "text-blue-700" : isCompleted ? "text-blue-500" : "text-gray-400"
+                isCurrent ? "text-[#1e3a8a]" : isCompleted ? "text-[#2563eb]" : "text-gray-400"
               }`}>
                 {s.label}
               </span>
@@ -146,18 +146,18 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
       {/* Pourcentage */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-gray-500">
-          Étape <span className="font-bold text-blue-700">{step}</span> sur {total}
+          Étape <span className="font-bold text-[#1e3a8a]">{step}</span> sur {total}
         </p>
         <div className="flex items-center gap-2">
           <div className="h-2 w-32 bg-gray-200 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-700 rounded-full"
+              className="h-full rounded-full" style={{ background: 'linear-gradient(90deg, #7cb9e8, #1e3a8a)' }}
               initial={{ width: "0%" }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: "easeOut" as const }}
         />
       </div>
-          <span className="text-xs font-bold text-blue-700">{Math.round(pct)}%</span>
+          <span className="text-xs font-bold text-[#1e3a8a]">{Math.round(pct)}%</span>
         </div>
       </div>
     </div>
@@ -250,24 +250,26 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white/97 backdrop-blur-md border-b border-[#dbeafe] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-900 rounded-xl flex items-center justify-center shadow-md">
-              <Plane className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/manus-storage/logo_3m_d0e23210.jpeg"
+              alt="3M Travel & Services"
+              className="w-11 h-11 rounded-full object-cover shadow-md ring-2 ring-[#1e3a8a]/20"
+            />
             <div>
-              <div className="font-extrabold text-blue-900 text-base leading-tight">3M Travel & Services</div>
-              <div className="text-xs text-blue-500 font-medium">Votre mobilité, notre expertise</div>
+              <div className="font-extrabold text-[#1e3a8a] text-base leading-tight">3M Travel & Services</div>
+              <div className="text-xs text-[#2563eb] font-semibold">Votre mobilité, notre expertise</div>
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#services" className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium">Services</a>
-            <a href="#evaluation" className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium">Pré-évaluation</a>
-            <a href="#contact" className="text-gray-600 hover:text-blue-600 transition-colors text-sm font-medium">Contact</a>
+            <a href="#services" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Services</a>
+            <a href="#evaluation" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Pré-évaluation</a>
+            <a href="#contact" className="text-gray-600 hover:text-[#1e3a8a] font-medium transition-colors text-sm">Contact</a>
           </nav>
           <a href="tel:+237620996045">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md">
+            <Button className="bg-[#1e3a8a] hover:bg-[#2563eb] text-white text-sm font-semibold shadow-md transition-colors">
               <Phone className="w-4 h-4 mr-2" />+237 620-996-045
             </Button>
           </a>
@@ -275,10 +277,10 @@ export default function Home() {
       </header>
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative py-16 md:py-24 bg-gradient-to-br from-blue-900 via-blue-700 to-blue-500 overflow-hidden">
+      <section className="relative py-16 md:py-24 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 40%, #2563eb 75%, #7cb9e8 100%)' }}>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-blue-300 blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
         </div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <motion.div
@@ -290,21 +292,32 @@ export default function Home() {
               <Star className="w-4 h-4 text-yellow-300" />
               Évaluation gratuite en 24h
             </motion.div>
+            {/* Logo centré dans le hero */}
+            <motion.div variants={fadeUp} className="flex justify-center">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-white/20 blur-xl scale-125" />
+                <img
+                  src="/manus-storage/logo_3m_d0e23210.jpeg"
+                  alt="3M Travel & Services"
+                  className="relative w-24 h-24 rounded-full object-cover shadow-2xl ring-4 ring-white/40"
+                />
+              </div>
+            </motion.div>
             <motion.h1 variants={fadeUp} className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
               Votre Pré-Évaluation<br />
-              <span className="text-yellow-300">Visa & Immigration</span>
+              <span className="text-[#7cb9e8]">Visa & Immigration</span>
             </motion.h1>
             <motion.p variants={fadeUp} className="text-blue-100 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto">
               Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
               <a href="#evaluation">
-                <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold text-base shadow-xl px-8 active:scale-[0.97] transition-transform">
+                <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold text-base shadow-xl px-8 active:scale-[0.97] transition-transform">
                   Commencer l'évaluation <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </a>
               <a href="tel:+237620996045">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
+                <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
                   <Phone className="w-4 h-4 mr-2" />Nous appeler
                 </Button>
               </a>
@@ -322,16 +335,16 @@ export default function Home() {
       <section id="services" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Nos Services</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Tout ce dont vous avez besoin</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-blue-100 text-blue-600" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-indigo-100 text-indigo-600" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-sky-100 text-sky-600" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-cyan-100 text-cyan-600" },
+              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]" },
             ].map((s, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
                 <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full">
@@ -351,7 +364,7 @@ export default function Home() {
       <section id="evaluation" className="py-16 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
-            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Formulaire Gratuit</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Formulaire Gratuit</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Pré-Évaluation Gratuite</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
               Suivez les 3 étapes ci-dessous. Nos experts vous répondent sous 24h.
@@ -417,10 +430,10 @@ export default function Home() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleCategorySelect(cat.id)}
-                            className={`flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            className={`flex items-center gap-5 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 ${
                               selectedCategory === cat.id
-                                ? "border-blue-600 bg-blue-50"
-                                : "border-gray-200 bg-white hover:border-blue-300"
+                                ? "border-[#1e3a8a] bg-[#eff6ff]"
+                                : "border-gray-200 bg-white hover:border-[#7cb9e8]"
                             }`}
                           >
                             <span className="text-4xl leading-none">{cat.flag}</span>
@@ -477,10 +490,10 @@ export default function Home() {
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
                               onClick={() => handleVisaSelect(visa.value)}
-                              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              className={`flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:ring-offset-2 ${
                                 selectedVisa === visa.value
-                                  ? "border-blue-600 bg-blue-50"
-                                  : "border-gray-200 bg-white hover:border-blue-300"
+                                  ? "border-[#1e3a8a] bg-[#eff6ff]"
+                                  : "border-gray-200 bg-white hover:border-[#7cb9e8]"
                               }`}
                             >
                               <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
@@ -661,7 +674,7 @@ export default function Home() {
                           <Button
                             type="submit"
                             disabled={submitMutation.isPending}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
+                            className="w-full text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all active:scale-[0.98]" style={{ background: 'linear-gradient(135deg, #1e3a8a, #2563eb)' }}
                           >
                             {submitMutation.isPending ? (
                               <span className="flex items-center gap-2">
@@ -694,15 +707,15 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2">Pourquoi nous choisir</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi nous choisir</p>
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">L'expertise à votre service</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-blue-600 bg-blue-100" },
-              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-indigo-600 bg-indigo-100" },
-              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-sky-600 bg-sky-100" },
-              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-cyan-600 bg-cyan-100" },
+              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
+              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
+              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-[#0369a1] bg-[#e0f2fe]" },
+              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-[#7cb9e8] bg-[#f0f9ff]" },
             ].map((item, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
                 <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
@@ -717,13 +730,13 @@ export default function Home() {
       </section>
 
       {/* ─── CTA ─────────────────────────────────────────────────────────── */}
-      <section className="py-16 bg-gradient-to-r from-blue-700 to-blue-900">
+      <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
           <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#evaluation">
-              <Button size="lg" className="bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
+              <a href="#evaluation">
+              <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
                 Pré-évaluation gratuite <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
@@ -737,15 +750,20 @@ export default function Home() {
       </section>
 
       {/* ─── FOOTER ──────────────────────────────────────────────────────── */}
-      <footer id="contact" className="bg-gray-950 text-gray-400 py-14">
+      <footer id="contact" style={{ background: 'linear-gradient(180deg, #0f1e4a 0%, #0a1230 100%)' }} className="text-gray-400 py-14">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-10 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <Plane className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src="/manus-storage/logo_3m_d0e23210.jpeg"
+                  alt="3M Travel & Services"
+                  className="w-12 h-12 rounded-full object-cover ring-2 ring-[#7cb9e8]/40 shadow-lg"
+                />
+                <div>
+                  <div className="font-bold text-white text-sm leading-tight">3M Travel & Services</div>
+                  <div className="text-xs text-[#7cb9e8]">SARL</div>
                 </div>
-                <div className="font-bold text-white text-sm">3M Travel & Services</div>
               </div>
               <p className="text-sm leading-relaxed mb-3">Votre partenaire de confiance pour tous vos besoins de voyage et visa.</p>
               <p className="text-xs text-gray-600">RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
@@ -754,7 +772,7 @@ export default function Home() {
               <h4 className="font-bold text-white mb-4 text-sm">Services</h4>
               <ul className="space-y-2 text-sm">
                 {["Visa & Immigration", "Billets d'avion", "Hôtels & Tourisme", "Assurance voyage", "Marketing digital"].map(s => (
-                  <li key={s}><a href="#services" className="hover:text-blue-400 transition-colors">{s}</a></li>
+                  <li key={s}><a href="#services" className="hover:text-[#7cb9e8] transition-colors">{s}</a></li>
                 ))}
               </ul>
             </div>
@@ -762,7 +780,7 @@ export default function Home() {
               <h4 className="font-bold text-white mb-4 text-sm">Destinations</h4>
               <ul className="space-y-2 text-sm">
                 {["🇫🇷 France", "🇩🇪 Allemagne", "🇬🇧 Royaume-Uni", "🇨🇦 Canada", "🇧🇪 Belgique", "🇮🇹 Italie"].map(d => (
-                  <li key={d}><span className="hover:text-blue-400 transition-colors cursor-pointer">{d}</span></li>
+                  <li key={d}><span className="hover:text-[#7cb9e8] transition-colors cursor-pointer">{d}</span></li>
                 ))}
               </ul>
             </div>
@@ -770,20 +788,20 @@ export default function Home() {
               <h4 className="font-bold text-white mb-4 text-sm">Contact</h4>
               <div className="space-y-3 text-sm">
                 <div className="flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <MapPin className="w-4 h-4 text-[#7cb9e8] mt-0.5 flex-shrink-0" />
                   <span>Yaoundé Biyem-Assi, Montée chapelle Obili (10m de EHS)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  <a href="tel:+237620996045" className="hover:text-blue-400">+237 620-996-045</a>
+                  <Phone className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
+                  <a href="tel:+237620996045" className="hover:text-[#7cb9e8]">+237 620-996-045</a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  <a href="tel:+237698104832" className="hover:text-blue-400">+237 698-104-832</a>
+                  <Phone className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
+                  <a href="tel:+237698104832" className="hover:text-[#7cb9e8]">+237 698-104-832</a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                  <a href="mailto:hello@3mtravelegency.com" className="hover:text-blue-400">hello@3mtravelegency.com</a>
+                  <Mail className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
+                  <a href="mailto:hello@3mtravelegency.com" className="hover:text-[#7cb9e8]">hello@3mtravelegency.com</a>
                 </div>
               </div>
             </div>
@@ -791,8 +809,8 @@ export default function Home() {
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
             <p>© 2026 3M Travel & Services SARL. Tous droits réservés.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="#" className="hover:text-blue-400 transition-colors">Politique de confidentialité</a>
-              <a href="#" className="hover:text-blue-400 transition-colors">Conditions d'utilisation</a>
+              <a href="#" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
+              <a href="#" className="hover:text-[#7cb9e8] transition-colors">Conditions d'utilisation</a>
             </div>
           </div>
         </div>

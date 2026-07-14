@@ -12,3 +12,9 @@
 - [x] Animer les transitions entre étapes avec framer-motion (slide + fade)
 - [x] Animer l'apparition des cartes de visa lors de la sélection de destination
 - [x] Animer le formulaire complet avec entrée progressive des champs
+- [x] Uploader le logo 3M sur S3 et récupérer l'URL publique
+- [x] Mettre à jour la palette CSS aux couleurs exactes du logo (bleu royal #1E3A8A, bleu ciel #7CB9E8, blanc)
+- [x] Remplacer l'icône avion dans le header par le vrai logo 3M
+- [x] Intégrer le logo dans le hero (section principale)
+- [x] Intégrer le logo dans le footer
+- [x] Générer et configurer le favicon avec le logo 3M
