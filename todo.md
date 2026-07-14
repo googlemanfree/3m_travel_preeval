@@ -18,3 +18,7 @@
 - [x] Intégrer le logo dans le hero (section principale)
 - [x] Intégrer le logo dans le footer
 - [x] Générer et configurer le favicon avec le logo 3M
+- [x] Ajouter une section Témoignages avec 6 avis de clients ayant obtenu leur visa
+- [x] Implémenter un carousel automatique avec navigation manuelle
+- [x] Animer les cartes avec Framer Motion (fade + slide)
+- [x] Ajouter les étoiles de notation et les drapeaux des pays obtenus

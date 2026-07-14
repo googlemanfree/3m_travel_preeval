@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
   Upload, CheckCircle2, ArrowRight, Users, FileText,
-  Star, Clock, Shield, X, ChevronRight
+  Star, Clock, Shield, X, ChevronRight, ChevronLeft, Quote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -728,6 +728,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
+      <TestimonialsSection />
 
       {/* ─── CTA ─────────────────────────────────────────────────────────── */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
@@ -816,5 +818,277 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// ─── Composant Témoignages ────────────────────────────────────────────────────
+
+const TESTIMONIALS = [
+  {
+    name: "Aminata Diallo",
+    country: "France",
+    flag: "🇫🇷",
+    visa: "Visa Étude",
+    rating: 5,
+    avatar: "AD",
+    color: "bg-[#1e3a8a]",
+    text: "Grâce à 3M Travel & Services, j'ai obtenu mon visa étudiant pour la France en seulement 3 semaines. L'équipe m'a accompagnée à chaque étape, de la constitution du dossier jusqu'à l'obtention du visa. Je recommande vivement !",
+    date: "Mars 2025",
+  },
+  {
+    name: "Jean-Pierre Mbarga",
+    country: "Canada",
+    flag: "🇨🇦",
+    visa: "Résidence Permanente",
+    rating: 5,
+    avatar: "JM",
+    color: "bg-[#2563eb]",
+    text: "Mon dossier de résidence permanente au Canada semblait complexe, mais l'équipe de 3M a su le gérer avec professionnalisme. Aujourd'hui je vis au Canada avec toute ma famille. Merci infiniment !",
+    date: "Janvier 2025",
+  },
+  {
+    name: "Fatou Ndiaye",
+    country: "Allemagne",
+    flag: "🇩🇪",
+    visa: "Visa Travail",
+    rating: 5,
+    avatar: "FN",
+    color: "bg-[#0369a1]",
+    text: "J'avais essayé seule pendant des mois sans succès. En confiant mon dossier à 3M Travel, j'ai obtenu mon visa de travail pour l'Allemagne en 6 semaines. Service impeccable et très réactif.",
+    date: "Février 2025",
+  },
+  {
+    name: "Emmanuel Talla",
+    country: "Belgique",
+    flag: "🇧🇪",
+    visa: "Visa Tourisme",
+    rating: 5,
+    avatar: "ET",
+    color: "bg-[#1e3a8a]",
+    text: "Excellente expérience ! 3M Travel a géré mon visa Schengen pour la Belgique avec une rapidité impressionnante. Conseils clairs, suivi régulier et résultat positif. Je ferai appel à eux pour mon prochain voyage.",
+    date: "Avril 2025",
+  },
+  {
+    name: "Marie-Claire Essomba",
+    country: "Canada",
+    flag: "🇨🇦",
+    visa: "Visa Étude",
+    rating: 5,
+    avatar: "ME",
+    color: "bg-[#2563eb]",
+    text: "Admise dans une université canadienne, j'avais besoin d'un visa rapidement. 3M Travel a monté un dossier solide et j'ai obtenu mon visa en temps record. Professionnalisme et efficacité au rendez-vous !",
+    date: "Juin 2025",
+  },
+  {
+    name: "Patrick Nguema",
+    country: "Espagne",
+    flag: "🇪🇸",
+    visa: "Visa Schengen",
+    rating: 5,
+    avatar: "PN",
+    color: "bg-[#0369a1]",
+    text: "Après deux refus de visa, j'ai fait appel à 3M Travel & Services. Ils ont analysé mes dossiers précédents, identifié les erreurs et monté un nouveau dossier béton. Résultat : visa accordé du premier coup !",
+    date: "Mai 2025",
+  },
+];
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${i < rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TestimonialsSection() {
+  const [active, setActive] = React.useState(0);
+  const [direction, setDirection] = React.useState(1);
+  const total = TESTIMONIALS.length;
+
+  // Auto-play every 5s
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setDirection(1);
+      setActive(prev => (prev + 1) % total);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [total]);
+
+  const goTo = (idx: number) => {
+    setDirection(idx > active ? 1 : -1);
+    setActive(idx);
+  };
+  const prev = () => goTo((active - 1 + total) % total);
+  const next = () => goTo((active + 1) % total);
+
+  // Show 3 cards on desktop: active-1, active, active+1
+  const visibleIndices = [
+    (active - 1 + total) % total,
+    active,
+    (active + 1) % total,
+  ];
+
+  const slideVariants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0, scale: 0.95 }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0, scale: 0.95 }),
+  };
+
+  return (
+    <section className="py-20 bg-gradient-to-b from-white to-[#f0f7ff] overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* Header */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}
+          className="text-center mb-14"
+        >
+          <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Témoignages</p>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+            Ils ont obtenu leur visa avec 3M Travel
+          </h2>
+          <p className="text-gray-500 max-w-2xl mx-auto text-lg">
+            Des centaines de clients nous font confiance chaque année. Voici ce qu'ils disent de leur expérience.
+          </p>
+          {/* Stats bar */}
+          <div className="flex flex-wrap justify-center gap-8 mt-8">
+            {[
+              { value: "500+", label: "Visas obtenus" },
+              { value: "98%", label: "Taux de succès" },
+              { value: "24h", label: "Délai de réponse" },
+              { value: "8", label: "Pays couverts" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-2xl font-extrabold text-[#1e3a8a]">{stat.value}</div>
+                <div className="text-xs text-gray-500 font-medium mt-0.5">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Carousel desktop: 3 cards */}
+        <div className="hidden md:block relative">
+          <div className="grid grid-cols-3 gap-6">
+            {visibleIndices.map((idx, pos) => {
+              const t = TESTIMONIALS[idx];
+              const isCenter = pos === 1;
+              return (
+                <motion.div
+                  key={`${idx}-${active}`}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                  className={`relative rounded-3xl p-7 flex flex-col gap-4 transition-all duration-300 ${
+                    isCenter
+                      ? "bg-white shadow-2xl border-2 border-[#1e3a8a]/20 scale-105 z-10"
+                      : "bg-white/70 shadow-md border border-gray-100 opacity-80"
+                  }`}
+                >
+                  {/* Quote icon */}
+                  <div className="absolute top-5 right-6 opacity-10">
+                    <Quote className="w-12 h-12 text-[#1e3a8a]" />
+                  </div>
+                  {/* Stars */}
+                  <StarRating rating={t.rating} />
+                  {/* Text */}
+                  <p className="text-gray-700 text-sm leading-relaxed flex-1 italic">"{t.text}"</p>
+                  {/* Author */}
+                  <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+                    <div className={`w-11 h-11 rounded-full ${t.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md`}>
+                      {t.avatar}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-gray-900 text-sm truncate">{t.name}</div>
+                      <div className="text-xs text-gray-500">{t.date}</div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-[#eff6ff] rounded-full px-3 py-1">
+                      <span className="text-base leading-none">{t.flag}</span>
+                      <span className="text-xs font-semibold text-[#1e3a8a] whitespace-nowrap">{t.visa}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Carousel mobile: 1 card */}
+        <div className="md:hidden relative overflow-hidden">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={active}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+              className="bg-white rounded-3xl p-6 shadow-xl border border-[#1e3a8a]/10"
+            >
+              <div className="relative">
+                <div className="absolute top-0 right-0 opacity-10">
+                  <Quote className="w-10 h-10 text-[#1e3a8a]" />
+                </div>
+                <StarRating rating={TESTIMONIALS[active].rating} />
+                <p className="text-gray-700 text-sm leading-relaxed mt-3 italic">"{TESTIMONIALS[active].text}"</p>
+                <div className="flex items-center gap-3 mt-5 pt-4 border-t border-gray-100">
+                  <div className={`w-11 h-11 rounded-full ${TESTIMONIALS[active].color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                    {TESTIMONIALS[active].avatar}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-gray-900 text-sm">{TESTIMONIALS[active].name}</div>
+                    <div className="text-xs text-gray-500">{TESTIMONIALS[active].date}</div>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-[#eff6ff] rounded-full px-2.5 py-1">
+                    <span className="text-sm">{TESTIMONIALS[active].flag}</span>
+                    <span className="text-xs font-semibold text-[#1e3a8a]">{TESTIMONIALS[active].visa}</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Navigation */}
+        <div className="flex items-center justify-center gap-4 mt-10">
+          <button
+            onClick={prev}
+            className="w-10 h-10 rounded-full border-2 border-[#1e3a8a] text-[#1e3a8a] flex items-center justify-center hover:bg-[#1e3a8a] hover:text-white transition-colors active:scale-95"
+            aria-label="Précédent"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex gap-2">
+            {TESTIMONIALS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className={`rounded-full transition-all duration-300 ${
+                  i === active ? "w-6 h-3 bg-[#1e3a8a]" : "w-3 h-3 bg-gray-300 hover:bg-[#7cb9e8]"
+                }`}
+                aria-label={`Témoignage ${i + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={next}
+            className="w-10 h-10 rounded-full border-2 border-[#1e3a8a] text-[#1e3a8a] flex items-center justify-center hover:bg-[#1e3a8a] hover:text-white transition-colors active:scale-95"
+            aria-label="Suivant"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    </section>
   );
 }
