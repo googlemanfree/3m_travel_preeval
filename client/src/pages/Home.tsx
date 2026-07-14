@@ -467,10 +467,15 @@ export default function Home() {
                   className="w-full h-44 object-cover"
                 />
                 {/* Badge destinations */}
-                <div className="absolute top-3 right-3 bg-[#1e3a8a]/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg">
-                  <p className="text-xs font-bold text-white">5 destinations</p>
-                  <p className="text-xs text-blue-200">Canada • Luxembourg • Pologne</p>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
+                  className="absolute top-3 right-3 bg-[#1e3a8a]/90 backdrop-blur-sm rounded-xl px-3 py-2 shadow-lg border border-white/10"
+                >
+                  <p className="text-xs font-bold text-white">🌍 30+ pays</p>
+                  <p className="text-xs text-blue-200">Canada • Europe • Golfe • Océanie</p>
+                </motion.div>
               </div>
             </motion.div>
 
