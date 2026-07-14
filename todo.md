@@ -97,3 +97,7 @@
 - [x] Auth Guard sur /procedures : écran d'accès refusé avec CTA connexion/inscription
 - [x] Message d'avertissement sur /login quand redirigé depuis une page protégée
 - [x] Améliorer /dashboard : message d'accueil personnalisé + raccourcis vers les services
+
+## Nom agence + Signature concepteur
+- [x] Afficher "3M Travel Agency" en grand dans le hero de Home.tsx
+- [x] Ajouter la signature Aureol Donfack avec CTA WhatsApp/email dans le footer
