@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import React, { useState, useEffect, useRef } from "react";
 import {
   MapPin, Phone, MessageCircle, ChevronDown, ChevronUp,
   FileText, Globe, Star, Clock, DollarSign, CheckCircle,
   ArrowRight, Briefcase, GraduationCap, Eye, Home,
+  Search, X,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -955,7 +956,7 @@ function DestinationSection({ dest }: { dest: Destination }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div id={`dest-${dest.id}`} className="border border-gray-200 rounded-xl overflow-hidden transition-all duration-300">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors text-left"
@@ -1029,14 +1030,102 @@ function RegionCard({ region, onSelect }: { region: Region; onSelect: () => void
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Search index ────────────────────────────────────────────────────────────
+interface SearchResult {
+  regionId: string;
+  regionName: string;
+  destinationId: string;
+  pays: string;
+  flag: string;
+  procedureTitle: string;
+  procedureType: string;
+  keywords: string;
+}
+
+const SEARCH_INDEX: SearchResult[] = REGIONS.flatMap(region =>
+  region.destinations.flatMap(dest =>
+    dest.procedures.map(proc => ({
+      regionId: region.id,
+      regionName: region.name,
+      destinationId: dest.id,
+      pays: dest.pays,
+      flag: dest.flag,
+      procedureTitle: proc.title,
+      procedureType: proc.type,
+      keywords: `${dest.pays} ${region.name} ${proc.title} ${proc.type}`.toLowerCase(),
+    }))
+  )
+);
+
+// Quick-access country tags
+const QUICK_TAGS = [
+  { label: "🍁 Canada", regionId: "canada" },
+  { label: "🇫🇷 France", regionId: "europe" },
+  { label: "🇩🇪 Allemagne", regionId: "europe" },
+  { label: "🇱🇺 Luxembourg", regionId: "europe" },
+  { label: "🇵🇱 Pologne", regionId: "europe" },
+  { label: "🇬🇧 Royaume-Uni", regionId: "uk-usa" },
+  { label: "🇺🇸 États-Unis", regionId: "uk-usa" },
+  { label: "🇶🇦 Qatar", regionId: "golfe" },
+  { label: "🇦🇪 Dubaï", regionId: "golfe" },
+  { label: "🇦🇺 Australie", regionId: "oceanie" },
+  { label: "🇳🇿 N.-Zélande", regionId: "oceanie" },
+  { label: "🇦🇲 Arménie", regionId: "caucase" },
+];
+
 export default function Procedures() {
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [evalStep, setEvalStep] = useState(1);
   const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const selectedRegion = REGIONS.find(r => r.id === activeRegion);
   const totalProcedures = REGIONS.reduce((s, r) => s + r.destinations.reduce((ss, d) => ss + d.procedures.length, 0), 0);
+
+  // Filtered search results (max 12)
+  const searchResults = searchQuery.trim().length >= 2
+    ? SEARCH_INDEX.filter(item => item.keywords.includes(searchQuery.toLowerCase())).slice(0, 12)
+    : [];
+
+  // Group results by region
+  const groupedResults = searchResults.reduce<Record<string, SearchResult[]>>((acc, item) => {
+    if (!acc[item.regionId]) acc[item.regionId] = [];
+    acc[item.regionId].push(item);
+    return acc;
+  }, {});
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelectResult = (regionId: string, destinationId?: string) => {
+    setActiveRegion(regionId);
+    setSearchQuery("");
+    setSearchFocused(false);
+    // Scroll to content then optionally to specific destination
+    setTimeout(() => {
+      if (destinationId) {
+        const el = document.getElementById(`dest-${destinationId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.classList.add("ring-2", "ring-sky-400", "ring-offset-2");
+          setTimeout(() => el.classList.remove("ring-2", "ring-sky-400", "ring-offset-2"), 2500);
+        }
+      } else {
+        window.scrollTo({ top: 300, behavior: "smooth" });
+      }
+    }, 100);
+  };
 
   const handleEvalSubmit = () => {
     const msg = `Bonjour 3M Travel & Services,\n\nJe souhaite une évaluation de mon dossier :\n\n👤 Nom : ${evalData.nom}\n📧 Email : ${evalData.email}\n📱 Téléphone : ${evalData.tel}\n🌍 Destination : ${evalData.destination}\n📋 Type de visa : ${evalData.type}\n🎓 Niveau d'études : ${evalData.niveau}\n\nMerci de me contacter pour la suite de la procédure.`;
@@ -1086,6 +1175,81 @@ export default function Procedures() {
             Canada, Europe Schengen, Royaume-Uni, États-Unis, Golfe & Moyen-Orient, Océanie, Caucase…
             Choisissez votre destination et découvrez toutes les procédures disponibles.
           </p>
+          {/* ── Barre de recherche ── */}
+          <div ref={searchRef} className="relative w-full max-w-2xl mx-auto mb-6">
+            <div className={`flex items-center bg-white rounded-2xl shadow-xl transition-all duration-200 ${searchFocused ? "ring-4 ring-sky-300/50" : ""}`}>
+              <Search className="w-5 h-5 text-gray-400 ml-4 flex-shrink-0" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                placeholder="Rechercher un pays, un visa, une procédure..."
+                className="flex-1 px-4 py-4 text-gray-800 bg-transparent outline-none text-base placeholder-gray-400"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="mr-3 text-gray-400 hover:text-gray-600 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown résultats */}
+            {searchFocused && searchQuery.trim().length >= 2 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 max-h-80 overflow-y-auto">
+                {searchResults.length === 0 ? (
+                  <div className="px-6 py-8 text-center text-gray-500">
+                    <Globe className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">Aucun résultat pour <strong>"{searchQuery}"</strong></p>
+                    <p className="text-xs text-gray-400 mt-1">Essayez : Canada, France, Qatar, Australie...</p>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    {Object.entries(groupedResults).map(([regionId, items]) => (
+                      <div key={regionId}>
+                        <div className="px-4 py-1.5 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50">
+                          {items[0].regionName}
+                        </div>
+                        {items.map((item, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleSelectResult(item.regionId, item.destinationId)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left"
+                          >
+                            <span className="text-xl">{item.flag}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-gray-800 truncate">{item.pays}</div>
+                              <div className="text-xs text-gray-500 truncate">{item.procedureTitle}</div>
+                            </div>
+                            <Badge variant="outline" className="text-xs flex-shrink-0">
+                              {item.procedureType === "travail" ? "💼 Travail" : item.procedureType === "etudes" ? "🎓 Études" : item.procedureType === "residence" ? "🏠 Résidence" : "👁️ Visiteur"}
+                            </Badge>
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                    <div className="px-4 py-2 border-t border-gray-100 text-xs text-gray-400 text-center">
+                      {searchResults.length} résultat{searchResults.length > 1 ? "s" : ""} trouvé{searchResults.length > 1 ? "s" : ""}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Tags rapides */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {QUICK_TAGS.map(tag => (
+              <button
+                key={tag.label}
+                onClick={() => handleSelectResult(tag.regionId)}
+                className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white text-xs font-medium rounded-full border border-white/20 transition-all duration-150 hover:scale-105"
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+
           <div className="flex flex-wrap justify-center gap-3">
             <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold px-6">
               <Star className="w-4 h-4 mr-2" /> Évaluation gratuite

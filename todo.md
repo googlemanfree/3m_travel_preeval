@@ -113,3 +113,9 @@
 - [x] Générer des images pour chaque région (IA)
 - [x] Rendre la page /procedures publique (accessible sans connexion)
 - [x] Intégrer image dédiée pour le Caucase (Arménie, Géorgie, Azerbaïdjan)
+
+## Barre de Recherche Interactive — Page /procedures
+- [x] Barre de recherche avec suggestions automatiques (pays, visa, procédure)
+- [x] Filtrage en temps réel des régions et destinations par mot-clé
+- [x] Affichage des résultats groupés par région avec navigation directe
+- [x] Raccourcis rapides (tags cliquables) : Canada, Schengen, UK, USA, Qatar, Australie...
