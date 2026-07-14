@@ -1,1148 +1,1320 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search, MapPin, Briefcase, Globe, Star,
-  CheckCircle, Clock, Users, Award,
-  ArrowRight, Phone, MessageCircle, Shield, BookOpen,
-  Plane, Building, ChevronDown, ChevronUp,
-  FileText, Download, X, Euro, DollarSign, Zap,
-  GraduationCap, TrendingUp, CheckCircle2, AlertCircle
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
-import CounterStats from "@/components/CounterStats";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  MapPin, Phone, MessageCircle, ChevronDown, ChevronUp,
+  FileText, Globe, Star, Clock, DollarSign, CheckCircle,
+  ArrowRight, Briefcase, GraduationCap, Eye, Home,
+} from "lucide-react";
 
-// ─── CONSTANTES ───────────────────────────────────────────────────────────────
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
-const WA_NUMBER = "237698104832";
-
-function waLink(msg: string) {
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
-}
-
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-type DestinationId = "canada" | "luxembourg" | "pologne" | "europe" | "golfe";
-type PaymentOption = "integral" | "echelonne" | "garanti" | null;
-
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface Procedure {
   id: string;
+  type: "travail" | "etudes" | "visiteur" | "residence";
   title: string;
-  description: string;
-  details: string[];
-  badge?: string;
-  badgeColor?: string;
-  url?: string;
+  budget: string;
+  delai: string;
+  points: string[];
+  whatsappMsg: string;
 }
 
 interface Destination {
-  id: DestinationId;
+  id: string;
+  pays: string;
   flag: string;
-  country: string;
-  subtitle: string;
   tagline: string;
-  color: string;
-  bgGradient: string;
+  highlight: string;
   procedures: Procedure[];
-  ctaLabel: string;
-  ctaAction: "form" | "whatsapp" | "popup";
-  ctaMessage?: string;
-  highlight?: string;
 }
 
-// ─── DONNÉES DES DESTINATIONS ─────────────────────────────────────────────────
-const DESTINATIONS: Destination[] = [
+interface Region {
+  id: string;
+  name: string;
+  subtitle: string;
+  image: string;
+  badge: string;
+  destinations: Destination[];
+}
+
+// ─── Données complètes extraites des PDFs ─────────────────────────────────────
+const REGIONS: Region[] = [
   {
     id: "canada",
-    flag: "🇨🇦",
-    country: "Canada",
-    subtitle: "Option d'Élite — Résidence Permanente",
-    tagline: "Notre domaine d'excellence depuis 2019. Le chemin le plus sûr vers la résidence permanente.",
-    color: "#C8102E",
-    bgGradient: "from-red-700 to-red-900",
-    ctaLabel: "Évaluer mon éligibilité Canada",
-    ctaAction: "form",
-    highlight: "⭐ Notre Point Fort",
-    procedures: [
+    name: "🍁 Canada",
+    subtitle: "Notre destination phare — Avantage francophone décisif",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_canada-5FXYWbUqwtBsoi8XsjZmJ2.webp",
+    badge: "⭐ Recommandé",
+    destinations: [
       {
-        id: "ca-1",
-        title: "Entrée Express (Fédéral)",
-        description: "Programme phare pour les travailleurs qualifiés bilingues souhaitant obtenir la résidence permanente.",
-        details: [
-          "Score CRS calculé sur vos compétences, expérience et niveau de langue",
-          "Invitation à Présenter une Demande (ITA) envoyée par IRCC",
-          "Résidence permanente obtenue en 6 mois après l'ITA",
-          "3 volets : Travailleurs qualifiés fédéraux, Métiers spécialisés, Expérience canadienne",
-          "Français ou anglais requis (IELTS / TEF Canada)"
+        id: "canada-rp",
+        pays: "Canada",
+        flag: "🍁",
+        tagline: "Résidence Permanente — Express Entry, PNP, Famille",
+        highlight: "500 000 RP/an · Avantage bilingue +16 pts CRS",
+        procedures: [
+          {
+            id: "ca-t1",
+            type: "travail",
+            title: "Express Entry — Travailleurs qualifiés fédéraux",
+            budget: "À partir de 2 500 000 FCFA",
+            delai: "6 mois après ITA",
+            points: [
+              "Résidence permanente directe — voie la plus rapide",
+              "Score CRS calculé sur diplôme, expérience, langue, âge",
+              "Avantage +16 pts CRS pour bilingues FR/EN camerounais",
+              "Secteurs en tension : santé, BTP, IT, transport, hôtellerie",
+              "Citoyenneté accessible après 3 ans de résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par Express Entry Canada (résidence permanente). Pouvez-vous évaluer mon profil ?",
+          },
+          {
+            id: "ca-t2",
+            type: "travail",
+            title: "Programme Candidats des Provinces (PNP)",
+            budget: "À partir de 2 500 000 FCFA",
+            delai: "6–18 mois",
+            points: [
+              "10 provinces disponibles avec quotas spécifiques",
+              "Québec : porte d'entrée privilégiée pour francophones",
+              "Ontario, Colombie-Britannique, Alberta : très actifs",
+              "Nomination provinciale = +600 pts CRS automatiques",
+              "Voie directe vers la résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le PNP Canada. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "ca-t3",
+            type: "travail",
+            title: "Volet Métiers Spécialisés — Soudure, Logistique, Transport",
+            budget: "À partir de 2 200 000 FCFA",
+            delai: "6–12 mois",
+            points: [
+              "Soudure & Chaudronnerie (SCIAN 7237, 7238) — pénurie critique",
+              "Chauffeurs poids lourds Classe 1 — forte demande nationale",
+              "Logistique & Gestion chaîne d'approvisionnement",
+              "Vente B2B & Représentation commerciale",
+              "Certification via Red Seal ou équivalent provincial",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le volet Métiers Spécialisés Canada. Mon métier : ",
+          },
+          {
+            id: "ca-e1",
+            type: "etudes",
+            title: "Study Permit — Permis d'études",
+            budget: "À partir de 2 000 000 FCFA",
+            delai: "6–12 mois avant rentrée",
+            points: [
+              "1ère destination mondiale étudiants : 800 000 étudiants étrangers",
+              "Niveaux : Secondaire, DEC Cégep, Bac, Master, Doctorat, DEP",
+              "Provinces : Québec, Ontario, Colombie-Britannique, Alberta",
+              "PGWP (Post-Graduation Work Permit) : travailler 1–3 ans après diplôme",
+              "Voie directe vers Express Entry et résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Study Permit Canada. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "ca-r1",
+            type: "residence",
+            title: "Regroupement Familial — Parrainage conjoint/parent",
+            budget: "À partir de 1 500 000 FCFA",
+            delai: "12–24 mois",
+            points: [
+              "Parrainage par conjoint, partenaire, enfant ou parent résident/citoyen",
+              "Résidence permanente directe pour le parrainé",
+              "Parrainage parents & grands-parents : Super Visa ou RP",
+              "Engagement financier du parrain sur 3 ans minimum",
+              "Traitement prioritaire pour conjoints et enfants",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, j'ai un proche au Canada et je souhaite le rejoindre. Pouvez-vous m'informer sur le regroupement familial ?",
+          },
         ],
-        badge: "Prioritaire",
-        badgeColor: "bg-red-100 text-red-700"
       },
-      {
-        id: "ca-2",
-        title: "Programmes des Candidats des Provinces (PCP)",
-        description: "Immigration régionale ciblée — chaque province sélectionne des profils adaptés à ses besoins.",
-        details: [
-          "Ontario, Québec, Alberta, Colombie-Britannique, Manitoba et plus",
-          "Volets spécifiques par secteur (tech, santé, agriculture, transport)",
-          "Nomination provinciale = points supplémentaires dans Entrée Express",
-          "Certains volets ne nécessitent pas d'offre d'emploi préalable",
-          "Délais : 6 à 18 mois selon la province"
-        ],
-        badge: "Régional",
-        badgeColor: "bg-blue-100 text-blue-700"
-      },
-      {
-        id: "ca-3",
-        title: "Volet des Métiers Spécialisés",
-        description: "Demande élevée pour les corps de métiers essentiels — traitement accéléré garanti.",
-        details: [
-          "Soudure & Chaudronnerie (SCIAN 7237, 7238)",
-          "Vente B2B & Représentation commerciale",
-          "Logistique & Gestion de la chaîne d'approvisionnement",
-          "Chauffeurs poids lourds (classe 1) — pénurie critique",
-          "Certification des compétences via Red Seal ou équivalent"
-        ],
-        badge: "Métiers",
-        badgeColor: "bg-green-100 text-green-700"
-      },
-      {
-        id: "ca-4",
-        title: "Permis de Travail Temporaire",
-        description: "Voie d'accès progressive — études, stage coopératif ou visa jeune professionnel.",
-        details: [
-          "Permis d'études + autorisation de travail hors campus",
-          "Stage coopératif (co-op) intégré au cursus universitaire",
-          "Visa Jeune Professionnel (Expérience Internationale Canada)",
-          "Permis post-diplôme (PGWP) jusqu'à 3 ans",
-          "Passerelle vers la résidence permanente via Expérience Canadienne"
-        ],
-        badge: "Temporaire",
-        badgeColor: "bg-orange-100 text-orange-700"
-      }
-    ]
-  },
-  {
-    id: "luxembourg",
-    flag: "🇱🇺",
-    country: "Luxembourg",
-    subtitle: "Sélection Cadres & Profils Qualifiés",
-    tagline: "Salaire minimum légal garanti : 3 165 EUR/mois brut. Audit de conformité de votre dossier inclus.",
-    color: "#EF3340",
-    bgGradient: "from-red-600 to-blue-800",
-    ctaLabel: "Demander un Audit Luxembourg",
-    ctaAction: "whatsapp",
-    ctaMessage: "Bonjour 3M Travel, je souhaite un audit pour le Luxembourg. Voici mon profil : ",
-    highlight: "💼 Sélection Élite",
-    procedures: [
-      {
-        id: "lu-1",
-        title: "Visa Salarié Hautement Qualifié — Carte Bleue UE",
-        description: "Directive européenne réservée aux profils qualifiés avec contrat de travail supérieur au seuil légal.",
-        details: [
-          "Salaire brut minimum exigé : 3 165 EUR/mois (seuil légal 2026)",
-          "Contrat de travail visé par le Ministère des Affaires Étrangères (MAEE)",
-          "Diplôme universitaire ou expérience professionnelle équivalente (5 ans)",
-          "Autorisation de séjour et de travail délivrée par la Direction de l'Immigration",
-          "Voie d'accès à la résidence permanente après 5 ans"
-        ],
-        badge: "Carte Bleue UE",
-        badgeColor: "bg-blue-100 text-blue-700"
-      },
-      {
-        id: "lu-2",
-        title: "Visa Travailleur Salarié Standard — Validation ADEM",
-        description: "Procédure standard avec validation préalable par l'Agence pour le Développement de l'Emploi.",
-        details: [
-          "Offre d'emploi validée par l'ADEM (test du marché du travail)",
-          "Dossier déposé auprès de l'Ambassade du Luxembourg ou Direction de l'Immigration",
-          "Secteurs en tension : BTP, hôtellerie-restauration, services financiers, IT",
-          "Regroupement familial possible dès l'obtention du titre de séjour",
-          "Audit préalable de vos diplômes et certifications par 3M Travel"
-        ],
-        badge: "Standard",
-        badgeColor: "bg-gray-100 text-gray-700"
-      }
-    ]
-  },
-  {
-    id: "pologne",
-    flag: "🇵🇱",
-    country: "Pologne",
-    subtitle: "Recrutement Direct & Placement Rapide",
-    tagline: "Contrat garanti avec hébergement inclus. Salaire : 25,36 à 25,50 PLN/heure. Départ en 4-6 semaines.",
-    color: "#DC143C",
-    bgGradient: "from-red-700 to-gray-800",
-    ctaLabel: "Postuler pour la Pologne",
-    ctaAction: "whatsapp",
-    ctaMessage: "Bonjour 3M Travel, je souhaite postuler pour la Pologne (logistique/industrie). Voici mon profil : ",
-    highlight: "🏭 Recrutement Direct",
-    procedures: [
-      {
-        id: "pl-1",
-        title: "Permis de Travail National — Type D (Industrie & Logistique)",
-        description: "Permis de travail national polonais pour les secteurs en forte demande de main-d'œuvre.",
-        details: [
-          "Contrat de travail signé avant le départ du Cameroun",
-          "Secteurs : logistique lourde, manutention, production industrielle",
-          "Hébergement entièrement pris en charge par l'employeur",
-          "Délai d'obtention du permis : 4 à 6 semaines",
-          "Visa national D délivré par l'Ambassade de Pologne"
-        ],
-        badge: "Type D",
-        badgeColor: "bg-red-100 text-red-700"
-      },
-      {
-        id: "pl-2",
-        title: "Programme de Placement Direct — Plateformes Logistiques",
-        description: "Partenariat direct avec des opérateurs logistiques majeurs (ex : ID Logistics, Amazon Poland).",
-        details: [
-          "Salaire garanti : 25,36 à 25,50 PLN/heure (environ 5 500 PLN/mois brut)",
-          "Hébergement fourni et payé par l'employeur sur site",
-          "Contrat à durée déterminée renouvelable (12 à 24 mois)",
-          "Encadrement sur place à l'arrivée par un référent 3M Travel",
-          "Possibilité de renouvellement et de régularisation après 2 ans"
-        ],
-        badge: "Contrat Garanti",
-        badgeColor: "bg-green-100 text-green-700"
-      }
-    ]
+    ],
   },
   {
     id: "europe",
-    flag: "🇪🇺",
-    country: "Europe Zone Schengen",
-    subtitle: "Allemagne, France, Belgique & Plus",
-    tagline: "Visa de recherche d'emploi, Chancenkarte allemande, études et alternance. Accès à 27 pays.",
-    color: "#003399",
-    bgGradient: "from-blue-800 to-indigo-900",
-    ctaLabel: "Consulter les options Europe",
-    ctaAction: "popup",
-    highlight: "🌍 Zone Schengen",
-    procedures: [
+    name: "🇪🇺 Europe Schengen",
+    subtitle: "30+ pays — Visa, Travail, Études, Résidence, Alternance",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_europe_schengen-axNNPzgDevQha8zjXRX6ed.webp",
+    badge: "30+ pays",
+    destinations: [
       {
-        id: "eu-1",
-        title: "Visa de Recherche d'Emploi — Allemagne",
-        description: "Opportunité unique : séjourner en Allemagne pour chercher un emploi qualifié sur place.",
-        details: [
-          "Durée : 6 mois non renouvelables pour chercher un emploi",
-          "Conditions : diplôme reconnu en Allemagne ou expérience équivalente",
-          "Secteurs prioritaires : IT, ingénierie, santé, BTP",
-          "Conversion en visa de travail dès l'obtention d'un contrat",
-          "Reconnaissance des diplômes via anabin / KMK"
+        id: "luxembourg",
+        pays: "Luxembourg",
+        flag: "🇱🇺",
+        tagline: "PIB/habitant le plus élevé au monde — Destination élite 3M",
+        highlight: "Salaire min. 2 570 €/mois · Trilingue FR/DE/LU",
+        procedures: [
+          {
+            id: "lu-t1",
+            type: "travail",
+            title: "Carte Bleue UE — Salarié Hautement Qualifié",
+            budget: "À partir de 2 800 000 FCFA",
+            delai: "3–5 mois",
+            points: [
+              "Salaire brut minimum exigé : 3 165 EUR/mois (seuil légal 2026)",
+              "Contrat de travail visé par le Ministère des Affaires Étrangères (MAEE)",
+              "Diplôme universitaire Bac+3 minimum ou 5 ans d'expérience",
+              "Autorisation de séjour et de travail — Direction de l'Immigration",
+              "Voie vers résidence permanente après 5 ans",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la Carte Bleue UE Luxembourg. Pouvez-vous auditer mon profil ?",
+          },
+          {
+            id: "lu-t2",
+            type: "travail",
+            title: "Visa Travailleur Salarié Standard — Validation ADEM",
+            budget: "À partir de 2 500 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Offre d'emploi validée par l'ADEM (test du marché du travail)",
+              "Secteurs en tension : BTP, hôtellerie-restauration, IT, finance",
+              "Regroupement familial possible dès l'obtention du titre de séjour",
+              "Audit préalable de vos diplômes et certifications par 3M Travel",
+              "Accès frontalier France, Belgique, Allemagne — 3 pays en 30 min",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail Luxembourg (standard). Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "lu-e1",
+            type: "etudes",
+            title: "Visa Études — Université du Luxembourg",
+            budget: "À partir de 1 500 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Université du Luxembourg — classée top 200 mondial",
+              "Cours en français, anglais et allemand",
+              "Bourses d'études disponibles pour étudiants africains",
+              "Travail autorisé 15h/semaine pendant les études",
+              "Voie vers résidence permanente après 5 ans",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études au Luxembourg. Pouvez-vous m'informer ?",
+          },
         ],
-        badge: "🇩🇪 Allemagne",
-        badgeColor: "bg-yellow-100 text-yellow-800"
       },
       {
-        id: "eu-2",
-        title: "Chancenkarte — Carte d'Opportunités Allemande",
-        description: "Nouveau visa basé sur un système de points pour les profils qualifiés hors UE.",
-        details: [
-          "Système de points : diplôme (4 pts), expérience (2 pts), langue (2 pts), âge (1 pt)",
-          "Score minimum requis : 6 points sur 10",
-          "Durée : 1 an pour chercher un emploi ou tester un poste",
-          "Travail partiel autorisé (jusqu'à 20h/semaine) pendant la recherche",
-          "Lancée en 2024 — forte demande, délais encore raisonnables"
+        id: "france",
+        pays: "France",
+        flag: "🇫🇷",
+        tagline: "350 000 postes vacants · 185 métiers en tension · DOM-TOM",
+        highlight: "SMIC 1 767 €/mois · Diaspora camerounaise 100 000+",
+        procedures: [
+          {
+            id: "fr-t1",
+            type: "travail",
+            title: "Visa Travail — Métiers en Tension (185 métiers exemptés)",
+            budget: "À partir de 2 600 000 FCFA",
+            delai: "2–4 mois",
+            points: [
+              "185 métiers exemptés d'opposabilité de l'emploi",
+              "Infirmiers, maçons, chauffeurs SPL, électriciens, développeurs IT",
+              "SMIC 1 767 €/mois · Secteurs qualifiés : 2 500–6 000 €/mois",
+              "EU Blue Card : diplôme Bac+3 + salaire ≥ 44 000 €/an",
+              "DOM-TOM (Martinique, Guadeloupe, Guyane) : forte demande",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail France. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "fr-e1",
+            type: "etudes",
+            title: "Visa Études — BTS, Licence, Master, Alternance",
+            budget: "À partir de 1 800 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Universités publiques, grandes écoles, BTS, IUT",
+              "Alternance : contrat d'apprentissage rémunéré pendant les études",
+              "Droit au travail 20h/semaine pendant les études",
+              "Passerelle vers titre de séjour salarié après diplôme",
+              "Campus France Cameroun — procédure bien codifiée",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en France. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "fr-v1",
+            type: "visiteur",
+            title: "Visa Visiteur Schengen — France",
+            budget: "À partir de 400 000 FCFA",
+            delai: "2–4 semaines",
+            points: [
+              "Ambassade directe à Yaoundé — procédure bien codifiée",
+              "Court séjour 90 jours — tourisme, famille, affaires",
+              "Accès à tout l'espace Schengen (27 pays)",
+              "Stratégie : historique de séjour pour futur visa travail",
+              "Délais prévisibles — traitement rapide",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur France. Pouvez-vous m'aider ?",
+          },
         ],
-        badge: "🇩🇪 Chancenkarte",
-        badgeColor: "bg-orange-100 text-orange-700"
       },
       {
-        id: "eu-3",
-        title: "Visa d'Études Supérieures & Alternance",
-        description: "Études universitaires ou formation en alternance dans les pays Schengen.",
-        details: [
-          "France : BTS, Licence Pro, Master avec contrat d'apprentissage",
-          "Belgique : universités francophones (UCLouvain, ULB, ULiège)",
-          "Allemagne : Ausbildung (formation duale 2-3 ans, salaire 600-1 200 EUR/mois)",
-          "Droit au travail pendant les études (20h/semaine en France)",
-          "Passerelle vers la résidence longue durée après le diplôme"
+        id: "allemagne",
+        pays: "Allemagne",
+        flag: "🇩🇪",
+        tagline: "Chancenkarte · Ausbildung · 1ère économie d'Europe",
+        highlight: "Salaire min. 12,41 €/h · Chancenkarte 2024",
+        procedures: [
+          {
+            id: "de-t1",
+            type: "travail",
+            title: "Chancenkarte — Carte des Opportunités (2024)",
+            budget: "À partir de 2 400 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Nouveau visa 2024 : chercher un emploi qualifié en Allemagne",
+              "Système à points : diplôme (4), expérience (2), langue (2), âge (1)",
+              "Score minimum 6/10 requis — travail partiel 20h/semaine autorisé",
+              "Salaire min. 12,41 €/h · Secteurs IT, santé, ingénierie",
+              "Voie vers résidence permanente après 4 ans",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la Chancenkarte Allemagne. Pouvez-vous évaluer mes points ?",
+          },
+          {
+            id: "de-f1",
+            type: "travail",
+            title: "Ausbildung — Formation Professionnelle Duale",
+            budget: "À partir de 1 800 000 FCFA",
+            delai: "6–12 mois",
+            points: [
+              "Formation rémunérée 700–1 200 €/mois pendant 2–3 ans",
+              "Secteurs : soins infirmiers, mécanique, électronique, IT, BTP",
+              "Diplôme reconnu dans toute l'Union Européenne",
+              "Contrat de travail garanti à la fin de la formation",
+              "Cours d'allemand obligatoire — niveau B1 minimum requis",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par l'Ausbildung en Allemagne. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "de-e1",
+            type: "etudes",
+            title: "Visa Études — Universités allemandes (frais quasi nuls)",
+            budget: "À partir de 1 500 000 FCFA",
+            delai: "3–5 mois",
+            points: [
+              "Universités publiques : frais quasi nuls (150–350 €/semestre)",
+              "Top universités : TU Munich, Heidelberg, Berlin, Hambourg",
+              "Cours en anglais disponibles dans de nombreux masters",
+              "Travail autorisé 120 jours/an pendant les études",
+              "Visa chercheur d'emploi 18 mois après obtention du diplôme",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en Allemagne. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "de-v1",
+            type: "visiteur",
+            title: "Visa Visiteur Schengen — Allemagne",
+            budget: "À partir de 350 000 FCFA",
+            delai: "2–5 semaines",
+            points: [
+              "Via VFS Global Yaoundé — centre de dépôt Allemagne",
+              "Court séjour 90 jours — tourisme, affaires, famille",
+              "Accès à tout l'espace Schengen (27 pays)",
+              "Stratégie : 1er visa pour constituer un historique de voyages",
+              "Berlin, Munich, Hambourg, Cologne — villes dynamiques",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur Allemagne. Pouvez-vous m'aider ?",
+          },
         ],
-        badge: "Études & Alternance",
-        badgeColor: "bg-purple-100 text-purple-700"
-      }
-    ]
+      },
+      {
+        id: "pologne",
+        pays: "Pologne",
+        flag: "🇵🇱",
+        tagline: "Recrutement direct · 25,36–25,50 PLN/h · Hébergement inclus",
+        highlight: "6ème économie UE · Hub tech : Google, Microsoft, Samsung",
+        procedures: [
+          {
+            id: "pl-t1",
+            type: "travail",
+            title: "Permis de Travail Type D — Industrie & Logistique",
+            budget: "À partir de 2 200 000 FCFA",
+            delai: "4–6 semaines",
+            points: [
+              "Contrat de travail signé avant le départ du Cameroun",
+              "Salaire 25,36–25,50 PLN/h (≈ 5 500 PLN/mois brut)",
+              "Hébergement entièrement pris en charge par l'employeur",
+              "Secteurs : logistique lourde, manutention, production industrielle",
+              "Via VFS Global Yaoundé — représentation Pologne par Allemagne",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail Pologne. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "pl-t2",
+            type: "travail",
+            title: "Placement Direct — Plateformes Logistiques (ID Logistics, Amazon)",
+            budget: "À partir de 2 200 000 FCFA",
+            delai: "4–6 semaines",
+            points: [
+              "Partenariat direct avec opérateurs logistiques majeurs",
+              "Contrat à durée déterminée renouvelable (12 à 24 mois)",
+              "Encadrement sur place à l'arrivée par un référent 3M Travel",
+              "Possibilité de renouvellement et de régularisation après 2 ans",
+              "Hub tech Wrocław, Cracovie, Varsovie — Silicon Tatra",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Placement Direct en Pologne. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "pl-e1",
+            type: "etudes",
+            title: "Visa Études — Universités polonaises",
+            budget: "À partir de 1 200 000 FCFA",
+            delai: "2–4 mois",
+            points: [
+              "Frais de scolarité très bas comparés à l'Europe occidentale",
+              "Universités reconnues dans l'espace européen (Erasmus+)",
+              "Cours disponibles en anglais dans de nombreux programmes",
+              "Coût de la vie parmi les plus bas d'Europe",
+              "Voie vers résidence permanente UE après diplôme",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en Pologne. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "pl-v1",
+            type: "visiteur",
+            title: "Visa Visiteur Schengen — Pologne",
+            budget: "À partir de 350 000 FCFA",
+            delai: "2–5 semaines",
+            points: [
+              "Via VFS Global Yaoundé — représentation par Allemagne",
+              "Cracovie UNESCO, Auschwitz-Birkenau, Varsovie reconstituée",
+              "Prix bien inférieurs à l'Europe occidentale",
+              "Très bon rapport qualité/prix pour 1er visa Schengen",
+              "Accès à tout l'espace Schengen",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur Pologne. Pouvez-vous m'aider ?",
+          },
+        ],
+      },
+      {
+        id: "belgique",
+        pays: "Belgique",
+        flag: "🇧🇪",
+        tagline: "Cœur de l'UE · Siège de la Commission Européenne · Francophone",
+        highlight: "Salaire min. 1 994 €/mois · Bilingue FR/NL",
+        procedures: [
+          {
+            id: "be-e1",
+            type: "etudes",
+            title: "Visa Études — UCLouvain, ULB, ULiège",
+            budget: "À partir de 1 400 000 FCFA",
+            delai: "3–5 mois",
+            points: [
+              "Universités francophones de rang mondial : UCLouvain, ULB, ULiège",
+              "Frais modérés : 800–1 500 €/an pour étudiants hors-UE",
+              "Bruxelles : capitale de l'UE — réseau professionnel unique",
+              "Travail autorisé 20h/semaine pendant les études",
+              "Voie vers résidence permanente après diplôme",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en Belgique. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "be-v1",
+            type: "visiteur",
+            title: "Visa Visiteur Schengen — Belgique",
+            budget: "À partir de 350 000 FCFA",
+            delai: "2–4 semaines",
+            points: [
+              "Ambassade de Belgique à Yaoundé — représentation Luxembourg incluse",
+              "Bruxelles, Bruges, Gand — patrimoine UNESCO",
+              "Accès à tout l'espace Schengen (27 pays)",
+              "Stratégie : historique de voyages pour futur visa études",
+              "Traitement rapide — délais prévisibles",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur Belgique. Pouvez-vous m'aider ?",
+          },
+        ],
+      },
+      {
+        id: "autres-europe",
+        pays: "Autres pays Schengen",
+        flag: "🌍",
+        tagline: "Portugal, Espagne, Italie, Pays-Bas, Suisse, Malte, Estonie, Hongrie...",
+        highlight: "20+ pays couverts — Visiteur, Travail, Études",
+        procedures: [
+          {
+            id: "eu-v1",
+            type: "visiteur",
+            title: "Visa Visiteur Schengen — Tous pays",
+            budget: "À partir de 350 000 FCFA",
+            delai: "2–6 semaines",
+            points: [
+              "Autriche, Danemark, Espagne, Finlande, Grèce, Hongrie",
+              "Islande, Italie, Lettonie, Liechtenstein, Lituanie, Malte",
+              "Pays-Bas, Portugal, Slovaquie, Slovénie, Suède, Suisse",
+              "Turquie (visa électronique e-Visa disponible en ligne)",
+              "Un seul visa Schengen = accès à 27 pays européens",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par un Visa Visiteur Schengen. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "eu-t1",
+            type: "travail",
+            title: "Visa Travail — Europe centrale & orientale",
+            budget: "À partir de 1 800 000 FCFA",
+            delai: "2–4 mois",
+            points: [
+              "Estonie : visa travail numérique — hub tech balte",
+              "Hongrie : visa travail — salaire min. 232 000 HUF/mois",
+              "Malte : visa travail — anglophone, hub financier méditerranéen",
+              "Roumanie, Bulgarie, Croatie : recrutement direct disponible",
+              "République Tchèque, Slovaquie : industrie automobile en tension",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par un Visa Travail en Europe centrale. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "eu-e1",
+            type: "etudes",
+            title: "Visa Études — Europe du Sud & Est",
+            budget: "À partir de 1 000 000 FCFA",
+            delai: "3–5 mois",
+            points: [
+              "Portugal : frais modérés, langue latine proche du français",
+              "Espagne : universités reconnues, vie abordable",
+              "Italie : art, design, gastronomie — universités historiques",
+              "Danemark, Finlande : masters en anglais, bourses disponibles",
+              "Malte : cours en anglais, passerelle vers Royaume-Uni",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par des Études en Europe du Sud. Pouvez-vous m'accompagner ?",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "uk-usa",
+    name: "🇬🇧🇺🇸 Royaume-Uni & États-Unis",
+    subtitle: "Skilled Worker Visa · H-1B · NHS · Silicon Valley",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_uk_usa-AexsjiW7S4Up8p43DfNrkW.webp",
+    badge: "Profils qualifiés",
+    destinations: [
+      {
+        id: "uk",
+        pays: "Royaume-Uni",
+        flag: "🇬🇧",
+        tagline: "Post-Brexit : Camerounais à égalité avec les Européens",
+        highlight: "Skilled Worker Visa · NHS recrute massivement",
+        procedures: [
+          {
+            id: "uk-t1",
+            type: "travail",
+            title: "Skilled Worker Visa — Royaume-Uni",
+            budget: "À partir de 2 800 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Post-Brexit : plus de distinction UE/hors-UE — égalité totale",
+              "NHS : recrutement massif infirmiers et médecins africains",
+              "Secteur IT Londres : salaires 40 000–100 000 £/an",
+              "Finance City of London : 1ère place financière mondiale",
+              "Salaire min. 26 200 £/an (seuil Skilled Worker 2024)",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Skilled Worker Visa Royaume-Uni. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "uk-e1",
+            type: "etudes",
+            title: "Student Visa — Universités britanniques",
+            budget: "À partir de 2 000 000 FCFA",
+            delai: "3–5 mois",
+            points: [
+              "Oxford, Cambridge, Imperial, UCL — top universités mondiales",
+              "Cours en anglais — atout pour Camerounais anglophones",
+              "Graduate Route Visa : travailler 2 ans après le diplôme",
+              "Travail autorisé 20h/semaine pendant les études",
+              "Voie vers Skilled Worker Visa après diplôme",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études au Royaume-Uni. Pouvez-vous m'informer ?",
+          },
+        ],
+      },
+      {
+        id: "usa",
+        pays: "États-Unis",
+        flag: "🇺🇸",
+        tagline: "Silicon Valley · H-1B · Green Card · 1ère économie mondiale",
+        highlight: "Salaires tech 150 000–300 000 USD/an",
+        procedures: [
+          {
+            id: "us-t1",
+            type: "travail",
+            title: "Visa Travail H-1B — Profils IT, Ingénierie, Médecine",
+            budget: "À partir de 3 200 000 FCFA",
+            delai: "6–12 mois",
+            points: [
+              "Silicon Valley : salaires tech les plus élevés du monde",
+              "H-1B : profils IT, ingénierie, médecine, finance",
+              "Green Card après H-1B : résidence permanente",
+              "Tirage au sort annuel H-1B — préparation dossier cruciale",
+              "Visa O-1 (talent exceptionnel) : alternative sans tirage au sort",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa H-1B États-Unis. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "us-v1",
+            type: "visiteur",
+            title: "Visa Visiteur B1/B2 — Tourisme & Affaires",
+            budget: "À partir de 600 000 FCFA",
+            delai: "1–3 mois",
+            points: [
+              "B1 : affaires, conférences, négociations commerciales",
+              "B2 : tourisme, famille, traitement médical",
+              "Durée de séjour : jusqu'à 6 mois",
+              "Entretien obligatoire à l'Ambassade de Yaoundé",
+              "Stratégie : constitution d'un dossier solide pour maximiser les chances",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur USA (B1/B2). Pouvez-vous m'aider ?",
+          },
+        ],
+      },
+    ],
   },
   {
     id: "golfe",
-    flag: "🇦🇪",
-    country: "Golfe & Moyen-Orient",
-    subtitle: "Émirats Arabes Unis, Qatar",
-    tagline: "Visa de travail par parrainage employeur. Hôtellerie, Sécurité, BTP. Salaire net exonéré d'impôt.",
-    color: "#00732F",
-    bgGradient: "from-green-700 to-teal-900",
-    ctaLabel: "En savoir plus sur le Golfe",
-    ctaAction: "whatsapp",
-    ctaMessage: "Bonjour 3M Travel, je souhaite des informations sur les opportunités au Golfe (EAU / Qatar). Mon profil : ",
-    highlight: "🌟 Salaire Net",
-    procedures: [
+    name: "🌙 Golfe & Moyen-Orient",
+    subtitle: "0% impôt · Qatar · Dubaï · Île Maurice · Salaires compétitifs",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_golfe_moyen_orient-6T7Rz3aV2LexKUQihpNqoQ.webp",
+    badge: "0% impôt",
+    destinations: [
       {
-        id: "ae-1",
-        title: "Visa de Travail par Parrainage Employeur",
-        description: "Système de parrainage (kafala) — l'employeur sponsor obtient le visa pour le travailleur.",
-        details: [
-          "Secteurs en forte demande : hôtellerie 5 étoiles, sécurité, BTP, restauration",
-          "Contrat de travail signé avant l'entrée dans le pays",
-          "Visa de résidence (Emirates ID / Qatar ID) inclus dans le package",
-          "Logement et transport souvent pris en charge par l'employeur",
-          "Salaire net exonéré d'impôt sur le revenu"
+        id: "qatar",
+        pays: "Qatar",
+        flag: "🇶🇦",
+        tagline: "Qatar National Vision 2030 · 0% impôt sur le revenu",
+        highlight: "QatarEnergy · Hamad Medical · IT Smart Qatar",
+        procedures: [
+          {
+            id: "qa-t1",
+            type: "travail",
+            title: "Visa Travail — Qatar (Parrainage Employeur)",
+            budget: "À partir de 2 600 000 FCFA",
+            delai: "2–4 mois",
+            points: [
+              "0% impôt sur le revenu — salaire net = salaire brut",
+              "Qatar National Vision 2030 : IT, santé, éducation, infrastructure",
+              "QatarEnergy : 1ère réserve LNG mondiale — ingénieurs recherchés",
+              "Hamad Medical Corporation : recrutement massif soignants",
+              "Logement et transport souvent pris en charge par l'employeur",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail Qatar. Pouvez-vous m'accompagner ?",
+          },
         ],
-        badge: "🇦🇪 EAU / 🇶🇦 Qatar",
-        badgeColor: "bg-green-100 text-green-700"
       },
       {
-        id: "ae-2",
-        title: "Visa de Recherche d'Emploi & Freelance — Émirats",
-        description: "Les Émirats proposent un visa spécifique pour chercher un emploi ou exercer en freelance.",
-        details: [
-          "Visa de recherche d'emploi : 60 à 120 jours pour trouver un poste",
-          "Freelance Visa : exercer en indépendant dans les zones franches (DMCC, DIFC)",
-          "Visa Nomade Digital : résider aux EAU en travaillant pour un employeur étranger",
-          "Pas de taxe sur le revenu, pas de TVA sur les services personnels",
-          "Accès à un système bancaire international de premier rang"
+        id: "dubai",
+        pays: "Dubaï (EAU)",
+        flag: "🇦🇪",
+        tagline: "Hub mondial · Freelance Visa · Nomade Digital · 0% impôt",
+        highlight: "0% impôt · DIFC · Zones franches · Visa Nomade Digital",
+        procedures: [
+          {
+            id: "ae-t1",
+            type: "travail",
+            title: "Visa Travail par Parrainage — EAU",
+            budget: "À partir de 2 200 000 FCFA",
+            delai: "1–3 mois",
+            points: [
+              "Système de parrainage (kafala) — l'employeur sponsor le visa",
+              "Secteurs : hôtellerie 5 étoiles, sécurité, BTP, restauration, finance",
+              "Emirates ID inclus dans le package employeur",
+              "Logement et transport souvent pris en charge",
+              "Salaire net exonéré d'impôt sur le revenu",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail Dubaï/EAU. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "ae-f1",
+            type: "travail",
+            title: "Freelance Visa & Nomade Digital — EAU",
+            budget: "À partir de 1 500 000 FCFA",
+            delai: "2–4 semaines",
+            points: [
+              "Freelance Visa : exercer en indépendant dans les zones franches (DMCC, DIFC)",
+              "Visa Nomade Digital : résider aux EAU en travaillant pour un employeur étranger",
+              "Visa de recherche d'emploi : 60 à 120 jours pour trouver un poste",
+              "Pas de taxe sur le revenu, pas de TVA sur les services personnels",
+              "Accès à un système bancaire international de premier rang",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Freelance Visa ou Nomade Digital Dubaï. Pouvez-vous m'informer ?",
+          },
+          {
+            id: "ae-v1",
+            type: "visiteur",
+            title: "Visa Visiteur — Dubaï (30 jours extensibles)",
+            budget: "À partir de 400 000 FCFA",
+            delai: "1–2 semaines",
+            points: [
+              "Visa électronique disponible en ligne — simple et rapide",
+              "30 jours extensibles à 60 jours",
+              "Hub commercial mondial — networking exceptionnel",
+              "Expo City Dubai, Burj Khalifa, Palm Jumeirah",
+              "Stratégie : exploration avant visa travail ou résidence",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Visiteur Dubaï. Pouvez-vous m'aider ?",
+          },
         ],
-        badge: "Freelance & Nomade",
-        badgeColor: "bg-teal-100 text-teal-700"
-      }
-    ]
-  }
+      },
+      {
+        id: "maurice",
+        pays: "Île Maurice",
+        flag: "🇲🇺",
+        tagline: "Paradis fiscal africain · Résidence permanente accessible",
+        highlight: "Impôt flat 15% · Bilingue FR/EN · Océan Indien",
+        procedures: [
+          {
+            id: "mu-t1",
+            type: "travail",
+            title: "Occupation Permit — Travail & Résidence combinés",
+            budget: "À partir de 1 500 000 FCFA",
+            delai: "1–3 mois",
+            points: [
+              "Fiscalité très avantageuse — impôt flat 15%",
+              "Bilingue anglais/français — intégration facile pour Camerounais",
+              "Secteurs : tourisme, finance, IT, BPO (centres d'appels)",
+              "Occupation Permit : travail + résidence combinés en un seul titre",
+              "Résidence permanente après 3 ans",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par l'Occupation Permit Île Maurice. Pouvez-vous m'informer ?",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "oceanie",
+    name: "🌏 Océanie",
+    subtitle: "Australie & Nouvelle-Zélande — Résidence Permanente",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_australia_nz-N2VuG4Tq6mjyiEWTQAi4tJ.webp",
+    badge: "RP disponible",
+    destinations: [
+      {
+        id: "australie",
+        pays: "Australie",
+        flag: "🇦🇺",
+        tagline: "Résidence Permanente — Employeur, Indépendant, Famille, Régional",
+        highlight: "Salaire min. 23,23 AUD/h · Mines, Santé, IT, BTP",
+        procedures: [
+          {
+            id: "au-rp1",
+            type: "residence",
+            title: "Résidence Permanente — Voie Employeur (subclass 186/187)",
+            budget: "À partir de 2 500 000 FCFA",
+            delai: "6–24 mois",
+            points: [
+              "Sponsorisé par une entreprise australienne accréditée",
+              "Subclass 186 (métropole) et 187 (régional) disponibles",
+              "Secteurs en tension : santé, mines, IT, construction, agriculture",
+              "Salaire min. 23,23 AUD/h (2024) — parmi les plus élevés au monde",
+              "Citoyenneté accessible après 4 ans de résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la Résidence Permanente Australie (voie employeur). Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "au-rp2",
+            type: "residence",
+            title: "Résidence Permanente — Voie Indépendante (Points)",
+            budget: "À partir de 2 200 000 FCFA",
+            delai: "12–24 mois",
+            points: [
+              "Système à points : diplôme, expérience, anglais, âge",
+              "Score minimum 65 points requis",
+              "Skilled Nominated Visa (subclass 190) — nomination d'un État",
+              "Voie régionale (subclass 491) : zones rurales — quotas plus faciles",
+              "Working Holiday Visa (18–35 ans) : explorer et travailler",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la Résidence Permanente Australie (voie indépendante). Pouvez-vous évaluer mes points ?",
+          },
+          {
+            id: "au-e1",
+            type: "etudes",
+            title: "Student Visa — Universités australiennes",
+            budget: "À partir de 2 000 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Universités du Groupe des 8 : Melbourne, Sydney, ANU, Queensland",
+              "Cours en anglais — atout pour Camerounais anglophones",
+              "Travail autorisé 48h/quinzaine pendant les études",
+              "Post-Study Work Visa : travailler 2–4 ans après diplôme",
+              "Passerelle vers la résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en Australie. Pouvez-vous m'informer ?",
+          },
+        ],
+      },
+      {
+        id: "nouvelle-zelande",
+        pays: "Nouvelle-Zélande",
+        flag: "🇳🇿",
+        tagline: "Green List · Skilled Migrant · Qualité de vie top 5 mondial",
+        highlight: "Green List · SMC Points · Famille · Affaires",
+        procedures: [
+          {
+            id: "nz-rp1",
+            type: "residence",
+            title: "Résidence Permanente — Green List & Skilled Migrant",
+            budget: "À partir de 2 000 000 FCFA",
+            delai: "6–18 mois",
+            points: [
+              "Green List : métiers en pénurie — résidence directe ou accélérée",
+              "Skilled Migrant Category (SMC) : système à points",
+              "Voie familiale : rejoindre un proche résident ou citoyen",
+              "Voie affaires : investissement minimum requis",
+              "Qualité de vie classée top 5 mondial — nature préservée",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la Résidence Permanente Nouvelle-Zélande. Pouvez-vous m'accompagner ?",
+          },
+          {
+            id: "nz-t1",
+            type: "travail",
+            title: "Accredited Employer Work Visa (AEWV)",
+            budget: "À partir de 2 000 000 FCFA",
+            delai: "3–6 mois",
+            points: [
+              "Salaire min. 22,70 NZD/h (2024)",
+              "Secteurs en tension : santé, IT, construction, agriculture",
+              "Employeur accrédité par Immigration New Zealand",
+              "Working Holiday Visa (18–35 ans) disponible",
+              "Passerelle vers résidence permanente",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le Visa Travail Nouvelle-Zélande. Pouvez-vous m'informer ?",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: "caucase",
+    name: "🌿 Caucase & Stratégie Schengen",
+    subtitle: "Arménie · Géorgie · Azerbaïdjan — Entrée libre, stratégie visa",
+    image: "https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/dest_caucase-MT44CPwLLTnPY8e8htrQTC.webp",
+    badge: "Sans visa",
+    destinations: [
+      {
+        id: "armenie",
+        pays: "Arménie",
+        flag: "🇦🇲",
+        tagline: "Entrée libre 180j · 20–40 USD/jour · Stratégie Schengen documentée",
+        highlight: "Aucun visa requis · 1er voyage international idéal",
+        procedures: [
+          {
+            id: "am-v1",
+            type: "visiteur",
+            title: "Séjour Arménie — Entrée libre (aucun visa)",
+            budget: "À partir de 300 000 FCFA",
+            delai: "Immédiat",
+            points: [
+              "Entrée libre 180 jours — aucun visa requis pour Camerounais",
+              "Coût de la vie : 20–40 USD/jour — très abordable",
+              "Erevan : capitale moderne, gastronomie exceptionnelle",
+              "Stratégie 3M : construire historique voyages pour visa Schengen",
+              "Guide VisaSchengen via Arménie — stratégie documentée dans nos PDFs",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par la stratégie Arménie pour obtenir un visa Schengen. Pouvez-vous m'expliquer ?",
+          },
+          {
+            id: "am-e1",
+            type: "etudes",
+            title: "Visa Études — Arménie (médecine, ingénierie, IT)",
+            budget: "À partir de 800 000 FCFA",
+            delai: "1–2 mois",
+            points: [
+              "Universités reconnues — frais très bas (500–2 000 USD/an)",
+              "Médecine, ingénierie, informatique — formations solides",
+              "Diplôme reconnu dans l'espace post-soviétique",
+              "Stratégie : études + constitution dossier Schengen",
+              "Communauté africaine croissante à Erevan",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par les Études en Arménie. Pouvez-vous m'informer ?",
+          },
+        ],
+      },
+      {
+        id: "georgie",
+        pays: "Géorgie",
+        flag: "🇬🇪",
+        tagline: "Entrée libre · Hub numérique · Tbilissi cosmopolite",
+        highlight: "Sans visa · Coût de vie bas · Économie en croissance",
+        procedures: [
+          {
+            id: "ge-v1",
+            type: "visiteur",
+            title: "Séjour Géorgie — Entrée libre (aucun visa)",
+            budget: "À partir de 300 000 FCFA",
+            delai: "Immédiat",
+            points: [
+              "Entrée libre pour Camerounais — pas de visa requis",
+              "Tbilissi : ville cosmopolite, gastronomie unique, architecture",
+              "Coût de vie très bas — idéal pour nomades numériques",
+              "Hub tech émergent — startups en croissance",
+              "Stratégie : constitution historique voyages pour Schengen",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par un séjour en Géorgie. Pouvez-vous m'accompagner ?",
+          },
+        ],
+      },
+      {
+        id: "azerbaidjan",
+        pays: "Azerbaïdjan",
+        flag: "🇦🇿",
+        tagline: "Bakou moderne · Pétrole & Gaz · e-Visa disponible",
+        highlight: "e-Visa simple · Économie pétrolière · Pont Europe-Asie",
+        procedures: [
+          {
+            id: "az-v1",
+            type: "visiteur",
+            title: "e-Visa Azerbaïdjan — En ligne, 3–5 jours",
+            budget: "À partir de 250 000 FCFA",
+            delai: "3–5 jours",
+            points: [
+              "e-Visa en ligne — simple et rapide",
+              "Bakou : architecture futuriste, Vieille Ville UNESCO",
+              "Carrefour Europe-Asie — position géostratégique unique",
+              "Secteur pétrolier et gazier — opportunités pour ingénieurs",
+              "Coût de vie modéré — bonne qualité de vie",
+            ],
+            whatsappMsg: "Bonjour 3M Travel, je suis intéressé(e) par le e-Visa Azerbaïdjan. Pouvez-vous m'aider ?",
+          },
+        ],
+      },
+    ],
+  },
 ];
 
-// ─── TIMELINE STEPS ───────────────────────────────────────────────────────────
-const TIMELINE_STEPS = [
-  {
-    number: "01", icon: Award, color: "from-blue-600 to-blue-800",
-    title: "Évaluation & Score",
-    subtitle: "65 000 FCFA",
-    description: "Audit complet de votre profil, traduction de vos justificatifs et rapport de scoring officiel.",
-    duration: "24-48h"
-  },
-  {
-    number: "02", icon: Star, color: "from-amber-500 to-amber-700",
-    title: "Choix de Formule",
-    subtitle: "3 options",
-    description: "Sélection de votre niveau de garantie : Intégral, Échelonné ou Permis Garanti.",
-    duration: "1 jour"
-  },
-  {
-    number: "03", icon: BookOpen, color: "from-indigo-600 to-indigo-800",
-    title: "Livret de Compétences",
-    subtitle: "Certification",
-    description: "Vérification des diplômes, constitution du dossier professionnel, préparation linguistique.",
-    duration: "2-4 semaines"
-  },
-  {
-    number: "04", icon: Users, color: "from-teal-600 to-teal-800",
-    title: "Mise en Avant du Profil",
-    subtitle: "Employeurs partenaires",
-    description: "Soumission officielle dans les bassins de sélection étatiques et employeurs partenaires.",
-    duration: "4-12 semaines"
-  },
-  {
-    number: "05", icon: Plane, color: "from-green-600 to-green-800",
-    title: "Visa & Départ",
-    subtitle: "Billet inclus",
-    description: "Réception de votre permis, organisation du vol via notre plateforme intégrée.",
-    duration: "Variable"
-  },
-];
+// ─── Type config ──────────────────────────────────────────────────────────────
+const TYPE_CONFIG = {
+  travail: { icon: Briefcase, label: "Travail", color: "bg-blue-100 text-blue-700" },
+  etudes: { icon: GraduationCap, label: "Études", color: "bg-purple-100 text-purple-700" },
+  visiteur: { icon: Eye, label: "Visiteur", color: "bg-green-100 text-green-700" },
+  residence: { icon: Home, label: "Résidence", color: "bg-amber-100 text-amber-700" },
+};
 
-// ─── COMPOSANT PRINCIPAL ──────────────────────────────────────────────────────
-export default function Procedures() {
-  const [activeDestination, setActiveDestination] = useState<DestinationId>("canada");
-  const [expandedProcedure, setExpandedProcedure] = useState<string | null>(null);
-  const [showEuropePopup, setShowEuropePopup] = useState(false);
-  function scrollToFormules() {
-    document.getElementById("formules")?.scrollIntoView({ behavior: "smooth" });
-  }
-  const [selectedPayment, setSelectedPayment] = useState<PaymentOption>(null);
-  const [showEvalForm, setShowEvalForm] = useState(false);
-  const [evalDestination, setEvalDestination] = useState<string>("");
-
-  const currentDest = DESTINATIONS.find(d => d.id === activeDestination)!;
-
-  function handleCTA(dest: Destination) {
-    if (dest.ctaAction === "form") {
-      setEvalDestination(dest.country);
-      setShowEvalForm(true);
-    } else if (dest.ctaAction === "whatsapp") {
-      window.open(waLink(dest.ctaMessage ?? `Bonjour 3M Travel, je souhaite des informations sur ${dest.country}.`), "_blank");
-    } else if (dest.ctaAction === "popup") {
-      setShowEuropePopup(true);
-    }
-  }
+// ─── ProcedureCard ────────────────────────────────────────────────────────────
+function ProcedureCard({ proc }: { proc: Procedure }) {
+  const [open, setOpen] = useState(false);
+  const cfg = TYPE_CONFIG[proc.type];
+  const Icon = cfg.icon;
+  const waUrl = `https://wa.me/237698104832?text=${encodeURIComponent(proc.whatsappMsg)}`;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* ── HEADER ──────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[#1E3A8A] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="3M Travel" className="h-12 w-12 rounded-full object-cover border-2 border-white/30" />
-            <div className="text-white">
-              <div className="font-bold text-lg leading-tight">3M Travel & Services</div>
-              <div className="text-xs text-blue-200">Votre mobilité, notre expertise</div>
-            </div>
-          </Link>
-          <div className="hidden md:flex items-center gap-5">
-            <Link href="/" className="text-blue-200 hover:text-white text-sm transition-colors">Accueil</Link>
-            <Link href="/flights" className="text-blue-200 hover:text-white text-sm transition-colors flex items-center gap-1">
-              <Plane className="w-3.5 h-3.5" /> Vols
-            </Link>
-            <button onClick={scrollToFormules}
-              className="text-yellow-300 hover:text-white text-sm font-semibold transition-colors flex items-center gap-1">
-              <Star className="w-3.5 h-3.5" /> Nos Formules
-            </button>
-            <a href="/login"
-              className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm font-bold transition-colors flex items-center gap-2 border border-white/30">
-              👤 Mon Espace
-            </a>
-            <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur vos services d'immigration.")}
-              target="_blank" rel="noopener noreferrer"
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
-            </a>
+    <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-start gap-2 flex-1">
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 mt-0.5 ${cfg.color}`}>
+              <Icon className="w-3 h-3" />
+              {cfg.label}
+            </span>
+            <h4 className="text-sm font-semibold text-gray-800 leading-tight">{proc.title}</h4>
           </div>
-          {/* Mobile: bouton WhatsApp */}
-          <a href={waLink("Bonjour 3M Travel")} target="_blank" rel="noopener noreferrer"
-            className="md:hidden bg-green-500 text-white p-2 rounded-full">
-            <MessageCircle className="w-5 h-5" />
-          </a>
+          <button
+            onClick={() => setOpen(!open)}
+            className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0 mt-0.5"
+            aria-label={open ? "Réduire" : "Voir les détails"}
+          >
+            {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
-      </header>
 
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#1E3A8A] via-[#1e4faa] to-[#2563EB] text-white py-14 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-2 rounded-full text-sm mb-5">
-              <Globe className="w-4 h-4 text-yellow-300" />
-              <span>Encyclopédie Migratoire — 5 destinations mondiales · 88 procédures</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
-              Immigration & Mobilité<br />
-              <span className="text-[#7CB9E8]">Internationale</span>
-            </h1>
-            <p className="text-blue-100 text-lg max-w-2xl mx-auto mb-8">
-              Choisissez votre destination, découvrez toutes les procédures disponibles et démarrez votre dossier accompagné par nos experts certifiés.
-            </p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <button onClick={() => { setEvalDestination(""); setShowEvalForm(true); }}
-                className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2 shadow-lg">
-                <Star className="w-4 h-4" /> Évaluer mon éligibilité
-              </button>
-              <button               onClick={scrollToFormules}
-                className="bg-white/10 hover:bg-white/20 text-white border border-white/30 px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2">
-                <Award className="w-4 h-4" /> Voir nos formules & tarifs
-              </button>
-
-            </div>
-          </motion.div>
+        <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+          <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-green-500" />{proc.budget}</span>
+          <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-blue-500" />{proc.delai}</span>
         </div>
-      </section>
 
-      {/* ── COMPTEUR DYNAMIQUE ──────────────────────────────────────────────── */}
-      <CounterStats variant="dark" />
+        {open && (
+          <ul className="space-y-1.5 mb-3 border-t pt-3">
+            {proc.points.map((p, i) => (
+              <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />
+                {p}
+              </li>
+            ))}
+          </ul>
+        )}
 
-      {/* ── SÉLECTEUR DE DESTINATIONS ────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 py-10">
-        {/* Grille de sélection */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          {DESTINATIONS.map((dest) => (
-            <button key={dest.id} onClick={() => setActiveDestination(dest.id)}
-              className={`relative rounded-2xl p-4 text-left transition-all duration-300 border-2 ${
-                activeDestination === dest.id
-                  ? "border-[#1E3A8A] bg-[#1E3A8A] text-white shadow-xl scale-105"
-                  : "border-gray-200 bg-white text-gray-700 hover:border-[#2563EB] hover:shadow-md"
-              }`}>
-              <div className="text-3xl mb-2">{dest.flag}</div>
-              <div className="font-bold text-sm leading-tight">{dest.country}</div>
-              <div className={`text-xs mt-1 ${activeDestination === dest.id ? "text-blue-200" : "text-gray-400"}`}>
-                {dest.highlight}
-              </div>
-            </button>
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 w-full py-2 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-lg transition-colors"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Démarrer ma procédure
+        </a>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── DestinationSection ───────────────────────────────────────────────────────
+function DestinationSection({ dest }: { dest: Destination }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{dest.flag}</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-gray-900">{dest.pays}</h3>
+              <Badge variant="outline" className="text-xs">
+                {dest.procedures.length} procédure{dest.procedures.length > 1 ? "s" : ""}
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">{dest.tagline}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:block text-xs text-blue-600 font-medium max-w-xs text-right">{dest.highlight}</span>
+          {expanded ? <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />}
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="p-4 bg-gray-50 border-t grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {dest.procedures.map(proc => (
+            <ProcedureCard key={proc.id} proc={proc} />
           ))}
         </div>
-
-        {/* Contenu de la destination active */}
-        <AnimatePresence mode="wait">
-          <motion.div key={activeDestination}
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}>
-
-            {/* En-tête destination */}
-            <div className={`bg-gradient-to-r ${currentDest.bgGradient} rounded-3xl p-8 text-white mb-8`}>
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-5xl">{currentDest.flag}</span>
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-black">{currentDest.country}</h2>
-                      <p className="text-white/80 text-sm">{currentDest.subtitle}</p>
-                    </div>
-                  </div>
-                  <p className="text-white/90 max-w-xl">{currentDest.tagline}</p>
-                </div>
-                <div className="flex flex-col gap-3 flex-shrink-0">
-                  <button onClick={() => handleCTA(currentDest)}
-                    className="bg-white text-[#1E3A8A] px-6 py-3 rounded-full font-bold hover:bg-blue-50 transition-colors flex items-center gap-2 shadow-lg whitespace-nowrap">
-                    <ArrowRight className="w-4 h-4" /> {currentDest.ctaLabel}
-                  </button>
-                  <a href={waLink(`Bonjour 3M Travel, je souhaite des informations sur ${currentDest.country}.`)}
-                    target="_blank" rel="noopener noreferrer"
-                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold transition-colors flex items-center gap-2 justify-center">
-                    <MessageCircle className="w-4 h-4" /> Parler à un conseiller
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Procédures disponibles */}
-            <h3 className="text-xl font-black text-[#1E3A8A] mb-5 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Procédures disponibles — {currentDest.country}
-              <span className="bg-[#1E3A8A] text-white text-xs px-2 py-0.5 rounded-full ml-1">
-                {currentDest.procedures.length} procédure{currentDest.procedures.length > 1 ? "s" : ""}
-              </span>
-            </h3>
-
-            <div className="space-y-4">
-              {currentDest.procedures.map((proc, i) => (
-                <motion.div key={proc.id}
-                  initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                  {/* En-tête de la procédure */}
-                  <button
-                    onClick={() => setExpandedProcedure(expandedProcedure === proc.id ? null : proc.id)}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="bg-[#1E3A8A] text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 mt-0.5">
-                        {i + 1}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h4 className="font-bold text-[#1E3A8A] text-base">{proc.title}</h4>
-                          {proc.badge && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${proc.badgeColor}`}>
-                              {proc.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-500 text-sm">{proc.description}</p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {expandedProcedure === proc.id
-                        ? <ChevronUp className="w-5 h-5 text-[#1E3A8A]" />
-                        : <ChevronDown className="w-5 h-5 text-gray-400" />
-                      }
-                    </div>
-                  </button>
-
-                  {/* Détails expandables */}
-                  <AnimatePresence>
-                    {expandedProcedure === proc.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className="overflow-hidden">
-                        <div className="px-5 pb-5 border-t border-gray-100">
-                          <ul className="mt-4 space-y-2">
-                            {proc.details.map((detail, j) => (
-                              <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
-                                <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                                <span>{detail}</span>
-                              </li>
-                            ))}
-                          </ul>
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <button onClick={() => handleCTA(currentDest)}
-                              className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
-                              <ArrowRight className="w-3.5 h-3.5" /> {currentDest.ctaLabel}
-                            </button>
-                            <a href={waLink(`Bonjour 3M Travel, je suis intéressé(e) par la procédure "${proc.title}" pour ${currentDest.country}. Mon profil : `)}
-                              target="_blank" rel="noopener noreferrer"
-                              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-1">
-                              <MessageCircle className="w-3.5 h-3.5" /> Discuter de cette procédure
-                            </a>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Bouton principal CTA répété en bas */}
-            <div className="mt-8 flex flex-wrap gap-3 justify-center">
-              <button onClick={() => handleCTA(currentDest)}
-                className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-8 py-4 rounded-full font-bold text-lg transition-colors flex items-center gap-2 shadow-xl">
-                <ArrowRight className="w-5 h-5" /> {currentDest.ctaLabel}
-              </button>
-              <button onClick={scrollToFormules}
-                className="border-2 border-[#1E3A8A] text-[#1E3A8A] hover:bg-[#1E3A8A] hover:text-white px-8 py-4 rounded-full font-bold text-lg transition-colors flex items-center gap-2">
-                <Award className="w-5 h-5" /> Voir les formules & tarifs
-              </button>
-
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </section>
-
-      {/* ── SECTION FORMULES DE PAIEMENT ─────────────────────────────────────── */}
-      <section id="formules" className="bg-gradient-to-br from-gray-50 to-blue-50 py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
-              <AlertCircle className="w-4 h-4" />
-              Frais d'ouverture de dossier : 65 000 FCFA non remboursables
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black text-[#1E3A8A] mb-3">
-              Choisissez Votre Formule de Garantie
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              L'ouverture, le traitement, la traduction et la soumission de tout dossier individuel exigent un règlement initial de <strong>65 000 FCFA non remboursables</strong>. Choisissez ensuite la formule adaptée à votre situation.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Formule 1 : Intégral */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              onClick={() => setSelectedPayment(selectedPayment === "integral" ? null : "integral")}
-              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all ${
-                selectedPayment === "integral"
-                  ? "border-[#1E3A8A] bg-[#1E3A8A] text-white shadow-2xl"
-                  : "border-gray-200 bg-white hover:border-[#1E3A8A] hover:shadow-lg"
-              }`}>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
-                selectedPayment === "integral" ? "bg-white/20" : "bg-blue-100"
-              }`}>
-                <Zap className={`w-7 h-7 ${selectedPayment === "integral" ? "text-white" : "text-[#1E3A8A]"}`} />
-              </div>
-              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
-                selectedPayment === "integral" ? "text-blue-200" : "text-[#2563EB]"
-              }`}>Option 1</div>
-              <h3 className="text-xl font-black mb-2">Règlement Intégral</h3>
-              <p className={`text-sm mb-4 ${selectedPayment === "integral" ? "text-blue-100" : "text-gray-500"}`}>
-                Traitement accéléré prioritaire — votre dossier passe en tête de file.
-              </p>
-              <ul className="space-y-2 text-sm">
-                {["Paiement unique à l'ouverture du dossier", "Traitement prioritaire immédiat", "Suivi dédié avec conseiller attitré", "Accès à toutes les destinations disponibles", "Rapport de scoring sous 24h"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "integral" ? "text-green-300" : "text-green-500"}`} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              {selectedPayment === "integral" && (
-                <a href={waLink("Bonjour 3M Travel, je choisis la formule Règlement Intégral. Je souhaite ouvrir mon dossier.")}
-                  target="_blank" rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-5 w-full bg-white text-[#1E3A8A] py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
-                  <MessageCircle className="w-4 h-4" /> Choisir cette formule
-                </a>
-              )}
-            </motion.div>
-
-            {/* Formule 2 : Échelonné */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              onClick={() => setSelectedPayment(selectedPayment === "echelonne" ? null : "echelonne")}
-              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all relative ${
-                selectedPayment === "echelonne"
-                  ? "border-amber-500 bg-amber-500 text-white shadow-2xl"
-                  : "border-amber-200 bg-white hover:border-amber-500 hover:shadow-lg"
-              }`}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">Populaire</span>
-              </div>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
-                selectedPayment === "echelonne" ? "bg-white/20" : "bg-amber-100"
-              }`}>
-                <Clock className={`w-7 h-7 ${selectedPayment === "echelonne" ? "text-white" : "text-amber-600"}`} />
-              </div>
-              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
-                selectedPayment === "echelonne" ? "text-amber-100" : "text-amber-600"
-              }`}>Option 2</div>
-              <h3 className="text-xl font-black mb-2">Échelonné Flexible</h3>
-              <p className={`text-sm mb-4 ${selectedPayment === "echelonne" ? "text-amber-100" : "text-gray-500"}`}>
-                Paiement structuré sur 4 à 5 mois — adapté à votre budget.
-              </p>
-              <ul className="space-y-2 text-sm">
-                {["65 000 FCFA à l'ouverture (non remboursables)", "Solde réparti sur 4 à 5 mensualités", "Traitement standard avec suivi régulier", "Flexibilité en cas d'imprévus financiers", "Contrat de paiement signé et sécurisé"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "echelonne" ? "text-amber-200" : "text-green-500"}`} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              {selectedPayment === "echelonne" && (
-                <a href={waLink("Bonjour 3M Travel, je choisis la formule Échelonné Flexible. Je souhaite ouvrir mon dossier.")}
-                  target="_blank" rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-5 w-full bg-white text-amber-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-amber-50 transition-colors">
-                  <MessageCircle className="w-4 h-4" /> Choisir cette formule
-                </a>
-              )}
-            </motion.div>
-
-            {/* Formule 3 : Permis Garanti */}
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              onClick={() => setSelectedPayment(selectedPayment === "garanti" ? null : "garanti")}
-              className={`cursor-pointer rounded-3xl p-7 border-2 transition-all ${
-                selectedPayment === "garanti"
-                  ? "border-green-600 bg-green-600 text-white shadow-2xl"
-                  : "border-green-200 bg-white hover:border-green-600 hover:shadow-lg"
-              }`}>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 ${
-                selectedPayment === "garanti" ? "bg-white/20" : "bg-green-100"
-              }`}>
-                <Shield className={`w-7 h-7 ${selectedPayment === "garanti" ? "text-white" : "text-green-600"}`} />
-              </div>
-              <div className={`text-xs font-bold uppercase tracking-wider mb-2 ${
-                selectedPayment === "garanti" ? "text-green-100" : "text-green-600"
-              }`}>Option 3</div>
-              <h3 className="text-xl font-black mb-2">Formule Permis Garanti</h3>
-              <p className={`text-sm mb-4 ${selectedPayment === "garanti" ? "text-green-100" : "text-gray-500"}`}>
-                Nos honoraires réglés <strong>uniquement après l'obtention du visa</strong>.
-              </p>
-              <ul className="space-y-2 text-sm">
-                {["65 000 FCFA à l'ouverture (non remboursables)", "Solde des honoraires après visa obtenu", "Engagement de résultat de 3M Travel", "Profils sélectionnés sur critères stricts", "Suivi premium jusqu'à l'arrivée à destination"].map((item, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className={`w-4 h-4 flex-shrink-0 ${selectedPayment === "garanti" ? "text-green-200" : "text-green-500"}`} />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              {selectedPayment === "garanti" && (
-                <a href={waLink("Bonjour 3M Travel, je choisis la Formule Permis Garanti. Je souhaite vérifier mon éligibilité.")}
-                  target="_blank" rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="mt-5 w-full bg-white text-green-600 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-50 transition-colors">
-                  <MessageCircle className="w-4 h-4" /> Vérifier mon éligibilité
-                </a>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Rappel frais obligatoires */}
-          <div className="mt-8 bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-3">
-            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-amber-800 mb-1">Rappel important — Frais d'ouverture non remboursables</p>
-              <p className="text-amber-700 text-sm">
-                Quelle que soit la formule choisie, l'ouverture, le traitement, la traduction et la soumission de tout dossier individuel exigent un règlement initial de <strong>65 000 FCFA non remboursables</strong>. Ces frais couvrent l'audit de votre profil, la traduction certifiée de vos documents et la préparation de votre rapport de scoring officiel.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── TIMELINE DU PARCOURS CANDIDAT ───────────────────────────────────── */}
-      <section className="bg-gradient-to-br from-[#0f2460] to-[#1E3A8A] py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full text-blue-200 text-sm mb-4">
-              <Clock className="w-4 h-4" /> Processus transparent et structuré
-            </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-3">Votre Parcours Candidat</h2>
-            <p className="text-blue-200 max-w-xl mx-auto">
-              De l'évaluation initiale à l'obtention de votre visa — 5 étapes claires et rassurantes.
-            </p>
-          </div>
-
-          {/* Desktop horizontal */}
-          <div className="hidden lg:flex items-start gap-0 relative">
-            <div className="absolute top-12 left-[10%] right-[10%] h-0.5 bg-white/20 z-0" />
-            {TIMELINE_STEPS.map((step, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.15 }}
-                className="flex-1 flex flex-col items-center text-center px-3 relative z-10">
-                <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${step.color} flex flex-col items-center justify-center shadow-xl mb-4 border-4 border-white/20`}>
-                  <step.icon className="w-8 h-8 text-white mb-1" />
-                  <span className="text-white/60 text-xs font-bold">{step.number}</span>
-                </div>
-                <h3 className="text-white font-bold text-sm mb-1">{step.title}</h3>
-                <span className="text-yellow-300 text-xs font-semibold mb-2">{step.subtitle}</span>
-                <p className="text-blue-200 text-xs leading-relaxed">{step.description}</p>
-                <span className="mt-2 bg-white/10 text-blue-100 text-xs px-2 py-1 rounded-full">{step.duration}</span>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Mobile vertical */}
-          <div className="lg:hidden space-y-4">
-            {TIMELINE_STEPS.map((step, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="flex gap-4 bg-white/5 rounded-2xl p-4 border border-white/10">
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${step.color} flex flex-col items-center justify-center flex-shrink-0`}>
-                  <step.icon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-white font-bold text-sm">{step.title}</h3>
-                    <span className="bg-white/10 text-blue-200 text-xs px-2 py-0.5 rounded-full">{step.duration}</span>
-                  </div>
-                  <span className="text-yellow-300 text-xs font-semibold block mb-1">{step.subtitle}</span>
-                  <p className="text-blue-200 text-xs">{step.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-10">
-            <button onClick={() => { setEvalDestination(""); setShowEvalForm(true); }}
-              className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-8 py-4 rounded-full font-bold text-lg transition-colors shadow-xl">
-              <Star className="w-5 h-5" /> Démarrer Mon Parcours — Évaluation Gratuite
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* ── BANDEAU CONFORMITÉ JURIDIQUE ─────────────────────────────────────── */}
-      <section className="bg-gray-50 border-t border-gray-200 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-start gap-4 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-            <div className="bg-[#1E3A8A] p-3 rounded-xl flex-shrink-0">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-[#1E3A8A] mb-2 flex items-center gap-2">
-                Bandeau de Conformité Juridique & Éthique
-                <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full font-semibold">Agence Agréée</span>
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                <strong>3M Travel & Services SARL (RC/YAO/2019/A/2567 | NIU : M112417203369H)</strong> s'engage au strict respect des réglementations d'immigration. Notre rôle se limite au conseil technique, à la préparation administrative rigoureuse de vos dossiers et à la mise en relation avec des employeurs partenaires agréés. L'octroi final des visas et permis de travail relève de la compétence souveraine des services d'immigration de chaque État d'accueil.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer className="bg-[#1E3A8A] text-white py-8 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="3M Travel" className="h-10 w-10 rounded-full object-cover border-2 border-white/30" />
-            <div>
-              <div className="font-bold">3M Travel & Services SARL</div>
-              <div className="text-blue-200 text-xs">Yaoundé Biyem-Assi, Montée chapelle Obili</div>
-            </div>
-          </div>
-          <div className="flex gap-4 text-sm text-blue-200">
-            <a href="tel:+237620996045" className="hover:text-white flex items-center gap-1">
-              <Phone className="w-3 h-3" /> +237 620-996-045
-            </a>
-            <a href="tel:+237698104832" className="hover:text-white flex items-center gap-1">
-              <Phone className="w-3 h-3" /> +237 698-104-832
-            </a>
-          </div>
-          <Link href="/" className="text-blue-200 hover:text-white text-sm">← Retour à l'accueil</Link>
-        </div>
-      </footer>
-
-      {/* ── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────────── */}
-      <a href={waLink("Bonjour 3M Travel, j'ai une question sur les procédures d'immigration.")}
-        target="_blank" rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl transition-all hover:scale-110 flex items-center gap-2">
-        <MessageCircle className="w-6 h-6" />
-        <span className="hidden md:block text-sm font-bold">WhatsApp</span>
-      </a>
-
-      {/* ── POP-UP EUROPE SCHENGEN ───────────────────────────────────────────── */}
-      <AnimatePresence>
-        {showEuropePopup && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-            onClick={() => setShowEuropePopup(false)}>
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-              <div className="bg-gradient-to-r from-blue-800 to-indigo-900 p-6 rounded-t-3xl text-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-4xl">🇪🇺</span>
-                    <div>
-                      <h3 className="text-xl font-black">Europe Zone Schengen</h3>
-                      <p className="text-blue-200 text-sm">Allemagne · France · Belgique · 27 pays</p>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowEuropePopup(false)}
-                    className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-6 space-y-5">
-                {DESTINATIONS.find(d => d.id === "europe")?.procedures.map((proc, i) => (
-                  <div key={proc.id} className="border border-gray-100 rounded-2xl p-5">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="bg-[#1E3A8A] text-white w-7 h-7 rounded-full flex items-center justify-center font-black text-xs flex-shrink-0">
-                        {i + 1}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-bold text-[#1E3A8A]">{proc.title}</h4>
-                          {proc.badge && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${proc.badgeColor}`}>
-                              {proc.badge}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-500 text-sm">{proc.description}</p>
-                      </div>
-                    </div>
-                    <ul className="space-y-1.5 ml-10">
-                      {proc.details.map((detail, j) => (
-                        <li key={j} className="flex items-start gap-2 text-sm text-gray-600">
-                          <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span>{detail}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-                <div className="flex gap-3 pt-2">
-                  <a href={waLink("Bonjour 3M Travel, je souhaite des informations sur les visas Europe Schengen (Allemagne, France, Belgique). Mon profil : ")}
-                    target="_blank" rel="noopener noreferrer"
-                    className="flex-1 bg-[#1E3A8A] hover:bg-[#2563EB] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors">
-                    <MessageCircle className="w-4 h-4" /> Consulter un conseiller Europe
-                  </a>
-                  <button onClick={() => setShowEuropePopup(false)}
-                    className="px-5 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors font-medium">
-                    Fermer
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ── MODAL FORMULAIRE D'ÉVALUATION ───────────────────────────────────── */}
-      <AnimatePresence>
-        {showEvalForm && (
-          <EvaluationModal
-            destination={evalDestination}
-            onClose={() => setShowEvalForm(false)}
-          />
-        )}
-      </AnimatePresence>
+      )}
     </div>
   );
 }
 
-// ─── MODAL D'ÉVALUATION ───────────────────────────────────────────────────────
-function EvaluationModal({ destination, onClose }: { destination: string; onClose: () => void }) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({
-    nom: "",
-    telephone: "",
-    email: "",
-    destination: destination || "",
-    niveauEtudes: "",
-    experience: "",
-    langue: "",
-    situation: "",
-    message: ""
-  });
-
-  const destinations = ["Canada", "Luxembourg", "Pologne", "Allemagne", "France", "Belgique", "Émirats Arabes Unis", "Qatar", "Autre"];
-  const niveauxEtudes = ["Baccalauréat", "BTS / DUT", "Licence / Bachelor", "Master / MBA", "Doctorat", "Formation professionnelle"];
-  const experiences = ["Moins de 2 ans", "2 à 5 ans", "5 à 10 ans", "Plus de 10 ans"];
-  const langues = ["Français uniquement", "Français + Anglais (intermédiaire)", "Français + Anglais (courant)", "Bilingue ou plus"];
-
-  function buildWAMessage() {
-    return `🌍 *NOUVELLE DEMANDE D'ÉVALUATION — 3M Travel*\n\n` +
-      `👤 *Nom :* ${form.nom}\n` +
-      `📞 *Téléphone :* ${form.telephone}\n` +
-      `📧 *Email :* ${form.email}\n` +
-      `🎯 *Destination souhaitée :* ${form.destination}\n` +
-      `🎓 *Niveau d'études :* ${form.niveauEtudes}\n` +
-      `💼 *Expérience professionnelle :* ${form.experience}\n` +
-      `🗣️ *Niveau de langue :* ${form.langue}\n` +
-      `📋 *Situation actuelle :* ${form.situation}\n` +
-      (form.message ? `💬 *Message :* ${form.message}\n` : "") +
-      `\n_Envoyé depuis le site 3mtravelagency.click_`;
-  }
-
-  function handleSubmit() {
-    window.open(waLink(buildWAMessage()), "_blank");
-    onClose();
-  }
-
-  const isStep1Valid = form.nom.trim() && form.telephone.trim();
-  const isStep2Valid = form.destination && form.niveauEtudes && form.experience;
-  const isStep3Valid = form.langue && form.situation;
+// ─── RegionCard ───────────────────────────────────────────────────────────────
+function RegionCard({ region, onSelect }: { region: Region; onSelect: () => void }) {
+  const totalProcedures = region.destinations.reduce((sum, d) => sum + d.procedures.length, 0);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}>
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden">
+    <div
+      onClick={onSelect}
+      className="group cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+    >
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={region.image}
+          alt={region.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute top-3 right-3">
+          <span className="bg-white/90 text-gray-800 text-xs font-bold px-2 py-1 rounded-full">
+            {region.badge}
+          </span>
+        </div>
+        <div className="absolute bottom-3 left-3 right-3">
+          <h3 className="text-white font-black text-lg leading-tight">{region.name}</h3>
+          <p className="text-white/80 text-xs mt-0.5 line-clamp-1">{region.subtitle}</p>
+        </div>
+      </div>
+      <div className="bg-white p-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <span className="flex items-center gap-1"><Globe className="w-3.5 h-3.5" />{region.destinations.length} pays</span>
+          <span className="flex items-center gap-1"><FileText className="w-3.5 h-3.5" />{totalProcedures} procédures</span>
+        </div>
+        <span className="text-blue-600 text-xs font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+          Explorer <ArrowRight className="w-3.5 h-3.5" />
+        </span>
+      </div>
+    </div>
+  );
+}
 
-        {/* Header */}
-        <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xl font-black">Évaluation d'Éligibilité</h3>
-              <p className="text-blue-200 text-sm">Réponse de nos experts sous 24h</p>
+// ─── Main Component ───────────────────────────────────────────────────────────
+export default function Procedures() {
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [evalStep, setEvalStep] = useState(1);
+  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+
+  const selectedRegion = REGIONS.find(r => r.id === activeRegion);
+  const totalProcedures = REGIONS.reduce((s, r) => s + r.destinations.reduce((ss, d) => ss + d.procedures.length, 0), 0);
+
+  const handleEvalSubmit = () => {
+    const msg = `Bonjour 3M Travel & Services,\n\nJe souhaite une évaluation de mon dossier :\n\n👤 Nom : ${evalData.nom}\n📧 Email : ${evalData.email}\n📱 Téléphone : ${evalData.tel}\n🌍 Destination : ${evalData.destination}\n📋 Type de visa : ${evalData.type}\n🎓 Niveau d'études : ${evalData.niveau}\n\nMerci de me contacter pour la suite de la procédure.`;
+    window.open(`https://wa.me/237698104832?text=${encodeURIComponent(msg)}`, "_blank");
+    setShowEvalModal(false);
+    setEvalStep(1);
+    setEvalData({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* ── Navigation ── */}
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logo.png" alt="3M Travel" className="w-8 h-8 rounded-full" onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+            <span className="font-black text-blue-700 text-lg">3M Travel</span>
+          </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+            <Link href="/" className="hover:text-blue-600 transition-colors">Accueil</Link>
+            <Link href="/flights" className="hover:text-blue-600 transition-colors">Vols</Link>
+            <Link href="/procedures" className="text-blue-700 border-b-2 border-blue-700 pb-0.5">Procédures</Link>
+            <Link href="/dashboard" className="hover:text-blue-600 transition-colors">Mon Espace</Link>
+          </div>
+          <div className="flex items-center gap-2">
+            <a href="tel:+237698104832" className="hidden sm:flex items-center gap-1 text-xs text-gray-600 hover:text-blue-600">
+              <Phone className="w-3.5 h-3.5" /> +237 698-104-832
+            </a>
+            <Button size="sm" onClick={() => setShowEvalModal(true)} className="bg-blue-700 hover:bg-blue-800 text-white text-xs">
+              Évaluation gratuite
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <Badge className="bg-white/20 text-white border-white/30 mb-4 text-sm px-4 py-1">
+            🌍 {totalProcedures} procédures officielles · {REGIONS.length} grandes régions · Mis à jour 2026
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
+            Nous vous accompagnons<br />
+            <span className="text-sky-300">partout dans le monde</span>
+          </h1>
+          <p className="text-blue-100 text-lg max-w-2xl mx-auto mb-8">
+            Canada, Europe Schengen, Royaume-Uni, États-Unis, Golfe & Moyen-Orient, Océanie, Caucase…
+            Choisissez votre destination et découvrez toutes les procédures disponibles.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold px-6">
+              <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+            </Button>
+            <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20des%20informations%20sur%20vos%20destinations" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="border-white text-white hover:bg-white/10 px-6">
+                <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Conformité ── */}
+      <div className="bg-amber-50 border-b border-amber-200 px-4 py-2">
+        <p className="max-w-5xl mx-auto text-xs text-amber-800 text-center">
+          ⚖️ <strong>3M Travel & Services SARL</strong> — RC/YAO/2019/A/2567 | NIU : M112417203369H — Rôle de conseil et d'accompagnement. Les décisions d'octroi de visa appartiennent exclusivement aux autorités consulaires.
+        </p>
+      </div>
+
+      {/* ── Contenu principal ── */}
+      <div className="max-w-7xl mx-auto px-4 py-10">
+
+        {/* Vue régions (grille) */}
+        {!activeRegion && (
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Choisissez votre région de destination</h2>
+              <p className="text-gray-500 text-sm">Cliquez sur une région pour explorer toutes les procédures disponibles</p>
             </div>
-            <button onClick={onClose} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          {/* Barre de progression */}
-          <div className="flex gap-2">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className={`h-1.5 flex-1 rounded-full transition-all ${s <= step ? "bg-white" : "bg-white/30"}`} />
-            ))}
-          </div>
-          <div className="flex justify-between text-xs text-blue-200 mt-1">
-            <span>Coordonnées</span>
-            <span>Profil</span>
-            <span>Finalisation</span>
-          </div>
-        </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {REGIONS.map(region => (
+                <RegionCard key={region.id} region={region} onSelect={() => setActiveRegion(region.id)} />
+              ))}
+            </div>
 
-        {/* Corps du formulaire */}
-        <div className="p-6">
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 1 — Vos coordonnées</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Nom complet *</label>
-                    <Input value={form.nom} onChange={(e) => setForm({ ...form, nom: e.target.value })}
-                      placeholder="Ex : Jean-Baptiste NKOMO" className="border-gray-200" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Numéro WhatsApp *</label>
-                    <Input value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })}
-                      placeholder="+237 6XX XXX XXX" className="border-gray-200" />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Email (optionnel)</label>
-                    <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      placeholder="votre@email.com" type="email" className="border-gray-200" />
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            {/* Stats rapides */}
+            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Procédures", value: `${totalProcedures}+`, icon: FileText, color: "text-blue-600" },
+                { label: "Pays couverts", value: "30+", icon: Globe, color: "text-green-600" },
+                { label: "Dossiers traités", value: "1 247+", icon: CheckCircle, color: "text-purple-600" },
+                { label: "Taux de succès", value: "89%", icon: Star, color: "text-amber-600" },
+              ].map(stat => (
+                <Card key={stat.label} className="text-center p-4">
+                  <stat.icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
+                  <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                  <div className="text-xs text-gray-500">{stat.label}</div>
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
 
-            {step === 2 && (
-              <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 2 — Votre profil</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Destination souhaitée *</label>
-                    <select value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                      <option value="">Choisir une destination</option>
-                      {destinations.map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Niveau d'études *</label>
-                    <select value={form.niveauEtudes} onChange={(e) => setForm({ ...form, niveauEtudes: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                      <option value="">Sélectionner</option>
-                      {niveauxEtudes.map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Expérience professionnelle *</label>
-                    <select value={form.experience} onChange={(e) => setForm({ ...form, experience: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                      <option value="">Sélectionner</option>
-                      {experiences.map(e => <option key={e} value={e}>{e}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h4 className="font-bold text-[#1E3A8A] mb-4">Étape 3 — Finalisation</h4>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Niveau de langue *</label>
-                    <select value={form.langue} onChange={(e) => setForm({ ...form, langue: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                      <option value="">Sélectionner</option>
-                      {langues.map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Situation actuelle *</label>
-                    <select value={form.situation} onChange={(e) => setForm({ ...form, situation: e.target.value })}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]">
-                      <option value="">Sélectionner</option>
-                      <option value="Étudiant(e)">Étudiant(e)</option>
-                      <option value="Salarié(e) du secteur privé">Salarié(e) du secteur privé</option>
-                      <option value="Fonctionnaire / Secteur public">Fonctionnaire / Secteur public</option>
-                      <option value="Entrepreneur / Indépendant">Entrepreneur / Indépendant</option>
-                      <option value="En recherche d'emploi">En recherche d'emploi</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">Message complémentaire (optionnel)</label>
-                    <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })}
-                      placeholder="Précisez votre domaine professionnel, vos certifications, vos questions..."
-                      rows={3}
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] resize-none" />
-                  </div>
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700">
-                    <strong>Rappel :</strong> Tout dossier ouvert requiert 65 000 FCFA non remboursables. Nos experts vous recontacteront sous 24h pour confirmer votre éligibilité.
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex gap-3 mt-6">
-            {step > 1 && (
-              <button onClick={() => setStep(step - 1)}
-                className="px-5 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors font-medium">
-                ← Retour
-              </button>
-            )}
-            {step < 3 ? (
+        {/* Vue détail région */}
+        {activeRegion && selectedRegion && (
+          <>
+            <div className="flex items-center gap-3 mb-6">
               <button
-                onClick={() => setStep(step + 1)}
-                disabled={step === 1 ? !isStep1Valid : !isStep2Valid}
-                className="flex-1 bg-[#1E3A8A] hover:bg-[#2563EB] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
-                Continuer <ArrowRight className="w-4 h-4" />
+                onClick={() => setActiveRegion(null)}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                ← Toutes les régions
               </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!isStep3Valid}
-                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
-                <MessageCircle className="w-4 h-4" /> Envoyer via WhatsApp
-              </button>
-            )}
-          </div>
+              <span className="text-gray-300">|</span>
+              <h2 className="text-xl font-black text-gray-900">{selectedRegion.name}</h2>
+            </div>
+
+            {/* Hero région */}
+            <div className="relative rounded-2xl overflow-hidden mb-8 h-48">
+              <img src={selectedRegion.image} alt={selectedRegion.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center px-8">
+                <div>
+                  <h3 className="text-white text-2xl font-black">{selectedRegion.name}</h3>
+                  <p className="text-white/80 text-sm mt-1">{selectedRegion.subtitle}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Destinations */}
+            <div className="space-y-3">
+              {selectedRegion.destinations.map(dest => (
+                <DestinationSection key={dest.id} dest={dest} />
+              ))}
+            </div>
+
+            {/* CTA bas de page */}
+            <div className="mt-10 bg-blue-700 rounded-2xl p-6 text-white text-center">
+              <h3 className="text-xl font-black mb-2">Vous ne savez pas quelle procédure choisir ?</h3>
+              <p className="text-blue-100 text-sm mb-4">Nos conseillers analysent votre profil gratuitement et vous orientent vers la meilleure voie.</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold">
+                  <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+                </Button>
+                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" className="border-white text-white hover:bg-white/10">
+                    <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp direct
+                  </Button>
+                </a>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Modal Évaluation ── */}
+      <Dialog open={showEvalModal} onOpenChange={setShowEvalModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-blue-800 font-black">
+              {evalStep === 1 ? "📋 Évaluation gratuite — Étape 1/3" :
+               evalStep === 2 ? "🌍 Votre projet — Étape 2/3" :
+               "✅ Confirmation — Étape 3/3"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {evalStep === 1 && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Vos informations personnelles</p>
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Nom complet *" value={evalData.nom} onChange={e => setEvalData({ ...evalData, nom: e.target.value })} />
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Email *" type="email" value={evalData.email} onChange={e => setEvalData({ ...evalData, email: e.target.value })} />
+              <input className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Téléphone (WhatsApp) *" value={evalData.tel} onChange={e => setEvalData({ ...evalData, tel: e.target.value })} />
+              <Button className="w-full bg-blue-700 hover:bg-blue-800" onClick={() => setEvalStep(2)} disabled={!evalData.nom || !evalData.tel}>
+                Suivant <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          )}
+
+          {evalStep === 2 && (
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">Votre projet de mobilité</p>
+              <select className="w-full border rounded-lg px-3 py-2 text-sm" value={evalData.destination} onChange={e => setEvalData({ ...evalData, destination: e.target.value })}>
+                <option value="">Destination souhaitée *</option>
+                <optgroup label="🍁 Canada">
+                  <option>Canada — Express Entry (Résidence Permanente)</option>
+                  <option>Canada — Études (Study Permit)</option>
+                  <option>Canada — Travail temporaire</option>
+                </optgroup>
+                <optgroup label="🇪🇺 Europe Schengen">
+                  <option>Luxembourg</option>
+                  <option>France</option>
+                  <option>Allemagne</option>
+                  <option>Pologne</option>
+                  <option>Belgique</option>
+                  <option>Autre pays Schengen</option>
+                </optgroup>
+                <optgroup label="🇬🇧🇺🇸 UK & USA">
+                  <option>Royaume-Uni</option>
+                  <option>États-Unis</option>
+                </optgroup>
+                <optgroup label="🌙 Golfe">
+                  <option>Qatar</option>
+                  <option>Dubaï (EAU)</option>
+                  <option>Île Maurice</option>
+                </optgroup>
+                <optgroup label="🌏 Océanie">
+                  <option>Australie</option>
+                  <option>Nouvelle-Zélande</option>
+                </optgroup>
+                <optgroup label="🌿 Caucase">
+                  <option>Arménie</option>
+                  <option>Géorgie</option>
+                  <option>Azerbaïdjan</option>
+                </optgroup>
+              </select>
+              <select className="w-full border rounded-lg px-3 py-2 text-sm" value={evalData.type} onChange={e => setEvalData({ ...evalData, type: e.target.value })}>
+                <option value="">Type de visa *</option>
+                <option>Visa Travail</option>
+                <option>Visa Études</option>
+                <option>Visa Visiteur / Tourisme</option>
+                <option>Résidence Permanente</option>
+                <option>Regroupement Familial</option>
+                <option>Je ne sais pas encore</option>
+              </select>
+              <select className="w-full border rounded-lg px-3 py-2 text-sm" value={evalData.niveau} onChange={e => setEvalData({ ...evalData, niveau: e.target.value })}>
+                <option value="">Niveau d'études *</option>
+                <option>BEPC / Brevet</option>
+                <option>Baccalauréat</option>
+                <option>BTS / DUT (Bac+2)</option>
+                <option>Licence (Bac+3)</option>
+                <option>Master (Bac+5)</option>
+                <option>Doctorat</option>
+                <option>Formation professionnelle / CAP / BEP</option>
+              </select>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEvalStep(1)}>← Retour</Button>
+                <Button className="flex-1 bg-blue-700 hover:bg-blue-800" onClick={() => setEvalStep(3)} disabled={!evalData.destination || !evalData.type}>
+                  Suivant <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {evalStep === 3 && (
+            <div className="space-y-4">
+              <div className="bg-blue-50 rounded-xl p-4 text-sm space-y-1">
+                <p><strong>Nom :</strong> {evalData.nom}</p>
+                <p><strong>Téléphone :</strong> {evalData.tel}</p>
+                <p><strong>Destination :</strong> {evalData.destination}</p>
+                <p><strong>Type :</strong> {evalData.type}</p>
+                <p><strong>Niveau :</strong> {evalData.niveau}</p>
+              </div>
+              <p className="text-xs text-gray-500 text-center">En cliquant sur Envoyer, vous serez redirigé vers WhatsApp pour finaliser votre demande.</p>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setEvalStep(2)}>← Retour</Button>
+                <Button className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleEvalSubmit}>
+                  <MessageCircle className="w-4 h-4 mr-2" /> Envoyer sur WhatsApp
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Footer ── */}
+      <footer className="bg-blue-900 text-white mt-16 py-8 px-4 text-center">
+        <p className="text-blue-200 text-sm">
+          <strong>3M Travel & Services SARL</strong> — Biyem-Assi, Yaoundé, Cameroun
+        </p>
+        <p className="text-blue-300 text-xs mt-1">
+          RC/YAO/2019/A/2567 | NIU : M112417203369H | +237 698 104 832 / +237 620 996 045
+        </p>
+        <div className="flex justify-center gap-4 mt-3">
+          <Link href="/" className="text-blue-300 hover:text-white text-xs transition-colors">Accueil</Link>
+          <Link href="/flights" className="text-blue-300 hover:text-white text-xs transition-colors">Vols</Link>
+          <Link href="/register" className="text-blue-300 hover:text-white text-xs transition-colors">Créer un compte</Link>
+          <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="text-blue-300 hover:text-white text-xs transition-colors">WhatsApp</a>
         </div>
-      </motion.div>
-    </motion.div>
+      </footer>
+    </div>
   );
 }

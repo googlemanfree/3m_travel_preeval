@@ -32,11 +32,7 @@ function Router() {
           <Flights />
         </AuthGuard>
       </Route>
-      <Route path={"/procedures"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder aux procédures d'immigration de 3M Travel.">
-          <Procedures />
-        </AuthGuard>
-      </Route>
+      <Route path={"/procedures"} component={Procedures} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />

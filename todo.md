@@ -106,3 +106,10 @@
 - [x] Générer une image hero de personnes avec passeport et visa (style professionnel, tons bleus)
 - [x] Agrandir et améliorer l'affichage du logo 3M dans le hero
 - [x] Uploader les visuels sur S3 et intégrer dans Home.tsx
+
+## Refonte Destinations — 6 Régions Mondiales (v3)
+- [x] Corriger les destinations : extraire toutes les destinations réelles des 89 PDFs
+- [x] Organiser en 6 grandes régions : Canada, Europe Schengen (30+ pays), Royaume-Uni & États-Unis, Golfe & Moyen-Orient, Océanie, Caucase & Stratégie Schengen
+- [x] Générer des images pour chaque région (IA)
+- [x] Rendre la page /procedures publique (accessible sans connexion)
+- [x] Intégrer image dédiée pour le Caucase (Arménie, Géorgie, Azerbaïdjan)
