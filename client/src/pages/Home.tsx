@@ -7,7 +7,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
   Upload, CheckCircle2, ArrowRight, Users, FileText,
-  Star, Clock, Shield, X, ChevronRight, ChevronLeft, Quote
+  Star, Clock, Shield, X, ChevronRight, ChevronLeft, Quote,
+  CheckCircle, AlertCircle, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -176,9 +177,40 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    trigger,
+    formState: { errors, touchedFields, dirtyFields, isValid },
+  } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
+
+  // Surveiller les champs obligatoires pour la complétion
+  const watchedName  = watch("fullName");
+  const watchedEmail = watch("email");
+  const watchedPhone = watch("phone");
+  const watchedMsg   = watch("message") ?? "";
+
+  // Calcul du % de complétion de l'étape 3
+  const requiredFilled = [
+    watchedName && watchedName.length >= 2,
+    watchedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(watchedEmail),
+    watchedPhone && watchedPhone.length >= 8,
+  ];
+  const completionPct = Math.round((requiredFilled.filter(Boolean).length / requiredFilled.length) * 100);
+
+  // Helper : état d'un champ (idle | valid | error)
+  const fieldState = (name: keyof FormValues): "idle" | "valid" | "error" => {
+    const touched = touchedFields[name] || dirtyFields[name];
+    if (!touched) return "idle";
+    return errors[name] ? "error" : "valid";
+  };
 
   const submitMutation = trpc.evaluation.submit.useMutation({
     onSuccess: () => {
@@ -568,36 +600,186 @@ export default function Home() {
                         </span>
                       </div>
 
+                      {/* Indicateur de complétion */}
+                      <div className="mb-5">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-semibold text-gray-500">Complétion du formulaire</span>
+                          <span className={`text-xs font-bold ${
+                            completionPct === 100 ? "text-green-600" : completionPct >= 66 ? "text-blue-600" : "text-orange-500"
+                          }`}>{completionPct}%</span>
+                        </div>
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <motion.div
+                            className="h-full rounded-full transition-all"
+                            style={{ background: completionPct === 100 ? "#16a34a" : completionPct >= 66 ? "linear-gradient(90deg,#7cb9e8,#1e3a8a)" : "#f97316" }}
+                            animate={{ width: `${completionPct}%` }}
+                            transition={{ duration: 0.4, ease: "easeOut" as const }}
+                          />
+                        </div>
+                      </div>
+
                       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                         {/* Infos personnelles */}
                         <motion.div variants={fadeUp} custom={0} initial="hidden" animate="visible" className="grid md:grid-cols-2 gap-4">
+                          {/* Nom complet */}
                           <div className="space-y-1">
-                            <Label htmlFor="fullName" className="text-gray-700 font-semibold text-sm">Nom complet *</Label>
-                            <Input id="fullName" placeholder="Jean Dupont" {...register("fullName")} className="border-gray-200 focus:border-blue-500" />
-                            {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName.message}</p>}
+                            <Label htmlFor="fullName" className="text-gray-700 font-semibold text-sm flex items-center gap-1">
+                              Nom complet <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="fullName"
+                                placeholder="Jean Dupont"
+                                {...register("fullName")}
+                                aria-invalid={fieldState("fullName") === "error"}
+                                className={`pr-9 transition-colors ${
+                                  fieldState("fullName") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
+                                  fieldState("fullName") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
+                                  "border-gray-200 focus:border-blue-500"
+                                }`}
+                              />
+                              <AnimatePresence mode="wait">
+                                {fieldState("fullName") === "valid" && (
+                                  <motion.span key="ok" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </motion.span>
+                                )}
+                                {fieldState("fullName") === "error" && (
+                                  <motion.span key="err" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                            <AnimatePresence>
+                              {fieldState("fullName") === "error" && (
+                                <motion.p key="msg" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />{errors.fullName?.message}
+                                </motion.p>
+                              )}
+                              {fieldState("fullName") === "valid" && (
+                                <motion.p key="ok" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-green-600 text-xs flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />Parfait !
+                                </motion.p>
+                              )}
+                            </AnimatePresence>
                           </div>
+
+                          {/* Email */}
                           <div className="space-y-1">
-                            <Label htmlFor="email" className="text-gray-700 font-semibold text-sm">Email *</Label>
-                            <Input id="email" type="email" placeholder="jean@example.com" {...register("email")} className="border-gray-200 focus:border-blue-500" />
-                            {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+                            <Label htmlFor="email" className="text-gray-700 font-semibold text-sm flex items-center gap-1">
+                              Email <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="jean@example.com"
+                                {...register("email")}
+                                aria-invalid={fieldState("email") === "error"}
+                                className={`pr-9 transition-colors ${
+                                  fieldState("email") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
+                                  fieldState("email") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
+                                  "border-gray-200 focus:border-blue-500"
+                                }`}
+                              />
+                              <AnimatePresence mode="wait">
+                                {fieldState("email") === "valid" && (
+                                  <motion.span key="ok" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </motion.span>
+                                )}
+                                {fieldState("email") === "error" && (
+                                  <motion.span key="err" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                            <AnimatePresence>
+                              {fieldState("email") === "error" && (
+                                <motion.p key="msg" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />{errors.email?.message}
+                                </motion.p>
+                              )}
+                              {fieldState("email") === "valid" && (
+                                <motion.p key="ok" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-green-600 text-xs flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />Adresse email valide
+                                </motion.p>
+                              )}
+                            </AnimatePresence>
                           </div>
+
+                          {/* Téléphone */}
                           <div className="space-y-1">
-                            <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm">Téléphone *</Label>
-                            <Input id="phone" placeholder="+237 620-996-045" {...register("phone")} className="border-gray-200 focus:border-blue-500" />
-                            {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
+                            <Label htmlFor="phone" className="text-gray-700 font-semibold text-sm flex items-center gap-1">
+                              Téléphone <span className="text-red-500">*</span>
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="phone"
+                                placeholder="+237 620-996-045"
+                                {...register("phone")}
+                                aria-invalid={fieldState("phone") === "error"}
+                                className={`pr-9 transition-colors ${
+                                  fieldState("phone") === "valid" ? "border-green-500 focus:border-green-500 bg-green-50/30" :
+                                  fieldState("phone") === "error" ? "border-red-400 focus:border-red-400 bg-red-50/30" :
+                                  "border-gray-200 focus:border-blue-500"
+                                }`}
+                              />
+                              <AnimatePresence mode="wait">
+                                {fieldState("phone") === "valid" && (
+                                  <motion.span key="ok" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <CheckCircle className="w-4 h-4 text-green-500" />
+                                  </motion.span>
+                                )}
+                                {fieldState("phone") === "error" && (
+                                  <motion.span key="err" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                                    <AlertCircle className="w-4 h-4 text-red-500" />
+                                  </motion.span>
+                                )}
+                              </AnimatePresence>
+                            </div>
+                            <AnimatePresence>
+                              {fieldState("phone") === "error" && (
+                                <motion.p key="msg" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-red-500 text-xs flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />{errors.phone?.message}
+                                </motion.p>
+                              )}
+                              {fieldState("phone") === "valid" && (
+                                <motion.p key="ok" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }} className="text-green-600 text-xs flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />Numéro valide
+                                </motion.p>
+                              )}
+                            </AnimatePresence>
                           </div>
+
+                          {/* Date de naissance */}
                           <div className="space-y-1">
                             <Label htmlFor="dateOfBirth" className="text-gray-700 font-semibold text-sm">Date de naissance</Label>
                             <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} className="border-gray-200 focus:border-blue-500" />
                           </div>
+
+                          {/* Nationalité */}
                           <div className="space-y-1">
                             <Label htmlFor="nationality" className="text-gray-700 font-semibold text-sm">Nationalité</Label>
                             <Input id="nationality" placeholder="Camerounaise" {...register("nationality")} className="border-gray-200 focus:border-blue-500" />
                           </div>
+
+                          {/* Pays de destination (Autre) */}
                           {selectedCategory === "autre" && (
                             <div className="space-y-1">
-                              <Label htmlFor="destinationCountry" className="text-gray-700 font-semibold text-sm">Pays de destination *</Label>
-                              <Input id="destinationCountry" placeholder="Ex: États-Unis, Australie..." {...register("destinationCountry")} className="border-gray-200 focus:border-blue-500" />
+                              <Label htmlFor="destinationCountry" className="text-gray-700 font-semibold text-sm flex items-center gap-1">
+                                Pays de destination <span className="text-red-500">*</span>
+                              </Label>
+                              <div className="relative">
+                                <Input
+                                  id="destinationCountry"
+                                  placeholder="Ex: États-Unis, Australie..."
+                                  {...register("destinationCountry")}
+                                  className="border-gray-200 focus:border-blue-500"
+                                />
+                              </div>
                             </div>
                           )}
                         </motion.div>
@@ -679,27 +861,81 @@ export default function Home() {
 
                         {/* Message */}
                         <motion.div variants={fadeUp} custom={3} initial="hidden" animate="visible" className="space-y-1">
-                          <Label htmlFor="message" className="text-gray-700 font-semibold text-sm">Message complémentaire</Label>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="message" className="text-gray-700 font-semibold text-sm flex items-center gap-1">
+                              <Info className="w-3.5 h-3.5 text-blue-400" />
+                              Message complémentaire
+                            </Label>
+                            <span className={`text-xs font-medium tabular-nums ${
+                              watchedMsg.length > 450 ? "text-red-500" :
+                              watchedMsg.length > 300 ? "text-orange-500" :
+                              watchedMsg.length > 0 ? "text-blue-500" : "text-gray-400"
+                            }`}>{watchedMsg.length}/500</span>
+                          </div>
                           <Textarea
                             id="message"
-                            placeholder="Décrivez votre projet, vos motivations ou toute information utile..."
-                            {...register("message")}
-                            rows={3}
-                            className="border-gray-200 focus:border-blue-500 resize-none"
+                            placeholder="Décrivez votre projet, vos motivations, votre situation actuelle ou toute information utile pour notre équipe..."
+                            {...register("message", { maxLength: { value: 500, message: "500 caractères maximum" } })}
+                            rows={4}
+                            maxLength={500}
+                            className={`resize-none transition-colors ${
+                              watchedMsg.length > 450 ? "border-red-400 focus:border-red-400" :
+                              watchedMsg.length > 0 ? "border-blue-300 focus:border-blue-500" :
+                              "border-gray-200 focus:border-blue-500"
+                            }`}
                           />
+                          {watchedMsg.length > 450 && (
+                            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-500 text-xs flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />{500 - watchedMsg.length} caractères restants
+                            </motion.p>
+                          )}
+                          {watchedMsg.length > 0 && watchedMsg.length <= 450 && (
+                            <p className="text-xs text-gray-400 flex items-center gap-1">
+                              <Info className="w-3 h-3" />Plus votre message est détaillé, meilleure sera notre analyse
+                            </p>
+                          )}
                         </motion.div>
 
                         {/* Bouton soumettre */}
                         <motion.div variants={fadeUp} custom={4} initial="hidden" animate="visible">
+                          {/* Avertissement si champs manquants */}
+                          <AnimatePresence>
+                            {completionPct < 100 && (touchedFields.fullName || touchedFields.email || touchedFields.phone) && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.25 }}
+                                className="flex items-start gap-2 bg-orange-50 border border-orange-200 rounded-xl p-3 mb-4"
+                              >
+                                <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                                <p className="text-xs text-orange-700">
+                                  Veuillez remplir tous les champs obligatoires (<span className="font-semibold">*</span>) avant de soumettre.
+                                </p>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+
                           <Button
                             type="submit"
                             disabled={submitMutation.isPending}
-                            className="w-full text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all active:scale-[0.98]" style={{ background: 'linear-gradient(135deg, #1e3a8a, #2563eb)' }}
+                            className={`w-full text-white text-base font-bold py-6 shadow-lg hover:shadow-xl transition-all active:scale-[0.98] ${
+                              completionPct === 100 ? "" : "opacity-80"
+                            }`}
+                            style={{ background: completionPct === 100
+                              ? 'linear-gradient(135deg, #15803d, #16a34a)'
+                              : 'linear-gradient(135deg, #1e3a8a, #2563eb)'
+                            }}
                           >
                             {submitMutation.isPending ? (
                               <span className="flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                 Envoi en cours...
+                              </span>
+                            ) : completionPct === 100 ? (
+                              <span className="flex items-center gap-2">
+                                <CheckCircle className="w-5 h-5" />
+                                Soumettre ma pré-évaluation
                               </span>
                             ) : (
                               <span className="flex items-center gap-2">
@@ -708,8 +944,9 @@ export default function Home() {
                               </span>
                             )}
                           </Button>
-                          <p className="text-xs text-gray-400 text-center mt-3">
-                            * Champs obligatoires. Données traitées de manière confidentielle. Réponse sous 24h.
+                          <p className="text-xs text-gray-400 text-center mt-3 flex items-center justify-center gap-1">
+                            <Shield className="w-3 h-3" />
+                            Champs <span className="font-semibold text-red-400">*</span> obligatoires — Données confidentielles — Réponse sous 24h
                           </p>
                         </motion.div>
                       </form>

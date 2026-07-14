@@ -22,3 +22,9 @@
 - [x] Implémenter un carousel automatique avec navigation manuelle
 - [x] Animer les cartes avec Framer Motion (fade + slide)
 - [x] Ajouter les étoiles de notation et les drapeaux des pays obtenus
+- [x] Validation temps réel sur tous les champs obligatoires (nom, email, téléphone, message)
+- [x] Indicateurs visuels vert/rouge sur les champs (bordure + icône checkmark/erreur)
+- [x] Messages d'erreur contextuels sous chaque champ
+- [x] Compteur de caractères sur le champ message
+- [x] Validation du format email et téléphone en temps réel
+- [x] Indicateur de force du formulaire (% de complétion)
