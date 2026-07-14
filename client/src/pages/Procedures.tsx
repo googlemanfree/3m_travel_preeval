@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "wouter";
+import CounterStats from "@/components/CounterStats";
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
@@ -437,6 +438,9 @@ export default function Procedures() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── COMPTEUR DYNAMIQUE ──────────────────────────────────────────────── */}
+      <CounterStats variant="dark" />
 
       {/* ── SÉLECTEUR DE DESTINATIONS ────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 py-10">

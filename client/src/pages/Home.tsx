@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import CounterStats from "@/components/CounterStats";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -401,6 +402,13 @@ export default function Home() {
           </svg>
         </div>
       </section>
+
+      {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
+      <CounterStats
+        title="Ils nous ont fait confiance"
+        subtitle="Chiffres mis à jour en juillet 2026 — Agence agréée RC/YAO/2019/A/2567"
+        variant="light"
+      />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">

@@ -61,3 +61,8 @@
 - [x] Afficher les exigences Luxembourg (salaire 3 165 EUR/mois, contrat MAEE)
 - [x] Afficher les conditions Pologne (25,36-25,50 PLN/h, hébergement inclus)
 - [x] Intégrer le formulaire d'évaluation multi-étapes directement sur la page /procedures
+
+## Compteur dynamique de dossiers traités
+- [x] Créer le composant CounterStats réutilisable avec animation de décompte au scroll (useIntersectionObserver)
+- [x] Intégrer le compteur dans Home.tsx (section chiffres clés)
+- [x] Intégrer le compteur dans Procedures.tsx (sous le hero)
