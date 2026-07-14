@@ -14,6 +14,10 @@ import Dashboard from "./pages/Dashboard";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import OpenDossier from "./pages/OpenDossier";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentFailed from "./pages/PaymentFailed";
+import Admin from "./pages/Admin";
 
 function Router() {
   return (
@@ -38,6 +42,14 @@ function Router() {
           <Dashboard />
         </AuthGuard>
       </Route>
+
+      {/* Ouverture de dossier & paiement */}
+      <Route path={"/open-dossier"} component={OpenDossier} />
+      <Route path={"/payment-success"} component={PaymentSuccess} />
+      <Route path={"/payment-failed"} component={PaymentFailed} />
+
+      {/* Panneau admin */}
+      <Route path={"/admin"} component={Admin} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

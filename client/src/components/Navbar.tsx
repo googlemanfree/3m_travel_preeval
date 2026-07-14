@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star } from "lucide-react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
 
@@ -15,6 +16,9 @@ interface NavbarProps {
 export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
+  const { user, isAuthenticated } = useAuth();
+
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   const active = activePage ?? (
     location === "/" ? "home" :
@@ -69,6 +73,12 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/procedures" className={linkClass("procedures")}>
             <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
           </Link>
+          {isAdmin && (
+            <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
+              <Shield className="w-3.5 h-3.5" />
+              Admin
+            </Link>
+          )}
         </nav>
 
         {/* ── Actions desktop ── */}
@@ -82,6 +92,14 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               Évaluation gratuite
             </Button>
           )}
+          <Link href="/open-dossier">
+            <Button
+              className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
+            >
+              <FolderOpen className="w-4 h-4 mr-1.5" />
+              Ouvrir un dossier
+            </Button>
+          </Link>
           <Link href="/dashboard">
             <Button
               variant="outline"
@@ -118,10 +136,20 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <BookOpen className="w-4 h-4 text-blue-600" /> Procédures
           </Link>
+          <Link href="/open-dossier" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+            <FolderOpen className="w-4 h-4" /> Ouvrir un dossier
+          </Link>
           <Link href="/dashboard" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
             <User className="w-4 h-4" /> Mon Espace
           </Link>
+          {isAdmin && (
+            <Link href="/admin" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
+              <Shield className="w-4 h-4" /> Administration
+            </Link>
+          )}
           {onEvalClick && (
             <Button
               onClick={() => { setMobileOpen(false); onEvalClick(); }}

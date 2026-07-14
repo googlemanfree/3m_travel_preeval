@@ -152,3 +152,59 @@ export const candidateMessages = mysqlTable("candidate_messages", {
 
 export type CandidateMessage = typeof candidateMessages.$inferSelect;
 export type InsertCandidateMessage = typeof candidateMessages.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOSSIERS D'IMMIGRATION (APPLICATIONS)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Dossiers d'immigration ouverts par les candidats avec paiement intégré.
+ * Chaque dossier correspond à une demande de 65 000 FCFA via CinetPay.
+ */
+export const applications = mysqlTable("applications", {
+  id: int("id").autoincrement().primaryKey(),
+  // Numéro de dossier lisible : 3M-YYYY-NNNN
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull().unique(),
+  // Candidat (peut être un candidat inscrit ou un visiteur)
+  candidateId: int("candidateId"),             // null si soumis sans compte
+  // Informations personnelles
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  whatsappNumber: varchar("whatsappNumber", { length: 50 }).notNull(),
+  age: int("age"),
+  nationality: varchar("nationality", { length: 100 }),
+  // Profil académique
+  academicLevel: varchar("academicLevel", { length: 100 }),
+  experienceYears: int("experienceYears"),
+  languageSkills: varchar("languageSkills", { length: 255 }),
+  jobSector: varchar("jobSector", { length: 100 }),
+  // Destination & formule
+  destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]).notNull(),
+  formulaChosen: mysqlEnum("formulaChosen", ["integral", "echelonne", "garanti"]).default("integral").notNull(),
+  // Documents (URLs S3 séparés par virgule)
+  documentsUrls: text("documentsUrls"),
+  // Paiement CinetPay
+  paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("PENDING").notNull(),
+  paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),
+  paymentAmount: int("paymentAmount").default(65000).notNull(),
+  paymentCurrency: varchar("paymentCurrency", { length: 10 }).default("XAF").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),   // MTN / ORANGE / CARD
+  paymentDate: timestamp("paymentDate"),
+  // Statut du dossier
+  dossierStatus: mysqlEnum("dossierStatus", [
+    "nouveau",
+    "paye",
+    "en_cours",
+    "documents_requis",
+    "soumis",
+    "approuve",
+    "refuse",
+  ]).default("nouveau").notNull(),
+  adminNote: text("adminNote"),
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;

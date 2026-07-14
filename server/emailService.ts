@@ -138,3 +138,106 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
   `;
   await sendEmail(to, "🎉 Bienvenue dans votre Espace Candidat 3M Travel !", emailBase(content));
 }
+
+// ─── Email de confirmation d'ouverture de dossier ─────────────────────────────
+
+export async function sendDossierConfirmationEmail(
+  to: string,
+  fullName: string,
+  dossierNumber: string,
+  destination: string,
+  formula: string,
+  amount: number
+): Promise<void> {
+  const dashboardUrl = `${SITE_URL}/dashboard`;
+  const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
+  const content = `
+    <p>Bonjour <strong>${fullName}</strong>,</p>
+    <p>✅ Votre dossier d'immigration a été <strong>créé avec succès</strong> !</p>
+    <div class="otp-box" style="background:#f0fdf4;border-color:#16a34a;">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">NUMÉRO DE DOSSIER</div>
+      <div class="otp-code" style="font-size:32px;letter-spacing:6px;color:#15803d;">${dossierNumber}</div>
+      <div class="otp-label">Conservez ce numéro précieusement</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr><td style="padding:8px;background:#f8faff;border-radius:6px;font-size:13px;color:#6b7280;">Destination</td><td style="padding:8px;font-weight:700;">${destination.toUpperCase()}</td></tr>
+      <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Formule</td><td style="padding:8px;font-weight:700;">${formula}</td></tr>
+      <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Montant</td><td style="padding:8px;font-weight:700;">${amount.toLocaleString("fr-FR")} FCFA</td></tr>
+    </table>
+    <p><strong>Prochaines étapes :</strong></p>
+    <ol style="color:#374151;line-height:2;font-size:14px;">
+      <li>Un conseiller vous contactera sur WhatsApp sous 24h</li>
+      <li>Préparez vos documents : passeport, CV, diplômes</li>
+      <li>Uploadez vos documents dans votre espace candidat</li>
+    </ol>
+    <p style="text-align:center;margin-top:20px;">
+      <a href="${dashboardUrl}" class="btn" style="margin-right:8px;">📁 Mon espace candidat</a>
+      <a href="${whatsappUrl}" class="btn" style="background:#16a34a;">💬 WhatsApp</a>
+    </p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
+  `;
+  await sendEmail(to, `📋 Dossier ${dossierNumber} — Confirmation d'ouverture`, emailBase(content));
+}
+
+// ─── Email d'alerte admin (nouveau dossier) ───────────────────────────────────
+
+export async function sendAdminNewDossierAlert(
+  fullName: string,
+  dossierNumber: string,
+  email: string,
+  phone: string,
+  destination: string,
+  formula: string,
+  paymentStatus: string
+): Promise<void> {
+  const adminEmail = process.env.ADMIN_EMAIL ?? "contact@3mtravelagency.click";
+  const adminUrl = `${SITE_URL}/admin`;
+  const payLabel = paymentStatus === "SUCCESS" ? "✅ PAYÉ" : paymentStatus === "PENDING" ? "⏳ EN ATTENTE" : "❌ ÉCHOUÉ";
+  const content = `
+    <p>🔔 <strong>Nouveau dossier reçu</strong> sur 3M Travel Agency !</p>
+    <div class="otp-box" style="background:#eff6ff;border-color:#2563EB;">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">DOSSIER</div>
+      <div class="otp-code" style="font-size:28px;letter-spacing:4px;">${dossierNumber}</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Candidat</td><td style="padding:8px;font-weight:700;">${fullName}</td></tr>
+      <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Email</td><td style="padding:8px;">${email}</td></tr>
+      <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Téléphone</td><td style="padding:8px;">${phone}</td></tr>
+      <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Destination</td><td style="padding:8px;font-weight:700;">${destination.toUpperCase()}</td></tr>
+      <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Formule</td><td style="padding:8px;">${formula}</td></tr>
+      <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Paiement</td><td style="padding:8px;font-weight:700;">${payLabel}</td></tr>
+    </table>
+    <p style="text-align:center;">
+      <a href="${adminUrl}" class="btn">🛠️ Voir dans le panneau admin</a>
+    </p>
+  `;
+  await sendEmail(adminEmail, `🔔 Nouveau dossier ${dossierNumber} — ${fullName}`, emailBase(content));
+}
+
+// ─── Email de confirmation de paiement réussi ─────────────────────────────────
+
+export async function sendPaymentSuccessEmail(
+  to: string,
+  fullName: string,
+  dossierNumber: string,
+  amount: number,
+  transactionId: string
+): Promise<void> {
+  const dashboardUrl = `${SITE_URL}/dashboard`;
+  const content = `
+    <p>Bonjour <strong>${fullName}</strong>,</p>
+    <p>💳 Votre paiement a été <strong>confirmé avec succès</strong> !</p>
+    <div class="otp-box" style="background:#f0fdf4;border-color:#16a34a;">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">REÇU DE PAIEMENT</div>
+      <div style="font-size:28px;font-weight:900;color:#15803d;">${amount.toLocaleString("fr-FR")} FCFA</div>
+      <div class="otp-label">Dossier : ${dossierNumber}</div>
+    </div>
+    <p style="font-size:13px;color:#6b7280;">Référence transaction : <code>${transactionId}</code></p>
+    <p>Votre dossier est maintenant <strong>actif</strong>. Notre équipe va commencer le traitement de votre dossier d'immigration.</p>
+    <p style="text-align:center;">
+      <a href="${dashboardUrl}" class="btn">📁 Suivre mon dossier</a>
+    </p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
+  `;
+  await sendEmail(to, `✅ Paiement confirmé — Dossier ${dossierNumber}`, emailBase(content));
+}

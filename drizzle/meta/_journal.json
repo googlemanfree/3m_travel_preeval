@@ -29,6 +29,13 @@
       "when": 1784021112310,
       "tag": "0003_fresh_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1784026662301,
+      "tag": "0004_public_kate_bishop",
+      "breakpoints": true
     }
   ]
 }
