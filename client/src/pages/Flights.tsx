@@ -456,9 +456,12 @@ export default function Flights() {
               </div>
             </a>
           </Link>
-          <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs font-semibold">
-            ⚡ Mode Démo — Connexion Travelport en cours
-          </Badge>
+          <div className="hidden md:flex items-center gap-3">
+            <a href="/procedures" className="text-[#1E3A8A] hover:text-[#2563EB] font-semibold text-sm transition-colors">📚 Procédures</a>
+            <Badge className="bg-amber-100 text-amber-700 border-amber-300 text-xs font-semibold">
+              ⚡ Mode Démo
+            </Badge>
+          </div>
           <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="bg-green-500 hover:bg-green-600 text-white font-bold text-xs gap-1">
               <MessageCircle className="w-3.5 h-3.5" /> Assistance

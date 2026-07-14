@@ -34,14 +34,21 @@
 - [x] Ajouter le CTA "Évaluer mon éligibilité en 2 minutes" dans le header et le hero
 - [x] Créer la modal d'auto-évaluation express avec 6 champs
 - [x] Implémenter la redirection WhatsApp avec message pré-rempli à la soumission
-- [ ] Configurer les credentials Travelport API (OAuth2)
-- [ ] Créer les routes backend : auth Travelport, recherche de vols (Low Fare Shopping), pricing, booking
-- [ ] Créer la page /flights avec moteur de recherche avancé (aller simple/retour/multi)
-- [ ] Autocomplétion IATA des aéroports (YAO, CDG, etc.)
-- [ ] Sélecteur de dates avec calendrier (dates passées bloquées)
-- [ ] Dropdowns passagers & classes (Adultes, Enfants, Bébés, Éco, Affaires, 1ère)
-- [ ] Tableau des résultats de vols avec cartes (logo compagnie, horaires, prix)
-- [ ] Filtres dynamiques (escales, compagnies, prix slider, horaires)
-- [ ] Marge bénéficiaire configurable pour les prix affichés
-- [ ] Bouton WhatsApp "Envoyer cet itinéraire à un conseiller" sur chaque vol
-- [ ] Système de cache temporaire pour optimiser les requêtes API
+- [x] Configurer les credentials Travelport API (OAuth2) — mode démo, à connecter dès réception credentials
+- [x] Créer les routes backend : auth Travelport, recherche de vols (Low Fare Shopping), pricing, booking
+- [x] Créer la page /flights avec moteur de recherche avancé (aller simple/retour/multi)
+- [x] Autocomplétion IATA des aéroports (YAO, CDG, etc.)
+- [x] Sélecteur de dates avec calendrier (dates passées bloquées)
+- [x] Dropdowns passagers & classes (Adultes, Enfants, Bébés, Éco, Affaires, 1ère)
+- [x] Tableau des résultats de vols avec cartes (logo compagnie, horaires, prix)
+- [x] Filtres dynamiques (escales, compagnies, prix slider, horaires)
+- [x] Marge bénéficiaire configurable pour les prix affichés
+- [x] Bouton WhatsApp "Envoyer cet itinéraire à un conseiller" sur chaque vol
+- [x] Système de cache temporaire pour optimiser les requêtes API
+- [x] Extraire le contenu des PDFs de procédures (80+ fichiers)
+- [x] Créer la page /procedures avec onglets Canada/Luxembourg/Pologne&Europe
+- [x] Implémenter le catalogue dynamique avec filtres par pays et type de visa
+- [x] Créer la timeline verticale/horizontale du parcours candidat (5 étapes)
+- [x] Ajouter le bandeau de conformité juridique et éthique
+- [x] Uploader les PDFs sur S3 et créer les liens de téléchargement
+- [x] Ajouter le lien "Procédures" dans la navigation principale (header + footer + page Vols)
