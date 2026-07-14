@@ -17,6 +17,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -167,6 +169,7 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
+  const [showEvalModal, setShowEvalModal] = useState(false);
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DestinationCategory | null>(null);
@@ -312,12 +315,21 @@ export default function Home() {
               </Button>
             </a>
           </div>
-          {/* Mobile : un seul bouton */}
-          <a href="tel:+237620996045" className="md:hidden">
-            <Button className="bg-[#1e3a8a] hover:bg-[#2563eb] text-white text-sm font-semibold shadow-md transition-colors">
-              <Phone className="w-4 h-4 mr-2" />Appeler
+          {/* CTA évaluation dans le header (desktop md+) */}
+          <button
+            onClick={() => setShowEvalModal(true)}
+            className="hidden md:flex items-center gap-2 bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg transition-all active:scale-[0.97] whitespace-nowrap"
+          >
+            <Star className="w-4 h-4 flex-shrink-0" />
+            <span className="hidden lg:inline">Évaluer mon éligibilité en 2 min</span>
+            <span className="lg:hidden">Évaluer</span>
+          </button>
+          {/* Mobile : bouton compact */}
+          <button onClick={() => setShowEvalModal(true)} className="md:hidden">
+            <Button className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] text-white text-xs font-bold shadow-md transition-colors px-3 py-2">
+              <Star className="w-3.5 h-3.5 mr-1" />Évaluer
             </Button>
-          </a>
+          </button>
         </div>
       </header>
 
@@ -356,23 +368,30 @@ export default function Home() {
               Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+              {/* CTA principal : auto-évaluation express */}
+              <button onClick={() => setShowEvalModal(true)}>
+                <Button size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-8 active:scale-[0.97] transition-transform gap-2">
+                  <Star className="w-5 h-5" />Évaluer mon éligibilité en 2 minutes
+                </Button>
+              </button>
               <a href="#evaluation">
-                <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold text-base shadow-xl px-8 active:scale-[0.97] transition-transform">
-                  Commencer l'évaluation <ArrowRight className="w-5 h-5 ml-2" />
+                <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-8 active:scale-[0.97] transition-transform">
+                  Pré-évaluation complète <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </a>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            </motion.div>
+            {/* Ligne téléphone */}
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="tel:+237620996045">
-                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-6 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-sm px-5 active:scale-[0.97] transition-transform w-full sm:w-auto">
                     <Phone className="w-4 h-4 mr-2" />+237 620-996-045
                   </Button>
                 </a>
                 <a href="tel:+237698104832">
-                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-6 active:scale-[0.97] transition-transform w-full sm:w-auto">
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-sm px-5 active:scale-[0.97] transition-transform w-full sm:w-auto">
                     <Phone className="w-4 h-4 mr-2" />+237 698-104-832
                   </Button>
                 </a>
-              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -988,7 +1007,10 @@ export default function Home() {
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <TestimonialsSection />
 
-      {/* ─── CTA ─────────────────────────────────────────────────────────── */}
+      {/* --- TARIFS & GARANTIES --- */}
+      <PricingSection />
+
+      {/* --- CTA --- */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
@@ -1065,7 +1087,28 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
+          {/* Bloc légal & Charte de Transparence */}
+          <div className="border-t border-gray-800 pt-8 mb-6">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row gap-4 items-start">
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#2563eb]/20 border border-[#7cb9e8]/30 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-[#7cb9e8]" />
+              </div>
+              <div>
+                <p className="text-white font-semibold text-sm mb-1">
+                  3M Travel & Services SARL
+                  <span className="ml-2 text-xs font-normal text-[#7cb9e8] bg-[#2563eb]/20 px-2 py-0.5 rounded-full">Agence officielle</span>
+                </p>
+                <p className="text-xs text-gray-400 leading-relaxed mb-2">
+                  Enregistrée sous le numéro <span className="text-gray-300 font-medium">RC/YAO/2019/A/2567</span> (NIU : <span className="text-gray-300 font-medium">M112417203369H</span>).
+                </p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  <span className="text-[#7cb9e8] font-semibold">Charte de Transparence :</span> Notre rôle est d’accompagner la recherche d’employeur, la préparation technique du dossier et le suivi administratif. Nous ne délivrons pas nous-mêmes de visa ou de permis de travail — cette décision appartient exclusivement aux autorités compétentes de chaque pays d’accueil.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
             <p>© 2026 3M Travel & Services SARL. Tous droits réservés.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
               <a href="#" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
@@ -1074,6 +1117,9 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
+      <EligibilityModal open={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
       {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
       <WhatsAppButton />
@@ -1435,5 +1481,403 @@ function WhatsAppButton() {
         WhatsApp
       </motion.span>
     </div>
+  );
+}
+
+// ─── Section Tarifs & Garanties ───────────────────────────────────────────────
+function PricingSection() {
+  const plans = [
+    {
+      id: "integral",
+      icon: <Plane className="w-7 h-7" />,
+      badge: null,
+      title: "Règlement Intégral",
+      subtitle: "Traitement accéléré",
+      color: "from-[#1e3a8a] to-[#2563eb]",
+      borderColor: "border-[#2563eb]/30",
+      badgeBg: "",
+      textAccent: "text-[#7cb9e8]",
+      description: "Payez en une seule fois et bénéficiez d'un traitement prioritaire de votre dossier, sans frais supplémentaires.",
+      features: [
+        "Traitement prioritaire du dossier",
+        "Suivi personnalisé dédié",
+        "Réponse sous 24h garantie",
+        "Accompagnement complet",
+        "Sans frais supplémentaires",
+      ],
+      cta: "Choisir cette option",
+      highlight: false,
+    },
+    {
+      id: "echelonne",
+      icon: <Clock className="w-7 h-7" />,
+      badge: "Le plus choisi",
+      title: "Échelonné Flexible",
+      subtitle: "4 à 5 mois",
+      color: "from-[#2563eb] to-[#1d4ed8]",
+      borderColor: "border-[#2563eb]",
+      badgeBg: "bg-yellow-400 text-yellow-900",
+      textAccent: "text-yellow-300",
+      description: "Un paiement structuré et modulable sur 4 à 5 mois pour adapter nos honoraires à votre situation.",
+      features: [
+        "Paiement sur 4 à 5 mensualités",
+        "Plan personnalisé selon votre budget",
+        "Suivi régulier de votre dossier",
+        "Flexibilité des échéances",
+        "Accompagnement complet inclus",
+      ],
+      cta: "Choisir cette option",
+      highlight: true,
+    },
+    {
+      id: "garanti",
+      icon: <Shield className="w-7 h-7" />,
+      badge: "Zéro risque",
+      title: "Permis Garanti",
+      subtitle: "Paiement après succès",
+      color: "from-[#059669] to-[#047857]",
+      borderColor: "border-emerald-500/40",
+      badgeBg: "bg-emerald-400 text-emerald-900",
+      textAccent: "text-emerald-300",
+      description: "Réglez nos honoraires d'agence UNIQUEMENT après succès et obtention effective de votre visa.",
+      features: [
+        "Honoraires payés après obtention du visa",
+        "Zéro risque financier pour vous",
+        "Engagement total de notre équipe",
+        "Suivi jusqu'à l'obtention du visa",
+        "Conditions d'éligibilité à vérifier",
+      ],
+      cta: "Vérifier mon éligibilité",
+      highlight: false,
+    },
+  ];
+
+  const phoneNumber = "237698104832";
+
+  return (
+    <section id="tarifs" className="py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
+      <div className="max-w-7xl mx-auto px-4">
+        {/* En-tête */}
+        <div className="text-center mb-14">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2"
+          >
+            Nos formules
+          </motion.p>
+          <motion.h2
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
+          >
+            Tarifs & Garanties
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-gray-500 max-w-2xl mx-auto text-base"
+          >
+            Choisissez la formule qui correspond à votre situation. Transparence totale, aucun frais caché.
+          </motion.p>
+        </div>
+
+        {/* Cards */}
+        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+          {plans.map((plan, i) => (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.12, duration: 0.5 }}
+              className={`relative rounded-3xl border-2 ${plan.borderColor} flex flex-col overflow-hidden shadow-lg ${plan.highlight ? "scale-[1.03] shadow-2xl ring-2 ring-[#2563eb]/40" : ""}`}
+            >
+              {/* Badge */}
+              {plan.badge && (
+                <div className={`absolute top-4 right-4 text-xs font-bold px-3 py-1 rounded-full ${plan.badgeBg}`}>
+                  {plan.badge}
+                </div>
+              )}
+
+              {/* Header coloré */}
+              <div className={`bg-gradient-to-br ${plan.color} p-7 text-white`}>
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mb-4">
+                  {plan.icon}
+                </div>
+                <h3 className="text-xl font-extrabold mb-1">{plan.title}</h3>
+                <p className={`text-sm font-semibold ${plan.textAccent}`}>{plan.subtitle}</p>
+              </div>
+
+              {/* Corps */}
+              <div className="bg-white flex flex-col flex-1 p-7">
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">{plan.description}</p>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle className="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <a
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
+                    plan.highlight
+                      ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
+                      : plan.id === "garanti"
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
+                  }`}
+                >
+                  {plan.cta} →
+                </a>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Note légale */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
+        >
+          <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
+          Les honoraires d'agence couvrent l'accompagnement, la préparation du dossier et le suivi administratif. La décision d'octroi du visa appartient exclusivement aux autorités compétentes.
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+// ─── Modal Auto-Évaluation Express ───────────────────────────────────────────
+type EvalFormData = {
+  nom: string;
+  ville: string;
+  diplome: string;
+  experience: string;
+  langues: string[];
+  secteur: string;
+};
+
+const LANGUES_OPTIONS = ["Français", "Anglais", "Allemand"];
+
+function EligibilityModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [form, setForm] = React.useState<EvalFormData>({
+    nom: "", ville: "", diplome: "", experience: "", langues: [], secteur: "",
+  });
+  const [errors, setErrors] = React.useState<Partial<Record<keyof EvalFormData, string>>>({});
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const validate = (): boolean => {
+    const e: Partial<Record<keyof EvalFormData, string>> = {};
+    if (!form.nom.trim() || form.nom.trim().length < 2) e.nom = "Veuillez entrer votre nom complet (min. 2 caractères)";
+    if (!form.ville) e.ville = "Veuillez sélectionner votre ville";
+    if (!form.diplome) e.diplome = "Veuillez sélectionner votre niveau d'études";
+    if (!form.experience) e.experience = "Veuillez sélectionner votre niveau d'expérience";
+    if (form.langues.length === 0) e.langues = "Veuillez sélectionner au moins une langue";
+    if (!form.secteur) e.secteur = "Veuillez sélectionner votre secteur d'activité";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+
+    const phoneNumber = "237698104832";
+    const message = `Bonjour 3M Travel, je viens de faire mon auto-évaluation sur le site. Voici mes informations :
+- Nom : ${form.nom}
+- Ville : ${form.ville}
+- Diplôme : ${form.diplome}
+- Expérience : ${form.experience}
+- Langues : ${form.langues.join(", ")}
+- Secteur : ${form.secteur}
+Je souhaite recevoir mon rapport de scoring officiel.`;
+
+    const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    setSubmitted(true);
+    setTimeout(() => {
+      window.open(url, "_blank", "noopener,noreferrer");
+      onClose();
+      setSubmitted(false);
+      setForm({ nom: "", ville: "", diplome: "", experience: "", langues: [], secteur: "" });
+      setErrors({});
+    }, 1200);
+  };
+
+  const toggleLangue = (lang: string) => {
+    setForm(prev => ({
+      ...prev,
+      langues: prev.langues.includes(lang)
+        ? prev.langues.filter(l => l !== lang)
+        : [...prev.langues, lang],
+    }));
+    if (errors.langues) setErrors(prev => ({ ...prev, langues: undefined }));
+  };
+
+  const fieldClass = (name: keyof EvalFormData) =>
+    `w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 transition-all ${
+      errors[name]
+        ? "border-red-400 focus:ring-red-200 bg-red-50"
+        : "border-gray-200 focus:ring-[#2563eb]/30 bg-white"
+    }`;
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-lg w-full rounded-3xl p-0 overflow-hidden">
+        {/* En-tête coloré */}
+        <div className="bg-gradient-to-br from-[#1e3a8a] to-[#2563eb] px-6 pt-6 pb-5 text-white">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center">
+              <Star className="w-5 h-5 text-yellow-300" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-extrabold text-white">Auto-Évaluation Express</DialogTitle>
+              <DialogDescription className="text-blue-200 text-xs">Résultat en 2 minutes · Gratuit</DialogDescription>
+            </div>
+          </div>
+          <p className="text-sm text-blue-100 leading-relaxed">
+            Remplissez ce formulaire rapide. Nous analyserons votre profil et vous enverrons votre rapport de scoring sur WhatsApp.
+          </p>
+        </div>
+
+        {/* Formulaire */}
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 max-h-[60vh] overflow-y-auto">
+          {submitted ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center justify-center py-8 text-center gap-3"
+            >
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <p className="font-bold text-gray-800 text-lg">Profil envoyé !</p>
+              <p className="text-sm text-gray-500">Redirection vers WhatsApp en cours...</p>
+            </motion.div>
+          ) : (
+            <>
+              {/* Nom & Prénom */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Nom & Prénom <span className="text-red-500">*</span></Label>
+                <input
+                  type="text"
+                  placeholder="Ex: Jean Dupont"
+                  value={form.nom}
+                  onChange={e => { setForm(p => ({ ...p, nom: e.target.value })); if (errors.nom) setErrors(p => ({ ...p, nom: undefined })); }}
+                  className={fieldClass("nom")}
+                />
+                {errors.nom && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.nom}</p>}
+              </div>
+
+              {/* Ville */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Ville actuelle <span className="text-red-500">*</span></Label>
+                <Select value={form.ville} onValueChange={v => { setForm(p => ({ ...p, ville: v })); setErrors(p => ({ ...p, ville: undefined })); }}>
+                  <SelectTrigger className={errors.ville ? "border-red-400 bg-red-50" : ""}>
+                    <SelectValue placeholder="Sélectionner votre ville" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Yaoundé", "Douala", "Hors-Cameroun"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.ville && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.ville}</p>}
+              </div>
+
+              {/* Diplôme */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Dernier diplôme <span className="text-red-500">*</span></Label>
+                <Select value={form.diplome} onValueChange={v => { setForm(p => ({ ...p, diplome: v })); setErrors(p => ({ ...p, diplome: undefined })); }}>
+                  <SelectTrigger className={errors.diplome ? "border-red-400 bg-red-50" : ""}>
+                    <SelectValue placeholder="Sélectionner votre diplôme" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Bac", "Licence", "Master ou plus"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.diplome && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.diplome}</p>}
+              </div>
+
+              {/* Expérience */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Années d'expérience <span className="text-red-500">*</span></Label>
+                <Select value={form.experience} onValueChange={v => { setForm(p => ({ ...p, experience: v })); setErrors(p => ({ ...p, experience: undefined })); }}>
+                  <SelectTrigger className={errors.experience ? "border-red-400 bg-red-50" : ""}>
+                    <SelectValue placeholder="Sélectionner votre niveau" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Junior (0-2 ans)", "Intermédiaire (3-7 ans)", "Expert (8 ans et plus)"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.experience && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.experience}</p>}
+              </div>
+
+              {/* Langues */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-2 block">Langues maîtrisées <span className="text-red-500">*</span></Label>
+                <div className="flex flex-wrap gap-3">
+                  {LANGUES_OPTIONS.map(lang => (
+                    <label key={lang} className="flex items-center gap-2 cursor-pointer select-none">
+                      <Checkbox
+                        checked={form.langues.includes(lang)}
+                        onCheckedChange={() => toggleLangue(lang)}
+                        className="border-[#2563eb] data-[state=checked]:bg-[#2563eb]"
+                      />
+                      <span className="text-sm text-gray-700">{lang}</span>
+                    </label>
+                  ))}
+                </div>
+                {errors.langues && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.langues}</p>}
+              </div>
+
+              {/* Secteur */}
+              <div>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Secteur d'activité <span className="text-red-500">*</span></Label>
+                <Select value={form.secteur} onValueChange={v => { setForm(p => ({ ...p, secteur: v })); setErrors(p => ({ ...p, secteur: undefined })); }}>
+                  <SelectTrigger className={errors.secteur ? "border-red-400 bg-red-50" : ""}>
+                    <SelectValue placeholder="Sélectionner votre secteur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["Métiers techniques", "Santé", "Enseignement", "Assurances", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {errors.secteur && <p className="text-xs text-red-500 mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.secteur}</p>}
+              </div>
+
+              {/* Bouton de soumission */}
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-xl font-extrabold text-sm bg-gradient-to-r from-[#25d366] to-[#128c7e] hover:from-[#128c7e] hover:to-[#0a6b5e] text-white shadow-lg transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-5 h-5 fill-white" aria-hidden="true">
+                  <path d="M16.003 2.667C8.638 2.667 2.667 8.637 2.667 16c0 2.344.635 4.61 1.84 6.594L2.667 29.333l6.9-1.81A13.267 13.267 0 0 0 16.003 29.333c7.364 0 13.33-5.97 13.33-13.333S23.367 2.667 16.003 2.667zm0 24.267a11.02 11.02 0 0 1-5.617-1.538l-.403-.24-4.094 1.074 1.09-3.984-.263-.41A10.977 10.977 0 0 1 5.003 16c0-6.066 4.934-11 11-11s11 4.934 11 11-4.934 11-11 11zm6.03-8.23c-.33-.165-1.953-.963-2.256-1.073-.303-.11-.524-.165-.744.165-.22.33-.854 1.073-1.047 1.293-.193.22-.386.248-.716.083-.33-.165-1.394-.514-2.655-1.638-.982-.875-1.645-1.956-1.838-2.286-.193-.33-.02-.508.145-.672.149-.148.33-.386.495-.58.165-.193.22-.33.33-.55.11-.22.055-.413-.027-.578-.083-.165-.744-1.793-1.02-2.455-.268-.644-.54-.557-.744-.567l-.633-.011c-.22 0-.578.083-.881.413-.303.33-1.155 1.128-1.155 2.75s1.183 3.19 1.348 3.41c.165.22 2.328 3.556 5.642 4.988.789.34 1.404.543 1.884.695.79.252 1.51.216 2.079.131.634-.095 1.953-.798 2.228-1.568.275-.77.275-1.43.193-1.568-.083-.138-.303-.22-.633-.386z" />
+                </svg>
+                Envoyer mon profil sur WhatsApp
+              </button>
+
+              <p className="text-center text-xs text-gray-400">
+                <Shield className="w-3 h-3 inline mr-1" />
+                Vos données sont confidentielles et utilisées uniquement pour votre évaluation.
+              </p>
+            </>
+          )}
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

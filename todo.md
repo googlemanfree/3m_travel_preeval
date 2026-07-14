@@ -29,3 +29,8 @@
 - [x] Validation du format email et téléphone en temps réel
 - [x] Indicateur de force du formulaire (% de complétion)
 - [x] Ajouter un bouton WhatsApp flottant en bas à droite avec animation et message pré-rempli
+- [x] Ajouter le bloc légal RC/NIU + Charte de Transparence dans le footer
+- [x] Créer la section Tarifs & Garanties avec 3 pricing cards (Intégral, Échelonné, Permis Garanti)
+- [x] Ajouter le CTA "Évaluer mon éligibilité en 2 minutes" dans le header et le hero
+- [x] Créer la modal d'auto-évaluation express avec 6 champs
+- [x] Implémenter la redirection WhatsApp avec message pré-rempli à la soumission
