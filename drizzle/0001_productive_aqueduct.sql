@@ -1,0 +1,20 @@
+CREATE TABLE `evaluations` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`fullName` varchar(255) NOT NULL,
+	`email` varchar(320) NOT NULL,
+	`phone` varchar(50) NOT NULL,
+	`dateOfBirth` varchar(20),
+	`nationality` varchar(100),
+	`destinationCategory` enum('schengen','canada','autre') NOT NULL,
+	`destinationCountry` varchar(100),
+	`visaType` enum('schengen_etude','schengen_tourisme','schengen_travail','canada_rp','canada_etude','canada_tourisme','autre') NOT NULL,
+	`educationLevel` varchar(100),
+	`employmentStatus` varchar(100),
+	`message` text,
+	`cvFileUrl` text,
+	`cvFileName` varchar(255),
+	`status` enum('pending','reviewed','contacted','closed') NOT NULL DEFAULT 'pending',
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `evaluations_id` PRIMARY KEY(`id`)
+);
