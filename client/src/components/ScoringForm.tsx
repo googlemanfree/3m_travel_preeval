@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,6 +349,16 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
           </div>
           <h2 className="font-black text-base leading-tight">{procedure.title}</h2>
 
+          {/* Barre de progression linéaire */}
+          <div className="mt-4 h-1.5 bg-blue-800/50 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-400 to-blue-300 rounded-full"
+              initial={{ width: "0%" }}
+              animate={{ width: `${(step / STEPS.length) * 100}%` }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+            />
+          </div>
+
           {/* Stepper */}
           <div className="flex items-center gap-1 mt-4">
             {STEPS.map((s, i) => {
@@ -355,28 +366,51 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
               const active = step === s.id;
               const done = step > s.id;
               return (
-                <div key={s.id} className="flex items-center flex-1">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${
-                    active ? "bg-white text-blue-800" :
-                    done ? "bg-blue-500 text-white" :
-                    "bg-blue-800/50 text-blue-300"
-                  }`}>
+                <motion.div
+                  key={s.id}
+                  className="flex items-center flex-1"
+                  initial={false}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <motion.div
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                      active ? "bg-white text-blue-800" :
+                      done ? "bg-blue-500 text-white" :
+                      "bg-blue-800/50 text-blue-300"
+                    }`}
+                    animate={active ? { scale: 1.05 } : { scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     {done ? <CheckCircle className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
                     <span className="hidden sm:block">{s.label}</span>
-                  </div>
+                  </motion.div>
                   {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-1 ${done ? "bg-blue-400" : "bg-blue-800/50"}`} />
+                    <motion.div
+                      className={`flex-1 h-0.5 mx-1 ${done ? "bg-blue-400" : "bg-blue-800/50"}`}
+                      animate={done ? { backgroundColor: "rgb(96, 165, 250)" } : {}}
+                      transition={{ duration: 0.3 }}
+                    />
                   )}
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
 
-        <div className="p-5 space-y-4">
-          {/* ── ÉTAPE 1 : Informations personnelles ── */}
-          {step === 1 && (
-            <div className="space-y-4">
+        <div className="p-5 space-y-4 relative min-h-96">
+          {/* Contenu animé des étapes */}
+          <AnimatePresence mode="wait">
+            {/* ── ÉTAPE 1 : Informations personnelles ── */}
+            {step === 1 && (
+            <motion.div
+              key="step-1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
               <h3 className="font-bold text-gray-800">Vos informations personnelles</h3>
               <div className="space-y-3">
                 <div>
@@ -411,12 +445,19 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            </motion.div>
+            )}
 
-          {/* ── ÉTAPE 2 : Profil professionnel + Scoring ── */}
-          {step === 2 && (
-            <div className="space-y-4">
+              {/* ── ÉTAPE 2 : Profil professionnel + Scoring ── */}
+            {step === 2 && (
+            <motion.div
+              key="step-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
               <h3 className="font-bold text-gray-800">Votre profil professionnel</h3>
 
               {/* Score en temps réel */}
@@ -512,12 +553,19 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                   {errors.jobSector && <p className="text-xs text-red-500 mt-1">{errors.jobSector}</p>}
                 </div>
               </div>
-            </div>
-          )}
+            </motion.div>
+            )}
 
-          {/* ── ÉTAPE 3 : Upload de documents ── */}
-          {step === 3 && (
-            <div className="space-y-4">
+              {/* ── ÉTAPE 3 : Upload de documents ── */}
+            {step === 3 && (
+            <motion.div
+              key="step-3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
               <h3 className="font-bold text-gray-800">Téléversement de vos documents</h3>
               <p className="text-sm text-gray-500">
                 Vos documents sont stockés de manière sécurisée et ne seront consultés que par nos conseillers.
@@ -564,12 +612,19 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                   </p>
                 </div>
               </div>
-            </div>
-          )}
+            </motion.div>
+            )}
 
-          {/* ── ÉTAPE 4 : Résultat du scoring + Paiement ── */}
-          {step === 4 && scoringResult && (
-            <div className="space-y-4">
+              {/* ── ÉTAPE 4 : Résultat du scoring + Paiement ── */}
+            {step === 4 && scoringResult && (
+            <motion.div
+              key="step-4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="space-y-4"
+            >
               <h3 className="font-bold text-gray-800 text-center">Votre rapport d'éligibilité</h3>
 
               {/* Score circulaire */}
@@ -640,8 +695,9 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                 <Shield className="w-3 h-3" />
                 MTN MoMo · Orange Money · Visa/Mastercard · Paiement sécurisé
               </p>
-            </div>
-          )}
+            </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Navigation */}
           <div className="flex gap-3 pt-2">

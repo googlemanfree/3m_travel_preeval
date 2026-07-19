@@ -157,3 +157,10 @@
 - [x] Fiche PDF : section "Score d'éligibilité" avec score/100, badge profil et détail par critère
 - [x] Fiche PDF : section "Documents fournis" avec liste des documents téléversés
 - [x] Statistique "Profils éligibles" dans le tableau de bord admin (remplace "En attente paiement")
+
+## Améliorations UX — Barre de Progression & Animations (v5)
+- [x] Barre de progression linéaire dans l'en-tête du ScoringForm (0% → 100% au fur et à mesure des étapes)
+- [x] Animations de transition fluides entre les étapes (fade + slide horizontal)
+- [x] Stepper animé avec agrandissement (scale) de l'étape active
+- [x] Connecteurs entre les étapes animés (changement de couleur quand complété)
+- [x] AnimatePresence pour gérer les entrées/sorties des contenus d'étapes
