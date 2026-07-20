@@ -214,3 +214,14 @@
 - [x] Ajouter une barre de progression globale et des messages d'encouragement
 - [ ] Tester l'animation en uploadant un CV et vérifier les étapes
 - [ ] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
+
+
+## Configuration SMTP — Emails de Confirmation (v10)
+- [x] Vérifier la configuration SMTP actuelle dans emailService.ts
+- [x] Configurer les variables SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
+- [x] Créer le test de validation SMTP (smtp.test.ts)
+- [x] Créer le test du mode développement (email-dev-mode.test.ts)
+- [x] Tous les tests SMTP passent avec succès
+- [ ] Générer un mot de passe d'application Gmail pour l'authentification réelle
+- [ ] Tester l'envoi réel d'emails avec Gmail
+- [ ] Ajouter des templates d'emails supplémentaires (rappel paiement, confirmation admin)
