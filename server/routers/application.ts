@@ -9,7 +9,8 @@ import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, or, like, ilike } from "drizzle-orm";
-import { sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendVerificationOtp } from "../emailService";
+import { sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendVerificationOtp, sendEvaluationReportEmail } from "../emailService";
+import { generateEvaluationReportHTML } from "../evaluationService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -365,5 +366,86 @@ export const applicationRouter = router({
         })
         .where(eq(applications.id, input.id));
       return { success: true };
+    }),
+
+  /** Envoyer le rapport d'évaluation automatique par email */
+  sendEvaluationReport: protectedProcedure
+    .input(z.object({
+      applicationId: z.number().int(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.id, input.applicationId))
+        .limit(1);
+      
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      
+      // Générer le rapport HTML
+      const reportHtml = generateEvaluationReportHTML(app);
+      
+      // Envoyer par email
+      try {
+        await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
+        return { success: true, message: "Rapport d'évaluation envoyé avec succès" };
+      } catch (err) {
+        console.error("[Evaluation Report] Send error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi du rapport" });
+      }
+    }),
+
+  /** Envoyer les rapports d'évaluation à tous les dossiers non évalués */
+  sendBulkEvaluationReports: protectedProcedure
+    .input(z.object({
+      dossierStatus: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      
+      // Récupérer les dossiers non évalués (status = "nouveau")
+      const apps = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierStatus, "nouveau"))
+        .limit(100);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const app of apps) {
+        try {
+          const reportHtml = generateEvaluationReportHTML(app);
+          await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
+          
+          // Marquer comme "en_cours" après envoi
+          await db.update(applications)
+            .set({ dossierStatus: "en_cours" })
+            .where(eq(applications.id, app.id));
+          
+          successCount++;
+        } catch (err) {
+          console.error(`[Evaluation Report] Error for ${app.dossierNumber}:`, err);
+          errorCount++;
+        }
+      }
+      
+      return {
+        success: true,
+        message: `${successCount} rapports envoyés, ${errorCount} erreurs`,
+        successCount,
+        errorCount,
+        totalProcessed: apps.length,
+      };
     }),
 });

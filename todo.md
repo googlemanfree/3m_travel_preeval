@@ -179,3 +179,17 @@
 - [x] Implémenter handleResend dans VerifyApplicationEmail.tsx
 - [ ] Corriger le bug : login candidat ne vérifiait pas emailVerified (ajouter la vérification)
 - [ ] Corriger le bug : VerifyEmail.tsx dépendait de localStorage "pendingCandidate" (rendre optionnel)
+
+
+## Système d'Évaluation Automatique — Rapports Personnalisés Multi-Destination (v7)
+- [x] Service d'évaluation : scoring multi-destination (Pologne, Canada, Allemagne, Luxembourg, UK, USA)
+- [x] Génération de rapports HTML personnalisés avec barres de progression visuelles
+- [x] Procédures tRPC : sendEvaluationReport (manuel) et sendBulkEvaluationReports (en masse)
+- [x] Fonction d'envoi d'email : sendEvaluationReportEmail avec template professionnel
+- [x] Composant EvaluationManager dans le panneau admin avec bouton "Envoyer les rapports"
+- [x] Endpoint Heartbeat : POST /api/scheduled/evaluation-job pour exécution périodique
+- [x] Routeur Heartbeat tRPC : createEvaluationJob, listJobs, deleteJob
+- [x] Intégration du gestionnaire d'évaluation dans Admin.tsx
+- [ ] Configurer le job Heartbeat via l'interface admin (bouton "Créer job quotidien")
+- [ ] Tester l'envoi en masse des rapports et vérifier les emails reçus
+- [ ] Ajouter un historique des envois de rapports dans la DB (optionnel)

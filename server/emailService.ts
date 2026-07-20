@@ -241,3 +241,27 @@ export async function sendPaymentSuccessEmail(
   `;
   await sendEmail(to, `✅ Paiement confirmé — Dossier ${dossierNumber}`, emailBase(content));
 }
+
+// ─── Email de rapport d'évaluation automatique ────────────────────────────────
+
+export async function sendEvaluationReportEmail(
+  to: string,
+  fullName: string,
+  dossierNumber: string,
+  reportHtml: string
+): Promise<void> {
+  const mailOptions = {
+    from: SMTP_FROM,
+    to,
+    subject: `📋 Rapport d'évaluation professionnelle — ${dossierNumber} — 3M Travel`,
+    html: reportHtml,
+  };
+
+  const transport = createTransport();
+  if (!transport) {
+    // Mode dev : afficher dans la console
+    console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${mailOptions.subject}\n[HTML Report sent]\n`);
+    return;
+  }
+  await transport.sendMail(mailOptions);
+}

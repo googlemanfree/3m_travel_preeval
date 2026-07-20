@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import EvaluationManager from "@/components/EvaluationManager";
 import {
   Search, Filter, Download, Printer, Eye, CheckCircle, XCircle,
   Clock, FileText, Users, TrendingUp, DollarSign, RefreshCw,
@@ -247,6 +248,11 @@ export default function Admin() {
             <RefreshCw className="w-4 h-4 mr-2" />
             Actualiser
           </Button>
+        </div>
+
+        {/* Gestionnaire d'évaluation automatique */}
+        <div className="mb-8 bg-gradient-to-r from-slate-900 to-slate-800 border border-white/10 rounded-xl p-6">
+          <EvaluationManager />
         </div>
 
         {/* Statistiques */}
