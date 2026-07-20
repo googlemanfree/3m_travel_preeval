@@ -26,6 +26,7 @@ import {
   type ScoringInput, type ScoringResult
 } from "@/lib/scoring";
 import type { ProcedureInfo } from "./ProcedureDetailModal";
+import AILoadingAnimation from "./AILoadingAnimation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface UploadedFile {
@@ -179,6 +180,7 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
   const [uploadingType, setUploadingType] = useState<string | null>(null);
   const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [isAnalyzingCV, setIsAnalyzingCV] = useState(false);
 
   const [form, setForm] = useState<FormData>({
     fullName: "", email: "", whatsappNumber: "", age: "", nationality: "",
@@ -266,22 +268,31 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
   // Analyser le CV avec l'IA
   const analyzeCV = async (file: File) => {
     if (!procedure) return;
+    setIsAnalyzingCV(true);
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64 = (e.target?.result as string)?.split(',')[1];
-        if (!base64) return;
+        if (!base64) {
+          setIsAnalyzingCV(false);
+          return;
+        }
         
-        await evaluateCVWithAI.mutateAsync({
-          cvBase64: base64,
-          candidateName: form.fullName,
-          destination: procedure.destination,
-          email: form.email,
-        });
+        try {
+          await evaluateCVWithAI.mutateAsync({
+            cvBase64: base64,
+            candidateName: form.fullName,
+            destination: procedure.destination,
+            email: form.email,
+          });
+        } finally {
+          setIsAnalyzingCV(false);
+        }
       };
       reader.readAsDataURL(file);
     } catch (err) {
       console.error('[AI Analysis] Error:', err);
+      setIsAnalyzingCV(false);
     }
   };
 
@@ -364,8 +375,10 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
   const liveScore = step >= 2 ? computeScore() : null;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0">
+    <>
+      <AILoadingAnimation isVisible={isAnalyzingCV} />
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0">
         {/* En-tête */}
         <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-5 rounded-t-xl">
           <div className="flex items-center gap-2 mb-1">
@@ -744,7 +757,8 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

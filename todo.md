@@ -204,3 +204,13 @@
 - [ ] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
 - [ ] Tester l'upload de CV et vérifier la génération du rapport IA
 - [ ] Ajouter un toast de notification lors de l'analyse IA en cours
+
+
+## Animation de Chargement IA (v9)
+- [x] Créer le composant AILoadingAnimation avec étapes animées (Extraction → Analyse → Génération → Envoi)
+- [x] Ajouter les icônes et animations Framer Motion pour chaque étape
+- [x] Intégrer l'animation dans ScoringForm lors de l'analyse IA du CV
+- [x] Ajouter l'état isAnalyzingCV pour contrôler la visibilité de l'animation
+- [x] Ajouter une barre de progression globale et des messages d'encouragement
+- [ ] Tester l'animation en uploadant un CV et vérifier les étapes
+- [ ] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
