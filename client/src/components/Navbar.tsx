@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search } from "lucide-react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -104,6 +104,11 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
                   <BookOpen className="w-4 h-4 text-blue-600" />
                   Guide Complet
                 </Link>
+                <div className="border-t border-gray-100 my-1" />
+                <Link href="/ressources" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">
+                  <Download className="w-4 h-4 text-blue-600" />
+                  Télécharger les guides PDF
+                </Link>
               </div>
             )}
           </div>
@@ -186,6 +191,10 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/guide" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <Globe className="w-4 h-4 text-blue-600" /> Guide Complet
+          </Link>
+          <Link href="/ressources" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+            <Download className="w-4 h-4 text-blue-600" /> Télécharger les guides PDF
           </Link>
           <Link href="/mon-dossier" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">

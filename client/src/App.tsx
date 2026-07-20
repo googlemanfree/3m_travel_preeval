@@ -23,6 +23,7 @@ import VisaTypes from "./pages/VisaTypes";
 import Destinations from "./pages/Destinations";
 import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
+import Ressources from "./pages/Ressources";
 
 function Router() {
   return (
@@ -59,6 +60,9 @@ function Router() {
 
       {/* Suivi de dossier candidat */}
       <Route path={"/mon-dossier"} component={MonDossier} />
+
+      {/* Bibliothèque de ressources PDF */}
+      <Route path={"/ressources"} component={Ressources} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />

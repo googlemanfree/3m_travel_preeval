@@ -293,3 +293,11 @@
 - [x] Route /mon-dossier ajoutée dans App.tsx
 - [ ] Admin : bouton "Répondre" aux messages candidats depuis le panneau admin (procédure replyToCandidate disponible, UI à créer)
 - [ ] Lien "Suivre mon dossier" dans la page /payment-success
+
+## Bibliothèque de Ressources PDF (v14)
+- [x] Upload de 212 fichiers PDF/DOCX sur S3 (Visa Travail, Études, Visiteur, Guides, Formulaires)
+- [x] Fichier shared/pdfResources.ts avec catalogue complet et vraies URLs S3
+- [x] Page /ressources avec recherche, filtres par catégorie, cartes de téléchargement (107 documents)
+- [x] Lien "Télécharger les guides PDF" dans le menu déroulant Ressources (desktop)
+- [x] Lien "Télécharger les guides PDF" dans le menu mobile
+- [x] Route /ressources ajoutée dans App.tsx
