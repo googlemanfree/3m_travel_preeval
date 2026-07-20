@@ -19,6 +19,9 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
+import VisaTypes from "./pages/VisaTypes";
+import Destinations from "./pages/Destinations";
+import Guide from "./pages/Guide";
 
 function Router() {
   return (
@@ -38,6 +41,9 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path={"/procedures"} component={Procedures} />
+      <Route path={"/visa-types"} component={VisaTypes} />
+      <Route path={"/destinations"} component={Destinations} />
+      <Route path={"/guide"} component={Guide} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />

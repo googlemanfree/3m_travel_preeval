@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield } from "lucide-react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -20,11 +20,16 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
 
   const isAdmin = isAuthenticated && user?.role === "admin";
 
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+
   const active = activePage ?? (
     location === "/" ? "home" :
     location.startsWith("/flights") ? "flights" :
     location.startsWith("/procedures") ? "procedures" :
-    location.startsWith("/dashboard") ? "dashboard" : undefined
+    location.startsWith("/dashboard") ? "dashboard" :
+    location.startsWith("/visa-types") ? "visa-types" :
+    location.startsWith("/destinations") ? "destinations" :
+    location.startsWith("/guide") ? "guide" : undefined
   );
 
   const linkClass = (page: string) =>
@@ -73,6 +78,36 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/procedures" className={linkClass("procedures")}>
             <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
           </Link>
+
+          {/* Menu déroulant Ressources */}
+          <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
+            <button className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+              ["visa-types", "destinations", "guide"].includes(active ?? "")
+                ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
+                : "text-gray-600 hover:text-blue-700"
+            }`}>
+              <Globe className="w-3.5 h-3.5" />
+              Ressources
+              <ChevronDown className={`w-3 h-3 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
+            </button>
+            {resourcesOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-blue-100 rounded-lg shadow-lg py-2 min-w-48 z-50">
+                <Link href="/visa-types" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Types de Visa
+                </Link>
+                <Link href="/destinations" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Map className="w-4 h-4 text-blue-600" />
+                  Destinations
+                </Link>
+                <Link href="/guide" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  Guide Complet
+                </Link>
+              </div>
+            )}
+          </div>
+
           {isAdmin && (
             <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
               <Shield className="w-3.5 h-3.5" />
@@ -135,6 +170,18 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/procedures" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <BookOpen className="w-4 h-4 text-blue-600" /> Procédures
+          </Link>
+          <Link href="/visa-types" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <FileText className="w-4 h-4 text-blue-600" /> Types de Visa
+          </Link>
+          <Link href="/destinations" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Map className="w-4 h-4 text-blue-600" /> Destinations
+          </Link>
+          <Link href="/guide" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Globe className="w-4 h-4 text-blue-600" /> Guide Complet
           </Link>
           <Link href="/open-dossier" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">

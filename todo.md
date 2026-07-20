@@ -225,3 +225,13 @@
 - [ ] Générer un mot de passe d'application Gmail pour l'authentification réelle
 - [ ] Tester l'envoi réel d'emails avec Gmail
 - [ ] Ajouter des templates d'emails supplémentaires (rappel paiement, confirmation admin)
+
+## Pages Mobilité Internationale (v10)
+- [x] Créer shared/visaData.ts avec données génériques (6 types de visa, 6 destinations, procédures)
+- [x] Page /visa-types : 6 cartes colorées expandables (conditions, documents, délais, coûts)
+- [x] Page /destinations : grille avec recherche, filtres par continent, infos clés par pays
+- [x] Page /guide : timeline interactive 6 étapes + FAQ + types de visa + CTA
+- [x] Navbar : menu déroulant "Ressources" (Types de Visa, Destinations, Guide Complet)
+- [x] Navbar mobile : liens Ressources dans le menu hamburger
+- [x] Routes App.tsx : /visa-types, /destinations, /guide
+- [x] Aucune erreur TypeScript
