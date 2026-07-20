@@ -187,6 +187,7 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
   });
 
   const createApplication = trpc.application.createApplication.useMutation();
+  const evaluateCVWithAI = trpc.application.evaluateCVWithAI.useMutation();
 
   const set = (field: keyof FormData, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }));
@@ -241,6 +242,11 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
         cvFile: type === "cv" ? uploaded : prev.cvFile,
         diplomaFile: type === "diplome" ? uploaded : prev.diplomaFile,
       }));
+
+      // Si c'est un CV, déclencher l'analyse IA
+      if (type === "cv") {
+        analyzeCV(file);
+      }
     } catch (err) {
       setErrors(prev => ({ ...prev, [type]: "Erreur lors du téléversement. Réessayez." }));
     } finally {
@@ -255,6 +261,28 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
       cvFile: type === "cv" ? null : prev.cvFile,
       diplomaFile: type === "diplome" ? null : prev.diplomaFile,
     }));
+  };
+
+  // Analyser le CV avec l'IA
+  const analyzeCV = async (file: File) => {
+    if (!procedure) return;
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string)?.split(',')[1];
+        if (!base64) return;
+        
+        await evaluateCVWithAI.mutateAsync({
+          cvBase64: base64,
+          candidateName: form.fullName,
+          destination: procedure.destination,
+          email: form.email,
+        });
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('[AI Analysis] Error:', err);
+    }
   };
 
   // Validation par étape

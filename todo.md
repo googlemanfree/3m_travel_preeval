@@ -193,3 +193,14 @@
 - [ ] Configurer le job Heartbeat via l'interface admin (bouton "Créer job quotidien")
 - [ ] Tester l'envoi en masse des rapports et vérifier les emails reçus
 - [ ] Ajouter un historique des envois de rapports dans la DB (optionnel)
+
+
+## Intégration IA — Analyse de CV avec OpenAI (v8)
+- [x] Installer les dépendances pdf-parse et openai
+- [x] Créer le service aiEvaluationService.ts : extraction PDF + analyse IA + rapport par défaut
+- [x] Ajouter la procédure tRPC evaluateCVWithAI : analyse CV en base64 + génération rapport + envoi email
+- [x] Intégrer analyzeCV dans ScoringForm : déclencher l'analyse lors de l'upload du CV
+- [x] Ajouter la mutation tRPC evaluateCVWithAI dans ScoringForm
+- [ ] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
+- [ ] Tester l'upload de CV et vérifier la génération du rapport IA
+- [ ] Ajouter un toast de notification lors de l'analyse IA en cours

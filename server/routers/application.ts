@@ -11,6 +11,7 @@ import { z } from "zod";
 import { eq, desc, or, like, ilike } from "drizzle-orm";
 import { sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendVerificationOtp, sendEvaluationReportEmail } from "../emailService";
 import { generateEvaluationReportHTML } from "../evaluationService";
+import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -447,5 +448,47 @@ export const applicationRouter = router({
         errorCount,
         totalProcessed: apps.length,
       };
+    }),
+
+  evaluateCVWithAI: publicProcedure
+    .input(z.object({
+      cvBase64: z.string(),
+      candidateName: z.string(),
+      destination: z.string(),
+      email: z.string().email(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const cvBuffer = Buffer.from(input.cvBase64, 'base64');
+        const cvText = await extractTextFromPDF(cvBuffer);
+        const openaiKey = process.env.OPENAI_API_KEY;
+        const report = await generateAIEvaluationReport(
+          cvText,
+          input.candidateName,
+          input.destination,
+          openaiKey
+        );
+        try {
+          await sendEvaluationReportEmail(
+            input.email,
+            input.candidateName,
+            `3M-AI-${Date.now()}`,
+            `<pre style="font-family: monospace; white-space: pre-wrap;">${report}</pre>`
+          );
+        } catch (emailErr) {
+          console.error('[AI Evaluation] Email send error:', emailErr);
+        }
+        return {
+          success: true,
+          report,
+          message: 'Rapport d\'évaluation IA généré avec succès',
+        };
+      } catch (err) {
+        console.error('[AI Evaluation] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de l\'évaluation IA du CV',
+        });
+      }
     }),
 });
