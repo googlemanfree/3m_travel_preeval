@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProcedureDetailModal from "@/components/ProcedureDetailModal";
-import ScoringForm from "@/components/ScoringForm";
+import FullDossierForm from "@/components/FullDossierForm";
 import type { ProcedureInfo } from "@/components/ProcedureDetailModal";
 import {
   Dialog,
@@ -1119,6 +1119,15 @@ export default function Procedures() {
     setShowScoringForm(true);
   };
 
+  // Mapper le type de procédure vers le type de visa FullDossierForm
+  const getProcedureVisaType = (type?: string) => {
+    if (!type) return undefined;
+    const map: Record<string, string> = {
+      travail: "travail", etudes: "etude", visiteur: "tourisme", residence: "residence"
+    };
+    return map[type] ?? undefined;
+  };
+
   const handleCloseTunnel = () => {
     setShowDetailModal(false);
     setShowScoringForm(false);
@@ -1492,11 +1501,31 @@ export default function Procedures() {
         onClose={handleCloseTunnel}
         onContinue={handleContinueToScoring}
       />
-      <ScoringForm
-        procedure={selectedProcedure}
-        open={showScoringForm}
-        onClose={handleCloseTunnel}
-      />
+      {/* Formulaire complet de constitution de dossier */}
+      {showScoringForm && (
+        <Dialog open={showScoringForm} onOpenChange={(o) => !o && handleCloseTunnel()}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <div className="p-6">
+              <DialogHeader className="mb-4">
+                <DialogTitle className="text-xl font-bold">
+                  Constitution de dossier
+                  {selectedProcedure && (
+                    <span className="text-blue-600 ml-2 text-base font-normal">
+                      — {selectedProcedure.title}
+                    </span>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+              <FullDossierForm
+                initialVisaType={getProcedureVisaType(selectedProcedure?.type) as import('@/components/FullDossierForm').VisaCategory}
+                initialDestination={selectedProcedure?.destination ?? ""}
+                procedureId={selectedProcedure?.id}
+                procedureTitle={selectedProcedure?.title}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Footer />
     </div>

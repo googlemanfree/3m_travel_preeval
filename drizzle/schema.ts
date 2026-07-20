@@ -187,7 +187,41 @@ export const applications = mysqlTable("applications", {
   passportUrl: text("passportUrl"),
   cvUrl: text("cvUrl"),
   diplomaUrl: text("diplomaUrl"),
-  // Scoring automatique sur 100 points
+  // ─── État civil complet ───
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  placeOfBirth: varchar("placeOfBirth", { length: 150 }),
+  gender: mysqlEnum("gender", ["homme", "femme", "autre"]),
+  maritalStatus: mysqlEnum("maritalStatus", ["celibataire", "marie", "divorce", "veuf", "union_libre"]),
+  currentAddress: text("currentAddress"),
+  currentCity: varchar("currentCity", { length: 100 }),
+  currentCountry: varchar("currentCountry", { length: 100 }),
+  // ─── Études & Diplômes ───
+  diplomaTitle: varchar("diplomaTitle", { length: 255 }),
+  diplomaInstitution: varchar("diplomaInstitution", { length: 255 }),
+  diplomaYear: int("diplomaYear"),
+  fieldOfStudy: varchar("fieldOfStudy", { length: 150 }),
+  additionalDiplomas: text("additionalDiplomas"),  // JSON array
+  // ─── Situation professionnelle ───
+  currentEmployer: varchar("currentEmployer", { length: 255 }),
+  currentJobTitle: varchar("currentJobTitle", { length: 150 }),
+  monthlyIncome: int("monthlyIncome"),
+  incomeCurrency: varchar("incomeCurrency", { length: 10 }).default("XAF"),
+  // ─── Ressources financières ───
+  bankBalance: int("bankBalance"),
+  bankBalanceCurrency: varchar("bankBalanceCurrency", { length: 10 }).default("XAF"),
+  hasSponsorship: boolean("hasSponsorship").default(false),
+  sponsorName: varchar("sponsorName", { length: 255 }),
+  sponsorRelation: varchar("sponsorRelation", { length: 100 }),
+  // ─── Situation familiale (regroupement familial) ───
+  numberOfChildren: int("numberOfChildren").default(0),
+  spouseFullName: varchar("spouseFullName", { length: 255 }),
+  spouseNationality: varchar("spouseNationality", { length: 100 }),
+  familyMemberInDestination: boolean("familyMemberInDestination").default(false),
+  familyMemberRelation: varchar("familyMemberRelation", { length: 100 }),
+  familyMemberStatus: varchar("familyMemberStatus", { length: 100 }),  // citoyen / résident / étudiant
+  // ─── Type de visa choisi ───
+  visaType: varchar("visaType", { length: 50 }),  // etude / travail / tourisme / residence / famille / affaires
+  // ─── Scoring automatique sur 100 points ───
   scoringTotal: int("scoringTotal"),
   scoringDetails: text("scoringDetails"),  // JSON {education, experience, language, sector, age}
   scoringBadge: mysqlEnum("scoringBadge", ["eligible", "admissible", "faible"]),

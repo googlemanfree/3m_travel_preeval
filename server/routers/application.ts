@@ -105,6 +105,37 @@ export const applicationRouter = router({
       // Informations complémentaires
       procedureId: z.string().optional(),
       procedureTitle: z.string().optional(),
+      // État civil complet
+      dateOfBirth: z.string().optional(),
+      placeOfBirth: z.string().optional(),
+      gender: z.enum(["homme", "femme", "autre"]).optional(),
+      maritalStatus: z.enum(["celibataire", "marie", "divorce", "veuf", "union_libre"]).optional(),
+      currentAddress: z.string().optional(),
+      currentCity: z.string().optional(),
+      currentCountry: z.string().optional(),
+      // Études & Diplômes
+      diplomaTitle: z.string().optional(),
+      diplomaInstitution: z.string().optional(),
+      diplomaYear: z.number().int().optional(),
+      fieldOfStudy: z.string().optional(),
+      // Situation professionnelle
+      currentEmployer: z.string().optional(),
+      currentJobTitle: z.string().optional(),
+      monthlyIncome: z.number().int().optional(),
+      bankBalance: z.number().int().optional(),
+      // Ressources financières
+      hasSponsorship: z.boolean().optional(),
+      sponsorName: z.string().optional(),
+      sponsorRelation: z.string().optional(),
+      // Situation familiale
+      numberOfChildren: z.number().int().min(0).optional(),
+      spouseFullName: z.string().optional(),
+      spouseNationality: z.string().optional(),
+      familyMemberInDestination: z.boolean().optional(),
+      familyMemberRelation: z.string().optional(),
+      familyMemberStatus: z.string().optional(),
+      // Type de visa
+      visaType: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -158,6 +189,37 @@ export const applicationRouter = router({
         emailVerified: false,
         emailOtp,
         emailOtpExpiresAt,
+        // État civil complet
+        dateOfBirth: input.dateOfBirth ?? null,
+        placeOfBirth: input.placeOfBirth ?? null,
+        gender: input.gender ?? null,
+        maritalStatus: input.maritalStatus ?? null,
+        currentAddress: input.currentAddress ?? null,
+        currentCity: input.currentCity ?? null,
+        currentCountry: input.currentCountry ?? null,
+        // Études & Diplômes
+        diplomaTitle: input.diplomaTitle ?? null,
+        diplomaInstitution: input.diplomaInstitution ?? null,
+        diplomaYear: input.diplomaYear ?? null,
+        fieldOfStudy: input.fieldOfStudy ?? null,
+        // Situation professionnelle
+        currentEmployer: input.currentEmployer ?? null,
+        currentJobTitle: input.currentJobTitle ?? null,
+        monthlyIncome: input.monthlyIncome ?? null,
+        bankBalance: input.bankBalance ?? null,
+        // Ressources financières
+        hasSponsorship: input.hasSponsorship ?? false,
+        sponsorName: input.sponsorName ?? null,
+        sponsorRelation: input.sponsorRelation ?? null,
+        // Situation familiale
+        numberOfChildren: input.numberOfChildren ?? 0,
+        spouseFullName: input.spouseFullName ?? null,
+        spouseNationality: input.spouseNationality ?? null,
+        familyMemberInDestination: input.familyMemberInDestination ?? false,
+        familyMemberRelation: input.familyMemberRelation ?? null,
+        familyMemberStatus: input.familyMemberStatus ?? null,
+        // Type de visa
+        visaType: input.visaType ?? null,
       });
 
       // Envoyer l'OTP au candidat

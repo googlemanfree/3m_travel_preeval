@@ -235,3 +235,28 @@
 - [x] Navbar mobile : liens Ressources dans le menu hamburger
 - [x] Routes App.tsx : /visa-types, /destinations, /guide
 - [x] Aucune erreur TypeScript
+
+## Formulaire Complet de Constitution de Dossier (v11)
+- [ ] Analyser le formulaire actuel (ScoringForm, OpenDossier) et identifier les champs manquants
+- [ ] Étendre le schéma DB : état civil, coordonnées complètes, études/diplômes, situation pro, expérience, ressources financières, situation familiale, champs spécifiques par type de visa
+- [ ] Créer FullDossierForm : 7 étapes (Visa & Destination → État civil → Coordonnées → Études/Diplômes → Situation pro/financière → Situation familiale → Documents & Paiement)
+- [ ] Étapes dynamiques selon le type de visa (ex: étape "Regroupement familial" uniquement si visa famille)
+- [ ] Upload documents : passeport, CV, diplômes, relevés bancaires, contrat de travail, lettre d'invitation
+- [ ] Scoring automatique mis à jour avec les nouveaux critères
+- [ ] Mettre à jour les procédures tRPC createApplication pour accepter tous les nouveaux champs
+- [ ] Remplacer ScoringForm par FullDossierForm dans le tunnel Procedures et OpenDossier
+- [ ] Barre de progression claire avec noms d'étapes et indicateur de complétion
+
+## Formulaire Complet de Constitution de Dossier (v11)
+- [x] Schéma DB étendu : 27 nouvelles colonnes (état civil, diplômes, emploi, finances, famille, type de visa)
+- [x] Migration DB appliquée via webdev_execute_sql
+- [x] Composant FullDossierForm : 6 étapes (Visa → Identité → Études → Emploi → Finances → Documents)
+- [x] Étapes adaptées dynamiquement au type de visa (ex: Regroupement Familial affiche l'étape Famille)
+- [x] Barre de progression et stepper numéroté avec labels
+- [x] Animations de transition Framer Motion entre étapes
+- [x] Upload de documents (passeport, CV, diplôme, justificatifs) via route publique S3
+- [x] Procédure tRPC createApplication étendue avec tous les nouveaux champs
+- [x] Page /open-dossier remplacée par wrapper autour de FullDossierForm
+- [x] Tunnel Procedures.tsx : ScoringForm remplacé par FullDossierForm dans la modale
+- [x] Props procedureId et procedureTitle passées depuis Procedures vers FullDossierForm
+- [x] Aucune erreur TypeScript
