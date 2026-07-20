@@ -209,6 +209,10 @@ export const applications = mysqlTable("applications", {
     "refuse",
   ]).default("nouveau").notNull(),
   adminNote: text("adminNote"),
+  // Vérification email avant paiement (OTP à 6 chiffres)
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  emailOtp: varchar("emailOtp", { length: 10 }),
+  emailOtpExpiresAt: timestamp("emailOtpExpiresAt"),
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

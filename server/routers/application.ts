@@ -9,7 +9,7 @@ import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, or, like, ilike } from "drizzle-orm";
-import { sendDossierConfirmationEmail, sendAdminNewDossierAlert } from "../emailService";
+import { sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendVerificationOtp } from "../emailService";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -121,6 +121,10 @@ export const applicationRouter = router({
 
       const transactionId = `${dossierNumber.replace(/-/g, "")}${Date.now()}`.slice(0, 50);
 
+      // Générer un OTP à 6 chiffres pour la vérification email
+      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+
       await db.insert(applications).values({
         dossierNumber,
         candidateId: input.candidateId ?? null,
@@ -148,61 +152,130 @@ export const applicationRouter = router({
         scoringTotal: input.scoringTotal ?? null,
         scoringDetails: input.scoringDetails ?? null,
         scoringBadge: input.scoringBadge ?? null,
+        // Vérification email
+        emailVerified: false,
+        emailOtp,
+        emailOtpExpiresAt,
       });
 
-      // Envoyer les emails de confirmation (en arrière-plan, sans bloquer la réponse)
-      const formulaLabels: Record<string, string> = {
-        integral: "Paiement Intégral (65 000 FCFA)",
-        echelonne: "Paiement Échelonné (3×25 000 FCFA)",
-        garanti: "Permis Garanti (130 000 FCFA)",
-      };
-      const formulaLabel = formulaLabels[input.formulaChosen] ?? input.formulaChosen;
-      Promise.all([
-        sendDossierConfirmationEmail(input.email, input.fullName, dossierNumber, input.destination, formulaLabel, 65000),
-        sendAdminNewDossierAlert(input.fullName, dossierNumber, input.email, input.whatsappNumber, input.destination, formulaLabel, "PENDING"),
-      ]).catch(err => console.error("[Email] Notification error:", err));
+      // Envoyer l'OTP au candidat
+      Promise.resolve().then(() => sendVerificationOtp(input.email, input.fullName, emailOtp))
+        .catch(err => console.error("[Email] OTP send error:", err));
 
-      // Mode démo si pas de credentials CinetPay
+      return {
+        dossierNumber,
+        transactionId,
+        requiresEmailVerification: true,
+        paymentUrl: null, // Sera généré après vérification OTP
+        message: "Dossier créé — vérification email requise avant paiement",
+      };
+    }),
+
+  /** Renvoyer l'OTP si expiré */
+  resendApplicationOtp: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (app.emailVerified) throw new TRPCError({ code: "BAD_REQUEST", message: "Email déjà vérifié" });
+
+      // Générer un nouvel OTP
+      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+
+      await db.update(applications)
+        .set({ emailOtp, emailOtpExpiresAt })
+        .where(eq(applications.dossierNumber, input.dossierNumber));
+
+      // Envoyer le nouvel OTP
+      Promise.resolve().then(() => sendVerificationOtp(app.email, app.fullName, emailOtp))
+        .catch(err => console.error("[Email] OTP resend error:", err));
+
+      return {
+        dossierNumber: input.dossierNumber,
+        message: "Nouveau code OTP envoyé par email",
+      };
+    }),
+
+  /** Vérifier l'OTP et initialiser le paiement CinetPay */
+  verifyApplicationOtp: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string(),
+      otp: z.string().length(6),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const siteId = process.env.CINETPAY_SITE_ID ?? "";
+      const apiKey = process.env.CINETPAY_API_KEY ?? "";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (app.emailVerified) throw new TRPCError({ code: "BAD_REQUEST", message: "Email déjà vérifié" });
+      if (app.emailOtp !== input.otp) throw new TRPCError({ code: "BAD_REQUEST", message: "Code OTP invalide" });
+      if (!app.emailOtpExpiresAt || app.emailOtpExpiresAt < new Date()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Code OTP expiré (15 minutes)" });
+      }
+
+      // Marquer l'email comme vérifié
+      await db.update(applications)
+        .set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null })
+        .where(eq(applications.dossierNumber, input.dossierNumber));
+
+      // Initialiser le paiement CinetPay
       if (!siteId || !apiKey) {
         return {
-          dossierNumber,
-          transactionId,
+          dossierNumber: input.dossierNumber,
           paymentUrl: null as string | null,
           demoMode: true,
-          message: "Dossier créé (mode démo — CinetPay non configuré)",
+          message: "Email vérifié (mode démo — CinetPay non configuré)",
         };
       }
 
       try {
         const result = await initCinetPayTransaction({
-          transactionId,
+          transactionId: app.paymentTransactionId ?? "",
           amount: 65000,
           currency: "XAF",
-          description: `Ouverture dossier immigration 3M Travel — ${dossierNumber}`,
-          customerName: input.fullName,
-          customerEmail: input.email,
-          customerPhone: input.whatsappNumber,
-          returnUrl: `${baseUrl}/payment-success?dossier=${dossierNumber}`,
+          description: `Ouverture dossier immigration 3M Travel — ${input.dossierNumber}`,
+          customerName: app.fullName,
+          customerEmail: app.email,
+          customerPhone: app.whatsappNumber,
+          returnUrl: `${baseUrl}/payment-success?dossier=${input.dossierNumber}`,
           notifyUrl: `${baseUrl}/api/cinetpay/webhook`,
           siteId,
           apiKey,
         });
 
         return {
-          dossierNumber,
-          transactionId,
+          dossierNumber: input.dossierNumber,
           paymentUrl: result.paymentUrl as string | null,
           demoMode: false,
-          message: "Dossier créé — redirection vers le paiement",
+          message: "Email vérifié — redirection vers le paiement",
         };
       } catch (err) {
         console.error("[CinetPay] Init error:", err);
         return {
-          dossierNumber,
-          transactionId,
+          dossierNumber: input.dossierNumber,
           paymentUrl: null as string | null,
           demoMode: true,
-          message: "Dossier créé — paiement à effectuer manuellement",
+          message: "Email vérifié — paiement à effectuer manuellement",
         };
       }
     }),

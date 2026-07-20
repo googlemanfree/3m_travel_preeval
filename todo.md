@@ -164,3 +164,18 @@
 - [x] Stepper animé avec agrandissement (scale) de l'étape active
 - [x] Connecteurs entre les étapes animés (changement de couleur quand complété)
 - [x] AnimatePresence pour gérer les entrées/sorties des contenus d'étapes
+
+
+## Amélioration des Inscriptions — Confirmation Email & Corrections de Bugs (v6)
+- [x] Ajouter colonnes emailVerified, emailOtp, emailOtpExpiresAt à la table applications
+- [x] Modifier createApplication : créer l'application avec emailVerified=false, générer et envoyer OTP
+- [x] Créer une page /verify-application-email pour vérifier l'OTP avant le paiement
+- [x] Intégrer la vérification email dans le tunnel ScoringForm (après étape 4, avant redirection paiement)
+- [x] Ajouter procédure verifyApplicationOtp : vérifier OTP et initialiser paiement CinetPay
+- [x] Route /verify-application-email intégrée dans App.tsx
+- [x] Adapter OpenDossier.tsx pour rediriger vers /verify-application-email
+- [x] Retirer emailOtp de la réponse createApplication (sécurité)
+- [x] Ajouter procédure resendApplicationOtp pour renvoyer l'OTP si expiré
+- [x] Implémenter handleResend dans VerifyApplicationEmail.tsx
+- [ ] Corriger le bug : login candidat ne vérifiait pas emailVerified (ajouter la vérification)
+- [ ] Corriger le bug : VerifyEmail.tsx dépendait de localStorage "pendingCandidate" (rendre optionnel)

@@ -322,11 +322,8 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
         procedureTitle: procedure.title,
       });
 
-      if (result.paymentUrl) {
-        window.location.href = result.paymentUrl;
-      } else {
-        navigate(`/payment-success?dossier=${result.dossierNumber}&demo=1`);
-      }
+      // Rediriger vers la vérification email
+      navigate(`/verify-application-email?dossier=${result.dossierNumber}`);
     } catch (err) {
       setErrors({ submit: "Une erreur est survenue. Veuillez réessayer." });
     } finally {

@@ -94,11 +94,8 @@ export default function OpenDossier() {
 
   const createApplication = trpc.application.createApplication.useMutation({
     onSuccess: (data) => {
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        navigate(`/payment-success?dossier=${data.dossierNumber}&demo=true`);
-      }
+      // Rediriger vers la vérification email (nouveau flux)
+      navigate(`/verify-application-email?dossier=${data.dossierNumber}`);
     },
     onError: (err) => {
       setErrors({ submit: err.message });

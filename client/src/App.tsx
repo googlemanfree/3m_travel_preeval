@@ -17,6 +17,7 @@ import ResetPassword from "./pages/ResetPassword";
 import OpenDossier from "./pages/OpenDossier";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
+import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
 
 function Router() {
@@ -45,6 +46,7 @@ function Router() {
 
       {/* Ouverture de dossier & paiement */}
       <Route path={"/open-dossier"} component={OpenDossier} />
+      <Route path={"/verify-application-email"} component={VerifyApplicationEmail} />
       <Route path={"/payment-success"} component={PaymentSuccess} />
       <Route path={"/payment-failed"} component={PaymentFailed} />
 
