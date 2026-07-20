@@ -278,3 +278,18 @@
 - [x] Signature électronique : nom + case à cocher + date horodatée
 - [x] Intégration dans FullDossierForm : affichage après soumission, avant vérification email
 - [x] Tunnel complet : Formulaire → Protocole d'Accord → Vérification Email → Paiement
+
+## Tableau de Bord Candidat — Suivi de Dossier (v12)
+- [x] Procédure tRPC getDossierStatus : récupérer le dossier par numéro + email (sans compte)
+- [x] Procédure tRPC sendCandidateMessage : envoyer un message au conseiller
+- [x] Procédure tRPC replyToCandidate : répondre au candidat depuis l'admin
+- [x] Page /mon-dossier : formulaire de connexion par numéro de dossier + email
+- [x] Timeline visuelle des étapes : Soumission → Accord → Paiement → Traitement → Soumis → Visa
+- [x] Section statut actuel avec badge coloré et description de l'étape
+- [x] Section documents soumis avec liens de téléchargement (passeport, CV, diplôme)
+- [x] Section messagerie candidat ↔ conseiller
+- [x] Section prochaines étapes personnalisées selon le statut
+- [x] Lien "Suivre mon dossier" dans la Navbar desktop et mobile
+- [x] Route /mon-dossier ajoutée dans App.tsx
+- [ ] Admin : bouton "Répondre" aux messages candidats depuis le panneau admin (procédure replyToCandidate disponible, UI à créer)
+- [ ] Lien "Suivre mon dossier" dans la page /payment-success

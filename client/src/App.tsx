@@ -22,6 +22,7 @@ import Admin from "./pages/Admin";
 import VisaTypes from "./pages/VisaTypes";
 import Destinations from "./pages/Destinations";
 import Guide from "./pages/Guide";
+import MonDossier from "./pages/MonDossier";
 
 function Router() {
   return (
@@ -55,6 +56,9 @@ function Router() {
       <Route path={"/verify-application-email"} component={VerifyApplicationEmail} />
       <Route path={"/payment-success"} component={PaymentSuccess} />
       <Route path={"/payment-failed"} component={PaymentFailed} />
+
+      {/* Suivi de dossier candidat */}
+      <Route path={"/mon-dossier"} component={MonDossier} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />

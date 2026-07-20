@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown } from "lucide-react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -108,6 +108,10 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             )}
           </div>
 
+          <Link href="/mon-dossier" className={linkClass("mon-dossier")}>
+            <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivre mon dossier</span>
+          </Link>
+
           {isAdmin && (
             <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
               <Shield className="w-3.5 h-3.5" />
@@ -182,6 +186,10 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/guide" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <Globe className="w-4 h-4 text-blue-600" /> Guide Complet
+          </Link>
+          <Link href="/mon-dossier" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Search className="w-4 h-4 text-blue-600" /> Suivre mon dossier
           </Link>
           <Link href="/open-dossier" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">

@@ -605,4 +605,126 @@ export const applicationRouter = router({
         message: 'Protocole d\'accord signé avec succès',
       };
     }),
+
+  // ─── Suivi de dossier candidat (sans compte) ────────────────────────────────
+
+  /**
+   * Récupère le statut d'un dossier par numéro + email (accès public sécurisé)
+   */
+  getDossierStatus: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string().min(5),
+      email: z.string().email(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+      if (!app) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable. Vérifiez le numéro et l\'email.' });
+      }
+      // Vérification email pour sécuriser l'accès
+      if (app.email.toLowerCase() !== input.email.toLowerCase()) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Email incorrect pour ce dossier.' });
+      }
+      // Retourner les infos sans données sensibles (OTP, etc.)
+      return {
+        id: app.id,
+        dossierNumber: app.dossierNumber,
+        fullName: app.fullName,
+        email: app.email,
+        destination: app.destination,
+        visaType: app.visaType,
+        formulaChosen: app.formulaChosen,
+        dossierStatus: app.dossierStatus,
+        paymentStatus: app.paymentStatus,
+        paymentDate: app.paymentDate,
+        emailVerified: app.emailVerified,
+        agreementSigned: app.agreementSigned,
+        agreementSignedAt: app.agreementSignedAt,
+        adminNote: app.adminNote,
+        passportUrl: app.passportUrl,
+        cvUrl: app.cvUrl,
+        diplomaUrl: app.diplomaUrl,
+        documentsUrls: app.documentsUrls,
+        scoringTotal: app.scoringTotal,
+        scoringBadge: app.scoringBadge,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+      };
+    }),
+
+  /**
+   * Envoyer un message au conseiller depuis le tableau de bord candidat
+   */
+  sendCandidateMessage: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string().min(5),
+      email: z.string().email(),
+      message: z.string().min(5).max(2000),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      // Vérifier que le dossier existe et que l'email correspond
+      const [app] = await db
+        .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+      if (!app || app.email.toLowerCase() !== input.email.toLowerCase()) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès non autorisé.' });
+      }
+      // Stocker le message dans adminNote (append)
+      const [current] = await db
+        .select({ adminNote: applications.adminNote })
+        .from(applications)
+        .where(eq(applications.id, app.id))
+        .limit(1);
+      const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
+      const newNote = `[MSG CANDIDAT — ${timestamp}]\n${input.message}`;
+      const updatedNote = current?.adminNote
+        ? `${current.adminNote}\n\n${newNote}`
+        : newNote;
+      await db
+        .update(applications)
+        .set({ adminNote: updatedNote })
+        .where(eq(applications.id, app.id));
+      return { success: true, message: 'Message envoyé à votre conseiller.' };
+    }),
+
+  /**
+   * Admin : répondre à un candidat (ajoute une note admin)
+   */
+  replyToCandidate: protectedProcedure
+    .input(z.object({
+      applicationId: z.number(),
+      reply: z.string().min(5).max(2000),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès réservé aux administrateurs.' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [current] = await db
+        .select({ adminNote: applications.adminNote })
+        .from(applications)
+        .where(eq(applications.id, input.applicationId))
+        .limit(1);
+      const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
+      const newReply = `[RÉPONSE CONSEILLER — ${timestamp}]\n${input.reply}`;
+      const updatedNote = current?.adminNote
+        ? `${current.adminNote}\n\n${newReply}`
+        : newReply;
+      await db
+        .update(applications)
+        .set({ adminNote: updatedNote })
+        .where(eq(applications.id, input.applicationId));
+      return { success: true };
+    }),
 });
