@@ -260,3 +260,21 @@
 - [x] Tunnel Procedures.tsx : ScoringForm remplacé par FullDossierForm dans la modale
 - [x] Props procedureId et procedureTitle passées depuis Procedures vers FullDossierForm
 - [x] Aucune erreur TypeScript
+
+## Protocole d'Accord — Signature Électronique (v12)
+- [ ] Ajouter colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
+- [ ] Procédure tRPC signAgreement : enregistrer la signature avec horodatage et IP
+- [ ] Composant AgreementProtocol : document d'accord complet (engagements agence + candidat, honoraires en référence discrète)
+- [ ] Signature électronique : champ nom + case à cocher + date auto + bouton "Je signe et accepte"
+- [ ] Intégrer AgreementProtocol dans le tunnel après l'évaluation positive (avant vérification email)
+- [ ] Afficher le récapitulatif de la signature dans le panneau admin (fiche PDF)
+- [ ] Tester le flux complet : évaluation → accord → signature → vérification email → paiement
+
+## Protocole d'Accord — Signature Électronique (v11)
+- [x] Colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
+- [x] Procédure tRPC signAgreement : vérification dossier, enregistrement signature horodatée avec IP
+- [x] Retour applicationId dans createApplication pour lier le protocole au bon dossier
+- [x] Composant AgreementProtocol : document d'accord complet avec engagements réciproques
+- [x] Signature électronique : nom + case à cocher + date horodatée
+- [x] Intégration dans FullDossierForm : affichage après soumission, avant vérification email
+- [x] Tunnel complet : Formulaire → Protocole d'Accord → Vérification Email → Paiement

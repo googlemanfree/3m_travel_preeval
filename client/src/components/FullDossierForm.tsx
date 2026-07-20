@@ -13,6 +13,7 @@ import {
   CheckCircle, AlertCircle, X, Loader2
 } from "lucide-react";
 import { toast } from "sonner";
+import AgreementProtocol from "@/components/AgreementProtocol";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -172,6 +173,8 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
   const [direction, setDirection] = useState(1);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [applicationResult, setApplicationResult] = useState<{ id: number; dossierNumber: string } | null>(null);
 
   const createApplication = trpc.application.createApplication.useMutation();
 
@@ -314,7 +317,9 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         visaType: form.visaType || undefined,
       });
 
-      navigate(`/verify-application-email?applicationId=${result.dossierNumber}&email=${encodeURIComponent(form.email)}`);
+      // Afficher le Protocole d'Accord avant la vérification email
+      setApplicationResult({ id: result.applicationId, dossierNumber: result.dossierNumber });
+      setShowAgreement(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erreur lors de la soumission";
       toast.error(msg);
@@ -331,6 +336,24 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
 
   const inputClass = (field: string) =>
     `border ${errors[field] ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-blue-300"} rounded-lg focus:outline-none focus:ring-2 transition-all`;
+
+  // Si le Protocole d'Accord doit être affiché
+  if (showAgreement && applicationResult) {
+    return (
+      <AgreementProtocol
+        applicationId={applicationResult.id}
+        dossierNumber={applicationResult.dossierNumber}
+        candidateName={form.fullName}
+        destination={form.destination}
+        visaType={form.visaType || "travail"}
+        formulaChosen={form.formulaChosen}
+        onSigned={() => {
+          navigate(`/verify-application-email?applicationId=${applicationResult.dossierNumber}&email=${encodeURIComponent(form.email)}`);
+        }}
+        onBack={() => setShowAgreement(false)}
+      />
+    );
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-auto overflow-hidden">

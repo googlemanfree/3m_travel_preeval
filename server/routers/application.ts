@@ -158,7 +158,7 @@ export const applicationRouter = router({
       const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
       const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
 
-      await db.insert(applications).values({
+      const [insertResult] = await db.insert(applications).values({
         dossierNumber,
         candidateId: input.candidateId ?? null,
         fullName: input.fullName,
@@ -226,7 +226,15 @@ export const applicationRouter = router({
       Promise.resolve().then(() => sendVerificationOtp(input.email, input.fullName, emailOtp))
         .catch(err => console.error("[Email] OTP send error:", err));
 
+      // Récupérer l'ID de l'application insérée
+      const [newApp] = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(eq(applications.dossierNumber, dossierNumber))
+        .limit(1);
+
       return {
+        applicationId: newApp?.id ?? 0,
         dossierNumber,
         transactionId,
         requiresEmailVerification: true,
@@ -552,5 +560,49 @@ export const applicationRouter = router({
           message: 'Erreur lors de l\'évaluation IA du CV',
         });
       }
+    }),
+
+  // ─── Signature du Protocole d'Accord ─────────────────────────────────────────
+  signAgreement: publicProcedure
+    .input(z.object({
+      applicationId: z.number(),
+      signatureName: z.string().min(2).max(255),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.id, input.applicationId))
+        .limit(1);
+      if (!app) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable' });
+      }
+      if (app.agreementSigned) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ce protocole a déjà été signé' });
+      }
+      // Récupérer l'IP du candidat
+      const ipAddress =
+        (ctx as any)?.req?.headers?.['x-forwarded-for'] as string ||
+        (ctx as any)?.req?.socket?.remoteAddress ||
+        'unknown';
+      const signedAt = Math.floor(Date.now() / 1000);
+      await db
+        .update(applications)
+        .set({
+          agreementSigned: true,
+          agreementSignedAt: signedAt,
+          agreementSignatureName: input.signatureName,
+          agreementIpAddress: typeof ipAddress === 'string' ? ipAddress.split(',')[0].trim() : 'unknown',
+        })
+        .where(eq(applications.id, input.applicationId));
+      console.log(`[Agreement] Signed by ${input.signatureName} for dossier ${app.dossierNumber} at ${new Date(signedAt * 1000).toISOString()}`);
+      return {
+        success: true,
+        signedAt,
+        dossierNumber: app.dossierNumber,
+        message: 'Protocole d\'accord signé avec succès',
+      };
     }),
 });

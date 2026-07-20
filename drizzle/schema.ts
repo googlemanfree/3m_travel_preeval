@@ -247,6 +247,11 @@ export const applications = mysqlTable("applications", {
   emailVerified: boolean("emailVerified").default(false).notNull(),
   emailOtp: varchar("emailOtp", { length: 10 }),
   emailOtpExpiresAt: timestamp("emailOtpExpiresAt"),
+  // ─── Protocole d'Accord — Signature électronique ───
+  agreementSigned: boolean("agreementSigned").default(false).notNull(),
+  agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
+  agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
+  agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
