@@ -24,6 +24,7 @@ import Destinations from "./pages/Destinations";
 import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
+import Fiches from "./pages/Fiches";
 
 function Router() {
   return (
@@ -63,6 +64,9 @@ function Router() {
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"} component={Ressources} />
+
+      {/* Fiches détaillées par pays */}
+      <Route path={"/fiches"} component={Fiches} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />

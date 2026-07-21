@@ -301,3 +301,11 @@
 - [x] Lien "Télécharger les guides PDF" dans le menu déroulant Ressources (desktop)
 - [x] Lien "Télécharger les guides PDF" dans le menu mobile
 - [x] Route /ressources ajoutée dans App.tsx
+
+## Enrichissement contenu PDF (v14)
+- [x] Extraction texte de 113 fichiers PDF/DOCX via pdfminer + python-docx
+- [x] Script analyze_docs.py : structuration en 102 procédures (pays, type, délai, coûts, docs, étapes, conseils)
+- [x] Fichier shared/procedureData.ts : 12 000+ lignes de données réelles extraites des PDFs
+- [x] Page /fiches : 95 fiches détaillées par pays avec recherche, filtres, boutons PDF et CTA
+- [x] Lien "Fiches détaillées par pays" dans le menu déroulant Ressources (desktop + mobile)
+- [x] Route /fiches ajoutée dans App.tsx
