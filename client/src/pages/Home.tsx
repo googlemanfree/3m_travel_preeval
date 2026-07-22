@@ -1,4 +1,5 @@
 import React, { useRef, useState, useMemo, useEffect } from "react";
+import { generateEvaluationPdf } from "@/lib/generateEvaluationPdf";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -494,6 +495,7 @@ export default function Home() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [aiReport, setAiReport] = useState<string | null>(null);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [candidateName, setCandidateName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
@@ -599,6 +601,7 @@ export default function Home() {
 
   const onSubmit = (data: FormValues) => {
     setIsGeneratingReport(true);
+    setCandidateName(data.fullName || "");
     submitMutation.mutate({ ...data, cvBase64: cvBase64 || undefined });
   };
 
@@ -996,26 +999,37 @@ export default function Home() {
                     </pre>
                   </div>
                   {/* Actions */}
-                  <div className="p-6 bg-white border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                  <div className="p-6 bg-white border-t border-gray-100 flex flex-col gap-3">
+                    {/* Bouton PDF — principal */}
                     <Button
-                      onClick={() => {
-                        const blob = new Blob([aiReport], { type: 'text/plain;charset=utf-8' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url; a.download = 'rapport-evaluation-3M-Travel.txt';
-                        a.click(); URL.revokeObjectURL(url);
-                      }}
-                      variant="outline"
-                      className="flex-1 border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50"
+                      onClick={() => generateEvaluationPdf(aiReport, candidateName)}
+                      className="w-full bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1e3a8a] text-white font-bold py-3 text-base shadow-lg active:scale-[0.97] transition-all"
                     >
-                      💾 Télécharger le rapport (.txt)
+                      📄 Télécharger le rapport en PDF
                     </Button>
-                    <Button
-                      onClick={() => { setIsSubmitted(false); setAiReport(null); }}
-                      className="flex-1 bg-[#1e3a8a] hover:bg-[#2563eb] text-white"
-                    >
-                      Nouvelle évaluation
-                    </Button>
+                    {/* Ligne secondaire */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button
+                        onClick={() => {
+                          const blob = new Blob([aiReport], { type: 'text/plain;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url; a.download = 'rapport-evaluation-3M-Travel.txt';
+                          a.click(); URL.revokeObjectURL(url);
+                        }}
+                        variant="outline"
+                        className="flex-1 border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
+                      >
+                        💾 Version texte (.txt)
+                      </Button>
+                      <Button
+                        onClick={() => { setIsSubmitted(false); setAiReport(null); }}
+                        variant="outline"
+                        className="flex-1 border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50 text-sm"
+                      >
+                        ↺ Nouvelle évaluation
+                      </Button>
+                    </div>
                   </div>
                   {/* CTA WhatsApp */}
                   <div className="px-6 pb-6">
