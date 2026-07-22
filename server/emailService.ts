@@ -1,38 +1,61 @@
 /**
  * Service d'envoi d'emails pour 3M Travel & Services
- * Utilise Nodemailer avec SMTP configurable via variables d'environnement.
- * En l'absence de credentials SMTP, les emails sont loggués en console (mode dev).
+ * Stratégie : Resend API (prioritaire, fiable en production) → SMTP Gmail (fallback) → console (dev)
  */
 import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT ?? "587");
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM = process.env.SMTP_FROM ?? "3M Travel & Services <noreply@3mtravelagency.click>";
+const RESEND_FROM = "3M Travel & Services <onboarding@resend.dev>";
 const SITE_URL = process.env.SITE_URL ?? "https://3mtravelagency.click";
 
-function createTransport() {
-  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-    return nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-  }
-  // Mode développement : afficher dans la console
-  return null;
-}
-
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  const transport = createTransport();
-  if (!transport) {
-    // Mode dev : afficher dans la console
-    console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${subject}\n${html.replace(/<[^>]+>/g, "")}\n`);
-    return;
+  // 1ère priorité : Resend API (fonctionne en production sans config SMTP)
+  if (RESEND_API_KEY) {
+    try {
+      const resend = new Resend(RESEND_API_KEY);
+      const { error } = await resend.emails.send({
+        from: RESEND_FROM,
+        to,
+        subject,
+        html,
+      });
+      if (error) {
+        console.error("[Email] Resend error:", error);
+        // Ne pas throw, essayer le fallback SMTP
+      } else {
+        console.log(`[Email] Resend OK → ${to} | ${subject}`);
+        return;
+      }
+    } catch (e) {
+      console.error("[Email] Resend exception:", e);
+    }
   }
-  await transport.sendMail({ from: SMTP_FROM, to, subject, html });
+
+  // 2ème priorité : SMTP (Gmail ou autre)
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    try {
+      const transport = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+      });
+      await transport.sendMail({ from: SMTP_FROM, to, subject, html });
+      console.log(`[Email] SMTP OK → ${to} | ${subject}`);
+      return;
+    } catch (e: any) {
+      console.error("[Email] SMTP error:", e.message);
+    }
+  }
+
+  // Fallback : mode dev — afficher dans la console
+  console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${subject}\n${html.replace(/<[^>]+>/g, "")}\n`);
 }
 
 // ─── Templates HTML ───────────────────────────────────────────────────────────
@@ -250,18 +273,9 @@ export async function sendEvaluationReportEmail(
   dossierNumber: string,
   reportHtml: string
 ): Promise<void> {
-  const mailOptions = {
-    from: SMTP_FROM,
+  await sendEmail(
     to,
-    subject: `📋 Rapport d'évaluation professionnelle — ${dossierNumber} — 3M Travel`,
-    html: reportHtml,
-  };
-
-  const transport = createTransport();
-  if (!transport) {
-    // Mode dev : afficher dans la console
-    console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${mailOptions.subject}\n[HTML Report sent]\n`);
-    return;
-  }
-  await transport.sendMail(mailOptions);
+    `📋 Rapport d’évaluation professionnelle — ${dossierNumber} — 3M Travel`,
+    reportHtml
+  );
 }
