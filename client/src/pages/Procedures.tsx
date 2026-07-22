@@ -18,7 +18,7 @@ import {
   MessageCircle, ChevronDown, ChevronUp,
   FileText, Globe, Star, Clock, DollarSign, CheckCircle,
   ArrowRight, Briefcase, GraduationCap, Eye, Home,
-  Search, X,
+  Search, X, Plane,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1364,6 +1364,42 @@ export default function Procedures() {
               {selectedRegion.destinations.map(dest => (
                 <DestinationSection key={dest.id} dest={dest} onStartProcedure={handleStartProcedure} />
               ))}
+            </div>
+
+            {/* ── Mini-module réservation vol pour dossier visa ── */}
+            <div className="mt-8 bg-gradient-to-r from-[#1E3A8A] to-[#1E40AF] rounded-2xl overflow-hidden">
+              <div className="p-5 flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center shrink-0">
+                    <Plane className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-black text-white text-lg">Réservation Vol pour Dossier Visa</span>
+                      <span className="bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Dès 5 000 FCFA</span>
+                    </div>
+                    <p className="text-blue-200 text-sm">Confirmation de vol sans payer votre billet — obligatoire pour les visas Schengen, Canada, UK</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 shrink-0">
+                  <a
+                    href="https://wa.me/237698104832?text=Bonjour%2C%20je%20souhaite%20une%20r%C3%A9servation%20de%20vol%20pour%20mon%20dossier%20visa.%20D%C3%A9part%20%3A%20%5Bville%5D%20%E2%86%92%20%5Bdestination%5D%20%2F%20Date%20%3A%20%5Bdate%5D"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button className="bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-sm">
+                      <MessageCircle className="w-4 h-4 mr-1.5" />
+                      Commander via WhatsApp
+                    </Button>
+                  </a>
+                  <Link href="/vols">
+                    <Button variant="outline" className="border-white/50 text-white hover:bg-white/10 rounded-xl text-sm">
+                      <Globe className="w-4 h-4 mr-1.5" />
+                      Voir les vols
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             </div>
 
             {/* CTA bas de page */}

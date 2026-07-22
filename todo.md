@@ -427,3 +427,27 @@
 - [x] Workflow WhatsApp pré-rempli sur chaque formule de service
 - [x] Bouton "Ouvrir un dossier" sur chaque formule
 - [x] 0 erreurs TypeScript
+
+## Session 6 — Améliorations EasyVisa
+
+- [ ] Grille tarifaire complète sur /tarifs (tous services avec prix exacts)
+- [ ] Éléments de réassurance : Visa Garanti*, Experts Certifiés, Suivi 24/7
+- [ ] Logos partenaires "Ils nous font confiance" sur la page d'accueil
+- [ ] Page /avi — AVI Attestation de Virement Irrévocable complète
+- [ ] Mini-module réservation vol pour dossier visa (widget depuis /procedures et /tarifs)
+- [ ] Section Blog /blog avec 10 articles rédigés (TCF, TEF, IELTS, TOEFL, visa, cours de langue)
+- [ ] Routes App.tsx pour /tarifs, /avi, /blog, /blog/:slug
+- [ ] Liens dans navbar pour les nouvelles pages
+
+
+## Session 22 juillet 2026 — Nouvelles pages & fonctionnalités
+- [x] Page /tarifs — Grille tarifaire complète avec accordéon par catégorie (Canada, Europe, Golfe, Afrique, Administratif, Tests de Langue)
+- [x] Éléments de réassurance : Visa Garanti*, Experts Certifiés, Suivi 24/7, Données Sécurisées
+- [x] Logos partenaires : IRCC, Campus France, MTN MoMo, Orange Money, CinetPay, Resend
+- [x] Formules de paiement : Intégral (-5%), Échelonné, Permis Garanti
+- [x] Page /avi — AVI complète avec processus 4 étapes, pays concernés, tarif 50 000 FCFA, FAQ 6 questions
+- [x] Mini-module réservation vol pour dossier visa dans Procedures.tsx
+- [x] Page /blog — 10 articles complets (TCF Canada, TEF vs TCF, Express Entry 2026, Visa Schengen, Chancenkarte, IELTS/TOEFL, TCF Québec, Cours de Français, DELF/DALF, AVI guide)
+- [x] Routes /tarifs, /avi, /blog, /blog/:slug ajoutées dans App.tsx
+- [x] Liens Grille Tarifaire, AVI, Blog & Conseils ajoutés dans le menu Ressources de la Navbar
+- [x] 0 erreurs TypeScript vérifiées

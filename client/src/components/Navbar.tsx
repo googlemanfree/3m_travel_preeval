@@ -270,9 +270,22 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             {ressources.open && (
               <div className="absolute top-full right-0 mt-2 w-56 bg-white border border-blue-100 rounded-2xl shadow-2xl z-50 py-2"
                 style={{ animation: "fadeInScale 150ms cubic-bezier(0.23,1,0.32,1)" }}>
-                <Link href="/services" onClick={() => ressources.setOpen(false)}
+                <Link href="/tarifs" onClick={() => ressources.setOpen(false)}
                   className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">
-                  <Briefcase className="w-4 h-4 text-blue-600" /> Nos Tarifs & Services
+                  <Briefcase className="w-4 h-4 text-blue-600" /> Grille Tarifaire
+                </Link>
+                <Link href="/avi" onClick={() => ressources.setOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <FileText className="w-4 h-4 text-purple-500" /> AVI — Attestation Bancaire
+                </Link>
+                <Link href="/blog" onClick={() => ressources.setOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <BookOpen className="w-4 h-4 text-green-500" /> Blog & Conseils
+                </Link>
+                <div className="border-t border-gray-100 my-1" />
+                <Link href="/services" onClick={() => ressources.setOpen(false)}
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Briefcase className="w-4 h-4 text-blue-500" /> Nos Services
                 </Link>
                 <Link href="/passeport" onClick={() => ressources.setOpen(false)}
                   className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">

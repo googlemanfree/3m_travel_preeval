@@ -29,6 +29,9 @@ import FlightBooking from "./pages/FlightBooking";
 import FlightBookingStatus from "./pages/FlightBookingStatus";
 import Services from "./pages/Services";
 import PasseportIndex from "./pages/PasseportIndex";
+import Tarifs from "./pages/Tarifs";
+import AVI from "./pages/AVI";
+import Blog from "./pages/Blog";
 
 function Router() {
   return (
@@ -49,6 +52,10 @@ function Router() {
       <Route path={"/procedures"} component={Procedures} />
       <Route path={"/services"} component={Services} />
       <Route path={"/passeport"} component={PasseportIndex} />
+      <Route path={"/tarifs"} component={Tarifs} />
+      <Route path={"/avi"} component={AVI} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/blog/:slug"} component={Blog} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
       <Route path={"/guide"} component={Guide} />
