@@ -1,10 +1,11 @@
 /**
  * Service d'envoi d'emails pour 3M Travel & Services
- * Utilise Nodemailer avec SMTP configurable via variables d'environnement.
- * En l'absence de credentials SMTP, les emails sont loggués en console (mode dev).
+ * Priorité : Resend API → SMTP Gmail → console (dev)
  */
+import { Resend } from "resend";
 import nodemailer from "nodemailer";
 
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT ?? "587");
 const SMTP_USER = process.env.SMTP_USER;
@@ -12,27 +13,52 @@ const SMTP_PASS = process.env.SMTP_PASS;
 const SMTP_FROM = process.env.SMTP_FROM ?? "3M Travel & Services <noreply@3mtravelagency.click>";
 const SITE_URL = process.env.SITE_URL ?? "https://3mtravelagency.click";
 
-function createTransport() {
-  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-    return nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT === 465,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-    });
-  }
-  // Mode développement : afficher dans la console
-  return null;
-}
+// Adresse d'expéditeur Resend — utilise le domaine vérifié si disponible, sinon onboarding@resend.dev
+const RESEND_FROM = "3M Travel & Services <onboarding@resend.dev>";
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  const transport = createTransport();
-  if (!transport) {
-    // Mode dev : afficher dans la console
-    console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${subject}\n${html.replace(/<[^>]+>/g, "")}\n`);
-    return;
+  // 1. Essayer Resend en priorité
+  if (RESEND_API_KEY) {
+    try {
+      const resend = new Resend(RESEND_API_KEY);
+      const { error } = await resend.emails.send({
+        from: RESEND_FROM,
+        to: [to],
+        subject,
+        html,
+      });
+      if (error) {
+        console.error("[Resend] Erreur envoi email:", error);
+        // Continuer vers le fallback SMTP
+      } else {
+        console.log(`[Resend] Email envoyé à ${to} — Sujet: ${subject}`);
+        return;
+      }
+    } catch (e) {
+      console.error("[Resend] Exception:", e);
+      // Continuer vers le fallback SMTP
+    }
   }
-  await transport.sendMail({ from: SMTP_FROM, to, subject, html });
+
+  // 2. Fallback SMTP Gmail
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    try {
+      const transport = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+      });
+      await transport.sendMail({ from: SMTP_FROM, to, subject, html });
+      console.log(`[SMTP] Email envoyé à ${to} — Sujet: ${subject}`);
+      return;
+    } catch (e) {
+      console.error("[SMTP] Erreur envoi email:", e);
+    }
+  }
+
+  // 3. Mode développement : afficher dans la console
+  console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${subject}\n${html.replace(/<[^>]+>/g, "").substring(0, 500)}\n`);
 }
 
 // ─── Templates HTML ───────────────────────────────────────────────────────────
@@ -45,14 +71,13 @@ function emailBase(content: string): string {
   body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 20px; }
   .container { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(30,58,138,0.1); }
   .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center; }
-  .header img { width: 56px; height: 56px; border-radius: 12px; margin-bottom: 12px; }
   .header h1 { color: #fff; font-size: 22px; margin: 0; font-weight: 800; }
   .header p { color: #bfdbfe; font-size: 13px; margin: 6px 0 0; }
   .body { padding: 32px 28px; }
   .otp-box { background: #eff6ff; border: 2px dashed #2563EB; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0; }
   .otp-code { font-size: 40px; font-weight: 900; color: #1E3A8A; letter-spacing: 12px; }
   .otp-label { font-size: 12px; color: #6b7280; margin-top: 8px; }
-  .btn { display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0; }
+  .btn { display: inline-block; background: #1E3A8A; color: #fff !important; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0; }
   .footer { background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
   p { color: #374151; line-height: 1.6; font-size: 15px; }
 </style>
@@ -60,12 +85,12 @@ function emailBase(content: string): string {
 <body>
 <div class="container">
   <div class="header">
-    <h1>3M Travel & Services</h1>
+    <h1>3M Travel &amp; Services</h1>
     <p>Votre partenaire mobilité internationale</p>
   </div>
   <div class="body">${content}</div>
   <div class="footer">
-    <p>3M Travel & Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+    <p>3M Travel &amp; Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
     <p>Yaoundé, Cameroun | +237 620-996-045 | contact@3mtravelagency.click</p>
     <p style="margin-top:8px;font-size:11px;">Cet email a été envoyé automatiquement. Ne pas répondre à cet email.</p>
   </div>
@@ -116,7 +141,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
     luxembourg: "🇱🇺 Luxembourg",
     pologne: "🇵🇱 Pologne",
     europe: "🇪🇺 Europe Schengen",
-    golfe: "🇦🇪 Golfe & Moyen-Orient",
+    golfe: "🇦🇪 Golfe &amp; Moyen-Orient",
     autre: "International",
   };
   const destLabel = destLabels[destination] ?? "International";
@@ -134,7 +159,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
       <a href="${dashboardUrl}" class="btn">🚀 Accéder à mon espace</a>
     </p>
     <p>Notre équipe vous contactera sous 24h pour la suite de votre dossier.</p>
-    <p>Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel &amp; Services</strong></p>
   `;
   await sendEmail(to, "🎉 Bienvenue dans votre Espace Candidat 3M Travel !", emailBase(content));
 }
@@ -174,7 +199,7 @@ export async function sendDossierConfirmationEmail(
       <a href="${dashboardUrl}" class="btn" style="margin-right:8px;">📁 Mon espace candidat</a>
       <a href="${whatsappUrl}" class="btn" style="background:#16a34a;">💬 WhatsApp</a>
     </p>
-    <p>Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel &amp; Services</strong></p>
   `;
   await sendEmail(to, `📋 Dossier ${dossierNumber} — Confirmation d'ouverture`, emailBase(content));
 }
@@ -190,7 +215,7 @@ export async function sendAdminNewDossierAlert(
   formula: string,
   paymentStatus: string
 ): Promise<void> {
-  const adminEmail = process.env.ADMIN_EMAIL ?? "contact@3mtravelagency.click";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "3mtravelandservices@gmail.com";
   const adminUrl = `${SITE_URL}/admin`;
   const payLabel = paymentStatus === "SUCCESS" ? "✅ PAYÉ" : paymentStatus === "PENDING" ? "⏳ EN ATTENTE" : "❌ ÉCHOUÉ";
   const content = `
@@ -237,7 +262,7 @@ export async function sendPaymentSuccessEmail(
     <p style="text-align:center;">
       <a href="${dashboardUrl}" class="btn">📁 Suivre mon dossier</a>
     </p>
-    <p>Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel &amp; Services</strong></p>
   `;
   await sendEmail(to, `✅ Paiement confirmé — Dossier ${dossierNumber}`, emailBase(content));
 }
@@ -248,20 +273,31 @@ export async function sendEvaluationReportEmail(
   to: string,
   fullName: string,
   dossierNumber: string,
-  reportHtml: string
+  reportText: string
 ): Promise<void> {
-  const mailOptions = {
-    from: SMTP_FROM,
-    to,
-    subject: `📋 Rapport d'évaluation professionnelle — ${dossierNumber} — 3M Travel`,
-    html: reportHtml,
-  };
+  const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, j'ai reçu mon rapport ${dossierNumber} et je souhaite en discuter.`)}`;
+  const reportHtml = reportText
+    .split("\n")
+    .map(line => {
+      if (line.startsWith("##")) return `<h3 style="color:#1E3A8A;margin-top:20px;border-bottom:1px solid #e5e7eb;padding-bottom:6px;">${line.replace(/^##\s*/, "")}</h3>`;
+      if (line.startsWith("#")) return `<h2 style="color:#1E3A8A;font-size:18px;">${line.replace(/^#\s*/, "")}</h2>`;
+      if (line.startsWith("- ")) return `<li style="color:#374151;line-height:1.8;">${line.replace(/^-\s*/, "")}</li>`;
+      if (line.trim() === "") return "<br>";
+      return `<p style="color:#374151;line-height:1.6;margin:4px 0;">${line}</p>`;
+    })
+    .join("\n");
 
-  const transport = createTransport();
-  if (!transport) {
-    // Mode dev : afficher dans la console
-    console.log(`\n📧 [EMAIL DEV MODE] To: ${to}\nSubject: ${mailOptions.subject}\n[HTML Report sent]\n`);
-    return;
-  }
-  await transport.sendMail(mailOptions);
+  const content = `
+    <p>Bonjour <strong>${fullName}</strong>,</p>
+    <p>Votre rapport d'évaluation professionnelle est prêt. Référence : <strong>${dossierNumber}</strong></p>
+    <div style="background:#f8faff;border-left:4px solid #2563EB;border-radius:8px;padding:20px;margin:20px 0;">
+      ${reportHtml}
+    </div>
+    <p style="text-align:center;margin-top:24px;">
+      <a href="${whatsappUrl}" class="btn" style="background:#16a34a;">💬 Discuter avec un conseiller</a>
+    </p>
+    <p style="font-size:13px;color:#6b7280;">Ce rapport est confidentiel et personnalisé. Il est valable 30 jours.</p>
+    <p>Cordialement,<br><strong>L'équipe 3M Travel &amp; Services</strong></p>
+  `;
+  await sendEmail(to, `📋 Rapport d'évaluation ${dossierNumber} — 3M Travel`, emailBase(content));
 }
