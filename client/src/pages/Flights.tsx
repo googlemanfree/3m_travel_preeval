@@ -59,6 +59,39 @@ function formatXAF(amount: number) {
   return new Intl.NumberFormat("fr-FR").format(amount) + " FCFA";
 }
 
+// ─── Skeleton Status Message ─────────────────────────────────────────────────
+const SKELETON_MESSAGES = [
+  "Connexion à Skyscanner Live...",
+  "Interrogation de 200+ compagnies aériennes...",
+  "Comparaison des tarifs en temps réel...",
+  "Recherche des meilleures escales...",
+  "Vérification des disponibilités...",
+  "Calcul des tarifs en FCFA...",
+  "Presque terminé !",
+];
+
+function SkeletonStatusMessage() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx(p => (p + 1) % SKELETON_MESSAGES.length), 1800);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.p
+        key={idx}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.3 }}
+        className="text-sm text-gray-400 font-medium"
+      >
+        {SKELETON_MESSAGES[idx]}
+      </motion.p>
+    </AnimatePresence>
+  );
+}
+
 function today() {
   return new Date().toISOString().split("T")[0];
 }
@@ -909,101 +942,122 @@ export default function Flights() {
         )}
 
         {isFetching && (
-          <div className="flex flex-col items-center justify-center py-20 select-none">
-            {/* Piste d'aéroport */}
-            <div className="relative w-full max-w-lg h-32 mb-6 overflow-hidden">
-              {/* Ciel dégradé */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-blue-100 via-blue-50 to-gray-100" />
-
-              {/* Nuages flottants */}
-              <motion.div
-                animate={{ x: ["0%", "-120%"] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 0 }}
-                className="absolute top-4 left-[110%] flex gap-8"
-              >
-                {["w-16 h-5", "w-10 h-4", "w-20 h-6"].map((cls, i) => (
-                  <div key={i} className={`${cls} bg-white/80 rounded-full blur-sm opacity-70`} />
-                ))}
-              </motion.div>
-              <motion.div
-                animate={{ x: ["0%", "-120%"] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "linear", delay: 2 }}
-                className="absolute top-8 left-[110%] flex gap-12"
-              >
-                {["w-12 h-4", "w-8 h-3"].map((cls, i) => (
-                  <div key={i} className={`${cls} bg-white/60 rounded-full blur-sm opacity-50`} />
-                ))}
-              </motion.div>
-
-              {/* Avion principal */}
-              <motion.div
-                animate={{
-                  x: ["-10%", "110%"],
-                  y: [0, -8, 0, -5, 0],
-                }}
-                transition={{
-                  x: { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
-                  y: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
-                }}
-                className="absolute top-1/2 -translate-y-1/2 left-0"
-              >
-                <div className="relative">
-                  {/* Traînée de fumée */}
-                  <motion.div
-                    animate={{ scaleX: [0.3, 1, 0.3], opacity: [0.6, 0.3, 0.6] }}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    className="absolute right-full top-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-l from-blue-300/60 to-transparent rounded-full"
-                    style={{ transformOrigin: "right" }}
-                  />
-                  {/* Icône avion SVG */}
-                  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="26" cy="26" r="26" fill="#2563EB" fillOpacity="0.12" />
-                    <g transform="translate(8, 8)">
-                      <path d="M34 18L20 4L18 6L24 14L10 12L8 14L18 18L8 22L10 24L24 22L18 30L20 32L34 18Z"
-                        fill="#1E3A8A" stroke="#2563EB" strokeWidth="0.5" />
-                    </g>
-                  </svg>
-                </div>
-              </motion.div>
-
-              {/* Piste au sol */}
-              <div className="absolute bottom-3 left-4 right-4 h-1.5 bg-gray-300 rounded-full overflow-hidden">
+          <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+            {/* Header skeleton */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="space-y-2">
+                <div className="h-5 w-48 bg-gray-200 rounded-lg animate-pulse" />
+                <div className="h-3.5 w-32 bg-gray-100 rounded-lg animate-pulse" />
+              </div>
+              {/* Avion animé compact */}
+              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl">
                 <motion.div
-                  animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-                  className="h-full w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
-                />
+                  animate={{ x: [0, 6, 0], rotate: [0, 5, 0] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Plane className="w-5 h-5 text-blue-600" />
+                </motion.div>
+                <motion.span
+                  animate={{ opacity: [1, 0.4, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="text-sm font-bold text-blue-700"
+                >
+                  Skyscanner Live en cours...
+                </motion.span>
               </div>
             </div>
 
-            {/* Texte animé */}
-            <motion.p
-              animate={{ opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-[#1E3A8A] font-black text-lg mb-1"
-            >
-              Recherche des meilleurs tarifs...
-            </motion.p>
-
-            {/* Compagnies défilantes */}
-            <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
-              <span>Comparaison de</span>
-              <motion.span
-                animate={{ opacity: [1, 0, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.4 }}
-                className="font-black text-[#2563EB]"
-              >
-                17 compagnies aériennes
-              </motion.span>
-            </div>
-
-            {/* Barre de progression */}
-            <div className="mt-5 w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            {/* Barre de progression shimmer */}
+            <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden mb-6">
               <motion.div
                 animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                className="h-full w-1/2 bg-gradient-to-r from-transparent via-[#2563EB] to-transparent rounded-full"
+                transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+                className="h-full w-1/3 bg-gradient-to-r from-transparent via-blue-500 to-transparent"
               />
+            </div>
+
+            {/* 5 skeleton cards de vols */}
+            {[0, 1, 2, 3, 4].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08, duration: 0.3, ease: "easeOut" }}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+              >
+                {/* Bandeau supérieur coloré skeleton */}
+                <div className="h-1 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+
+                    {/* Compagnie */}
+                    <div className="flex items-center gap-3 w-40 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-gray-200 animate-pulse flex-shrink-0" />
+                      <div className="space-y-1.5">
+                        <div className="h-3.5 w-20 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-2.5 w-14 bg-gray-100 rounded animate-pulse" />
+                      </div>
+                    </div>
+
+                    {/* Itinéraire */}
+                    <div className="flex items-center gap-4 flex-1 justify-center">
+                      {/* Départ */}
+                      <div className="text-center space-y-1.5">
+                        <div className="h-6 w-12 bg-gray-200 rounded-lg animate-pulse mx-auto" />
+                        <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                      </div>
+
+                      {/* Flèche + durée */}
+                      <div className="flex flex-col items-center gap-1 flex-1 max-w-[140px]">
+                        <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                        <div className="flex items-center w-full gap-1">
+                          <div className="h-px flex-1 bg-gray-200" />
+                          <motion.div
+                            animate={{ x: [0, 4, 0] }}
+                            transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.2 }}
+                          >
+                            <Plane className="w-3.5 h-3.5 text-gray-300" />
+                          </motion.div>
+                          <div className="h-px flex-1 bg-gray-200" />
+                        </div>
+                        <div className="h-2.5 w-12 bg-gray-100 rounded animate-pulse" />
+                      </div>
+
+                      {/* Arrivée */}
+                      <div className="text-center space-y-1.5">
+                        <div className="h-6 w-12 bg-gray-200 rounded-lg animate-pulse mx-auto" />
+                        <div className="h-3 w-16 bg-gray-100 rounded animate-pulse" />
+                      </div>
+                    </div>
+
+                    {/* Escales */}
+                    <div className="hidden md:flex flex-col items-center gap-1 w-20">
+                      <div className="h-3 w-14 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-2.5 w-10 bg-gray-100 rounded animate-pulse" />
+                    </div>
+
+                    {/* Prix + bouton */}
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0 w-36">
+                      <div className="h-6 w-28 bg-gray-200 rounded-lg animate-pulse" />
+                      <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+                      <div className="h-9 w-28 bg-blue-100 rounded-xl animate-pulse mt-1" />
+                    </div>
+                  </div>
+
+                  {/* Tags skeleton */}
+                  <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
+                    {["w-16", "w-20", "w-14"].map((w, j) => (
+                      <div key={j} className={`h-5 ${w} bg-gray-100 rounded-full animate-pulse`} />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+
+            {/* Message de statut rotatif */}
+            <div className="text-center pt-2">
+              <SkeletonStatusMessage />
             </div>
           </div>
         )}
