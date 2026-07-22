@@ -1121,7 +1121,7 @@ export default function Home() {
       <PricingSection />
 
       {/* ─── RESSOURCES ─────────────────────────────────────────────────── */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section id="ressources" className="py-16 px-4 bg-gray-50 scroll-mt-20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Ressources & Outils</h2>
