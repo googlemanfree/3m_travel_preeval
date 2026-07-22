@@ -3,10 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  Search, Filter, Clock, DollarSign, FileText, CheckCircle,
+  Search, Clock, DollarSign, FileText, CheckCircle,
   AlertTriangle, Briefcase, GraduationCap, Eye, Globe,
   ChevronDown, ChevronUp, Download, ArrowRight, Info,
-  Building, Users, Star
+  Building, Star, GitCompare, X, Plus, Check
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -14,41 +14,47 @@ import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
 import { useLocation } from "wouter";
 
-const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
   "Travail": {
     label: "Visa Travail",
     color: "text-emerald-700",
-    bg: "bg-emerald-50 border-emerald-200",
+    bg: "bg-emerald-50",
+    border: "border-emerald-200",
     icon: <Briefcase className="w-4 h-4" />,
   },
   "Études": {
     label: "Visa Études",
     color: "text-blue-700",
-    bg: "bg-blue-50 border-blue-200",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
     icon: <GraduationCap className="w-4 h-4" />,
   },
   "Visiteur": {
     label: "Visa Visiteur",
     color: "text-purple-700",
-    bg: "bg-purple-50 border-purple-200",
+    bg: "bg-purple-50",
+    border: "border-purple-200",
     icon: <Eye className="w-4 h-4" />,
   },
   "Résidence Permanente": {
     label: "Résidence Permanente",
     color: "text-amber-700",
-    bg: "bg-amber-50 border-amber-200",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
     icon: <Globe className="w-4 h-4" />,
   },
   "Procédure Complète": {
     label: "Procédure Complète",
     color: "text-indigo-700",
-    bg: "bg-indigo-50 border-indigo-200",
+    bg: "bg-indigo-50",
+    border: "border-indigo-200",
     icon: <FileText className="w-4 h-4" />,
   },
   "Autre": {
     label: "Guide / Info",
     color: "text-gray-700",
-    bg: "bg-gray-50 border-gray-200",
+    bg: "bg-gray-50",
+    border: "border-gray-200",
     icon: <Info className="w-4 h-4" />,
   },
 };
@@ -82,28 +88,222 @@ function truncate(text: string, maxLen: number): string {
   return text.slice(0, maxLen) + "…";
 }
 
+function getSections(proc: ProcedureInfo) {
+  return [
+    { key: "eligibility", label: "Conditions d'éligibilité", icon: <CheckCircle className="w-4 h-4 text-emerald-600" />, content: cleanText(proc.eligibilityConditions) },
+    { key: "documents", label: "Documents requis", icon: <FileText className="w-4 h-4 text-blue-600" />, content: cleanText(proc.requiredDocuments) },
+    { key: "steps", label: "Étapes de la procédure", icon: <ArrowRight className="w-4 h-4 text-indigo-600" />, content: cleanText(proc.procedureSteps) },
+    { key: "costs", label: "Coûts & Budget", icon: <DollarSign className="w-4 h-4 text-amber-600" />, content: cleanText(proc.costs) },
+    { key: "sectors", label: "Secteurs couverts", icon: <Building className="w-4 h-4 text-purple-600" />, content: cleanText(proc.sectors) },
+    { key: "tips", label: "Conseils pratiques", icon: <AlertTriangle className="w-4 h-4 text-orange-600" />, content: cleanText(proc.practicalTips) },
+  ].filter(s => s.content && s.content.length > 20);
+}
+
+// ─── Composant modal de comparaison ─────────────────────────────────────────
+
+interface CompareModalProps {
+  procA: ProcedureInfo;
+  procB: ProcedureInfo;
+  pdfA?: string;
+  pdfB?: string;
+  onClose: () => void;
+}
+
+function CompareModal({ procA, procB, pdfA, pdfB, onClose }: CompareModalProps) {
+  const [, navigate] = useLocation();
+  const sectionsA = getSections(procA);
+  const sectionsB = getSections(procB);
+  const flagA = COUNTRY_FLAGS[procA.country] ?? "🌍";
+  const flagB = COUNTRY_FLAGS[procB.country] ?? "🌍";
+  const cfgA = VISA_TYPE_CONFIG[procA.visaType] ?? VISA_TYPE_CONFIG["Autre"];
+  const cfgB = VISA_TYPE_CONFIG[procB.visaType] ?? VISA_TYPE_CONFIG["Autre"];
+
+  // Clés communes pour la comparaison structurée
+  const allKeys = ["eligibility", "documents", "steps", "costs", "sectors", "tips"];
+  const keyLabels: Record<string, { label: string; icon: React.ReactNode }> = {
+    eligibility: { label: "Conditions d'éligibilité", icon: <CheckCircle className="w-4 h-4 text-emerald-600" /> },
+    documents:   { label: "Documents requis",          icon: <FileText className="w-4 h-4 text-blue-600" /> },
+    steps:       { label: "Étapes de la procédure",    icon: <ArrowRight className="w-4 h-4 text-indigo-600" /> },
+    costs:       { label: "Coûts & Budget",            icon: <DollarSign className="w-4 h-4 text-amber-600" /> },
+    sectors:     { label: "Secteurs couverts",         icon: <Building className="w-4 h-4 text-purple-600" /> },
+    tips:        { label: "Conseils pratiques",        icon: <AlertTriangle className="w-4 h-4 text-orange-600" /> },
+  };
+
+  function getContent(proc: ProcedureInfo, key: string): string {
+    const map: Record<string, string> = {
+      eligibility: proc.eligibilityConditions,
+      documents:   proc.requiredDocuments,
+      steps:       proc.procedureSteps,
+      costs:       proc.costs,
+      sectors:     proc.sectors,
+      tips:        proc.practicalTips,
+    };
+    return cleanText(map[key] ?? "");
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 backdrop-blur-sm overflow-y-auto py-6 px-2">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl mx-auto">
+        {/* Header modal */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-700 to-indigo-700 rounded-t-2xl">
+          <div className="flex items-center gap-3 text-white">
+            <GitCompare className="w-6 h-6" />
+            <h2 className="text-xl font-bold">Comparaison de procédures</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/20"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* En-têtes des deux procédures */}
+        <div className="grid grid-cols-2 gap-0 border-b border-gray-100">
+          {[
+            { proc: procA, cfg: cfgA, flag: flagA, pdfUrl: pdfA },
+            { proc: procB, cfg: cfgB, flag: flagB, pdfUrl: pdfB },
+          ].map(({ proc, cfg, flag, pdfUrl }, idx) => (
+            <div
+              key={idx}
+              className={`p-5 ${idx === 0 ? "border-r border-gray-100" : ""} ${cfg.bg}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{flag}</span>
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900">{proc.country}</h3>
+                    <Badge variant="outline" className={`text-xs mt-1 ${cfg.color} border-current flex items-center gap-1 w-fit`}>
+                      {cfg.icon}
+                      {cfg.label}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5 flex-shrink-0">
+                  {pdfUrl && (
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center gap-1">
+                        <Download className="w-3 h-3" />
+                        PDF
+                      </Button>
+                    </a>
+                  )}
+                  <Button
+                    size="sm"
+                    className="text-xs bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-1"
+                    onClick={() => { onClose(); navigate("/open-dossier"); }}
+                  >
+                    <ArrowRight className="w-3 h-3" />
+                    Démarrer
+                  </Button>
+                </div>
+              </div>
+
+              {/* Méta-infos rapides */}
+              <div className="mt-3 space-y-1.5">
+                {proc.processingTime && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span className="font-medium">Délai :</span>
+                    <span>{truncate(proc.processingTime, 80)}</span>
+                  </div>
+                )}
+                {proc.salaryMin && (
+                  <div className="flex items-center gap-2 text-sm text-emerald-700">
+                    <DollarSign className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="font-medium">Salaire min. :</span>
+                    <span>{truncate(proc.salaryMin, 80)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Sections comparées ligne par ligne */}
+        <div className="divide-y divide-gray-100">
+          {allKeys.map(key => {
+            const contentA = getContent(procA, key);
+            const contentB = getContent(procB, key);
+            if (!contentA && !contentB) return null;
+            const { label, icon } = keyLabels[key];
+
+            return (
+              <div key={key}>
+                {/* Titre de section */}
+                <div className="px-6 py-3 bg-gray-50 flex items-center gap-2 border-b border-gray-100">
+                  {icon}
+                  <span className="text-sm font-bold text-gray-700 uppercase tracking-wide">{label}</span>
+                </div>
+                {/* Contenu côte à côte */}
+                <div className="grid grid-cols-2 gap-0">
+                  {[contentA, contentB].map((content, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line ${
+                        idx === 0 ? "border-r border-gray-100" : ""
+                      } ${!content ? "text-gray-400 italic" : ""}`}
+                    >
+                      {content
+                        ? truncate(content, 600)
+                        : "Information non disponible dans le document source."}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Footer modal */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-gray-500">
+            Données extraites des documents officiels 3M Travel — 2026. Pour une analyse personnalisée, contactez un conseiller.
+          </p>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onClose} className="text-gray-600">
+              Fermer
+            </Button>
+            <Button
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold"
+              onClick={() => { onClose(); navigate("/open-dossier"); }}
+            >
+              <Star className="w-3.5 h-3.5 mr-1.5" />
+              Ouvrir un dossier
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Composant carte de fiche ────────────────────────────────────────────────
+
 interface FicheCardProps {
   proc: ProcedureInfo;
   pdfUrl?: string;
+  isSelected: boolean;
+  compareCount: number;
+  onToggleCompare: (proc: ProcedureInfo) => void;
 }
 
-function FicheCard({ proc, pdfUrl }: FicheCardProps) {
+function FicheCard({ proc, pdfUrl, isSelected, compareCount, onToggleCompare }: FicheCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [, navigate] = useLocation();
   const config = VISA_TYPE_CONFIG[proc.visaType] ?? VISA_TYPE_CONFIG["Autre"];
   const flag = COUNTRY_FLAGS[proc.country] ?? "🌍";
+  const sections = getSections(proc);
 
-  const sections = [
-    { label: "Conditions d'éligibilité", icon: <CheckCircle className="w-4 h-4 text-emerald-600" />, content: cleanText(proc.eligibilityConditions) },
-    { label: "Documents requis", icon: <FileText className="w-4 h-4 text-blue-600" />, content: cleanText(proc.requiredDocuments) },
-    { label: "Étapes de la procédure", icon: <ArrowRight className="w-4 h-4 text-indigo-600" />, content: cleanText(proc.procedureSteps) },
-    { label: "Coûts & Budget", icon: <DollarSign className="w-4 h-4 text-amber-600" />, content: cleanText(proc.costs) },
-    { label: "Secteurs couverts", icon: <Building className="w-4 h-4 text-purple-600" />, content: cleanText(proc.sectors) },
-    { label: "Conseils pratiques", icon: <AlertTriangle className="w-4 h-4 text-orange-600" />, content: cleanText(proc.practicalTips) },
-  ].filter(s => s.content && s.content.length > 20);
+  const canAddToCompare = !isSelected && compareCount < 2;
 
   return (
-    <Card className={`border ${config.bg} hover:shadow-md transition-all duration-200`}>
+    <Card className={`border transition-all duration-200 ${
+      isSelected
+        ? "border-blue-500 shadow-lg shadow-blue-100 ring-2 ring-blue-400 ring-offset-1"
+        : `${config.border} hover:shadow-md`
+    } ${config.bg}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -131,9 +331,35 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
             </div>
           </div>
           <div className="flex flex-col gap-1.5 flex-shrink-0">
+            {/* Bouton Comparer */}
+            <button
+              onClick={() => onToggleCompare(proc)}
+              disabled={!isSelected && compareCount >= 2}
+              title={
+                isSelected
+                  ? "Retirer de la comparaison"
+                  : compareCount >= 2
+                  ? "Vous avez déjà sélectionné 2 fiches"
+                  : "Ajouter à la comparaison"
+              }
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                isSelected
+                  ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                  : canAddToCompare
+                  ? "bg-white text-blue-700 border-blue-300 hover:bg-blue-50"
+                  : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+              }`}
+            >
+              {isSelected ? (
+                <><Check className="w-3 h-3" /> Sélectionné</>
+              ) : (
+                <><Plus className="w-3 h-3" /> Comparer</>
+              )}
+            </button>
+
             {pdfUrl && (
               <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center gap-1">
+                <Button size="sm" variant="outline" className="text-xs border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center gap-1 w-full">
                   <Download className="w-3 h-3" />
                   PDF
                 </Button>
@@ -181,7 +407,6 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
                 </div>
               ))}
 
-              {/* Texte brut (début du document) */}
               {proc.rawText && (
                 <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-2 mb-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
@@ -212,10 +437,16 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
   );
 }
 
+// ─── Page principale ─────────────────────────────────────────────────────────
+
 export default function Fiches() {
   const [search, setSearch] = useState("");
   const [activeType, setActiveType] = useState<string>("Tous");
   const [activeCountry, setActiveCountry] = useState<string>("Tous");
+
+  // Sélection pour la comparaison (max 2)
+  const [compareSelection, setCompareSelection] = useState<ProcedureInfo[]>([]);
+  const [showCompareModal, setShowCompareModal] = useState(false);
 
   // Dédupliquer : garder la fiche la plus complète par pays+type
   const dedupedData = useMemo(() => {
@@ -226,7 +457,6 @@ export default function Fiches() {
       if (!existing) {
         seen.set(key, p);
       } else {
-        // Garder la plus complète (plus de texte)
         const existingLen = (existing.eligibilityConditions + existing.requiredDocuments + existing.procedureSteps).length;
         const newLen = (p.eligibilityConditions + p.requiredDocuments + p.procedureSteps).length;
         if (newLen > existingLen) seen.set(key, p);
@@ -237,10 +467,6 @@ export default function Fiches() {
 
   const countries = useMemo(() => {
     return ["Tous", ...Array.from(new Set(dedupedData.map(p => p.country))).sort()];
-  }, [dedupedData]);
-
-  const visaTypes = useMemo(() => {
-    return ["Tous", ...Array.from(new Set(dedupedData.map(p => p.visaType))).sort()];
   }, [dedupedData]);
 
   const filtered = useMemo(() => {
@@ -255,6 +481,14 @@ export default function Fiches() {
       return matchSearch && matchType && matchCountry;
     });
   }, [dedupedData, search, activeType, activeCountry]);
+
+  const typeStats = useMemo(() => {
+    const stats: Record<string, number> = {};
+    for (const p of dedupedData) {
+      stats[p.visaType] = (stats[p.visaType] ?? 0) + 1;
+    }
+    return stats;
+  }, [dedupedData]);
 
   // Trouver le PDF correspondant à une procédure
   function findPdf(proc: ProcedureInfo): string | undefined {
@@ -274,7 +508,7 @@ export default function Fiches() {
     const typeNorm = typeMap[proc.visaType] ?? "";
 
     const allResources = getAllResources();
-  const match = allResources.find((r: PdfResource) => {
+    const match = allResources.find((r: PdfResource) => {
       const titleNorm = (r.title as string).toLowerCase()
         .replace(/é/g, "e").replace(/è/g, "e").replace(/ê/g, "e")
         .replace(/à/g, "a").replace(/â/g, "a").replace(/ô/g, "o")
@@ -285,13 +519,22 @@ export default function Fiches() {
     return match?.url;
   }
 
-  const typeStats = useMemo(() => {
-    const stats: Record<string, number> = {};
-    for (const p of dedupedData) {
-      stats[p.visaType] = (stats[p.visaType] ?? 0) + 1;
+  function isInCompare(proc: ProcedureInfo): boolean {
+    return compareSelection.some(p => p.country === proc.country && p.visaType === proc.visaType);
+  }
+
+  function toggleCompare(proc: ProcedureInfo) {
+    if (isInCompare(proc)) {
+      setCompareSelection(prev => prev.filter(p => !(p.country === proc.country && p.visaType === proc.visaType)));
+    } else if (compareSelection.length < 2) {
+      setCompareSelection(prev => [...prev, proc]);
     }
-    return stats;
-  }, [dedupedData]);
+  }
+
+  function clearCompare() {
+    setCompareSelection([]);
+    setShowCompareModal(false);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -351,7 +594,6 @@ export default function Fiches() {
             {/* Filtre type */}
             <div className="flex flex-wrap gap-1.5">
               {["Tous", "Travail", "Études", "Visiteur", "Résidence Permanente", "Procédure Complète", "Autre"].map(type => {
-                const cfg = VISA_TYPE_CONFIG[type] ?? { label: "Tous", color: "text-gray-700", bg: "bg-gray-100", icon: null };
                 const count = type === "Tous" ? dedupedData.length : (typeStats[type] ?? 0);
                 if (type !== "Tous" && count === 0) return null;
                 return (
@@ -382,18 +624,41 @@ export default function Fiches() {
                 </option>
               ))}
             </select>
+
+            {/* Bouton Comparer (si 2 sélectionnés) */}
+            {compareSelection.length === 2 && (
+              <Button
+                onClick={() => setShowCompareModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-2 flex-shrink-0"
+              >
+                <GitCompare className="w-4 h-4" />
+                Comparer les 2 fiches
+              </Button>
+            )}
           </div>
 
-          {/* Résultats */}
-          <div className="mt-2 text-xs text-gray-500">
-            {filtered.length} fiche{filtered.length !== 1 ? "s" : ""} trouvée{filtered.length !== 1 ? "s" : ""}
-            {(search || activeType !== "Tous" || activeCountry !== "Tous") && (
-              <button
-                onClick={() => { setSearch(""); setActiveType("Tous"); setActiveCountry("Tous"); }}
-                className="ml-3 text-blue-600 hover:underline"
-              >
-                Réinitialiser les filtres
-              </button>
+          {/* Résultats + info comparaison */}
+          <div className="mt-2 flex items-center justify-between flex-wrap gap-2">
+            <div className="text-xs text-gray-500">
+              {filtered.length} fiche{filtered.length !== 1 ? "s" : ""} trouvée{filtered.length !== 1 ? "s" : ""}
+              {(search || activeType !== "Tous" || activeCountry !== "Tous") && (
+                <button
+                  onClick={() => { setSearch(""); setActiveType("Tous"); setActiveCountry("Tous"); }}
+                  className="ml-3 text-blue-600 hover:underline"
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
+            </div>
+            {compareSelection.length > 0 && (
+              <div className="flex items-center gap-2 text-xs text-indigo-700 font-medium bg-indigo-50 border border-indigo-200 rounded-full px-3 py-1">
+                <GitCompare className="w-3.5 h-3.5" />
+                {compareSelection.length}/2 fiche{compareSelection.length > 1 ? "s" : ""} sélectionnée{compareSelection.length > 1 ? "s" : ""}
+                {compareSelection.length < 2 && <span className="text-indigo-500 font-normal"> — sélectionnez une 2ème fiche</span>}
+                <button onClick={clearCompare} className="ml-1 text-indigo-400 hover:text-indigo-700">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -410,11 +675,67 @@ export default function Fiches() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {filtered.map((proc, i) => (
-              <FicheCard key={`${proc.country}-${proc.visaType}-${i}`} proc={proc} pdfUrl={findPdf(proc)} />
+              <FicheCard
+                key={`${proc.country}-${proc.visaType}-${i}`}
+                proc={proc}
+                pdfUrl={findPdf(proc)}
+                isSelected={isInCompare(proc)}
+                compareCount={compareSelection.length}
+                onToggleCompare={toggleCompare}
+              />
             ))}
           </div>
         )}
       </section>
+
+      {/* Barre flottante de comparaison */}
+      {compareSelection.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-indigo-200 rounded-2xl shadow-2xl px-5 py-3 flex items-center gap-4 min-w-[340px] max-w-[600px]">
+          <GitCompare className="w-5 h-5 text-indigo-600 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-900">
+              {compareSelection.length === 1
+                ? `${COUNTRY_FLAGS[compareSelection[0].country] ?? "🌍"} ${compareSelection[0].country} — ${compareSelection[0].visaType}`
+                : `${COUNTRY_FLAGS[compareSelection[0].country] ?? "🌍"} ${compareSelection[0].country} vs ${COUNTRY_FLAGS[compareSelection[1].country] ?? "🌍"} ${compareSelection[1].country}`}
+            </p>
+            <p className="text-xs text-gray-500">
+              {compareSelection.length < 2
+                ? "Sélectionnez une 2ème fiche pour comparer"
+                : "Prêt à comparer — cliquez sur le bouton"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {compareSelection.length === 2 && (
+              <Button
+                size="sm"
+                onClick={() => setShowCompareModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5"
+              >
+                <GitCompare className="w-3.5 h-3.5" />
+                Comparer
+              </Button>
+            )}
+            <button
+              onClick={clearCompare}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              title="Annuler la comparaison"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de comparaison */}
+      {showCompareModal && compareSelection.length === 2 && (
+        <CompareModal
+          procA={compareSelection[0]}
+          procB={compareSelection[1]}
+          pdfA={findPdf(compareSelection[0])}
+          pdfB={findPdf(compareSelection[1])}
+          onClose={() => setShowCompareModal(false)}
+        />
+      )}
 
       {/* CTA bas de page */}
       <section className="bg-blue-700 text-white py-12">

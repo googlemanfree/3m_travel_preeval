@@ -309,3 +309,10 @@
 - [x] Page /fiches : 95 fiches détaillées par pays avec recherche, filtres, boutons PDF et CTA
 - [x] Lien "Fiches détaillées par pays" dans le menu déroulant Ressources (desktop + mobile)
 - [x] Route /fiches ajoutée dans App.tsx
+
+## Comparaison côte à côte de visas — Page /fiches (v15)
+- [x] Bouton "Comparer" sur chaque fiche (sélection de 2 fiches max)
+- [x] Barre de sélection flottante en bas de page (0/2 → 1/2 → 2/2 sélectionnés)
+- [x] Modal de comparaison côte à côte : pays, type, délai, coûts, documents, conditions, étapes
+- [x] Mise en évidence visuelle de la fiche sélectionnée (ring bleu)
+- [x] Bouton "Effacer la comparaison" (X) pour réinitialiser la sélection
