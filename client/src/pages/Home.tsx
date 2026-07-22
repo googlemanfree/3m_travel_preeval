@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -242,6 +242,242 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
           <span className="text-xs font-bold text-[#1e3a8a]">{Math.round(pct)}%</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Composant animation de chargement IA ───────────────────────────────────
+const AI_LOADING_STEPS = [
+  { icon: "🔍", label: "Lecture du profil",       detail: "Identification des informations clés de votre dossier..." },
+  { icon: "🌍", label: "Analyse des destinations", detail: "Comparaison avec 6 marchés d'immigration actifs en 2026..." },
+  { icon: "📊", label: "Calcul des scores",        detail: "Évaluation sur 5 critères : formation, expérience, langues, secteur, âge..." },
+  { icon: "🇨🇦", label: "Priorité Canada RP",       detail: "Express Entry, PNP, avantage bilingue +16 pts CRS analysés..." },
+  { icon: "📝", label: "Rédaction du rapport",     detail: "Génération de votre rapport personnalisé par l'IA 3M Travel..." },
+  { icon: "✅", label: "Finalisation",             detail: "Vérification finale et mise en forme du rapport..." },
+];
+
+function AILoadingScreen() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  useEffect(() => {
+    // Avancer les étapes progressivement
+    const totalDuration = 18000; // 18 secondes estimées
+    const stepDuration = totalDuration / AI_LOADING_STEPS.length;
+
+    const stepInterval = setInterval(() => {
+      setCurrentStep(prev => {
+        const next = prev + 1;
+        if (next < AI_LOADING_STEPS.length) {
+          setCompletedSteps(c => [...c, prev]);
+          return next;
+        }
+        clearInterval(stepInterval);
+        return prev;
+      });
+    }, stepDuration);
+
+    // Barre de progression fluide
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 95) { clearInterval(progressInterval); return 95; }
+        return prev + 0.4;
+      });
+    }, 80);
+
+    return () => {
+      clearInterval(stepInterval);
+      clearInterval(progressInterval);
+    };
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+    >
+      <Card className="overflow-hidden border-blue-200 shadow-2xl">
+        {/* En-tête gradient */}
+        <div className="bg-gradient-to-r from-[#0f2460] via-[#1e3a8a] to-[#2563eb] px-6 pt-8 pb-6 text-white text-center">
+          {/* Icône IA animée */}
+          <div className="relative w-20 h-20 mx-auto mb-4">
+            {/* Cercles orbitaux */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-blue-300/40"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            />
+            <motion.div
+              className="absolute inset-2 rounded-full border-2 border-[#7cb9e8]/60"
+              animate={{ rotate: -360 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Centre */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-2xl"
+              >
+                🤖
+              </motion.div>
+            </div>
+            {/* Points orbitaux */}
+            {[0, 120, 240].map((deg, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2.5 h-2.5 rounded-full bg-[#7cb9e8]"
+                style={{ top: "50%", left: "50%", transformOrigin: "0 0" }}
+                animate={{ rotate: [deg, deg + 360] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: i * 0.3 }}
+              >
+                <div
+                  className="w-2.5 h-2.5 rounded-full bg-[#7cb9e8]"
+                  style={{ transform: `translate(-50%, -50%) translateX(28px)` }}
+                />
+              </motion.div>
+            ))}
+          </div>
+
+          <h3 className="text-xl font-extrabold tracking-tight mb-1">Analyse IA en cours</h3>
+          <p className="text-blue-200 text-sm">Votre rapport personnalisé est en cours de génération</p>
+        </div>
+
+        {/* Corps */}
+        <div className="bg-white px-6 py-6">
+          {/* Barre de progression */}
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Progression</span>
+              <span className="text-sm font-bold text-[#1e3a8a]">{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: "linear-gradient(90deg, #7cb9e8, #2563eb, #1e3a8a)" }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+
+          {/* Étapes */}
+          <div className="space-y-2.5">
+            {AI_LOADING_STEPS.map((step, i) => {
+              const isDone    = completedSteps.includes(i);
+              const isActive  = currentStep === i;
+              const isPending = !isDone && !isActive;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: isPending ? 0.4 : 1, x: 0 }}
+                  transition={{ duration: 0.35, delay: i * 0.06 }}
+                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 ${
+                    isActive  ? "bg-blue-50 border border-blue-200" :
+                    isDone    ? "bg-green-50 border border-green-100" :
+                    "bg-gray-50 border border-transparent"
+                  }`}
+                >
+                  {/* Icône état */}
+                  <div className="flex-shrink-0 mt-0.5">
+                    {isDone ? (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                      </motion.div>
+                    ) : isActive ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
+                    )}
+                  </div>
+
+                  {/* Texte */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base leading-none">{step.icon}</span>
+                      <span className={`text-sm font-semibold ${
+                        isDone ? "text-green-700" : isActive ? "text-[#1e3a8a]" : "text-gray-400"
+                      }`}>{step.label}</span>
+                      {isActive && (
+                        <motion.span
+                          animate={{ opacity: [1, 0, 1] }}
+                          transition={{ duration: 1.2, repeat: Infinity }}
+                          className="text-xs text-blue-500 font-medium"
+                        >
+                          en cours...
+                        </motion.span>
+                      )}
+                    </div>
+                    {isActive && (
+                      <motion.p
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        transition={{ duration: 0.3 }}
+                        className="text-xs text-blue-600 mt-1 leading-relaxed"
+                      >
+                        {step.detail}
+                      </motion.p>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Message rassurant rotatif */}
+          <AIReassuranceMessage />
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
+
+const REASSURANCE_MESSAGES = [
+  "🔒 Vos données sont traitées de manière confidentielle et sécurisée.",
+  "🌟 Plus de 1 247 candidats ont déjà reçu leur rapport personnalisé.",
+  "🇨🇦 Le Canada accueille 500 000 nouveaux résidents permanents par an.",
+  "⚡ Notre IA analyse votre profil selon les critères officiels IRCC 2026.",
+  "📧 Votre rapport sera également envoyé à votre adresse email.",
+  "🤝 Un conseiller 3M Travel est disponible sur WhatsApp pour vous accompagner.",
+  "🎯 Chaque rapport est unique et adapté à votre profil spécifique.",
+];
+
+function AIReassuranceMessage() {
+  const [msgIndex, setMsgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMsgIndex(prev => (prev + 1) % REASSURANCE_MESSAGES.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mt-5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-4 py-3 min-h-[52px] flex items-center">
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={msgIndex}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="text-xs text-blue-700 leading-relaxed text-center w-full"
+        >
+          {REASSURANCE_MESSAGES[msgIndex]}
+        </motion.p>
+      </AnimatePresence>
     </div>
   );
 }
@@ -736,24 +972,7 @@ export default function Home() {
           </motion.div>
 
           {isGeneratingReport ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <Card className="p-12 text-center border-blue-200 bg-blue-50 shadow-xl">
-                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                  <Globe className="w-10 h-10 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-blue-900 mb-3">⏳ Analyse IA en cours...</h3>
-                <p className="text-blue-700 mb-4 max-w-md mx-auto">
-                  Notre intelligence artificielle analyse votre profil et génère votre rapport personnalisé. Veuillez patienter quelques instants.
-                </p>
-                <div className="w-full bg-blue-200 rounded-full h-2 max-w-xs mx-auto">
-                  <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '75%' }} />
-                </div>
-              </Card>
-            </motion.div>
+            <AILoadingScreen />
           ) : isSubmitted ? (
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
