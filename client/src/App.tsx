@@ -29,6 +29,7 @@ import Tarifs from "./pages/Tarifs";
 import AVI from "./pages/AVI";
 import Blog from "./pages/Blog";
 import EvaluationWidget from "./pages/EvaluationWidget";
+import MagicLogin from "./pages/MagicLogin";
 
 function Router() {
   return (
@@ -38,6 +39,7 @@ function Router() {
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
       <Route path={"/verify-email"} component={VerifyEmail} />
+      <Route path={"/magic-login"} component={MagicLogin} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
 

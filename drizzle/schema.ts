@@ -99,6 +99,9 @@ export const candidates = mysqlTable("candidates", {
   // Réinitialisation de mot de passe
   passwordResetToken: varchar("passwordResetToken", { length: 128 }),
   passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  // Magic link (connexion sans mot de passe après inscription)
+  magicLinkToken: varchar("magicLinkToken", { length: 128 }),
+  magicLinkExpiresAt: timestamp("magicLinkExpiresAt"),
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

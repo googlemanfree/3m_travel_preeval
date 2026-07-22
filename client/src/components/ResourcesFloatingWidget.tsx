@@ -11,6 +11,7 @@ export default function ResourcesFloatingWidget() {
     { icon: "📚", label: "Blog & Conseils", href: "/blog", desc: "10 articles complets" },
     { icon: "📋", label: "Procédures", href: "/procedures", desc: "Étapes par destination" },
     { icon: "🗺️", label: "Destinations", href: "/destinations", desc: "Pays & opportunités" },
+    { icon: "⭐", label: "Évaluation gratuite", href: "/evaluation-widget", desc: "Testez votre éligibilité" },
   ];
 
   return (

@@ -656,3 +656,52 @@ export async function sendEvaluationReportEmail(
     reportHtml
   );
 }
+
+// ─── Email Magic Link (connexion sans mot de passe) ───────────────────────────
+
+export async function sendMagicLinkEmail(
+  to: string,
+  fullName: string,
+  token: string,
+  type: "verify" | "login" = "verify"
+): Promise<void> {
+  const magicUrl = `${SITE_URL}/magic-login?token=${token}`;
+  const isVerify = type === "verify";
+
+  const content = `
+    <p class="greeting">Bonjour ${fullName},</p>
+    ${isVerify
+      ? `<p>Votre compte <strong>3M Travel</strong> a été créé avec succès ! Cliquez sur le bouton ci-dessous pour <strong>activer votre compte</strong> et accéder à votre espace candidat :</p>`
+      : `<p>Vous avez demandé un <strong>lien de connexion</strong> à votre espace candidat 3M Travel. Cliquez sur le bouton ci-dessous pour vous connecter :</p>`
+    }
+
+    <div class="btn-wrapper">
+      <a href="${magicUrl}" class="btn">${isVerify ? "✅ Activer mon compte" : "🔑 Me connecter"}</a>
+    </div>
+
+    <div class="security-note">
+      ⏱️ Ce lien est valable <strong>24 heures</strong> et ne peut être utilisé qu'une seule fois.
+    </div>
+
+    ${isVerify ? `
+    <p><strong>Après activation, vous pourrez :</strong></p>
+    <ul>
+      <li>📁 Uploader vos documents (CV, passeport, diplômes)</li>
+      <li>💬 Contacter directement votre conseiller</li>
+      <li>📊 Suivre l'avancement de votre dossier en temps réel</li>
+      <li>✈️ Rechercher des vols vers votre destination</li>
+    </ul>
+    ` : ""}
+
+    <hr class="divider" />
+    <p style="font-size:13px;color:#6B7280;">Si vous n'avez pas demandé ce lien, ignorez cet email — votre compte reste sécurisé.</p>
+    <p style="font-size:11px;color:#9CA3AF;word-break:break-all;margin-top:8px;">Lien direct : <a href="${magicUrl}" style="color:#2563EB;">${magicUrl}</a></p>
+    <p style="font-size:13px;color:#6B7280;margin-top:16px;">Cordialement,<br /><strong>L'équipe 3M Travel &amp; Services</strong></p>
+  `;
+
+  const subject = isVerify
+    ? "✅ Activez votre compte 3M Travel"
+    : "🔑 Votre lien de connexion — 3M Travel";
+
+  await sendEmail(to, subject, emailBase(content));
+}

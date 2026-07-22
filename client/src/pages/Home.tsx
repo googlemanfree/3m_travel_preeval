@@ -1121,72 +1121,126 @@ export default function Home() {
       <PricingSection />
 
       {/* ─── RESSOURCES ─────────────────────────────────────────────────── */}
-      <section id="ressources" className="py-16 px-4 bg-gray-50 scroll-mt-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Ressources & Outils</h2>
-            <p className="text-gray-600 text-lg">Accédez à nos guides, tarifs et outils d'évaluation</p>
+      <section id="ressources" className="py-20 px-4 scroll-mt-20" style={{ background: 'linear-gradient(180deg, #f0f4ff 0%, #e8eeff 100%)' }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Ressources & Outils</span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Tout ce dont vous avez besoin</h2>
+            <p className="text-gray-500 text-lg max-w-xl mx-auto">Guides, tarifs, outils d'évaluation et conseils d'experts pour votre projet d'immigration</p>
           </div>
-          <div className="grid md:grid-cols-4 gap-6">
-            {/* Tarifs */}
-            <a href="/tarifs" className="group">
-              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-6 h-full border-t-4 border-blue-600">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <FileText className="w-6 h-6 text-blue-600" />
+
+          {/* Grille principale : 2 grandes + 3 petites */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+            {/* Grande carte — Grille Tarifaire */}
+            <a href="/tarifs" className="group md:col-span-5 relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all block">
+              <div className="relative h-64 md:h-full min-h-[260px] overflow-hidden">
+                <img
+                  src="/manus-storage/res_tarifs_5f3052a7.jpg"
+                  alt="Grille Tarifaire"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(30,58,138,0.92) 0%, rgba(30,58,138,0.4) 60%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <span className="inline-block bg-blue-500/30 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-sm">Tarifs</span>
+                  <h3 className="text-xl font-extrabold text-white mb-1">Grille Tarifaire Complète</h3>
+                  <p className="text-blue-200 text-sm mb-3">Tous nos tarifs par service — Canada, Europe, Golfe, Tests de langue</p>
+                  <span className="inline-flex items-center gap-1 text-white font-semibold text-sm bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full transition-colors">
+                    Voir les tarifs <ChevronRight className="w-4 h-4" />
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Grille Tarifaire</h3>
-                <p className="text-sm text-gray-600 mb-4">Tous nos tarifs par service avec transparence totale</p>
-                <span className="text-blue-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Voir les tarifs <ChevronRight className="w-4 h-4" />
-                </span>
               </div>
             </a>
 
-            {/* AVI */}
-            <a href="/avi" className="group">
-              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-6 h-full border-t-4 border-green-600">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
-                  <Shield className="w-6 h-6 text-green-600" />
+            {/* Grande carte — AVI Bancaire */}
+            <a href="/avi" className="group md:col-span-7 relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all block">
+              <div className="relative h-64 md:h-full min-h-[260px] overflow-hidden">
+                <img
+                  src="/manus-storage/res_avi_93df0501.jpg"
+                  alt="AVI Bancaire"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(5,100,50,0.92) 0%, rgba(5,100,50,0.3) 60%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <span className="inline-block bg-green-500/30 text-green-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-sm">Bancaire</span>
+                  <h3 className="text-xl font-extrabold text-white mb-1">AVI — Attestation de Virement Irrévocable</h3>
+                  <p className="text-green-200 text-sm mb-3">Document obligatoire pour visa étudiant France, Canada, Belgique, Allemagne</p>
+                  <span className="inline-flex items-center gap-1 text-white font-semibold text-sm bg-green-600 hover:bg-green-500 px-4 py-2 rounded-full transition-colors">
+                    En savoir plus <ChevronRight className="w-4 h-4" />
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">AVI Bancaire</h3>
-                <p className="text-sm text-gray-600 mb-4">Attestation de Virement Irrévocable pour visa étudiant</p>
-                <span className="text-green-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                  En savoir plus <ChevronRight className="w-4 h-4" />
-                </span>
               </div>
             </a>
 
-            {/* Blog */}
-            <a href="/blog" className="group">
-              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-6 h-full border-t-4 border-purple-600">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                  <BookOpen className="w-6 h-6 text-purple-600" />
+            {/* Petite carte — Blog */}
+            <a href="/blog" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src="/manus-storage/res_blog_8ec0a918.jpg"
+                  alt="Blog & Conseils"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(88,28,135,0.9) 0%, rgba(88,28,135,0.2) 70%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-base font-bold text-white mb-1">Blog & Conseils</h3>
+                  <p className="text-purple-200 text-xs mb-2">10 articles sur l'immigration</p>
+                  <span className="inline-flex items-center gap-1 text-purple-200 text-xs font-semibold hover:text-white transition-colors">
+                    Lire <ChevronRight className="w-3 h-3" />
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Blog & Conseils</h3>
-                <p className="text-sm text-gray-600 mb-4">10 articles complets sur l'immigration et tests de langue</p>
-                <span className="text-purple-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Lire les articles <ChevronRight className="w-4 h-4" />
-                </span>
               </div>
             </a>
 
-            {/* Évaluation */}
-            <a href="/evaluation-widget" className="group">
-              <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all p-6 h-full border-t-4 border-orange-600">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
-                  <Star className="w-6 h-6 text-orange-600" />
+            {/* Petite carte — Procédures */}
+            <a href="/procedures" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src="/manus-storage/res_procedures_8fb3c52d.png"
+                  alt="Procédures"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(180,83,9,0.9) 0%, rgba(180,83,9,0.2) 70%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-base font-bold text-white mb-1">Procédures Visa</h3>
+                  <p className="text-orange-200 text-xs mb-2">Étapes par destination</p>
+                  <span className="inline-flex items-center gap-1 text-orange-200 text-xs font-semibold hover:text-white transition-colors">
+                    Voir <ChevronRight className="w-3 h-3" />
+                  </span>
                 </div>
-                <h3 className="font-bold text-gray-900 mb-2">Évaluation</h3>
-                <p className="text-sm text-gray-600 mb-4">Découvrez votre meilleure option d'immigration en 2 min</p>
-                <span className="text-orange-600 font-semibold text-sm flex items-center gap-1 group-hover:gap-2 transition-all">
-                  Évaluer <ChevronRight className="w-4 h-4" />
-                </span>
               </div>
+            </a>
+
+            {/* Petite carte — Destinations */}
+            <a href="/destinations" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
+              <div className="relative h-48 overflow-hidden">
+                <img
+                  src="/manus-storage/res_destinations_7240855f.jpg"
+                  alt="Destinations"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.2) 70%, transparent 100%)' }} />
+                <div className="absolute bottom-0 left-0 right-0 p-4">
+                  <h3 className="text-base font-bold text-white mb-1">Destinations</h3>
+                  <p className="text-gray-300 text-xs mb-2">Pays & opportunités</p>
+                  <span className="inline-flex items-center gap-1 text-gray-300 text-xs font-semibold hover:text-white transition-colors">
+                    Explorer <ChevronRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </div>
+            </a>
+
+          </div>
+
+          {/* Lien Évaluation en bas */}
+          <div className="mt-8 text-center">
+            <a href="/evaluation-widget" className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-[0.97]">
+              <Star className="w-5 h-5" />
+              Évaluez votre éligibilité gratuitement en 2 minutes
+              <ChevronRight className="w-5 h-5" />
             </a>
           </div>
         </div>
       </section>
-
       {/* --- CTA --- */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">

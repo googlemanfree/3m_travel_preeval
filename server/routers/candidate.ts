@@ -16,7 +16,7 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { sendMagicLinkEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -95,12 +95,10 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
 
-      const passwordHash = await bcrypt.hash(input.password, 12);
-
-      // Générer un OTP à 6 chiffres
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
+            const passwordHash = await bcrypt.hash(input.password, 12);
+      // Générer un magic link token (valable 24h)
+      const magicToken = crypto.randomUUID().replace(/-/g, "");
+      const magicExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
       const result = await db.insert(candidates).values({
         fullName: input.fullName,
         email: input.email,
@@ -110,20 +108,17 @@ export const candidateRouter = router({
         nationality: input.nationality ?? null,
         dossierStatus: "nouveau",
         emailVerified: false,
-        emailOtp: otp,
-        emailOtpExpiresAt: otpExpiresAt,
+        magicLinkToken: magicToken,
+        magicLinkExpiresAt: magicExpiresAt,
       });
-
       const candidateId = (result as any).insertId as number;
-
-      // Envoyer l'email OTP
+      // Envoyer l'email avec le magic link
       try {
-        await sendVerificationOtp(input.email, input.fullName, otp);
+        await sendMagicLinkEmail(input.email, input.fullName, magicToken, "verify");
       } catch (err) {
-        console.error("[Register] Email OTP send error:", err);
+        console.error("[Register] Magic link email error:", err);
       }
-
-      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Veuillez vérifier votre email." };
+      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de connexion a été envoyé à votre email." };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -386,11 +381,12 @@ export const candidateRouter = router({
       if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
       if (candidate.emailVerified) return { success: true };
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
-      try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
-      return { success: true, message: "Nouveau code envoyé à votre adresse email." };
+      // Régénérer un magic link
+      const magicToken = crypto.randomUUID().replace(/-/g, "");
+      const magicExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db.update(candidates).set({ magicLinkToken: magicToken, magicLinkExpiresAt: magicExpiresAt }).where(eq(candidates.id, input.candidateId));
+      try { await sendMagicLinkEmail(candidate.email, candidate.fullName, magicToken, "verify"); } catch {}
+      return { success: true, message: "Un nouveau lien d'activation a été envoyé à votre adresse email." };
     }),
 
   requestPasswordReset: publicProcedure
@@ -422,6 +418,25 @@ export const candidateRouter = router({
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
       await db.update(candidates).set({ passwordHash, passwordResetToken: null, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
+    }),
+
+  verifyMagicLink: publicProcedure
+    .input(z.object({ token: z.string().min(10) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.magicLinkToken, input.token)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou déjà utilisé." });
+      const candidate = rows[0];
+      if (!candidate.magicLinkExpiresAt || new Date() > candidate.magicLinkExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez vous inscrire à nouveau." });
+      }
+      await db.update(candidates).set({ emailVerified: true, magicLinkToken: null, magicLinkExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      if (!candidate.emailVerified) {
+        try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      }
+      const token = signCandidateToken(candidate.id);
+      return { success: true, token, candidateId: candidate.id, fullName: candidate.fullName };
     }),
 
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
