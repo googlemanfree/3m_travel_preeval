@@ -330,3 +330,16 @@
 - [ ] Badge "Mode Démo" visible — prêt pour connexion API Amadeus réelle
 - [ ] CTA "Réserver via 3M Travel" → ouverture dossier
 - [ ] Route /vols/resultats ajoutée dans App.tsx
+
+## Filtres résultats de vols (v18)
+- [x] Panneau de filtres latéral (desktop) / drawer bottom mobile
+- [x] Tri par prix/durée/escales avec ordre croissant ↑ / décroissant ↓ (clic sur le même bouton)
+- [x] Filtre escales : Tous, Direct, 1 escale, 2+ escales (radio)
+- [x] Filtre budget : slider double poignée min/max avec affichage en FCFA
+- [x] Filtre compagnies aériennes : checkboxes avec logo/nom, scroll si > 5
+- [x] Filtre heure de départ : 4 tranches horaires (Matin, Après-midi, Soir, Nuit) avec sélection multiple
+- [x] Filtre durée maximale : slider en heures
+- [x] Compteur de résultats actifs ("X vols trouvés")
+- [x] Badge du nombre de filtres actifs sur le bouton Filtres et dans le titre
+- [x] Bouton "Tout réinitialiser" (visible uniquement si filtres actifs)
+- [x] Drawer bottom mobile avec animation spring, poignée, bouton "Voir X vols"
