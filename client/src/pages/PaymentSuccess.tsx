@@ -82,7 +82,7 @@ export default function PaymentSuccess() {
             {/* CTA */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <a
-                href={`https://wa.me/237620996045?text=${whatsappMsg}`}
+                href={`https://wa.me/237698104832?text=${whatsappMsg}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
