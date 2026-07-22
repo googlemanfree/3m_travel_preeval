@@ -82,7 +82,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           {/* Menu déroulant Ressources */}
           <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
             <button className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
-              ["visa-types", "destinations", "guide"].includes(active ?? "")
+              ["visa-types", "destinations", "guide", "evaluation-widget"].includes(active ?? "")
                 ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
                 : "text-gray-600 hover:text-blue-700"
             }`}>
@@ -103,6 +103,10 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
                 <Link href="/guide" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                   <BookOpen className="w-4 h-4 text-blue-600" />
                   Guide Complet
+                </Link>
+                <Link href="/evaluation-widget" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Star className="w-4 h-4 text-blue-600" />
+                  Évaluation d'Éligibilité
                 </Link>
                 <div className="border-t border-gray-100 my-1" />
                 <Link href="/ressources" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">

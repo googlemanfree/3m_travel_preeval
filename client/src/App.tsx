@@ -28,6 +28,7 @@ import Fiches from "./pages/Fiches";
 import Tarifs from "./pages/Tarifs";
 import AVI from "./pages/AVI";
 import Blog from "./pages/Blog";
+import EvaluationWidget from "./pages/EvaluationWidget";
 
 function Router() {
   return (
@@ -72,6 +73,7 @@ function Router() {
       <Route path={"/tarifs"} component={Tarifs} />
       <Route path={"/avi"} component={AVI} />
       <Route path={"/blog"} component={Blog} />
+      <Route path={"/evaluation-widget"} component={EvaluationWidget} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />
