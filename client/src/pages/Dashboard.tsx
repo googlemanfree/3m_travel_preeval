@@ -396,84 +396,193 @@ export default function Dashboard() {
                 </motion.div>
               )}
 
-              {/* ── Onglet : Suivi détaillé ───────────────────────────────────────── */}
+              {/* ── Onglet : Suivi détaillé — Timeline chronologique ─────────── */}
               {activeTab === "suivi" && (
                 <motion.div key="suivi" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
-                  <h1 className="text-2xl font-black text-gray-900 mb-6">Suivi détaillé du dossier</h1>
+                  {/* En-tête avec progression globale */}
+                  {(summaryQuery.data?.steps?.length ?? 0) > 0 && (() => {
+                    const steps = summaryQuery.data?.steps ?? [];
+                    const total = steps.length;
+                    const done = steps.filter((s: any) => s.status === "completed").length;
+                    const inProgress = steps.filter((s: any) => s.status === "in_progress").length;
+                    const blocked = steps.filter((s: any) => s.status === "blocked").length;
+                    const pct = Math.round((done / total) * 100);
+                    return (
+                      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#1d4ed8] rounded-2xl p-6 mb-8 text-white shadow-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h2 className="text-lg font-black">Avancement de votre dossier</h2>
+                            <p className="text-blue-200 text-sm mt-0.5">{done} étape{done > 1 ? "s" : ""} complétée{done > 1 ? "s" : ""} sur {total}</p>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-4xl font-black">{pct}%</div>
+                            <div className="text-blue-200 text-xs">complété</div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-white/20 rounded-full h-3 overflow-hidden">
+                          <motion.div
+                            className="h-full bg-white rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1.2, ease: "easeOut", delay: 0.3 }}
+                          />
+                        </div>
+                        <div className="flex gap-4 mt-3 text-xs">
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-green-400 rounded-full inline-block" />{done} terminée{done > 1 ? "s" : ""}</span>
+                          {inProgress > 0 && <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-yellow-300 rounded-full inline-block" />{inProgress} en cours</span>}
+                          {blocked > 0 && <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-red-400 rounded-full inline-block" />{blocked} bloquée{blocked > 1 ? "s" : ""}</span>}
+                          <span className="flex items-center gap-1.5"><span className="w-2 h-2 bg-white/40 rounded-full inline-block" />{total - done - inProgress - blocked} en attente</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {summaryQuery.isLoading ? (
-                    <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement...</div>
+                    <div className="space-y-4">
+                      {[1,2,3,4].map(i => (
+                        <div key={i} className="flex gap-4 animate-pulse">
+                          <div className="flex flex-col items-center">
+                            <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                            {i < 4 && <div className="w-0.5 h-16 bg-gray-100 mt-1" />}
+                          </div>
+                          <div className="flex-1 pb-8">
+                            <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
+                            <div className="h-3 bg-gray-100 rounded w-2/3" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   ) : !summaryQuery.data?.steps?.length ? (
-                    <div className="bg-white rounded-2xl p-8 text-center">
-                      <TrendingUp className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-                      <p className="text-gray-500 font-medium">Aucune étape définie pour l'instant</p>
-                      <p className="text-gray-400 text-sm mt-1">Votre conseiller va bientôt configurer les étapes de votre dossier.</p>
+                    <div className="bg-white rounded-2xl p-10 text-center shadow-sm border border-gray-100">
+                      <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <TrendingUp className="w-8 h-8 text-[#1E3A8A]" />
+                      </div>
+                      <p className="text-gray-700 font-bold text-lg">Suivi en cours de configuration</p>
+                      <p className="text-gray-400 text-sm mt-2 max-w-xs mx-auto">Votre conseiller va bientôt définir les étapes de votre dossier. Vous serez notifié par email.</p>
+                      <a href="https://wa.me/237698104832?text=Bonjour%2C%20je%20voudrais%20avoir%20des%20informations%20sur%20l'avancement%20de%20mon%20dossier." target="_blank" rel="noopener noreferrer"
+                        className="mt-5 inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl transition-colors">
+                        <MessageCircle className="w-4 h-4" /> Contacter mon conseiller
+                      </a>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {(() => {
-                        const total = summaryQuery.data.steps.length;
-                        const done = summaryQuery.data.steps.filter((s: any) => s.status === "completed").length;
-                        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-                        return (
-                          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="font-bold text-gray-800">Progression globale</span>
-                              <span className="font-black text-[#1E3A8A] text-lg">{pct}%</span>
-                            </div>
-                            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-400 mt-1">
-                              <span>{done} étape{done > 1 ? "s" : ""} terminée{done > 1 ? "s" : ""}</span>
-                              <span>{total - done} restante{total - done > 1 ? "s" : ""}</span>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                      {summaryQuery.data.steps.map((step: any) => {
-                        const statusMap: Record<string, { icon: any; color: string; bg: string; label: string }> = {
-                          completed:    { icon: CheckCircle, color: "text-green-600",  bg: "bg-green-100",  label: "Terminé" },
-                          in_progress:  { icon: Clock,       color: "text-blue-600",   bg: "bg-blue-100",   label: "En cours" },
-                          pending:      { icon: Clock,       color: "text-gray-400",   bg: "bg-gray-100",   label: "En attente" },
-                          blocked:      { icon: AlertCircle, color: "text-red-600",    bg: "bg-red-100",    label: "Bloqué" },
-                          not_required: { icon: XCircle,     color: "text-gray-300",   bg: "bg-gray-50",    label: "Non requis" },
-                        };
-                        const s = statusMap[step.status] ?? statusMap.pending;
-                        const StepIcon = s.icon;
-                        return (
-                          <div key={step.id} className={`bg-white rounded-xl border p-4 flex items-start gap-4 ${
-                            step.status === "blocked" ? "border-red-200" :
-                            step.status === "completed" ? "border-green-200" :
-                            step.status === "in_progress" ? "border-blue-200" : "border-gray-100"
-                          }`}>
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg}`}>
-                              <StepIcon className={`w-5 h-5 ${s.color}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-gray-800 text-sm">{step.stepLabel}</span>
-                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.bg} ${s.color}`}>{s.label}</span>
+                    <div className="relative">
+                      {/* Timeline verticale */}
+                      <div className="space-y-0">
+                        {summaryQuery.data.steps.map((step: any, idx: number) => {
+                          const isLast = idx === summaryQuery.data.steps.length - 1;
+                          const statusMap: Record<string, { icon: React.ElementType; color: string; bg: string; ring: string; line: string; label: string; dot: string }> = {
+                            completed:    { icon: CheckCircle, color: "text-white",       bg: "bg-green-500",   ring: "ring-green-200",  line: "bg-green-200",  label: "Terminé",    dot: "bg-green-500" },
+                            in_progress:  { icon: Clock,       color: "text-white",       bg: "bg-blue-500",    ring: "ring-blue-200",   line: "bg-blue-100",   label: "En cours",   dot: "bg-blue-500" },
+                            blocked:      { icon: AlertCircle, color: "text-white",       bg: "bg-red-500",     ring: "ring-red-200",    line: "bg-red-100",    label: "Bloqué",     dot: "bg-red-500" },
+                            pending:      { icon: Clock,       color: "text-gray-400",    bg: "bg-gray-100",    ring: "ring-gray-100",   line: "bg-gray-100",   label: "En attente", dot: "bg-gray-300" },
+                            not_required: { icon: XCircle,     color: "text-gray-300",    bg: "bg-gray-50",     ring: "ring-gray-100",   line: "bg-gray-50",    label: "Non requis", dot: "bg-gray-200" },
+                          };
+                          const s = statusMap[step.status] ?? statusMap.pending;
+                          const StepIcon = s.icon;
+                          const cardBorder =
+                            step.status === "blocked"     ? "border-red-200 bg-red-50/30" :
+                            step.status === "completed"   ? "border-green-200 bg-green-50/20" :
+                            step.status === "in_progress" ? "border-blue-200 bg-blue-50/30 shadow-md shadow-blue-100" :
+                            "border-gray-100 bg-white";
+
+                          return (
+                            <motion.div
+                              key={step.id}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.35, delay: idx * 0.07 }}
+                              className="flex gap-0"
+                            >
+                              {/* Colonne gauche : icône + ligne verticale */}
+                              <div className="flex flex-col items-center mr-5" style={{ minWidth: 44 }}>
+                                <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ring-4 ${s.bg} ${s.ring} shadow-sm z-10`}>
+                                  <StepIcon className={`w-5 h-5 ${s.color}`} />
+                                </div>
+                                {!isLast && (
+                                  <div className={`w-0.5 flex-1 min-h-[32px] mt-1 mb-1 rounded-full ${s.line}`} />
+                                )}
                               </div>
-                              {step.description && <p className="text-sm text-gray-500 mt-1">{step.description}</p>}
-                              <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-400">
-                                {step.dueDate && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Limite : {new Date(step.dueDate).toLocaleDateString("fr-FR")}</span>}
-                                {step.completedAt && <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-3 h-3" />Terminé le {new Date(step.completedAt).toLocaleDateString("fr-FR")}</span>}
+
+                              {/* Colonne droite : contenu */}
+                              <div className={`flex-1 mb-6 rounded-2xl border p-4 ${cardBorder}`}>
+                                {/* Numéro + titre + badge */}
+                                <div className="flex items-start justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-gray-300 w-5 text-center">#{idx + 1}</span>
+                                    <span className="font-bold text-gray-800 text-sm leading-tight">{step.stepLabel}</span>
+                                  </div>
+                                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${
+                                    step.status === "completed"   ? "bg-green-100 text-green-700" :
+                                    step.status === "in_progress" ? "bg-blue-100 text-blue-700" :
+                                    step.status === "blocked"     ? "bg-red-100 text-red-700" :
+                                    "bg-gray-100 text-gray-500"
+                                  }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                                    {s.label}
+                                  </span>
+                                </div>
+
+                                {/* Description */}
+                                {step.description && (
+                                  <p className="text-sm text-gray-500 mt-2 leading-relaxed">{step.description}</p>
+                                )}
+
+                                {/* Dates */}
+                                <div className="flex flex-wrap items-center gap-3 mt-2.5 text-xs text-gray-400">
+                                  {step.dueDate && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="w-3 h-3" />
+                                      Échéance : <span className="font-semibold text-gray-600">{new Date(step.dueDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                                    </span>
+                                  )}
+                                  {step.completedAt && (
+                                    <span className="flex items-center gap-1 text-green-600">
+                                      <CheckCircle className="w-3 h-3" />
+                                      Complété le <span className="font-semibold">{new Date(step.completedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Document téléchargeable */}
+                                {step.documentUrl && (
+                                  <a href={step.documentUrl} target="_blank" rel="noopener noreferrer"
+                                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#1E3A8A] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
+                                    <Download className="w-3.5 h-3.5" />
+                                    {step.documentName ?? "Télécharger le document"}
+                                  </a>
+                                )}
+
+                                {/* Indicateur "en cours" animé */}
+                                {step.status === "in_progress" && (
+                                  <div className="mt-3 flex items-center gap-2">
+                                    <div className="flex gap-1">
+                                      {[0,1,2].map(i => (
+                                        <motion.div key={i} className="w-1.5 h-1.5 bg-blue-500 rounded-full"
+                                          animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                                          transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-blue-600 font-semibold">Traitement en cours…</span>
+                                  </div>
+                                )}
                               </div>
-                              {step.documentUrl && (
-                                <a href={step.documentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-[#1E3A8A] font-semibold hover:underline">
-                                  <Download className="w-3.5 h-3.5" /> {step.documentName ?? "Télécharger"}
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Documents remis par 3M Travel */}
                       {summaryQuery.data.deliveredDocs?.length > 0 && (
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
-                          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
-                            <Download className="w-4 h-4 text-[#1E3A8A]" />
-                            <h3 className="font-bold text-gray-800">Documents remis par 3M Travel</h3>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-2">
+                          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2 bg-green-50/50">
+                            <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+                              <Download className="w-4 h-4 text-green-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-gray-800 text-sm">Documents remis par 3M Travel</h3>
+                              <p className="text-xs text-gray-400">{summaryQuery.data.deliveredDocs.length} document{summaryQuery.data.deliveredDocs.length > 1 ? "s" : ""} disponible{summaryQuery.data.deliveredDocs.length > 1 ? "s" : ""}</p>
+                            </div>
                           </div>
                           <div className="divide-y divide-gray-50">
                             {summaryQuery.data.deliveredDocs.map((doc: any) => (
@@ -483,10 +592,11 @@ export default function Dashboard() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="font-semibold text-gray-800 text-sm">{doc.docLabel}</div>
-                                  <div className="text-xs text-gray-400">{new Date(doc.deliveredAt).toLocaleDateString("fr-FR")}</div>
+                                  <div className="text-xs text-gray-400">{new Date(doc.deliveredAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</div>
                                 </div>
                                 {doc.fileUrl && (
-                                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-bold text-[#1E3A8A] hover:underline">
+                                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer"
+                                    className="flex items-center gap-1 text-xs font-bold text-[#1E3A8A] bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors">
                                     <Download className="w-3.5 h-3.5" /> Télécharger
                                   </a>
                                 )}
@@ -499,8 +609,7 @@ export default function Dashboard() {
                   )}
                 </motion.div>
               )}
-
-              {/* ── Onglet : Paiements ───────────────────────────────────────────── */}
+                            {/* ── Onglet : Paiements ───────────────────────────────────────────── */}
               {activeTab === "paiements" && (
                 <motion.div key="paiements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
                   <h1 className="text-2xl font-black text-gray-900 mb-6">Mes Paiements</h1>
