@@ -304,3 +304,126 @@ export const flightBookings = mysqlTable("flightBookings", {
 
 export type FlightBooking = typeof flightBookings.$inferSelect;
 export type InsertFlightBooking = typeof flightBookings.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SUIVI DÉTAILLÉ DU DOSSIER
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Étapes détaillées de l'avancement du dossier (WES, TCF, IELTS, etc.)
+ * Chaque ligne = une étape du processus d'immigration
+ */
+export const dossierSteps = mysqlTable("dossierSteps", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  // Identification de l'étape
+  stepKey: varchar("stepKey", { length: 100 }).notNull(), // ex: "wes_evaluation", "tcf_test", "expression_interet", etc.
+  stepLabel: varchar("stepLabel", { length: 255 }).notNull(), // Libellé affiché
+  stepCategory: mysqlEnum("stepCategory", [
+    "evaluation",    // Évaluation initiale
+    "documents",     // Documents à fournir
+    "tests",         // Tests de langue (TCF, IELTS, TEF)
+    "equivalence",   // Équivalence diplômes (WES, CES)
+    "candidature",   // Expression d'intérêt / candidature
+    "immigration",   // Procédure immigration officielle
+    "visa",          // Visa / permis
+    "arrivee",       // Arrivée et installation
+  ]).default("documents").notNull(),
+  // Statut de l'étape
+  status: mysqlEnum("status", [
+    "pending",       // En attente
+    "in_progress",   // En cours
+    "completed",     // Terminé
+    "blocked",       // Bloqué / problème
+    "not_required",  // Non requis pour ce profil
+  ]).default("pending").notNull(),
+  // Détails
+  description: text("description"),          // Note explicative
+  dueDate: timestamp("dueDate"),             // Date limite
+  completedAt: timestamp("completedAt"),     // Date de complétion
+  documentUrl: text("documentUrl"),          // Lien vers le document associé
+  documentName: varchar("documentName", { length: 255 }),
+  // Ordre d'affichage
+  sortOrder: int("sortOrder").default(0).notNull(),
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DossierStep = typeof dossierSteps.$inferSelect;
+export type InsertDossierStep = typeof dossierSteps.$inferInsert;
+
+/**
+ * Paiements partiels du candidat (versements échelonnés)
+ */
+export const dossierPayments = mysqlTable("dossierPayments", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  // Montant
+  amount: int("amount").notNull(),           // en FCFA
+  currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+  // Méthode de paiement
+  paymentMethod: mysqlEnum("paymentMethod", [
+    "mtn_momo",
+    "orange_money",
+    "virement",
+    "especes",
+    "carte",
+    "autre",
+  ]).default("autre").notNull(),
+  // Référence de transaction
+  transactionRef: varchar("transactionRef", { length: 255 }),
+  // Statut
+  status: mysqlEnum("status", [
+    "pending",
+    "confirmed",
+    "rejected",
+  ]).default("pending").notNull(),
+  // Libellé / motif
+  label: varchar("label", { length: 255 }),  // ex: "Acompte 1/3", "Solde final"
+  note: text("note"),                         // Note admin
+  // Date du paiement
+  paidAt: timestamp("paidAt"),
+  confirmedAt: timestamp("confirmedAt"),
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DossierPayment = typeof dossierPayments.$inferSelect;
+export type InsertDossierPayment = typeof dossierPayments.$inferInsert;
+
+/**
+ * Documents officiels remis au candidat par 3M Travel
+ * (lettres, attestations, billets, permis, etc.)
+ */
+export const dossierDeliveredDocs = mysqlTable("dossierDeliveredDocs", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  // Type de document remis
+  docType: mysqlEnum("docType", [
+    "lettre_invitation",
+    "attestation_inscription",
+    "permis_etudes",
+    "permis_travail",
+    "visa",
+    "billet_avion",
+    "assurance_voyage",
+    "rapport_evaluation",
+    "autre",
+  ]).default("autre").notNull(),
+  docLabel: varchar("docLabel", { length: 255 }).notNull(),
+  // Fichier
+  fileUrl: text("fileUrl"),
+  fileKey: varchar("fileKey", { length: 512 }),
+  fileName: varchar("fileName", { length: 255 }),
+  // Date de remise
+  deliveredAt: timestamp("deliveredAt").defaultNow().notNull(),
+  // Note
+  note: text("note"),
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DossierDeliveredDoc = typeof dossierDeliveredDocs.$inferSelect;
+export type InsertDossierDeliveredDoc = typeof dossierDeliveredDocs.$inferInsert;

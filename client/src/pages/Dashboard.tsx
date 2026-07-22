@@ -5,7 +5,8 @@ import {
   User, FileText, MessageCircle, Upload, LogOut, CheckCircle,
   Clock, AlertCircle, XCircle, ChevronRight, Send, Paperclip,
   Home, Globe, Award, Trash2, Eye,
-  FolderOpen, Star
+  FolderOpen, Star, CreditCard, Download, TrendingUp, Shield,
+  BookOpen, Languages, GraduationCap, Briefcase, MapPin, Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ const FILE_TYPES: { value: string; label: string }[] = [
   { value: "autre",                 label: "Autre document" },
 ];
 
-type Tab = "overview" | "documents" | "messages" | "profile";
+type Tab = "overview" | "suivi" | "paiements" | "documents" | "messages" | "profile";
 
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -68,6 +69,12 @@ export default function Dashboard() {
   }, [isAuthenticated, navigate]);
 
   const utils = trpc.useUtils();
+
+  // Query résumé complet du dossier
+  const summaryQuery = trpc.candidate.getDossierSummary.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
 
   // Queries — le token est automatiquement injecté via main.tsx headers()
   const profileQuery = trpc.candidate.getProfile.useQuery(undefined, {
@@ -210,6 +217,8 @@ export default function Dashboard() {
             <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {[
                 { id: "overview" as Tab,   icon: Globe,         label: "Mon dossier" },
+                { id: "suivi" as Tab,      icon: TrendingUp,    label: "Suivi détaillé" },
+                { id: "paiements" as Tab,  icon: CreditCard,    label: "Paiements" },
                 { id: "documents" as Tab,  icon: FolderOpen,    label: "Mes documents" },
                 { id: "messages" as Tab,   icon: MessageCircle, label: "Messagerie" },
                 { id: "profile" as Tab,    icon: User,          label: "Mon profil" },
@@ -379,6 +388,205 @@ export default function Dashboard() {
                                 <Upload className="w-4 h-4" /> Uploader mes documents
                               </button>
                             </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Suivi détaillé ───────────────────────────────────────── */}
+              {activeTab === "suivi" && (
+                <motion.div key="suivi" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Suivi détaillé du dossier</h1>
+
+                  {summaryQuery.isLoading ? (
+                    <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement...</div>
+                  ) : !summaryQuery.data?.steps?.length ? (
+                    <div className="bg-white rounded-2xl p-8 text-center">
+                      <TrendingUp className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-500 font-medium">Aucune étape définie pour l'instant</p>
+                      <p className="text-gray-400 text-sm mt-1">Votre conseiller va bientôt configurer les étapes de votre dossier.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(() => {
+                        const total = summaryQuery.data.steps.length;
+                        const done = summaryQuery.data.steps.filter((s: any) => s.status === "completed").length;
+                        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                        return (
+                          <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-bold text-gray-800">Progression globale</span>
+                              <span className="font-black text-[#1E3A8A] text-lg">{pct}%</span>
+                            </div>
+                            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                              <span>{done} étape{done > 1 ? "s" : ""} terminée{done > 1 ? "s" : ""}</span>
+                              <span>{total - done} restante{total - done > 1 ? "s" : ""}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {summaryQuery.data.steps.map((step: any) => {
+                        const statusMap: Record<string, { icon: any; color: string; bg: string; label: string }> = {
+                          completed:    { icon: CheckCircle, color: "text-green-600",  bg: "bg-green-100",  label: "Terminé" },
+                          in_progress:  { icon: Clock,       color: "text-blue-600",   bg: "bg-blue-100",   label: "En cours" },
+                          pending:      { icon: Clock,       color: "text-gray-400",   bg: "bg-gray-100",   label: "En attente" },
+                          blocked:      { icon: AlertCircle, color: "text-red-600",    bg: "bg-red-100",    label: "Bloqué" },
+                          not_required: { icon: XCircle,     color: "text-gray-300",   bg: "bg-gray-50",    label: "Non requis" },
+                        };
+                        const s = statusMap[step.status] ?? statusMap.pending;
+                        const StepIcon = s.icon;
+                        return (
+                          <div key={step.id} className={`bg-white rounded-xl border p-4 flex items-start gap-4 ${
+                            step.status === "blocked" ? "border-red-200" :
+                            step.status === "completed" ? "border-green-200" :
+                            step.status === "in_progress" ? "border-blue-200" : "border-gray-100"
+                          }`}>
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg}`}>
+                              <StepIcon className={`w-5 h-5 ${s.color}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-gray-800 text-sm">{step.stepLabel}</span>
+                                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.bg} ${s.color}`}>{s.label}</span>
+                              </div>
+                              {step.description && <p className="text-sm text-gray-500 mt-1">{step.description}</p>}
+                              <div className="flex items-center gap-4 mt-1.5 text-xs text-gray-400">
+                                {step.dueDate && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Limite : {new Date(step.dueDate).toLocaleDateString("fr-FR")}</span>}
+                                {step.completedAt && <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-3 h-3" />Terminé le {new Date(step.completedAt).toLocaleDateString("fr-FR")}</span>}
+                              </div>
+                              {step.documentUrl && (
+                                <a href={step.documentUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs text-[#1E3A8A] font-semibold hover:underline">
+                                  <Download className="w-3.5 h-3.5" /> {step.documentName ?? "Télécharger"}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {summaryQuery.data.deliveredDocs?.length > 0 && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
+                          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                            <Download className="w-4 h-4 text-[#1E3A8A]" />
+                            <h3 className="font-bold text-gray-800">Documents remis par 3M Travel</h3>
+                          </div>
+                          <div className="divide-y divide-gray-50">
+                            {summaryQuery.data.deliveredDocs.map((doc: any) => (
+                              <div key={doc.id} className="px-5 py-3.5 flex items-center gap-3">
+                                <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                  <FileText className="w-4 h-4 text-green-600" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-gray-800 text-sm">{doc.docLabel}</div>
+                                  <div className="text-xs text-gray-400">{new Date(doc.deliveredAt).toLocaleDateString("fr-FR")}</div>
+                                </div>
+                                {doc.fileUrl && (
+                                  <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs font-bold text-[#1E3A8A] hover:underline">
+                                    <Download className="w-3.5 h-3.5" /> Télécharger
+                                  </a>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Paiements ───────────────────────────────────────────── */}
+              {activeTab === "paiements" && (
+                <motion.div key="paiements" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mes Paiements</h1>
+                  {summaryQuery.isLoading ? (
+                    <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement...</div>
+                  ) : (
+                    <>
+                      {(() => {
+                        const fin = summaryQuery.data?.financials;
+                        if (!fin) return null;
+                        const pct = fin.totalAmount > 0 ? Math.round((fin.totalPaid / fin.totalAmount) * 100) : 0;
+                        return (
+                          <div className="bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] rounded-2xl p-6 mb-6 text-white">
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                              <div className="text-center">
+                                <div className="text-xl font-black">{fin.totalPaid.toLocaleString("fr-FR")} FCFA</div>
+                                <div className="text-blue-200 text-xs mt-1">Total versé</div>
+                              </div>
+                              <div className="text-center border-x border-white/20">
+                                <div className="text-xl font-black">{fin.remainingAmount.toLocaleString("fr-FR")} FCFA</div>
+                                <div className="text-blue-200 text-xs mt-1">Reste à payer</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-black">{fin.totalAmount.toLocaleString("fr-FR")} FCFA</div>
+                                <div className="text-blue-200 text-xs mt-1">Montant total</div>
+                              </div>
+                            </div>
+                            <div className="h-2.5 bg-white/20 rounded-full overflow-hidden">
+                              <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
+                            </div>
+                            <div className="flex justify-between text-xs text-blue-200 mt-1">
+                              <span>{pct}% payé</span>
+                              <span>{fin.paymentCount} versement{fin.paymentCount > 1 ? "s" : ""} confirmé{fin.paymentCount > 1 ? "s" : ""}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {!summaryQuery.data?.payments?.length ? (
+                        <div className="bg-white rounded-2xl p-8 text-center">
+                          <CreditCard className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                          <p className="text-gray-500 font-medium">Aucun versement enregistré</p>
+                          <p className="text-gray-400 text-sm mt-1">Vos paiements apparaîtront ici dès confirmation par votre conseiller.</p>
+                          <a href="https://wa.me/237698104832?text=Bonjour%2C%20je%20souhaite%20effectuer%20un%20paiement." target="_blank" rel="noopener noreferrer"
+                            className="mt-4 inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors">
+                            <MessageCircle className="w-4 h-4" /> Contacter mon conseiller
+                          </a>
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                          <div className="px-5 py-4 border-b border-gray-100">
+                            <h3 className="font-bold text-gray-800">Historique des versements</h3>
+                          </div>
+                          <div className="divide-y divide-gray-50">
+                            {summaryQuery.data.payments.map((p: any) => {
+                              const methodLabels: Record<string, string> = {
+                                mtn_momo: "MTN MoMo", orange_money: "Orange Money",
+                                virement: "Virement", especes: "Espèces",
+                                carte: "Carte bancaire", autre: "Autre",
+                              };
+                              const statusColors: Record<string, string> = {
+                                confirmed: "bg-green-100 text-green-700",
+                                pending:   "bg-amber-100 text-amber-700",
+                                rejected:  "bg-red-100 text-red-700",
+                              };
+                              const statusLabels: Record<string, string> = {
+                                confirmed: "Confirmé", pending: "En attente", rejected: "Refusé",
+                              };
+                              return (
+                                <div key={p.id} className="px-5 py-4 flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${p.status === "confirmed" ? "bg-green-50" : p.status === "rejected" ? "bg-red-50" : "bg-amber-50"}`}>
+                                    <CreditCard className={`w-5 h-5 ${p.status === "confirmed" ? "text-green-600" : p.status === "rejected" ? "text-red-600" : "text-amber-600"}`} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-bold text-gray-800 text-sm">{p.label ?? "Versement"}</div>
+                                    <div className="text-xs text-gray-400">{methodLabels[p.paymentMethod] ?? p.paymentMethod} · {new Date(p.createdAt).toLocaleDateString("fr-FR")}</div>
+                                    {p.transactionRef && <div className="text-xs text-gray-400">Réf : {p.transactionRef}</div>}
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-black text-gray-900">{p.amount.toLocaleString("fr-FR")} FCFA</div>
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${statusColors[p.status] ?? "bg-gray-100 text-gray-600"}`}>
+                                      {statusLabels[p.status] ?? p.status}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       )}

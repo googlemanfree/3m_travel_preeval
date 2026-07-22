@@ -98,7 +98,24 @@ function emailBase(content: string): string {
 </html>`;
 }
 
-// ─── Email de vérification OTP ────────────────────────────────────────────────
+// ─── Email de confirmation par lien (remplace OTP) ──────────────────────────
+
+export async function sendVerificationLink(to: string, fullName: string, token: string): Promise<void> {
+  const confirmUrl = `${SITE_URL}/verify-email?token=${token}`;
+  const content = `
+    <p>Bonjour <strong>${fullName}</strong>,</p>
+    <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! Cliquez sur le bouton ci-dessous pour activer votre compte :</p>
+    <p style="text-align:center;margin:32px 0;">
+      <a href="${confirmUrl}" class="btn" style="background:#1d4ed8;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:700;display:inline-block;">✅ Activer mon compte</a>
+    </p>
+    <p style="font-size:13px;color:#6b7280;">Ce lien est valable <strong>24 heures</strong>. Après ce délai, vous devrez créer un nouveau compte.</p>
+    <p style="font-size:13px;color:#6b7280;">Si vous n'avez pas créé de compte sur 3M Travel, ignorez cet email.</p>
+    <p style="font-size:12px;color:#9ca3af;word-break:break-all;">Lien direct : ${confirmUrl}</p>
+  `;
+  await sendEmail(to, "✅ Activez votre compte 3M Travel", emailBase(content));
+}
+
+// ─── Email de vérification OTP (conservé pour compatibilité) ─────────────────
 
 export async function sendVerificationOtp(to: string, fullName: string, otp: string): Promise<void> {
   const content = `
