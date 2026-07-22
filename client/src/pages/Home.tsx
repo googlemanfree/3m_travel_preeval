@@ -550,7 +550,7 @@ export default function Home() {
           </div>
 
           {/* Bande défilante secondaire — pays supplémentaires */}
-          <div className="mt-6 overflow-hidden relative">
+          <div className="mt-6 overflow-hidden relative" style={{ overflowX: 'hidden', overflowY: 'visible' }}>
             <div className="flex gap-3 animate-[marquee_30s_linear_infinite] whitespace-nowrap w-max">
               {[
                 { flag: "🇮🇹", label: "Italie" },
@@ -579,8 +579,17 @@ export default function Home() {
                 { flag: "🇸🇳", label: "Sénégal" },
                 { flag: "🇨🇮", label: "Côte d'Ivoire" },
               ].map((c, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-sm text-gray-600 font-medium flex-shrink-0">
-                  <span className="text-base">{c.flag}</span> {c.label}
+                <span
+                  key={idx}
+                  className="group relative inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-sm text-gray-600 font-medium flex-shrink-0 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors cursor-default"
+                >
+                  <span className="text-base">{c.flag}</span>
+                  <span>{c.label}</span>
+                  {/* Infobulle */}
+                  <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg z-50">
+                    {c.label}
+                    <span className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900" />
+                  </span>
                 </span>
               ))}
             </div>
