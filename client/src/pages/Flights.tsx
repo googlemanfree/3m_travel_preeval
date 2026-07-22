@@ -800,8 +800,8 @@ export default function Flights() {
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] py-10 px-4">
         <div className="max-w-5xl mx-auto">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-amber-400/20 text-amber-200 text-xs font-bold px-4 py-1.5 rounded-full mb-3 border border-amber-400/30">
-              <Info className="w-3.5 h-3.5" /> Mode Démo — Prêt pour connexion API Amadeus
+            <div className="inline-flex items-center gap-2 bg-green-400/20 text-green-200 text-xs font-bold px-4 py-1.5 rounded-full mb-3 border border-green-400/30">
+              <Plane className="w-3.5 h-3.5" /> Tarifs en temps réel — Skyscanner Live
             </div>
             <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Recherche de Vols</h1>
             <p className="text-blue-200 text-sm">Comparez les meilleurs tarifs · 60+ destinations mondiales · Toutes compagnies</p>

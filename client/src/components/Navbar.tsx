@@ -117,17 +117,17 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
   );
 
   const linkClass = (page: string) =>
-    `text-sm font-semibold transition-colors duration-150 ${
+    `text-[15px] font-bold transition-colors duration-150 ${
       active === page
         ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
-        : "text-gray-600 hover:text-blue-700"
+        : "text-gray-700 hover:text-blue-700"
     }`;
 
   const dropdownBtnClass = (pages: string[]) =>
-    `text-sm font-semibold transition-colors duration-150 flex items-center gap-1 ${
+    `text-[15px] font-bold transition-colors duration-150 flex items-center gap-1 ${
       pages.includes(active ?? "")
         ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
-        : "text-gray-600 hover:text-blue-700"
+        : "text-gray-700 hover:text-blue-700"
     }`;
 
   // Search suggestions (simple)
@@ -138,31 +138,33 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
   ] : [];
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between gap-4">
 
         {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-          <img
-            src={LOGO_URL}
-            alt="3M Travel & Services"
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-200 flex-shrink-0"
-            onError={e => {
-              const t = e.target as HTMLImageElement;
-              t.style.display = "none";
-              const fallback = t.nextElementSibling as HTMLElement | null;
-              if (fallback) fallback.style.display = "flex";
-            }}
-          />
-          <div className="w-10 h-10 rounded-full bg-blue-700 items-center justify-center text-white font-black text-sm flex-shrink-0" style={{ display: "none" }}>3M</div>
+        <Link href="/" className="flex items-center gap-3 flex-shrink-0 min-w-0 group">
+          <div className="relative flex-shrink-0">
+            <img
+              src={LOGO_URL}
+              alt="3M Travel & Services"
+              className="w-14 h-14 rounded-full object-cover ring-2 ring-blue-300 shadow-md group-hover:ring-blue-500 transition-all duration-200 flex-shrink-0"
+              onError={e => {
+                const t = e.target as HTMLImageElement;
+                t.style.display = "none";
+                const fallback = t.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = "flex";
+              }}
+            />
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-700 to-blue-900 items-center justify-center text-white font-black text-base flex-shrink-0 shadow-md" style={{ display: "none" }}>3M</div>
+          </div>
           <div className="min-w-0 hidden sm:block">
-            <div className="font-black text-blue-800 text-sm leading-tight truncate">3M Travel & Services</div>
-            <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
+            <div className="font-black text-blue-900 text-base leading-tight tracking-tight truncate">3M Travel & Services</div>
+            <div className="text-xs text-blue-500 font-semibold tracking-wide truncate uppercase">Votre mobilité, notre expertise</div>
           </div>
         </Link>
 
         {/* ── Nav desktop ── */}
-        <nav className="hidden lg:flex items-center gap-5">
+        <nav className="hidden lg:flex items-center gap-6">
           <Link href="/" className={linkClass("home")}>Accueil</Link>
 
           {/* Menu Services */}
@@ -361,17 +363,17 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           </div>
 
           {onEvalClick && (
-            <Button onClick={onEvalClick} className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-4 shadow-md">
+            <Button onClick={onEvalClick} className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[15px] px-5 py-2.5 h-10 shadow-md rounded-xl">
               <Star className="w-4 h-4 mr-1.5" />Évaluation gratuite
             </Button>
           )}
           <Link href="/open-dossier">
-            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md">
+            <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-[15px] px-5 py-2.5 h-10 shadow-md rounded-xl">
               <FolderOpen className="w-4 h-4 mr-1.5" />Ouvrir un dossier
             </Button>
           </Link>
           <Link href="/dashboard">
-            <Button variant="outline" className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4">
+            <Button variant="outline" className="border-2 border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-[15px] px-5 py-2.5 h-10 rounded-xl">
               <User className="w-4 h-4 mr-1.5" />Mon Espace
             </Button>
           </Link>
