@@ -1,9 +1,8 @@
 /**
- * Test de configuration email — vérifie que Resend API est disponible
- * Note : SMTP Gmail nécessite un App Password (pas le mot de passe normal).
- * Ce projet utilise Resend en priorité pour l'envoi d'emails.
+ * Test de configuration email — vérifie SMTP Gmail (App Password) et Resend API
  */
 import { describe, it, expect } from "vitest";
+import nodemailer from "nodemailer";
 
 describe("Email Configuration", () => {
   it("RESEND_API_KEY should be defined", () => {
@@ -15,8 +14,35 @@ describe("Email Configuration", () => {
   it("SMTP environment variables should be defined", () => {
     expect(process.env.SMTP_HOST, "SMTP_HOST doit être défini").toBeTruthy();
     expect(process.env.SMTP_USER, "SMTP_USER doit être défini").toBeTruthy();
-    // SMTP_PASS peut être vide si on utilise Resend en priorité
+    expect(process.env.SMTP_PASS, "SMTP_PASS doit être défini").toBeTruthy();
   });
+
+  it("should connect to Gmail SMTP with App Password", async () => {
+    const smtpPass = process.env.SMTP_PASS;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpHost = process.env.SMTP_HOST;
+    if (!smtpPass || !smtpUser || !smtpHost) {
+      console.warn("[SMTP Test] Variables SMTP manquantes — test ignoré");
+      return;
+    }
+
+    const transport = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(process.env.SMTP_PORT ?? "587"),
+      secure: false,
+      auth: { user: smtpUser, pass: smtpPass },
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      transport.verify((err, success) => {
+        if (err) reject(new Error(`SMTP connexion échouée: ${err.message}`));
+        else {
+          console.log("[SMTP Test] Connexion Gmail réussie:", success);
+          resolve();
+        }
+      });
+    });
+  }, 15000);
 
   it("should send email via Resend API", async () => {
     const apiKey = process.env.RESEND_API_KEY;
@@ -42,6 +68,6 @@ describe("Email Configuration", () => {
     const data = await res.json() as { id?: string; name?: string; message?: string };
     expect(res.ok, `Resend API erreur: ${JSON.stringify(data)}`).toBe(true);
     expect(data.id).toBeTruthy();
-    console.log(`[Email Test] Email envoyé avec succès — ID: ${data.id}`);
+    console.log(`[Email Test] Resend email envoyé — ID: ${data.id}`);
   }, 15000);
 });

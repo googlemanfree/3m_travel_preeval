@@ -1,6 +1,6 @@
 /**
  * Service d'envoi d'emails pour 3M Travel & Services
- * Priorité : Resend API → SMTP Gmail → console (dev)
+ * Priorité : SMTP Gmail (App Password) → Resend API → console (dev)
  */
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
@@ -17,7 +17,25 @@ const SITE_URL = process.env.SITE_URL ?? "https://3mtravelagency.click";
 const RESEND_FROM = "3M Travel & Services <onboarding@resend.dev>";
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  // 1. Essayer Resend en priorité
+  // 1. SMTP Gmail en priorité (App Password configuré)
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    try {
+      const transport = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
+      });
+      await transport.sendMail({ from: SMTP_FROM, to, subject, html });
+      console.log(`[SMTP Gmail] Email envoyé à ${to} — Sujet: ${subject}`);
+      return;
+    } catch (e) {
+      console.error("[SMTP Gmail] Erreur envoi email:", e);
+      // Continuer vers le fallback Resend
+    }
+  }
+
+  // 2. Fallback Resend API
   if (RESEND_API_KEY) {
     try {
       const resend = new Resend(RESEND_API_KEY);
@@ -29,31 +47,12 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
       });
       if (error) {
         console.error("[Resend] Erreur envoi email:", error);
-        // Continuer vers le fallback SMTP
       } else {
         console.log(`[Resend] Email envoyé à ${to} — Sujet: ${subject}`);
         return;
       }
     } catch (e) {
       console.error("[Resend] Exception:", e);
-      // Continuer vers le fallback SMTP
-    }
-  }
-
-  // 2. Fallback SMTP Gmail
-  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
-    try {
-      const transport = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-      });
-      await transport.sendMail({ from: SMTP_FROM, to, subject, html });
-      console.log(`[SMTP] Email envoyé à ${to} — Sujet: ${subject}`);
-      return;
-    } catch (e) {
-      console.error("[SMTP] Erreur envoi email:", e);
     }
   }
 
