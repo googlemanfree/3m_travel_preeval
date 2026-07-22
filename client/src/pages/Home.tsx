@@ -513,6 +513,81 @@ export default function Home() {
         variant="light"
       />
 
+      {/* ─── DESTINATIONS POPULAIRES ─────────────────────────────────── */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-8">
+            <p className="text-xs font-bold text-[#2563eb] uppercase tracking-widest mb-1">Destinations</p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">Où immigrent nos clients</h2>
+            <p className="text-gray-400 text-sm mt-2">Les pays les plus demandés en 2025–2026</p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            {[
+              { flag: "🇨🇦", country: "Canada",        stat: "Express Entry",     color: "from-red-50 to-white",    border: "border-red-100" },
+              { flag: "🇫🇷", country: "France",         stat: "VLS-TS / Talent",   color: "from-blue-50 to-white",   border: "border-blue-100" },
+              { flag: "🇩🇪", country: "Allemagne",      stat: "Chancenkarte",      color: "from-yellow-50 to-white", border: "border-yellow-100" },
+              { flag: "🇧🇪", country: "Belgique",       stat: "Visa Schengen",     color: "from-yellow-50 to-white", border: "border-yellow-100" },
+              { flag: "🇦🇪", country: "Dubaï / EAU",    stat: "Résidence / Emploi",color: "from-amber-50 to-white",  border: "border-amber-100" },
+              { flag: "🇬🇧", country: "Royaume-Uni",    stat: "Skilled Worker",    color: "from-indigo-50 to-white", border: "border-indigo-100" },
+              { flag: "🇵🇱", country: "Pologne",        stat: "Permis de travail", color: "from-red-50 to-white",    border: "border-red-100" },
+              { flag: "🇦🇺", country: "Australie",      stat: "Skilled Migration", color: "from-sky-50 to-white",    border: "border-sky-100" },
+            ].map((dest, i) => (
+              <motion.div
+                key={dest.country}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.4, ease: "easeOut" }}
+                whileHover={{ y: -4, scale: 1.04 }}
+                className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b ${dest.color} border ${dest.border} shadow-sm hover:shadow-md transition-all cursor-default`}
+              >
+                <span className="text-4xl leading-none select-none" role="img" aria-label={dest.country}>{dest.flag}</span>
+                <span className="text-sm font-bold text-gray-800 text-center leading-tight">{dest.country}</span>
+                <span className="text-[10px] text-gray-400 text-center leading-tight">{dest.stat}</span>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Bande défilante secondaire — pays supplémentaires */}
+          <div className="mt-6 overflow-hidden relative">
+            <div className="flex gap-3 animate-[marquee_30s_linear_infinite] whitespace-nowrap w-max">
+              {[
+                { flag: "🇮🇹", label: "Italie" },
+                { flag: "🇪🇸", label: "Espagne" },
+                { flag: "🇵🇹", label: "Portugal" },
+                { flag: "🇨🇭", label: "Suisse" },
+                { flag: "🇳🇱", label: "Pays-Bas" },
+                { flag: "🇸🇦", label: "Arabie Saoudite" },
+                { flag: "🇶🇦", label: "Qatar" },
+                { flag: "🇺🇸", label: "États-Unis" },
+                { flag: "🇳🇿", label: "Nouvelle-Zélande" },
+                { flag: "🇲🇦", label: "Maroc" },
+                { flag: "🇸🇳", label: "Sénégal" },
+                { flag: "🇨🇮", label: "Côte d'Ivoire" },
+                // Répétition pour boucle continue
+                { flag: "🇮🇹", label: "Italie" },
+                { flag: "🇪🇸", label: "Espagne" },
+                { flag: "🇵🇹", label: "Portugal" },
+                { flag: "🇨🇭", label: "Suisse" },
+                { flag: "🇳🇱", label: "Pays-Bas" },
+                { flag: "🇸🇦", label: "Arabie Saoudite" },
+                { flag: "🇶🇦", label: "Qatar" },
+                { flag: "🇺🇸", label: "États-Unis" },
+                { flag: "🇳🇿", label: "Nouvelle-Zélande" },
+                { flag: "🇲🇦", label: "Maroc" },
+                { flag: "🇸🇳", label: "Sénégal" },
+                { flag: "🇨🇮", label: "Côte d'Ivoire" },
+              ].map((c, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-sm text-gray-600 font-medium flex-shrink-0">
+                  <span className="text-base">{c.flag}</span> {c.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
