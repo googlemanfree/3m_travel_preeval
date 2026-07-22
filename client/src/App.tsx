@@ -37,12 +37,9 @@ function Router() {
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
 
-      {/* Pages protégées — nécessitent un compte 3M Travel */}
-      <Route path={"/flights"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
-          <Flights />
-        </AuthGuard>
-      </Route>
+      {/* Espace Vols */}
+      <Route path={"/vols"} component={Flights} />
+      <Route path={"/flights"} component={Flights} />
       <Route path={"/procedures"} component={Procedures} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />

@@ -316,3 +316,17 @@
 - [x] Modal de comparaison côte à côte : pays, type, délai, coûts, documents, conditions, étapes
 - [x] Mise en évidence visuelle de la fiche sélectionnée (ring bleu)
 - [x] Bouton "Effacer la comparaison" (X) pour réinitialiser la sélection
+
+## Espace Vols — Mode Démo Amadeus (v16)
+- [ ] shared/flightData.ts : données démo réalistes (structure Amadeus) — aéroports, compagnies, vols
+- [ ] server/routers/flights.ts : procédures tRPC searchFlights, getFlightDetail, getAirportSuggestions
+- [ ] Page /vols refonte complète : formulaire de recherche (aller simple / aller-retour / multi)
+- [ ] Autocomplete aéroports (IATA) dans les champs origine/destination
+- [ ] Sélecteur de date avec calendrier
+- [ ] Sélecteur passagers (adultes, enfants, bébés) et classe (Économique, Business, Première)
+- [ ] Page /vols/resultats : liste des vols avec filtres (escales, compagnie, heure, prix)
+- [ ] Tri des résultats (prix croissant, durée, départ, arrivée)
+- [ ] Carte de vol détaillée : compagnie, horaires, durée, escales, bagages, prix par classe
+- [ ] Badge "Mode Démo" visible — prêt pour connexion API Amadeus réelle
+- [ ] CTA "Réserver via 3M Travel" → ouverture dossier
+- [ ] Route /vols/resultats ajoutée dans App.tsx

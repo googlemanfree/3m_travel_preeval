@@ -24,7 +24,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
 
   const active = activePage ?? (
     location === "/" ? "home" :
-    location.startsWith("/flights") ? "flights" :
+    location.startsWith("/vols") || location.startsWith("/flights") ? "flights" :
     location.startsWith("/procedures") ? "procedures" :
     location.startsWith("/dashboard") ? "dashboard" :
     location.startsWith("/visa-types") ? "visa-types" :
@@ -72,7 +72,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
         {/* ── Nav desktop ── */}
         <nav className="hidden md:flex items-center gap-6">
           <Link href="/" className={linkClass("home")}>Accueil</Link>
-          <Link href="/flights" className={linkClass("flights")}>
+          <Link href="/vols" className={linkClass("flights")}>
             <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
           </Link>
           <Link href="/procedures" className={linkClass("procedures")}>
@@ -176,7 +176,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             Accueil
           </Link>
-          <Link href="/flights" onClick={() => setMobileOpen(false)}
+          <Link href="/vols" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <Plane className="w-4 h-4 text-blue-600" /> Vols
           </Link>
