@@ -351,3 +351,30 @@
 - [x] Email : sujet + corps formaté avec tous les détails du vol et lien 3M Travel
 - [x] Copier le lien : URL avec paramètres (from, to, date, pnr) + icône Check + message "Lien copié !"
 - [x] Fermeture automatique au clic en dehors du popover (useRef + useEffect)
+
+## Restructuration EasyVisa-style (v20)
+
+### Navbar
+- [ ] Navbar épurée : Logo gauche, liens centrés (Accueil, Services, Vols, Ressources, Contact), CTA droit
+- [ ] Menu déroulant "Services" avec 4 catégories : Visa Travail, Visa Études, Visa Visiteur, Immigration
+- [ ] Barre de recherche globale dans la Navbar (recherche par pays ou type de visa)
+- [ ] Sticky navbar avec fond blanc/blur au scroll
+
+### Page d'accueil (Home.tsx)
+- [ ] Hero : titre accrocheur + sous-titre + barre de recherche rapide (destination + type de visa) + 2 CTA
+- [ ] Section "Ils nous font confiance" : logos de partenaires / compteurs animés
+- [ ] Section "Nos Solutions" : 4 cartes services (Visa Travail, Études, Visiteur, Immigration) avec icônes et liens
+- [ ] Section "Comment ça marche" : 4 étapes numérotées (Évaluation → Dossier → Paiement → Visa)
+- [ ] Section "Destinations populaires" : grille de 8 pays avec drapeaux et prix indicatifs
+- [ ] Section "Pourquoi choisir 3M Travel" : 3 arguments (Expertise, Conformité, Rapidité) avec icônes
+- [ ] Section Témoignages (existante, à conserver)
+- [ ] Section Tarifs (existante, à conserver)
+- [ ] Section CTA finale : "Prêt à réaliser votre projet ?" + bouton consultation gratuite
+- [ ] Footer restructuré : 4 colonnes (À propos, Services, Ressources, Contact)
+
+### Pages de services
+- [ ] Page /services : hub central listant tous les services avec catégories et filtres
+- [ ] Page /visa-travail : dédiée aux visas de travail avec procédures par pays
+- [ ] Page /visa-etudes : dédiée aux visas d'études avec procédures par pays
+- [ ] Page /visa-visiteur : dédiée aux visas touristiques avec procédures par pays
+- [ ] Chaque page service : hero + liste des pays + FAQ + CTA

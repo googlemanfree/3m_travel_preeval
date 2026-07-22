@@ -519,6 +519,176 @@ export default function Home() {
         variant="light"
       />
 
+      {/* ─── NOS SOLUTIONS ─────────────────────────────────────────────────────── */}
+      <section id="nos-solutions" className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Ce que nous faisons</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Nos Solutions Visa &amp; Immigration</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">Choisissez votre projet et découvrez comment 3M Travel vous accompagne étape par étape.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Briefcase,
+                title: "Visa Travail",
+                desc: "Obtenez un emploi en Europe, au Canada, en Australie ou dans le Golfe. Nous gérons votre dossier complet.",
+                color: "bg-blue-700",
+                lightColor: "bg-blue-50 text-blue-700",
+                href: "/procedures?type=travail",
+                countries: ["🇫🇷", "🇩🇪", "🇨🇦", "🇦🇺", "🇶🇦"],
+                badge: "34 pays",
+              },
+              {
+                icon: GraduationCap,
+                title: "Visa Études",
+                desc: "Partez étudier dans les meilleures universités européennes ou canadiennes avec un accompagnement expert.",
+                color: "bg-emerald-600",
+                lightColor: "bg-emerald-50 text-emerald-700",
+                href: "/procedures?type=etudes",
+                countries: ["🇧🇪", "🇱🇺", "🇵🇱", "🇷🇴", "🇨🇦"],
+                badge: "22 pays",
+              },
+              {
+                icon: Globe,
+                title: "Visa Visiteur",
+                desc: "Voyagez en toute sérénité dans l'espace Schengen, à Dubaï ou au Royaume-Uni. Dossier clé en main.",
+                color: "bg-amber-500",
+                lightColor: "bg-amber-50 text-amber-700",
+                href: "/procedures?type=visiteur",
+                countries: ["🇫🇷", "🇩🇪", "🇦🇪", "🇬🇧", "🇮🇹"],
+                badge: "26 pays",
+              },
+              {
+                icon: Star,
+                title: "Résidence Permanente",
+                desc: "Immigrez définitivement au Canada, en Australie ou en Nouvelle-Zélande. Stratégie personnalisée.",
+                color: "bg-purple-700",
+                lightColor: "bg-purple-50 text-purple-700",
+                href: "/fiches?type=R%C3%A9sidence+Permanente",
+                countries: ["🇨🇦", "🇦🇺", "🇳🇿"],
+                badge: "3 pays",
+              },
+            ].map((sol, i) => (
+              <motion.a
+                key={i}
+                href={sol.href}
+                initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
+                className="group block bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 hover:border-blue-200 transition-all duration-300 overflow-hidden"
+              >
+                <div className={`${sol.color} px-6 pt-6 pb-8 relative`}>
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                    <sol.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-1">{sol.title}</h3>
+                  <span className="text-xs font-semibold text-white/80 bg-white/20 px-2 py-0.5 rounded-full">{sol.badge}</span>
+                  <div className="absolute bottom-0 right-0 w-24 h-24 rounded-tl-full bg-white/10" />
+                </div>
+                <div className="px-6 py-4">
+                  <p className="text-sm text-gray-600 leading-relaxed mb-4">{sol.desc}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1">
+                      {sol.countries.map((f, j) => <span key={j} className="text-lg">{f}</span>)}
+                    </div>
+                    <span className={`text-xs font-bold flex items-center gap-1 ${sol.lightColor} px-2.5 py-1 rounded-full group-hover:gap-2 transition-all`}>
+                      Voir <ArrowRight className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+              </motion.a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── COMMENT ÇA MARCHE ─────────────────────────────────────────────────── */}
+      <section className="py-16 bg-white">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Simple &amp; Rapide</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Comment ça marche ?</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">4 étapes claires pour obtenir votre visa avec 3M Travel &amp; Services.</p>
+          </div>
+          <div className="relative">
+            <div className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { step: "01", icon: FileText, title: "Évaluation gratuite", desc: "Remplissez notre formulaire en ligne. Nos experts analysent votre profil sous 24h.", color: "bg-blue-700 text-white" },
+                { step: "02", icon: Users,    title: "Constitution du dossier", desc: "Nous vous guidons pour rassembler tous les documents nécessaires à votre demande.", color: "bg-blue-600 text-white" },
+                { step: "03", icon: Upload,   title: "Soumission officielle", desc: "Votre dossier est soumis à l'ambassade ou au consulat compétent.", color: "bg-amber-500 text-white" },
+                { step: "04", icon: CheckCircle2, title: "Obtention du visa", desc: "Vous recevez votre visa et nos conseils pour préparer votre départ en toute sérénité.", color: "bg-green-600 text-white" },
+              ].map((step, i) => (
+                <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="flex flex-col items-center text-center">
+                  <div className={`relative w-16 h-16 rounded-2xl ${step.color} flex items-center justify-center shadow-lg mb-4 z-10`}>
+                    <step.icon className="w-7 h-7" />
+                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border-2 border-blue-200 text-xs font-black text-blue-700 flex items-center justify-center">{step.step}</span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2 text-sm">{step.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          <div className="text-center mt-10">
+            <a href="#evaluation">
+              <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3 text-base shadow-lg">
+                Commencer maintenant <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── DESTINATIONS POPULAIRES ───────────────────────────────────────────── */}
+      <section className="py-16 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-blue-300 uppercase tracking-widest mb-2">Où voulez-vous aller ?</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Destinations Populaires</h2>
+            <p className="text-blue-200 max-w-xl mx-auto">Nos clients partent dans ces pays chaque semaine. Découvrez les procédures adaptées à votre profil.</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {[
+              { flag: "🇫🇷", name: "France",       count: "Visa Schengen",     href: "/fiches?q=france",      popular: true },
+              { flag: "🇩🇪", name: "Allemagne",    count: "Travail & Études",   href: "/fiches?q=allemagne",   popular: false },
+              { flag: "🇱🇺", name: "Luxembourg",   count: "Travail & Études",   href: "/fiches?q=luxembourg",  popular: true },
+              { flag: "🇧🇪", name: "Belgique",     count: "Visa Études",        href: "/fiches?q=belgique",    popular: false },
+              { flag: "🇨🇦", name: "Canada",       count: "RP & Travail",       href: "/fiches?q=canada",      popular: true },
+              { flag: "🇮🇹", name: "Italie",       count: "Travail & Tourisme", href: "/fiches?q=italie",      popular: false },
+              { flag: "🇵🇹", name: "Portugal",     count: "Visa Travail",       href: "/fiches?q=portugal",    popular: false },
+              { flag: "🇦🇪", name: "Dubaï",        count: "Visa Visiteur",      href: "/fiches?q=dubai",       popular: true },
+              { flag: "🇦🇺", name: "Australie",    count: "Travail & RP",       href: "/fiches?q=australie",   popular: false },
+              { flag: "🇵🇱", name: "Pologne",      count: "Travail & Études",   href: "/fiches?q=pologne",     popular: false },
+            ].map((dest, i) => (
+              <motion.a
+                key={i}
+                href={dest.href}
+                initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
+                className="group relative bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {dest.popular && (
+                  <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">Populaire</span>
+                )}
+                <div className="text-4xl mb-2">{dest.flag}</div>
+                <div className="font-bold text-white text-sm mb-0.5">{dest.name}</div>
+                <div className="text-xs text-blue-300">{dest.count}</div>
+                <div className="mt-2 text-xs text-blue-200 group-hover:text-white transition-colors flex items-center justify-center gap-1">
+                  Voir <ArrowRight className="w-3 h-3" />
+                </div>
+              </motion.a>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <a href="/destinations">
+              <Button variant="outline" className="border-white/50 text-white hover:bg-white/15 font-bold px-8 py-3 text-base">
+                <Globe className="w-5 h-5 mr-2" /> Toutes les destinations
+              </Button>
+            </a>
+          </div>
+        </div>
+      </section>
+
+
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
