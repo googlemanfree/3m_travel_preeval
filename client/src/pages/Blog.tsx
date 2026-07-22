@@ -153,7 +153,7 @@ export default function Blog() {
               <div className="mt-12 p-6 bg-blue-50 rounded-lg text-center">
                 <p className="text-gray-700 mb-4">Besoin de plus d'informations ?</p>
                 <a
-                  href="https://wa.me/237698104832"
+                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services%20%21%20Je%20souhaite%20obtenir%20plus%20d%27informations%20sur%20l%27%C3%A9valuation%20de%20mon%20profil."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700"

@@ -71,7 +71,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp</a>
+                <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services%20%21%20Je%20souhaite%20obtenir%20plus%20d%27informations%20sur%20l%27%C3%A9valuation%20de%20mon%20profil." target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp</a>
               </div>
             </div>
           </div>
