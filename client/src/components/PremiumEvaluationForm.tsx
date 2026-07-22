@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import PremiumEvaluationFormSteps47 from "./PremiumEvaluationFormSteps47";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -48,7 +49,33 @@ interface FormData {
   visaRefusals: string;
   criminalRecord: string;
 
-  // Sections conditionnelles (à compléter dans la phase 2)
+  // Étape 5: Sections conditionnelles
+  desiredEducationLevel: string;
+  admissionLetterAvailable: boolean;
+  targetInstitution: string;
+  intendedStartDate: string;
+  studyBudget: number;
+  academicProject: string;
+  visitType: "tourism" | "family" | "business" | "event" | "other" | "";
+  plannedStayDuration: string;
+  estimatedTravelDate: string;
+  tiesInHomeCountry: string;
+  desiredPosition: string;
+  targetCity: string;
+  languageLevel: string;
+  jobOfferAvailable: boolean;
+  previousExperiences: string;
+  targetCategory: string;
+  age: number;
+  experienceYears: number;
+  provincialNomination: boolean;
+  policeCertificatesAvailable: boolean;
+  availableFunds: number;
+
+  // Étape 6: Documents
+  uploadedFiles: any[];
+
+  // Autres
   [key: string]: any;
 }
 
@@ -125,6 +152,28 @@ export default function PremiumEvaluationForm() {
     countriesVisited: "",
     visaRefusals: "",
     criminalRecord: "",
+    desiredEducationLevel: "",
+    admissionLetterAvailable: false,
+    targetInstitution: "",
+    intendedStartDate: "",
+    studyBudget: 0,
+    academicProject: "",
+    visitType: "" as any,
+    plannedStayDuration: "",
+    estimatedTravelDate: "",
+    tiesInHomeCountry: "",
+    desiredPosition: "",
+    targetCity: "",
+    languageLevel: "",
+    jobOfferAvailable: false,
+    previousExperiences: "",
+    targetCategory: "",
+    age: 0,
+    experienceYears: 0,
+    provincialNomination: false,
+    policeCertificatesAvailable: false,
+    availableFunds: 0,
+    uploadedFiles: [],
   });
 
   const submitMutation = trpc.profileEvaluation.submit.useMutation();
@@ -208,14 +257,34 @@ export default function PremiumEvaluationForm() {
         educationLevel: formData.educationLevel,
         fieldOfStudy: formData.fieldOfStudy,
         currentProfession: formData.currentProfession,
-        yearsOfExperience: formData.yearsOfExperience,
-        monthlyIncome: parseInt(formData.monthlyIncome) || 0,
-        bankBalance: parseInt(formData.bankBalance) || 0,
-        hasSponsor: formData.sponsor !== "Auto-prise en charge",
-        sponsorName: formData.sponsor,
-        countriesVisited: formData.countriesVisited,
-        visaRefusals: formData.visaRefusals === "Oui",
-        criminalRecord: formData.criminalRecord === "Oui",
+              yearsOfExperience: formData.yearsOfExperience,
+              monthlyIncome: parseInt(formData.monthlyIncome) || 0,
+              bankBalance: parseInt(formData.bankBalance) || 0,
+              hasSponsor: formData.sponsor !== "Auto-prise en charge",
+              sponsorName: formData.sponsor,
+              countriesVisited: formData.countriesVisited,
+              visaRefusals: formData.visaRefusals === "Oui",
+              criminalRecord: formData.criminalRecord === "Oui",
+              desiredEducationLevel: formData.desiredEducationLevel,
+              admissionLetterAvailable: formData.admissionLetterAvailable,
+              targetInstitution: formData.targetInstitution,
+              intendedStartDate: formData.intendedStartDate,
+              studyBudget: formData.studyBudget,
+              academicProject: formData.academicProject,
+              visitType: (formData.visitType || "other") as any,
+              plannedStayDuration: formData.plannedStayDuration,
+              estimatedTravelDate: formData.estimatedTravelDate,
+              tiesInHomeCountry: formData.tiesInHomeCountry,
+              desiredPosition: formData.desiredPosition,
+              targetCity: formData.targetCity,
+              languageLevel: formData.languageLevel,
+              jobOfferAvailable: formData.jobOfferAvailable,
+              targetCategory: formData.targetCategory,
+              age: formData.age,
+              experienceYears: formData.experienceYears,
+              provincialNomination: formData.provincialNomination,
+              policeCertificatesAvailable: formData.policeCertificatesAvailable,
+              availableFunds: formData.availableFunds,
       });
       setIsSuccess(true);
       toast.success("Formulaire soumis avec succès !");
@@ -274,6 +343,28 @@ export default function PremiumEvaluationForm() {
               countriesVisited: "",
               visaRefusals: "",
               criminalRecord: "",
+              desiredEducationLevel: "",
+              admissionLetterAvailable: false,
+              targetInstitution: "",
+              intendedStartDate: "",
+              studyBudget: 0,
+              academicProject: "",
+              visitType: "" as any,
+              plannedStayDuration: "",
+              estimatedTravelDate: "",
+              tiesInHomeCountry: "",
+              desiredPosition: "",
+              targetCity: "",
+              languageLevel: "",
+              jobOfferAvailable: false,
+              previousExperiences: "",
+              targetCategory: "",
+              age: 0,
+              experienceYears: 0,
+              provincialNomination: false,
+              policeCertificatesAvailable: false,
+              availableFunds: 0,
+              uploadedFiles: [],
             });
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -674,19 +765,15 @@ export default function PremiumEvaluationForm() {
             </motion.div>
           )}
 
-          {/* ÉTAPE 4-7: Placeholder pour phase 2 */}
-          {currentStep > 3 && (
-            <motion.div
-              key={`step-${currentStep}`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="text-center py-12">
-                <p className="text-gray-600 text-lg">Étape {currentStep} - À venir dans la phase 2</p>
-              </div>
-            </motion.div>
+          {/* ÉTAPE 4-7: Sections conditionnelles et documents */}
+          {currentStep > 3 && currentStep <= 7 && (
+            <PremiumEvaluationFormSteps47
+              formData={formData}
+              onFormDataChange={handleInputChange}
+              onNext={handleNext}
+              onPrev={handlePrev}
+              currentStep={currentStep}
+            />
           )}
         </AnimatePresence>
 
