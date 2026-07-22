@@ -14,6 +14,7 @@ import {
 import { Link } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AirportAutocomplete from "@/components/AirportAutocomplete";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Airport = { iata: string; name: string; city: string; country: string };
@@ -646,20 +647,29 @@ export default function Flights() {
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Origin */}
+                            {/* Origin */}
               <div className="relative">
-                <AirportInput label="Départ" value={`${origin} — ${origin}`} onChange={(iata) => setOrigin(iata)}
-                  placeholder="Ville ou code IATA" icon={<MapPin className="w-4 h-4" />} />
+                <AirportAutocomplete
+                  label="Départ"
+                  value={origin}
+                  onChange={(iata) => setOrigin(iata)}
+                  placeholder="Ville, pays ou code IATA"
+                  icon="origin"
+                />
               </div>
-
               {/* Swap + Destination */}
               <div className="relative">
                 <button onClick={swapAirports}
                   className="absolute left-0 top-7 -translate-x-3 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                 </button>
-                <AirportInput label="Arrivée" value={`${destination} — ${destination}`} onChange={(iata) => setDestination(iata)}
-                  placeholder="Ville ou code IATA" icon={<Plane className="w-4 h-4" />} />
+                <AirportAutocomplete
+                  label="Arrivée"
+                  value={destination}
+                  onChange={(iata) => setDestination(iata)}
+                  placeholder="Ville, pays ou code IATA"
+                  icon="destination"
+                />
               </div>
 
               {/* Dates */}

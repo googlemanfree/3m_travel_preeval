@@ -419,13 +419,21 @@ export default function Home() {
               </motion.p>
 
               {/* CTAs */}
-              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
-                <Button onClick={() => setShowEvalModal(true)} size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-7 active:scale-[0.97] transition-transform gap-2">
-                  <Star className="w-5 h-5" />Évaluer mon éligibilité
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-3">
+                <Button
+                  onClick={() => setShowEvalModal(true)}
+                  size="lg"
+                  className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-xl shadow-2xl px-10 py-7 h-auto active:scale-[0.97] transition-all gap-3 rounded-2xl ring-2 ring-amber-400/40 hover:ring-amber-400/70 hover:shadow-amber-500/30"
+                >
+                  <Star className="w-6 h-6" />Évaluer mon éligibilité
                 </Button>
                 <a href="#evaluation">
-                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-7 active:scale-[0.97] transition-transform">
-                    Pré-évaluation <ArrowRight className="w-5 h-5 ml-2" />
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-2 border-white/70 text-white hover:bg-white/15 font-bold text-xl px-10 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl"
+                  >
+                    Pré-évaluation <ArrowRight className="w-6 h-6 ml-2" />
                   </Button>
                 </a>
               </motion.div>
@@ -1124,15 +1132,22 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
           <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="#evaluation">
-              <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
-                Pré-évaluation gratuite <ArrowRight className="w-5 h-5 ml-2" />
+          <div className="flex flex-col sm:flex-row gap-5 justify-center">
+            <a href="#evaluation">
+              <Button
+                size="lg"
+                className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-extrabold text-xl shadow-2xl px-12 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl ring-2 ring-white/30 hover:ring-white/60"
+              >
+                Pré-évaluation gratuite <ArrowRight className="w-6 h-6 ml-2" />
               </Button>
             </a>
             <a href="mailto:hello@3mtravelegency.com">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 active:scale-[0.97] transition-transform">
-                <Mail className="w-4 h-4 mr-2" />Nous écrire
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white/10 font-bold text-xl px-10 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl"
+              >
+                <Mail className="w-5 h-5 mr-2" />Nous écrire
               </Button>
             </a>
           </div>
@@ -1764,7 +1779,7 @@ function PricingSection() {
                   href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
+                  className={`w-full py-4 rounded-2xl font-extrabold text-base text-center transition-all active:scale-[0.97] block shadow-md hover:shadow-xl ${
                     plan.highlight
                       ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
                       : plan.id === "garanti"
