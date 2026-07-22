@@ -179,6 +179,11 @@ export default function PremiumEvaluationForm() {
   const submitMutation = trpc.profileEvaluation.submit.useMutation();
 
   const handleInputChange = (field: string, value: any) => {
+    // Gestion spéciale pour la navigation vers une étape spécifique
+    if (field === '_goToStep') {
+      setCurrentStep(value);
+      return;
+    }
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

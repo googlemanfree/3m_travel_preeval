@@ -613,27 +613,190 @@ export default function PremiumEvaluationFormSteps47({
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">7. Finalisation & Confirmation</h2>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
-          <h3 className="font-semibold text-blue-900 mb-4">✓ Résumé de votre évaluation</h3>
-          <div className="space-y-3 text-sm text-blue-800">
-            <p>
-              <strong>Destination :</strong> {formData.destination}
-            </p>
-            <p>
-              <strong>Type de projet :</strong> {formData.projectType}
-            </p>
-            <p>
-              <strong>Nom :</strong> {formData.fullName}
-            </p>
-            <p>
-              <strong>Email :</strong> {formData.email}
-            </p>
-            <p>
-              <strong>Téléphone :</strong> {formData.whatsappPhone}
-            </p>
-            <p>
-              <strong>Documents uploadés :</strong> {uploadedFiles.length} fichier(s)
-            </p>
+        <div className="space-y-4 mb-8">
+          <h3 className="font-semibold text-gray-900 text-lg">✓ Résumé de votre évaluation</h3>
+          
+          {/* Étape 1: Destination & Projet */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-blue-900 mb-2">1. Destination & Projet</p>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p><strong>Destination :</strong> {formData.destination}</p>
+                  <p><strong>Type de projet :</strong> {formData.projectType}</p>
+                  <p><strong>Pays actuel :</strong> {formData.currentCountry}</p>
+                  <p><strong>Langue :</strong> {formData.communicationLanguage === 'fr' ? 'Français' : 'Anglais'}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 1)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 2: Identité & Passeport */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-green-900 mb-2">2. Identité & Passeport</p>
+                <div className="text-sm text-green-800 space-y-1">
+                  <p><strong>Nom :</strong> {formData.fullName}</p>
+                  <p><strong>Genre :</strong> {formData.gender}</p>
+                  <p><strong>Nationalité :</strong> {formData.nationality}</p>
+                  <p><strong>Passeport :</strong> {formData.passportNumber}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 2)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 3: Études & Finances */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-purple-900 mb-2">3. Études & Finances</p>
+                <div className="text-sm text-purple-800 space-y-1">
+                  <p><strong>Niveau d'études :</strong> {formData.educationLevel}</p>
+                  <p><strong>Domaine :</strong> {formData.fieldOfStudy}</p>
+                  <p><strong>Profession :</strong> {formData.currentProfession}</p>
+                  <p><strong>Revenu mensuel :</strong> {formData.monthlyIncome} FCFA</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 3)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 4: Voyage & Admissibilité */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-orange-900 mb-2">4. Voyage & Admissibilité</p>
+                <div className="text-sm text-orange-800 space-y-1">
+                  <p><strong>Pays visités :</strong> {formData.countriesVisited || 'Aucun'}</p>
+                  <p><strong>Refus de visa :</strong> {formData.visaRefusals}</p>
+                  <p><strong>Casier judiciaire :</strong> {formData.criminalRecord}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 4)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 5: Détails du Projet */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-indigo-900 mb-2">5. Détails du Projet</p>
+                <div className="text-sm text-indigo-800 space-y-1">
+                  {formData.projectType === 'student' && (
+                    <>
+                      <p><strong>Institution :</strong> {formData.targetInstitution || 'Non spécifiée'}</p>
+                      <p><strong>Admission :</strong> {formData.admissionLetterAvailable ? 'Reçue' : 'En cours'}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'visitor' && (
+                    <>
+                      <p><strong>Type de visite :</strong> {formData.visitType}</p>
+                      <p><strong>Durée :</strong> {formData.plannedStayDuration}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'worker' && (
+                    <>
+                      <p><strong>Poste :</strong> {formData.desiredPosition || 'Non spécifié'}</p>
+                      <p><strong>Offre d'emploi :</strong> {formData.jobOfferAvailable ? 'Reçue' : 'En cours'}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'permanent_residence' && (
+                    <>
+                      <p><strong>Catégorie :</strong> {formData.targetCategory}</p>
+                      <p><strong>Expérience :</strong> {formData.experienceYears} ans</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 5)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 6: Documents */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-yellow-900 mb-2">6. Documents</p>
+                <div className="text-sm text-yellow-800">
+                  <p><strong>Documents uploadés :</strong> {uploadedFiles.length} fichier(s)</p>
+                  {uploadedFiles.length > 0 && (
+                    <ul className="mt-2 space-y-1 ml-4">
+                      {uploadedFiles.slice(0, 3).map((file, idx) => (
+                        <li key={idx} className="text-xs">• {file.name}</li>
+                      ))}
+                      {uploadedFiles.length > 3 && <li className="text-xs italic">... et {uploadedFiles.length - 3} autre(s)</li>}
+                    </ul>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 6)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900 mb-2">📞 Informations de Contact</p>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p><strong>Email :</strong> {formData.email}</p>
+                  <p><strong>Téléphone WhatsApp :</strong> {formData.whatsappPhone}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 2)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
           </div>
         </div>
 
