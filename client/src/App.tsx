@@ -27,6 +27,8 @@ import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import FlightBooking from "./pages/FlightBooking";
 import FlightBookingStatus from "./pages/FlightBookingStatus";
+import Services from "./pages/Services";
+import PasseportIndex from "./pages/PasseportIndex";
 
 function Router() {
   return (
@@ -45,6 +47,8 @@ function Router() {
       <Route path={"/vols/reserver"} component={FlightBooking} />
       <Route path={"/vols/suivi"} component={FlightBookingStatus} />
       <Route path={"/procedures"} component={Procedures} />
+      <Route path={"/services"} component={Services} />
+      <Route path={"/passeport"} component={PasseportIndex} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
       <Route path={"/guide"} component={Guide} />

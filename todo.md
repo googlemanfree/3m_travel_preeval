@@ -417,3 +417,13 @@
 - [x] Bouton téléchargement rapport .txt dans la page d'accueil
 - [x] Écran de chargement "Analyse IA en cours..." pendant la génération
 - [x] Envoi automatique du rapport par email après génération
+
+## Session 5 — Alignement EasyVisa (Juillet 2026)
+
+- [x] Page /services créée avec tarifs alignés sur EasyVisa.cm (Canada RP 500k, Études 250k, Travail 350k, Visiteur 400k, Dubaï 95k, Côte d'Ivoire 68k, AVI 50k, Assurance 15k, Réservations 5k)
+- [x] Page /passeport créée — Index Passeport Camerounais avec 4 catégories (22 sans visa, 25 à l'arrivée, 51 e-visa, 133 requis) et drapeaux flagcdn.com
+- [x] Liens Services et Index Passeport ajoutés dans le menu Ressources de la navbar
+- [x] Routes /services et /passeport enregistrées dans App.tsx
+- [x] Workflow WhatsApp pré-rempli sur chaque formule de service
+- [x] Bouton "Ouvrir un dossier" sur chaque formule
+- [x] 0 erreurs TypeScript
