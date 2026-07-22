@@ -86,6 +86,21 @@ export default function Dashboard() {
     retry: false,
   });
 
+  // Compteur de messages non lus — rafraîchi toutes les 30 secondes
+  const unreadCountQuery = trpc.candidate.unreadCount.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+    retry: false,
+  });
+  const unreadCount = unreadCountQuery.data?.count ?? 0;
+
+  // Quand on ouvre l'onglet messagerie, invalider unreadCount (les messages sont marqués lus par getMessages)
+  useEffect(() => {
+    if (activeTab === "messages") {
+      setTimeout(() => utils.candidate.unreadCount.invalidate(), 1500);
+    }
+  }, [activeTab]);
+
   const sendMessageMutation = trpc.candidate.sendMessage.useMutation({
     onSuccess: () => {
       setMessageText("");
@@ -224,7 +239,13 @@ export default function Dashboard() {
                   }`}
                 >
                   <item.icon className="w-4 h-4 flex-shrink-0" />
-                  {item.label}
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {/* Badge messages non lus */}
+                  {item.id === "messages" && unreadCount > 0 && activeTab !== "messages" && (
+                    <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-black animate-pulse">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                   {activeTab === item.id && <ChevronRight className="w-4 h-4 ml-auto" />}
                 </button>
               ))}
@@ -590,7 +611,15 @@ export default function Dashboard() {
               {/* ── Onglet : Messagerie ──────────────────────────────────────── */}
               {activeTab === "messages" && (
                 <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
-                  <h1 className="text-2xl font-black text-gray-900 mb-4">Messagerie</h1>
+                  <div className="flex items-center gap-3 mb-4">
+                    <h1 className="text-2xl font-black text-gray-900">Messagerie</h1>
+                    {unreadCount > 0 && (
+                      <span className="flex items-center gap-1.5 bg-red-100 text-red-700 text-xs font-bold px-2.5 py-1 rounded-full border border-red-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
+                        {unreadCount} nouveau{unreadCount > 1 ? "x" : ""} message{unreadCount > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
                     {/* Messages */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-3">
