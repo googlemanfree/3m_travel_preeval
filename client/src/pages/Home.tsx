@@ -477,6 +477,29 @@ export default function Home() {
                 </motion.div>
               </motion.div>
 
+              {/* Barre de recherche rapide */}
+              <motion.div variants={fadeUp} className="mt-8 pt-6 border-t border-white/20">
+                <p className="text-sm font-semibold text-white/80 mb-4">🔍 Trouvez votre destination</p>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Cherchez un pays, une procédure..."
+                    className="w-full px-5 py-3 rounded-lg bg-white/15 backdrop-blur-md border border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all duration-300 font-medium"
+                    onChange={(e) => {
+                      const query = e.target.value.toLowerCase();
+                      if (query.length > 0) {
+                        const element = document.getElementById('procedures-section');
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }
+                    }}
+                  />
+                  <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+              </motion.div>
 
             </motion.div>
 
