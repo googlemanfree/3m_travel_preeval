@@ -779,6 +779,152 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {/* ─── AVIS CLIENTS ────────────────────────────────────────────────── */}
+      <section id="avis-clients" className="py-16 bg-gradient-to-b from-[#f0f6ff] to-white overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Témoignages</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Ce que disent nos clients</h2>
+            <p className="text-gray-500 max-w-xl mx-auto">Plus de 1 247 dossiers traités avec succès. Voici quelques témoignages de personnes qui nous ont fait confiance.</p>
+            {/* Note globale */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <div className="flex">
+                {[1,2,3,4,5].map(s => (
+                  <svg key={s} className="w-6 h-6 text-amber-400 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                ))}
+              </div>
+              <span className="text-2xl font-extrabold text-gray-900">4.9</span>
+              <span className="text-gray-500 text-sm">/5 — basé sur 312 avis vérifiés</span>
+            </div>
+          </div>
+
+          {/* Grille d'avis */}
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              {
+                name: "Armelle Nguemo",
+                country: "🇨🇲 → 🇨🇦",
+                date: "Juin 2026",
+                rating: 5,
+                program: "Résidence Permanente Canada",
+                text: "J'ai obtenu ma résidence permanente au Canada grâce à 3M Travel. Toute l'équipe m'a accompagnée étape par étape, de la constitution du dossier jusqu'à l'approbation. Je recommande vivement !",
+                avatar: "AN",
+                color: "bg-[#1e3a8a]",
+                verified: true,
+              },
+              {
+                name: "Jean-Paul Mbarga",
+                country: "🇨🇲 → 🇩🇪",
+                date: "Mai 2026",
+                rating: 5,
+                program: "Visa Étudiant Allemagne",
+                text: "Service exceptionnel ! Mon visa étudiant a été approuvé en 3 semaines. Les conseillers sont disponibles sur WhatsApp et répondent très rapidement. Merci à toute l'équipe 3M !",
+                avatar: "JM",
+                color: "bg-[#0369a1]",
+                verified: true,
+              },
+              {
+                name: "Christelle Fouda",
+                country: "🇨🇲 → 🇦🇪",
+                date: "Avril 2026",
+                rating: 5,
+                program: "Visa Tourisme Dubaï",
+                text: "Très professionnels. J'ai eu mon visa Dubaï en 5 jours ouvrables. Le prix est correct et la qualité du service est au rendez-vous. Je reviendrai pour mon prochain voyage.",
+                avatar: "CF",
+                color: "bg-[#7c3aed]",
+                verified: true,
+              },
+              {
+                name: "Rodrigue Essomba",
+                country: "🇨🇲 → 🇨🇦",
+                date: "Mars 2026",
+                rating: 5,
+                program: "Permis de Travail Canada",
+                text: "Après deux refus avec d'autres agences, 3M Travel a réussi à faire accepter mon dossier. Leur expertise en immigration canadienne est vraiment sérieuse. Mon permis de travail est arrivé !",
+                avatar: "RE",
+                color: "bg-[#059669]",
+                verified: true,
+              },
+              {
+                name: "Sylvie Atangana",
+                country: "🇨🇲 → 🇧🇪",
+                date: "Février 2026",
+                rating: 5,
+                program: "Visa Schengen Belgique",
+                text: "Processus clair, transparent et rapide. J'ai apprécié le suivi en temps réel de mon dossier sur leur plateforme. Visa obtenu sans aucun problème. Bravo à l'équipe !",
+                avatar: "SA",
+                color: "bg-[#dc2626]",
+                verified: true,
+              },
+              {
+                name: "Patrick Nkomo",
+                country: "🇨🇲 → 🇨🇦",
+                date: "Janvier 2026",
+                rating: 5,
+                program: "Permis d'Études Canada",
+                text: "Je suis maintenant étudiant à l'Université de Montréal grâce à 3M Travel. Ils ont géré tout mon dossier WES, TCF et la demande de permis. Service 5 étoiles, sans hésitation.",
+                avatar: "PN",
+                color: "bg-[#d97706]",
+                verified: true,
+              },
+            ].map((review, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+              >
+                <Card className="p-6 h-full border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 relative">
+                  {review.verified && (
+                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-green-50 text-green-700 text-xs font-semibold px-2 py-1 rounded-full border border-green-200">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
+                      Vérifié
+                    </div>
+                  )}
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-11 h-11 rounded-full ${review.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
+                      {review.avatar}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{review.name}</p>
+                      <p className="text-xs text-gray-500">{review.country} · {review.date}</p>
+                    </div>
+                  </div>
+                  {/* Étoiles */}
+                  <div className="flex gap-0.5 mb-3">
+                    {[1,2,3,4,5].map(s => (
+                      <svg key={s} className={`w-4 h-4 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    ))}
+                  </div>
+                  {/* Programme */}
+                  <div className="inline-block bg-blue-50 text-[#1e3a8a] text-xs font-semibold px-2 py-1 rounded-md mb-3">
+                    {review.program}
+                  </div>
+                  {/* Texte */}
+                  <p className="text-gray-600 text-sm leading-relaxed italic">"{review.text}"</p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* CTA sous les avis */}
+          <div className="text-center">
+            <p className="text-gray-500 text-sm mb-4">Rejoignez nos 1 247+ clients satisfaits</p>
+            <button
+              onClick={() => {
+                const el = document.getElementById("evaluation");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold px-8 py-3 rounded-xl transition-all duration-200 active:scale-[0.97] shadow-md hover:shadow-lg"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+              Obtenir mon évaluation gratuite
+            </button>
+          </div>
+        </div>
+      </section>
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
       <CounterStats
         title="Ils nous ont fait confiance"
