@@ -109,6 +109,12 @@ export default function PromoFloatingBanner() {
                 >
                   💬 En profiter maintenant
                 </a>
+                <a
+                  href="/evaluation-widget"
+                  className="block w-full py-2 mt-2 bg-gradient-to-r from-[#0f2460] to-[#2563eb] text-white text-xs font-bold rounded-lg hover:opacity-90 transition-opacity active:scale-[0.97] text-center"
+                >
+                  ⭐ Évaluation gratuite de mon profil
+                </a>
               </motion.div>
             )}
           </AnimatePresence>
