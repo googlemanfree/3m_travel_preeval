@@ -25,13 +25,6 @@ import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
-import FlightBooking from "./pages/FlightBooking";
-import FlightBookingStatus from "./pages/FlightBookingStatus";
-import Services from "./pages/Services";
-import PasseportIndex from "./pages/PasseportIndex";
-import Tarifs from "./pages/Tarifs";
-import AVI from "./pages/AVI";
-import Blog from "./pages/Blog";
 
 function Router() {
   return (
@@ -45,17 +38,9 @@ function Router() {
       <Route path={"/reset-password"} component={ResetPassword} />
 
       {/* Espace Vols */}
-      <Route path={"/vols"} component={Flights} />
       <Route path={"/flights"} component={Flights} />
-      <Route path={"/vols/reserver"} component={FlightBooking} />
-      <Route path={"/vols/suivi"} component={FlightBookingStatus} />
+      <Route path={"/vols"} component={Flights} />
       <Route path={"/procedures"} component={Procedures} />
-      <Route path={"/services"} component={Services} />
-      <Route path={"/passeport"} component={PasseportIndex} />
-      <Route path={"/tarifs"} component={Tarifs} />
-      <Route path={"/avi"} component={AVI} />
-      <Route path={"/blog"} component={Blog} />
-      <Route path={"/blog/:slug"} component={Blog} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
       <Route path={"/guide"} component={Guide} />

@@ -46,20 +46,20 @@ function calculateDestinationScore(
   let adjustmentFactor = 1;
 
   switch (destination.toLowerCase()) {
-    case "canada":
-      // Destination phare 3M Travel — Résidence Permanente, Express Entry, avantage francophone
-      adjustmentFactor = 1.08; // +8% bonus (priorité maximale)
-      break;
     case "pologne":
-      // Procédures simplifiées, marché favorable
-      adjustmentFactor = 1.04; // +4% bonus
+      // Marché très favorable pour les techniciens et cadres
+      adjustmentFactor = 1.05; // +5% bonus
+      break;
+    case "canada":
+      // Marché favorable, critères clairs et objectifs
+      adjustmentFactor = 1.02; // +2% bonus
       break;
     case "allemagne":
-      // Chancenkarte, Ausbildung — marché modérément favorable
-      adjustmentFactor = 0.97; // -3% légère pénalité
+      // Marché modérément favorable
+      adjustmentFactor = 0.95; // -5% pénalité
       break;
     case "luxembourg":
-      // Marché très restrictif pour les non-EU, contingentement strict
+      // Marché très restrictif pour les non-EU
       adjustmentFactor = 0.75; // -25% pénalité importante
       break;
     case "royaume_uni":

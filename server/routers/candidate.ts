@@ -13,24 +13,10 @@ import {
   candidateFiles,
   candidateMessages,
   candidates,
-  dossierSteps,
-  dossierPayments,
-  dossierDeliveredDocs,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { sendVerificationLink, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
-
-// Admin middleware inline — accès via header x-admin-token ou rôle admin Manus
-const adminProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  const adminToken = (ctx as any).req?.headers?.["x-admin-token"];
-  const isAdminToken = adminToken === (process.env.ADMIN_SECRET ?? "3m-admin-2026");
-  const isManusAdmin = (ctx as any).user?.role === "admin";
-  if (!isAdminToken && !isManusAdmin) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Accès administrateur requis." });
-  }
-  return next({ ctx });
-});
+import { sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -112,9 +98,8 @@ export const candidateRouter = router({
       const passwordHash = await bcrypt.hash(input.password, 12);
 
       // Générer un OTP à 6 chiffres
-      // Générer un token de confirmation (UUID sans tirets)
-      const confirmToken = crypto.randomUUID().replace(/-/g, "");
-      const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
       const result = await db.insert(candidates).values({
         fullName: input.fullName,
@@ -125,20 +110,20 @@ export const candidateRouter = router({
         nationality: input.nationality ?? null,
         dossierStatus: "nouveau",
         emailVerified: false,
-        verificationToken: confirmToken,
-        emailOtpExpiresAt: tokenExpiresAt,
+        emailOtp: otp,
+        emailOtpExpiresAt: otpExpiresAt,
       });
 
       const candidateId = (result as any).insertId as number;
 
-      // Envoyer l'email avec le lien de confirmation
+      // Envoyer l'email OTP
       try {
-        await sendVerificationLink(input.email, input.fullName, confirmToken);
+        await sendVerificationOtp(input.email, input.fullName, otp);
       } catch (err) {
-        console.error("[Register] Email confirmation send error:", err);
+        console.error("[Register] Email OTP send error:", err);
       }
 
-      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Vérifiez votre boîte email pour activer votre compte." };
+      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Veuillez vérifier votre email." };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -164,14 +149,6 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
-      // Vérifier que l'email est validé
-      if (!candidate.emailVerified) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: `Veuillez valider votre adresse e-mail avant de vous connecter. Vérifiez votre boîte mail (code OTP envoyé à l'inscription).`,
-        });
-      }
-
       // Mettre à jour lastLoginAt
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
 
@@ -184,7 +161,6 @@ export const candidateRouter = router({
           email: candidate.email,
           destination: candidate.destination,
           dossierStatus: candidate.dossierStatus,
-          emailVerified: candidate.emailVerified,
         },
       };
     }),
@@ -370,49 +346,51 @@ export const candidateRouter = router({
   }),
 
 
-  // ── Vérification email par lien de confirmation ──────────────────────────
+  // ── Vérification email par OTP ────────────────────────────────────────────
   verifyEmail: publicProcedure
-    .input(z.object({ token: z.string().min(10) }))
+    .input(z.object({ candidateId: z.number(), otp: z.string().length(6) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
-      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Lien de confirmation invalide ou déjà utilisé." });
+      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
       if (candidate.emailVerified) {
-        const token = signCandidateToken(candidate.id);
-        return { success: true, token, candidateId: candidate.id, message: "Email déjà vérifié. Vous pouvez vous connecter." };
+        const token = signCandidateToken(input.candidateId);
+        return { success: true, token, message: "Email déjà vérifié." };
       }
-      if (candidate.emailOtpExpiresAt && new Date() > candidate.emailOtpExpiresAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré (24h). Veuillez vous réinscrire ou demander un nouveau lien." });
+      if (!candidate.emailOtp || candidate.emailOtp !== input.otp) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Code incorrect. Vérifiez votre email et réessayez." });
       }
-      await db.update(candidates).set({ emailVerified: true, verificationToken: null, emailOtpExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      if (!candidate.emailOtpExpiresAt || new Date() > candidate.emailOtpExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce code a expiré. Demandez un nouveau code." });
+      }
+      await db.update(candidates).set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null }).where(eq(candidates.id, input.candidateId));
       await db.insert(candidateMessages).values({
-        candidateId: candidate.id,
+        candidateId: input.candidateId,
         senderRole: "advisor",
-        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h pour la suite de votre dossier.`,
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
       try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
-      const jwtToken = signCandidateToken(candidate.id);
-      return { success: true, token: jwtToken, candidateId: candidate.id, message: "Compte activé avec succès ! Bienvenue dans votre espace candidat." };
+      const token = signCandidateToken(input.candidateId);
+      return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
 
-  // ── Renvoyer le lien de confirmation ──────────────────────────────────────
-  resendConfirmationLink: publicProcedure
-    .input(z.object({ email: z.string().email() }))
+  resendOtp: publicProcedure
+    .input(z.object({ candidateId: z.number() }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
-      if (!rows.length) return { success: true, message: "Si cet email existe, un nouveau lien a été envoyé." };
+      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
-      if (candidate.emailVerified) return { success: true, message: "Votre compte est déjà activé. Connectez-vous." };
-      const confirmToken = crypto.randomUUID().replace(/-/g, "");
-      const tokenExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await db.update(candidates).set({ verificationToken: confirmToken, emailOtpExpiresAt: tokenExpiresAt }).where(eq(candidates.id, candidate.id));
-      try { await sendVerificationLink(candidate.email, candidate.fullName, confirmToken); } catch {}
-      return { success: true, message: "Un nouveau lien de confirmation a été envoyé à votre adresse email." };
+      if (candidate.emailVerified) return { success: true };
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
+      try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
+      return { success: true, message: "Nouveau code envoyé à votre adresse email." };
     }),
 
   requestPasswordReset: publicProcedure
@@ -446,227 +424,8 @@ export const candidateRouter = router({
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
     }),
 
-  // ── Résumé complet du dossier (étapes + paiements + docs remis) ──────────────
-  getDossierSummary: candidateProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    const c = ctx.candidate;
-
-    const [steps, payments, deliveredDocs] = await Promise.all([
-      db.select().from(dossierSteps).where(eq(dossierSteps.candidateId, c.id)).orderBy(dossierSteps.sortOrder),
-      db.select().from(dossierPayments).where(eq(dossierPayments.candidateId, c.id)).orderBy(desc(dossierPayments.createdAt)),
-      db.select().from(dossierDeliveredDocs).where(eq(dossierDeliveredDocs.candidateId, c.id)).orderBy(desc(dossierDeliveredDocs.deliveredAt)),
-    ]);
-
-    const totalPaid = payments
-      .filter((p: any) => p.status === "confirmed")
-      .reduce((sum: number, p: any) => sum + p.amount, 0);
-
-    const formulaPrices: Record<string, number> = {
-      integral: 500000, echelonne: 500000, garanti: 750000,
-    };
-    const totalAmount = formulaPrices[c.formulaChosen ?? "integral"] ?? 500000;
-
-    return {
-      candidate: {
-        id: c.id, fullName: c.fullName, email: c.email, phone: c.phone,
-        nationality: c.nationality, dateOfBirth: c.dateOfBirth,
-        destination: c.destination, visaType: c.visaType,
-        dossierStatus: c.dossierStatus, dossierNote: c.dossierNote,
-        formulaChosen: c.formulaChosen, scoreResult: c.scoreResult,
-        educationLevel: c.educationLevel, employmentStatus: c.employmentStatus,
-        languageLevel: c.languageLevel, createdAt: c.createdAt, lastLoginAt: c.lastLoginAt,
-      },
-      steps,
-      payments,
-      deliveredDocs,
-      financials: {
-        totalPaid,
-        totalAmount,
-        remainingAmount: Math.max(0, totalAmount - totalPaid),
-        paymentCount: payments.filter((p: any) => p.status === "confirmed").length,
-      },
-    };
-  }),
-
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
   getDossierSteps: publicProcedure.query(() => {
     return DOSSIER_STEPS;
   }),
-
-  // ── ADMIN : Lister tous les candidats ─────────────────────────────────────────
-  adminListCandidates: adminProcedure.query(async () => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-    return db.select({
-      id: candidates.id,
-      fullName: candidates.fullName,
-      email: candidates.email,
-      phone: candidates.phone,
-      nationality: candidates.nationality,
-      destination: candidates.destination,
-      visaType: candidates.visaType,
-      dossierStatus: candidates.dossierStatus,
-      formulaChosen: candidates.formulaChosen,
-      scoreResult: candidates.scoreResult,
-      educationLevel: candidates.educationLevel,
-      employmentStatus: candidates.employmentStatus,
-      languageLevel: candidates.languageLevel,
-      dossierNote: candidates.dossierNote,
-      createdAt: candidates.createdAt,
-      lastLoginAt: candidates.lastLoginAt,
-    }).from(candidates).orderBy(desc(candidates.createdAt));
-  }),
-
-  adminUpdateCandidateStatus: adminProcedure
-    .input(z.object({
-      candidateId: z.number(),
-      dossierStatus: z.string().optional(),
-      dossierNote: z.string().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const updates: Record<string, unknown> = {};
-      if (input.dossierStatus !== undefined) updates.dossierStatus = input.dossierStatus;
-      if (input.dossierNote !== undefined) updates.dossierNote = input.dossierNote;
-      await db.update(candidates).set(updates).where(eq(candidates.id, input.candidateId));
-      return { success: true };
-    }),
-
-  adminAddStep: adminProcedure
-    .input(z.object({
-      candidateId: z.number(),
-      stepLabel: z.string().min(1),
-      stepCategory: z.string().default("general"),
-      description: z.string().optional(),
-      status: z.enum(["pending", "in_progress", "completed", "blocked", "not_required"]).default("pending"),
-      sortOrder: z.number().default(0),
-      dueDate: z.number().optional(),
-      documentUrl: z.string().optional(),
-      documentName: z.string().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.insert(dossierSteps).values({
-        candidateId: input.candidateId,
-        stepLabel: input.stepLabel,
-        stepKey: input.stepLabel.toLowerCase().replace(/\s+/g, "_"),
-        stepCategory: input.stepCategory as any,
-        description: input.description ?? null,
-        status: input.status,
-        sortOrder: input.sortOrder,
-        dueDate: input.dueDate ? new Date(input.dueDate) : null,
-        documentUrl: input.documentUrl ?? null,
-        documentName: input.documentName ?? null,
-      });
-      return { success: true };
-    }),
-
-  adminUpdateStep: adminProcedure
-    .input(z.object({
-      stepId: z.number(),
-      status: z.enum(["pending", "in_progress", "completed", "blocked", "not_required"]).optional(),
-      description: z.string().optional(),
-      dueDate: z.number().optional(),
-      documentUrl: z.string().optional(),
-      documentName: z.string().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const updates: Record<string, unknown> = {};
-      if (input.status !== undefined) {
-        updates.status = input.status;
-        if (input.status === "completed") updates.completedAt = new Date();
-      }
-      if (input.description !== undefined) updates.description = input.description;
-      if (input.dueDate !== undefined) updates.dueDate = new Date(input.dueDate);
-      if (input.documentUrl !== undefined) updates.documentUrl = input.documentUrl;
-      if (input.documentName !== undefined) updates.documentName = input.documentName;
-      await db.update(dossierSteps).set(updates).where(eq(dossierSteps.id, input.stepId));
-      return { success: true };
-    }),
-
-  adminDeleteStep: adminProcedure
-    .input(z.object({ stepId: z.number() }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.delete(dossierSteps).where(eq(dossierSteps.id, input.stepId));
-      return { success: true };
-    }),
-
-  adminAddPayment: adminProcedure
-    .input(z.object({
-      candidateId: z.number(),
-      amount: z.number().positive(),
-      paymentMethod: z.enum(["mtn_momo", "orange_money", "virement", "especes", "carte", "autre"]),
-      label: z.string().optional(),
-      transactionRef: z.string().optional(),
-      status: z.enum(["confirmed", "pending", "rejected"]).default("confirmed"),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.insert(dossierPayments).values({
-        candidateId: input.candidateId,
-        amount: input.amount,
-        paymentMethod: input.paymentMethod,
-        label: input.label ?? null,
-        transactionRef: input.transactionRef ?? null,
-        status: input.status,
-      });
-      return { success: true };
-    }),
-
-  adminDeliverDocument: adminProcedure
-    .input(z.object({
-      candidateId: z.number(),
-      docLabel: z.string().min(1),
-      fileUrl: z.string().optional(),
-      notes: z.string().optional(),
-    }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      await db.insert(dossierDeliveredDocs).values({
-        candidateId: input.candidateId,
-        docLabel: input.docLabel,
-        fileUrl: input.fileUrl ?? null,
-        note: input.notes ?? null,
-      });
-      return { success: true };
-    }),
-
-  adminGetCandidateSummary: adminProcedure
-    .input(z.object({ candidateId: z.number() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const [candidateRows, steps, payments, deliveredDocs] = await Promise.all([
-        db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1),
-        db.select().from(dossierSteps).where(eq(dossierSteps.candidateId, input.candidateId)).orderBy(dossierSteps.sortOrder),
-        db.select().from(dossierPayments).where(eq(dossierPayments.candidateId, input.candidateId)).orderBy(desc(dossierPayments.createdAt)),
-        db.select().from(dossierDeliveredDocs).where(eq(dossierDeliveredDocs.candidateId, input.candidateId)).orderBy(desc(dossierDeliveredDocs.deliveredAt)),
-      ]);
-      if (!candidateRows.length) throw new TRPCError({ code: "NOT_FOUND" });
-      const c = candidateRows[0];
-      const totalPaid = payments.filter((p: any) => p.status === "confirmed").reduce((sum: number, p: any) => sum + p.amount, 0);
-      const formulaPrices: Record<string, number> = { integral: 500000, echelonne: 500000, garanti: 750000 };
-      const totalAmount = formulaPrices[c.formulaChosen ?? "integral"] ?? 500000;
-      return {
-        candidate: c,
-        steps,
-        payments,
-        deliveredDocs,
-        financials: {
-          totalPaid,
-          totalAmount,
-          remainingAmount: Math.max(0, totalAmount - totalPaid),
-          paymentCount: payments.filter((p: any) => p.status === "confirmed").length,
-        },
-      };
-    }),
 });

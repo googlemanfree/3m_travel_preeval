@@ -54,12 +54,7 @@ export default function Register() {
 
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
-      // Sauvegarder les infos temporaires pour la page de vérification OTP
-      localStorage.setItem("pendingCandidate", JSON.stringify({
-        fullName: form.fullName,
-        email: form.email,
-        destination: form.destination,
-      }));
+      // Rediriger vers la page de vérification OTP
       toast.success("Compte créé ! Un code de vérification a été envoyé à votre adresse email.");
       navigate(`/verify-email?id=${data.candidateId}`);
     },

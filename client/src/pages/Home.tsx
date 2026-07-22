@@ -1,5 +1,4 @@
-import React, { useRef, useState, useMemo, useEffect } from "react";
-import { generateEvaluationPdf } from "@/lib/generateEvaluationPdf";
+import React, { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -247,242 +246,6 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
   );
 }
 
-// ─── Composant animation de chargement IA ───────────────────────────────────
-const AI_LOADING_STEPS = [
-  { icon: "🔍", label: "Lecture du profil",       detail: "Identification des informations clés de votre dossier..." },
-  { icon: "🌍", label: "Analyse des destinations", detail: "Comparaison avec 6 marchés d'immigration actifs en 2026..." },
-  { icon: "📊", label: "Calcul des scores",        detail: "Évaluation sur 5 critères : formation, expérience, langues, secteur, âge..." },
-  { icon: "🇨🇦", label: "Priorité Canada RP",       detail: "Express Entry, PNP, avantage bilingue +16 pts CRS analysés..." },
-  { icon: "📝", label: "Rédaction du rapport",     detail: "Génération de votre rapport personnalisé par l'IA 3M Travel..." },
-  { icon: "✅", label: "Finalisation",             detail: "Vérification finale et mise en forme du rapport..." },
-];
-
-function AILoadingScreen() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-
-  useEffect(() => {
-    // Avancer les étapes progressivement
-    const totalDuration = 18000; // 18 secondes estimées
-    const stepDuration = totalDuration / AI_LOADING_STEPS.length;
-
-    const stepInterval = setInterval(() => {
-      setCurrentStep(prev => {
-        const next = prev + 1;
-        if (next < AI_LOADING_STEPS.length) {
-          setCompletedSteps(c => [...c, prev]);
-          return next;
-        }
-        clearInterval(stepInterval);
-        return prev;
-      });
-    }, stepDuration);
-
-    // Barre de progression fluide
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 95) { clearInterval(progressInterval); return 95; }
-        return prev + 0.4;
-      });
-    }, 80);
-
-    return () => {
-      clearInterval(stepInterval);
-      clearInterval(progressInterval);
-    };
-  }, []);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease: "easeOut" }}
-    >
-      <Card className="overflow-hidden border-blue-200 shadow-2xl">
-        {/* En-tête gradient */}
-        <div className="bg-gradient-to-r from-[#0f2460] via-[#1e3a8a] to-[#2563eb] px-6 pt-8 pb-6 text-white text-center">
-          {/* Icône IA animée */}
-          <div className="relative w-20 h-20 mx-auto mb-4">
-            {/* Cercles orbitaux */}
-            <motion.div
-              className="absolute inset-0 rounded-full border-2 border-blue-300/40"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            />
-            <motion.div
-              className="absolute inset-2 rounded-full border-2 border-[#7cb9e8]/60"
-              animate={{ rotate: -360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            />
-            {/* Centre */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <motion.div
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-                className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-2xl"
-              >
-                🤖
-              </motion.div>
-            </div>
-            {/* Points orbitaux */}
-            {[0, 120, 240].map((deg, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2.5 h-2.5 rounded-full bg-[#7cb9e8]"
-                style={{ top: "50%", left: "50%", transformOrigin: "0 0" }}
-                animate={{ rotate: [deg, deg + 360] }}
-                transition={{ duration: 2.5, repeat: Infinity, ease: "linear", delay: i * 0.3 }}
-              >
-                <div
-                  className="w-2.5 h-2.5 rounded-full bg-[#7cb9e8]"
-                  style={{ transform: `translate(-50%, -50%) translateX(28px)` }}
-                />
-              </motion.div>
-            ))}
-          </div>
-
-          <h3 className="text-xl font-extrabold tracking-tight mb-1">Analyse IA en cours</h3>
-          <p className="text-blue-200 text-sm">Votre rapport personnalisé est en cours de génération</p>
-        </div>
-
-        {/* Corps */}
-        <div className="bg-white px-6 py-6">
-          {/* Barre de progression */}
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Progression</span>
-              <span className="text-sm font-bold text-[#1e3a8a]">{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, #7cb9e8, #2563eb, #1e3a8a)" }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-              />
-            </div>
-          </div>
-
-          {/* Étapes */}
-          <div className="space-y-2.5">
-            {AI_LOADING_STEPS.map((step, i) => {
-              const isDone    = completedSteps.includes(i);
-              const isActive  = currentStep === i;
-              const isPending = !isDone && !isActive;
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -12 }}
-                  animate={{ opacity: isPending ? 0.4 : 1, x: 0 }}
-                  transition={{ duration: 0.35, delay: i * 0.06 }}
-                  className={`flex items-start gap-3 p-3 rounded-xl transition-all duration-300 ${
-                    isActive  ? "bg-blue-50 border border-blue-200" :
-                    isDone    ? "bg-green-50 border border-green-100" :
-                    "bg-gray-50 border border-transparent"
-                  }`}
-                >
-                  {/* Icône état */}
-                  <div className="flex-shrink-0 mt-0.5">
-                    {isDone ? (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                        className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                      </motion.div>
-                    ) : isActive ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
-                    )}
-                  </div>
-
-                  {/* Texte */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base leading-none">{step.icon}</span>
-                      <span className={`text-sm font-semibold ${
-                        isDone ? "text-green-700" : isActive ? "text-[#1e3a8a]" : "text-gray-400"
-                      }`}>{step.label}</span>
-                      {isActive && (
-                        <motion.span
-                          animate={{ opacity: [1, 0, 1] }}
-                          transition={{ duration: 1.2, repeat: Infinity }}
-                          className="text-xs text-blue-500 font-medium"
-                        >
-                          en cours...
-                        </motion.span>
-                      )}
-                    </div>
-                    {isActive && (
-                      <motion.p
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        transition={{ duration: 0.3 }}
-                        className="text-xs text-blue-600 mt-1 leading-relaxed"
-                      >
-                        {step.detail}
-                      </motion.p>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Message rassurant rotatif */}
-          <AIReassuranceMessage />
-        </div>
-      </Card>
-    </motion.div>
-  );
-}
-
-const REASSURANCE_MESSAGES = [
-  "🔒 Vos données sont traitées de manière confidentielle et sécurisée.",
-  "🌟 Plus de 1 247 candidats ont déjà reçu leur rapport personnalisé.",
-  "🇨🇦 Le Canada accueille 500 000 nouveaux résidents permanents par an.",
-  "⚡ Notre IA analyse votre profil selon les critères officiels IRCC 2026.",
-  "📧 Votre rapport sera également envoyé à votre adresse email.",
-  "🤝 Un conseiller 3M Travel est disponible sur WhatsApp pour vous accompagner.",
-  "🎯 Chaque rapport est unique et adapté à votre profil spécifique.",
-];
-
-function AIReassuranceMessage() {
-  const [msgIndex, setMsgIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMsgIndex(prev => (prev + 1) % REASSURANCE_MESSAGES.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="mt-5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 px-4 py-3 min-h-[52px] flex items-center">
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={msgIndex}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="text-xs text-blue-700 leading-relaxed text-center w-full"
-        >
-          {REASSURANCE_MESSAGES[msgIndex]}
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
-}
-
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
   const [showEvalModal, setShowEvalModal] = useState(false);
@@ -493,9 +256,6 @@ export default function Home() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvBase64, setCvBase64] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [aiReport, setAiReport] = useState<string | null>(null);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [candidateName, setCandidateName] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
@@ -535,9 +295,7 @@ export default function Home() {
   };
 
   const submitMutation = trpc.evaluation.submit.useMutation({
-    onSuccess: (data) => {
-      setIsGeneratingReport(false);
-      setAiReport(data.report ?? null);
+    onSuccess: () => {
       setIsSubmitted(true);
       reset();
       setStep(1);
@@ -548,7 +306,6 @@ export default function Home() {
       setCvBase64("");
     },
     onError: (err) => {
-      setIsGeneratingReport(false);
       toast.error("Erreur lors de la soumission : " + err.message);
     },
   });
@@ -600,8 +357,6 @@ export default function Home() {
   };
 
   const onSubmit = (data: FormValues) => {
-    setIsGeneratingReport(true);
-    setCandidateName(data.fullName || "");
     submitMutation.mutate({ ...data, cvBase64: cvBase64 || undefined });
   };
 
@@ -663,14 +418,14 @@ export default function Home() {
                 Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
               </motion.p>
 
-              {/* CTA unique */}
-              <motion.div variants={fadeUp} className="flex justify-center lg:justify-start pt-3">
+              {/* CTAs */}
+              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start pt-1">
+                <Button onClick={() => setShowEvalModal(true)} size="lg" className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl px-7 active:scale-[0.97] transition-transform gap-2">
+                  <Star className="w-5 h-5" />Évaluer mon éligibilité
+                </Button>
                 <a href="#evaluation">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-xl shadow-2xl px-12 py-7 h-auto active:scale-[0.97] transition-all gap-3 rounded-2xl ring-2 ring-amber-400/40 hover:ring-amber-400/70 hover:shadow-amber-500/30"
-                  >
-                    <Star className="w-6 h-6" /> Évaluation gratuite
+                  <Button size="lg" variant="outline" className="border-white/70 text-white hover:bg-white/15 font-semibold text-base px-7 active:scale-[0.97] transition-transform">
+                    Pré-évaluation <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </a>
               </motion.div>
@@ -749,182 +504,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── NOS SERVICES ────────────────────────────────────────────────── */}
-      <section id="services" className="py-14 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Tout ce dont vous avez besoin</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/vols" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "/destinations" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/services" },
-            ].map((s, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
-                <a href={s.href}>
-                  <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full cursor-pointer">
-                    <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <s.icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-                  </Card>
-                </a>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-      {/* ─── AVIS CLIENTS ────────────────────────────────────────────────── */}
-      <section id="avis-clients" className="py-16 bg-gradient-to-b from-[#f0f6ff] to-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Témoignages</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Ce que disent nos clients</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">Plus de 1 247 dossiers traités avec succès. Voici quelques témoignages de personnes qui nous ont fait confiance.</p>
-            {/* Note globale */}
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <div className="flex">
-                {[1,2,3,4,5].map(s => (
-                  <svg key={s} className="w-6 h-6 text-amber-400 fill-amber-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                ))}
-              </div>
-              <span className="text-2xl font-extrabold text-gray-900">4.9</span>
-              <span className="text-gray-500 text-sm">/5 — basé sur 312 avis vérifiés</span>
-            </div>
-          </div>
-
-          {/* Grille d'avis */}
-          <div className="grid md:grid-cols-3 gap-6 mb-10">
-            {[
-              {
-                name: "Armelle Nguemo",
-                country: "🇨🇲 → 🇨🇦",
-                date: "Juin 2026",
-                rating: 5,
-                program: "Résidence Permanente Canada",
-                text: "J'ai obtenu ma résidence permanente au Canada grâce à 3M Travel. Toute l'équipe m'a accompagnée étape par étape, de la constitution du dossier jusqu'à l'approbation. Je recommande vivement !",
-                avatar: "AN",
-                color: "bg-[#1e3a8a]",
-                verified: true,
-              },
-              {
-                name: "Jean-Paul Mbarga",
-                country: "🇨🇲 → 🇩🇪",
-                date: "Mai 2026",
-                rating: 5,
-                program: "Visa Étudiant Allemagne",
-                text: "Service exceptionnel ! Mon visa étudiant a été approuvé en 3 semaines. Les conseillers sont disponibles sur WhatsApp et répondent très rapidement. Merci à toute l'équipe 3M !",
-                avatar: "JM",
-                color: "bg-[#0369a1]",
-                verified: true,
-              },
-              {
-                name: "Christelle Fouda",
-                country: "🇨🇲 → 🇦🇪",
-                date: "Avril 2026",
-                rating: 5,
-                program: "Visa Tourisme Dubaï",
-                text: "Très professionnels. J'ai eu mon visa Dubaï en 5 jours ouvrables. Le prix est correct et la qualité du service est au rendez-vous. Je reviendrai pour mon prochain voyage.",
-                avatar: "CF",
-                color: "bg-[#7c3aed]",
-                verified: true,
-              },
-              {
-                name: "Rodrigue Essomba",
-                country: "🇨🇲 → 🇨🇦",
-                date: "Mars 2026",
-                rating: 5,
-                program: "Permis de Travail Canada",
-                text: "Après deux refus avec d'autres agences, 3M Travel a réussi à faire accepter mon dossier. Leur expertise en immigration canadienne est vraiment sérieuse. Mon permis de travail est arrivé !",
-                avatar: "RE",
-                color: "bg-[#059669]",
-                verified: true,
-              },
-              {
-                name: "Sylvie Atangana",
-                country: "🇨🇲 → 🇧🇪",
-                date: "Février 2026",
-                rating: 5,
-                program: "Visa Schengen Belgique",
-                text: "Processus clair, transparent et rapide. J'ai apprécié le suivi en temps réel de mon dossier sur leur plateforme. Visa obtenu sans aucun problème. Bravo à l'équipe !",
-                avatar: "SA",
-                color: "bg-[#dc2626]",
-                verified: true,
-              },
-              {
-                name: "Patrick Nkomo",
-                country: "🇨🇲 → 🇨🇦",
-                date: "Janvier 2026",
-                rating: 5,
-                program: "Permis d'Études Canada",
-                text: "Je suis maintenant étudiant à l'Université de Montréal grâce à 3M Travel. Ils ont géré tout mon dossier WES, TCF et la demande de permis. Service 5 étoiles, sans hésitation.",
-                avatar: "PN",
-                color: "bg-[#d97706]",
-                verified: true,
-              },
-            ].map((review, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-              >
-                <Card className="p-6 h-full border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 relative">
-                  {review.verified && (
-                    <div className="absolute top-4 right-4 flex items-center gap-1 bg-green-50 text-green-700 text-xs font-semibold px-2 py-1 rounded-full border border-green-200">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/></svg>
-                      Vérifié
-                    </div>
-                  )}
-                  {/* Header */}
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-11 h-11 rounded-full ${review.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
-                      {review.avatar}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-gray-900 text-sm truncate">{review.name}</p>
-                      <p className="text-xs text-gray-500">{review.country} · {review.date}</p>
-                    </div>
-                  </div>
-                  {/* Étoiles */}
-                  <div className="flex gap-0.5 mb-3">
-                    {[1,2,3,4,5].map(s => (
-                      <svg key={s} className={`w-4 h-4 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                    ))}
-                  </div>
-                  {/* Programme */}
-                  <div className="inline-block bg-blue-50 text-[#1e3a8a] text-xs font-semibold px-2 py-1 rounded-md mb-3">
-                    {review.program}
-                  </div>
-                  {/* Texte */}
-                  <p className="text-gray-600 text-sm leading-relaxed italic">"{review.text}"</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* CTA sous les avis */}
-          <div className="text-center">
-            <p className="text-gray-500 text-sm mb-4">Rejoignez nos 1 247+ clients satisfaits</p>
-            <button
-              onClick={() => {
-                const el = document.getElementById("evaluation");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
-              className="inline-flex items-center gap-2 bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold px-8 py-3 rounded-xl transition-all duration-200 active:scale-[0.97] shadow-md hover:shadow-lg"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-              Obtenir mon évaluation gratuite
-            </button>
-          </div>
-        </div>
-      </section>
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
       <CounterStats
         title="Ils nous ont fait confiance"
@@ -932,176 +511,34 @@ export default function Home() {
         variant="light"
       />
 
-      {/* ─── NOS SOLUTIONS ─────────────────────────────────────────────────────── */}
-      <section id="nos-solutions" className="py-16 bg-gray-50">
+      {/* ─── SERVICES ────────────────────────────────────────────────────── */}
+      <section id="services" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Ce que nous faisons</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Nos Solutions Visa &amp; Immigration</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">Choisissez votre projet et découvrez comment 3M Travel vous accompagne étape par étape.</p>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Tout ce dont vous avez besoin</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              {
-                icon: Briefcase,
-                title: "Visa Travail",
-                desc: "Obtenez un emploi en Europe, au Canada, en Australie ou dans le Golfe. Nous gérons votre dossier complet.",
-                color: "bg-blue-700",
-                lightColor: "bg-blue-50 text-blue-700",
-                href: "/procedures?type=travail",
-                countries: ["🇫🇷", "🇩🇪", "🇨🇦", "🇦🇺", "🇶🇦"],
-                badge: "34 pays",
-              },
-              {
-                icon: GraduationCap,
-                title: "Visa Études",
-                desc: "Partez étudier dans les meilleures universités européennes ou canadiennes avec un accompagnement expert.",
-                color: "bg-emerald-600",
-                lightColor: "bg-emerald-50 text-emerald-700",
-                href: "/procedures?type=etudes",
-                countries: ["🇧🇪", "🇱🇺", "🇵🇱", "🇷🇴", "🇨🇦"],
-                badge: "22 pays",
-              },
-              {
-                icon: Globe,
-                title: "Visa Visiteur",
-                desc: "Voyagez en toute sérénité dans l'espace Schengen, à Dubaï ou au Royaume-Uni. Dossier clé en main.",
-                color: "bg-amber-500",
-                lightColor: "bg-amber-50 text-amber-700",
-                href: "/procedures?type=visiteur",
-                countries: ["🇫🇷", "🇩🇪", "🇦🇪", "🇬🇧", "🇮🇹"],
-                badge: "26 pays",
-              },
-              {
-                icon: Star,
-                title: "Résidence Permanente",
-                desc: "Immigrez définitivement au Canada, en Australie ou en Nouvelle-Zélande. Stratégie personnalisée.",
-                color: "bg-purple-700",
-                lightColor: "bg-purple-50 text-purple-700",
-                href: "/fiches?type=R%C3%A9sidence+Permanente",
-                countries: ["🇨🇦", "🇦🇺", "🇳🇿"],
-                badge: "3 pays",
-              },
-            ].map((sol, i) => (
-              <motion.a
-                key={i}
-                href={sol.href}
-                initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-                className="group block bg-white rounded-2xl shadow-sm hover:shadow-xl border border-gray-100 hover:border-blue-200 transition-all duration-300 overflow-hidden"
-              >
-                <div className={`${sol.color} px-6 pt-6 pb-8 relative`}>
-                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                    <sol.icon className="w-6 h-6 text-white" />
+              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]" },
+            ].map((s, i) => (
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
+                <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full">
+                  <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                    <s.icon className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-1">{sol.title}</h3>
-                  <span className="text-xs font-semibold text-white/80 bg-white/20 px-2 py-0.5 rounded-full">{sol.badge}</span>
-                  <div className="absolute bottom-0 right-0 w-24 h-24 rounded-tl-full bg-white/10" />
-                </div>
-                <div className="px-6 py-4">
-                  <p className="text-sm text-gray-600 leading-relaxed mb-4">{sol.desc}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-1">
-                      {sol.countries.map((f, j) => <span key={j} className="text-lg">{f}</span>)}
-                    </div>
-                    <span className={`text-xs font-bold flex items-center gap-1 ${sol.lightColor} px-2.5 py-1 rounded-full group-hover:gap-2 transition-all`}>
-                      Voir <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
-              </motion.a>
+                  <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
-
-      {/* ─── COMMENT ÇA MARCHE ─────────────────────────────────────────────────── */}
-      <section className="py-16 bg-white">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Simple &amp; Rapide</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Comment ça marche ?</h2>
-            <p className="text-gray-500 max-w-xl mx-auto">4 étapes claires pour obtenir votre visa avec 3M Travel &amp; Services.</p>
-          </div>
-          <div className="relative">
-            <div className="hidden md:block absolute top-8 left-[12.5%] right-[12.5%] h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {[
-                { step: "01", icon: FileText, title: "Évaluation gratuite", desc: "Remplissez notre formulaire en ligne. Nos experts analysent votre profil sous 24h.", color: "bg-blue-700 text-white" },
-                { step: "02", icon: Users,    title: "Constitution du dossier", desc: "Nous vous guidons pour rassembler tous les documents nécessaires à votre demande.", color: "bg-blue-600 text-white" },
-                { step: "03", icon: Upload,   title: "Soumission officielle", desc: "Votre dossier est soumis à l'ambassade ou au consulat compétent.", color: "bg-amber-500 text-white" },
-                { step: "04", icon: CheckCircle2, title: "Obtention du visa", desc: "Vous recevez votre visa et nos conseils pour préparer votre départ en toute sérénité.", color: "bg-green-600 text-white" },
-              ].map((step, i) => (
-                <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="flex flex-col items-center text-center">
-                  <div className={`relative w-16 h-16 rounded-2xl ${step.color} flex items-center justify-center shadow-lg mb-4 z-10`}>
-                    <step.icon className="w-7 h-7" />
-                    <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-white border-2 border-blue-200 text-xs font-black text-blue-700 flex items-center justify-center">{step.step}</span>
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2 text-sm">{step.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-          <div className="text-center mt-10">
-            <a href="#evaluation">
-              <Button className="bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-3 text-base shadow-lg">
-                Commencer maintenant <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── DESTINATIONS POPULAIRES ───────────────────────────────────────────── */}
-      <section className="py-16 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-blue-300 uppercase tracking-widest mb-2">Où voulez-vous aller ?</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Destinations Populaires</h2>
-            <p className="text-blue-200 max-w-xl mx-auto">Nos clients partent dans ces pays chaque semaine. Découvrez les procédures adaptées à votre profil.</p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            {[
-              { flag: "🇫🇷", name: "France",       count: "Visa Schengen",     href: "/fiches?q=france",      popular: true },
-              { flag: "🇩🇪", name: "Allemagne",    count: "Travail & Études",   href: "/fiches?q=allemagne",   popular: false },
-              { flag: "🇱🇺", name: "Luxembourg",   count: "Travail & Études",   href: "/fiches?q=luxembourg",  popular: true },
-              { flag: "🇧🇪", name: "Belgique",     count: "Visa Études",        href: "/fiches?q=belgique",    popular: false },
-              { flag: "🇨🇦", name: "Canada",       count: "RP & Travail",       href: "/fiches?q=canada",      popular: true },
-              { flag: "🇮🇹", name: "Italie",       count: "Travail & Tourisme", href: "/fiches?q=italie",      popular: false },
-              { flag: "🇵🇹", name: "Portugal",     count: "Visa Travail",       href: "/fiches?q=portugal",    popular: false },
-              { flag: "🇦🇪", name: "Dubaï",        count: "Visa Visiteur",      href: "/fiches?q=dubai",       popular: true },
-              { flag: "🇦🇺", name: "Australie",    count: "Travail & RP",       href: "/fiches?q=australie",   popular: false },
-              { flag: "🇵🇱", name: "Pologne",      count: "Travail & Études",   href: "/fiches?q=pologne",     popular: false },
-            ].map((dest, i) => (
-              <motion.a
-                key={i}
-                href={dest.href}
-                initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-                className="group relative bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/40 rounded-2xl p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                {dest.popular && (
-                  <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">Populaire</span>
-                )}
-                <div className="text-4xl mb-2">{dest.flag}</div>
-                <div className="font-bold text-white text-sm mb-0.5">{dest.name}</div>
-                <div className="text-xs text-blue-300">{dest.count}</div>
-                <div className="mt-2 text-xs text-blue-200 group-hover:text-white transition-colors flex items-center justify-center gap-1">
-                  Voir <ArrowRight className="w-3 h-3" />
-                </div>
-              </motion.a>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <a href="/destinations">
-              <Button variant="outline" className="border-white/50 text-white hover:bg-white/15 font-bold px-8 py-3 text-base">
-                <Globe className="w-5 h-5 mr-2" /> Toutes les destinations
-              </Button>
-            </a>
-          </div>
-        </div>
-      </section>
-
-
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-16 bg-gradient-to-b from-blue-50 to-white">
@@ -1114,94 +551,29 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {isGeneratingReport ? (
-            <AILoadingScreen />
-          ) : isSubmitted ? (
+          {isSubmitted ? (
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" as const }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" as const }}
             >
-              {aiReport ? (
-                <Card className="border-blue-200 shadow-xl overflow-hidden">
-                  {/* En-tête du rapport */}
-                  <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] p-6 text-white">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CheckCircle2 className="w-8 h-8 text-green-300" />
-                      <h3 className="text-xl font-bold">Rapport d'Évaluation Personnalisé</h3>
-                    </div>
-                    <p className="text-blue-200 text-sm">Généré par intelligence artificielle — 3M Travel & Services</p>
-                  </div>
-                  {/* Contenu du rapport en texte brut */}
-                  <div className="p-6 bg-gray-50">
-                    <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800 leading-relaxed bg-white border border-gray-200 rounded-lg p-4 overflow-auto max-h-[500px] shadow-inner">
-                      {aiReport}
-                    </pre>
-                  </div>
-                  {/* Actions */}
-                  <div className="p-6 bg-white border-t border-gray-100 flex flex-col gap-3">
-                    {/* Bouton PDF — principal */}
-                    <Button
-                      onClick={() => generateEvaluationPdf(aiReport, candidateName)}
-                      className="w-full bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1e3a8a] text-white font-bold py-3 text-base shadow-lg active:scale-[0.97] transition-all"
-                    >
-                      📄 Télécharger le rapport en PDF
-                    </Button>
-                    {/* Ligne secondaire */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button
-                        onClick={() => {
-                          const blob = new Blob([aiReport], { type: 'text/plain;charset=utf-8' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url; a.download = 'rapport-evaluation-3M-Travel.txt';
-                          a.click(); URL.revokeObjectURL(url);
-                        }}
-                        variant="outline"
-                        className="flex-1 border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
-                      >
-                        💾 Version texte (.txt)
-                      </Button>
-                      <Button
-                        onClick={() => { setIsSubmitted(false); setAiReport(null); }}
-                        variant="outline"
-                        className="flex-1 border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50 text-sm"
-                      >
-                        ↺ Nouvelle évaluation
-                      </Button>
-                    </div>
-                  </div>
-                  {/* CTA WhatsApp */}
-                  <div className="px-6 pb-6">
-                    <a
-                      href={`https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20j'ai%20re%C3%A7u%20mon%20rapport%20d'%C3%A9valuation%20et%20je%20souhaite%20d%C3%A9marrer%20mon%20dossier.`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
-                    >
-                      💬 Contacter un conseiller WhatsApp
-                    </a>
-                  </div>
-                </Card>
-              ) : (
-                <Card className="p-12 text-center border-green-200 bg-green-50 shadow-xl">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
-                    className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
-                  >
-                    <CheckCircle2 className="w-10 h-10 text-green-600" />
-                  </motion.div>
-                  <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
-                  <p className="text-green-700 mb-6 max-w-md mx-auto">
-                    Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
-                  </p>
-                  <Button onClick={() => { setIsSubmitted(false); setAiReport(null); }} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
-                    Faire une nouvelle demande
-                  </Button>
-                </Card>
-              )}
+              <Card className="p-12 text-center border-green-200 bg-green-50 shadow-xl">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+                  className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
+                >
+                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+                </motion.div>
+                <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
+                <p className="text-green-700 mb-6 max-w-md mx-auto">
+                  Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
+                </p>
+                <Button onClick={() => setIsSubmitted(false)} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
+                  Faire une nouvelle demande
+                </Button>
+              </Card>
             </motion.div>
           ) : (
             <Card className="p-6 md:p-10 border-blue-100 shadow-xl overflow-hidden">
@@ -1752,22 +1124,15 @@ export default function Home() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4">Prêt à réaliser votre projet ?</h2>
           <p className="text-blue-200 text-lg mb-8 max-w-2xl mx-auto">Contactez nos experts dès aujourd'hui pour une consultation gratuite et personnalisée.</p>
-          <div className="flex flex-col sm:flex-row gap-5 justify-center">
-            <a href="#evaluation">
-              <Button
-                size="lg"
-                className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-extrabold text-xl shadow-2xl px-12 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl ring-2 ring-white/30 hover:ring-white/60"
-              >
-                Pré-évaluation gratuite <ArrowRight className="w-6 h-6 ml-2" />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href="#evaluation">
+              <Button size="lg" className="bg-white hover:bg-[#dbeafe] text-[#1e3a8a] font-bold shadow-xl px-8 active:scale-[0.97] transition-transform">
+                Pré-évaluation gratuite <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
             <a href="mailto:hello@3mtravelegency.com">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/10 font-bold text-xl px-10 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl"
-              >
-                <Mail className="w-5 h-5 mr-2" />Nous écrire
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 active:scale-[0.97] transition-transform">
+                <Mail className="w-4 h-4 mr-2" />Nous écrire
               </Button>
             </a>
           </div>
@@ -2399,7 +1764,7 @@ function PricingSection() {
                   href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`w-full py-4 rounded-2xl font-extrabold text-base text-center transition-all active:scale-[0.97] block shadow-md hover:shadow-xl ${
+                  className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
                     plan.highlight
                       ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
                       : plan.id === "garanti"

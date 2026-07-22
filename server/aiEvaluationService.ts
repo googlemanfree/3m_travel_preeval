@@ -59,9 +59,8 @@ Ta mission est d'analyser le texte du CV fourni et de rédiger le rapport offici
 Consignes de notation et de structure :
 - Analyse le profil, le nom du candidat et ses compétences.
 - Évalue la destination initiale (${destination}) : attribue un score entre 50 et 60/100 en expliquant les blocages légaux/ministériels de 2026 (contingentement, bilinguisme, ADEM, salaire social minimum).
-- PRIORITÉ ABSOLUE : Recommande le Canada (Résidence Permanente) en PREMIER avec un score de 95/100, en expliquant Express Entry, PNP, l'avantage bilingue +16 pts CRS, les 500 000 RP/an et les secteurs en tension (santé, BTP, IT, transport). C'est la destination phare de 3M Travel & Services.
-- Recommande ensuite la Pologne (88/100) comme alternative rapide.
-- Inclus la synthèse des scores visuelle avec barres (████), dans cet ordre : Canada (1er), Pologne (2e), Allemagne (3e), Luxembourg (4e). Le tableau des critères (Formation/25, Expérience/25, Langues/20, Secteur/20, Ajustement/10).
+- Recommande les destinations fortes (Pologne: 95/100 pour la rapidité / Canada: 90/100 pour la Résidence Permanente).
+- Inclus la synthèse des scores visuelle avec barres (████), le tableau des critères (Formation/25, Expérience/25, Langues/20, Secteur/20, Ajustement/10).
 - Mentionne les points forts, points de vigilance, le cadre juridique, les frais d'ouverture obligatoires de 65 000 FCFA non remboursables, la liste des pièces justificatives, le suivi WhatsApp (698 104 832) et les étapes immédiates.
 - N'utilise aucun formatage Markdown (pas de **, pas de #, pas de code blocks). Uniquement du texte brut lisible directement dans un e-mail.
 
@@ -135,8 +134,8 @@ Nous avons le plaisir de vous transmettre les conclusions de notre comité d'adm
 
 SYNTHÈSE DES SCORES PAR DESTINATION
 
-🇨🇦 CANADA      |  ████████████████████████████████  |  95 / 100  |  (DOSSIER EXCELLENT) ⭐ RECOMMANDÉ
-🇵🇱 POLOGNE     |  ██████████████████████████████  |  88 / 100  |  (DOSSIER RECOMMANDÉ)
+🇵🇱 POLOGNE     |  ████████████████████████████████  |  95 / 100  |  (DOSSIER EXCELLENT)
+🇨🇦 CANADA      |  ████████████████████████████████  |  90 / 100  |  (DOSSIER RECOMMANDÉ)
 🇩🇪 ALLEMAGNE   |  ████████████████████████          |  75 / 100  |  (DOSSIER ADMISSIBLE)
 🇱🇺 LUXEMBOURG  |  ████████████████                  |  ${destinationScore} / 100  |  (ÉLIGIBILITÉ MODÉRÉE)
 
@@ -156,10 +155,10 @@ SCORE TOTAL : ${totalScore} / 100
 
 RECOMMANDATION STRATÉGIQUE
 
-Destination recommandée : Canada — Résidence Permanente
+Destination recommandée : Pologne
 Score : 95/100 (DOSSIER EXCELLENT)
 
-Notre analyse stratégique identifie le Canada comme la destination prioritaire pour votre profil. Le programme Express Entry et le Programme des Candidats des Provinces (PNP) offrent une voie directe vers la Résidence Permanente, avec un avantage décisif pour les bilingues français/anglais (+16 pts CRS). Avec 500 000 RP accordées par an et des secteurs en tension (santé, BTP, IT, transport), le Canada représente l'opportunité la plus sécurisée et la plus durable pour votre projet de vie.
+Notre analyse stratégique identifie la Pologne comme offrant les meilleures perspectives pour votre profil, avec des procédures simplifiées et des opportunités réelles d'établissement ou de résidence permanente.
 
 ---
 
