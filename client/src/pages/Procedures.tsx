@@ -943,7 +943,7 @@ function ProcedureCard({ proc, dest, onStartProcedure }: {
         </div>
 
         <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-          <span className="flex items-center gap-1"><DollarSign className="w-3 h-3 text-green-500" />{proc.budget}</span>
+          <span className="flex items-center gap-1 text-amber-700 font-medium"><DollarSign className="w-3 h-3 text-amber-500" />Honoraires après évaluation</span>
           <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-blue-500" />{proc.delai}</span>
         </div>
 

@@ -283,13 +283,7 @@ export default function AgreementProtocol({
                 Honoraires et Conditions Financières
               </h3>
               <p className="text-slate-600">
-                Les honoraires d'accompagnement correspondent à la formule
-                choisie par le Candidat lors de sa demande ({formulaChosen || "formule standard"}).
-                Le détail des prestations incluses dans cette formule est
-                disponible sur notre site et a été présenté au Candidat lors de
-                son évaluation. Les conditions de paiement et d'éventuel
-                remboursement partiel en cas de refus de visa sont précisées
-                dans les conditions générales de vente disponibles sur demande.
+                Les honoraires d'accompagnement de l'Agence sont définis sur mesure après évaluation du profil du Candidat, en fonction de la destination choisie, du type de visa et de la complexité du dossier. Le montant convenu entre les parties sera communiqué au Candidat par le conseiller assigné avant l'ouverture officielle du dossier. Les conditions de paiement sont précisées dans la proposition commerciale remise au Candidat.
               </p>
             </div>
 

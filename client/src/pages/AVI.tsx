@@ -106,14 +106,37 @@ export default function AVI() {
             </div>
           </div>
 
-          {/* Tarif */}
-          <div className="bg-yellow-50 border-l-4 border-yellow-600 p-6 rounded">
-            <h2 className="text-2xl font-bold text-yellow-900 mb-4">💰 Tarif</h2>
-            <div className="space-y-2">
-              <p className="text-lg"><strong>Frais de service 3M Travel :</strong> 50 000 FCFA</p>
-              <p className="text-gray-700"><strong>Inclus :</strong> Conseil, suivi, coordination avec la banque</p>
-              <p className="text-gray-700"><strong>Non inclus :</strong> Frais bancaires variables (selon banque et montant)</p>
-              <p className="text-sm text-gray-600 mt-3">⏱️ Délai total : 2-3 semaines</p>
+          {/* Frais officiels + honoraires */}
+          <div className="space-y-4">
+            {/* Frais bancaires officiels */}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+              <h2 className="text-xl font-bold text-blue-900 mb-3">Frais officiels (banque)</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between items-center py-2 border-b border-blue-100">
+                  <span className="text-gray-700">Frais bancaires de traitement (banque camerounaise)</span>
+                  <span className="font-bold text-blue-800">20 000 – 50 000 FCFA</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-gray-700">Légalisation du document (si requis)</span>
+                  <span className="font-bold text-blue-800">5 000 – 10 000 FCFA</span>
+                </div>
+                <p className="text-xs text-blue-600 mt-2">⚠️ Ces frais sont payés directement à votre banque. Ils varient selon l'établissement bancaire et le montant de l'AVI.</p>
+              </div>
+            </div>
+            {/* Honoraires 3M */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+              <h2 className="text-xl font-bold text-amber-900 mb-2">Honoraires 3M Travel</h2>
+              <p className="text-sm text-amber-800 leading-relaxed">
+                Nos honoraires pour l'accompagnement AVI (conseil, coordination bancaire, suivi) sont définis après évaluation de votre dossier. Contactez-nous pour obtenir une proposition personnalisée.
+              </p>
+              <a
+                href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20des%20informations%20sur%20l%27AVI%20et%20vos%20honoraires."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-amber-600 text-white text-sm font-bold rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                💬 Demander un devis
+              </a>
             </div>
           </div>
 

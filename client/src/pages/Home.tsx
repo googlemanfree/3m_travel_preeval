@@ -1117,8 +1117,8 @@ export default function Home() {
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <TestimonialsSection />
 
-      {/* --- TARIFS & GARANTIES --- */}
-      <PricingSection />
+      {/* ─── HONORAIRES ─────────────────────────────────────────────────── */}
+      <HonorairesSection />
 
       {/* ─── RESSOURCES ─────────────────────────────────────────────────── */}
       <section id="ressources" className="py-20 px-4 scroll-mt-20" style={{ background: 'linear-gradient(180deg, #f0f4ff 0%, #e8eeff 100%)' }}>
@@ -1144,7 +1144,7 @@ export default function Home() {
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <span className="inline-block bg-blue-500/30 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-sm">Tarifs</span>
                   <h3 className="text-xl font-extrabold text-white mb-1">Grille Tarifaire Complète</h3>
-                  <p className="text-blue-200 text-sm mb-3">Tous nos tarifs par service — Canada, Europe, Golfe, Tests de langue</p>
+                  <p className="text-blue-200 text-sm mb-3">Frais officiels des ambassades et autorités — Canada, Europe, Golfe, Tests de langue</p>
                   <span className="inline-flex items-center gap-1 text-white font-semibold text-sm bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full transition-colors">
                     Voir les tarifs <ChevronRight className="w-4 h-4" />
                   </span>
@@ -1740,79 +1740,47 @@ function WhatsAppButton() {
   );
 }
 
-// ─── Section Tarifs & Garanties ───────────────────────────────────────────────
-function PricingSection() {
-  const plans = [
+// ─── Section Honoraires ───────────────────────────────────────────────────────
+function HonorairesSection() {
+  const phoneNumber = "237698104832";
+  const steps = [
     {
-      id: "integral",
-      icon: <Plane className="w-7 h-7" />,
-      badge: null,
-      title: "Règlement Intégral",
-      subtitle: "Traitement accéléré",
-      color: "from-[#1e3a8a] to-[#2563eb]",
-      borderColor: "border-[#2563eb]/30",
-      badgeBg: "",
-      textAccent: "text-[#7cb9e8]",
-      description: "Payez en une seule fois et bénéficiez d'un traitement prioritaire de votre dossier, sans frais supplémentaires.",
-      features: [
-        "Traitement prioritaire du dossier",
-        "Suivi personnalisé dédié",
-        "Réponse sous 24h garantie",
-        "Accompagnement complet",
-        "Sans frais supplémentaires",
-      ],
-      cta: "Choisir cette option",
-      highlight: false,
+      num: "01",
+      icon: <Star className="w-6 h-6" />,
+      title: "Évaluation gratuite de votre profil",
+      desc: "Remplissez notre formulaire en ligne. Nos experts analysent votre profil (diplômes, expérience, langues, finances) sous 24h.",
+      color: "bg-yellow-50 border-yellow-200 text-yellow-700",
+      iconBg: "bg-yellow-100 text-yellow-600",
     },
     {
-      id: "echelonne",
-      icon: <Clock className="w-7 h-7" />,
-      badge: "Le plus choisi",
-      title: "Échelonné Flexible",
-      subtitle: "4 à 5 mois",
-      color: "from-[#2563eb] to-[#1d4ed8]",
-      borderColor: "border-[#2563eb]",
-      badgeBg: "bg-yellow-400 text-yellow-900",
-      textAccent: "text-yellow-300",
-      description: "Un paiement structuré et modulable sur 4 à 5 mois pour adapter nos honoraires à votre situation.",
-      features: [
-        "Paiement sur 4 à 5 mensualités",
-        "Plan personnalisé selon votre budget",
-        "Suivi régulier de votre dossier",
-        "Flexibilité des échéances",
-        "Accompagnement complet inclus",
-      ],
-      cta: "Choisir cette option",
-      highlight: true,
+      num: "02",
+      icon: <FileText className="w-6 h-6" />,
+      title: "Rapport d'évaluation personnalisé",
+      desc: "Vous recevez un rapport détaillé avec vos destinations recommandées, les procédures adaptées à votre situation et les frais officiels associés.",
+      color: "bg-blue-50 border-blue-200 text-blue-700",
+      iconBg: "bg-blue-100 text-blue-600",
     },
     {
-      id: "garanti",
-      icon: <Shield className="w-7 h-7" />,
-      badge: "Zéro risque",
-      title: "Permis Garanti",
-      subtitle: "Paiement après succès",
-      color: "from-[#059669] to-[#047857]",
-      borderColor: "border-emerald-500/40",
-      badgeBg: "bg-emerald-400 text-emerald-900",
-      textAccent: "text-emerald-300",
-      description: "Réglez nos honoraires d'agence UNIQUEMENT après succès et obtention effective de votre visa.",
-      features: [
-        "Honoraires payés après obtention du visa",
-        "Zéro risque financier pour vous",
-        "Engagement total de notre équipe",
-        "Suivi jusqu'à l'obtention du visa",
-        "Conditions d'éligibilité à vérifier",
-      ],
-      cta: "Vérifier mon éligibilité",
-      highlight: false,
+      num: "03",
+      icon: <Users className="w-6 h-6" />,
+      title: "Proposition d'honoraires sur mesure",
+      desc: "Sur la base de votre profil et de la complexité de votre dossier, nous vous proposons nos honoraires d'accompagnement. Aucun montant n'est fixé avant cette étape.",
+      color: "bg-green-50 border-green-200 text-green-700",
+      iconBg: "bg-green-100 text-green-600",
+    },
+    {
+      num: "04",
+      icon: <Shield className="w-6 h-6" />,
+      title: "Accord et ouverture du dossier",
+      desc: "Vous acceptez notre proposition, signez le protocole d'accord et nous ouvrons officiellement votre dossier d'immigration.",
+      color: "bg-purple-50 border-purple-200 text-purple-700",
+      iconBg: "bg-purple-100 text-purple-600",
     },
   ];
 
-  const phoneNumber = "237698104832";
-
   return (
     <section id="tarifs" className="py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto px-4">
         {/* En-tête */}
         <div className="text-center mb-14">
           <motion.p
@@ -1821,7 +1789,7 @@ function PricingSection() {
             viewport={{ once: true }}
             className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2"
           >
-            Nos formules
+            Transparence totale
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
@@ -1830,7 +1798,7 @@ function PricingSection() {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
           >
-            Tarifs & Garanties
+            Nos honoraires, après votre évaluation
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
@@ -1839,82 +1807,81 @@ function PricingSection() {
             transition={{ delay: 0.2 }}
             className="text-gray-500 max-w-2xl mx-auto text-base"
           >
-            Choisissez la formule qui correspond à votre situation. Transparence totale, aucun frais caché.
+            Nous ne parlons jamais d'argent avant d'avoir analysé votre profil. Nos honoraires sont définis sur mesure, en fonction de votre situation et de la destination choisie.
           </motion.p>
         </div>
 
-        {/* Cards */}
-        <div className="grid md:grid-cols-3 gap-6 items-stretch">
-          {plans.map((plan, i) => (
+        {/* Étapes */}
+        <div className="grid md:grid-cols-2 gap-5 mb-12">
+          {steps.map((step, i) => (
             <motion.div
-              key={plan.id}
-              initial={{ opacity: 0, y: 30 }}
+              key={step.num}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.12, duration: 0.5 }}
-              className={`relative rounded-3xl border-2 ${plan.borderColor} flex flex-col overflow-hidden shadow-lg ${plan.highlight ? "scale-[1.03] shadow-2xl ring-2 ring-[#2563eb]/40" : ""}`}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className={`flex items-start gap-4 p-5 rounded-2xl border ${step.color}`}
             >
-              {/* Badge */}
-              {plan.badge && (
-                <div className={`absolute top-4 right-4 text-xs font-bold px-3 py-1 rounded-full ${plan.badgeBg}`}>
-                  {plan.badge}
-                </div>
-              )}
-
-              {/* Header coloré */}
-              <div className={`bg-gradient-to-br ${plan.color} p-7 text-white`}>
-                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mb-4">
-                  {plan.icon}
-                </div>
-                <h3 className="text-xl font-extrabold mb-1">{plan.title}</h3>
-                <p className={`text-sm font-semibold ${plan.textAccent}`}>{plan.subtitle}</p>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${step.iconBg}`}>
+                {step.icon}
               </div>
-
-              {/* Corps */}
-              <div className="bg-white flex flex-col flex-1 p-7">
-                <p className="text-gray-500 text-sm leading-relaxed mb-6">{plan.description}</p>
-
-                {/* Features */}
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                      <CheckCircle className="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <a
-                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
-                    plan.highlight
-                      ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
-                      : plan.id === "garanti"
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                      : "bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
-                  }`}
-                >
-                  {plan.cta} →
-                </a>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-bold opacity-60">{step.num}</span>
+                  <h3 className="font-bold text-gray-900 text-sm">{step.title}</h3>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Note légale */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+        {/* Encadré frais officiels */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="bg-[#f8faff] border border-[#dbeafe] rounded-2xl p-6 mb-8"
+        >
+          <div className="flex items-start gap-3">
+            <Info className="w-5 h-5 text-[#2563eb] flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-[#1e3a8a] mb-1">Frais officiels des autorités</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                En plus de nos honoraires, chaque procédure implique des <strong>frais officiels payables directement aux autorités</strong> (ambassades, gouvernements, centres d'examen) : frais de visa, biométrie, examen médical, tests de langue, etc. Ces frais sont indépendants de notre agence.
+              </p>
+              <a href="/tarifs" className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors">
+                Consulter les frais officiels par procédure <ChevronRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
-          className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
+          className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
-          Les honoraires d'agence couvrent l'accompagnement, la préparation du dossier et le suivi administratif. La décision d'octroi du visa appartient exclusivement aux autorités compétentes.
-        </motion.p>
+          <a
+            href="/evaluation-widget"
+            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#0f2460] to-[#2563eb] text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-200"
+          >
+            <Star className="w-5 h-5 text-yellow-300" />
+            Évaluation gratuite de mon profil
+          </a>
+          <a
+            href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent("Bonjour 3M Travel & Services ! Je souhaite connaître vos honoraires pour mon dossier. Pouvez-vous m'aider ?")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white border-2 border-[#2563eb] text-[#2563eb] font-bold rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            💬 Parler à un conseiller
+          </a>
+        </motion.div>
       </div>
     </section>
   );
