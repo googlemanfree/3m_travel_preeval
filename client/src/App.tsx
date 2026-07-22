@@ -25,6 +25,9 @@ import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
+import Tarifs from "./pages/Tarifs";
+import AVI from "./pages/AVI";
+import Blog from "./pages/Blog";
 
 function Router() {
   return (
@@ -64,6 +67,11 @@ function Router() {
 
       {/* Fiches détaillées par pays */}
       <Route path={"/fiches"} component={Fiches} />
+
+      {/* Pages ressources */}
+      <Route path={"/tarifs"} component={Tarifs} />
+      <Route path={"/avi"} component={AVI} />
+      <Route path={"/blog"} component={Blog} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />

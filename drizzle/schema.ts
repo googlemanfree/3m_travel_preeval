@@ -252,6 +252,13 @@ export const applications = mysqlTable("applications", {
   agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
   agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
   agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
+  // ─── Envoi d'évaluation après 3 jours ───
+  evaluationEmailSentAt: timestamp("evaluationEmailSentAt"),  // Quand l'évaluation a été envoyée
+  evaluationEmailScheduledAt: timestamp("evaluationEmailScheduledAt"),  // Quand l'envoi est prévu (createdAt + 3 jours)
+  // ─── Confirmation RDV pour dépôt de dossier ───
+  appointmentScheduledAt: timestamp("appointmentScheduledAt"),  // Date/heure du RDV confirmé
+  appointmentConfirmedAt: timestamp("appointmentConfirmedAt"),  // Quand le candidat a confirmé le RDV
+  appointmentConfirmationEmailSentAt: timestamp("appointmentConfirmationEmailSentAt"),  // Quand l'email de confirmation a été envoyé
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
