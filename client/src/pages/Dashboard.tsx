@@ -343,11 +343,11 @@ export default function Dashboard() {
                       </div>
 
                       {/* Infos du dossier */}
-                      <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="grid sm:grid-cols-2 gap-4 mb-6">
                         {[
                           { label: "Destination", value: profile?.destination?.toUpperCase() ?? "—", icon: Globe },
                           { label: "Type de visa", value: profile?.visaType ?? "À définir", icon: FileText },
-                          { label: "Formule choisie", value: profile?.formulaChosen ?? "Non sélectionnée", icon: Award },
+                          { label: "Procédure recommandée", value: (profile as any)?.procedureChoisie ?? "En cours d’analyse", icon: Award },
                           { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
                         ].map((item) => (
                           <div key={item.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
@@ -361,6 +361,97 @@ export default function Dashboard() {
                           </div>
                         ))}
                       </div>
+
+                      {/* Étapes de traitement détaillées (si l'admin les a renseignées) */}
+                      {(() => {
+                        const rawSteps = (profile as any)?.processingSteps;
+                        if (!rawSteps) return null;
+                        let steps: Array<{key:string;label:string;status:string;completedAt?:string;note?:string}> = [];
+                        try { steps = JSON.parse(rawSteps); } catch { return null; }
+                        if (!steps.length) return null;
+                        const doneCount = steps.filter(s => s.status === "done").length;
+                        const progress = Math.round((doneCount / steps.length) * 100);
+                        return (
+                          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h2 className="font-bold text-gray-800">Détail des étapes de traitement</h2>
+                              <span className="text-xs text-gray-500">{doneCount}/{steps.length} étapes</span>
+                            </div>
+                            {/* Barre de progression */}
+                            <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
+                              <div
+                                className="bg-[#1E3A8A] h-2 rounded-full transition-all duration-700"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              {steps.map(step => {
+                                const isDone = step.status === "done";
+                                const isInProgress = step.status === "in_progress";
+                                const isBlocked = step.status === "blocked";
+                                return (
+                                  <div key={step.key} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
+                                    isDone ? "bg-green-50" : isInProgress ? "bg-blue-50" : isBlocked ? "bg-red-50" : "bg-gray-50"
+                                  }`}>
+                                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                                      isDone ? "bg-green-500" : isInProgress ? "bg-blue-500 animate-pulse" : isBlocked ? "bg-red-500" : "bg-gray-300"
+                                    }`} />
+                                    <span className={`text-sm flex-1 ${
+                                      isDone ? "text-green-700 font-medium" : isInProgress ? "text-blue-700 font-semibold" : isBlocked ? "text-red-600" : "text-gray-500"
+                                    }`}>{step.label}</span>
+                                    {isDone && step.completedAt && (
+                                      <span className="text-xs text-gray-400">{new Date(step.completedAt).toLocaleDateString("fr-FR")}</span>
+                                    )}
+                                    {isInProgress && <span className="text-xs text-blue-500 font-semibold">En cours</span>}
+                                    {isBlocked && <span className="text-xs text-red-500 font-semibold">Bloqué</span>}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Proposition d'honoraires */}
+                      {(profile as any)?.honoraires && (profile as any)?.honorairesStatus === "proposed" && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 mb-6">
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <span className="text-yellow-600 text-lg">💰</span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-black text-yellow-800 text-base">Proposition d’honoraires</div>
+                              <div className="text-2xl font-black text-yellow-700 mt-1">
+                                {Number((profile as any).honoraires).toLocaleString("fr-FR")} FCFA
+                              </div>
+                              {(profile as any)?.honorairesNote && (
+                                <div className="text-sm text-yellow-700 mt-2">{(profile as any).honorairesNote}</div>
+                              )}
+                              <a
+                                href={`https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, j'ai reçu la proposition d'honoraires de ${Number((profile as any).honoraires).toLocaleString("fr-FR")} FCFA et je souhaite confirmer mon accord.`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors"
+                              >
+                                ✅ Confirmer mon accord via WhatsApp
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Honoraires acceptés */}
+                      {(profile as any)?.honorairesStatus === "accepted" && (
+                        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                          <div>
+                            <div className="font-bold text-green-800">Honoraires confirmés</div>
+                            <div className="text-sm text-green-700">
+                              Montant : {Number((profile as any).honoraires).toLocaleString("fr-FR")} FCFA
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* CTA si dossier nouveau */}
                       {(profile?.dossierStatus === "nouveau" || profile?.dossierStatus === "documents") && (

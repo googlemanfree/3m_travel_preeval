@@ -179,6 +179,13 @@ export const candidateRouter = router({
       educationLevel: c.educationLevel,
       employmentStatus: c.employmentStatus,
       languageLevel: c.languageLevel,
+      // Champs de traitement admin (visibles par le client)
+      adminNote: c.adminNote,
+      processingSteps: c.processingSteps,
+      honoraires: c.honoraires,
+      honorairesNote: c.honorairesNote,
+      honorairesStatus: c.honorairesStatus,
+      procedureChoisie: c.procedureChoisie,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -443,4 +450,190 @@ export const candidateRouter = router({
   getDossierSteps: publicProcedure.query(() => {
     return DOSSIER_STEPS;
   }),
+
+  // ── [ADMIN] Liste des candidats inscrits ─────────────────────────────────
+  adminListCandidates: publicProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      status: z.enum(["nouveau", "evaluation", "documents", "traitement", "soumis", "approuve", "refuse", "ALL"]).optional().default("ALL"),
+      limit: z.number().int().max(200).default(100),
+      offset: z.number().int().default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      if ((ctx as any).user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      let rows = await db
+        .select()
+        .from(candidates)
+        .orderBy(desc(candidates.createdAt))
+        .limit(input.limit)
+        .offset(input.offset);
+
+      if (input.status && input.status !== "ALL") {
+        rows = rows.filter(c => c.dossierStatus === input.status);
+      }
+      if (input.search) {
+        const q = input.search.toLowerCase();
+        rows = rows.filter(c =>
+          c.fullName.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          (c.phone ?? "").includes(q)
+        );
+      }
+
+      return rows.map(c => ({
+        id: c.id,
+        fullName: c.fullName,
+        email: c.email,
+        phone: c.phone,
+        nationality: c.nationality,
+        destination: c.destination,
+        visaType: c.visaType,
+        dossierStatus: c.dossierStatus,
+        adminNote: c.adminNote,
+        adminPrivateNote: c.adminPrivateNote,
+        processingSteps: c.processingSteps,
+        honoraires: c.honoraires,
+        honorairesNote: c.honorairesNote,
+        honorairesStatus: c.honorairesStatus,
+        procedureChoisie: c.procedureChoisie,
+        scoreResult: c.scoreResult,
+        educationLevel: c.educationLevel,
+        employmentStatus: c.employmentStatus,
+        languageLevel: c.languageLevel,
+        emailVerified: c.emailVerified,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        lastLoginAt: c.lastLoginAt,
+      }));
+    }),
+
+  // ── [ADMIN] Mettre à jour le statut et les infos de traitement d'un candidat
+  adminUpdateCandidate: publicProcedure
+    .input(z.object({
+      id: z.number().int(),
+      dossierStatus: z.enum(["nouveau", "evaluation", "documents", "traitement", "soumis", "approuve", "refuse"]).optional(),
+      adminNote: z.string().optional(),
+      adminPrivateNote: z.string().optional(),
+      processingSteps: z.string().optional(),
+      honoraires: z.number().int().optional(),
+      honorairesNote: z.string().optional(),
+      honorairesStatus: z.enum(["pending", "proposed", "accepted", "refused"]).optional(),
+      procedureChoisie: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if ((ctx as any).user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const updateData: Record<string, unknown> = {};
+      const { id, ...fields } = input;
+      Object.entries(fields).forEach(([k, v]) => { if (v !== undefined) updateData[k] = v; });
+
+      await db.update(candidates).set(updateData).where(eq(candidates.id, id));
+
+      // Notification automatique si changement de statut
+      if (input.dossierStatus) {
+        const step = DOSSIER_STEPS.find(s => s.key === input.dossierStatus);
+        if (step) {
+          const msgContent = input.adminNote
+            ? `📁 **${step.label}**
+
+${input.adminNote}`
+            : `📁 Votre dossier est maintenant en statut : **${step.label}**. ${step.desc}`;
+          await db.insert(candidateMessages).values({
+            candidateId: id,
+            senderRole: "advisor",
+            content: msgContent,
+            isRead: false,
+          });
+        }
+      }
+
+      // Notification si proposition d'honoraires
+      if (input.honoraires && input.honorairesStatus === "proposed") {
+        const amount = input.honoraires.toLocaleString("fr-FR");
+        const noteText = input.honorairesNote ? `
+
+${input.honorairesNote}` : "";
+        await db.insert(candidateMessages).values({
+          candidateId: id,
+          senderRole: "advisor",
+          content: `💰 **Proposition d'honoraires**
+
+Suite à l'évaluation de votre profil, nos honoraires d'accompagnement sont de **${amount} FCFA**.${noteText}
+
+Veuillez nous contacter pour confirmer votre accord.`,
+          isRead: false,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  // ── [ADMIN] Envoyer un message à un candidat ──────────────────────────────
+  adminSendMessage: publicProcedure
+    .input(z.object({
+      candidateId: z.number().int(),
+      content: z.string().min(1).max(5000),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if ((ctx as any).user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db.insert(candidateMessages).values({
+        candidateId: input.candidateId,
+        senderRole: "advisor",
+        content: input.content,
+        isRead: false,
+      });
+      return { success: true };
+    }),
+
+  // ── [ADMIN] Lire les messages d'un candidat spécifique ────────────────────
+  adminGetCandidateMessages: publicProcedure
+    .input(z.object({ candidateId: z.number().int() }))
+    .query(async ({ ctx, input }) => {
+      if ((ctx as any).user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const msgs = await db
+        .select()
+        .from(candidateMessages)
+        .where(eq(candidateMessages.candidateId, input.candidateId))
+        .orderBy(candidateMessages.createdAt);
+
+      return msgs as CandidateMessage[];
+    }),
+
+  // ── [ADMIN] Documents d'un candidat spécifique ────────────────────────────
+  adminGetCandidateFiles: publicProcedure
+    .input(z.object({ candidateId: z.number().int() }))
+    .query(async ({ ctx, input }) => {
+      if ((ctx as any).user?.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const files = await db
+        .select()
+        .from(candidateFiles)
+        .where(eq(candidateFiles.candidateId, input.candidateId))
+        .orderBy(desc(candidateFiles.uploadedAt));
+
+      return files as CandidateFile[];
+    }),
 });

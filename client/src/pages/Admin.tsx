@@ -9,12 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EvaluationManager from "@/components/EvaluationManager";
+import CandidateManager from "@/components/CandidateManager";
 import {
   Search, Filter, Download, Printer, Eye, CheckCircle, XCircle,
   Clock, FileText, Users, TrendingUp, DollarSign, RefreshCw,
   ChevronDown, ChevronUp, MessageCircle, Shield, Loader2
 } from "lucide-react";
 
+type AdminTab = "dossiers" | "candidats";
 type DossierStatus = "nouveau" | "paye" | "en_cours" | "documents_requis" | "soumis" | "approuve" | "refuse";
 type PaymentStatus = "ALL" | "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED";
 type ScoreFilter = "ALL" | "eligible" | "admissible" | "faible" | "unscored";
@@ -180,6 +182,7 @@ export default function Admin() {
   const [paymentFilter, setPaymentFilter] = useState<PaymentStatus>("ALL");
   const [scoreFilter, setScoreFilter] = useState<ScoreFilter>("ALL");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [adminTab, setAdminTab] = useState<AdminTab>("dossiers");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [noteInputs, setNoteInputs] = useState<Record<number, string>>({});
 
@@ -239,7 +242,7 @@ export default function Admin() {
 
       <div className="pt-24 pb-16 px-4 max-w-7xl mx-auto">
         {/* En-tête */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl font-black">Panneau Administrateur</h1>
             <p className="text-slate-400 mt-1">Gestion des dossiers d'immigration — 3M Travel Agency</p>
@@ -250,6 +253,34 @@ export default function Admin() {
           </Button>
         </div>
 
+        {/* Onglets principaux */}
+        <div className="flex gap-1 mb-8 bg-white/5 rounded-xl p-1 w-fit">
+          <button
+            onClick={() => setAdminTab("dossiers")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              adminTab === "dossiers" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            📋 Dossiers pré-évaluation
+          </button>
+          <button
+            onClick={() => setAdminTab("candidats")}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-colors ${
+              adminTab === "candidats" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            👤 Candidats inscrits
+          </button>
+        </div>
+
+        {/* ── ONGLET CANDIDATS INSCRITS ── */}
+        {adminTab === "candidats" && (
+          <CandidateManager />
+        )}
+
+        {/* ── ONGLET DOSSIERS PRÉ-ÉVALUATION ── */}
+        {adminTab === "dossiers" && (
+          <>
         {/* Gestionnaire d'évaluation automatique */}
         <div className="mb-8 bg-gradient-to-r from-slate-900 to-slate-800 border border-white/10 rounded-xl p-6">
           <EvaluationManager />
@@ -486,6 +517,8 @@ export default function Admin() {
               );
             })}
           </div>
+        )}
+          </>
         )}
       </div>
 

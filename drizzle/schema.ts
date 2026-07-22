@@ -102,6 +102,14 @@ export const candidates = mysqlTable("candidates", {
   // Magic link (connexion sans mot de passe après inscription)
   magicLinkToken: varchar("magicLinkToken", { length: 128 }),
   magicLinkExpiresAt: timestamp("magicLinkExpiresAt"),
+  // ─── Traitement admin ───
+  adminNote: text("adminNote"),                    // Note interne du conseiller (visible client)
+  adminPrivateNote: text("adminPrivateNote"),       // Note interne confidentielle (admin seulement)
+  processingSteps: text("processingSteps"),         // JSON : tableau d'étapes {key, label, status, completedAt, note}
+  honoraires: int("honoraires"),                    // Montant honoraires proposé (FCFA)
+  honorairesNote: text("honorairesNote"),           // Détail de la proposition d'honoraires
+  honorairesStatus: mysqlEnum("honorairesStatus", ["pending", "proposed", "accepted", "refused"]).default("pending"),
+  procedureChoisie: varchar("procedureChoisie", { length: 255 }), // Procédure recommandée par l'admin
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
