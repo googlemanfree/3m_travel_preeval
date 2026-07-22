@@ -259,3 +259,48 @@ export const applications = mysqlTable("applications", {
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RÉSERVATIONS DE VOLS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Réservations de vols — tunnel de réservation complet
+ */
+export const flightBookings = mysqlTable("flightBookings", {
+  id: int("id").autoincrement().primaryKey(),
+  // Référence unique de réservation (ex: 3MF-2026-XXXX)
+  bookingRef: varchar("bookingRef", { length: 20 }).notNull().unique(),
+  // Informations du vol sélectionné (JSON sérialisé)
+  flightData: text("flightData").notNull(), // JSON: {airline, flightNumber, from, to, departure, arrival, duration, stops, class, price}
+  // Passagers (JSON sérialisé)
+  passengersData: text("passengersData").notNull(), // JSON: [{type, firstName, lastName, dob, nationality, passportNumber, email, phone}]
+  // Nombre de passagers par type
+  adultsCount: int("adultsCount").default(1).notNull(),
+  childrenCount: int("childrenCount").default(0).notNull(),
+  infantsCount: int("infantsCount").default(0).notNull(),
+  // Prix total
+  totalPrice: int("totalPrice").notNull(), // en FCFA
+  currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+  // Contact principal
+  contactEmail: varchar("contactEmail", { length: 320 }).notNull(),
+  contactPhone: varchar("contactPhone", { length: 50 }).notNull(),
+  // Statut de la réservation
+  bookingStatus: mysqlEnum("bookingStatus", [
+    "pending",      // En attente de confirmation
+    "confirmed",    // Confirmée par l'agence
+    "paid",         // Paiement reçu
+    "ticketed",     // Billet émis
+    "cancelled",    // Annulée
+  ]).default("pending").notNull(),
+  // Note admin
+  adminNote: text("adminNote"),
+  // Utilisateur connecté (optionnel)
+  userId: int("userId"),
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type FlightBooking = typeof flightBookings.$inferSelect;
+export type InsertFlightBooking = typeof flightBookings.$inferInsert;

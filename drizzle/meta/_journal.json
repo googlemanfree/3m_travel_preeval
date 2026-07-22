@@ -57,6 +57,13 @@
       "when": 1784512526623,
       "tag": "0007_silky_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1784684461496,
+      "tag": "0008_fine_energizer",
+      "breakpoints": true
     }
   ]
 }

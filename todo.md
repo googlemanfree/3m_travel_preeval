@@ -378,3 +378,26 @@
 - [ ] Page /visa-etudes : dédiée aux visas d'études avec procédures par pays
 - [ ] Page /visa-visiteur : dédiée aux visas touristiques avec procédures par pays
 - [ ] Chaque page service : hero + liste des pays + FAQ + CTA
+
+## Système de Réservation de Vols (v21)
+- [ ] Schéma DB : table flightBookings (passagers, vol, statut, paiement, référence)
+- [ ] Procédure tRPC createFlightBooking : créer une réservation avec passagers
+- [ ] Procédure tRPC getMyFlightBookings : liste des réservations de l'utilisateur
+- [ ] Procédure tRPC getFlightBookingById : détail d'une réservation
+- [ ] Procédure tRPC updateBookingStatus : admin — confirmer/annuler une réservation
+- [ ] Page /vols/reserver : tunnel de réservation en 3 étapes (Passagers → Récapitulatif → Confirmation)
+- [ ] Étape 1 — Formulaire passagers : prénom, nom, date de naissance, nationalité, numéro de passeport, email, téléphone
+- [ ] Étape 2 — Récapitulatif : détails du vol, liste passagers, total FCFA, conditions
+- [ ] Étape 3 — Confirmation : numéro de réservation, instructions de paiement WhatsApp
+- [ ] Page /mes-reservations : liste des réservations avec statut (En attente / Confirmé / Annulé)
+- [ ] Admin : onglet Réservations Vols dans le panneau admin avec liste et actions
+- [ ] Bouton "Réserver ce vol" sur les cartes de résultats (remplace "Contacter sur WhatsApp")
+
+## Système de Réservation de Vols — Tunnel 3 étapes + Suivi (v12)
+- [x] Table DB flightBookings : bookingRef, flightData (JSON), passengersData (JSON), adultsCount, childrenCount, infantsCount, totalPrice, currency, contactEmail, contactPhone, bookingStatus, adminNote, userId, createdAt, updatedAt
+- [x] Router tRPC flightBookings : createBooking, getBookingByRef (email requis), getMyBookings, listAllBookings (admin), updateBookingStatus (admin)
+- [x] Page /vols/reserver (FlightBooking.tsx) : tunnel 3 étapes (formulaire passagers → récapitulatif → confirmation avec référence)
+- [x] Page /vols/suivi (FlightBookingStatus.tsx) : suivi par référence + email, affichage statut, détails vol, coordonnées, prochaines étapes
+- [x] Route /vols/suivi ajoutée dans App.tsx
+- [x] Lien "Suivre ma réservation" dans la page de confirmation (étape 3 de FlightBooking.tsx)
+- [x] Correction des 14 erreurs TypeScript : accès via flightData JSON (fd.airline, fd.flightNumber, fd.departure, fd.returnFlight), champ bookingStatus (pas status), email requis dans getBookingByRef

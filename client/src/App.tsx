@@ -25,6 +25,8 @@ import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
+import FlightBooking from "./pages/FlightBooking";
+import FlightBookingStatus from "./pages/FlightBookingStatus";
 
 function Router() {
   return (
@@ -40,6 +42,8 @@ function Router() {
       {/* Espace Vols */}
       <Route path={"/vols"} component={Flights} />
       <Route path={"/flights"} component={Flights} />
+      <Route path={"/vols/reserver"} component={FlightBooking} />
+      <Route path={"/vols/suivi"} component={FlightBookingStatus} />
       <Route path={"/procedures"} component={Procedures} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />

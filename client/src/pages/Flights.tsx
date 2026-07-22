@@ -11,7 +11,7 @@ import {
   Luggage, RefreshCw, SlidersHorizontal, TrendingUp, Zap,
   CheckCircle2, Info, Globe, Share2, Mail, Copy, Check,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AirportAutocomplete from "@/components/AirportAutocomplete";
@@ -290,11 +290,12 @@ function CalendarPriceStrip({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-function FlightCard({ flight, searchParams, onSelect, isSelected }: {
+function FlightCard({ flight, searchParams, onSelect, isSelected, onBook }: {
   flight: Flight;
   searchParams: { adults: number; children: number; infants: number; cabinClass: string };
   onSelect?: (flight: Flight) => void;
   isSelected?: boolean;
+  onBook?: (flight: Flight) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -446,11 +447,12 @@ function FlightCard({ flight, searchParams, onSelect, isSelected }: {
                   {isSelected ? <><CheckCircle2 className="w-4 h-4 mr-1" /> Sélectionné</> : <><Plane className="w-4 h-4 mr-1" /> Sélectionner</>}
                 </Button>
               ) : (
-                <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
-                  <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-xs px-5 py-2 rounded-xl w-full">
-                    <Plane className="w-4 h-4 mr-1" /> Réserver
-                  </Button>
-                </a>
+                <Button
+                  onClick={() => onBook ? onBook(flight) : window.open(buildWhatsAppMsg(), "_blank")}
+                  className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-xs px-5 py-2 rounded-xl w-full"
+                >
+                  <Plane className="w-4 h-4 mr-1" /> Réserver
+                </Button>
               )}
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
@@ -620,6 +622,7 @@ function PopularRoutes({ onSelect }: { onSelect: (origin: string, dest: string) 
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Flights() {
+  const [, navigate] = useLocation();
   const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">("ROUND_TRIP");
   const [origin, setOrigin] = useState("YAO");
   const [destination, setDestination] = useState("CDG");
@@ -732,6 +735,46 @@ export default function Flights() {
     setOrigin(destination);
     setDestination(tmp);
   };
+
+  // Navigate to booking page with flight data
+  function handleBookFlight(flight: Flight, returnFlight?: Flight) {
+    const flightData = {
+      airline: flight.airline.name,
+      airlineCode: flight.airline.code,
+      flightNumber: flight.flightNumber,
+      from: flight.origin,
+      fromCity: flight.originCity,
+      to: flight.destination,
+      toCity: flight.destinationCity,
+      departure: `${flight.departureDate}T${flight.departureTime}:00`,
+      arrival: `${flight.departureDate}T${flight.arrivalTime}:00`,
+      duration: flight.duration,
+      stops: flight.stops,
+      stopCities: flight.stopDetails.map(s => s.airport),
+      class: flight.cabinClass,
+      price: flight.totalPrice,
+      baggageIncluded: flight.baggage !== "Aucun bagage",
+      refundable: flight.refundable,
+      pnr: flight.pnrRef,
+      returnFlight: returnFlight ? {
+        airline: returnFlight.airline.name,
+        flightNumber: returnFlight.flightNumber,
+        departure: `${returnFlight.departureDate}T${returnFlight.departureTime}:00`,
+        arrival: `${returnFlight.departureDate}T${returnFlight.arrivalTime}:00`,
+        duration: returnFlight.duration,
+        stops: returnFlight.stops,
+        price: returnFlight.totalPrice,
+      } : undefined,
+    };
+    sessionStorage.setItem("3m_selected_flight", JSON.stringify(flightData));
+    sessionStorage.setItem("3m_pax_config", JSON.stringify({
+      adults: passengers.adults,
+      children: passengers.children,
+      infants: passengers.infants,
+      cabinClass: passengers.cabinClass,
+    }));
+    navigate("/vols/reserver");
+  }
 
   // Build WhatsApp booking summary
   function buildBookingWhatsApp() {
@@ -1002,17 +1045,20 @@ export default function Flights() {
                       Total : <span className="text-white font-black text-base">{formatXAF((selectedOutbound?.totalPrice ?? 0) + (selectedInbound?.totalPrice ?? 0))}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {selectedOutbound && (
+                      <Button
+                        onClick={() => handleBookFlight(selectedOutbound, selectedInbound ?? undefined)}
+                        className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2 rounded-xl"
+                      >
+                        <Plane className="w-4 h-4 mr-2" /> Réserver en ligne
+                      </Button>
+                    )}
                     <a href={buildBookingWhatsApp()} target="_blank" rel="noopener noreferrer">
                       <Button className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-2 rounded-xl">
                         <MessageCircle className="w-4 h-4 mr-2" /> Réserver via WhatsApp
                       </Button>
                     </a>
-                    <Link href="/ouvrir-dossier">
-                      <Button variant="outline" className="border-white text-white hover:bg-white/10 font-bold px-5 py-2 rounded-xl">
-                        Ouvrir un dossier
-                      </Button>
-                    </Link>
                   </div>
                 </motion.div>
               )}
@@ -1322,6 +1368,7 @@ export default function Flights() {
                       searchParams={passengers}
                       onSelect={tripType === "ROUND_TRIP" ? setSelectedOutbound : undefined}
                       isSelected={selectedOutbound?.id === flight.id}
+                      onBook={tripType === "ONE_WAY" ? (f) => handleBookFlight(f) : undefined}
                     />
                   ))}
                   {filteredOutbound.length === 0 && (
