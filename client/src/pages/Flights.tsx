@@ -1401,11 +1401,11 @@ export default function Flights() {
                   </>
                 )}
 
-                {/* Demo notice */}
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-amber-800">
-                    <strong>Mode Démo actif</strong> — Les tarifs et disponibilités affichés sont simulés à des fins de démonstration. Pour des prix réels en temps réel, la connexion à l'API Amadeus sera activée dès réception de vos credentials. Les prix sont indicatifs et basés sur les tarifs moyens du marché.
+                {/* Info tarifs */}
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3">
+                  <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800">
+                    <strong>Tarifs indicatifs</strong> — Les prix affichés sont basés sur les tarifs moyens du marché et incluent les frais d'agence. Le prix final peut varier selon la disponibilité. Contactez-nous pour confirmer votre réservation.
                   </div>
                 </div>
               </div>

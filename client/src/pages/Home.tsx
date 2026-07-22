@@ -256,6 +256,8 @@ export default function Home() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvBase64, setCvBase64] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [aiReport, setAiReport] = useState<string | null>(null);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
@@ -295,7 +297,9 @@ export default function Home() {
   };
 
   const submitMutation = trpc.evaluation.submit.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setIsGeneratingReport(false);
+      setAiReport(data.report ?? null);
       setIsSubmitted(true);
       reset();
       setStep(1);
@@ -306,6 +310,7 @@ export default function Home() {
       setCvBase64("");
     },
     onError: (err) => {
+      setIsGeneratingReport(false);
       toast.error("Erreur lors de la soumission : " + err.message);
     },
   });
@@ -357,6 +362,7 @@ export default function Home() {
   };
 
   const onSubmit = (data: FormValues) => {
+    setIsGeneratingReport(true);
     submitMutation.mutate({ ...data, cvBase64: cvBase64 || undefined });
   };
 
@@ -729,29 +735,100 @@ export default function Home() {
             </p>
           </motion.div>
 
-          {isSubmitted ? (
+          {isGeneratingReport ? (
             <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4, ease: "easeOut" as const }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
             >
-              <Card className="p-12 text-center border-green-200 bg-green-50 shadow-xl">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
-                  className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
-                >
-                  <CheckCircle2 className="w-10 h-10 text-green-600" />
-                </motion.div>
-                <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
-                <p className="text-green-700 mb-6 max-w-md mx-auto">
-                  Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
+              <Card className="p-12 text-center border-blue-200 bg-blue-50 shadow-xl">
+                <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-6 animate-pulse">
+                  <Globe className="w-10 h-10 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-blue-900 mb-3">⏳ Analyse IA en cours...</h3>
+                <p className="text-blue-700 mb-4 max-w-md mx-auto">
+                  Notre intelligence artificielle analyse votre profil et génère votre rapport personnalisé. Veuillez patienter quelques instants.
                 </p>
-                <Button onClick={() => setIsSubmitted(false)} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
-                  Faire une nouvelle demande
-                </Button>
+                <div className="w-full bg-blue-200 rounded-full h-2 max-w-xs mx-auto">
+                  <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '75%' }} />
+                </div>
               </Card>
+            </motion.div>
+          ) : isSubmitted ? (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4, ease: "easeOut" as const }}
+            >
+              {aiReport ? (
+                <Card className="border-blue-200 shadow-xl overflow-hidden">
+                  {/* En-tête du rapport */}
+                  <div className="bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] p-6 text-white">
+                    <div className="flex items-center gap-3 mb-2">
+                      <CheckCircle2 className="w-8 h-8 text-green-300" />
+                      <h3 className="text-xl font-bold">Rapport d'Évaluation Personnalisé</h3>
+                    </div>
+                    <p className="text-blue-200 text-sm">Généré par intelligence artificielle — 3M Travel & Services</p>
+                  </div>
+                  {/* Contenu du rapport en texte brut */}
+                  <div className="p-6 bg-gray-50">
+                    <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800 leading-relaxed bg-white border border-gray-200 rounded-lg p-4 overflow-auto max-h-[500px] shadow-inner">
+                      {aiReport}
+                    </pre>
+                  </div>
+                  {/* Actions */}
+                  <div className="p-6 bg-white border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={() => {
+                        const blob = new Blob([aiReport], { type: 'text/plain;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = 'rapport-evaluation-3M-Travel.txt';
+                        a.click(); URL.revokeObjectURL(url);
+                      }}
+                      variant="outline"
+                      className="flex-1 border-[#1e3a8a] text-[#1e3a8a] hover:bg-blue-50"
+                    >
+                      💾 Télécharger le rapport (.txt)
+                    </Button>
+                    <Button
+                      onClick={() => { setIsSubmitted(false); setAiReport(null); }}
+                      className="flex-1 bg-[#1e3a8a] hover:bg-[#2563eb] text-white"
+                    >
+                      Nouvelle évaluation
+                    </Button>
+                  </div>
+                  {/* CTA WhatsApp */}
+                  <div className="px-6 pb-6">
+                    <a
+                      href={`https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20j'ai%20re%C3%A7u%20mon%20rapport%20d'%C3%A9valuation%20et%20je%20souhaite%20d%C3%A9marrer%20mon%20dossier.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
+                    >
+                      💬 Contacter un conseiller WhatsApp
+                    </a>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="p-12 text-center border-green-200 bg-green-50 shadow-xl">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+                    className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6"
+                  >
+                    <CheckCircle2 className="w-10 h-10 text-green-600" />
+                  </motion.div>
+                  <h3 className="text-2xl font-bold text-green-900 mb-3">Demande envoyée avec succès !</h3>
+                  <p className="text-green-700 mb-6 max-w-md mx-auto">
+                    Votre pré-évaluation a été soumise. Nos experts analyseront votre profil et vous contacteront dans les <strong>24 heures</strong>.
+                  </p>
+                  <Button onClick={() => { setIsSubmitted(false); setAiReport(null); }} className="bg-green-600 hover:bg-green-700 text-white active:scale-[0.97] transition-transform">
+                    Faire une nouvelle demande
+                  </Button>
+                </Card>
+              )}
             </motion.div>
           ) : (
             <Card className="p-6 md:p-10 border-blue-100 shadow-xl overflow-hidden">

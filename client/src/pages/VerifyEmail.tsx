@@ -37,14 +37,18 @@ export default function VerifyEmail() {
       if (data.token) {
         // Récupérer les infos depuis le localStorage temporaire si disponible
         const pending = JSON.parse(localStorage.getItem("pendingCandidate") ?? "{}");
-        login(data.token, {
+        const candidateInfo = {
           id: candidateId,
           fullName: pending.fullName ?? "Candidat",
           email: pending.email ?? "",
           destination: pending.destination ?? "autre",
           dossierStatus: "nouveau",
           emailVerified: true,
-        });
+        };
+        // Stocker le token et les infos dans localStorage (persistant)
+        localStorage.setItem("3m_candidate_token", data.token);
+        localStorage.setItem("3m_candidate_info", JSON.stringify(candidateInfo));
+        login(data.token, candidateInfo);
         localStorage.removeItem("pendingCandidate");
       }
       toast.success("Email vérifié ! Bienvenue dans votre espace 3M Travel.");

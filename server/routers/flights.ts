@@ -383,7 +383,6 @@ export const flightsRouter = router({
         agencyMarkup: AGENCY_MARKUP,
         originInfo: AIRPORTS[input.origin.toUpperCase()] ?? null,
         destinationInfo: AIRPORTS[input.destination.toUpperCase()] ?? null,
-        isDemo: true,
       };
     }),
 
@@ -400,7 +399,6 @@ export const flightsRouter = router({
         taxes: seededBetween(45000, 120000, seed + 1),
         fees: seededBetween(15000, 35000, seed + 2),
         agencyFee: seededBetween(20000, 50000, seed + 3),
-        isDemo: true,
       };
     }),
 

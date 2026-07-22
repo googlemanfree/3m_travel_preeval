@@ -44,13 +44,16 @@ const trpcClient = trpc.createClient({
       transformer: superjson,
       headers() {
         // 1. Candidate JWT (email/password auth) — takes priority for candidate routes
+        // Check both localStorage (rememberMe=true) and sessionStorage (rememberMe=false)
         try {
-          const candidateToken = localStorage.getItem("3m_candidate_token");
+          const candidateToken =
+            localStorage.getItem("3m_candidate_token") ||
+            sessionStorage.getItem("3m_candidate_token");
           if (candidateToken) {
             return { Authorization: `Bearer ${candidateToken}` };
           }
         } catch {
-          // localStorage unavailable
+          // localStorage/sessionStorage unavailable
         }
         // 2. Preview auto-login fallback: when the browser blocks iframe cookies
         // (Safari ITP / private browsing / WebView), the runtime mirrors the

@@ -4,6 +4,8 @@ import { getDb } from "../db";
 import { evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
+import { generateAIEvaluationReport, extractTextFromPDF } from "../aiEvaluationService";
+import { sendEvaluationReportEmail } from "../emailService";
 
 const visaTypeEnum = z.enum([
   "schengen_etude",
@@ -120,6 +122,55 @@ export const evaluationRouter = router({
         console.warn("[Evaluation] Notification failed:", notifErr);
       }
 
-      return { success: true, message: "Votre demande a été soumise avec succès." };
+      // Générer le rapport IA automatique
+      let aiReport: string | undefined;
+      let aiError: string | undefined;
+      try {
+        let cvText = "";
+        // Extraire le texte du CV si fourni
+        if (input.cvBase64) {
+          try {
+            const base64Data = input.cvBase64.includes(",")
+              ? input.cvBase64.split(",")[1]
+              : input.cvBase64;
+            const fileBuffer = Buffer.from(base64Data!, "base64");
+            cvText = await extractTextFromPDF(fileBuffer);
+          } catch {
+            cvText = `Candidat: ${input.fullName}, Destination: ${input.destinationCountry || input.destinationCategory}, Niveau: ${input.educationLevel || "non précisé"}`;
+          }
+        } else {
+          cvText = `Candidat: ${input.fullName}, Destination: ${input.destinationCountry || input.destinationCategory}, Niveau: ${input.educationLevel || "non précisé"}, Emploi: ${input.employmentStatus || "non précisé"}, Message: ${input.message || "aucun"}`;
+        }
+
+        const destination = input.destinationCountry || input.destinationCategory;
+        aiReport = await generateAIEvaluationReport(
+          cvText,
+          input.fullName,
+          destination,
+          process.env.OPENAI_API_KEY
+        );
+
+        // Envoyer le rapport par email
+        if (aiReport) {
+          try {
+            const dossierNum = `3M-EVAL-${Date.now().toString().slice(-6)}`;
+            await sendEvaluationReportEmail(input.email, input.fullName, dossierNum, aiReport);
+          } catch (emailErr) {
+            console.warn("[Evaluation] Email send failed:", emailErr);
+          }
+        }
+      } catch (err) {
+        console.error("[Evaluation] AI report generation failed:", err);
+        aiError = "Rapport en cours de préparation par notre équipe.";
+      }
+
+      return {
+        success: true,
+        message: aiReport
+          ? "Votre rapport d'évaluation a été généré avec succès."
+          : "Votre demande a été soumise avec succès.",
+        report: aiReport,
+        aiError,
+      };
     }),
 });

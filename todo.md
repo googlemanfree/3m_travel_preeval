@@ -401,3 +401,19 @@
 - [x] Route /vols/suivi ajoutée dans App.tsx
 - [x] Lien "Suivre ma réservation" dans la page de confirmation (étape 3 de FlightBooking.tsx)
 - [x] Correction des 14 erreurs TypeScript : accès via flightData JSON (fd.airline, fd.flightNumber, fd.departure, fd.returnFlight), champ bookingStatus (pas status), email requis dans getBookingByRef
+
+## Session 4 — Améliorations majeures (22 juillet 2026)
+
+- [x] Corriger le système d'auth : token candidat envoyé via localStorage ET sessionStorage
+- [x] Corriger Register.tsx : sauvegarder pendingCandidate avant redirection OTP
+- [x] Corriger VerifyEmail.tsx : stocker token dans localStorage après vérification
+- [x] Supprimer le message "Mode Démo actif" dans la page Vols
+- [x] Supprimer isDemo:true dans le router flights
+- [x] Favoriser Canada RP en premier dans evaluationService.ts (+8% bonus vs +4% Pologne)
+- [x] Corriger aiEvaluationService.ts : Canada en 1er dans le rapport par défaut (95/100)
+- [x] Corriger le prompt OpenAI : Canada RP priorité absolue en premier
+- [x] Évaluation automatique par IA dans evaluation.ts : rapport généré immédiatement
+- [x] Afficher le rapport IA en texte brut dans Home.tsx après soumission
+- [x] Bouton téléchargement rapport .txt dans la page d'accueil
+- [x] Écran de chargement "Analyse IA en cours..." pendant la génération
+- [x] Envoi automatique du rapport par email après génération

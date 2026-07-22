@@ -149,6 +149,14 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
+      // Vérifier que l'email est validé
+      if (!candidate.emailVerified) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: `Veuillez valider votre adresse e-mail avant de vous connecter. Vérifiez votre boîte mail (code OTP envoyé à l'inscription).`,
+        });
+      }
+
       // Mettre à jour lastLoginAt
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
 
@@ -161,6 +169,7 @@ export const candidateRouter = router({
           email: candidate.email,
           destination: candidate.destination,
           dossierStatus: candidate.dossierStatus,
+          emailVerified: candidate.emailVerified,
         },
       };
     }),
