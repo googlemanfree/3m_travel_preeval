@@ -48,6 +48,7 @@ const AIRLINES: Record<string, { name: string; code: string; logo: string; color
   EK: { code: "EK", name: "Emirates", logo: "https://logo.clearbit.com/emirates.com", color: "#C8102E" },
   LH: { code: "LH", name: "Lufthansa", logo: "https://logo.clearbit.com/lufthansa.com", color: "#05164D" },
   KQ: { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", color: "#CC0000" },
+  AT: { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", color: "#006233" },
   SN: { code: "SN", name: "Brussels Airlines", logo: "https://logo.clearbit.com/brusselsairlines.com", color: "#003399" },
   WB: { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", color: "#00A0E3" },
 };
@@ -90,25 +91,21 @@ function generateFlights(
   const results = [];
   const count = randomBetween(6, 12);
 
-  // Prix de base en USD (convertis en FCFA avec taux ~600 FCFA/USD)
   const basePrice: Record<string, number> = {
-    ECONOMY: randomBetween(400, 800),    // 240 000 - 480 000 FCFA
-    PREMIUM_ECONOMY: randomBetween(900, 1400),  // 540 000 - 840 000 FCFA
-    BUSINESS: randomBetween(2000, 4000),  // 1.2M - 2.4M FCFA
-    FIRST: randomBetween(5000, 9000),    // 3M - 5.4M FCFA
+    ECONOMY: randomBetween(280, 650),
+    PREMIUM_ECONOMY: randomBetween(600, 1200),
+    BUSINESS: randomBetween(1500, 3500),
+    FIRST: randomBetween(4000, 8000),
   };
   const base = basePrice[cabinClass] ?? basePrice.ECONOMY;
 
   const departureTimes = ["06:15", "07:30", "09:00", "10:45", "12:30", "14:00", "15:45", "17:20", "19:00", "21:30", "23:00"];
 
-  // Filtrer les compagnies selon la route (retirer Royal Air Maroc)
-  const validAirlines = airlineKeys.filter(k => k !== "AT");
-  
   for (let i = 0; i < count; i++) {
-    const airlineCode = validAirlines[i % validAirlines.length];
+    const airlineCode = airlineKeys[i % airlineKeys.length];
     const airline = AIRLINES[airlineCode];
     const flightNumber = `${airlineCode}${randomBetween(100, 999)}`;
-    const stops = i < 3 ? 0 : i < 7 ? 1 : 2;
+    const stops = i < 4 ? 0 : i < 8 ? 1 : 2;
     const durationMinutes = stops === 0 ? randomBetween(240, 480) : stops === 1 ? randomBetween(480, 720) : randomBetween(720, 1080);
     const depTime = departureTimes[i % departureTimes.length];
     const arrTime = addMinutes(depTime, durationMinutes);

@@ -21,8 +21,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
-import ResourcesFloatingWidget from "@/components/ResourcesFloatingWidget";
-import PromoFloatingBanner from "@/components/PromoFloatingBanner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -512,90 +510,6 @@ export default function Home() {
         subtitle="Chiffres mis à jour en juillet 2026 — Agence agréée RC/YAO/2019/A/2567"
         variant="light"
       />
-
-      {/* ─── DESTINATIONS POPULAIRES ─────────────────────────────────── */}
-      <section className="py-12 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-8">
-            <p className="text-xs font-bold text-[#2563eb] uppercase tracking-widest mb-1">Destinations</p>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">Où immigrent nos clients</h2>
-            <p className="text-gray-400 text-sm mt-2">Les pays les plus demandés en 2025–2026</p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-4">
-            {[
-              { flag: "🇨🇦", country: "Canada",        stat: "Express Entry",     color: "from-red-50 to-white",    border: "border-red-100" },
-              { flag: "🇫🇷", country: "France",         stat: "VLS-TS / Talent",   color: "from-blue-50 to-white",   border: "border-blue-100" },
-              { flag: "🇩🇪", country: "Allemagne",      stat: "Chancenkarte",      color: "from-yellow-50 to-white", border: "border-yellow-100" },
-              { flag: "🇧🇪", country: "Belgique",       stat: "Visa Schengen",     color: "from-yellow-50 to-white", border: "border-yellow-100" },
-              { flag: "🇦🇪", country: "Dubaï / EAU",    stat: "Résidence / Emploi",color: "from-amber-50 to-white",  border: "border-amber-100" },
-              { flag: "🇬🇧", country: "Royaume-Uni",    stat: "Skilled Worker",    color: "from-indigo-50 to-white", border: "border-indigo-100" },
-              { flag: "🇵🇱", country: "Pologne",        stat: "Permis de travail", color: "from-red-50 to-white",    border: "border-red-100" },
-              { flag: "🇦🇺", country: "Australie",      stat: "Skilled Migration", color: "from-sky-50 to-white",    border: "border-sky-100" },
-            ].map((dest, i) => (
-              <motion.div
-                key={dest.country}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.06, duration: 0.4, ease: "easeOut" }}
-                whileHover={{ y: -4, scale: 1.04 }}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-b ${dest.color} border ${dest.border} shadow-sm hover:shadow-md transition-all cursor-default`}
-              >
-                <span className="text-4xl leading-none select-none" role="img" aria-label={dest.country}>{dest.flag}</span>
-                <span className="text-sm font-bold text-gray-800 text-center leading-tight">{dest.country}</span>
-                <span className="text-[10px] text-gray-400 text-center leading-tight">{dest.stat}</span>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Bande défilante secondaire — pays supplémentaires */}
-          <div className="mt-6 overflow-hidden relative" style={{ overflowX: 'hidden', overflowY: 'visible' }}>
-            <div className="flex gap-3 animate-[marquee_30s_linear_infinite] whitespace-nowrap w-max">
-              {[
-                { flag: "🇮🇹", label: "Italie" },
-                { flag: "🇪🇸", label: "Espagne" },
-                { flag: "🇵🇹", label: "Portugal" },
-                { flag: "🇨🇭", label: "Suisse" },
-                { flag: "🇳🇱", label: "Pays-Bas" },
-                { flag: "🇸🇦", label: "Arabie Saoudite" },
-                { flag: "🇶🇦", label: "Qatar" },
-                { flag: "🇺🇸", label: "États-Unis" },
-                { flag: "🇳🇿", label: "Nouvelle-Zélande" },
-                { flag: "🇲🇦", label: "Maroc" },
-                { flag: "🇸🇳", label: "Sénégal" },
-                { flag: "🇨🇮", label: "Côte d'Ivoire" },
-                // Répétition pour boucle continue
-                { flag: "🇮🇹", label: "Italie" },
-                { flag: "🇪🇸", label: "Espagne" },
-                { flag: "🇵🇹", label: "Portugal" },
-                { flag: "🇨🇭", label: "Suisse" },
-                { flag: "🇳🇱", label: "Pays-Bas" },
-                { flag: "🇸🇦", label: "Arabie Saoudite" },
-                { flag: "🇶🇦", label: "Qatar" },
-                { flag: "🇺🇸", label: "États-Unis" },
-                { flag: "🇳🇿", label: "Nouvelle-Zélande" },
-                { flag: "🇲🇦", label: "Maroc" },
-                { flag: "🇸🇳", label: "Sénégal" },
-                { flag: "🇨🇮", label: "Côte d'Ivoire" },
-              ].map((c, idx) => (
-                <span
-                  key={idx}
-                  className="group relative inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100 rounded-full px-3 py-1.5 text-sm text-gray-600 font-medium flex-shrink-0 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors cursor-default"
-                >
-                  <span className="text-base">{c.flag}</span>
-                  <span>{c.label}</span>
-                  {/* Infobulle */}
-                  <span className="pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-gray-900 text-white text-xs font-semibold px-2.5 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 shadow-lg z-50">
-                    {c.label}
-                    <span className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-gray-900" />
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">
@@ -1202,130 +1116,9 @@ export default function Home() {
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <TestimonialsSection />
 
-      {/* ─── HONORAIRES ─────────────────────────────────────────────────── */}
-      <HonorairesSection />
+      {/* --- TARIFS & GARANTIES --- */}
+      <PricingSection />
 
-      {/* ─── RESSOURCES ─────────────────────────────────────────────────── */}
-      <section id="ressources" className="py-20 px-4 scroll-mt-20" style={{ background: 'linear-gradient(180deg, #f0f4ff 0%, #e8eeff 100%)' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Ressources & Outils</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Tout ce dont vous avez besoin</h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">Guides, tarifs, outils d'évaluation et conseils d'experts pour votre projet d'immigration</p>
-          </div>
-
-          {/* Grille principale : 2 grandes + 3 petites */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-            {/* Grande carte — Grille Tarifaire */}
-            <a href="/tarifs" className="group md:col-span-5 relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all block">
-              <div className="relative h-64 md:h-full min-h-[260px] overflow-hidden">
-                <img
-                  src="/manus-storage/res_tarifs_5f3052a7.jpg"
-                  alt="Grille Tarifaire"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(30,58,138,0.92) 0%, rgba(30,58,138,0.4) 60%, transparent 100%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="inline-block bg-blue-500/30 text-blue-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-sm">Tarifs</span>
-                  <h3 className="text-xl font-extrabold text-white mb-1">Grille Tarifaire Complète</h3>
-                  <p className="text-blue-200 text-sm mb-3">Frais officiels des ambassades et autorités — Canada, Europe, Golfe, Tests de langue</p>
-                  <span className="inline-flex items-center gap-1 text-white font-semibold text-sm bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full transition-colors">
-                    Voir les tarifs <ChevronRight className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-            </a>
-
-            {/* Grande carte — AVI Bancaire */}
-            <a href="/avi" className="group md:col-span-7 relative overflow-hidden rounded-2xl shadow-lg hover:shadow-xl transition-all block">
-              <div className="relative h-64 md:h-full min-h-[260px] overflow-hidden">
-                <img
-                  src="/manus-storage/res_avi_93df0501.jpg"
-                  alt="AVI Bancaire"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(5,100,50,0.92) 0%, rgba(5,100,50,0.3) 60%, transparent 100%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <span className="inline-block bg-green-500/30 text-green-100 text-xs font-semibold px-3 py-1 rounded-full mb-2 backdrop-blur-sm">Bancaire</span>
-                  <h3 className="text-xl font-extrabold text-white mb-1">AVI — Attestation de Virement Irrévocable</h3>
-                  <p className="text-green-200 text-sm mb-3">Document obligatoire pour visa étudiant France, Canada, Belgique, Allemagne</p>
-                  <span className="inline-flex items-center gap-1 text-white font-semibold text-sm bg-green-600 hover:bg-green-500 px-4 py-2 rounded-full transition-colors">
-                    En savoir plus <ChevronRight className="w-4 h-4" />
-                  </span>
-                </div>
-              </div>
-            </a>
-
-            {/* Petite carte — Blog */}
-            <a href="/blog" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src="/manus-storage/res_blog_8ec0a918.jpg"
-                  alt="Blog & Conseils"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(88,28,135,0.9) 0%, rgba(88,28,135,0.2) 70%, transparent 100%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-base font-bold text-white mb-1">Blog & Conseils</h3>
-                  <p className="text-purple-200 text-xs mb-2">10 articles sur l'immigration</p>
-                  <span className="inline-flex items-center gap-1 text-purple-200 text-xs font-semibold hover:text-white transition-colors">
-                    Lire <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            </a>
-
-            {/* Petite carte — Procédures */}
-            <a href="/procedures" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src="/manus-storage/res_procedures_8fb3c52d.png"
-                  alt="Procédures"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(180,83,9,0.9) 0%, rgba(180,83,9,0.2) 70%, transparent 100%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-base font-bold text-white mb-1">Procédures Visa</h3>
-                  <p className="text-orange-200 text-xs mb-2">Étapes par destination</p>
-                  <span className="inline-flex items-center gap-1 text-orange-200 text-xs font-semibold hover:text-white transition-colors">
-                    Voir <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            </a>
-
-            {/* Petite carte — Destinations */}
-            <a href="/destinations" className="group md:col-span-4 relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all block">
-              <div className="relative h-48 overflow-hidden">
-                <img
-                  src="/manus-storage/res_destinations_7240855f.jpg"
-                  alt="Destinations"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(15,23,42,0.9) 0%, rgba(15,23,42,0.2) 70%, transparent 100%)' }} />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-base font-bold text-white mb-1">Destinations</h3>
-                  <p className="text-gray-300 text-xs mb-2">Pays & opportunités</p>
-                  <span className="inline-flex items-center gap-1 text-gray-300 text-xs font-semibold hover:text-white transition-colors">
-                    Explorer <ChevronRight className="w-3 h-3" />
-                  </span>
-                </div>
-              </div>
-            </a>
-
-          </div>
-
-          {/* Lien Évaluation en bas */}
-          <div className="mt-8 text-center">
-            <a href="/evaluation-widget" className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-[0.97]">
-              <Star className="w-5 h-5" />
-              Évaluez votre éligibilité gratuitement en 2 minutes
-              <ChevronRight className="w-5 h-5" />
-            </a>
-          </div>
-        </div>
-      </section>
       {/* --- CTA --- */}
       <section className="py-16" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
@@ -1458,12 +1251,6 @@ export default function Home() {
 
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EligibilityModal open={showEvalModal} onClose={() => setShowEvalModal(false)} />
-
-      {/* ─── WIDGET RESSOURCES FLOTTANT ─────────────────────────────────────── */}
-      <ResourcesFloatingWidget />
-
-      {/* ─── BANNIERE PROMO ETUDIANT FLOTTANTE ─────────────────────────────── */}
-      <PromoFloatingBanner />
 
       {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
       <WhatsAppButton />
@@ -1828,47 +1615,79 @@ function WhatsAppButton() {
   );
 }
 
-// ─── Section Honoraires ───────────────────────────────────────────────────────
-function HonorairesSection() {
-  const phoneNumber = "237698104832";
-  const steps = [
+// ─── Section Tarifs & Garanties ───────────────────────────────────────────────
+function PricingSection() {
+  const plans = [
     {
-      num: "01",
-      icon: <Star className="w-6 h-6" />,
-      title: "Évaluation gratuite de votre profil",
-      desc: "Remplissez notre formulaire en ligne. Nos experts analysent votre profil (diplômes, expérience, langues, finances) sous 24h.",
-      color: "bg-yellow-50 border-yellow-200 text-yellow-700",
-      iconBg: "bg-yellow-100 text-yellow-600",
+      id: "integral",
+      icon: <Plane className="w-7 h-7" />,
+      badge: null,
+      title: "Règlement Intégral",
+      subtitle: "Traitement accéléré",
+      color: "from-[#1e3a8a] to-[#2563eb]",
+      borderColor: "border-[#2563eb]/30",
+      badgeBg: "",
+      textAccent: "text-[#7cb9e8]",
+      description: "Payez en une seule fois et bénéficiez d'un traitement prioritaire de votre dossier, sans frais supplémentaires.",
+      features: [
+        "Traitement prioritaire du dossier",
+        "Suivi personnalisé dédié",
+        "Réponse sous 24h garantie",
+        "Accompagnement complet",
+        "Sans frais supplémentaires",
+      ],
+      cta: "Choisir cette option",
+      highlight: false,
     },
     {
-      num: "02",
-      icon: <FileText className="w-6 h-6" />,
-      title: "Rapport d'évaluation personnalisé",
-      desc: "Vous recevez un rapport détaillé avec vos destinations recommandées, les procédures adaptées à votre situation et les frais officiels associés.",
-      color: "bg-blue-50 border-blue-200 text-blue-700",
-      iconBg: "bg-blue-100 text-blue-600",
+      id: "echelonne",
+      icon: <Clock className="w-7 h-7" />,
+      badge: "Le plus choisi",
+      title: "Échelonné Flexible",
+      subtitle: "4 à 5 mois",
+      color: "from-[#2563eb] to-[#1d4ed8]",
+      borderColor: "border-[#2563eb]",
+      badgeBg: "bg-yellow-400 text-yellow-900",
+      textAccent: "text-yellow-300",
+      description: "Un paiement structuré et modulable sur 4 à 5 mois pour adapter nos honoraires à votre situation.",
+      features: [
+        "Paiement sur 4 à 5 mensualités",
+        "Plan personnalisé selon votre budget",
+        "Suivi régulier de votre dossier",
+        "Flexibilité des échéances",
+        "Accompagnement complet inclus",
+      ],
+      cta: "Choisir cette option",
+      highlight: true,
     },
     {
-      num: "03",
-      icon: <Users className="w-6 h-6" />,
-      title: "Proposition d'honoraires sur mesure",
-      desc: "Sur la base de votre profil et de la complexité de votre dossier, nous vous proposons nos honoraires d'accompagnement. Aucun montant n'est fixé avant cette étape.",
-      color: "bg-green-50 border-green-200 text-green-700",
-      iconBg: "bg-green-100 text-green-600",
-    },
-    {
-      num: "04",
-      icon: <Shield className="w-6 h-6" />,
-      title: "Accord et ouverture du dossier",
-      desc: "Vous acceptez notre proposition, signez le protocole d'accord et nous ouvrons officiellement votre dossier d'immigration.",
-      color: "bg-purple-50 border-purple-200 text-purple-700",
-      iconBg: "bg-purple-100 text-purple-600",
+      id: "garanti",
+      icon: <Shield className="w-7 h-7" />,
+      badge: "Zéro risque",
+      title: "Permis Garanti",
+      subtitle: "Paiement après succès",
+      color: "from-[#059669] to-[#047857]",
+      borderColor: "border-emerald-500/40",
+      badgeBg: "bg-emerald-400 text-emerald-900",
+      textAccent: "text-emerald-300",
+      description: "Réglez nos honoraires d'agence UNIQUEMENT après succès et obtention effective de votre visa.",
+      features: [
+        "Honoraires payés après obtention du visa",
+        "Zéro risque financier pour vous",
+        "Engagement total de notre équipe",
+        "Suivi jusqu'à l'obtention du visa",
+        "Conditions d'éligibilité à vérifier",
+      ],
+      cta: "Vérifier mon éligibilité",
+      highlight: false,
     },
   ];
 
+  const phoneNumber = "237698104832";
+
   return (
     <section id="tarifs" className="py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
-      <div className="max-w-5xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4">
         {/* En-tête */}
         <div className="text-center mb-14">
           <motion.p
@@ -1877,7 +1696,7 @@ function HonorairesSection() {
             viewport={{ once: true }}
             className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2"
           >
-            Transparence totale
+            Nos formules
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 15 }}
@@ -1886,7 +1705,7 @@ function HonorairesSection() {
             transition={{ delay: 0.1 }}
             className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] mb-4"
           >
-            Nos honoraires, après votre évaluation
+            Tarifs & Garanties
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 15 }}
@@ -1895,81 +1714,82 @@ function HonorairesSection() {
             transition={{ delay: 0.2 }}
             className="text-gray-500 max-w-2xl mx-auto text-base"
           >
-            Nous ne parlons jamais d'argent avant d'avoir analysé votre profil. Nos honoraires sont définis sur mesure, en fonction de votre situation et de la destination choisie.
+            Choisissez la formule qui correspond à votre situation. Transparence totale, aucun frais caché.
           </motion.p>
         </div>
 
-        {/* Étapes */}
-        <div className="grid md:grid-cols-2 gap-5 mb-12">
-          {steps.map((step, i) => (
+        {/* Cards */}
+        <div className="grid md:grid-cols-3 gap-6 items-stretch">
+          {plans.map((plan, i) => (
             <motion.div
-              key={step.num}
-              initial={{ opacity: 0, y: 20 }}
+              key={plan.id}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.5 }}
-              className={`flex items-start gap-4 p-5 rounded-2xl border ${step.color}`}
+              transition={{ delay: i * 0.12, duration: 0.5 }}
+              className={`relative rounded-3xl border-2 ${plan.borderColor} flex flex-col overflow-hidden shadow-lg ${plan.highlight ? "scale-[1.03] shadow-2xl ring-2 ring-[#2563eb]/40" : ""}`}
             >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${step.iconBg}`}>
-                {step.icon}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold opacity-60">{step.num}</span>
-                  <h3 className="font-bold text-gray-900 text-sm">{step.title}</h3>
+              {/* Badge */}
+              {plan.badge && (
+                <div className={`absolute top-4 right-4 text-xs font-bold px-3 py-1 rounded-full ${plan.badgeBg}`}>
+                  {plan.badge}
                 </div>
-                <p className="text-sm text-gray-600 leading-relaxed">{step.desc}</p>
+              )}
+
+              {/* Header coloré */}
+              <div className={`bg-gradient-to-br ${plan.color} p-7 text-white`}>
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mb-4">
+                  {plan.icon}
+                </div>
+                <h3 className="text-xl font-extrabold mb-1">{plan.title}</h3>
+                <p className={`text-sm font-semibold ${plan.textAccent}`}>{plan.subtitle}</p>
+              </div>
+
+              {/* Corps */}
+              <div className="bg-white flex flex-col flex-1 p-7">
+                <p className="text-gray-500 text-sm leading-relaxed mb-6">{plan.description}</p>
+
+                {/* Features */}
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle className="w-4 h-4 text-[#2563eb] flex-shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <a
+                  href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent(`Bonjour 3M Travel & Services ! Je suis intéressé(e) par la formule "${plan.title}". Pouvez-vous me donner plus d'informations ?`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`w-full py-3 rounded-xl font-bold text-sm text-center transition-all active:scale-[0.97] block ${
+                    plan.highlight
+                      ? "bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-lg shadow-blue-200"
+                      : plan.id === "garanti"
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      : "bg-[#1e3a8a] hover:bg-[#1e40af] text-white"
+                  }`}
+                >
+                  {plan.cta} →
+                </a>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Encadré frais officiels */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="bg-[#f8faff] border border-[#dbeafe] rounded-2xl p-6 mb-8"
-        >
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-[#2563eb] flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-[#1e3a8a] mb-1">Frais officiels des autorités</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                En plus de nos honoraires, chaque procédure implique des <strong>frais officiels payables directement aux autorités</strong> (ambassades, gouvernements, centres d'examen) : frais de visa, biométrie, examen médical, tests de langue, etc. Ces frais sont indépendants de notre agence.
-              </p>
-              <a href="/tarifs" className="inline-flex items-center gap-1 mt-2 text-sm font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors">
-                Consulter les frais officiels par procédure <ChevronRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+        {/* Note légale */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
+          className="text-center text-xs text-gray-400 mt-8 max-w-2xl mx-auto"
         >
-          <a
-            href="/evaluation-widget"
-            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-gradient-to-r from-[#0f2460] to-[#2563eb] text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-200"
-          >
-            <Star className="w-5 h-5 text-yellow-300" />
-            Évaluation gratuite de mon profil
-          </a>
-          <a
-            href={`https://wa.me/${phoneNumber}?text=${encodeURIComponent("Bonjour 3M Travel & Services ! Je souhaite connaître vos honoraires pour mon dossier. Pouvez-vous m'aider ?")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-white border-2 border-[#2563eb] text-[#2563eb] font-bold rounded-xl hover:bg-blue-50 transition-colors"
-          >
-            💬 Parler à un conseiller
-          </a>
-        </motion.div>
+          <Info className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
+          Les honoraires d'agence couvrent l'accompagnement, la préparation du dossier et le suivi administratif. La décision d'octroi du visa appartient exclusivement aux autorités compétentes.
+        </motion.p>
       </div>
     </section>
   );

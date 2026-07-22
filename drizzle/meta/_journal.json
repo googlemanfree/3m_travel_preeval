@@ -61,22 +61,8 @@
     {
       "idx": 8,
       "version": "5",
-      "when": 1784733533229,
-      "tag": "0008_next_wolfpack",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "5",
-      "when": 1784736578427,
-      "tag": "0009_ordinary_timeslip",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "5",
-      "when": 1784743899982,
-      "tag": "0010_curly_proemial_gods",
+      "when": 1784763139085,
+      "tag": "0008_young_karma",
       "breakpoints": true
     }
   ]

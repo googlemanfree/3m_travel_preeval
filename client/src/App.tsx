@@ -25,11 +25,6 @@ import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
-import Tarifs from "./pages/Tarifs";
-import AVI from "./pages/AVI";
-import Blog from "./pages/Blog";
-import EvaluationWidget from "./pages/EvaluationWidget";
-import MagicLogin from "./pages/MagicLogin";
 
 function Router() {
   return (
@@ -39,13 +34,15 @@ function Router() {
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
       <Route path={"/verify-email"} component={VerifyEmail} />
-      <Route path={"/magic-login"} component={MagicLogin} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
 
-      {/* Espace Vols */}
-      <Route path={"/flights"} component={Flights} />
-      <Route path={"/vols"} component={Flights} />
+      {/* Pages protégées — nécessitent un compte 3M Travel */}
+      <Route path={"/flights"}>
+        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
+          <Flights />
+        </AuthGuard>
+      </Route>
       <Route path={"/procedures"} component={Procedures} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
@@ -70,12 +67,6 @@ function Router() {
 
       {/* Fiches détaillées par pays */}
       <Route path={"/fiches"} component={Fiches} />
-
-      {/* Pages ressources */}
-      <Route path={"/tarifs"} component={Tarifs} />
-      <Route path={"/avi"} component={AVI} />
-      <Route path={"/blog"} component={Blog} />
-      <Route path={"/evaluation-widget"} component={EvaluationWidget} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />

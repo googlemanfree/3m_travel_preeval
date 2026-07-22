@@ -16,7 +16,7 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { sendMagicLinkEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -95,10 +95,12 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
 
-            const passwordHash = await bcrypt.hash(input.password, 12);
-      // Générer un magic link token (valable 24h)
-      const magicToken = crypto.randomUUID().replace(/-/g, "");
-      const magicExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+      const passwordHash = await bcrypt.hash(input.password, 12);
+
+      // Générer un OTP à 6 chiffres
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
       const result = await db.insert(candidates).values({
         fullName: input.fullName,
         email: input.email,
@@ -108,17 +110,20 @@ export const candidateRouter = router({
         nationality: input.nationality ?? null,
         dossierStatus: "nouveau",
         emailVerified: false,
-        magicLinkToken: magicToken,
-        magicLinkExpiresAt: magicExpiresAt,
+        emailOtp: otp,
+        emailOtpExpiresAt: otpExpiresAt,
       });
+
       const candidateId = (result as any).insertId as number;
-      // Envoyer l'email avec le magic link
+
+      // Envoyer l'email OTP
       try {
-        await sendMagicLinkEmail(input.email, input.fullName, magicToken, "verify");
+        await sendVerificationOtp(input.email, input.fullName, otp);
       } catch (err) {
-        console.error("[Register] Magic link email error:", err);
+        console.error("[Register] Email OTP send error:", err);
       }
-      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de connexion a été envoyé à votre email." };
+
+      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Veuillez vérifier votre email." };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -179,13 +184,6 @@ export const candidateRouter = router({
       educationLevel: c.educationLevel,
       employmentStatus: c.employmentStatus,
       languageLevel: c.languageLevel,
-      // Champs de traitement admin (visibles par le client)
-      adminNote: c.adminNote,
-      processingSteps: c.processingSteps,
-      honoraires: c.honoraires,
-      honorairesNote: c.honorairesNote,
-      honorairesStatus: c.honorairesStatus,
-      procedureChoisie: c.procedureChoisie,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -388,12 +386,11 @@ export const candidateRouter = router({
       if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
       if (candidate.emailVerified) return { success: true };
-      // Régénérer un magic link
-      const magicToken = crypto.randomUUID().replace(/-/g, "");
-      const magicExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-      await db.update(candidates).set({ magicLinkToken: magicToken, magicLinkExpiresAt: magicExpiresAt }).where(eq(candidates.id, input.candidateId));
-      try { await sendMagicLinkEmail(candidate.email, candidate.fullName, magicToken, "verify"); } catch {}
-      return { success: true, message: "Un nouveau lien d'activation a été envoyé à votre adresse email." };
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
+      try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
+      return { success: true, message: "Nouveau code envoyé à votre adresse email." };
     }),
 
   requestPasswordReset: publicProcedure
@@ -427,213 +424,8 @@ export const candidateRouter = router({
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
     }),
 
-  verifyMagicLink: publicProcedure
-    .input(z.object({ token: z.string().min(10) }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.magicLinkToken, input.token)).limit(1);
-      if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou déjà utilisé." });
-      const candidate = rows[0];
-      if (!candidate.magicLinkExpiresAt || new Date() > candidate.magicLinkExpiresAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez vous inscrire à nouveau." });
-      }
-      await db.update(candidates).set({ emailVerified: true, magicLinkToken: null, magicLinkExpiresAt: null }).where(eq(candidates.id, candidate.id));
-      if (!candidate.emailVerified) {
-        try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
-      }
-      const token = signCandidateToken(candidate.id);
-      return { success: true, token, candidateId: candidate.id, fullName: candidate.fullName };
-    }),
-
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
   getDossierSteps: publicProcedure.query(() => {
     return DOSSIER_STEPS;
   }),
-
-  // ── [ADMIN] Liste des candidats inscrits ─────────────────────────────────
-  adminListCandidates: publicProcedure
-    .input(z.object({
-      search: z.string().optional(),
-      status: z.enum(["nouveau", "evaluation", "documents", "traitement", "soumis", "approuve", "refuse", "ALL"]).optional().default("ALL"),
-      limit: z.number().int().max(200).default(100),
-      offset: z.number().int().default(0),
-    }))
-    .query(async ({ ctx, input }) => {
-      if ((ctx as any).user?.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      let rows = await db
-        .select()
-        .from(candidates)
-        .orderBy(desc(candidates.createdAt))
-        .limit(input.limit)
-        .offset(input.offset);
-
-      if (input.status && input.status !== "ALL") {
-        rows = rows.filter(c => c.dossierStatus === input.status);
-      }
-      if (input.search) {
-        const q = input.search.toLowerCase();
-        rows = rows.filter(c =>
-          c.fullName.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          (c.phone ?? "").includes(q)
-        );
-      }
-
-      return rows.map(c => ({
-        id: c.id,
-        fullName: c.fullName,
-        email: c.email,
-        phone: c.phone,
-        nationality: c.nationality,
-        destination: c.destination,
-        visaType: c.visaType,
-        dossierStatus: c.dossierStatus,
-        adminNote: c.adminNote,
-        adminPrivateNote: c.adminPrivateNote,
-        processingSteps: c.processingSteps,
-        honoraires: c.honoraires,
-        honorairesNote: c.honorairesNote,
-        honorairesStatus: c.honorairesStatus,
-        procedureChoisie: c.procedureChoisie,
-        scoreResult: c.scoreResult,
-        educationLevel: c.educationLevel,
-        employmentStatus: c.employmentStatus,
-        languageLevel: c.languageLevel,
-        emailVerified: c.emailVerified,
-        createdAt: c.createdAt,
-        updatedAt: c.updatedAt,
-        lastLoginAt: c.lastLoginAt,
-      }));
-    }),
-
-  // ── [ADMIN] Mettre à jour le statut et les infos de traitement d'un candidat
-  adminUpdateCandidate: publicProcedure
-    .input(z.object({
-      id: z.number().int(),
-      dossierStatus: z.enum(["nouveau", "evaluation", "documents", "traitement", "soumis", "approuve", "refuse"]).optional(),
-      adminNote: z.string().optional(),
-      adminPrivateNote: z.string().optional(),
-      processingSteps: z.string().optional(),
-      honoraires: z.number().int().optional(),
-      honorairesNote: z.string().optional(),
-      honorairesStatus: z.enum(["pending", "proposed", "accepted", "refused"]).optional(),
-      procedureChoisie: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if ((ctx as any).user?.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const updateData: Record<string, unknown> = {};
-      const { id, ...fields } = input;
-      Object.entries(fields).forEach(([k, v]) => { if (v !== undefined) updateData[k] = v; });
-
-      await db.update(candidates).set(updateData).where(eq(candidates.id, id));
-
-      // Notification automatique si changement de statut
-      if (input.dossierStatus) {
-        const step = DOSSIER_STEPS.find(s => s.key === input.dossierStatus);
-        if (step) {
-          const msgContent = input.adminNote
-            ? `📁 **${step.label}**
-
-${input.adminNote}`
-            : `📁 Votre dossier est maintenant en statut : **${step.label}**. ${step.desc}`;
-          await db.insert(candidateMessages).values({
-            candidateId: id,
-            senderRole: "advisor",
-            content: msgContent,
-            isRead: false,
-          });
-        }
-      }
-
-      // Notification si proposition d'honoraires
-      if (input.honoraires && input.honorairesStatus === "proposed") {
-        const amount = input.honoraires.toLocaleString("fr-FR");
-        const noteText = input.honorairesNote ? `
-
-${input.honorairesNote}` : "";
-        await db.insert(candidateMessages).values({
-          candidateId: id,
-          senderRole: "advisor",
-          content: `💰 **Proposition d'honoraires**
-
-Suite à l'évaluation de votre profil, nos honoraires d'accompagnement sont de **${amount} FCFA**.${noteText}
-
-Veuillez nous contacter pour confirmer votre accord.`,
-          isRead: false,
-        });
-      }
-
-      return { success: true };
-    }),
-
-  // ── [ADMIN] Envoyer un message à un candidat ──────────────────────────────
-  adminSendMessage: publicProcedure
-    .input(z.object({
-      candidateId: z.number().int(),
-      content: z.string().min(1).max(5000),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if ((ctx as any).user?.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      await db.insert(candidateMessages).values({
-        candidateId: input.candidateId,
-        senderRole: "advisor",
-        content: input.content,
-        isRead: false,
-      });
-      return { success: true };
-    }),
-
-  // ── [ADMIN] Lire les messages d'un candidat spécifique ────────────────────
-  adminGetCandidateMessages: publicProcedure
-    .input(z.object({ candidateId: z.number().int() }))
-    .query(async ({ ctx, input }) => {
-      if ((ctx as any).user?.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const msgs = await db
-        .select()
-        .from(candidateMessages)
-        .where(eq(candidateMessages.candidateId, input.candidateId))
-        .orderBy(candidateMessages.createdAt);
-
-      return msgs as CandidateMessage[];
-    }),
-
-  // ── [ADMIN] Documents d'un candidat spécifique ────────────────────────────
-  adminGetCandidateFiles: publicProcedure
-    .input(z.object({ candidateId: z.number().int() }))
-    .query(async ({ ctx, input }) => {
-      if ((ctx as any).user?.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      const files = await db
-        .select()
-        .from(candidateFiles)
-        .where(eq(candidateFiles.candidateId, input.candidateId))
-        .orderBy(desc(candidateFiles.uploadedAt));
-
-      return files as CandidateFile[];
-    }),
 });

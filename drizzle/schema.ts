@@ -99,17 +99,6 @@ export const candidates = mysqlTable("candidates", {
   // Réinitialisation de mot de passe
   passwordResetToken: varchar("passwordResetToken", { length: 128 }),
   passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
-  // Magic link (connexion sans mot de passe après inscription)
-  magicLinkToken: varchar("magicLinkToken", { length: 128 }),
-  magicLinkExpiresAt: timestamp("magicLinkExpiresAt"),
-  // ─── Traitement admin ───
-  adminNote: text("adminNote"),                    // Note interne du conseiller (visible client)
-  adminPrivateNote: text("adminPrivateNote"),       // Note interne confidentielle (admin seulement)
-  processingSteps: text("processingSteps"),         // JSON : tableau d'étapes {key, label, status, completedAt, note}
-  honoraires: int("honoraires"),                    // Montant honoraires proposé (FCFA)
-  honorairesNote: text("honorairesNote"),           // Détail de la proposition d'honoraires
-  honorairesStatus: mysqlEnum("honorairesStatus", ["pending", "proposed", "accepted", "refused"]).default("pending"),
-  procedureChoisie: varchar("procedureChoisie", { length: 255 }), // Procédure recommandée par l'admin
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -263,13 +252,6 @@ export const applications = mysqlTable("applications", {
   agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
   agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
   agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
-  // ─── Envoi d'évaluation après 3 jours ───
-  evaluationEmailSentAt: timestamp("evaluationEmailSentAt"),  // Quand l'évaluation a été envoyée
-  evaluationEmailScheduledAt: timestamp("evaluationEmailScheduledAt"),  // Quand l'envoi est prévu (createdAt + 3 jours)
-  // ─── Confirmation RDV pour dépôt de dossier ───
-  appointmentScheduledAt: timestamp("appointmentScheduledAt"),  // Date/heure du RDV confirmé
-  appointmentConfirmedAt: timestamp("appointmentConfirmedAt"),  // Quand le candidat a confirmé le RDV
-  appointmentConfirmationEmailSentAt: timestamp("appointmentConfirmationEmailSentAt"),  // Quand l'email de confirmation a été envoyé
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -277,3 +259,153 @@ export const applications = mysqlTable("applications", {
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FORMULAIRE D'ÉVALUATION DE PROFIL PREMIUM (MULTI-ÉTAPES)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Évaluations de profil complètes — formulaire multi-étapes pour toutes destinations
+ */
+export const profileEvaluations = mysqlTable("profile_evaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // ─── Choix principal ───
+  destination: varchar("destination", { length: 100 }).notNull(),  // Canada, France, Allemagne, etc.
+  projectType: mysqlEnum("projectType", [
+    "student",
+    "visitor",
+    "worker",
+    "permanent_residence",
+    "family_reunification",
+    "other"
+  ]).notNull(),
+  currentCountry: varchar("currentCountry", { length: 100 }),
+  communicationLanguage: mysqlEnum("communicationLanguage", ["fr", "en"]).default("fr"),
+  
+  // ─── Informations personnelles ───
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  gender: mysqlEnum("gender", ["homme", "femme", "autre"]),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  placeOfBirth: varchar("placeOfBirth", { length: 150 }),
+  nationality: varchar("nationality", { length: 100 }),
+  currentAddress: text("currentAddress"),
+  whatsappPhone: varchar("whatsappPhone", { length: 50 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  
+  // ─── Passeport et identité ───
+  passportNumber: varchar("passportNumber", { length: 50 }),
+  passportCountry: varchar("passportCountry", { length: 100 }),
+  passportIssueDate: varchar("passportIssueDate", { length: 20 }),
+  passportExpiryDate: varchar("passportExpiryDate", { length: 20 }),
+  passportCopyAvailable: boolean("passportCopyAvailable").default(false),
+  oldPassportAvailable: boolean("oldPassportAvailable").default(false),
+  idCardAvailable: boolean("idCardAvailable").default(false),
+  
+  // ─── Situation familiale ───
+  maritalStatus: mysqlEnum("maritalStatus", ["single", "married", "divorced", "widowed", "civil_union"]),
+  spouseName: varchar("spouseName", { length: 255 }),
+  numberOfChildren: int("numberOfChildren").default(0),
+  dependents: int("dependents").default(0),
+  familyInDestination: boolean("familyInDestination").default(false),
+  familyMemberRelation: varchar("familyMemberRelation", { length: 100 }),
+  familyMemberStatus: varchar("familyMemberStatus", { length: 100 }),
+  
+  // ─── Études et formation ───
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  latestDiploma: varchar("latestDiploma", { length: 255 }),
+  fieldOfStudy: varchar("fieldOfStudy", { length: 150 }),
+  diplomaYear: int("diplomaYear"),
+  institution: varchar("institution", { length: 255 }),
+  diplomasAvailable: boolean("diplomasAvailable").default(false),
+  
+  // ─── Parcours professionnel ───
+  currentProfession: varchar("currentProfession", { length: 150 }),
+  currentEmployer: varchar("currentEmployer", { length: 255 }),
+  yearsOfExperience: int("yearsOfExperience"),
+  previousExperiences: text("previousExperiences"),  // JSON array
+  monthlyIncome: int("monthlyIncome"),
+  cvAvailable: boolean("cvAvailable").default(false),
+  jobOfferAvailable: boolean("jobOfferAvailable").default(false),
+  
+  // ─── Situation financière ───
+  bankBalance: int("bankBalance"),
+  bankBalanceAverage6Months: int("bankBalanceAverage6Months"),
+  hasSponsor: boolean("hasSponsor").default(false),
+  sponsorName: varchar("sponsorName", { length: 255 }),
+  fundSource: varchar("fundSource", { length: 100 }),
+  realEstate: boolean("realEstate").default(false),
+  businessActivity: boolean("businessActivity").default(false),
+  debts: boolean("debts").default(false),
+  
+  // ─── Historique de voyage ───
+  countriesVisited: text("countriesVisited"),  // JSON array
+  visasObtained: text("visasObtained"),  // JSON array
+  visaRefusals: boolean("visaRefusals").default(false),
+  overstayHistory: boolean("overstayHistory").default(false),
+  deportationOrRefusal: boolean("deportationOrRefusal").default(false),
+  previousApplications: text("previousApplications"),  // JSON array
+  
+  // ─── Admissibilité ───
+  criminalRecord: boolean("criminalRecord").default(false),
+  immigrationIssues: boolean("immigrationIssues").default(false),
+  medicalConcerns: boolean("medicalConcerns").default(false),
+  falseDeclaration: boolean("falseDeclaration").default(false),
+  specialNeeds: text("specialNeeds"),
+  
+  // ─── Documents disponibles ───
+  documentsAvailable: text("documentsAvailable"),  // JSON array: ["passport", "photos", "diplomas", "cv", "bank_statements", "birth_certificate", "marriage_certificate", "invitation_letter", "admission_letter", "language_results", "eca", "police_certificate", "other"]
+  
+  // ─── Sections conditionnelles (Étudiant) ───
+  desiredProgram: varchar("desiredProgram", { length: 255 }),
+  desiredEducationLevel: varchar("desiredEducationLevel", { length: 100 }),
+  targetInstitution: varchar("targetInstitution", { length: 255 }),
+  admissionLetterAvailable: boolean("admissionLetterAvailable").default(false),
+  intendedStartDate: varchar("intendedStartDate", { length: 20 }),
+  studyBudget: int("studyBudget"),
+  studyFunder: varchar("studyFunder", { length: 100 }),
+  academicProject: text("academicProject"),
+  postStudiesProject: text("postStudiesProject"),
+  companions: text("companions"),  // JSON array
+  
+  // ─── Sections conditionnelles (Visiteur) ───
+  visitReason: varchar("visitReason", { length: 100 }),
+  visitType: mysqlEnum("visitType", ["tourism", "family", "business", "event", "other"]),
+  plannedStayDuration: varchar("plannedStayDuration", { length: 50 }),
+  estimatedTravelDate: varchar("estimatedTravelDate", { length: 20 }),
+  plannedAccommodation: varchar("plannedAccommodation", { length: 100 }),
+  invitingPerson: varchar("invitingPerson", { length: 255 }),
+  invitationLetterAvailable: boolean("invitationLetterAvailable").default(false),
+  stayFunder: varchar("stayFunder", { length: 100 }),
+  tiesInHomeCountry: text("tiesInHomeCountry"),  // JSON array: ["employment", "business", "property", "family", "studies"]
+  
+  // ─── Sections conditionnelles (Travailleur) ───
+  desiredPosition: varchar("desiredPosition", { length: 150 }),
+  targetCity: varchar("targetCity", { length: 100 }),
+  relatedExperience: int("relatedExperience"),
+  relatedDiplomas: text("relatedDiplomas"),  // JSON array
+  languageLevel: varchar("languageLevel", { length: 50 }),
+  departureAvailability: varchar("departureAvailability", { length: 50 }),
+  
+  // ─── Sections conditionnelles (Résidence permanente) ───
+  targetCategory: varchar("targetCategory", { length: 100 }),
+  age: int("age"),
+  ecaAvailable: boolean("ecaAvailable").default(false),
+  experienceYears: int("experienceYears"),
+  experienceInDestination: boolean("experienceInDestination").default(false),
+  provincialNomination: boolean("provincialNomination").default(false),
+  availableFunds: int("availableFunds"),
+  policeCertificatesAvailable: boolean("policeCertificatesAvailable").default(false),
+  
+  // ─── Métadonnées ───
+  status: mysqlEnum("status", ["draft", "submitted", "reviewed", "contacted", "closed"]).default("submitted").notNull(),
+  submissionNotes: text("submissionNotes"),
+  adminNotes: text("adminNotes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProfileEvaluation = typeof profileEvaluations.$inferSelect;
+export type InsertProfileEvaluation = typeof profileEvaluations.$inferInsert;

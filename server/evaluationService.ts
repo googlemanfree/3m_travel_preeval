@@ -200,60 +200,47 @@ export function generateEvaluationReportHTML(app: Application): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
-    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 50px 40px; text-align: center; position: relative; }
-    .logo { width: 80px; height: 80px; margin: 0 auto 20px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; color: #1E3A8A; }
-    .header h1 { margin: 0 0 10px 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
-    .header p { margin: 0; font-size: 15px; opacity: 0.95; font-weight: 500; }
-    .body { padding: 50px 40px; }
-    .intro { margin-bottom: 35px; line-height: 1.8; color: #374151; }
-    .intro strong { color: #1E3A8A; }
-    .section { margin-bottom: 40px; }
-    .section-title { font-size: 18px; font-weight: 700; color: #1E3A8A; margin-bottom: 20px; border-bottom: 3px solid #2563EB; padding-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-    .score-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid #E5E7EB; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 40px 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 800; }
+    .header p { margin: 8px 0 0; font-size: 14px; opacity: 0.9; }
+    .body { padding: 40px 30px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 16px; font-weight: 700; color: #1E3A8A; margin-bottom: 15px; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; }
+    .score-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #E5E7EB; }
     .score-row:last-child { border-bottom: none; }
-    .destination { font-weight: 600; color: #1E3A8A; font-size: 15px; min-width: 150px; }
-    .score-bar { flex: 1; margin: 0 20px; }
-    .bar { background: #E5E7EB; height: 8px; border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-    .bar-fill { height: 100%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 4px; transition: width 0.3s ease; }
-    .score-value { font-weight: 800; color: #1E3A8A; min-width: 60px; text-align: right; font-size: 16px; }
-    .badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-left: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .destination { font-weight: 600; color: #374151; }
+    .score-bar { flex: 1; margin: 0 15px; }
+    .bar { background: #E5E7EB; height: 6px; border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, #10B981, #059669); border-radius: 3px; }
+    .score-value { font-weight: 700; color: #1E3A8A; min-width: 50px; text-align: right; }
+    .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-left: 10px; }
     .badge-excellent { background: #DCFCE7; color: #166534; }
     .badge-recommande { background: #DBEAFE; color: #0C4A6E; }
     .badge-admissible { background: #FEF3C7; color: #92400E; }
     .badge-modere { background: #FEE2E2; color: #991B1B; }
     .criteria-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    .criteria-table tr { border-bottom: 1px solid #E5E7EB; }
-    .criteria-table tr:last-child { border-bottom: none; }
-    .criteria-table td { padding: 14px 0; }
-    .criteria-table td:first-child { font-weight: 600; color: #374151; width: 60%; }
-    .criteria-table td:last-child { text-align: right; color: #1E3A8A; font-weight: 800; font-size: 16px; }
-    .recommendation { background: linear-gradient(135deg, #EFF6FF 0%, #F0F9FF 100%); border-left: 5px solid #2563EB; padding: 20px; margin-top: 15px; border-radius: 6px; }
-    .recommendation p { margin: 10px 0; color: #1E40AF; font-size: 15px; line-height: 1.7; }
-    .recommendation p:first-child { margin-top: 0; font-weight: 700; }
-    .cta { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 16px 32px; border-radius: 6px; text-align: center; margin-top: 30px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 15px; transition: transform 0.2s; }
-    .cta:hover { transform: translateY(-2px); }
-    .legal { background: #F9FAFB; padding: 20px; border-radius: 6px; margin-top: 15px; font-size: 14px; color: #6B7280; line-height: 1.7; }
-    .footer { background: #F8FAFF; padding: 40px; text-align: center; font-size: 13px; color: #6B7280; border-top: 2px solid #E5E7EB; }
+    .criteria-table td { padding: 10px; border-bottom: 1px solid #E5E7EB; }
+    .criteria-table td:first-child { font-weight: 600; color: #374151; width: 50%; }
+    .criteria-table td:last-child { text-align: right; color: #1E3A8A; font-weight: 700; }
+    .recommendation { background: #EFF6FF; border-left: 4px solid #2563EB; padding: 15px; margin-top: 15px; border-radius: 4px; }
+    .recommendation p { margin: 0; color: #1E40AF; font-size: 14px; line-height: 1.6; }
+    .cta { background: #1E3A8A; color: white; padding: 15px 30px; border-radius: 6px; text-align: center; margin-top: 20px; font-weight: 600; text-decoration: none; display: inline-block; }
+    .footer { background: #F8FAFF; padding: 30px; text-align: center; font-size: 12px; color: #6B7280; border-top: 1px solid #E5E7EB; }
     .footer p { margin: 8px 0; }
-    .footer strong { color: #1E3A8A; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">3M</div>
-      <h1>Rapport d'Évaluation Professionnelle</h1>
+      <h1>📋 Rapport d'Évaluation Professionnelle</h1>
       <p>Analyse approfondie de votre profil — 3M Travel & Services</p>
     </div>
     
     <div class="body">
-      <div class="intro">
-        <p>Bonjour <strong>${app.fullName}</strong>,</p>
-        <p style="margin-top: 12px;">Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.</p>
-      </div>
+      <p>Bonjour <strong>${app.fullName}</strong>,</p>
+      <p>Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.</p>
       
       <div class="section">
         <div class="section-title">📊 SYNTHÈSE DES SCORES PAR DESTINATION</div>
@@ -312,14 +299,12 @@ export function generateEvaluationReportHTML(app: Application): string {
       
       <div class="section">
         <div class="section-title">⚙️ CADRE JURIDIQUE</div>
-        <div class="legal">
-          <p>Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique, à la préparation rigoureuse de votre dossier administratif et à la mise en relation avec les opportunités du marché. L'octroi final des visas et permis de travail reste la compétence souveraine des autorités étatiques.</p>
-        </div>
+        <p>Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigration. Notre rôle se limite à l'ingénierie documentaire, au conseil technique, à la préparation rigoureuse de votre dossier administratif et à la mise en relation avec les opportunités du marché. L'octroi final des visas et permis de travail reste la compétence souveraine des autorités étatiques.</p>
       </div>
       
       <div class="section">
         <div class="section-title">💰 FRAIS D'OUVERTURE DE DOSSIER</div>
-        <p style="font-size: 15px; line-height: 1.8; color: #374151;">Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de <strong style="color: #1E3A8A; font-size: 18px;">65 000 FCFA</strong> est requis.</p>
+        <p>Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de <strong>65 000 FCFA</strong> est requis.</p>
       </div>
       
       <a href="https://3mtravelagency.click/verify-application-email?dossier=${app.dossierNumber}" class="cta">Continuer vers le paiement →</a>
@@ -327,9 +312,9 @@ export function generateEvaluationReportHTML(app: Application): string {
     
     <div class="footer">
       <p><strong>3M Travel & Services SARL</strong></p>
-      <p>Yaoundé, Cameroun</p>
-      <p>Tél : +237 698 104 832 | Email : hello@3mtravelagency.com</p>
-      <p style="margin-top: 15px; font-style: italic; font-weight: 600;">&quot;Votre mobilité, notre expertise. Votre réussite, notre mission.&quot;</p>
+      <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
+      <p>RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
+      <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>
     </div>
   </div>
 </body>

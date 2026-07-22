@@ -64,7 +64,7 @@ export default function PaymentFailed() {
               </Button>
             </Link>
             <a
-              href={`https://wa.me/237698104832?text=${whatsappMsg}`}
+              href={`https://wa.me/237620996045?text=${whatsappMsg}`}
               target="_blank"
               rel="noopener noreferrer"
             >
