@@ -343,3 +343,11 @@
 - [x] Badge du nombre de filtres actifs sur le bouton Filtres et dans le titre
 - [x] Bouton "Tout réinitialiser" (visible uniquement si filtres actifs)
 - [x] Drawer bottom mobile avec animation spring, poignée, bouton "Voir X vols"
+
+## Bouton de partage sur les cartes de vols (v19)
+- [x] Icône "Partager" sur chaque carte de vol (Share2)
+- [x] Popover animé (scale + fade, origin bottom-right) avec 3 options
+- [x] WhatsApp : message pré-rempli complet (compagnie, route, horaires, durée, classe, prix, référence)
+- [x] Email : sujet + corps formaté avec tous les détails du vol et lien 3M Travel
+- [x] Copier le lien : URL avec paramètres (from, to, date, pnr) + icône Check + message "Lien copié !"
+- [x] Fermeture automatique au clic en dehors du popover (useRef + useEffect)

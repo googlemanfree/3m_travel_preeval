@@ -9,7 +9,7 @@ import {
   Filter, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, ChevronLeft, ChevronRight, AlertCircle,
   Luggage, RefreshCw, SlidersHorizontal, TrendingUp, Zap,
-  CheckCircle2, Info, Globe,
+  CheckCircle2, Info, Globe, Share2, Mail, Copy, Check,
 } from "lucide-react";
 import { Link } from "wouter";
 import Navbar from "@/components/Navbar";
@@ -297,6 +297,52 @@ function FlightCard({ flight, searchParams, onSelect, isSelected }: {
   isSelected?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const shareRef = useRef<HTMLDivElement>(null);
+
+  // Close share popover on outside click
+  useEffect(() => {
+    if (!shareOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
+        setShareOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [shareOpen]);
+
+  function buildFlightSummary() {
+    return `✈️ Vol ${flight.airline.name} — ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 ${flight.departureDate} · Départ ${flight.departureTime} · Arrivée ${flight.arrivalTime}\n⏱ Durée : ${flight.duration} · ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 ${CABIN_LABELS[flight.cabinClass]}\n💰 ${formatXAF(flight.totalPrice)} / ${searchParams.adults + searchParams.children} passager(s)\n📋 Réf. : ${flight.pnrRef}`;
+  }
+
+  function handleShareWhatsApp() {
+    const msg = `Bonjour ! Je t'envoie cette option de vol trouvée sur 3M Travel :\n\n${buildFlightSummary()}\n\n👉 Réserve via 3M Travel : https://www.3mtravelagency.click/vols`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    setShareOpen(false);
+  }
+
+  function handleShareEmail() {
+    const subject = encodeURIComponent(`Vol ${flight.origin} → ${flight.destination} — ${formatXAF(flight.totalPrice)}`);
+    const body = encodeURIComponent(`Bonjour,\n\nVoici une option de vol que j'ai trouvée sur 3M Travel :\n\n${buildFlightSummary()}\n\nPour réserver ou en savoir plus :\nhttps://www.3mtravelagency.click/vols\n\nCordialement`);
+    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
+    setShareOpen(false);
+  }
+
+  function handleCopyLink() {
+    const params = new URLSearchParams({
+      from: flight.origin,
+      to: flight.destination,
+      date: flight.departureDate,
+      pnr: flight.pnrRef,
+    });
+    const url = `${window.location.origin}/vols?${params.toString()}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => { setCopied(false); setShareOpen(false); }, 2000);
+    });
+  }
 
   function buildWhatsAppMsg() {
     const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Prix total : ${formatXAF(flight.totalPrice)}\n📋 Réf. : ${flight.pnrRef}\n\nMerci de me contacter pour finaliser la réservation.`;
@@ -411,6 +457,60 @@ function FlightCard({ flight, searchParams, onSelect, isSelected }: {
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
                 </Button>
               </a>
+              {/* Share button with popover */}
+              <div className="relative" ref={shareRef}>
+                <Button
+                  variant="outline"
+                  onClick={() => setShareOpen(!shareOpen)}
+                  className="border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
+                >
+                  <Share2 className="w-3.5 h-3.5 mr-1" /> Partager
+                </Button>
+                <AnimatePresence>
+                  {shareOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                      transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                      className="absolute bottom-full right-0 mb-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50"
+                      style={{ transformOrigin: "bottom right" }}
+                    >
+                      <div className="px-3 py-2 border-b border-gray-100">
+                        <p className="text-xs font-bold text-gray-700">Partager ce vol</p>
+                        <p className="text-[10px] text-gray-400 truncate">{flight.originCity} → {flight.destinationCity} · {formatXAF(flight.totalPrice)}</p>
+                      </div>
+                      <button
+                        onClick={handleShareWhatsApp}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                      >
+                        <span className="w-7 h-7 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <MessageCircle className="w-4 h-4 text-green-600" />
+                        </span>
+                        Envoyer sur WhatsApp
+                      </button>
+                      <button
+                        onClick={handleShareEmail}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                      >
+                        <span className="w-7 h-7 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4 text-blue-600" />
+                        </span>
+                        Envoyer par email
+                      </button>
+                      <button
+                        onClick={handleCopyLink}
+                        className="flex items-center gap-3 w-full px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                      >
+                        <span className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${copied ? "bg-green-100" : "bg-gray-100"}`}>
+                          {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-600" />}
+                        </span>
+                        {copied ? "Lien copié !" : "Copier le lien"}
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
