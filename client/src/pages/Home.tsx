@@ -663,22 +663,14 @@ export default function Home() {
                 Remplissez notre formulaire gratuit. Nos experts analysent votre profil et vous proposent les meilleures options pour réaliser votre projet.
               </motion.p>
 
-              {/* CTAs */}
-              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-3">
-                <Button
-                  onClick={() => setShowEvalModal(true)}
-                  size="lg"
-                  className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-xl shadow-2xl px-10 py-7 h-auto active:scale-[0.97] transition-all gap-3 rounded-2xl ring-2 ring-amber-400/40 hover:ring-amber-400/70 hover:shadow-amber-500/30"
-                >
-                  <Star className="w-6 h-6" />Évaluer mon éligibilité
-                </Button>
+              {/* CTA unique */}
+              <motion.div variants={fadeUp} className="flex justify-center lg:justify-start pt-3">
                 <a href="#evaluation">
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="border-2 border-white/70 text-white hover:bg-white/15 font-bold text-xl px-10 py-7 h-auto active:scale-[0.97] transition-all rounded-2xl"
+                    className="bg-gradient-to-r from-[#f59e0b] to-[#d97706] hover:from-[#d97706] hover:to-[#b45309] text-white font-extrabold text-xl shadow-2xl px-12 py-7 h-auto active:scale-[0.97] transition-all gap-3 rounded-2xl ring-2 ring-amber-400/40 hover:ring-amber-400/70 hover:shadow-amber-500/30"
                   >
-                    Pré-évaluation <ArrowRight className="w-6 h-6 ml-2" />
+                    <Star className="w-6 h-6" /> Évaluation gratuite
                   </Button>
                 </a>
               </motion.div>
@@ -757,6 +749,36 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── NOS SERVICES ────────────────────────────────────────────────── */}
+      <section id="services" className="py-14 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">Tout ce dont vous avez besoin</h2>
+            <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/vols" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "/destinations" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/services" },
+            ].map((s, i) => (
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
+                <a href={s.href}>
+                  <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full cursor-pointer">
+                    <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <s.icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
+                  </Card>
+                </a>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
       <CounterStats
         title="Ils nous ont fait confiance"
@@ -934,34 +956,6 @@ export default function Home() {
       </section>
 
 
-      {/* ─── SERVICES ────────────────────────────────────────────────────── */}
-      <section id="services" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Tout ce dont vous avez besoin</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]" },
-            ].map((s, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
-                <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full">
-                  <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <s.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-16 bg-gradient-to-b from-blue-50 to-white">
