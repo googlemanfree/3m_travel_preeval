@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
 import ResourcesFloatingWidget from "@/components/ResourcesFloatingWidget";
+import PromoFloatingBanner from "@/components/PromoFloatingBanner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -1376,6 +1377,9 @@ export default function Home() {
 
       {/* ─── WIDGET RESSOURCES FLOTTANT ─────────────────────────────────────── */}
       <ResourcesFloatingWidget />
+
+      {/* ─── BANNIERE PROMO ETUDIANT FLOTTANTE ─────────────────────────────── */}
+      <PromoFloatingBanner />
 
       {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
       <WhatsAppButton />
