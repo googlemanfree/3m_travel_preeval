@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
+import ResourcesFloatingWidget from "@/components/ResourcesFloatingWidget";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
@@ -1251,6 +1252,9 @@ export default function Home() {
 
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EligibilityModal open={showEvalModal} onClose={() => setShowEvalModal(false)} />
+
+      {/* ─── WIDGET RESSOURCES FLOTTANT ─────────────────────────────────────── */}
+      <ResourcesFloatingWidget />
 
       {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
       <WhatsAppButton />
