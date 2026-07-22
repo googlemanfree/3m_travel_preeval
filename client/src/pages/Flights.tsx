@@ -721,10 +721,102 @@ export default function Flights() {
         )}
 
         {isFetching && (
-          <div className="text-center py-20">
-            <RefreshCw className="w-10 h-10 text-[#2563EB] animate-spin mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">Recherche des meilleurs tarifs...</p>
-            <p className="text-gray-400 text-xs mt-1">Comparaison de {Object.keys({}).length + 17} compagnies aériennes</p>
+          <div className="flex flex-col items-center justify-center py-20 select-none">
+            {/* Piste d'aéroport */}
+            <div className="relative w-full max-w-lg h-32 mb-6 overflow-hidden">
+              {/* Ciel dégradé */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-blue-100 via-blue-50 to-gray-100" />
+
+              {/* Nuages flottants */}
+              <motion.div
+                animate={{ x: ["0%", "-120%"] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 0 }}
+                className="absolute top-4 left-[110%] flex gap-8"
+              >
+                {["w-16 h-5", "w-10 h-4", "w-20 h-6"].map((cls, i) => (
+                  <div key={i} className={`${cls} bg-white/80 rounded-full blur-sm opacity-70`} />
+                ))}
+              </motion.div>
+              <motion.div
+                animate={{ x: ["0%", "-120%"] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "linear", delay: 2 }}
+                className="absolute top-8 left-[110%] flex gap-12"
+              >
+                {["w-12 h-4", "w-8 h-3"].map((cls, i) => (
+                  <div key={i} className={`${cls} bg-white/60 rounded-full blur-sm opacity-50`} />
+                ))}
+              </motion.div>
+
+              {/* Avion principal */}
+              <motion.div
+                animate={{
+                  x: ["-10%", "110%"],
+                  y: [0, -8, 0, -5, 0],
+                }}
+                transition={{
+                  x: { duration: 2.8, repeat: Infinity, ease: "easeInOut" },
+                  y: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+                }}
+                className="absolute top-1/2 -translate-y-1/2 left-0"
+              >
+                <div className="relative">
+                  {/* Traînée de fumée */}
+                  <motion.div
+                    animate={{ scaleX: [0.3, 1, 0.3], opacity: [0.6, 0.3, 0.6] }}
+                    transition={{ duration: 0.8, repeat: Infinity }}
+                    className="absolute right-full top-1/2 -translate-y-1/2 w-16 h-1 bg-gradient-to-l from-blue-300/60 to-transparent rounded-full"
+                    style={{ transformOrigin: "right" }}
+                  />
+                  {/* Icône avion SVG */}
+                  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="26" cy="26" r="26" fill="#2563EB" fillOpacity="0.12" />
+                    <g transform="translate(8, 8)">
+                      <path d="M34 18L20 4L18 6L24 14L10 12L8 14L18 18L8 22L10 24L24 22L18 30L20 32L34 18Z"
+                        fill="#1E3A8A" stroke="#2563EB" strokeWidth="0.5" />
+                    </g>
+                  </svg>
+                </div>
+              </motion.div>
+
+              {/* Piste au sol */}
+              <div className="absolute bottom-3 left-4 right-4 h-1.5 bg-gray-300 rounded-full overflow-hidden">
+                <motion.div
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                  className="h-full w-1/3 bg-gradient-to-r from-transparent via-blue-400 to-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Texte animé */}
+            <motion.p
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="text-[#1E3A8A] font-black text-lg mb-1"
+            >
+              Recherche des meilleurs tarifs...
+            </motion.p>
+
+            {/* Compagnies défilantes */}
+            <div className="flex items-center gap-2 text-xs text-gray-400 font-medium">
+              <span>Comparaison de</span>
+              <motion.span
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.4 }}
+                className="font-black text-[#2563EB]"
+              >
+                17 compagnies aériennes
+              </motion.span>
+            </div>
+
+            {/* Barre de progression */}
+            <div className="mt-5 w-64 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+                className="h-full w-1/2 bg-gradient-to-r from-transparent via-[#2563EB] to-transparent rounded-full"
+              />
+            </div>
           </div>
         )}
 
