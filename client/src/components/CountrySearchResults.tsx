@@ -142,6 +142,10 @@ export const CountrySearchResults: React.FC<CountrySearchResultsProps> = ({
           countryName={selectedCountry.name}
           pdfUrl={selectedCountry.pdfGuide}
           onDownload={() => {}}
+          onSelectSimilar={(countryId) => {
+            // Optionnel: charger le nouveau pays
+            console.log('Guide similaire sélectionné:', countryId);
+          }}
         />
       )}
     </AnimatePresence>
