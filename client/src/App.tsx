@@ -25,6 +25,7 @@ import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
+import Assurance from "./pages/Assurance";
 
 function Router() {
   return (
@@ -67,6 +68,9 @@ function Router() {
 
       {/* Fiches détaillées par pays */}
       <Route path={"/fiches"} component={Fiches} />
+
+      {/* Assurance voyage */}
+      <Route path={"/assurance"} component={Assurance} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />
