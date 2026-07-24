@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { CountryData } from '@/data/countriesData';
+import PDFPreviewModal from '@/components/PDFPreviewModal';
 
 interface CountrySearchResultsProps {
   countries: CountryData[];
@@ -26,9 +27,17 @@ export const CountrySearchResults: React.FC<CountrySearchResultsProps> = ({
   isLoading = false,
   onClose,
 }) => {
+  const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
+  const [showPDFModal, setShowPDFModal] = useState(false);
+
   if (countries.length === 0 && !isLoading) {
     return null;
   }
+
+  const handlePDFClick = (country: CountryData) => {
+    setSelectedCountry(country);
+    setShowPDFModal(true);
+  };
 
   return (
     <AnimatePresence>
@@ -110,21 +119,31 @@ export const CountrySearchResults: React.FC<CountrySearchResultsProps> = ({
                 </div>
 
                 {/* Bouton téléchargement PDF */}
-                <motion.a
-                  href={country.pdfGuide}
-                  download
+                <motion.button
+                  onClick={() => handlePDFClick(country)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-lg font-semibold text-sm transition-all duration-200 w-full justify-center"
                 >
                   <Download className="w-4 h-4" />
                   Télécharger le guide PDF
-                </motion.a>
+                </motion.button>
               </motion.div>
             ))}
           </div>
         )}
       </motion.div>
+
+      {/* Modale d'aperçu PDF */}
+      {selectedCountry && (
+        <PDFPreviewModal
+          isOpen={showPDFModal}
+          onClose={() => setShowPDFModal(false)}
+          countryName={selectedCountry.name}
+          pdfUrl={selectedCountry.pdfGuide}
+          onDownload={() => {}}
+        />
+      )}
     </AnimatePresence>
   );
 };
