@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useLocation } from 'wouter';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -745,19 +746,25 @@ export default function Home() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]" },
+              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "#" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/assurance" },
             ].map((s, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
-                <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 group h-full">
-                  <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                    <s.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-gray-900 mb-2">{s.title}</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
-                </Card>
+                <a href={s.href} className="block h-full group">
+                  <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 h-full cursor-pointer">
+                    <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                      <s.icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{s.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed group-hover:text-gray-700 transition-colors">{s.desc}</p>
+                    <div className="mt-4 flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-sm font-semibold">En savoir plus</span>
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </div>
+                  </Card>
+                </a>
               </motion.div>
             ))}
           </div>
@@ -1390,6 +1397,8 @@ export default function Home() {
                 ))}
                 <li><a href="/procedures" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">📚 Procédures & Guides</a></li>
                 <li><a href="/flights" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">✈️ Recherche de Vols</a></li>
+                <li><a href="/traduction" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">📄 Traduction Assermentée</a></li>
+                <li><a href="/assurance" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">🛡️ Assurance Voyage</a></li>
               </ul>
             </div>
             <div>
