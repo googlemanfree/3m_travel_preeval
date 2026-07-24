@@ -23,9 +23,13 @@ import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
+import { searchCountries, countriesData } from '@/data/countriesData';
+import CountrySearchResults from '@/components/CountrySearchResults';
+
 const SearchBarWithAutocomplete = () => {
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchResults, setSearchResults] = useState(countriesData.slice(0, 0));
 
   const destinations = [
     { emoji: '🇨🇦', name: 'Canada', type: 'destination' },
@@ -49,6 +53,9 @@ const SearchBarWithAutocomplete = () => {
   const filteredItems = query.length > 0 
     ? allItems.filter(item => item.name.toLowerCase().includes(query.toLowerCase()))
     : [];
+  
+  // Résultats détaillés des pays
+  const detailedResults = query.length > 2 ? searchCountries(query) : [];
 
   return (
     <div className="relative">
@@ -69,9 +76,14 @@ const SearchBarWithAutocomplete = () => {
         </svg>
       </div>
 
+      {/* Résultats détaillés des pays */}
+      {detailedResults.length > 0 && (
+        <CountrySearchResults countries={detailedResults} />
+      )}
+
       {/* Menu déroulant d'auto-complétion */}
       <AnimatePresence>
-        {showSuggestions && filteredItems.length > 0 && (
+        {showSuggestions && filteredItems.length > 0 && detailedResults.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -614,28 +626,10 @@ export default function Home() {
                 </motion.div>
               </motion.div>
 
-              {/* Barre de recherche rapide */}
-              <motion.div variants={fadeUp} className="mt-8 pt-6 border-t border-white/20">
-                <p className="text-sm font-semibold text-white/80 mb-4">🔍 Trouvez votre destination</p>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Cherchez un pays, une procédure..."
-                    className="w-full px-5 py-3 rounded-lg bg-white/15 backdrop-blur-md border border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all duration-300 font-medium"
-                    onChange={(e) => {
-                      const query = e.target.value.toLowerCase();
-                      if (query.length > 0) {
-                        const element = document.getElementById('procedures-section');
-                        if (element) {
-                          element.scrollIntoView({ behavior: 'smooth' });
-                        }
-                      }
-                    }}
-                  />
-                  <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
+              {/* Barre de recherche rapide - PLACÉE PLUS HAUT */}
+              <motion.div variants={fadeUp} className="mt-6 mb-8">
+                <p className="text-sm font-semibold text-white/80 mb-3">🔍 Trouvez votre destination</p>
+                <SearchBarWithAutocomplete />
               </motion.div>
 
             </motion.div>
