@@ -22,6 +22,143 @@ import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
 
+// ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
+const SearchBarWithAutocomplete = () => {
+  const [query, setQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const destinations = [
+    { emoji: '🇨🇦', name: 'Canada', type: 'destination' },
+    { emoji: '🇫🇷', name: 'France', type: 'destination' },
+    { emoji: '🇦🇪', name: 'Dubaï', type: 'destination' },
+    { emoji: '🇩🇪', name: 'Allemagne', type: 'destination' },
+    { emoji: '🇬🇧', name: 'Royaume-Uni', type: 'destination' },
+    { emoji: '🇦🇺', name: 'Australie', type: 'destination' },
+    { emoji: '🇧🇪', name: 'Belgique', type: 'destination' },
+    { emoji: '🇵🇱', name: 'Pologne', type: 'destination' },
+  ];
+
+  const procedures = [
+    { emoji: '🎓', name: 'Visa Étudiant', type: 'procedure' },
+    { emoji: '💼', name: 'Permis de Travail', type: 'procedure' },
+    { emoji: '🏠', name: 'Résidence Permanente', type: 'procedure' },
+    { emoji: '✈️', name: 'Visa Visiteur', type: 'procedure' },
+  ];
+
+  const allItems = [...destinations, ...procedures];
+  const filteredItems = query.length > 0 
+    ? allItems.filter(item => item.name.toLowerCase().includes(query.toLowerCase()))
+    : [];
+
+  return (
+    <div className="relative">
+      <div className="relative mb-4">
+        <input
+          type="text"
+          placeholder="Cherchez un pays, une procédure..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShowSuggestions(e.target.value.length > 0);
+          }}
+          onFocus={() => setShowSuggestions(query.length > 0)}
+          className="w-full px-5 py-3 rounded-lg bg-white/15 backdrop-blur-md border border-white/30 text-white placeholder-white/50 focus:outline-none focus:border-white/60 focus:bg-white/20 transition-all duration-300 font-medium"
+        />
+        <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+
+      {/* Menu déroulant d'auto-complétion */}
+      <AnimatePresence>
+        {showSuggestions && filteredItems.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full left-0 right-0 mt-2 bg-[#0f1e4a]/95 backdrop-blur-md border border-white/20 rounded-lg shadow-2xl z-50 overflow-hidden"
+          >
+            <div className="max-h-64 overflow-y-auto">
+              {/* Destinations */}
+              {filteredItems.some(item => item.type === 'destination') && (
+                <>
+                  <div className="px-4 py-2 text-xs font-semibold text-white/60 bg-white/5 border-b border-white/10">
+                    🌍 Destinations
+                  </div>
+                  {filteredItems.filter(item => item.type === 'destination').map((item, idx) => (
+                    <motion.a
+                      key={idx}
+                      href="/procedures"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.02 * idx }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer border-b border-white/5 last:border-b-0"
+                      onClick={() => setShowSuggestions(false)}
+                    >
+                      <span className="text-lg">{item.emoji}</span>
+                      <span className="text-white font-medium">{item.name}</span>
+                    </motion.a>
+                  ))}
+                </>
+              )}
+
+              {/* Procédures */}
+              {filteredItems.some(item => item.type === 'procedure') && (
+                <>
+                  <div className="px-4 py-2 text-xs font-semibold text-white/60 bg-white/5 border-b border-white/10">
+                    📋 Procédures
+                  </div>
+                  {filteredItems.filter(item => item.type === 'procedure').map((item, idx) => (
+                    <motion.a
+                      key={idx}
+                      href="/procedures"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.02 * idx }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-white/10 transition-colors cursor-pointer border-b border-white/5 last:border-b-0"
+                      onClick={() => setShowSuggestions(false)}
+                    >
+                      <span className="text-lg">{item.emoji}</span>
+                      <span className="text-white font-medium">{item.name}</span>
+                    </motion.a>
+                  ))}
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tags de destinations populaires */}
+      <div className="flex flex-wrap gap-2">
+        {[
+          { emoji: '🇨🇦', name: 'Canada', href: '/procedures' },
+          { emoji: '🇫🇷', name: 'France', href: '/procedures' },
+          { emoji: '🇦🇪', name: 'Dubaï', href: '/procedures' },
+          { emoji: '🇩🇪', name: 'Allemagne', href: '/procedures' },
+          { emoji: '🇬🇧', name: 'UK', href: '/procedures' },
+          { emoji: '🇦🇺', name: 'Australie', href: '/procedures' },
+        ].map((dest, idx) => (
+          <motion.a
+            key={idx}
+            href={dest.href}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.05 * idx }}
+            whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.25)' }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 border border-white/30 text-white text-xs font-semibold hover:bg-white/20 transition-all duration-200 cursor-pointer"
+          >
+            <span>{dest.emoji}</span>
+            <span>{dest.name}</span>
+          </motion.a>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DestinationCategory = "schengen" | "canada" | "autre";
 type VisaType =
