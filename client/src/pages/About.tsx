@@ -343,6 +343,74 @@ export default function About() {
         </div>
       </section>
 
+      {/* Partners & Certifications Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
+            Nos partenaires et certifications
+          </h2>
+
+          {/* Certifications */}
+          <div className="mb-16">
+            <h3 className="text-xl font-bold text-gray-900 mb-8 text-center">
+              Certifications et accréditations
+            </h3>
+            <div className="grid md:grid-cols-4 gap-6 mb-12">
+              {[
+                { name: 'ISO 9001', desc: 'Qualité de service' },
+                { name: 'ISO 27001', desc: 'Sécurité des données' },
+                { name: 'RGPD', desc: 'Protection des données' },
+                { name: 'Agréé ONU', desc: 'Reconnaissance officielle' },
+              ].map((cert, index) => (
+                <motion.div
+                  key={cert.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all"
+                >
+                  <div className="text-4xl mb-3">✓</div>
+                  <h4 className="font-bold text-gray-900 mb-1">{cert.name}</h4>
+                  <p className="text-sm text-gray-600">{cert.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Partners */}
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-8 text-center">
+              Nos partenaires officiels
+            </h3>
+            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
+              {[
+                { emoji: '🇨🇦', name: 'Immigration Canada' },
+                { emoji: '🇫🇷', name: 'Ambassade France' },
+                { emoji: '🇩🇪', name: 'Consulat Allemagne' },
+                { emoji: '🇬🇧', name: 'UK Visas' },
+                { emoji: '🇦🇪', name: 'Dubaï Tourism' },
+                { emoji: '🏛️', name: 'Ministère Intérieur' },
+              ].map((partner, index) => (
+                <motion.div
+                  key={partner.name}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all cursor-pointer group"
+                >
+                  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">
+                    {partner.emoji}
+                  </div>
+                  <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
+                    {partner.name}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
