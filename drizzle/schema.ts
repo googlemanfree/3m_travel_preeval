@@ -409,3 +409,32 @@ export const profileEvaluations = mysqlTable("profile_evaluations", {
 
 export type ProfileEvaluation = typeof profileEvaluations.$inferSelect;
 export type InsertProfileEvaluation = typeof profileEvaluations.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHAT DE SUPPORT — CONTACT EN DIRECT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Messages de chat en direct depuis la page Contact
+ * Permet aux clients de communiquer directement avec le support
+ */
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  // Identité du visiteur (pas nécessairement un compte inscrit)
+  visitorName: varchar("visitorName", { length: 255 }).notNull(),
+  visitorEmail: varchar("visitorEmail", { length: 320 }).notNull(),
+  visitorPhone: varchar("visitorPhone", { length: 50 }),
+  // Conversation
+  sessionId: varchar("sessionId", { length: 128 }).notNull(),  // Identifie la session de chat
+  senderRole: mysqlEnum("senderRole", ["visitor", "support"]).notNull(),
+  content: text("content").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  // Métadonnées
+  subject: varchar("subject", { length: 255 }),  // Sujet initial du chat
+  status: mysqlEnum("status", ["active", "closed", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = typeof contactMessages.$inferInsert;

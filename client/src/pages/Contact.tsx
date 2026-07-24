@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Navbar from '@/components/Navbar';
+import { ChatModal } from '@/components/ChatModal';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,7 @@ export default function Contact() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const contactInfo = [
     {
@@ -333,57 +335,64 @@ export default function Contact() {
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: MessageSquare,
-                title: 'WhatsApp',
-                description: 'Discutez directement avec notre équipe',
-                action: 'Ouvrir WhatsApp',
-                link: 'https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services',
-              },
-              {
-                icon: Phone,
-                title: 'Appel direct',
-                description: 'Parlez à un conseiller en temps réel',
-                action: 'Appeler maintenant',
-                link: 'tel:+237698104832',
-              },
-              {
-                icon: Zap,
-                title: 'Chat en ligne',
-                description: 'Réponse instantanée de notre support',
-                action: 'Démarrer le chat',
-                link: '#',
-              },
-            ].map((option, index) => {
-              const Icon = option.icon;
-              return (
-                <motion.div
-                  key={option.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+            {/* WhatsApp Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0 }}
+            >
+              <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
+                <MessageSquare className="text-blue-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">WhatsApp</h3>
+                <p className="text-gray-600 mb-6">Discutez directement avec notre équipe</p>
+                <a
+                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                    <Icon className="text-blue-600 mx-auto mb-4" size={40} />
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
-                      {option.title}
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      {option.description}
-                    </p>
-                    <a
-                      href={option.link}
-                      target={option.title === 'WhatsApp' ? '_blank' : undefined}
-                      rel={option.title === 'WhatsApp' ? 'noopener noreferrer' : undefined}
-                      className="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      {option.action}
-                    </a>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                  Ouvrir WhatsApp
+                </a>
+              </Card>
+            </motion.div>
+
+            {/* Phone Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
+                <Phone className="text-blue-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Appel direct</h3>
+                <p className="text-gray-600 mb-6">Parlez à un conseiller en temps réel</p>
+                <a
+                  href="tel:+237698104832"
+                  className="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Appeler maintenant
+                </a>
+              </Card>
+            </motion.div>
+
+            {/* Chat Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
+                <Zap className="text-blue-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Chat en ligne</h3>
+                <p className="text-gray-600 mb-6">Réponse instantanée de notre support</p>
+                <Button
+                  onClick={() => setIsChatOpen(true)}
+                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Démarrer le chat
+                </Button>
+              </Card>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -416,6 +425,9 @@ export default function Contact() {
               </motion.div>
             ))}
           </div>
+
+          {/* Chat Modal */}
+          <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </div>
       </section>
 

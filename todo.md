@@ -301,3 +301,12 @@
 - [x] Lien "Télécharger les guides PDF" dans le menu déroulant Ressources (desktop)
 - [x] Lien "Télécharger les guides PDF" dans le menu mobile
 - [x] Route /ressources ajoutée dans App.tsx
+
+## Chat en Direct — Support Client (v15)
+- [x] Créer la table DB contact_messages pour stocker les conversations
+- [x] Créer le routeur tRPC contact avec procédures sendMessage, getMessages, closeSession
+- [x] Créer le composant ChatModal avec interface de chat
+- [x] Intégrer ChatModal à la page Contact.tsx
+- [x] Remplacer le lien "#" du "Chat en ligne" par un bouton qui ouvre la modale
+- [x] Ajouter animations Framer Motion à la modale
+- [x] Tester l'ouverture/fermeture de la modale
