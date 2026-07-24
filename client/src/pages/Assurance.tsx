@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Heart, Globe, Clock, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
+import { Link } from 'wouter';
 
 export default function Assurance() {
   const [activeTab, setActiveTab] = useState<'types' | 'process' | 'benefits'>('types');
@@ -100,13 +101,15 @@ export default function Assurance() {
               Souscrivez une assurance voyage rapidement pour vos déplacements à l'étranger : visa, tourisme, affaires, études ou séjour familial.
             </p>
 
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
-            >
-              Souscrire une assurance
-            </motion.button>
+            <Link href="/assurance-inscription">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Souscrire une assurance
+              </motion.button>
+            </Link>
           </motion.div>
         </div>
 

@@ -27,6 +27,7 @@ import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
 import Traduction from "./pages/Traduction";
+import AssuranceInscription from "./pages/AssuranceInscription";
 
 function Router() {
   return (
@@ -46,8 +47,9 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path={"/procedures"} component={Procedures} />
-      <Route path={"/visa-types"} component={VisaTypes} />
-      <Route path={"/destinations"} component={Destinations} />
+      <Route path={"/assurance"} component={Assurance} />
+      <Route path={"/assurance-inscription"} component={AssuranceInscription} />
+      <Route path={"/traduction"} component={Traduction} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
