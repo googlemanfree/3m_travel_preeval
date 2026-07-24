@@ -30,6 +30,7 @@ import Traduction from "./pages/Traduction";
 import AssuranceInscription from "./pages/AssuranceInscription";
 import Evisa from "./pages/Evisa";
 import EvisaDemande from "./pages/EvisaDemande";
+import About from "./pages/About";
 
 function Router() {
   return (
@@ -53,6 +54,7 @@ function Router() {
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
       <Route path={"/evisa-demande"} component={EvisaDemande} />
+      <Route path={"/about"} component={About} />
       <Route path={"/traduction"} component={Traduction} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/dashboard"}>
