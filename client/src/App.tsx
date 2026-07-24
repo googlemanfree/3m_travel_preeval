@@ -26,6 +26,7 @@ import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
+import Traduction from "./pages/Traduction";
 
 function Router() {
   return (
@@ -71,6 +72,9 @@ function Router() {
 
       {/* Assurance voyage */}
       <Route path={"/assurance"} component={Assurance} />
+
+      {/* Traduction assermentée */}
+      <Route path={"/traduction"} component={Traduction} />
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />
