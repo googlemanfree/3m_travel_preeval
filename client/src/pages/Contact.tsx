@@ -108,6 +108,60 @@ export default function Contact() {
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
       </section>
 
+      {/* Google Maps Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Nos localisations
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Yaoundé Map */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="rounded-lg overflow-hidden shadow-lg"
+            >
+              <div className="bg-white p-4">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Yaoundé</h3>
+                <p className="text-sm text-gray-600 mb-4">Siège principal</p>
+              </div>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.7441234567890!2d11.5021!3d3.8667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM8KwNTIwMDEuMiJOIDExwrMwMDA1OS4yIkU!5e0!3m2!1sfr!2scm!4v1234567890"
+                width="100%"
+                height="300"
+                style={{ border: 0 }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </motion.div>
+
+            {/* Douala Map */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="rounded-lg overflow-hidden shadow-lg"
+            >
+              <div className="bg-white p-4">
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Douala</h3>
+                <p className="text-sm text-gray-600 mb-4">Bureau secondaire</p>
+              </div>
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.7441234567890!2d9.7679!3d4.0511!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z0JDQu9C80LXQvdC40LXQvdC90LjRgdC60LDRgtC10YI!5e0!3m2!1sfr!2scm!4v1234567890"
+                width="100%"
+                height="300"
+                style={{ border: 0 }}
+                allowFullScreen={true}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Contact Info Cards */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
