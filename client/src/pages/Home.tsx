@@ -1361,7 +1361,7 @@ export default function Home() {
                 Pré-évaluation gratuite <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </a>
-            <a href="mailto:hello@3mtravelegency.com">
+            <a href="mailto:hello@3mtravelagency.com">
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-semibold px-8 active:scale-[0.97] transition-transform">
                 <Mail className="w-4 h-4 mr-2" />Nous écrire
               </Button>
@@ -1426,7 +1426,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
-                  <a href="mailto:hello@3mtravelegency.com" className="hover:text-[#7cb9e8]">hello@3mtravelegency.com</a>
+                  <a href="mailto:hello@3mtravelagency.com" className="hover:text-[#7cb9e8]">hello@3mtravelagency.com</a>
                 </div>
               </div>
             </div>
@@ -1455,8 +1455,9 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
             <p>© 2026 3M Travel & Services SARL. Tous droits réservés.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="#" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
-              <a href="#" className="hover:text-[#7cb9e8] transition-colors">Conditions d'utilisation</a>
+              {/* Liens légaux à implémenter */}
+              {/* <a href="/privacy" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
+              <a href="/terms" className="hover:text-[#7cb9e8] transition-colors">Conditions d'utilisation</a> */}
             </div>
           </div>
         </div>

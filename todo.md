@@ -310,3 +310,9 @@
 - [x] Remplacer le lien "#" du "Chat en ligne" par un bouton qui ouvre la modale
 - [x] Ajouter animations Framer Motion à la modale
 - [x] Tester l'ouverture/fermeture de la modale
+
+
+## Corrections de contenu et de liens (v16)
+- [x] Corriger email footer : hello@3mtravelegency.com → hello@3mtravelagency.com (Footer.tsx, Home.tsx)
+- [x] Modifier le lien "Destinations" : /destinations → /procedures (Navbar.tsx)
+- [x] Commenter les liens légaux morts dans Home.tsx (à implémenter : /privacy et /terms)
