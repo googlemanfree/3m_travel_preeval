@@ -35,6 +35,9 @@ import Contact from "./pages/Contact";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import DossierConfirmation from "./pages/DossierConfirmation";
 import ConditionsUtilisation from "./pages/ConditionsUtilisation";
+import AdminEvaluation from "./pages/AdminEvaluation";
+import AdminAccompagnement from "./pages/AdminAccompagnement";
+import AdminProcedures from "./pages/AdminProcedures";
 
 function Router() {
   return (
@@ -95,6 +98,21 @@ function Router() {
 
       {/* Panneau admin */}
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/admin/evaluation"}>
+        <AuthGuard message="Accès réservé aux administrateurs.">
+          <AdminEvaluation />
+        </AuthGuard>
+      </Route>
+      <Route path={"/admin/accompagnement"}>
+        <AuthGuard message="Accès réservé aux administrateurs.">
+          <AdminAccompagnement />
+        </AuthGuard>
+      </Route>
+      <Route path={"/admin/procedures"}>
+        <AuthGuard message="Accès réservé aux administrateurs.">
+          <AdminProcedures />
+        </AuthGuard>
+      </Route>
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

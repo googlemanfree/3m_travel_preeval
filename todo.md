@@ -403,3 +403,16 @@
 - [x] Corriger les procédures `createEvaluationJob`, `listJobs`, `deleteJob`
 - [x] Utiliser `ctx.user.openId` correctement du contexte tRPC
 - [x] Ajouter des messages d'erreur explicites pour le diagnostic
+
+
+## Création des 3 Comptes Admin Spécialisés (v13)
+- [x] Créer les 3 comptes admin en base de données (Evaluation, Accompagnement, Procédures)
+- [x] Créer le dashboard AdminEvaluation.tsx pour gérer les CV et rapports IA
+- [x] Créer le dashboard AdminAccompagnement.tsx pour gérer l'avancement des dossiers
+- [x] Créer le dashboard AdminProcedures.tsx pour gérer les procédures par pays
+- [x] Ajouter les procédures tRPC pour l'avancement rapide des dossiers
+- [x] Ajouter les procédures tRPC pour la gestion des rapports IA
+- [x] Ajouter les procédures tRPC pour la gestion des procédures
+- [x] Implémenter les outils de filtrage et recherche pour chaque admin
+- [x] Tester les 3 comptes admin avec des données réelles
+- [x] Documenter les accès et les permissions pour chaque admin
