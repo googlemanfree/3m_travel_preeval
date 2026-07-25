@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AdminInvite from "@/components/AdminInvite";
+import ResendInviteDialog from "@/components/ResendInviteDialog";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -105,6 +106,7 @@ export default function AdminsList() {
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isResendOpen, setIsResendOpen] = useState(false);
 
   // Apply filters
   React.useEffect(() => {
@@ -345,6 +347,22 @@ export default function AdminsList() {
           }}
         />
 
+        {/* Resend Invite Dialog */}
+        {selectedAdmin && (
+          <ResendInviteDialog
+            isOpen={isResendOpen}
+            onClose={() => setIsResendOpen(false)}
+            adminEmail={selectedAdmin.email}
+            adminName={selectedAdmin.name}
+            inviteLink={`${window.location.origin}/admin/accept-invite?email=${encodeURIComponent(
+              selectedAdmin.email
+            )}`}
+            onResendSuccess={() => {
+              console.log("Invitation resent to:", selectedAdmin.email);
+            }}
+          />
+        )}
+
         {/* Admin Detail Modal */}
         {selectedAdmin && (
           <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -436,6 +454,13 @@ export default function AdminsList() {
                 <div className="flex gap-2 justify-end border-t pt-6">
                   <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
                     Fermer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsResendOpen(true)}
+                    className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    Renvoyer invitation
                   </Button>
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     Modifier
