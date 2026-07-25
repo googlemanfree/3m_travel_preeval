@@ -190,7 +190,7 @@
 - [x] Endpoint Heartbeat : POST /api/scheduled/evaluation-job pour exécution périodique
 - [x] Routeur Heartbeat tRPC : createEvaluationJob, listJobs, deleteJob
 - [x] Intégration du gestionnaire d'évaluation dans Admin.tsx
-- [ ] Corriger l'authentification admin pour le gestionnaire Heartbeat (session openId)
+- [ ] Corriger l'authentification admin pour le gestionnaire Heartbeat (utiliser OWNER_OPEN_ID comme fallback)
 - [ ] Tester la création/liste/suppression d'un job depuis l'interface admin
 - [ ] Exécuter un vrai test du job d'évaluation avec envoi d'emails
 - [ ] Ajouter un historique d'envoi des rapports en base de données

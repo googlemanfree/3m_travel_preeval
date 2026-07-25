@@ -21,6 +21,16 @@ export const heartbeatRouter = router({
       }
 
       try {
+        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
+        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        
+        if (!ownerOpenId) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Impossible de créer le job : identifiant propriétaire manquant",
+          });
+        }
+
         const result = await createHeartbeatJob(
           {
             name: "evaluation-job-daily",
@@ -29,7 +39,7 @@ export const heartbeatRouter = router({
             method: "POST",
             description: input.description || "Envoi automatique des rapports d'évaluation aux nouveaux dossiers",
           },
-          ctx.user.openId || ""
+          ownerOpenId
         );
 
         return {
@@ -55,7 +65,17 @@ export const heartbeatRouter = router({
       }
 
       try {
-        const jobs = await listHeartbeatJobs(ctx.user.openId || "");
+        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
+        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        
+        if (!ownerOpenId) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Impossible de récupérer les jobs : identifiant propriétaire manquant",
+          });
+        }
+
+        const jobs = await listHeartbeatJobs(ownerOpenId);
         return {
           success: true,
           jobs,
@@ -80,7 +100,17 @@ export const heartbeatRouter = router({
       }
 
       try {
-        await deleteHeartbeatJob(input.taskUid, ctx.user.openId || "");
+        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
+        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        
+        if (!ownerOpenId) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Impossible de supprimer le job : identifiant propriétaire manquant",
+          });
+        }
+
+        await deleteHeartbeatJob(input.taskUid, ownerOpenId);
         return {
           success: true,
           message: "Job supprimé avec succès",
