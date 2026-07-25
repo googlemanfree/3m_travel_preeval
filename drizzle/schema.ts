@@ -529,6 +529,133 @@ export const adminLogs = mysqlTable("admin_logs", {
 export type AdminLog = typeof adminLogs.$inferSelect;
 export type InsertAdminLog = typeof adminLogs.$inferInsert;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTION AUTOMATIQUE DES CANDIDATURES
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Table de suivi des candidatures avec gestion automatique
+ * Centralise toutes les candidatures pour un suivi efficace
+ */
+export const candidateApplications = mysqlTable("candidate_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identifiant unique
+  applicationNumber: varchar("applicationNumber", { length: 50 }).notNull().unique(),  // 3M-APP-YYYY-NNNN
+  
+  // Informations du candidat
+  candidateId: int("candidateId"),  // Référence au candidat inscrit (peut être null)
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  whatsappNumber: varchar("whatsappNumber", { length: 50 }),
+  
+  // Destination et type de visa
+  destination: varchar("destination", { length: 100 }).notNull(),
+  visaType: varchar("visaType", { length: 100 }).notNull(),
+  
+  // Profil du candidat
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  experienceYears: int("experienceYears"),
+  languageSkills: varchar("languageSkills", { length: 255 }),
+  
+  // Scoring automatique (0-100)
+  scoringTotal: int("scoringTotal"),  // Score global
+  scoringDetails: text("scoringDetails"),  // JSON {education, experience, language, age, etc.}
+  scoringBadge: mysqlEnum("scoringBadge", ["excellent", "bon", "moyen", "faible"]),
+  
+  // Statut de la candidature
+  status: mysqlEnum("status", [
+    "nouveau",
+    "en_evaluation",
+    "documents_requis",
+    "en_attente",
+    "approuve",
+    "refuse",
+    "archive"
+  ]).default("nouveau").notNull(),
+  
+  // Paiement
+  paymentStatus: mysqlEnum("paymentStatus", ["non_paye", "en_attente", "paye", "remboursement"]).default("non_paye").notNull(),
+  paymentAmount: int("paymentAmount"),
+  paymentDate: timestamp("paymentDate"),
+  
+  // Documents
+  documentsCount: int("documentsCount").default(0),
+  documentsUrls: text("documentsUrls"),  // JSON array
+  
+  // Notifications
+  emailSent: boolean("emailSent").default(false),
+  whatsappSent: boolean("whatsappSent").default(false),
+  lastEmailSentAt: timestamp("lastEmailSentAt"),
+  lastWhatsappSentAt: timestamp("lastWhatsappSentAt"),
+  
+  // Notes et commentaires
+  adminNotes: text("adminNotes"),
+  internalNotes: text("internalNotes"),
+  
+  // Suivi du processus
+  evaluationCompletedAt: timestamp("evaluationCompletedAt"),
+  approvedAt: timestamp("approvedAt"),
+  rejectedAt: timestamp("rejectedAt"),
+  rejectionReason: text("rejectionReason"),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  nextFollowUpAt: timestamp("nextFollowUpAt"),  // Prochaine relance automatique
+});
+
+export type CandidateApplication = typeof candidateApplications.$inferSelect;
+export type InsertCandidateApplication = typeof candidateApplications.$inferInsert;
+
+/**
+ * Historique des changements de statut des candidatures
+ * Permet de tracer toutes les modifications
+ */
+export const applicationStatusHistory = mysqlTable("application_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  previousStatus: varchar("previousStatus", { length: 50 }).notNull(),
+  newStatus: varchar("newStatus", { length: 50 }).notNull(),
+  changedBy: varchar("changedBy", { length: 320 }),  // Email de l'admin qui a fait le changement
+  reason: text("reason"),  // Raison du changement
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ApplicationStatusHistory = typeof applicationStatusHistory.$inferSelect;
+export type InsertApplicationStatusHistory = typeof applicationStatusHistory.$inferInsert;
+
+/**
+ * Tâches automatiques planifiées pour chaque candidature
+ * Permet de gérer les rappels, les relances, etc.
+ */
+export const automatedTasks = mysqlTable("automated_tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  taskType: mysqlEnum("taskType", [
+    "send_email",
+    "send_whatsapp",
+    "request_documents",
+    "follow_up",
+    "payment_reminder",
+    "evaluation_reminder",
+    "auto_approve",
+    "auto_reject"
+  ]).notNull(),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  scheduledFor: timestamp("scheduledFor").notNull(),  // Quand la tâche doit s'exécuter
+  executedAt: timestamp("executedAt"),  // Quand la tâche a été exécutée
+  failureReason: text("failureReason"),  // Raison de l'échec si applicable
+  retryCount: int("retryCount").default(0),
+  maxRetries: int("maxRetries").default(3),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AutomatedTask = typeof automatedTasks.$inferSelect;
+export type InsertAutomatedTask = typeof automatedTasks.$inferInsert;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GESTION DES DOCUMENTS ET PAIEMENTS CLIENTS
