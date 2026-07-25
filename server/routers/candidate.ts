@@ -101,7 +101,7 @@ export const candidateRouter = router({
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
-      const result = await db.insert(candidates).values({
+      await db.insert(candidates).values({
         fullName: input.fullName,
         email: input.email,
         passwordHash,
@@ -114,7 +114,12 @@ export const candidateRouter = router({
         emailOtpExpiresAt: otpExpiresAt,
       });
 
-      const candidateId = (result as any).insertId as number;
+      // Recuperer le candidateId insere
+      const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      if (!inserted.length) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
+      }
+      const candidateId = inserted[0].id;
 
       // Envoyer l'email OTP
       try {
