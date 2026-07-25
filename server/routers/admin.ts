@@ -313,6 +313,41 @@ export const adminRouter = router({
     }),
 
   /**
+   * Récupérer les statistiques du dashboard admin
+   * Retourne : pending, reviewed, contacted, closed
+   */
+  getDashboardStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allEvals = await db.select().from(evaluations);
+        
+        return {
+          success: true,
+          stats: {
+            pending: allEvals.filter(e => e.status === "pending").length,
+            reviewed: allEvals.filter(e => e.status === "reviewed").length,
+            contacted: allEvals.filter(e => e.status === "contacted").length,
+            closed: allEvals.filter(e => e.status === "closed").length,
+            total: allEvals.length,
+          },
+        };
+      } catch (err) {
+        console.error("[Admin Dashboard Stats] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des statistiques du dashboard",
+        });
+      }
+    }),
+
+  /**
    * Récupérer les statistiques globales
    */
   getGlobalStats: protectedProcedure

@@ -4,51 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
   // Récupérer les infos de l'admin depuis localStorage
   const adminName = localStorage.getItem('adminName') || 'Admin';
-  const adminEmail = localStorage.getItem('adminType') || '';
   const sessionToken = localStorage.getItem('adminSessionToken') || '';
 
-  // État pour les données
-  const [evaluationStats, setEvaluationStats] = useState({
+  // Récupérer les statistiques du dashboard depuis la DB
+  const { data: dashboardData, isLoading, refetch } = trpc.admin.getDashboardStats.useQuery(undefined, {
+    refetchInterval: 5000, // Actualiser toutes les 5 secondes
+  });
+
+  const evaluationStats = dashboardData?.stats || {
     pending: 0,
     reviewed: 0,
     contacted: 0,
     closed: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Charger les données au montage du composant
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        setIsLoading(true);
-        // Récupérer les statistiques depuis la base de données
-        // Pour l'instant, initialiser à 0
-        setEvaluationStats({
-          pending: 0,
-          reviewed: 0,
-          contacted: 0,
-          closed: 0,
-        });
-      } catch (error) {
-        console.error('Erreur lors du chargement des statistiques:', error);
-        toast.error('Erreur lors du chargement des données');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadStats();
-  }, []);
+    total: 0,
+  };
 
   // Mutations
   const logoutMutation = trpc.adminAuth.logout.useMutation({
@@ -68,13 +48,18 @@ export default function AdminDashboard() {
     logoutMutation.mutate({ sessionToken });
   };
 
+  const handleRefresh = () => {
+    refetch();
+    toast.success('Statistiques actualisées');
+  };
+
   // Données dynamiques basées sur les statistiques
   const statusData = [
     { name: 'Nouveau', value: evaluationStats.pending },
     { name: 'Révisé', value: evaluationStats.reviewed },
     { name: 'Contacté', value: evaluationStats.contacted },
     { name: 'Fermé', value: evaluationStats.closed },
-  ];
+  ].filter(d => d.value > 0);
 
   const destinationData = [
     { name: 'Canada', value: 0 },
@@ -112,16 +97,27 @@ export default function AdminDashboard() {
           <div>
             <h1 className="text-3xl font-bold">🛠️ Dashboard Admin</h1>
             <p className="text-blue-100 mt-1">Bienvenue, {adminName}</p>
+            <p className="text-blue-200 text-xs mt-1">📊 Données actualisées automatiquement toutes les 5 secondes</p>
           </div>
-          <Button
-            onClick={handleLogout}
-            disabled={logoutMutation.isPending}
-            variant="outline"
-            className="text-white border-white hover:bg-white/10"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Déconnexion
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleRefresh}
+              variant="outline"
+              className="text-white border-white hover:bg-white/10"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualiser
+            </Button>
+            <Button
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              variant="outline"
+              className="text-white border-white hover:bg-white/10"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -129,7 +125,7 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Cartes de statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-yellow-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -141,7 +137,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -153,7 +149,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-green-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -165,7 +161,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700">
+          <Card className="bg-slate-800 border-slate-700 hover:border-emerald-500 transition-colors">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -204,7 +200,7 @@ export default function AdminDashboard() {
                   <CardTitle className="text-white">Répartition par statut</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {statusData.some(d => d.value > 0) ? (
+                  {statusData.length > 0 ? (
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
                         <Pie data={statusData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} fill="#8884d8" dataKey="value">
@@ -350,9 +346,9 @@ export default function AdminDashboard() {
           <CardContent className="pt-6 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-blue-300 font-semibold">Vous avez accès à toutes les fonctionnalités</p>
+              <p className="text-blue-300 font-semibold">✨ Statistiques en temps réel</p>
               <p className="text-blue-200 text-sm mt-1">
-                En tant qu'administrateur, vous pouvez gérer les évaluations, l'accompagnement des candidats et les procédures par destination. Les statistiques se mettront à jour automatiquement à mesure que des dossiers seront créés.
+                Les statistiques du dashboard se mettent à jour automatiquement toutes les 5 secondes. Chaque nouveau dossier créé ou statut modifié s'affichera immédiatement.
               </p>
             </div>
           </CardContent>
