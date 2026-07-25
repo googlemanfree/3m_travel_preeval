@@ -3,6 +3,15 @@ import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { contactMessages } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
+import { sendEmail } from "../_core/email";
+
+const sendContactEmailInput = z.object({
+  name: z.string().min(2, "Le nom est requis"),
+  email: z.string().email("Email invalide"),
+  phone: z.string().optional(),
+  subject: z.string().min(3, "Le sujet est requis"),
+  message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
+});
 
 const sendMessageInput = z.object({
   visitorName: z.string().min(2, "Le nom est requis"),
@@ -98,6 +107,33 @@ export const contactRouter = router({
       } catch (error) {
         console.error("[Contact] Close session error:", error);
         throw new Error("Erreur lors de la fermeture de la session");
+      }
+    }),
+
+  sendContactEmail: publicProcedure
+    .input(sendContactEmailInput)
+    .mutation(async ({ input }) => {
+      try {
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `[Contact] ${input.subject}`,
+          html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${input.name}</p><p><strong>Email:</strong> ${input.email}</p>${input.phone ? `<p><strong>Telephone:</strong> ${input.phone}</p>` : ""}<p><strong>Sujet:</strong> ${input.subject}</p><hr /><p><strong>Message:</strong></p><p>${input.message.replace(/\n/g, "<br />")}</p>`,
+          replyTo: input.email,
+        });
+
+        await sendEmail({
+          to: input.email,
+          subject: "Confirmation de votre demande - 3M Travel & Services",
+          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${input.name},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M Travel & Services</p>`,
+        });
+
+        return {
+          success: true,
+          message: "Votre demande a ete envoyee avec succes. Vous recevrez une reponse dans les 24 heures.",
+        };
+      } catch (error) {
+        console.error("[Contact] Send email error:", error);
+        throw new Error("Erreur lors de l'envoi de votre demande. Veuillez reessayer.");
       }
     }),
 });

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Navbar from '@/components/Navbar';
 import { ChatModal } from '@/components/ChatModal';
+import { trpc } from '@/lib/trpc';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -18,6 +19,10 @@ export default function Contact() {
 
   const [submitted, setSubmitted] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const sendContactEmailMutation = trpc.contact.sendContactEmail.useMutation();
 
   const contactInfo = [
     {
@@ -36,7 +41,7 @@ export default function Contact() {
     {
       icon: Mail,
       title: 'Email',
-      details: ['contact@3mtravelagency.com', 'support@3mtravelagency.com'],
+      details: ['hello@3mtravelagency.com'],
       color: 'text-blue-500',
       link: true,
     },
@@ -70,16 +75,27 @@ export default function Contact() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    setSubmitted(true);
-    setTimeout(() => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      await sendContactEmailMutation.mutateAsync(formData);
+      setSubmitted(true);
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-      setSubmitted(false);
-    }, 3000);
+      setTimeout(() => {
+        setSubmitted(false);
+      }, 3000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -226,11 +242,36 @@ export default function Contact() {
             </h2>
 
             <Card className="p-8">
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3"
+                >
+                  <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+                  <p className="text-red-800">{error}</p>
+                </motion.div>
+              )}
+
+              {submitted && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3"
+                >
+                  <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+                  <div>
+                    <p className="text-green-800 font-semibold">Message envoyé avec succès!</p>
+                    <p className="text-green-700 text-sm">Vous recevrez une réponse dans les 24 heures.</p>
+                  </div>
+                </motion.div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom complet
+                      Nom complet *
                     </label>
                     <Input
                       type="text"
@@ -239,12 +280,13 @@ export default function Contact() {
                       onChange={handleInputChange}
                       placeholder="Votre nom"
                       required
+                      disabled={isLoading}
                       className="w-full"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
+                      Email *
                     </label>
                     <Input
                       type="email"
@@ -253,6 +295,7 @@ export default function Contact() {
                       onChange={handleInputChange}
                       placeholder="votre@email.com"
                       required
+                      disabled={isLoading}
                       className="w-full"
                     />
                   </div>
@@ -269,12 +312,13 @@ export default function Contact() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       placeholder="+237 6XX XXX XXX"
+                      disabled={isLoading}
                       className="w-full"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Sujet
+                      Sujet *
                     </label>
                     <Input
                       type="text"
@@ -283,6 +327,7 @@ export default function Contact() {
                       onChange={handleInputChange}
                       placeholder="Sujet de votre message"
                       required
+                      disabled={isLoading}
                       className="w-full"
                     />
                   </div>
@@ -290,7 +335,7 @@ export default function Contact() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message
+                    Message *
                   </label>
                   <textarea
                     name="message"
@@ -298,8 +343,9 @@ export default function Contact() {
                     onChange={handleInputChange}
                     placeholder="Décrivez votre demande..."
                     required
+                    disabled={isLoading}
                     rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100"
                   />
                 </div>
 
@@ -307,12 +353,18 @@ export default function Contact() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   type="submit"
-                  disabled={submitted}
+                  disabled={submitted || isLoading}
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {submitted ? (
                     <>
-                      <span>✓ Message envoyé</span>
+                      <CheckCircle size={20} />
+                      <span>Message envoyé</span>
+                    </>
+                  ) : isLoading ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Envoi en cours...</span>
                     </>
                   ) : (
                     <>
@@ -349,7 +401,7 @@ export default function Contact() {
                   href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
                   Ouvrir WhatsApp
                 </a>
@@ -363,14 +415,14 @@ export default function Contact() {
               transition={{ delay: 0.1 }}
             >
               <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                <Phone className="text-blue-600 mx-auto mb-4" size={40} />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Appel direct</h3>
-                <p className="text-gray-600 mb-6">Parlez à un conseiller en temps réel</p>
+                <Phone className="text-green-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Appel Direct</h3>
+                <p className="text-gray-600 mb-6">Appelez nos conseillers</p>
                 <a
                   href="tel:+237698104832"
-                  className="inline-block px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Appeler maintenant
+                  +237 698 104 832
                 </a>
               </Card>
             </motion.div>
@@ -382,15 +434,15 @@ export default function Contact() {
               transition={{ delay: 0.2 }}
             >
               <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                <Zap className="text-blue-600 mx-auto mb-4" size={40} />
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Chat en ligne</h3>
-                <p className="text-gray-600 mb-6">Réponse instantanée de notre support</p>
-                <Button
+                <Zap className="text-purple-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Chat en Ligne</h3>
+                <p className="text-gray-600 mb-6">Démarrer une conversation</p>
+                <button
                   onClick={() => setIsChatOpen(true)}
-                  className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   Démarrer le chat
-                </Button>
+                </button>
               </Card>
             </motion.div>
           </div>
@@ -401,47 +453,29 @@ export default function Contact() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Questions fréquemment posées
+            Questions fréquentes
           </h2>
 
           <div className="space-y-4">
             {faqs.map((faq, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="p-6 hover:shadow-md transition-all duration-300">
-                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <span className="text-blue-600">Q:</span>
-                    {faq.question}
-                  </h3>
-                  <p className="text-gray-600 ml-6">
-                    <span className="text-blue-600 font-semibold">R: </span>
-                    {faq.answer}
-                  </p>
+                <Card className="p-6 hover:shadow-lg transition-all duration-300">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{faq.question}</h3>
+                  <p className="text-gray-600">{faq.answer}</p>
                 </Card>
               </motion.div>
             ))}
           </div>
-
-          {/* Chat Modal */}
-          <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </div>
       </section>
 
-      {/* Response Time Banner */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-blue-500">
-        <div className="max-w-4xl mx-auto text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">
-            ✓ Réponse rapide garantie
-          </h3>
-          <p className="text-blue-100 text-lg">
-            Notre équipe s'engage à répondre à toutes vos demandes dans les 24 heures ouvrables.
-          </p>
-        </div>
-      </section>
+      {/* Chat Modal */}
+      <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </div>
   );
 }

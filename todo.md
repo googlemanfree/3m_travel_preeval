@@ -336,3 +336,13 @@
 - [x] Mettre à jour les liens légaux dans Home.tsx : pointer vers /politique-confidentialite et /conditions-utilisation
 - [x] Transformer les pastilles destinations du footer en liens vers /procedures (déjà fait)
 - [x] Tester les pages légales et les liens
+
+
+## Formulaire de Contact Amélioré (v19)
+- [x] Créer une procédure tRPC contact.sendEmail pour envoyer les demandes
+- [x] Intégrer Resend pour l'envoi d'emails
+- [x] Ajouter validation du formulaire (email, téléphone, message)
+- [x] Implémenter la soumission du formulaire via tRPC
+- [x] Ajouter les messages de succès/erreur
+- [x] Tester l'envoi d'emails via Resend (test@resend.dev)
+- [x] Améliorer le design du formulaire avec animations
