@@ -546,6 +546,11 @@
 - [x] Vérifier et optimiser l'affichage mobile
 - [x] Ajouter un lien de connexion admin dans la navbar
 - [x] Rendre le lien admin accessible sur desktop et mobile
+- [x] Ajouter des messages d'erreur clairs et stylisés sur la page de connexion
+- [x] Afficher les messages d'erreur contextuels (email non autorisé, OTP incorrect)
+- [x] Ajouter un compteur de tentatives échouées
+- [x] Implémenter un bouton "Besoin d'aide ?" pour les conseils OTP
+- [x] Rendre les adresses autorisées cliquables pour remplir automatiquement l'email
 
 ## Modules de Réassurance et Suivi Dynamique (v14)
 
