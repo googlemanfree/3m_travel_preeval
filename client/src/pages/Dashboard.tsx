@@ -18,6 +18,15 @@ import { toast } from "sonner";
 const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 
 // ─── Statuts du dossier ───────────────────────────────────────────────────────
+const STEP_TOOLTIPS: Record<string, { description: string; actions: string }> = {
+  nouveau: { description: "Votre dossier a été créé avec succès", actions: "Attendez notre première évaluation" },
+  evaluation: { description: "Notre équipe analyse votre profil", actions: "Consultez votre rapport d'évaluation" },
+  documents: { description: "Documents supplémentaires requis", actions: "Téléversez les documents demandés" },
+  traitement: { description: "Votre dossier est en cours de traitement", actions: "Notre équipe prépare votre dossier" },
+  soumis: { description: "Votre dossier a été soumis", actions: "Attendez la décision des autorités" },
+  approuve: { description: "Votre visa a été approuvé ✓", actions: "Félicitations ! Consultez les détails" },
+};
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType; step: number }> = {
   nouveau:     { label: "Nouveau dossier",       color: "text-gray-600",   bg: "bg-gray-100",   icon: Star,         step: 0 },
   evaluation:  { label: "Évaluation en cours",   color: "text-blue-600",   bg: "bg-blue-100",   icon: Clock,        step: 1 },
@@ -29,12 +38,42 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 };
 
 const DOSSIER_STEPS = [
-  { key: "nouveau",    label: "Dossier créé" },
-  { key: "evaluation", label: "Évaluation" },
-  { key: "documents",  label: "Documents" },
-  { key: "traitement", label: "Traitement" },
-  { key: "soumis",     label: "Soumis" },
-  { key: "approuve",   label: "Approuvé" },
+  { 
+    key: "nouveau", 
+    label: "Dossier créé",
+    description: "Votre dossier a été créé avec succès",
+    actions: "Attendez notre première évaluation"
+  },
+  { 
+    key: "evaluation", 
+    label: "Evaluation",
+    description: "Notre équipe analyse votre profil",
+    actions: "Consultez votre rapport d'évaluation dans vos messages"
+  },
+  { 
+    key: "documents", 
+    label: "Documents",
+    description: "Documents supplémentaires requis",
+    actions: "Téléversez les documents demandés dans l'onglet Documents"
+  },
+  { 
+    key: "traitement", 
+    label: "Traitement",
+    description: "Votre dossier est en cours de traitement",
+    actions: "Notre équipe prépare votre dossier pour la soumission"
+  },
+  { 
+    key: "soumis", 
+    label: "Soumis",
+    description: "Votre dossier a été soumis aux autorités",
+    actions: "Attendez la décision des autorités d'immigration"
+  },
+  { 
+    key: "approuve", 
+    label: "Approuvé",
+    description: "Votre visa a été approuvé ✓",
+    actions: "Félicitations ! Consultez les détails dans vos messages"
+  },
 ];
 
 const FILE_TYPES: { value: string; label: string }[] = [
@@ -342,28 +381,44 @@ export default function Dashboard() {
                       <div className="mb-6">
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-gray-900">Progression de votre dossier</h3>
-                          <span className="text-xs font-medium text-gray-500">Étape {statusConfig.step + 1}/6</span>
+                          <span className="text-xs font-medium text-gray-500">Etape {statusConfig.step + 1}/6</span>
                         </div>
-                        <div className="flex gap-2 mb-3">
+                        <div className="flex gap-2 mb-4">
                           {DOSSIER_STEPS.map((step, idx) => {
                             const isActive = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step === idx;
                             const isCompleted = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step > idx;
+                            const tooltip = STEP_TOOLTIPS[step.key];
                             return (
-                              <motion.div
-                                key={step.key}
-                                className={`flex-1 h-2 rounded-full transition-all ${
-                                  isCompleted ? "bg-green-500" : isActive ? "bg-blue-500" : "bg-gray-200"
-                                }`}
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                              />
+                              <div key={step.key} className="flex-1 group relative">
+                                <motion.div
+                                  className={`flex-1 h-2 rounded-full transition-all cursor-help ${
+                                    isCompleted ? "bg-green-500" : isActive ? "bg-blue-500" : "bg-gray-200"
+                                  }`}
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ delay: idx * 0.1 }}
+                                />
+                                {/* Infobulle */}
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10 }}
+                                  whileHover={{ opacity: 1, y: 0 }}
+                                  className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50"
+                                >
+                                  <div className="bg-gray-900 text-white text-xs rounded-lg p-3 w-48 shadow-lg">
+                                    <div className="font-semibold mb-1">{step.label}</div>
+                                    <div className="text-gray-200 mb-2">{tooltip.description}</div>
+                                    <div className="text-blue-300 text-xs italic">📍 {tooltip.actions}</div>
+                                    {/* Flèche de l'infobulle */}
+                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                  </div>
+                                </motion.div>
+                              </div>
                             );
                           })}
                         </div>
                         <div className="flex justify-between text-xs text-gray-600">
                           {DOSSIER_STEPS.map((step) => (
-                            <span key={step.key}>{step.label}</span>
+                            <span key={step.key} className="text-center flex-1">{step.label}</span>
                           ))}
                         </div>
                       </div>
