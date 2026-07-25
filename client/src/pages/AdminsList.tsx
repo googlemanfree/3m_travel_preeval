@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import AdminInvite from "@/components/AdminInvite";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -103,6 +104,7 @@ export default function AdminsList() {
   const [statusFilter, setStatusFilter] = useState("tous");
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
 
   // Apply filters
   React.useEffect(() => {
@@ -149,7 +151,10 @@ export default function AdminsList() {
               Gérez les administrateurs et leurs permissions
             </p>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => setIsInviteOpen(true)}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Ajouter Admin
           </Button>
@@ -329,6 +334,16 @@ export default function AdminsList() {
             </table>
           </div>
         </div>
+
+        {/* Admin Invite Dialog */}
+        <AdminInvite
+          isOpen={isInviteOpen}
+          onClose={() => setIsInviteOpen(false)}
+          onInviteSent={(email) => {
+            // Optionally add the invited admin to the list
+            console.log("Admin invited:", email);
+          }}
+        />
 
         {/* Admin Detail Modal */}
         {selectedAdmin && (
