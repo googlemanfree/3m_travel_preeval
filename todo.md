@@ -419,22 +419,22 @@
 
 
 ## Phase A : Système d'Email Différé 48h avec Heartbeat
-- [ ] Créer une table `evaluation_emails` pour tracker les emails envoyés
-- [ ] Créer une procédure Heartbeat pour envoyer les bilans après 48h
-- [ ] Créer le template d'email "Bilan d'Admissibilité"
-- [ ] Tester l'envoi automatique des emails
+- [x] Créer une table `evaluation_emails` pour tracker les emails envoyés
+- [x] Créer une procédure Heartbeat pour envoyer les bilans après 48h
+- [x] Créer le template d'email "Bilan d'Admissibilité"
+- [x] Tester l'envoi automatique des emails
 
 ## Phase B : Gestion Hybride (En ligne + Agence Physique)
-- [ ] Ajouter des champs admin pour enregistrer manuellement les documents
-- [ ] Ajouter des champs admin pour enregistrer manuellement les paiements cash
-- [ ] Créer les procédures tRPC pour l'admin de soumettre documents/paiements
-- [ ] Ajouter les validations et logs d'audit
+- [x] Ajouter des champs admin pour enregistrer manuellement les documents
+- [x] Ajouter des champs admin pour enregistrer manuellement les paiements cash
+- [x] Créer les procédures tRPC pour l'admin de soumettre documents/paiements
+- [x] Ajouter les validations et logs d'audit
 
 ## Phase C : Module de Génération de Factures PDF
-- [ ] Créer le template de facture PDF avec en-tête 3M
-- [ ] Créer la procédure de génération de factures
-- [ ] Ajouter les numéros de facture uniques
-- [ ] Tester la génération et l'envoi par email
+- [x] Créer le template de facture PDF avec en-tête 3M
+- [x] Créer la procédure de génération de factures
+- [x] Ajouter les numéros de facture uniques
+- [x] Tester la génération et l'envoi par email
 
 ## Phase D : Sections Client et Dashboard Admin Complet
 - [ ] Créer la section "Mes documents" dans l'espace client
