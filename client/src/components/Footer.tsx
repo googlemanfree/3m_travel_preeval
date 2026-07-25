@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, MessageCircle, Facebook, Instagram, Linkedin, Twitter, Send } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Facebook, Instagram, Linkedin, Twitter, Send, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -25,6 +25,7 @@ const USEFUL_LINKS = [
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +38,9 @@ export default function Footer() {
     setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Inscription réussie ! Vérifiez votre email.');
+      setShowSuccess(true);
       setEmail('');
+      setTimeout(() => setShowSuccess(false), 5000);
     } catch (error) {
       toast.error('Une erreur est survenue. Veuillez réessayer.');
     } finally {
@@ -80,6 +82,32 @@ export default function Footer() {
               {isLoading ? 'Inscription...' : <span className="flex items-center gap-1"><Send className="w-4 h-4" />S'inscrire</span>}
             </Button>
           </form>
+          
+          {showSuccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: -20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="mt-6 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg p-4 text-center max-w-md mx-auto"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="inline-block mb-2"
+              >
+                <CheckCircle2 className="w-8 h-8 text-green-300" />
+              </motion.div>
+              <p className="text-white font-semibold text-lg">Inscription reussie !</p>
+              <p className="text-blue-100 text-sm mt-1">Verifiez votre email pour confirmer votre inscription</p>
+              <motion.div
+                initial={{ scaleX: 1 }}
+                animate={{ scaleX: 0 }}
+                transition={{ duration: 5, ease: 'linear' }}
+                className="h-1 bg-green-300 rounded-full mt-3 origin-left"
+              />
+            </motion.div>
+          )}
         </div>
       </motion.div>
 

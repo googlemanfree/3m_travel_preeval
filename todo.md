@@ -530,6 +530,20 @@
 - [ ] Documenter les étapes d'utilisation
 
 
+## Améliorations UX — Animations et Footer (v25)
+- [x] Ajouter des animations fluides de chargement pour les sections
+- [x] Créer un composant AnimatedSection réutilisable
+- [x] Ajouter des infobulles interactives au survol des cartes
+- [x] Intégrer un bouton "Retour en haut" flottant avec icône d'avion
+- [x] Personnaliser le pied de page avec réseaux sociaux et newsletter
+- [x] Ajouter une section "Liens utiles" dans le footer
+- [x] Intégrer les coordonnées directes (adresse, téléphone, email)
+- [x] Rendre l'adresse cliquable pour Google Maps
+- [x] Rendre le téléphone cliquable pour appels directs (tel:)
+- [x] Rendre l'email cliquable pour messagerie (mailto:)
+- [x] Optimiser l'espacement et l'alignement des sections
+- [x] Vérifier et optimiser l'affichage mobile
+
 ## Modules de Réassurance et Suivi Dynamique (v14)
 
 ### 1. Barre de Progression de Dossier
