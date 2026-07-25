@@ -223,7 +223,7 @@ export async function sendAdminNewDossierAlert(
       <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Email</td><td style="padding:8px;">${email}</td></tr>
       <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Téléphone</td><td style="padding:8px;">${phone}</td></tr>
       <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Destination</td><td style="padding:8px;font-weight:700;">${destination.toUpperCase()}</td></tr>
-      <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Formule</td><td style="padding:8px;">${formula}</td></tr>
+
       <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Paiement</td><td style="padding:8px;font-weight:700;">${payLabel}</td></tr>
     </table>
     <p style="text-align:center;">
