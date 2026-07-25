@@ -48,6 +48,7 @@ import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
 import { HowItWorks } from "./pages/HowItWorks";
 import { ScrollToTop } from "./components/ScrollToTop";
+import AdminGuard from "./components/AdminGuard";
 
 function Router() {
   return (
@@ -170,31 +171,35 @@ function Router() {
 
       {/* Panneau admin */}
       <Route path={"/admin/login"} component={AdminLogin} />
-      <Route path={"/admin"} component={Admin} />
+      <Route path={"/admin"}>
+        <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
+          <Admin />
+        </AdminGuard>
+      </Route>
       <Route path={"/admin/evaluation"}>
-        <AuthGuard message="Accès réservé aux administrateurs.">
+        <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluation />
-        </AuthGuard>
+        </AdminGuard>
       </Route>
       <Route path={"/admin/accompagnement"}>
-        <AuthGuard message="Accès réservé aux administrateurs.">
+        <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminAccompagnement />
-        </AuthGuard>
+        </AdminGuard>
       </Route>
-      <Route path={"admin/procedures"}>
-        <AuthGuard message="Accès réservé aux administrateurs.">
+      <Route path={"/admin/procedures"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
-        </AuthGuard>
+        </AdminGuard>
       </Route>
-      <Route path={"admin/candidates"}>
-        <AuthGuard message="Accès réservé aux administrateurs.">
+      <Route path={"/admin/candidates"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
           <CandidatesManager />
-        </AuthGuard>
+        </AdminGuard>
       </Route>
-      <Route path={"admin/admins"}>
-        <AuthGuard message="Accès réservé aux administrateurs.">
+      <Route path={"/admin/admins"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminsList />
-        </AuthGuard>
+        </AdminGuard>
       </Route>
       <Route path={"/admin/agency-dossiers"} component={AdminAgencyDossiers} />
       <Route path={"admin/agency-dossiers"} component={AdminAgencyDossiers} />
