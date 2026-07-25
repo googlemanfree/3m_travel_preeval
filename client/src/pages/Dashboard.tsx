@@ -59,8 +59,28 @@ export default function Dashboard() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadType, setUploadType] = useState("cv");
   const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fonction pour actualiser manuellement
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (activeTab === "overview") {
+        await profileQuery.refetch();
+      } else if (activeTab === "documents") {
+        await documentsQuery.refetch();
+      } else if (activeTab === "messages") {
+        await messagesQuery.refetch();
+      }
+      toast.success("Donnees actualisees");
+    } catch (err) {
+      toast.error("Erreur lors de l'actualisation");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Rediriger si non connecté
   useEffect(() => {
@@ -82,7 +102,7 @@ export default function Dashboard() {
 
   const messagesQuery = trpc.candidate.getMessages.useQuery(undefined, {
     enabled: isAuthenticated && activeTab === "messages",
-    refetchInterval: activeTab === "messages" ? 10000 : false,
+    refetchInterval: false, // Desactiver le refetch automatique
     retry: false,
   });
 
@@ -193,10 +213,20 @@ export default function Dashboard() {
               <StatusIcon className="w-3.5 h-3.5" />
               {statusConfig.label}
             </div>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
+              title="Actualiser les donnees"
+            >
+              <svg className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
             <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors">
               <Home className="w-5 h-5" />
             </Link>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se déconnecter">
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se deconnecter">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
