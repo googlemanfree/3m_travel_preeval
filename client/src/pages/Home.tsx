@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import CounterStats from "@/components/CounterStats";
+import AnimatedCounterStats from "@/components/AnimatedCounterStats";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 
@@ -529,11 +529,7 @@ export default function Home() {
 
 
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
-      <CounterStats
-        title="Ils nous ont fait confiance"
-        subtitle="Chiffres mis à jour en juillet 2026 — Agence agréée RC/YAO/2019/A/2567"
-        variant="light"
-      />
+      <AnimatedCounterStats />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">
