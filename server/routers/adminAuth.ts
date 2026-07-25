@@ -175,6 +175,7 @@ export const adminAuthRouter = router({
         // Générer un token de session
         const sessionToken = generateSessionToken();
         const sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+        const now = new Date();
 
         // Mettre à jour le compte avec la session
         await db
@@ -185,7 +186,8 @@ export const adminAuthRouter = router({
             otpCode: null,
             otpExpiresAt: null,
             otpAttempts: 0,
-            lastLoginAt: new Date(),
+            lastLoginAt: now,
+            lastActivityAt: now,
           })
           .where(eq(adminAccounts.email, input.email));
 
@@ -239,6 +241,34 @@ export const adminAuthRouter = router({
             message: "Session expirée",
           });
         }
+
+        // Vérifier l'inactivité (12 heures)
+        const lastActivity = admin[0].lastActivityAt ? new Date(admin[0].lastActivityAt) : new Date();
+        const now = new Date();
+        const inactivityMinutes = (now.getTime() - lastActivity.getTime()) / (1000 * 60);
+        const INACTIVITY_THRESHOLD_MINUTES = 12 * 60; // 12 heures
+
+        if (inactivityMinutes > INACTIVITY_THRESHOLD_MINUTES) {
+          // Invalider la session après 12h d'inactivité
+          await db
+            .update(adminAccounts)
+            .set({
+              sessionToken: null,
+              sessionExpiresAt: null,
+            })
+            .where(eq(adminAccounts.email, admin[0].email));
+
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session expirée après 12 heures d'inactivité. Veuillez vous reconnecter.",
+          });
+        }
+
+        // Mettre à jour l'heure de la dernière activité
+        await db
+          .update(adminAccounts)
+          .set({ lastActivityAt: now })
+          .where(eq(adminAccounts.email, admin[0].email));
 
         return {
           success: true,

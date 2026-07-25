@@ -498,6 +498,7 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   sessionToken: varchar("sessionToken", { length: 256 }),  // Token de session actuel
   sessionExpiresAt: timestamp("sessionExpiresAt"),  // Expiration de la session
   lastLoginAt: timestamp("lastLoginAt"),  // Dernière connexion
+  lastActivityAt: timestamp("lastActivityAt"),  // Dernière activité (pour détecter l'inactivité)
   // Métadonnées
   fullName: varchar("fullName", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }),
