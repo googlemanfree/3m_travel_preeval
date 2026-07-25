@@ -202,13 +202,13 @@ export default function Footer() {
         >
           <h3 className="text-white font-bold text-lg mb-4 text-center">Nous Contacter</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center justify-center gap-3 text-center">
+            <a href="https://maps.google.com/?q=Yaound%C3%A9+Biyem-Assi+Mont%C3%A9e+chapelle+Obili" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
               <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <div>
                 <p className="text-xs text-gray-400 mb-1">Adresse</p>
-                <p className="text-sm text-white font-medium">Yaoundé Biyem-Assi<br />Montée chapelle Obili</p>
+                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">Yaoundé Biyem-Assi<br />Montée chapelle Obili</p>
               </div>
-            </div>
+            </a>
             <div className="flex items-center justify-center gap-3 text-center">
               <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <div>
