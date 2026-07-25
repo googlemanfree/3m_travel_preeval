@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { EmailGenerator } from "./EmailGenerator";
 import {
   Sparkles,
   TrendingUp,
@@ -15,6 +16,7 @@ import { Card } from "@/components/ui/card";
 
 interface Candidate {
   fullName: string;
+  email?: string;
   scoringTotal: number;
   scoringBadge: "excellent" | "bon" | "moyen" | "faible";
   destination: string;
@@ -298,8 +300,12 @@ export function AISummary({ candidate }: AISummaryProps) {
         </ul>
       </Card>
 
-      {/* Bouton de régénération */}
-      <div className="flex justify-end">
+      {/* Actions */}
+      <div className="flex gap-2 justify-between">
+        <EmailGenerator
+          candidate={candidate}
+          aiSummary={summary}
+        />
         <Button
           variant="outline"
           size="sm"
