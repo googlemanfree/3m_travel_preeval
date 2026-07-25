@@ -93,7 +93,9 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
 // ─── Email de réinitialisation de mot de passe ────────────────────────────────
 
 export async function sendPasswordResetEmail(to: string, fullName: string, resetToken: string): Promise<void> {
-  const resetUrl = `${SITE_URL}/reset-password?token=${resetToken}`;
+  // Utiliser le domaine configuré ou un domaine par défaut
+  const baseUrl = SITE_URL || "https://3mtravelagency.click";
+  const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
   const content = `
     <p>Bonjour <strong>${fullName}</strong>,</p>
     <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte 3M Travel.</p>

@@ -15,17 +15,24 @@ export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
 
   const resetMutation = trpc.candidate.requestPasswordReset.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("[ForgotPassword] Succès:", data);
       setSent(true);
+      toast.success("Email de réinitialisation envoyé ! Vérifiez votre boîte de réception et vos spams.");
     },
     onError: (err) => {
-      toast.error(err.message);
+      console.error("[ForgotPassword] Erreur:", err);
+      toast.error(err.message || "Erreur lors de l'envoi du lien");
     },
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) { toast.error("Veuillez entrer votre adresse email."); return; }
+    if (!email) { 
+      toast.error("Veuillez entrer votre adresse email."); 
+      return; 
+    }
+    console.log("[ForgotPassword] Envoi de la demande pour:", email);
     resetMutation.mutate({ email });
   }
 
