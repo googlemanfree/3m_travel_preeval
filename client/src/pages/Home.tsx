@@ -527,11 +527,8 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
-
-
-
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
-      <section id="services" className="py-16 bg-white">
+      <section id="services" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
@@ -566,7 +563,7 @@ export default function Home() {
       </section>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
-      <section id="evaluation" className="py-16 bg-gradient-to-b from-blue-50 to-white">
+      <section id="evaluation" className="py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Formulaire Gratuit</p>
