@@ -36,7 +36,6 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   adminAuth: adminAuthRouter,
-  clientDocuments: clientDocumentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

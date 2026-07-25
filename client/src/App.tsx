@@ -39,6 +39,7 @@ import AdminEvaluation from "./pages/AdminEvaluation";
 import AdminAccompagnement from "./pages/AdminAccompagnement";
 import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
+import Hotels from "./pages/Hotels";
 
 function Router() {
   return (
@@ -114,6 +115,10 @@ function Router() {
         <AuthGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
         </AuthGuard>
+      </Route>
+
+      <Route path="/hotels">
+        <Hotels />
       </Route>
 
       <Route path={"/404"} component={NotFound} />

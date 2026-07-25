@@ -528,3 +528,34 @@
 ### Phase 8 : Checkpoint Final
 - [ ] Créer le checkpoint avec le module de traduction complet
 - [ ] Documenter les étapes d'utilisation
+
+
+## Modules de Réassurance et Suivi Dynamique (v14)
+
+### 1. Barre de Progression de Dossier
+- [ ] Créer la table `dossier_progress` pour tracker les étapes
+- [ ] Implémenter la procédure tRPC `getDossierProgress`
+- [ ] Créer le composant ProgressBar avec 5 étapes
+- [ ] Ajouter les timestamps et les statuts
+- [ ] Afficher la barre dans l'Espace Client
+
+### 2. Système de Callback 15 min
+- [ ] Créer la table `callback_requests` pour les demandes
+- [ ] Implémenter la procédure tRPC `requestCallback`
+- [ ] Créer le bouton "Demander un rappel" dans l'Espace Client
+- [ ] Envoyer notification admin + SMS/WhatsApp
+- [ ] Ajouter le formulaire de rappel avec horaires disponibles
+
+### 3. Galerie de Visas Accordés
+- [ ] Créer la table `approved_visas` pour les visas accordés
+- [ ] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
+- [ ] Créer le dashboard admin pour gérer les visas
+- [ ] Créer la galerie publique sur le site (anonymisée)
+- [ ] Ajouter les filtres par pays et date
+
+### 4. Calculateur de Budget
+- [ ] Créer la table `country_costs` avec les frais par pays
+- [ ] Implémenter la procédure tRPC `calculateBudget`
+- [ ] Créer le formulaire du calculateur (pays, type visa, etc.)
+- [ ] Afficher le détail des frais (droits, garanties, visa)
+- [ ] Ajouter les graphiques de répartition des coûts
