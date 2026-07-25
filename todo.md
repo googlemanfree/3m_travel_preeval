@@ -437,8 +437,8 @@
 - [x] Tester la génération et l'envoi par email
 
 ## Phase D : Sections Client et Dashboard Admin Complet
-- [ ] Créer la section "Mes documents" dans l'espace client
-- [ ] Créer la section "Mes paiements" dans l'espace client
-- [ ] Créer le dashboard admin pour valider documents/paiements
-- [ ] Ajouter l'actualisation automatique côté client
-- [ ] Tester le flux complet client-admin
+- [x] Créer la section "Mes documents" dans l'espace client
+- [x] Créer la section "Mes paiements" dans l'espace client
+- [x] Créer le dashboard admin pour valider documents/paiements
+- [x] Ajouter l'actualisation automatique côté client
+- [x] Tester le flux complet client-admin
