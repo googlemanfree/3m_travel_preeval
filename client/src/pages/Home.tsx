@@ -528,14 +528,14 @@ export default function Home() {
       />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
-      <section id="services" className="py-20 bg-white">
+      <section id="services" className="py-12 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Tout ce dont vous avez besoin</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
+          <div className="text-center mb-8 md:mb-12">
+            <p className="text-xs md:text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
+            <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3 md:mb-4">Tout ce dont vous avez besoin</h2>
+            <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
               { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
               { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
@@ -544,7 +544,7 @@ export default function Home() {
             ].map((s, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
                 <a href={s.href} className="block h-full group">
-                  <Card className="p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 h-full cursor-pointer">
+                  <Card className="p-4 md:p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 h-full cursor-pointer">
                     <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <s.icon className="w-6 h-6" />
                     </div>
@@ -563,7 +563,7 @@ export default function Home() {
       </section>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
-      <section id="evaluation" className="py-20 bg-gradient-to-b from-blue-50 to-white">
+      <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Formulaire Gratuit</p>
@@ -1710,7 +1710,7 @@ function PricingSection() {
   const phoneNumber = "237698104832";
 
   return (
-    <section id="tarifs" className="py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
+    <section id="tarifs" className="py-12 md:py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
       <div className="max-w-7xl mx-auto px-4">
         {/* En-tête */}
         <div className="text-center mb-14">
