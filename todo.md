@@ -692,3 +692,40 @@
 - [ ] Vérifier que le site est accessible et fonctionne correctement
 - [ ] Tester sur mobile et desktop
 - [ ] Vérifier les performances et les temps de chargement
+
+
+## Indicateur de Progression Visuel (v28)
+
+### Phase 1 : Composant DossierProgressBar
+- [x] Créer le composant DossierProgressBar.tsx avec :
+  - Barre de progression linéaire animée (0-100%)
+  - Timeline horizontale avec 12 étapes du processus
+  - Icônes spécifiques pour chaque étape
+  - Codes couleur pour les statuts (bleu actuel, vert complété, gris à venir)
+  - Connecteurs animés entre les étapes
+- [x] Implémenter les 12 statuts : nouveau, en_evaluation, bilan_envoye, en_attente_paiement, paye, en_attente_documents, documents_recus, soumis_agences, en_cours_recrutement, contrat_obtenu, visa_approuve, refuse
+
+### Phase 2 : Intégration dans MonDossier
+- [x] Importer le composant DossierProgressBar dans MonDossier.tsx
+- [x] Ajouter la barre de progression en haut de la page de suivi
+- [x] Passer les props status, createdAt, evaluationCompletedAt, documentsReceivedAt, submittedToAgenciesAt
+
+### Phase 3 : Animations et Transitions
+- [x] Ajouter animations Framer Motion :
+  - Entrée progressive des étapes (whileInView)
+  - Hover effects sur les cercles (scale 1.15)
+  - Tap effects (scale 0.95)
+  - Glow effect sur l'étape actuelle (box-shadow animée)
+  - Transition des connecteurs (couleur animée)
+- [x] Ajouter les animations des sections détails et CTA
+
+### Phase 4 : Tests et Validation
+- [x] Vérifier que la page MonDossier s'affiche correctement
+- [x] Tester les animations au scroll
+- [x] Vérifier la responsivité sur mobile et desktop
+- [ ] Tester avec différents statuts de dossier
+- [ ] Vérifier que les boutons d'action fonctionnent correctement
+
+### Phase 5 : Déploiement
+- [ ] Créer un checkpoint avec le composant de progression
+- [ ] Vérifier que le site fonctionne correctement en production

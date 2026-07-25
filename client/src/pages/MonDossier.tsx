@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { DossierProgressBar } from "@/components/DossierProgressBar";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -272,6 +273,14 @@ export default function MonDossier() {
             </div>
           ) : dossier ? (
             <div className="space-y-6">
+              {/* Barre de progression visuelle */}
+              <DossierProgressBar
+                status={dossier.dossierStatus as any}
+                createdAt={dossier.createdAt}
+                evaluationCompletedAt={undefined}
+                documentsReceivedAt={undefined}
+                submittedToAgenciesAt={undefined}
+              />
 
               {/* Carte d'identité du dossier */}
               <Card className="shadow-md border-0 overflow-hidden">
