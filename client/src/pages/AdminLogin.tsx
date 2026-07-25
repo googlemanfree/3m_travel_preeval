@@ -183,28 +183,19 @@ export default function AdminLogin() {
                   {requestOTPMutation.isPending ? 'Envoi en cours...' : 'Envoyer Code OTP'}
                 </Button>
 
-                {/* Comptes admin disponibles */}
+                {/* Message d'information */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-xl p-4 shadow-md"
+                  className="bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-300 rounded-xl p-4 shadow-md"
                 >
-                  <p className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
-                    <Lock className="w-4 h-4" /> Adresses Autorisées:
+                  <p className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                    <Lock className="w-4 h-4" /> Accès Administrateur
                   </p>
-                  <div className="space-y-2 text-sm">
-                    <div className="bg-white rounded-lg p-3 border border-blue-200 hover:border-blue-400 transition-colors cursor-pointer hover:shadow-md"
-                      onClick={() => setEmail('aureoldonfack@gmail.com')}>
-                      <p className="text-blue-900 font-semibold">aureoldonfack@gmail.com</p>
-                      <p className="text-xs text-blue-600">Admin Évaluation</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 border border-blue-200 hover:border-blue-400 transition-colors cursor-pointer hover:shadow-md"
-                      onClick={() => setEmail('fabienbah203@gmail.com')}>
-                      <p className="text-blue-900 font-semibold">fabienbah203@gmail.com</p>
-                      <p className="text-xs text-blue-600">Admin Accompagnement</p>
-                    </div>
-                  </div>
+                  <p className="text-xs text-indigo-700">
+                    Entrez votre email administrateur pour recevoir un code de connexion sécurisé.
+                  </p>
                 </motion.div>
               </form>
             ) : (
