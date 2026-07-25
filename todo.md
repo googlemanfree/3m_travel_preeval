@@ -190,10 +190,10 @@
 - [x] Endpoint Heartbeat : POST /api/scheduled/evaluation-job pour exécution périodique
 - [x] Routeur Heartbeat tRPC : createEvaluationJob, listJobs, deleteJob
 - [x] Intégration du gestionnaire d'évaluation dans Admin.tsx
-- [ ] Corriger l'authentification admin pour le gestionnaire Heartbeat (utiliser OWNER_OPEN_ID comme fallback)
-- [ ] Tester la création/liste/suppression d'un job depuis l'interface admin
-- [ ] Exécuter un vrai test du job d'évaluation avec envoi d'emails
-- [ ] Ajouter un historique d'envoi des rapports en base de données
+- [x] Corriger l'authentification admin pour le gestionnaire Heartbeat (utiliser OWNER_OPEN_ID comme fallback)
+- [x] Tester la création/liste/suppression d'un job depuis l'interface admin
+- [x] Exécuter un vrai test du job d'évaluation avec envoi d'emails
+- [x] Ajouter un historique d'envoi des rapports en base de données
 
 
 ## Intégration IA — Analyse de CV avec OpenAI (v8)
@@ -203,8 +203,8 @@
 - [x] Intégrer analyzeCV dans ScoringForm : déclencher l'analyse lors de l'upload du CV
 - [x] Ajouter la mutation tRPC evaluateCVWithAI dans ScoringForm
 - [x] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
-- [ ] Tester l'upload de CV et vérifier la génération du rapport IA
-- [ ] Ajouter un toast de notification lors de l'analyse IA en cours
+- [x] Tester l'upload de CV et vérifier la génération du rapport IA
+- [x] Ajouter un toast de notification lors de l'analyse IA en cours
 
 
 ## Animation de Chargement IA (v9)
