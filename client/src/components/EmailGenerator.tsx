@@ -16,6 +16,8 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { SchedulingLink } from "./SchedulingLink";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Candidate {
   fullName: string;
@@ -51,6 +53,8 @@ export function EmailGenerator({ candidate, aiSummary }: EmailGeneratorProps) {
   );
   const [isCopied, setIsCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  const [schedulingLink, setSchedulingLink] = useState("");
+  const [includeScheduling, setIncludeScheduling] = useState(false);
 
   const generateEmail = async (tone: "professionnel" | "encourageant" | "neutre") => {
     setIsGenerating(true);
@@ -293,6 +297,35 @@ Cordialement,
                 <div className="bg-gray-50 p-3 rounded-lg mt-2 border">
                   <p className="text-gray-900">{email.subject}</p>
                 </div>
+              </div>
+
+              {/* Lien de rendez-vous */}
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <input
+                    type="checkbox"
+                    id="include-scheduling"
+                    checked={includeScheduling}
+                    onChange={(e) => setIncludeScheduling(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded"
+                  />
+                  <Label htmlFor="include-scheduling" className="font-semibold cursor-pointer">
+                    Inclure un lien de prise de rendez-vous
+                  </Label>
+                </div>
+                {includeScheduling && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="bg-blue-50 p-4 rounded-lg border border-blue-200"
+                  >
+                    <SchedulingLink
+                      candidateName={candidate.fullName}
+                      candidateEmail={candidate.email}
+                      onLinkGenerated={(link) => setSchedulingLink(link)}
+                    />
+                  </motion.div>
+                )}
               </div>
 
               {/* Corps de l'email */}
