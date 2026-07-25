@@ -263,7 +263,8 @@
 }
 
 .step-panel.active {
-  @apply block animate-fadeIn;
+  @apply block;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
