@@ -212,7 +212,7 @@
 - [x] Intégrer l'animation dans ScoringForm lors de l'analyse IA du CV
 - [x] Ajouter l'état isAnalyzingCV pour contrôler la visibilité de l'animation
 - [x] Ajouter une barre de progression globale et des messages d'encouragement
-- [ ] Tester l'animation en uploadant un CV et vérifier les étapes
+- [x] Tester l'animation en uploadant un CV et vérifier les étapes
 - [ ] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
 
 
@@ -222,9 +222,9 @@
 - [x] Créer le test de validation SMTP (smtp.test.ts)
 - [x] Créer le test du mode développement (email-dev-mode.test.ts)
 - [x] Tous les tests SMTP passent avec succès
-- [ ] Générer un mot de passe d'application Gmail pour l'authentification réelle
-- [ ] Tester l'envoi réel d'emails avec Gmail
-- [ ] Ajouter des templates d'emails supplémentaires (rappel paiement, confirmation admin)
+- [x] Générer un mot de passe d'application Gmail pour l'authentification réelle
+- [x] Tester l'envoi réel d'emails avec Gmail
+- [x] Ajouter des templates d'emails supplémentaires (rappel paiement, confirmation admin)
 
 ## Pages Mobilité Internationale (v10)
 - [x] Créer shared/visaData.ts avec données génériques (6 types de visa, 6 destinations, procédures)

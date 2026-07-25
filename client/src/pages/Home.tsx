@@ -22,10 +22,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 import CounterStats from "@/components/CounterStats";
 import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
 import CountrySearchResults from '@/components/CountrySearchResults';
+
+// ─── Constantes ───────────────────────────────────────────────────────────────────
+const WHATSAPP_NUMBER = "237698104832";
 
 const SearchBarWithAutocomplete = () => {
   const [query, setQuery] = useState('');
@@ -517,217 +521,12 @@ export default function Home() {
       <Navbar activePage="home" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative py-14 md:py-20 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0f2460 0%, #1e3a8a 40%, #2563eb 75%, #7cb9e8 100%)' }}>
-        {/* Blobs décoratifs */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
-        </div>
+      <HeroSection
+        onEvalClick={() => setShowEvalModal(true)}
+        logoUrl="/manus-storage/logo_3m_d0e23210.jpeg"
+        whatsappNumber={WHATSAPP_NUMBER}
+      />
 
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          {/* Layout 2 colonnes sur desktop */}
-          <div className="grid lg:grid-cols-2 gap-10 items-center">
-
-            {/* ── Colonne gauche : texte + CTA ── */}
-            <motion.div
-              initial="hidden" animate="visible"
-              variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
-              className="text-center lg:text-left space-y-6"
-            >
-              {/* Badge animé */}
-              <motion.div 
-                variants={fadeUp} 
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-white/25 to-white/10 backdrop-blur-md text-white text-sm font-semibold px-5 py-3 rounded-full border border-white/40 shadow-lg hover:shadow-xl hover:from-white/35 hover:to-white/15 transition-all duration-300 cursor-default"
-              >
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
-                  <Star className="w-5 h-5 text-yellow-300" />
-                </motion.div>
-                <span>Évaluation gratuite en 24h</span>
-              </motion.div>
-
-              {/* Logo + Nom avec animation */}
-              <motion.div variants={fadeUp} className="flex flex-col items-center lg:items-start gap-5">
-                {/* Logo avec effet de glow */}
-                <motion.div 
-                  className="relative"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.div 
-                    className="absolute inset-0 rounded-full bg-gradient-to-r from-[#7cb9e8] to-[#3b82f6] blur-3xl opacity-60"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  />
-                  <img
-                    src="/manus-storage/logo_3m_d0e23210.jpeg"
-                    alt="3M Travel & Services"
-                    className="relative w-40 h-40 md:w-48 md:h-48 rounded-full object-cover shadow-2xl ring-4 ring-white/60 ring-offset-4 ring-offset-blue-600/20"
-                  />
-                </motion.div>
-                {/* Nom avec dégradé animé */}
-                <div>
-                  <motion.span 
-                    className="block text-5xl md:text-6xl lg:text-7xl font-black tracking-tight bg-gradient-to-r from-white via-blue-50 to-white bg-clip-text text-transparent drop-shadow-2xl" 
-                    style={{ letterSpacing: "-0.02em" }}
-                    animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                  >
-                    3M Travel Agency
-                  </motion.span>
-                  <motion.span 
-                    className="block h-1.5 bg-gradient-to-r from-[#7cb9e8] via-white to-[#3b82f6] rounded-full mt-4 mx-auto lg:mx-0 shadow-lg"
-                    initial={{ width: 0 }}
-                    animate={{ width: 80 }}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                  />
-                </div>
-              </motion.div>
-
-              {/* Sous-titre avec accent */}
-              <motion.div variants={fadeUp} className="space-y-3">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
-                  <span className="text-white">Votre Pré-Évaluation</span>
-                  <br />
-                  <span className="bg-gradient-to-r from-[#7cb9e8] to-[#60a5fa] bg-clip-text text-transparent">Visa & Immigration</span>
-                </h1>
-                <p className="text-blue-100 text-base md:text-lg leading-relaxed max-w-2xl font-light">
-                  Découvrez vos opportunités d'immigration. Nos experts analysent votre profil en détail et vous proposent un plan personnalisé pour réaliser votre projet.
-                </p>
-              </motion.div>
-
-              {/* CTAs améliorés */}
-              <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-3">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button 
-                    onClick={() => setShowEvalModal(true)} 
-                    size="lg" 
-                    className="bg-gradient-to-r from-[#f59e0b] via-[#f97316] to-[#d97706] hover:from-[#d97706] hover:via-[#ea580c] hover:to-[#b45309] text-white font-extrabold text-base shadow-2xl hover:shadow-3xl px-8 py-6 active:scale-[0.97] transition-all duration-300 gap-2 rounded-lg"
-                  >
-                    <motion.div animate={{ y: [0, -2, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                      <Star className="w-5 h-5" />
-                    </motion.div>
-                    Évaluer mon éligibilité
-                  </Button>
-                </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <a href="#evaluation" className="block">
-                    <Button 
-                      size="lg" 
-                      className="border-2 border-white/80 text-white hover:bg-white/20 hover:border-white font-semibold text-base px-8 py-6 active:scale-[0.97] transition-all duration-300 bg-white/10 backdrop-blur-sm rounded-lg"
-                    >
-                      Pré-évaluation <motion.div animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}><ArrowRight className="w-5 h-5 ml-2" /></motion.div>
-                    </Button>
-                  </a>
-                </motion.div>
-              </motion.div>
-
-              {/* Barre de recherche rapide - PLACÉE PLUS HAUT */}
-              <motion.div variants={fadeUp} className="mt-6 mb-8">
-                <p className="text-sm font-semibold text-white/80 mb-3">🔍 Trouvez votre destination</p>
-                <SearchBarWithAutocomplete />
-              </motion.div>
-
-            </motion.div>
-
-            {/* ── Colonne droite : images visuelles avec effets ── */}
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.7, delay: 0.3, ease: [0.23, 1, 0.32, 1] }}
-              className="hidden lg:flex flex-col gap-5"
-            >
-              {/* Image principale : personnes avec passeports */}
-              <motion.div 
-                className="relative rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20"
-                whileHover={{ scale: 1.02, boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa-mRwrcvG24vYkd29VuhCyfY.webp"
-                  alt="Candidats heureux avec passeports et billets d'avion"
-                  className="w-full h-64 object-cover"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                />
-                {/* Badge flottant amélioré */}
-                <motion.div 
-                  className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl flex items-center gap-3 border border-white/40"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <motion.div 
-                    className="w-8 h-8 rounded-full bg-gradient-to-r from-green-400 to-green-500 flex items-center justify-center shadow-lg"
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                  </motion.div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-800">Visa approuvé !</p>
-                    <p className="text-xs text-gray-500 font-medium">1 247 dossiers traités</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-
-              {/* Image secondaire : passeport avec tampons */}
-              <motion.div 
-                className="relative rounded-2xl overflow-hidden shadow-xl ring-1 ring-white/20"
-                whileHover={{ scale: 1.02, boxShadow: "0 20px 50px rgba(0,0,0,0.3)" }}
-                transition={{ duration: 0.3 }}
-              >
-                <motion.img
-                  src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa_v2-WSEoBNe8QxwhosdXQLgg2D.webp"
-                  alt="Passeport avec tampons de visa et carte du monde"
-                  className="w-full h-44 object-cover"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                />
-                {/* Badge destinations amélioré */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8, y: 8 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.9, ease: [0.23, 1, 0.32, 1] }}
-                  className="absolute top-4 right-4 bg-gradient-to-r from-[#1e3a8a]/95 to-[#1e40af]/95 backdrop-blur-md rounded-xl px-4 py-3 shadow-xl border border-white/20 hover:border-white/40 transition-all"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  <p className="text-xs font-bold text-white">🌍 30+ pays</p>
-                  <p className="text-xs text-blue-100 font-medium">Canada • Europe • Golfe • Océanie</p>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-
-          </div>
-
-          {/* Image mobile : affichée uniquement sur petits écrans, sous le texte */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="lg:hidden mt-8 rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/20"
-          >
-            <img
-              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663571863877/GebUu8iQdw8TShCpTwPjnX/hero_passport_visa-mRwrcvG24vYkd29VuhCyfY.webp"
-              alt="Candidats heureux avec passeports et billets d'avion"
-              className="w-full h-52 object-cover"
-            />
-          </motion.div>
-
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0 60L1440 60L1440 0C1440 0 1080 60 720 60C360 60 0 0 0 0L0 60Z" fill="white" />
-          </svg>
-        </div>
-      </section>
 
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
       <CounterStats
