@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PendingActionsCards } from "@/components/PendingActionsCards";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -142,6 +143,11 @@ export default function Dashboard() {
   const messagesQuery = trpc.candidate.getMessages.useQuery(undefined, {
     enabled: isAuthenticated && activeTab === "messages",
     refetchInterval: false, // Desactiver le refetch automatique
+    retry: false,
+  });
+
+  const pendingActionsQuery = trpc.candidate.getPendingActions.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "overview",
     retry: false,
   });
 
@@ -350,6 +356,17 @@ export default function Dashboard() {
                   })()}
 
                   <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
+
+                  {/* Actions en attente */}
+                  {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions en attente</h3>
+                      <PendingActionsCards 
+                        actions={pendingActionsQuery.data} 
+                        isLoading={pendingActionsQuery.isLoading}
+                      />
+                    </div>
+                  )}
 
                   {profileQuery.isLoading ? (
                     <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement de votre dossier...</div>

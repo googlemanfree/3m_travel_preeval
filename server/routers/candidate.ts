@@ -292,6 +292,65 @@ export const candidateRouter = router({
       return { success: true };
     }),
 
+  // ── Actions en attente ──────────────────────────────────────────────────────
+  getPendingActions: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const actions: any[] = [];
+
+    // Vérifier le statut du dossier
+    const candidate = ctx.candidate;
+
+    // Action 1: Paiement en attente (statut documents)
+    if (candidate.dossierStatus === "documents") {
+      actions.push({
+        id: "payment-pending",
+        type: "payment",
+        title: "Paiement obligatoire",
+        description: "Veuillez effectuer le paiement de 65 000 XAF pour finaliser votre dossier.",
+        urgency: "high",
+        amount: 65000,
+        action: {
+          label: "Payer maintenant",
+          href: "/mon-dossier",
+        },
+      });
+    }
+
+    // Action 2: Documents manquants (statut traitement)
+    if (candidate.dossierStatus === "traitement") {
+      actions.push({
+        id: "documents-pending",
+        type: "documents",
+        title: "Documents à soumettre",
+        description: "Veuillez soumettre vos documents originaux ou une version numérisée professionnelle.",
+        urgency: "high",
+        action: {
+          label: "Soumettre les documents",
+          href: "/submit-documents",
+        },
+      });
+    }
+
+    // Action 3: Évaluation en attente (statut evaluation)
+    if (candidate.dossierStatus === "evaluation") {
+      actions.push({
+        id: "evaluation-pending",
+        type: "evaluation",
+        title: "Évaluation en cours",
+        description: "Notre équipe analyse votre profil. Vous recevrez votre bilan dans 48 heures.",
+        urgency: "medium",
+        action: {
+          label: "Consulter mon dossier",
+          href: "/mon-dossier",
+        },
+      });
+    }
+
+    return actions;
+  }),
+
   // ── Messagerie : lire les messages ────────────────────────────────────────
   getMessages: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
