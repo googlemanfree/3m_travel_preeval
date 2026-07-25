@@ -7,8 +7,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, aiReportHistory } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { evaluations, aiReportHistory, users, applications } from "../../drizzle/schema";
+import { eq, desc, like, or } from "drizzle-orm";
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -389,6 +389,59 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la récupération des statistiques globales",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer la liste des utilisateurs avec leurs dossiers
+   */
+  getAllUsersWithApplications: protectedProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      status: z.string().optional(),
+      limit: z.number().default(50),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allUsers = await db.select().from(users).limit(input.limit).offset(input.offset);
+
+        // Récupérer les dossiers pour chaque utilisateur
+        const usersWithApps = await Promise.all(
+          allUsers.map(async (user) => {
+            const userApps = await db
+              .select()
+              .from(applications)
+              .where(eq(applications.candidateId, user.id));
+
+            return {
+              ...user,
+              applications: userApps,
+              applicationCount: userApps.length,
+              lastApplication: userApps.length > 0 ? userApps[0] : null,
+              email: user.email || "",
+            };
+          })
+        );
+
+        return {
+          success: true,
+          users: usersWithApps,
+          total: allUsers.length,
+        };
+      } catch (err) {
+        console.error("[Admin Users] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des utilisateurs",
         });
       }
     }),

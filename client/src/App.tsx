@@ -49,6 +49,7 @@ import { SubmitDocuments } from "./pages/SubmitDocuments";
 import { HowItWorks } from "./pages/HowItWorks";
 import { ScrollToTop } from "./components/ScrollToTop";
 import AdminGuard from "./components/AdminGuard";
+import AdminUsersManagement from "./pages/AdminUsersManagement";
 
 function Router() {
   return (
@@ -199,6 +200,11 @@ function Router() {
       <Route path={"/admin/admins"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminsList />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/users"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminUsersManagement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/agency-dossiers"} component={AdminAgencyDossiers} />
