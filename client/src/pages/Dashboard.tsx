@@ -315,12 +315,59 @@ export default function Dashboard() {
                   {profileQuery.isLoading ? (
                     <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement de votre dossier...</div>
                   ) : profileQuery.error ? (
-                    <div className="bg-red-50 rounded-2xl p-6 text-red-600 text-sm">
-                      Erreur de chargement. Veuillez vous reconnecter.
-                      <button onClick={handleLogout} className="ml-2 underline">Se reconnecter</button>
-                    </div>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-50 rounded-2xl p-6 border-l-4 border-red-500"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-red-900 mb-1">Erreur de chargement</h3>
+                          <p className="text-red-700 text-sm mb-3">Impossible de charger votre dossier. Veuillez actualiser la page ou vous reconnecter.</p>
+                          <div className="flex gap-2">
+                            <button onClick={handleRefresh} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded font-medium transition">
+                              Actualiser
+                            </button>
+                            <button onClick={handleLogout} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium transition">
+                              Se reconnecter
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
                   ) : (
                     <>
+                      {/* Barre de progression des étapes */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-900">Progression de votre dossier</h3>
+                          <span className="text-xs font-medium text-gray-500">Étape {statusConfig.step + 1}/6</span>
+                        </div>
+                        <div className="flex gap-2 mb-3">
+                          {DOSSIER_STEPS.map((step, idx) => {
+                            const isActive = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step === idx;
+                            const isCompleted = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step > idx;
+                            return (
+                              <motion.div
+                                key={step.key}
+                                className={`flex-1 h-2 rounded-full transition-all ${
+                                  isCompleted ? "bg-green-500" : isActive ? "bg-blue-500" : "bg-gray-200"
+                                }`}
+                                initial={{ scaleX: 0 }}
+                                animate={{ scaleX: 1 }}
+                                transition={{ delay: idx * 0.1 }}
+                              />
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          {DOSSIER_STEPS.map((step) => (
+                            <span key={step.key}>{step.label}</span>
+                          ))}
+                        </div>
+                      </div>
+
                       {/* Statut actuel */}
                       <div className={`rounded-2xl p-5 mb-6 ${statusConfig.bg}`}>
                         <div className="flex items-center gap-3 mb-2">

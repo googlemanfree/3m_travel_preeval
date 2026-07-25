@@ -629,3 +629,12 @@
 - [ ] Tester la modification du statut
 - [ ] Tester les notifications email
 - [ ] Tester l'affichage côté candidat
+
+
+## Corrections et Améliorations (v26)
+- [ ] Corriger l'erreur "Erreur de chargement. Veuillez vous reconnecter."
+- [ ] Ajouter un indicateur visuel de l'étape de la procédure du candidat
+- [ ] Créer une barre de progression du dossier (Évaluation ➔ Bilan ➔ Traduction ➔ Soumission ➔ Visa)
+- [ ] Implémenter la synchronisation automatique des données dans l'espace admin
+- [ ] Ajouter un système de cache pour optimiser les performances
+- [ ] Créer des notifications en temps réel pour les mises à jour de dossier

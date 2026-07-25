@@ -12,6 +12,8 @@ export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('overview');
   const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Récupérer les infos de l'admin depuis localStorage
   const adminName = localStorage.getItem('adminName') || 'Admin';
@@ -48,10 +50,26 @@ export default function AdminDashboard() {
     logoutMutation.mutate({ sessionToken });
   };
 
-  const handleRefresh = () => {
-    refetch();
-    toast.success('Statistiques actualisées');
+  const handleRefresh = async () => {
+    setIsSyncing(true);
+    try {
+      await refetch();
+      setLastSyncTime(new Date());
+      toast.success('Données synchronisées');
+    } catch (err) {
+      toast.error('Erreur lors de la synchronisation');
+    } finally {
+      setIsSyncing(false);
+    }
   };
+
+  // Synchronisation automatique toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, 30000); // 30 secondes
+    return () => clearInterval(interval);
+  }, []);
 
   // Données dynamiques basées sur les statistiques
   const statusData = [
@@ -97,7 +115,7 @@ export default function AdminDashboard() {
           <div>
             <h1 className="text-3xl font-bold">🛠️ Dashboard Admin</h1>
             <p className="text-blue-100 mt-1">Bienvenue, {adminName}</p>
-            <p className="text-blue-200 text-xs mt-1">📊 Données actualisées automatiquement toutes les 5 secondes</p>
+            <p className="text-blue-200 text-xs mt-1">🔄 Synchronisation auto toutes les 30s • Dernière mise à jour: {lastSyncTime.toLocaleTimeString('fr-FR')}</p>
           </div>
           <div className="flex gap-2">
             <Button
