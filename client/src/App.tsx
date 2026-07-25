@@ -43,6 +43,7 @@ import Hotels from "./pages/Hotels";
 import FloatingServices from "./components/FloatingServices";
 import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
+import { ScrollToTop } from "./components/ScrollToTop";
 
 function Router() {
   return (
@@ -148,6 +149,7 @@ function App() {
           <Toaster />
           <Router />
           <FloatingServices />
+          <ScrollToTop />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
