@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AISummary } from "@/components/AISummary";
 import { InterviewQuestions } from "@/components/InterviewQuestions";
+import { PDFExporter } from "@/components/PDFExporter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -162,7 +163,10 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Détails du candidat</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Détails du candidat</DialogTitle>
+            <PDFExporter candidate={candidate} />
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="info" className="w-full">
