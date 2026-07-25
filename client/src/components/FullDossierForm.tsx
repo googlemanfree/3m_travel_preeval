@@ -348,7 +348,14 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         visaType={form.visaType || "travail"}
         formulaChosen={form.formulaChosen}
         onSigned={() => {
-          navigate(`/verify-application-email?applicationId=${applicationResult.dossierNumber}&email=${encodeURIComponent(form.email)}`);
+          localStorage.setItem('dossierConfirmation', JSON.stringify({
+            dossierNumber: applicationResult.dossierNumber,
+            candidateName: form.fullName,
+            email: form.email,
+            destination: form.destination,
+            formula: form.formulaChosen,
+          }));
+          navigate('/dossier-confirmation');
         }}
         onBack={() => setShowAgreement(false)}
       />

@@ -33,6 +33,7 @@ import EvisaDemande from "./pages/EvisaDemande";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
+import DossierConfirmation from "./pages/DossierConfirmation";
 import ConditionsUtilisation from "./pages/ConditionsUtilisation";
 
 function Router() {

@@ -226,6 +226,27 @@ export const applicationRouter = router({
       Promise.resolve().then(() => sendVerificationOtp(input.email, input.fullName, emailOtp))
         .catch(err => console.error("[Email] OTP send error:", err));
 
+      // Envoyer l'email de confirmation au candidat
+      Promise.resolve().then(() => sendDossierConfirmationEmail(
+        input.email,
+        input.fullName,
+        dossierNumber,
+        input.destination.toUpperCase(),
+        input.formulaChosen,
+        177000 // Montant en FCFA
+      )).catch(err => console.error("[Email] Dossier confirmation error:", err));
+
+      // Envoyer l'alerte admin
+      Promise.resolve().then(() => sendAdminNewDossierAlert(
+        input.fullName,
+        dossierNumber,
+        input.email,
+        input.whatsappNumber,
+        input.destination,
+        input.formulaChosen,
+        "PENDING"
+      )).catch(err => console.error("[Email] Admin alert error:", err));
+
       // Récupérer l'ID de l'application insérée
       const [newApp] = await db
         .select({ id: applications.id })

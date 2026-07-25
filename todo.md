@@ -346,3 +346,12 @@
 - [x] Ajouter les messages de succès/erreur
 - [x] Tester l'envoi d'emails via Resend (test@resend.dev)
 - [x] Améliorer le design du formulaire avec animations
+
+
+## Nouveau Design Hero (v21)
+- [x] Créer le composant HeroSection.tsx avec design optimisé
+- [x] Remplacer la section hero du Home.tsx par le composant
+- [x] Ajouter animations Framer Motion au hero
+- [x] Implémenter les 2 CTAs distincts (Évaluer + WhatsApp)
+- [x] Ajouter les statistiques de réassurance
+- [x] Tester le responsive design (mobile + desktop)
