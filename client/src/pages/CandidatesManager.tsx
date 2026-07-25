@@ -43,6 +43,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AISummary } from "@/components/AISummary";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -162,12 +164,18 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
           <DialogTitle>Détails du candidat</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Informations personnelles */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">
-              Informations personnelles
-            </h3>
+        <Tabs defaultValue="info" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="info">Informations</TabsTrigger>
+            <TabsTrigger value="ai-summary">Résumé IA</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="info" className="space-y-6">
+            {/* Informations personnelles */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-4">
+                Informations personnelles
+              </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-xs text-gray-600">Nom complet</Label>
@@ -300,16 +308,21 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 justify-end border-t pt-6">
-            <Button variant="outline" onClick={onClose}>
-              Fermer
-            </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Sauvegarder les modifications
-            </Button>
-          </div>
-        </div>
+              {/* Actions */}
+              <div className="flex gap-2 justify-end border-t pt-6">
+                <Button variant="outline" onClick={onClose}>
+                  Fermer
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Sauvegarder les modifications
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ai-summary" className="space-y-4">
+              <AISummary candidate={candidate} />
+            </TabsContent>
+          </Tabs>
       </DialogContent>
     </Dialog>
   );
