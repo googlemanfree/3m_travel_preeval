@@ -193,6 +193,44 @@ export default function Footer() {
           })}
         </div>
 
+        {/* Contact Info Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-r from-blue-900/50 to-blue-800/50 rounded-lg p-6 my-8 border border-blue-700/50"
+        >
+          <h3 className="text-white font-bold text-lg mb-4 text-center">Nous Contacter</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center justify-center gap-3 text-center">
+              <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Adresse</p>
+                <p className="text-sm text-white font-medium">Yaoundé Biyem-Assi<br />Montée chapelle Obili</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-3 text-center">
+              <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Téléphone</p>
+                <p className="text-sm text-white font-medium">
+                  <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">+237 620-996-045</a><br />
+                  <a href="tel:+237698104832" className="hover:text-blue-300 transition-colors">+237 698-104-832</a>
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-center gap-3 text-center">
+              <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Email</p>
+                <p className="text-sm text-white font-medium">
+                  <a href="mailto:hello@3mtravelagency.com" className="hover:text-blue-300 transition-colors">hello@3mtravelagency.com</a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Barre légale */}
         <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">
           <p>
