@@ -811,3 +811,16 @@
 ### Phase 6 : Déploiement
 - [ ] Créer un checkpoint avec la zone de téléchargement
 - [ ] Vérifier que le site fonctionne correctement en production
+
+
+## Analyse IA de Lisibilité des Documents (v11)
+
+- [x] Service d'analyse de lisibilité (documentReadabilityService.ts)
+- [x] Procédure tRPC analyzeDocumentReadability
+- [x] Composant SecureDocumentUploadWithAI avec feedback visuel
+- [x] Intégration de la vision par IA (gpt-5-mini)
+- [x] Affichage des résultats d'analyse en temps réel
+- [x] Validation des documents avant acceptation
+- [ ] Intégration du composant dans la progression
+- [ ] Tests du flux complet d'analyse
+- [ ] Documentation pour les utilisateurs

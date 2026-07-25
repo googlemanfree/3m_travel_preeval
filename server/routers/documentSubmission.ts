@@ -4,8 +4,32 @@ import { applications } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { analyzeDocumentReadability } from "../documentReadabilityService";
 
 export const documentSubmissionRouter = router({
+  analyzeDocumentReadability: publicProcedure
+    .input(z.object({
+      imageUrl: z.string().url(),
+      documentType: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const analysis = await analyzeDocumentReadability(
+          input.imageUrl,
+          input.documentType || "document"
+        );
+        return {
+          success: true,
+          analysis,
+        };
+      } catch (error) {
+        console.error("Error analyzing document:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'analyse du document",
+        });
+      }
+    }),
   submitDocuments: publicProcedure
     .input(z.object({
       dossierNumber: z.string(),

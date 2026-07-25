@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Upload,
   File,
@@ -14,6 +13,7 @@ import {
   Loader2,
   Zap,
   TrendingUp,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -33,32 +33,41 @@ export interface UploadedDocument {
     issues: string[];
     suggestions: string[];
     confidence: number;
+    analysisDetails: {
+      textClarity: string;
+      imageQuality: string;
+      completeness: string;
+      visibility: string;
+    };
   };
 }
 
-interface SecureDocumentUploadProps {
+interface SecureDocumentUploadWithAIProps {
   dossierNumber: string;
   onUploadComplete?: (documents: UploadedDocument[]) => void;
   maxFiles?: number;
-  maxFileSize?: number; // in MB
+  maxFileSize?: number;
   acceptedFormats?: string[];
 }
 
 const ALLOWED_FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_FILES = 10;
 
-export function SecureDocumentUpload({
+export function SecureDocumentUploadWithAI({
   dossierNumber,
   onUploadComplete,
   maxFiles = MAX_FILES,
   maxFileSize = MAX_FILE_SIZE,
   acceptedFormats = ALLOWED_FORMATS,
-}: SecureDocumentUploadProps) {
+}: SecureDocumentUploadWithAIProps) {
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const analyzeReadabilityMutation =
+    trpc.documentSubmission.analyzeDocumentReadability.useMutation();
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <ImageIcon className="w-5 h-5" />;
@@ -120,6 +129,31 @@ export function SecureDocumentUpload({
     setDocuments((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const analyzeReadability = async (file: File, docId: string): Promise<any> => {
+    try {
+      const reader = new FileReader();
+      return new Promise((resolve: (value: any) => void) => {
+        reader.onload = async (e) => {
+          const base64 = e.target?.result as string;
+          try {
+            const result = await analyzeReadabilityMutation.mutateAsync({
+              imageUrl: base64,
+              documentType: "document",
+            });
+            resolve(result.analysis);
+          } catch (error) {
+            console.error("Error analyzing document:", error);
+            resolve(null);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error("Error reading file:", error);
+      return null;
+    }
+  };
+
   const uploadDocuments = async () => {
     const validDocuments = documents.filter((d) => d.status !== "error");
 
@@ -131,17 +165,20 @@ export function SecureDocumentUpload({
     setIsUploading(true);
 
     try {
-      // Simuler le téléchargement avec progression
       for (const doc of validDocuments) {
+        // Marquer comme en analyse
         setDocuments((prev) =>
           prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "uploading", progress: 0 } : d
+            d.id === doc.id ? { ...d, status: "analyzing", progress: 10 } : d
           )
         );
 
+        // Analyser la lisibilité avec IA
+        const analysis = await analyzeReadability(doc.file, doc.id);
+
         // Simuler la progression du téléchargement
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        for (let i = 20; i <= 100; i += 20) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
           setDocuments((prev) =>
             prev.map((d) =>
               d.id === doc.id ? { ...d, progress: i } : d
@@ -149,15 +186,35 @@ export function SecureDocumentUpload({
           );
         }
 
-        // Marquer comme succès
+        // Marquer comme succès avec résultats d'analyse
         setDocuments((prev) =>
           prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "success", progress: 100 } : d
+            d.id === doc.id
+              ? {
+                  ...d,
+                  status: "success",
+                  progress: 100,
+                  readabilityAnalysis: analysis,
+                }
+              : d
           )
         );
+
+        // Afficher les résultats
+        if (analysis) {
+          if (analysis.isReadable) {
+            toast.success(
+              `✓ ${doc.name} - Lisibilité: ${analysis.readabilityScore}%`
+            );
+          } else {
+            toast.warning(
+              `⚠ ${doc.name} - Qualité insuffisante (${analysis.readabilityScore}%)`
+            );
+          }
+        }
       }
 
-      toast.success(`${validDocuments.length} document(s) téléchargé(s) avec succès`);
+      toast.success(`${validDocuments.length} document(s) analysé(s) avec succès`);
 
       if (onUploadComplete) {
         onUploadComplete(validDocuments);
@@ -168,11 +225,11 @@ export function SecureDocumentUpload({
         setDocuments([]);
       }, 2000);
     } catch (error) {
-      toast.error("Erreur lors du téléchargement");
+      toast.error("Erreur lors de l'analyse");
       setDocuments((prev) =>
         prev.map((d) =>
-          d.status === "uploading"
-            ? { ...d, status: "error", error: "Erreur de téléchargement" }
+          d.status === "analyzing"
+            ? { ...d, status: "error", error: "Erreur d'analyse" }
             : d
         )
       );
@@ -228,8 +285,12 @@ export function SecureDocumentUpload({
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Téléchargez vos documents
           </h3>
-          <p className="text-sm text-gray-600 text-center mb-4">
+          <p className="text-sm text-gray-600 text-center mb-2">
             Glissez-déposez vos fichiers ici ou cliquez pour parcourir
+          </p>
+          <p className="text-xs text-blue-600 font-medium mb-4 flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            Analyse IA de lisibilité automatique
           </p>
 
           <Button
@@ -273,7 +334,7 @@ export function SecureDocumentUpload({
               </h4>
               {uploadedCount > 0 && (
                 <span className="text-sm text-green-600 font-medium">
-                  ✓ {uploadedCount} téléchargé(s)
+                  ✓ {uploadedCount} analysé(s)
                 </span>
               )}
             </div>
@@ -290,7 +351,9 @@ export function SecureDocumentUpload({
                       ? "bg-red-50 border-red-200"
                       : doc.status === "success"
                         ? "bg-green-50 border-green-200"
-                        : "bg-white border-gray-200"
+                        : doc.status === "analyzing"
+                          ? "bg-blue-50 border-blue-200"
+                          : "bg-white border-gray-200"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -300,6 +363,8 @@ export function SecureDocumentUpload({
                           <AlertCircle className="w-5 h-5 text-red-600" />
                         ) : doc.status === "success" ? (
                           <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        ) : doc.status === "analyzing" ? (
+                          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
                         ) : (
                           <div className="text-gray-600">{getFileIcon(doc.type)}</div>
                         )}
@@ -317,7 +382,7 @@ export function SecureDocumentUpload({
                           <p className="text-xs text-red-600 mt-1">{doc.error}</p>
                         )}
 
-                        {doc.status === "uploading" && (
+                        {doc.status === "analyzing" && (
                           <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
                             <motion.div
                               className="bg-blue-600 h-1.5 rounded-full"
@@ -326,10 +391,32 @@ export function SecureDocumentUpload({
                             />
                           </div>
                         )}
+
+                        {/* Résultats d'analyse */}
+                        {doc.readabilityAnalysis && (
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <TrendingUp className="w-3 h-3 text-blue-600" />
+                              <span className="text-xs font-semibold text-gray-700">
+                                Lisibilité: {doc.readabilityAnalysis.readabilityScore}%
+                              </span>
+                            </div>
+                            {!doc.readabilityAnalysis.isReadable && (
+                              <div className="space-y-1">
+                                {doc.readabilityAnalysis.issues.slice(0, 2).map((issue, i) => (
+                                  <p key={i} className="text-xs text-red-600 flex items-start gap-1">
+                                    <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                    {issue}
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {doc.status !== "uploading" && (
+                    {doc.status !== "uploading" && doc.status !== "analyzing" && (
                       <button
                         onClick={() => removeDocument(doc.id)}
                         className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
@@ -369,12 +456,12 @@ export function SecureDocumentUpload({
             {isUploading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Téléchargement...
+                Analyse en cours...
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
-                Télécharger ({pendingCount})
+                <Zap className="w-4 h-4 mr-2" />
+                Analyser ({pendingCount})
               </>
             )}
           </Button>
@@ -385,7 +472,7 @@ export function SecureDocumentUpload({
       <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-blue-700">
-          Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M Travel peuvent y accéder.
+          Analyse IA sécurisée: Vos documents sont chiffrés et analysés automatiquement pour vérifier leur lisibilité. Seuls les documents acceptables seront traités.
         </p>
       </div>
     </div>
