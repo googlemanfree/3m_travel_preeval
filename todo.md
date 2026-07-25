@@ -639,3 +639,56 @@
 - [x] Implémenter la synchronisation automatique des données dans l'espace admin
 - [ ] Ajouter un système de cache pour optimiser les performances
 - [ ] Créer des notifications en temps réel pour les mises à jour de dossier
+
+
+## Processus de Visa Travail Automatisé (v27)
+
+### Phase 1 : Schéma DB et Statuts
+- [x] Ajouter 12 nouveaux statuts de dossier (nouveau → en_evaluation → bilan_envoye → en_attente_paiement → paye → en_attente_documents → documents_recus → soumis_agences → en_cours_recrutement → contrat_obtenu → visa_approuve → refuse)
+- [x] Ajouter les champs pour le suivi de l'évaluation (evaluationStartedAt, evaluationCompletedAt, evaluationReportUrl, evaluationScore, evaluationBadge)
+- [x] Ajouter les champs pour la gestion des documents (documentsSubmissionMethod, documentsReceivedAt, documentsVerifiedAt, documentsVerifiedBy)
+- [x] Ajouter les champs pour la soumission aux agences de recrutement (submittedToAgenciesAt, agencyName, recruitmentStatus)
+- [x] Migration DB appliquée via webdev_execute_sql
+
+### Phase 2 : Job Heartbeat pour Délai 48h
+- [x] Créer le fichier evaluationBilanJob.ts pour implémenter le délai de 48h
+- [x] Récupérer les dossiers créés il y a 48h+
+- [x] Générer les rapports d'éligibilité automatiquement
+- [x] Envoyer les bilans par email
+- [x] Passer automatiquement le dossier en "en_attente_paiement"
+- [x] Intégrer le job Heartbeat dans le serveur Express (server/_core/index.ts)
+
+### Phase 3 : Procédures tRPC pour Gestion des Documents
+- [x] Créer documentSubmissionRouter avec procédures :
+  - submitDocuments : soumettre les documents (en ligne ou agence)
+  - getDocumentSubmissionStatus : récupérer le statut de soumission
+  - verifyDocuments : vérifier et valider les documents (admin)
+- [x] Intégrer le routeur dans server/routers.ts
+
+### Phase 4 : Pages Frontend
+- [x] Créer SubmitDocuments.tsx : page de dépôt des documents (en ligne ou agence)
+- [x] Créer HowItWorks.tsx : page "Comment ça marche" avec 8 étapes
+- [x] Créer AdminDocumentVerification.tsx : page de vérification des documents (admin)
+- [x] Intégrer les routes dans App.tsx
+
+### Phase 5 : Correction des Emails Automatiques
+- [x] Supprimer les mentions de "Formule d'Accompagnement" dans admissibilityReportService.ts
+- [x] Remplacer "accéder à nos services d'accompagnement" par "finaliser votre dossier"
+- [x] Remplacer "commencer l'accompagnement personnalisé" par "soumettre votre dossier à nos agences partenaires"
+- [x] Vérifier que tous les emails automatiques sont exempts de mentions d'accompagnement
+
+### Phase 6 : Tests et Validation
+- [ ] Tester le flux complet : création de compte → choix du pays → évaluation
+- [ ] Vérifier que les résultats sont envoyés après 48h
+- [ ] Tester le paiement obligatoire (65 000 XAF)
+- [ ] Tester le dépôt des documents (en ligne et agence)
+- [ ] Vérifier que les documents sont correctement vérifiés
+- [ ] Tester la soumission aux agences partenaires
+- [ ] Vérifier que les emails ne contiennent pas de mentions d'accompagnement
+- [ ] Tester le suivi du dossier dans l'espace client
+
+### Phase 7 : Déploiement Final
+- [ ] Créer un checkpoint final avec le processus complet
+- [ ] Vérifier que le site est accessible et fonctionne correctement
+- [ ] Tester sur mobile et desktop
+- [ ] Vérifier les performances et les temps de chargement

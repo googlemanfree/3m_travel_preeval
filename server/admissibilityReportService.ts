@@ -90,11 +90,11 @@ function generateAdmissibilityReport(evaluation: any): string {
           </div>
 
           <h2>🎯 Prochaines Étapes</h2>
-          <p>Pour finaliser votre dossier et accéder à nos services d'accompagnement :</p>
+          <p>Pour finaliser votre dossier :</p>
           <ol>
             <li><strong>Téléverser vos pièces justificatives</strong> (passeport, diplômes, justificatifs financiers)</li>
             <li><strong>Régler les frais d'ouverture de dossier</strong> (65 000 FCFA) en ligne ou en agence</li>
-            <li><strong>Recevoir votre bilan officiel</strong> et commencer l'accompagnement personnalisé</li>
+            <li><strong>Soumettre votre dossier</strong> à nos agences partenaires pour le traitement administratif</li>
           </ol>
 
           <a href="https://www.3mtravelagency.com/mon-dossier" class="cta-button">Accéder à mon espace</a>
