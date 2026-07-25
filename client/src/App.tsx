@@ -141,7 +141,11 @@ function Router() {
       </Route>
 
       {/* Depot des documents */}
-      <Route path={"/submit-documents"} component={SubmitDocuments} />
+      <Route path={"/submit-documents"}>
+        <AuthGuard message="Vous devez créer un compte pour soumettre vos documents.">
+          <SubmitDocuments />
+        </AuthGuard>
+      </Route>
 
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />

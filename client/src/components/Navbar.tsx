@@ -157,15 +157,37 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               </Button>
             </Link>
           )}
-          <Link href="/dashboard">
-            <Button
-              variant="outline"
-              className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
-            >
-              <User className="w-4 h-4 mr-1.5" />
-              Mon Espace
-            </Button>
-          </Link>
+          {/* Show Mon Espace if authenticated, otherwise show Login/Signup */}
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
+              >
+                <User className="w-4 h-4 mr-1.5" />
+                Mon Espace
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
+                >
+                  <User className="w-4 h-4 mr-1.5" />
+                  Connexion
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button
+                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
+                >
+                  Inscription
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* ── Mobile burger ── */}
@@ -217,10 +239,23 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
             <FolderOpen className="w-4 h-4" /> Ouvrir un dossier
           </Link>
-          <Link href="/dashboard" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-            <User className="w-4 h-4" /> Mon Espace
-          </Link>
+          {isAuthenticated ? (
+            <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+              <User className="w-4 h-4" /> Mon Espace
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+                <User className="w-4 h-4" /> Connexion
+              </Link>
+              <Link href="/signup" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+                Inscription
+              </Link>
+            </>
+          )}
           <Link href="/admin/login" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
             <Shield className="w-4 h-4" /> Connexion Admin

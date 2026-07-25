@@ -841,3 +841,18 @@
 - [ ] Intégration du composant SmartDocumentUpload dans la progression
 - [ ] Tests du flux complet de classification
 - [ ] Documentation pour les utilisateurs
+
+
+## Authentification Obligatoire (v13)
+
+- [x] Boutons de connexion et d'inscription dans la barre de navigation
+- [x] Affichage intelligent des boutons (Connexion/Inscription si non authentifié, Mon Espace si authentifié)
+- [x] Pages de connexion et d'inscription existantes avec design professionnel
+- [x] Composant AuthGuard pour protéger les routes
+- [x] Protection de toutes les routes critiques (/open-dossier, /mon-dossier, /submit-documents, etc.)
+- [x] Redirection automatique vers /login pour les utilisateurs non authentifiés
+- [x] Messages personnalisés pour chaque route protégée
+- [x] Composant ProtectedRoute créé comme alternative
+- [ ] Tests du flux de connexion/inscription
+- [ ] Tests de redirection automatique
+- [ ] Tests d'accès aux routes protégées
