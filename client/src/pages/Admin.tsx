@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import EvaluationManager from "@/components/EvaluationManager";
+import HeartbeatJobManager from "@/components/HeartbeatJobManager";
 import {
   Search, Filter, Download, Printer, Eye, CheckCircle, XCircle,
   Clock, FileText, Users, TrendingUp, DollarSign, RefreshCw,
@@ -253,6 +254,11 @@ export default function Admin() {
         {/* Gestionnaire d'évaluation automatique */}
         <div className="mb-8 bg-gradient-to-r from-slate-900 to-slate-800 border border-white/10 rounded-xl p-6">
           <EvaluationManager />
+        </div>
+
+        {/* Gestionnaire des jobs Heartbeat */}
+        <div className="mb-8 bg-gradient-to-r from-slate-900 to-slate-800 border border-white/10 rounded-xl p-6">
+          <HeartbeatJobManager />
         </div>
 
         {/* Statistiques */}

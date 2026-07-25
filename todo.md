@@ -190,9 +190,10 @@
 - [x] Endpoint Heartbeat : POST /api/scheduled/evaluation-job pour exécution périodique
 - [x] Routeur Heartbeat tRPC : createEvaluationJob, listJobs, deleteJob
 - [x] Intégration du gestionnaire d'évaluation dans Admin.tsx
-- [ ] Configurer le job Heartbeat via l'interface admin (bouton "Créer job quotidien")
-- [ ] Tester l'envoi en masse des rapports et vérifier les emails reçus
-- [ ] Ajouter un historique des envois de rapports dans la DB (optionnel)
+- [ ] Corriger l'authentification admin pour le gestionnaire Heartbeat (session openId)
+- [ ] Tester la création/liste/suppression d'un job depuis l'interface admin
+- [ ] Exécuter un vrai test du job d'évaluation avec envoi d'emails
+- [ ] Ajouter un historique d'envoi des rapports en base de données
 
 
 ## Intégration IA — Analyse de CV avec OpenAI (v8)
@@ -355,3 +356,11 @@
 - [x] Implémenter les 2 CTAs distincts (Évaluer + WhatsApp)
 - [x] Ajouter les statistiques de réassurance
 - [x] Tester le responsive design (mobile + desktop)
+
+## Soumission Complète de Dossier (v22)
+- [x] Créer une procédure tRPC submitDossier avec génération de numéro unique
+- [x] Ajouter des emails de confirmation au candidat et à l'équipe interne
+- [x] Créer une page de confirmation avec affichage du numéro de dossier
+- [x] Ajouter des boutons pour copier/télécharger le numéro de dossier
+- [x] Améliorer FullDossierForm pour rediriger vers la page de confirmation
+- [x] Tester le flux complet de soumission
