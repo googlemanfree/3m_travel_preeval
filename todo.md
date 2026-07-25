@@ -316,3 +316,13 @@
 - [x] Corriger email footer : hello@3mtravelegency.com → hello@3mtravelagency.com (Footer.tsx, Home.tsx)
 - [x] Modifier le lien "Destinations" : /destinations → /procedures (Navbar.tsx)
 - [x] Commenter les liens légaux morts dans Home.tsx (à implémenter : /privacy et /terms)
+
+
+## Filtrage et Recherche sur /visa-types (v17)
+- [x] Ajouter une barre de recherche pour filtrer par nom de visa
+- [x] Ajouter des filtres par catégories (Étude, Travail, Tourisme, etc.)
+- [x] Ajouter des filtres par délai de traitement
+- [x] Ajouter des filtres par coût estimé
+- [x] Implémenter la logique de filtrage avec état React
+- [x] Ajouter des animations de transition entre les résultats filtrés
+- [x] Tester les filtres avec différentes combinaisons

@@ -59,6 +59,8 @@ function Router() {
       <Route path={"/contact"} component={Contact} />
       <Route path={"/traduction"} component={Traduction} />
       <Route path={"/guide"} component={Guide} />
+      <Route path={"/visa-types"} component={VisaTypes} />
+      <Route path={"/destinations"} component={Destinations} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />
