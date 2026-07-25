@@ -65,19 +65,55 @@ function Router() {
           <Flights />
         </AuthGuard>
       </Route>
-      <Route path={"/procedures"} component={Procedures} />
-      <Route path={"/assurance"} component={Assurance} />
-      <Route path={"/assurance-inscription"} component={AssuranceInscription} />
-      <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"} component={EvisaDemande} />
+      <Route path={"/procedures"}>
+        <AuthGuard message="Vous devez créer un compte pour consulter les procédures détaillées.">
+          <Procedures />
+        </AuthGuard>
+      </Route>
+      <Route path={"/assurance"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder à nos offres d'assurance.">
+          <Assurance />
+        </AuthGuard>
+      </Route>
+      <Route path={"/assurance-inscription"}>
+        <AuthGuard message="Vous devez créer un compte pour vous inscrire à une assurance.">
+          <AssuranceInscription />
+        </AuthGuard>
+      </Route>
+      <Route path={"/evisa"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder aux services e-visa.">
+          <Evisa />
+        </AuthGuard>
+      </Route>
+      <Route path={"/evisa-demande"}>
+        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
+          <EvisaDemande />
+        </AuthGuard>
+      </Route>
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
-      <Route path={"/traduction/order"} component={TranslationOrder} />
-      <Route path={"/guide"} component={Guide} />
-      <Route path={"/visa-types"} component={VisaTypes} />
-      <Route path={"/destinations"} component={Destinations} />
+      <Route path={"/traduction/order"}>
+        <AuthGuard message="Vous devez créer un compte pour commander une traduction.">
+          <TranslationOrder />
+        </AuthGuard>
+      </Route>
+      <Route path={"/guide"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder aux guides.">
+          <Guide />
+        </AuthGuard>
+      </Route>
+      <Route path={"/visa-types"}>
+        <AuthGuard message="Vous devez créer un compte pour voir les types de visa.">
+          <VisaTypes />
+        </AuthGuard>
+      </Route>
+      <Route path={"/destinations"}>
+        <AuthGuard message="Vous devez créer un compte pour voir les destinations.">
+          <Destinations />
+        </AuthGuard>
+      </Route>
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />
@@ -85,23 +121,38 @@ function Router() {
       </Route>
 
       {/* Ouverture de dossier & paiement */}
-      <Route path={"/open-dossier"} component={OpenDossier} />
+      <Route path={"/open-dossier"}>
+        <AuthGuard message="Vous devez créer un compte pour ouvrir un dossier.">
+          <OpenDossier />
+        </AuthGuard>
+      </Route>
       <Route path={"/verify-application-email"} component={VerifyApplicationEmail} />
       <Route path={"/payment-success"} component={PaymentSuccess} />
       <Route path={"/payment-failed"} component={PaymentFailed} />
       <Route path={"/dossier-confirmation"} component={DossierConfirmation} />
 
       {/* Suivi de dossier candidat */}
-      <Route path={"/mon-dossier"} component={MonDossier} />
+      <Route path={"/mon-dossier"}>
+        <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
+          <MonDossier />
+        </AuthGuard>
+      </Route>
 
       {/* Bibliothèque de ressources PDF */}
-      <Route path={"/ressources"} component={Ressources} />
+      <Route path={"/ressources"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder aux ressources.">
+          <Ressources />
+        </AuthGuard>
+      </Route>
 
       {/* Fiches détaillées par pays */}
-      <Route path={"/fiches"} component={Fiches} />
+      <Route path={"/fiches"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder aux fiches pays.">
+          <Fiches />
+        </AuthGuard>
+      </Route>
 
-      {/* Assurance voyage */}
-      <Route path={"/assurance"} component={Assurance} />
+      {/* Routes Hotels */}
 
       {/* Traduction assermentée */}
 
