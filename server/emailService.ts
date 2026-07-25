@@ -77,8 +77,9 @@ function emailBase(content: string): string {
 // ─── Email de lien de confirmation ──────────────────────────────────────────────
 
 export async function sendVerificationLink(to: string, fullName: string, verificationToken: string): Promise<void> {
-  const baseUrl = SITE_URL || "https://3mtravelagency.click";
-  const verifyUrl = `${baseUrl}/verify-email-link?token=${verificationToken}`;
+  const baseUrl = (SITE_URL || "https://3mtravelagency.click").replace(/\/+$/, "");
+  const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
+  console.log(`[sendVerificationLink] Sending verification link to ${to}: ${verifyUrl}`);
   const content = `
     <p>Bonjour <strong>${fullName}</strong>,</p>
     <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! Pour activer votre compte, cliquez sur le lien ci-dessous :</p>
