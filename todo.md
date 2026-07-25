@@ -177,8 +177,8 @@
 - [x] Retirer emailOtp de la réponse createApplication (sécurité)
 - [x] Ajouter procédure resendApplicationOtp pour renvoyer l'OTP si expiré
 - [x] Implémenter handleResend dans VerifyApplicationEmail.tsx
-- [ ] Corriger le bug : login candidat ne vérifiait pas emailVerified (ajouter la vérification)
-- [ ] Corriger le bug : VerifyEmail.tsx dépendait de localStorage "pendingCandidate" (rendre optionnel)
+- [x] Corriger le bug : login candidat ne vérifiait pas emailVerified (ajouter la vérification)
+- [x] Corriger le bug : VerifyEmail.tsx dépendait de localStorage "pendingCandidate" (rendre optionnel)
 
 
 ## Système d'Évaluation Automatique — Rapports Personnalisés Multi-Destination (v7)
@@ -201,7 +201,7 @@
 - [x] Ajouter la procédure tRPC evaluateCVWithAI : analyse CV en base64 + génération rapport + envoi email
 - [x] Intégrer analyzeCV dans ScoringForm : déclencher l'analyse lors de l'upload du CV
 - [x] Ajouter la mutation tRPC evaluateCVWithAI dans ScoringForm
-- [ ] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
+- [x] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
 - [ ] Tester l'upload de CV et vérifier la génération du rapport IA
 - [ ] Ajouter un toast de notification lors de l'analyse IA en cours
 

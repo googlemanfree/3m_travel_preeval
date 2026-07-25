@@ -36,16 +36,24 @@ export default function VerifyEmail() {
       setVerified(true);
       if (data.token) {
         // Récupérer les infos depuis le localStorage temporaire si disponible
-        const pending = JSON.parse(localStorage.getItem("pendingCandidate") ?? "{}");
+        let pending = {};
+        try {
+          const stored = localStorage.getItem("pendingCandidate");
+          if (stored) {
+            pending = JSON.parse(stored);
+            localStorage.removeItem("pendingCandidate");
+          }
+        } catch (e) {
+          console.warn("localStorage unavailable", e);
+        }
         login(data.token, {
           id: candidateId,
-          fullName: pending.fullName ?? "Candidat",
-          email: pending.email ?? "",
-          destination: pending.destination ?? "autre",
+          fullName: (pending as any).fullName ?? "Candidat",
+          email: (pending as any).email ?? "",
+          destination: (pending as any).destination ?? "autre",
           dossierStatus: "nouveau",
           emailVerified: true,
         });
-        localStorage.removeItem("pendingCandidate");
       }
       toast.success("Email vérifié ! Bienvenue dans votre espace 3M Travel.");
       setTimeout(() => navigate("/dashboard"), 2000);

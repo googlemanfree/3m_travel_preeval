@@ -149,6 +149,11 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
+      // Vérifier que l'email est confirmé
+      if (!candidate.emailVerified) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Veuillez vérifier votre email avant de vous connecter." });
+      }
+
       // Mettre à jour lastLoginAt
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
 
