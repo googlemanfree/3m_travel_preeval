@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AISummary } from "@/components/AISummary";
+import { InterviewQuestions } from "@/components/InterviewQuestions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -165,9 +166,10 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="info">Informations</TabsTrigger>
             <TabsTrigger value="ai-summary">Résumé IA</TabsTrigger>
+            <TabsTrigger value="interview">Questions d'Entretien</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-6">
@@ -321,6 +323,10 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 
             <TabsContent value="ai-summary" className="space-y-4">
               <AISummary candidate={candidate} />
+            </TabsContent>
+
+            <TabsContent value="interview" className="space-y-4">
+              <InterviewQuestions candidate={candidate} />
             </TabsContent>
           </Tabs>
       </DialogContent>
