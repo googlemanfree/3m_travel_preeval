@@ -376,17 +376,17 @@
 
 
 ## Espace Utilisateur Personnalisé (v24)
-- [ ] Étendre le schéma DB : table users avec email, password, profil, préférences
-- [ ] Créer les procédures tRPC : registerUser, loginUser, updateProfile, getUserDashboard
-- [ ] Créer la page /inscription avec formulaire complet (nom, email, mot de passe, téléphone)
-- [ ] Créer la page /connexion avec formulaire email/mot de passe
-- [ ] Créer la page /profil avec édition des informations personnelles
-- [ ] Améliorer le tableau de bord /mon-dossier avec timeline détaillée
-- [ ] Ajouter les notifications en temps réel pour les mises à jour de dossier
-- [ ] Ajouter l'historique des documents soumis avec dates
-- [ ] Ajouter la section "Prochaines étapes" personnalisée
-- [ ] Ajouter les statistiques du dossier (% complétude, étapes restantes)
-- [ ] Tester le flux complet : inscription → connexion → tableau de bord
+- [x] Étendre le schéma DB : table users avec email, password, profil, préférences
+- [x] Créer les procédures tRPC : registerUser, loginUser, updateProfile, getUserDashboard
+- [x] Créer la page /inscription avec formulaire complet (nom, email, mot de passe, téléphone)
+- [x] Créer la page /connexion avec formulaire email/mot de passe
+- [x] Créer la page /profil avec édition des informations personnelles
+- [x] Améliorer le tableau de bord /mon-dossier avec timeline détaillée
+- [x] Ajouter les notifications en temps réel pour les mises à jour de dossier
+- [x] Ajouter l'historique des documents soumis avec dates
+- [x] Ajouter la section "Prochaines étapes" personnalisée
+- [x] Ajouter les statistiques du dossier (% complétude, étapes restantes)
+- [x] Tester le flux complet : inscription → connexion → tableau de bord
 
 
 ## Amélioration du Système d'Analyse IA (v11)
