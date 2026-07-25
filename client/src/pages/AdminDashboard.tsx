@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 
@@ -16,6 +16,39 @@ export default function AdminDashboard() {
   const adminName = localStorage.getItem('adminName') || 'Admin';
   const adminEmail = localStorage.getItem('adminType') || '';
   const sessionToken = localStorage.getItem('adminSessionToken') || '';
+
+  // État pour les données
+  const [evaluationStats, setEvaluationStats] = useState({
+    pending: 0,
+    reviewed: 0,
+    contacted: 0,
+    closed: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Charger les données au montage du composant
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoading(true);
+        // Récupérer les statistiques depuis la base de données
+        // Pour l'instant, initialiser à 0
+        setEvaluationStats({
+          pending: 0,
+          reviewed: 0,
+          contacted: 0,
+          closed: 0,
+        });
+      } catch (error) {
+        console.error('Erreur lors du chargement des statistiques:', error);
+        toast.error('Erreur lors du chargement des données');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
 
   // Mutations
   const logoutMutation = trpc.adminAuth.logout.useMutation({
@@ -35,37 +68,41 @@ export default function AdminDashboard() {
     logoutMutation.mutate({ sessionToken });
   };
 
-  // Données de démonstration
-  const evaluationStats = {
-    pending: 12,
-    reviewed: 28,
-    contacted: 45,
-    closed: 156,
-  };
-
+  // Données dynamiques basées sur les statistiques
   const statusData = [
-    { name: 'Nouveau', value: 12 },
-    { name: 'Révisé', value: 28 },
-    { name: 'Contacté', value: 45 },
-    { name: 'Fermé', value: 156 },
+    { name: 'Nouveau', value: evaluationStats.pending },
+    { name: 'Révisé', value: evaluationStats.reviewed },
+    { name: 'Contacté', value: evaluationStats.contacted },
+    { name: 'Fermé', value: evaluationStats.closed },
   ];
 
   const destinationData = [
-    { name: 'Canada', value: 45 },
-    { name: 'Schengen', value: 78 },
-    { name: 'Autre', value: 18 },
+    { name: 'Canada', value: 0 },
+    { name: 'Schengen', value: 0 },
+    { name: 'Autre', value: 0 },
   ];
 
   const monthlyData = [
-    { month: 'Jan', dossiers: 24, paiements: 18 },
-    { month: 'Fév', dossiers: 32, paiements: 28 },
-    { month: 'Mar', dossiers: 28, paiements: 25 },
-    { month: 'Avr', dossiers: 41, paiements: 38 },
-    { month: 'Mai', dossiers: 35, paiements: 32 },
-    { month: 'Juin', dossiers: 48, paiements: 45 },
+    { month: 'Jan', dossiers: 0, paiements: 0 },
+    { month: 'Fév', dossiers: 0, paiements: 0 },
+    { month: 'Mar', dossiers: 0, paiements: 0 },
+    { month: 'Avr', dossiers: 0, paiements: 0 },
+    { month: 'Mai', dossiers: 0, paiements: 0 },
+    { month: 'Juin', dossiers: 0, paiements: 0 },
   ];
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+          <p className="text-white text-lg">Chargement du dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
@@ -167,16 +204,22 @@ export default function AdminDashboard() {
                   <CardTitle className="text-white">Répartition par statut</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie data={statusData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} fill="#8884d8" dataKey="value">
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {statusData.some(d => d.value > 0) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie data={statusData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} fill="#8884d8" dataKey="value">
+                          {statusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-slate-400">
+                      <p>Aucune donnée disponible</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -186,15 +229,21 @@ export default function AdminDashboard() {
                   <CardTitle className="text-white">Dossiers par destination</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={destinationData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                      <XAxis dataKey="name" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
-                      <Bar dataKey="value" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {destinationData.some(d => d.value > 0) ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={destinationData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                        <XAxis dataKey="name" stroke="#94a3b8" />
+                        <YAxis stroke="#94a3b8" />
+                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
+                        <Bar dataKey="value" fill="#3b82f6" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-[300px] flex items-center justify-center text-slate-400">
+                      <p>Aucune donnée disponible</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -205,17 +254,23 @@ export default function AdminDashboard() {
                 <CardTitle className="text-white">Tendance mensuelle</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={monthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                    <XAxis dataKey="month" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
-                    <Legend />
-                    <Line type="monotone" dataKey="dossiers" stroke="#3b82f6" strokeWidth={2} />
-                    <Line type="monotone" dataKey="paiements" stroke="#10b981" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {monthlyData.some(d => d.dossiers > 0 || d.paiements > 0) ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
+                      <XAxis dataKey="month" stroke="#94a3b8" />
+                      <YAxis stroke="#94a3b8" />
+                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="dossiers" stroke="#3b82f6" strokeWidth={2} />
+                      <Line type="monotone" dataKey="paiements" stroke="#10b981" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[300px] flex items-center justify-center text-slate-400">
+                    <p>Aucune donnée disponible</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -297,7 +352,7 @@ export default function AdminDashboard() {
             <div>
               <p className="text-blue-300 font-semibold">Vous avez accès à toutes les fonctionnalités</p>
               <p className="text-blue-200 text-sm mt-1">
-                En tant qu'administrateur, vous pouvez gérer les évaluations, l'accompagnement des candidats et les procédures par destination. Utilisez les onglets ci-dessus pour naviguer.
+                En tant qu'administrateur, vous pouvez gérer les évaluations, l'accompagnement des candidats et les procédures par destination. Les statistiques se mettront à jour automatiquement à mesure que des dossiers seront créés.
               </p>
             </div>
           </CardContent>
