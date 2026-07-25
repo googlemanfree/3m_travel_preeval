@@ -41,6 +41,7 @@ import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import Hotels from "./pages/Hotels";
 import FloatingServices from "./components/FloatingServices";
+import CandidatesManager from "./pages/CandidatesManager";
 
 function Router() {
   return (
@@ -114,6 +115,11 @@ function Router() {
       <Route path={"admin/procedures"}>
         <AuthGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
+        </AuthGuard>
+      </Route>
+      <Route path={"admin/candidates"}>
+        <AuthGuard message="Accès réservé aux administrateurs.">
+          <CandidatesManager />
         </AuthGuard>
       </Route>
 
