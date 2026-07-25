@@ -46,30 +46,34 @@ export const clientDocumentsRouter = router({
 
       try {
         // Vérifier que l'évaluation existe
-        const eval_ = await db
+        const evals = await db
           .select()
           .from(evaluations)
           .where(eq(evaluations.id, input.evaluationId))
           .limit(1);
 
-        if (eval_.length === 0) {
+        if (evals.length === 0) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
         }
 
-        // Créer le document
+        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
         await db.insert(clientDocuments).values({
           evaluationId: input.evaluationId,
           candidateEmail: input.candidateEmail,
-          documentType: input.documentType,
+          documentType: input.documentType as any,
           documentName: input.documentName,
           documentUrl: input.documentUrl,
           fileSize: input.fileSize,
           status: "pending",
+          receiptNumber,
+          receiptGeneratedAt: new Date(),
         });
 
         return {
           success: true,
-          message: "Document soumis avec succès. L'admin le validera bientôt.",
+          message: "Document soumis avec succès",
+          receiptNumber,
         };
       } catch (err) {
         console.error("[Submit Document] Error:", err);
@@ -81,9 +85,9 @@ export const clientDocumentsRouter = router({
     }),
 
   /**
-   * Récupérer les documents d'une évaluation (côté client)
+   * Récupérer les documents d'une évaluation
    */
-  getDocumentsByEvaluation: publicProcedure
+  getDocuments: publicProcedure
     .input(z.object({
       evaluationId: z.number().int(),
       candidateEmail: z.string().email(),
@@ -93,7 +97,7 @@ export const clientDocumentsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const documents = await db
+        const docs = await db
           .select()
           .from(clientDocuments)
           .where(
@@ -104,11 +108,7 @@ export const clientDocumentsRouter = router({
           )
           .orderBy(desc(clientDocuments.createdAt));
 
-        return {
-          success: true,
-          documents,
-          count: documents.length,
-        };
+        return docs;
       } catch (err) {
         console.error("[Get Documents] Error:", err);
         throw new TRPCError({
@@ -118,93 +118,12 @@ export const clientDocumentsRouter = router({
       }
     }),
 
-  /**
-   * Récupérer les documents en attente de validation (côté admin)
-   */
-  getPendingDocuments: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const documents = await db
-          .select()
-          .from(clientDocuments)
-          .where(eq(clientDocuments.status, "pending"))
-          .orderBy(desc(clientDocuments.createdAt))
-          .limit(100);
-
-        return {
-          success: true,
-          documents,
-          count: documents.length,
-        };
-      } catch (err) {
-        console.error("[Get Pending Documents] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des documents",
-        });
-      }
-    }),
-
-  /**
-   * Valider un document et générer une décharge (côté admin)
-   */
-  validateDocument: protectedProcedure
-    .input(z.object({
-      documentId: z.number().int(),
-      status: z.enum(["received", "verified", "rejected"]),
-      adminNotes: z.string().optional(),
-      receiptNumber: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        // Générer un numéro de décharge unique si reçu
-        const receiptNumber = input.receiptNumber || `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        await db
-          .update(clientDocuments)
-          .set({
-            status: input.status,
-            adminNotes: input.adminNotes,
-            receivedByAdmin: input.status === "received" || input.status === "verified",
-            receiptNumber: input.status === "received" ? receiptNumber : undefined,
-            receiptGeneratedAt: input.status === "received" ? new Date() : undefined,
-          })
-          .where(eq(clientDocuments.id, input.documentId));
-
-        return {
-          success: true,
-          message: `Document ${input.status === "received" ? "reçu" : input.status === "verified" ? "vérifié" : "rejeté"} avec succès`,
-          receiptNumber: input.status === "received" ? receiptNumber : undefined,
-        };
-      } catch (err) {
-        console.error("[Validate Document] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la validation du document",
-        });
-      }
-    }),
-
   // ─────────────────────────────────────────────────────────────────────────
   // PAIEMENTS CLIENTS
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
-   * Enregistrer un paiement (côté client ou admin)
+   * Soumettre un paiement (côté client)
    */
   submitPayment: publicProcedure
     .input(z.object({
@@ -212,7 +131,7 @@ export const clientDocumentsRouter = router({
       candidateEmail: z.string().email(),
       amount: z.number().positive(),
       currency: z.string().default("EUR"),
-      paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),
+      paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
       paymentDescription: z.string(),
     }))
     .mutation(async ({ input }) => {
@@ -221,17 +140,16 @@ export const clientDocumentsRouter = router({
 
       try {
         // Vérifier que l'évaluation existe
-        const eval_ = await db
+        const evals = await db
           .select()
           .from(evaluations)
           .where(eq(evaluations.id, input.evaluationId))
           .limit(1);
 
-        if (eval_.length === 0) {
+        if (evals.length === 0) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
         }
 
-        // Créer le paiement
         await db.insert(clientPayments).values({
           evaluationId: input.evaluationId,
           candidateEmail: input.candidateEmail,
@@ -244,21 +162,21 @@ export const clientDocumentsRouter = router({
 
         return {
           success: true,
-          message: "Paiement enregistré. L'admin le confirmera bientôt.",
+          message: "Paiement soumis avec succès. En attente de confirmation.",
         };
       } catch (err) {
         console.error("[Submit Payment] Error:", err);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de l'enregistrement du paiement",
+          message: "Erreur lors de la soumission du paiement",
         });
       }
     }),
 
   /**
-   * Récupérer les paiements d'une évaluation (côté client)
+   * Récupérer les paiements d'une évaluation
    */
-  getPaymentsByEvaluation: publicProcedure
+  getPayments: publicProcedure
     .input(z.object({
       evaluationId: z.number().int(),
       candidateEmail: z.string().email(),
@@ -279,51 +197,9 @@ export const clientDocumentsRouter = router({
           )
           .orderBy(desc(clientPayments.createdAt));
 
-        return {
-          success: true,
-          payments,
-          count: payments.length,
-          totalAmount: payments.reduce((sum, p) => sum + parseFloat(p.amount as any), 0),
-        };
+        return payments;
       } catch (err) {
         console.error("[Get Payments] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des paiements",
-        });
-      }
-    }),
-
-  /**
-   * Récupérer les paiements en attente de confirmation (côté admin)
-   */
-  getPendingPayments: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const payments = await db
-          .select()
-          .from(clientPayments)
-          .where(eq(clientPayments.status, "pending"))
-          .orderBy(desc(clientPayments.createdAt))
-          .limit(100);
-
-        const totalAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount as any), 0);
-
-        return {
-          success: true,
-          payments,
-          count: payments.length,
-          totalAmount,
-        };
-      } catch (err) {
-        console.error("[Get Pending Payments] Error:", err);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la récupération des paiements",
@@ -356,7 +232,7 @@ export const clientDocumentsRouter = router({
         await db
           .update(clientPayments)
           .set({
-            status: input.status,
+            status: input.status as any,
             adminNotes: input.adminNotes,
             confirmedByAdmin: input.status === "confirmed" || input.status === "verified",
             invoiceNumber: input.status === "confirmed" ? invoiceNumber : undefined,
@@ -374,6 +250,112 @@ export const clientDocumentsRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la confirmation du paiement",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION HYBRIDE — ENREGISTREMENT MANUEL PAR L'ADMIN (AGENCE PHYSIQUE)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Admin : Enregistrer manuellement un document reçu en agence (papier numérisé)
+   */
+  adminAddDocument: protectedProcedure
+    .input(z.object({
+      evaluationId: z.number().int(),
+      candidateEmail: z.string().email(),
+      documentType: z.string(),
+      documentName: z.string(),
+      documentUrl: z.string().url().optional(),
+      adminNotes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        await db.insert(clientDocuments).values({
+          evaluationId: input.evaluationId,
+          candidateEmail: input.candidateEmail,
+          documentType: input.documentType as any,
+          documentName: input.documentName,
+          documentUrl: input.documentUrl,
+          status: "received",
+          receivedByAdmin: true,
+          adminNotes: input.adminNotes || "Enregistré manuellement par l'admin en agence",
+          receiptNumber,
+          receiptGeneratedAt: new Date(),
+        });
+
+        return {
+          success: true,
+          message: "Document enregistré avec succès",
+          receiptNumber,
+        };
+      } catch (err) {
+        console.error("[Admin Add Document] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'enregistrement du document",
+        });
+      }
+    }),
+
+  /**
+   * Admin : Enregistrer manuellement un paiement reçu en agence (cash, chèque, etc.)
+   */
+  adminAddPayment: protectedProcedure
+    .input(z.object({
+      evaluationId: z.number().int(),
+      candidateEmail: z.string().email(),
+      amount: z.number().positive(),
+      currency: z.string().default("EUR"),
+      paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),
+      paymentDescription: z.string(),
+      adminNotes: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        await db.insert(clientPayments).values({
+          evaluationId: input.evaluationId,
+          candidateEmail: input.candidateEmail,
+          amount: input.amount.toString(),
+          currency: input.currency,
+          paymentMethod: input.paymentMethod as any,
+          paymentDescription: input.paymentDescription,
+          status: "confirmed",
+          confirmedByAdmin: true,
+          adminNotes: input.adminNotes || `Paiement en ${input.paymentMethod} enregistré en agence`,
+          invoiceNumber,
+          invoiceGeneratedAt: new Date(),
+        });
+
+        return {
+          success: true,
+          message: "Paiement enregistré avec succès",
+          invoiceNumber,
+        };
+      } catch (err) {
+        console.error("[Admin Add Payment] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'enregistrement du paiement",
         });
       }
     }),
