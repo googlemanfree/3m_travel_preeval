@@ -491,6 +491,7 @@
 - [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
 - [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
 - [ ] Créer la procédure `downloadTranslatedDocument` (client)
+- [ ] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
 
 ### Phase 3 : Dashboard Traducteur
 - [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
@@ -543,6 +544,8 @@
 - [x] Rendre l'email cliquable pour messagerie (mailto:)
 - [x] Optimiser l'espacement et l'alignement des sections
 - [x] Vérifier et optimiser l'affichage mobile
+- [x] Ajouter un lien de connexion admin dans la navbar
+- [x] Rendre le lien admin accessible sur desktop et mobile
 
 ## Modules de Réassurance et Suivi Dynamique (v14)
 
