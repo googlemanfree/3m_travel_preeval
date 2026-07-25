@@ -581,3 +581,51 @@
 - [ ] Créer le formulaire du calculateur (pays, type visa, etc.)
 - [ ] Afficher le détail des frais (droits, garanties, visa)
 - [ ] Ajouter les graphiques de répartition des coûts
+
+
+## Management des Dossiers en Agence (v26)
+
+### Phase 1 : Schéma DB et Procédures
+- [ ] Créer la table `agency_dossiers` pour les dossiers ajoutés manuellement par les admins
+- [ ] Ajouter les champs : fullName, email, phone, destination, visaType, status, createdByAdmin, adminNotes
+- [ ] Créer la procédure tRPC `createAgencyDossier` (admin uniquement)
+- [ ] Créer la procédure tRPC `getAgencyDossiers` (filtrés par admin)
+- [ ] Créer la procédure tRPC `updateAgencyDossier` (modification du statut et notes)
+- [ ] Créer la procédure tRPC `deleteAgencyDossier` (suppression logique)
+
+### Phase 2 : Interface Admin pour Ajout Manuel
+- [ ] Créer la page `/admin/agency-dossiers` avec liste des dossiers
+- [ ] Ajouter un bouton "Ajouter un Dossier" qui ouvre une modal
+- [ ] Créer le formulaire d'ajout avec validation
+- [ ] Implémenter la table avec colonnes : Nom, Email, Téléphone, Destination, Statut, Actions
+- [ ] Ajouter les filtres : par statut, par destination, par date
+
+### Phase 3 : Gestion des Statuts
+- [ ] Implémenter les statuts : nouveau, en_cours, documents_requis, soumis, approuve, refuse
+- [ ] Ajouter les boutons d'action : Modifier, Changer Statut, Ajouter Notes, Supprimer
+- [ ] Créer les modales pour chaque action
+- [ ] Ajouter les transitions de statut avec validation
+
+### Phase 4 : Notifications et Suivi
+- [ ] Envoyer un email au candidat lors de l'ajout du dossier
+- [ ] Ajouter un système de notes internes pour les admins
+- [ ] Créer un historique des modifications
+- [ ] Ajouter les logs d'audit pour tracer les actions
+
+### Phase 5 : Dashboard Admin Amélioré
+- [ ] Ajouter un widget "Dossiers en Agence" au dashboard
+- [ ] Afficher les statistiques : total, en cours, approuvés, refusés
+- [ ] Créer un graphique de progression des dossiers
+- [ ] Ajouter les alertes pour les dossiers en attente
+
+### Phase 6 : Espace Client pour Dossiers en Agence
+- [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
+- [ ] Afficher la barre de progression du dossier
+- [ ] Ajouter la section "Messages de l'Agence"
+- [ ] Permettre le téléchargement des documents requis
+
+### Phase 7 : Tests et Validation
+- [ ] Tester l'ajout d'un dossier par l'admin
+- [ ] Tester la modification du statut
+- [ ] Tester les notifications email
+- [ ] Tester l'affichage côté candidat

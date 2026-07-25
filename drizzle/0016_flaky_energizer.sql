@@ -1,0 +1,41 @@
+CREATE TABLE `agency_dossier_history` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`dossierId` int NOT NULL,
+	`action` varchar(100) NOT NULL,
+	`changedBy` varchar(320) NOT NULL,
+	`oldValue` text,
+	`newValue` text,
+	`details` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `agency_dossier_history_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `agency_dossiers` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`fullName` varchar(255) NOT NULL,
+	`email` varchar(320) NOT NULL,
+	`phone` varchar(50) NOT NULL,
+	`dateOfBirth` varchar(20),
+	`nationality` varchar(100),
+	`destination` varchar(100) NOT NULL,
+	`visaType` varchar(100) NOT NULL,
+	`status` enum('nouveau','en_cours','documents_requis','soumis','approuve','refuse') NOT NULL DEFAULT 'nouveau',
+	`createdByAdmin` varchar(320) NOT NULL,
+	`assignedToAdmin` varchar(320),
+	`adminNotes` text,
+	`educationLevel` varchar(100),
+	`employmentStatus` varchar(100),
+	`monthlyIncome` int,
+	`bankBalance` int,
+	`cvFileUrl` text,
+	`cvFileName` varchar(255),
+	`additionalDocuments` text,
+	`lastStatusChangeAt` timestamp,
+	`lastStatusChangeBy` varchar(320),
+	`welcomeEmailSent` boolean NOT NULL DEFAULT false,
+	`statusUpdateEmailSent` boolean NOT NULL DEFAULT false,
+	`source` enum('manual_admin','online_form') NOT NULL DEFAULT 'manual_admin',
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `agency_dossiers_id` PRIMARY KEY(`id`)
+);

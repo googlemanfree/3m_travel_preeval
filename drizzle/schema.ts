@@ -993,3 +993,81 @@ export const translationDownloadLogs = mysqlTable("translation_download_logs", {
 
 export type TranslationDownloadLog = typeof translationDownloadLogs.$inferSelect;
 export type InsertTranslationDownloadLog = typeof translationDownloadLogs.$inferInsert;
+
+/**
+ * Dossiers ajoutés manuellement par les administrateurs en agence
+ * Système parallèle aux candidatures en ligne pour gérer les clients en agence
+ */
+export const agencyDossiers = mysqlTable("agency_dossiers", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identité du candidat
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  nationality: varchar("nationality", { length: 100 }),
+  
+  // Destination et visa
+  destination: varchar("destination", { length: 100 }).notNull(),  // Canada, France, Allemagne, etc.
+  visaType: varchar("visaType", { length: 100 }).notNull(),  // etude, travail, tourisme, residence, etc.
+  
+  // Statut du dossier
+  status: mysqlEnum("status", [
+    "nouveau",
+    "en_cours",
+    "documents_requis",
+    "soumis",
+    "approuve",
+    "refuse"
+  ]).default("nouveau").notNull(),
+  
+  // Gestion administrative
+  createdByAdmin: varchar("createdByAdmin", { length: 320 }).notNull(),  // Email de l'admin qui a créé le dossier
+  assignedToAdmin: varchar("assignedToAdmin", { length: 320 }),  // Email de l'admin assigné
+  adminNotes: text("adminNotes"),  // Notes internes pour les admins
+  
+  // Informations supplémentaires
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  employmentStatus: varchar("employmentStatus", { length: 100 }),
+  monthlyIncome: int("monthlyIncome"),
+  bankBalance: int("bankBalance"),
+  
+  // Documents
+  cvFileUrl: text("cvFileUrl"),
+  cvFileName: varchar("cvFileName", { length: 255 }),
+  additionalDocuments: text("additionalDocuments"),  // JSON array of {name, url, uploadedAt}
+  
+  // Historique des modifications
+  lastStatusChangeAt: timestamp("lastStatusChangeAt"),
+  lastStatusChangeBy: varchar("lastStatusChangeBy", { length: 320 }),
+  
+  // Notifications
+  welcomeEmailSent: boolean("welcomeEmailSent").default(false).notNull(),
+  statusUpdateEmailSent: boolean("statusUpdateEmailSent").default(false).notNull(),
+  
+  // Métadonnées
+  source: mysqlEnum("source", ["manual_admin", "online_form"]).default("manual_admin").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgencyDossier = typeof agencyDossiers.$inferSelect;
+export type InsertAgencyDossier = typeof agencyDossiers.$inferInsert;
+
+/**
+ * Historique des modifications des dossiers en agence (audit)
+ */
+export const agencyDossierHistory = mysqlTable("agency_dossier_history", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierId: int("dossierId").notNull(),
+  action: varchar("action", { length: 100 }).notNull(),  // created, status_changed, notes_added, document_added, etc.
+  changedBy: varchar("changedBy", { length: 320 }).notNull(),  // Email de l'admin
+  oldValue: text("oldValue"),  // Ancienne valeur (JSON)
+  newValue: text("newValue"),  // Nouvelle valeur (JSON)
+  details: text("details"),  // Détails supplémentaires
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AgencyDossierHistory = typeof agencyDossierHistory.$inferSelect;
+export type InsertAgencyDossierHistory = typeof agencyDossierHistory.$inferInsert;
