@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   FileText,
@@ -10,6 +11,7 @@ import {
   Award,
   AlertCircle,
 } from "lucide-react";
+import { PaymentModal } from "./PaymentModal";
 
 export interface DossierProgressBarProps {
   status:
@@ -29,6 +31,9 @@ export interface DossierProgressBarProps {
   evaluationCompletedAt?: Date;
   documentsReceivedAt?: Date;
   submittedToAgenciesAt?: Date;
+  dossierNumber?: string;
+  email?: string;
+  onPaymentSuccess?: () => void;
 }
 
 const STEPS = [
@@ -130,7 +135,17 @@ const STEPS = [
   },
 ];
 
-export function DossierProgressBar({ status, createdAt, evaluationCompletedAt, documentsReceivedAt, submittedToAgenciesAt }: DossierProgressBarProps) {
+export function DossierProgressBar({
+  status,
+  createdAt,
+  evaluationCompletedAt,
+  documentsReceivedAt,
+  submittedToAgenciesAt,
+  dossierNumber = "",
+  email = "",
+  onPaymentSuccess,
+}: DossierProgressBarProps) {
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const currentStepIndex = useMemo(() => {
     return STEPS.findIndex((step) => step.id === status);
   }, [status]);
@@ -368,8 +383,12 @@ export function DossierProgressBar({ status, createdAt, evaluationCompletedAt, d
         className="mt-6 flex gap-3"
       >
         {status === "en_attente_paiement" && (
-          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
-            Procéder au Paiement
+          <button
+            onClick={() => setIsPaymentModalOpen(true)}
+            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+          >
+            <DollarSign className="w-5 h-5" />
+            Payer 65 000 XAF
           </button>
         )}
         {status === "en_attente_documents" && (
@@ -383,6 +402,16 @@ export function DossierProgressBar({ status, createdAt, evaluationCompletedAt, d
           </button>
         )}
       </motion.div>
+
+      {/* Modal de paiement */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        dossierNumber={dossierNumber}
+        email={email}
+        amount={65000}
+        onPaymentSuccess={onPaymentSuccess}
+      />
     </div>
   );
 }

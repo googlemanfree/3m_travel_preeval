@@ -729,3 +729,39 @@
 ### Phase 5 : Déploiement
 - [ ] Créer un checkpoint avec le composant de progression
 - [ ] Vérifier que le site fonctionne correctement en production
+
+
+## Bouton de Paiement Sécurisé dans la Progression (v29)
+
+### Phase 1 : Analyse CinetPay
+- [x] Analyser l'intégration CinetPay existante dans VerifyApplicationEmail.tsx
+- [x] Identifier la procédure verifyApplicationOtp et initCinetPayTransaction
+
+### Phase 2 : Composant PaymentModal
+- [x] Créer le composant PaymentModal.tsx avec :
+  - Modal animée avec Framer Motion
+  - Affichage du montant (65 000 XAF)
+  - Choix du mode de paiement (MTN, Orange Money, Carte Bancaire)
+  - États : confirm, processing, success, error
+  - Message de sécurité SSL
+  - Boutons d'action (Annuler, Payer, Réessayer)
+
+### Phase 3 : Intégration dans DossierProgressBar
+- [x] Ajouter la procédure tRPC initiateCinetPayPayment dans application.ts
+- [x] Importer PaymentModal dans DossierProgressBar.tsx
+- [x] Ajouter les props dossierNumber, email, onPaymentSuccess
+- [x] Remplacer le bouton "Procéder au Paiement" par un bouton vert avec icône
+- [x] Intégrer le modal de paiement dans DossierProgressBar
+- [x] Mettre à jour MonDossier.tsx pour passer les props
+
+### Phase 4 : Tests et Validation
+- [x] Vérifier que le site compile sans erreurs
+- [x] Vérifier que la page MonDossier s'affiche correctement
+- [x] Vérifier que le bouton de paiement s'affiche quand le statut est "en_attente_paiement"
+- [ ] Tester l'ouverture du modal au clic
+- [ ] Tester les modes de paiement
+- [ ] Tester le flux complet avec CinetPay (en mode démo)
+
+### Phase 5 : Déploiement
+- [ ] Créer un checkpoint avec le bouton de paiement sécurisé
+- [ ] Vérifier que le site fonctionne correctement en production

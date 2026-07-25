@@ -371,6 +371,72 @@ export const applicationRouter = router({
       }
     }),
 
+  /** Initier un paiement CinetPay direct depuis la progression */
+  initiateCinetPayPayment: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string(),
+      email: z.string().email(),
+      amount: z.number().default(65000),
+      paymentMethod: z.enum(["mtn", "orange", "card"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const siteId = process.env.CINETPAY_SITE_ID ?? "";
+      const apiKey = process.env.CINETPAY_API_KEY ?? "";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (app.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Paiement déjà effectué" });
+
+      // Initialiser le paiement CinetPay
+      if (!siteId || !apiKey) {
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: null as string | null,
+          demoMode: true,
+          message: "Mode démo — CinetPay non configuré",
+        };
+      }
+
+      try {
+        const result = await initCinetPayTransaction({
+          transactionId: app.paymentTransactionId ?? `${input.dossierNumber}-${Date.now()}`,
+          amount: input.amount,
+          currency: "XAF",
+          description: `Paiement dossier immigration 3M Travel — ${input.dossierNumber}`,
+          customerName: app.fullName,
+          customerEmail: input.email,
+          customerPhone: app.whatsappNumber,
+          returnUrl: `${baseUrl}/payment-success?dossier=${input.dossierNumber}`,
+          notifyUrl: `${baseUrl}/api/cinetpay/webhook`,
+          siteId,
+          apiKey,
+        });
+
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: result.paymentUrl as string | null,
+          demoMode: false,
+          message: "Paiement initié",
+        };
+      } catch (err) {
+        console.error("[CinetPay] Init error:", err);
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: null as string | null,
+          demoMode: true,
+          message: "Erreur lors de l'initiation du paiement",
+        };
+      }
+    }),
+
   /** Récupérer un dossier par son numéro */
   getApplicationByDossierNumber: publicProcedure
     .input(z.object({ dossierNumber: z.string() }))

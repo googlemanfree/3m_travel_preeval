@@ -280,6 +280,12 @@ export default function MonDossier() {
                 evaluationCompletedAt={undefined}
                 documentsReceivedAt={undefined}
                 submittedToAgenciesAt={undefined}
+                dossierNumber={dossier.dossierNumber}
+                email={dossier.email}
+                onPaymentSuccess={() => {
+                  // Recharger le dossier après le paiement
+                  window.location.reload();
+                }}
               />
 
               {/* Carte d'identité du dossier */}
