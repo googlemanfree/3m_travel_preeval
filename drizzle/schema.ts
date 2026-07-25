@@ -604,3 +604,38 @@ export const clientPayments = mysqlTable("client_payments", {
 });
 export type ClientPayment = typeof clientPayments.$inferSelect;
 export type InsertClientPayment = typeof clientPayments.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SYSTÈME D'EMAIL DIFFÉRÉ 48H — BILAN D'ADMISSIBILITÉ
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Tracking des emails de bilan d'admissibilité envoyés après 48h
+ * Permet de tracker quand et à qui les emails ont été envoyés
+ */
+export const evaluationEmails = mysqlTable("evaluation_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  destinationCountry: varchar("destinationCountry", { length: 100 }).notNull(),
+  visaType: varchar("visaType", { length: 100 }).notNull(),
+  // Email tracking
+  emailType: mysqlEnum("emailType", ["admissibility_report", "reminder", "follow_up"]).default("admissibility_report").notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),  // Quand l'email doit être envoyé (createdAt + 48h)
+  sentAt: timestamp("sentAt"),  // Quand l'email a été effectivement envoyé
+  status: mysqlEnum("status", ["pending", "sent", "failed", "bounced"]).default("pending").notNull(),
+  failureReason: text("failureReason"),  // Raison de l'échec si applicable
+  // Contenu
+  reportContent: text("reportContent"),  // Contenu du rapport HTML
+  secureLink: varchar("secureLink", { length: 500 }),  // Lien sécurisé vers l'espace client
+  // Métadonnées
+  sentVia: varchar("sentVia", { length: 50 }).default("email"),  // email, whatsapp, sms
+  openedAt: timestamp("openedAt"),  // Quand l'email a été ouvert (tracking pixel)
+  clickedAt: timestamp("clickedAt"),  // Quand le lien a été cliqué
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EvaluationEmail = typeof evaluationEmails.$inferSelect;
+export type InsertEvaluationEmail = typeof evaluationEmails.$inferInsert;

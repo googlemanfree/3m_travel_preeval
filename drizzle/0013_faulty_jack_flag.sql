@@ -1,0 +1,21 @@
+CREATE TABLE `evaluation_emails` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`evaluationId` int NOT NULL,
+	`candidateEmail` varchar(320) NOT NULL,
+	`candidateName` varchar(255) NOT NULL,
+	`destinationCountry` varchar(100) NOT NULL,
+	`visaType` varchar(100) NOT NULL,
+	`emailType` enum('admissibility_report','reminder','follow_up') NOT NULL DEFAULT 'admissibility_report',
+	`scheduledAt` timestamp NOT NULL,
+	`sentAt` timestamp,
+	`status` enum('pending','sent','failed','bounced') NOT NULL DEFAULT 'pending',
+	`failureReason` text,
+	`reportContent` text,
+	`secureLink` varchar(500),
+	`sentVia` varchar(50) DEFAULT 'email',
+	`openedAt` timestamp,
+	`clickedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `evaluation_emails_id` PRIMARY KEY(`id`)
+);

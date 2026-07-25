@@ -416,3 +416,29 @@
 - [x] Implémenter les outils de filtrage et recherche pour chaque admin
 - [x] Tester les 3 comptes admin avec des données réelles
 - [x] Documenter les accès et les permissions pour chaque admin
+
+
+## Phase A : Système d'Email Différé 48h avec Heartbeat
+- [ ] Créer une table `evaluation_emails` pour tracker les emails envoyés
+- [ ] Créer une procédure Heartbeat pour envoyer les bilans après 48h
+- [ ] Créer le template d'email "Bilan d'Admissibilité"
+- [ ] Tester l'envoi automatique des emails
+
+## Phase B : Gestion Hybride (En ligne + Agence Physique)
+- [ ] Ajouter des champs admin pour enregistrer manuellement les documents
+- [ ] Ajouter des champs admin pour enregistrer manuellement les paiements cash
+- [ ] Créer les procédures tRPC pour l'admin de soumettre documents/paiements
+- [ ] Ajouter les validations et logs d'audit
+
+## Phase C : Module de Génération de Factures PDF
+- [ ] Créer le template de facture PDF avec en-tête 3M
+- [ ] Créer la procédure de génération de factures
+- [ ] Ajouter les numéros de facture uniques
+- [ ] Tester la génération et l'envoi par email
+
+## Phase D : Sections Client et Dashboard Admin Complet
+- [ ] Créer la section "Mes documents" dans l'espace client
+- [ ] Créer la section "Mes paiements" dans l'espace client
+- [ ] Créer le dashboard admin pour valider documents/paiements
+- [ ] Ajouter l'actualisation automatique côté client
+- [ ] Tester le flux complet client-admin
