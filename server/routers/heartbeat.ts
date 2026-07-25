@@ -21,13 +21,14 @@ export const heartbeatRouter = router({
       }
 
       try {
-        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
-        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        // Utiliser la session utilisateur du contexte tRPC
+        // ctx.user.openId est déjà la session valide
+        const userSession = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
         
-        if (!ownerOpenId) {
+        if (!userSession) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Impossible de créer le job : identifiant propriétaire manquant",
+            message: "Impossible de créer le job : identifiant utilisateur manquant",
           });
         }
 
@@ -39,7 +40,7 @@ export const heartbeatRouter = router({
             method: "POST",
             description: input.description || "Envoi automatique des rapports d'évaluation aux nouveaux dossiers",
           },
-          ownerOpenId
+          userSession
         );
 
         return {
@@ -65,17 +66,17 @@ export const heartbeatRouter = router({
       }
 
       try {
-        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
-        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        // Utiliser la session utilisateur du contexte tRPC
+        const userSession = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
         
-        if (!ownerOpenId) {
+        if (!userSession) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Impossible de récupérer les jobs : identifiant propriétaire manquant",
+            message: "Impossible de récupérer les jobs : identifiant utilisateur manquant",
           });
         }
 
-        const jobs = await listHeartbeatJobs(ownerOpenId);
+        const jobs = await listHeartbeatJobs(userSession);
         return {
           success: true,
           jobs,
@@ -100,17 +101,17 @@ export const heartbeatRouter = router({
       }
 
       try {
-        // Utiliser openId de l'utilisateur ou OWNER_OPEN_ID comme fallback
-        const ownerOpenId = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
+        // Utiliser la session utilisateur du contexte tRPC
+        const userSession = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
         
-        if (!ownerOpenId) {
+        if (!userSession) {
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Impossible de supprimer le job : identifiant propriétaire manquant",
+            message: "Impossible de supprimer le job : identifiant utilisateur manquant",
           });
         }
 
-        await deleteHeartbeatJob(input.taskUid, ownerOpenId);
+        await deleteHeartbeatJob(input.taskUid, userSession);
         return {
           success: true,
           message: "Job supprimé avec succès",

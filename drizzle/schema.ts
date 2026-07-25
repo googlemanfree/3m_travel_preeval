@@ -438,3 +438,40 @@ export const contactMessages = mysqlTable("contact_messages", {
 
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type InsertContactMessage = typeof contactMessages.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HISTORIQUE D'ENVOI DES RAPPORTS IA
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Historique des rapports d'évaluation IA envoyés aux candidats
+ * Permet de tracer les envois, les dates et les statuts
+ */
+export const aiReportHistory = mysqlTable("ai_report_history", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au candidat/dossier
+  applicationId: int("applicationId"),  // Référence à la table applications
+  candidateId: int("candidateId"),      // Référence à la table candidates
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  
+  // Détails du rapport
+  destination: varchar("destination", { length: 100 }).notNull(),
+  reportId: varchar("reportId", { length: 100 }).notNull().unique(),  // Identifiant unique du rapport (ex: 3M-AI-TIMESTAMP)
+  reportContent: text("reportContent"),  // Contenu du rapport (peut être long)
+  
+  // Statut d'envoi
+  sendStatus: mysqlEnum("sendStatus", ["pending", "sent", "failed", "bounced"]).default("pending").notNull(),
+  sendAttempts: int("sendAttempts").default(0).notNull(),
+  lastSendError: text("lastSendError"),  // Message d'erreur si l'envoi a échoué
+  
+  // Timestamps
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  sentAt: timestamp("sentAt"),  // Quand le rapport a été effectivement envoyé
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AIReportHistory = typeof aiReportHistory.$inferSelect;
+export type InsertAIReportHistory = typeof aiReportHistory.$inferInsert;

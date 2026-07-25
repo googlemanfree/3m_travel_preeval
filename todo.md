@@ -373,3 +373,33 @@
 - [x] Améliorer les animations de transition entre étapes
 - [x] Intégrer les statistiques de confiance du hero
 - [x] Tester le formulaire amélioré sur mobile et desktop
+
+
+## Espace Utilisateur Personnalisé (v24)
+- [ ] Étendre le schéma DB : table users avec email, password, profil, préférences
+- [ ] Créer les procédures tRPC : registerUser, loginUser, updateProfile, getUserDashboard
+- [ ] Créer la page /inscription avec formulaire complet (nom, email, mot de passe, téléphone)
+- [ ] Créer la page /connexion avec formulaire email/mot de passe
+- [ ] Créer la page /profil avec édition des informations personnelles
+- [ ] Améliorer le tableau de bord /mon-dossier avec timeline détaillée
+- [ ] Ajouter les notifications en temps réel pour les mises à jour de dossier
+- [ ] Ajouter l'historique des documents soumis avec dates
+- [ ] Ajouter la section "Prochaines étapes" personnalisée
+- [ ] Ajouter les statistiques du dossier (% complétude, étapes restantes)
+- [ ] Tester le flux complet : inscription → connexion → tableau de bord
+
+
+## Amélioration du Système d'Analyse IA (v11)
+- [x] Créer la table `ai_report_history` pour tracer les envois de rapports
+- [x] Améliorer la procédure `evaluateCVWithAI` pour enregistrer l'historique d'envoi
+- [x] Ajouter le statut d'envoi (pending → sent/failed) avec timestamps
+- [x] Enregistrer les erreurs d'envoi pour diagnostic
+- [x] Ajouter la procédure `getAIReportHistory` pour consulter l'historique
+- [x] Ajouter la procédure `getAIReport` pour récupérer un rapport spécifique
+- [x] Ajouter la procédure `retryAIReportSend` pour retenter les envois échoués
+
+## Correction de l'Authentification Heartbeat (v12)
+- [x] Identifier le problème : `ownerOpenId` vs `userSession` incompatibles
+- [x] Corriger les procédures `createEvaluationJob`, `listJobs`, `deleteJob`
+- [x] Utiliser `ctx.user.openId` correctement du contexte tRPC
+- [x] Ajouter des messages d'erreur explicites pour le diagnostic

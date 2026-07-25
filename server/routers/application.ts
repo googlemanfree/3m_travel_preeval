@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications } from "../../drizzle/schema";
+import { applications, aiReportHistory } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -547,9 +547,27 @@ export const applicationRouter = router({
       candidateName: z.string(),
       destination: z.string(),
       email: z.string().email(),
+      applicationId: z.number().int().optional(),
+      candidateId: z.number().int().optional(),
     }))
     .mutation(async ({ input }) => {
+      const reportId = `3M-AI-${Date.now()}`;
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      
       try {
+        // Créer l'enregistrement d'historique avec statut pending
+        await db.insert(aiReportHistory).values({
+          applicationId: input.applicationId,
+          candidateId: input.candidateId,
+          candidateName: input.candidateName,
+          candidateEmail: input.email,
+          destination: input.destination,
+          reportId,
+          sendStatus: 'pending',
+          sendAttempts: 0,
+        });
+        
         const cvBuffer = Buffer.from(input.cvBase64, 'base64');
         const cvText = await extractTextFromPDF(cvBuffer);
         const openaiKey = process.env.OPENAI_API_KEY;
@@ -559,23 +577,67 @@ export const applicationRouter = router({
           input.destination,
           openaiKey
         );
+        
+        // Mettre à jour l'enregistrement avec le contenu du rapport
+        await db
+          .update(aiReportHistory)
+          .set({ reportContent: report })
+          .where(eq(aiReportHistory.reportId, reportId));
+        
+        let emailSendSuccess = false;
         try {
           await sendEvaluationReportEmail(
             input.email,
             input.candidateName,
-            `3M-AI-${Date.now()}`,
+            reportId,
             `<pre style="font-family: monospace; white-space: pre-wrap;">${report}</pre>`
           );
+          emailSendSuccess = true;
+          
+          // Mettre à jour l'historique avec le statut sent
+          await db
+            .update(aiReportHistory)
+            .set({ sendStatus: 'sent', sentAt: new Date() })
+            .where(eq(aiReportHistory.reportId, reportId));
         } catch (emailErr) {
           console.error('[AI Evaluation] Email send error:', emailErr);
+          
+          // Mettre à jour l'historique avec le statut failed
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'failed',
+              lastSendError: emailErr instanceof Error ? emailErr.message : 'Erreur d\'envoi inconnue',
+              sendAttempts: 1,
+            })
+            .where(eq(aiReportHistory.reportId, reportId));
         }
+        
         return {
           success: true,
           report,
-          message: 'Rapport d\'évaluation IA généré avec succès',
+          reportId,
+          emailSent: emailSendSuccess,
+          message: emailSendSuccess
+            ? 'Rapport d\'évaluation IA généré et envoyé avec succès'
+            : 'Rapport généré mais l\'envoi par email a échoué',
         };
       } catch (err) {
         console.error('[AI Evaluation] Error:', err);
+        
+        // Mettre à jour l'historique avec l'erreur
+        try {
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'failed',
+              lastSendError: err instanceof Error ? err.message : 'Erreur inconnue',
+            })
+            .where(eq(aiReportHistory.reportId, reportId));
+        } catch (updateErr) {
+          console.error('[AI Evaluation] Failed to update history:', updateErr);
+        }
+        
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de l\'évaluation IA du CV',
@@ -747,5 +809,168 @@ export const applicationRouter = router({
         .set({ adminNote: updatedNote })
         .where(eq(applications.id, input.applicationId));
       return { success: true };
+    }),
+
+  // ─── Historique des rapports IA ──────────────────────────────────────────
+
+  /**
+   * Récupérer l'historique des rapports IA envoyés
+   */
+  getAIReportHistory: publicProcedure
+    .input(z.object({
+      applicationId: z.number().int().optional(),
+      candidateId: z.number().int().optional(),
+      email: z.string().email().optional(),
+      limit: z.number().int().default(50),
+      offset: z.number().int().default(0),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        let whereCondition: any = undefined;
+
+        if (input.applicationId) {
+          whereCondition = eq(aiReportHistory.applicationId, input.applicationId);
+        } else if (input.candidateId) {
+          whereCondition = eq(aiReportHistory.candidateId, input.candidateId);
+        } else if (input.email) {
+          whereCondition = eq(aiReportHistory.candidateEmail, input.email);
+        }
+
+        const query = db.select().from(aiReportHistory);
+        const baseQuery = whereCondition ? query.where(whereCondition) : query;
+
+        const reports = await baseQuery
+          .orderBy(desc(aiReportHistory.createdAt))
+          .limit(input.limit)
+          .offset(input.offset);
+
+        return {
+          success: true,
+          reports,
+          count: reports.length,
+        };
+      } catch (err) {
+        console.error('[AI Report History] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la récupération de l\'historique',
+        });
+      }
+    }),
+
+  /**
+   * Récupérer un rapport IA spécifique par son ID
+   */
+  getAIReport: publicProcedure
+    .input(z.object({
+      reportId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        const [report] = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.reportId, input.reportId))
+          .limit(1);
+
+        if (!report) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouvé' });
+        }
+
+        return {
+          success: true,
+          report,
+        };
+      } catch (err) {
+        console.error('[AI Report] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la récupération du rapport',
+        });
+      }
+    }),
+
+  /**
+   * Retenter l'envoi d'un rapport IA qui a échoué
+   */
+  retryAIReportSend: publicProcedure
+    .input(z.object({
+      reportId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        const [report] = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.reportId, input.reportId))
+          .limit(1);
+
+        if (!report) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouvé' });
+        }
+
+        if (!report.reportContent) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST',
+            message: 'Le contenu du rapport est vide',
+          });
+        }
+
+        let emailSendSuccess = false;
+        try {
+          await sendEvaluationReportEmail(
+            report.candidateEmail,
+            report.candidateName,
+            report.reportId,
+            `<pre style="font-family: monospace; white-space: pre-wrap;">${report.reportContent}</pre>`
+          );
+          emailSendSuccess = true;
+
+          // Mettre à jour l'historique
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'sent',
+              sentAt: new Date(),
+              sendAttempts: (report.sendAttempts || 0) + 1,
+              lastSendError: null,
+            })
+            .where(eq(aiReportHistory.reportId, input.reportId));
+        } catch (emailErr) {
+          console.error('[AI Report Retry] Email send error:', emailErr);
+
+          // Mettre à jour l'historique avec l'erreur
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'failed',
+              sendAttempts: (report.sendAttempts || 0) + 1,
+              lastSendError: emailErr instanceof Error ? emailErr.message : 'Erreur d\'envoi inconnue',
+            })
+            .where(eq(aiReportHistory.reportId, input.reportId));
+        }
+
+        return {
+          success: emailSendSuccess,
+          message: emailSendSuccess
+            ? 'Rapport renvoyé avec succès'
+            : 'Erreur lors de l\'envoi du rapport',
+        };
+      } catch (err) {
+        console.error('[AI Report Retry] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors du renvoi du rapport',
+        });
+      }
     }),
 });

@@ -71,6 +71,13 @@
       "when": 1784937142274,
       "tag": "0009_rich_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1784943676076,
+      "tag": "0010_glossy_colossus",
+      "breakpoints": true
     }
   ]
 }
