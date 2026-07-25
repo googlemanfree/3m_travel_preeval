@@ -41,10 +41,10 @@ export async function handleEvaluationJob(req: Request, res: Response): Promise<
         // Envoyer par email
         await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
 
-        // Marquer comme "en_cours" après envoi
+        // Marquer comme "en_evaluation" apres envoi
         await db
           .update(applications)
-          .set({ dossierStatus: "en_cours" })
+          .set({ dossierStatus: "en_evaluation" })
           .where(eq(applications.id, app.id));
 
         console.log(`[Evaluation Job] ✓ Evaluation report sent for ${app.dossierNumber}`);

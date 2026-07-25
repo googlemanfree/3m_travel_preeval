@@ -440,7 +440,7 @@ export const applicationRouter = router({
   updateApplicationStatus: protectedProcedure
     .input(z.object({
       id: z.number().int(),
-      dossierStatus: z.enum(["nouveau", "paye", "en_cours", "documents_requis", "soumis", "approuve", "refuse"]),
+      dossierStatus: z.enum(["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"]),
       adminNote: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -520,7 +520,7 @@ export const applicationRouter = router({
           
           // Marquer comme "en_cours" après envoi
           await db.update(applications)
-            .set({ dossierStatus: "en_cours" })
+            .set({ dossierStatus: "en_attente_paiement" })
             .where(eq(applications.id, app.id));
           
           successCount++;

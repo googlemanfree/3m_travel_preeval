@@ -233,14 +233,19 @@ export const applications = mysqlTable("applications", {
   paymentCurrency: varchar("paymentCurrency", { length: 10 }).default("XAF").notNull(),
   paymentMethod: varchar("paymentMethod", { length: 50 }),   // MTN / ORANGE / CARD
   paymentDate: timestamp("paymentDate"),
-  // Statut du dossier
+  // Statut du dossier — Processus visa travail
   dossierStatus: mysqlEnum("dossierStatus", [
     "nouveau",
+    "en_evaluation",
+    "bilan_envoye",
+    "en_attente_paiement",
     "paye",
-    "en_cours",
-    "documents_requis",
-    "soumis",
-    "approuve",
+    "en_attente_documents",
+    "documents_recus",
+    "soumis_agences",
+    "en_cours_recrutement",
+    "contrat_obtenu",
+    "visa_approuve",
     "refuse",
   ]).default("nouveau").notNull(),
   adminNote: text("adminNote"),
@@ -253,6 +258,30 @@ export const applications = mysqlTable("applications", {
   agreementSignedAt: int("agreementSignedAt"),  // Unix timestamp en secondes
   agreementSignatureName: varchar("agreementSignatureName", { length: 255 }),
   agreementIpAddress: varchar("agreementIpAddress", { length: 64 }),
+  // Processus d'evaluation 48h
+  evaluationStartedAt: timestamp("evaluationStartedAt"),
+  evaluationCompletedAt: timestamp("evaluationCompletedAt"),
+  evaluationReportUrl: text("evaluationReportUrl"),
+  evaluationScore: int("evaluationScore"),
+  evaluationBadge: varchar("evaluationBadge", { length: 50 }),
+  
+  // Gestion des documents (originaux vs scan pro)
+  documentsSubmissionMethod: mysqlEnum("documentsSubmissionMethod", ["en_ligne", "agence_physique"]),
+  documentsReceivedAt: timestamp("documentsReceivedAt"),
+  documentsVerifiedAt: timestamp("documentsVerifiedAt"),
+  documentsVerifiedBy: varchar("documentsVerifiedBy", { length: 255 }),
+  
+  // Soumission aux agences de recrutement
+  submittedToAgenciesAt: timestamp("submittedToAgenciesAt"),
+  submittedToAgenciesBy: varchar("submittedToAgenciesBy", { length: 255 }),
+  recruitmentPartnerName: varchar("recruitmentPartnerName", { length: 255 }),
+  recruitmentPartnerReference: varchar("recruitmentPartnerReference", { length: 100 }),
+  
+  // Suivi administratif
+  adminAssignedTo: varchar("adminAssignedTo", { length: 255 }),
+  lastStatusUpdateAt: timestamp("lastStatusUpdateAt"),
+  lastStatusUpdatedBy: varchar("lastStatusUpdatedBy", { length: 255 }),
+  
   // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

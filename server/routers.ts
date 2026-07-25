@@ -13,6 +13,7 @@ import { adminAuthRouter } from "./routers/adminAuth";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
+import { documentSubmissionRouter } from "./routers/documentSubmission";
 
 const COOKIE_NAME = "manus_session";
 
@@ -42,6 +43,7 @@ export const appRouter = router({
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
+  documentSubmission: documentSubmissionRouter,
 });
 
 export type AppRouter = typeof appRouter;

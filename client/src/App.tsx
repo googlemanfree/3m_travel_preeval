@@ -45,6 +45,8 @@ import FloatingServices from "./components/FloatingServices";
 import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
+import { SubmitDocuments } from "./pages/SubmitDocuments";
+import { HowItWorks } from "./pages/HowItWorks";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 function Router() {
@@ -137,6 +139,12 @@ function Router() {
           <MonDossier />
         </AuthGuard>
       </Route>
+
+      {/* Depot des documents */}
+      <Route path={"/submit-documents"} component={SubmitDocuments} />
+
+      {/* Comment ca marche */}
+      <Route path={"/how-it-works"} component={HowItWorks} />
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"}>

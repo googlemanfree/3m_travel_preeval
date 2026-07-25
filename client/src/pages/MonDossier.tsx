@@ -530,40 +530,40 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "documents_requis" && (
+                  {dossier.dossierStatus === "en_attente_documents" && (
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-8 h-8 text-yellow-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-gray-900">Documents supplémentaires requis</p>
+                        <p className="font-semibold text-gray-900">En attente de vos documents</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Votre conseiller a besoin de documents supplémentaires. Consultez les notes ci-dessus et envoyez un message.
+                          Veuillez déposer vos documents originaux à notre agence ou soumettre un scan professionnel en ligne.
                         </p>
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "en_cours" && (
+                  {dossier.dossierStatus === "en_cours_recrutement" && (
                     <div className="flex items-start gap-3">
                       <Clock className="w-8 h-8 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold text-gray-900">Traitement en cours</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Votre dossier est activement traité par notre équipe. Nous vous contacterons dès qu'il y a du nouveau.
+                          Votre dossier est activement traité par nos agences partenaires. Nous vous contacterons dès qu'il y a du nouveau.
                         </p>
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "soumis" && (
+                  {dossier.dossierStatus === "soumis_agences" && (
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-8 h-8 text-purple-500 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-gray-900">Dossier soumis aux autorités</p>
+                        <p className="font-semibold text-gray-900">Dossier soumis aux agences partenaires</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Votre dossier a été soumis aux autorités compétentes. La décision est attendue sous 4 à 8 semaines.
+                          Votre dossier a été soumis à nos agences de recrutement. Nous travaillons pour vous trouver une opportunité.
                         </p>
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "approuve" && (
+                  {dossier.dossierStatus === "visa_approuve" && (
                     <div className="flex items-start gap-3">
                       <Star className="w-8 h-8 text-emerald-500 flex-shrink-0 mt-0.5" />
                       <div>

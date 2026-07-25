@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../routers/candidateUpload";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
+import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -44,6 +45,7 @@ async function startServer() {
   registerCinetPayWebhook(app);
   // Scheduled jobs
   app.post("/api/scheduled/evaluation-job", handleEvaluationJob);
+  app.post("/api/scheduled/evaluation-bilan-job", handleEvaluationBilanJob);
   // tRPC API
   app.use(
     "/api/trpc",
