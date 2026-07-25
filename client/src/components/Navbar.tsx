@@ -144,6 +144,15 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               Ouvrir un dossier
             </Button>
           </Link>
+          <Link href="/admin/login">
+            <Button
+              variant="outline"
+              className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
+            >
+              <Shield className="w-4 h-4 mr-1.5" />
+              Admin
+            </Button>
+          </Link>
           <Link href="/dashboard">
             <Button
               variant="outline"
@@ -207,6 +216,10 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           <Link href="/dashboard" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
             <User className="w-4 h-4" /> Mon Espace
+          </Link>
+          <Link href="/admin/login" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
+            <Shield className="w-4 h-4" /> Connexion Admin
           </Link>
           {isAdmin && (
             <Link href="/admin" onClick={() => setMobileOpen(false)}
