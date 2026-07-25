@@ -14,6 +14,7 @@ export default function VerifyEmailLink() {
   const { login } = useCandidateAuth();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const token = params.get("token") ?? "";
+  const redirect = params.get("redirect") ?? "/dashboard";
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -35,7 +36,7 @@ export default function VerifyEmailLink() {
         });
       }
       toast.success("Bienvenue dans votre espace 3M Travel !");
-      setTimeout(() => navigate("/dashboard"), 3000);
+      setTimeout(() => navigate(decodeURIComponent(redirect)), 3000);
     },
     onError: (err) => {
       setStatus("error");

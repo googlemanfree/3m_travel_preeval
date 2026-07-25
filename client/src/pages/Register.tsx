@@ -40,7 +40,11 @@ function getPasswordStrength(password: string): { score: number; label: string; 
 }
 
 export default function Register() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  
+  // Récupérer l'URL de redirection si elle existe
+  const params = new URLSearchParams(location.split("?")[1] ?? "");
+  const from = params.get("from") ?? "";
   const { login } = useCandidateAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -54,9 +58,10 @@ export default function Register() {
 
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
-      // Rediriger vers la page de vérification OTP
+      // Rediriger vers la page de vérification OTP avec l'URL de redirection
       toast.success("Compte créé ! Un code de vérification a été envoyé à votre adresse email.");
-      navigate(`/verify-email?id=${data.candidateId}`);
+      const redirectUrl = from ? `&redirect=${encodeURIComponent(from)}` : "";
+      navigate(`/verify-email?id=${data.candidateId}${redirectUrl}`);
     },
     onError: (err) => {
       toast.error(err.message);
