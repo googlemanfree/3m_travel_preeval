@@ -32,6 +32,8 @@ import Evisa from "./pages/Evisa";
 import EvisaDemande from "./pages/EvisaDemande";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
+import ConditionsUtilisation from "./pages/ConditionsUtilisation";
 
 function Router() {
   return (
@@ -57,6 +59,8 @@ function Router() {
       <Route path={"/evisa-demande"} component={EvisaDemande} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
+      <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
+      <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction"} component={Traduction} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/visa-types"} component={VisaTypes} />

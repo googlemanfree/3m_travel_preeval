@@ -326,3 +326,13 @@
 - [x] Implémenter la logique de filtrage avec état React
 - [x] Ajouter des animations de transition entre les résultats filtrés
 - [x] Tester les filtres avec différentes combinaisons
+
+
+## Corrections supplémentaires (v18)
+- [x] Créer la page /politique-confidentialite avec le contenu fourni
+- [x] Créer la page /conditions-utilisation avec le contenu fourni
+- [x] Ajouter les routes /politique-confidentialite et /conditions-utilisation dans App.tsx
+- [x] Corriger l'email hello@3mtravelegency.com → hello@3mtravelagency.com globalement (Footer.tsx)
+- [x] Mettre à jour les liens légaux dans Home.tsx : pointer vers /politique-confidentialite et /conditions-utilisation
+- [x] Transformer les pastilles destinations du footer en liens vers /procedures (déjà fait)
+- [x] Tester les pages légales et les liens

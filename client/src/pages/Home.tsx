@@ -1455,9 +1455,8 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-600">
             <p>© 2026 3M Travel & Services SARL. Tous droits réservés.</p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              {/* Liens légaux à implémenter */}
-              {/* <a href="/privacy" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
-              <a href="/terms" className="hover:text-[#7cb9e8] transition-colors">Conditions d'utilisation</a> */}
+              <a href="/politique-confidentialite" className="hover:text-[#7cb9e8] transition-colors">Politique de confidentialité</a>
+              <a href="/conditions-utilisation" className="hover:text-[#7cb9e8] transition-colors">Conditions d'utilisation</a>
             </div>
           </div>
         </div>
