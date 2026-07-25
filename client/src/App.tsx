@@ -87,6 +87,7 @@ function Router() {
       <Route path={"/verify-application-email"} component={VerifyApplicationEmail} />
       <Route path={"/payment-success"} component={PaymentSuccess} />
       <Route path={"/payment-failed"} component={PaymentFailed} />
+      <Route path={"/dossier-confirmation"} component={DossierConfirmation} />
 
       {/* Suivi de dossier candidat */}
       <Route path={"/mon-dossier"} component={MonDossier} />
