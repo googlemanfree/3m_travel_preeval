@@ -559,6 +559,9 @@ export const clientDocuments = mysqlTable("client_documents", {
   documentUrl: text("documentUrl"),  // URL du fichier stocké
   fileSize: int("fileSize"),  // Taille en bytes
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  // Traçabilité de la source
+  source: mysqlEnum("source", ["online", "scanned_agency", "manual_admin"]).default("online").notNull(),  // Où le document provient
+  uploadedByAdmin: varchar("uploadedByAdmin", { length: 320 }),  // Email de l'admin si scanned_agency ou manual_admin
   // Gestion admin
   receivedByAdmin: boolean("receivedByAdmin").default(false).notNull(),
   adminNotes: text("adminNotes"),
@@ -639,3 +642,82 @@ export const evaluationEmails = mysqlTable("evaluation_emails", {
 });
 export type EvaluationEmail = typeof evaluationEmails.$inferSelect;
 export type InsertEvaluationEmail = typeof evaluationEmails.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRISE DE RENDEZ-VOUS EN AGENCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Rendez-vous en agence pour consultation physique après évaluation
+ * Permet aux candidats de réserver un créneau et aux admins de gérer les disponibilités
+ */
+export const appointments = mysqlTable("appointments", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  candidatePhone: varchar("candidatePhone", { length: 50 }).notNull(),
+  
+  // Créneau réservé
+  appointmentDate: varchar("appointmentDate", { length: 20 }).notNull(),  // Date du rendez-vous (YYYY-MM-DD)
+  appointmentTime: varchar("appointmentTime", { length: 10 }).notNull(),  // Heure (HH:MM)
+  durationMinutes: int("durationMinutes").default(30).notNull(),  // Durée en minutes
+  
+  // Localisation
+  agencyLocation: varchar("agencyLocation", { length: 255 }).notNull(),  // Douala / Yaoundé / Kinshasa
+  agencyAddress: text("agencyAddress"),  // Adresse complète
+  agencyPhone: varchar("agencyPhone", { length: 50 }),  // Téléphone de l'agence
+  
+  // Raison du rendez-vous
+  appointmentReason: mysqlEnum("appointmentReason", [
+    "initial_consultation",
+    "document_submission",
+    "payment_cash",
+    "follow_up",
+    "visa_collection",
+    "other"
+  ]).default("initial_consultation").notNull(),
+  appointmentNotes: text("appointmentNotes"),  // Notes supplémentaires du candidat
+  
+  // Gestion admin
+  confirmedByAdmin: boolean("confirmedByAdmin").default(false).notNull(),
+  adminNotes: text("adminNotes"),
+  assignedToAgent: varchar("assignedToAgent", { length: 320 }),  // Email de l'agent assigné
+  
+  // Statut
+  status: mysqlEnum("status", ["pending", "confirmed", "completed", "cancelled", "no_show"]).default("pending").notNull(),
+  completionNotes: text("completionNotes"),  // Notes après le rendez-vous
+  
+  // Notifications
+  emailSent: boolean("emailSent").default(false).notNull(),
+  whatsappSent: boolean("whatsappSent").default(false).notNull(),
+  reminderSentAt: timestamp("reminderSentAt"),  // Rappel envoyé 24h avant
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = typeof appointments.$inferInsert;
+
+/**
+ * Créneaux horaires disponibles par agence
+ * Permet aux admins de gérer les disponibilités
+ */
+export const appointmentSlots = mysqlTable("appointment_slots", {
+  id: int("id").autoincrement().primaryKey(),
+  agencyLocation: varchar("agencyLocation", { length: 255 }).notNull(),  // Douala / Yaoundé / Kinshasa
+  dayOfWeek: int("dayOfWeek").notNull(),  // 0 = Dimanche, 1 = Lundi, etc.
+  startTime: varchar("startTime", { length: 10 }).notNull(),  // HH:MM
+  endTime: varchar("endTime", { length: 10 }).notNull(),  // HH:MM
+  slotDurationMinutes: int("slotDurationMinutes").default(30).notNull(),
+  maxAppointmentsPerSlot: int("maxAppointmentsPerSlot").default(1).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AppointmentSlot = typeof appointmentSlots.$inferSelect;
+export type InsertAppointmentSlot = typeof appointmentSlots.$inferInsert;

@@ -442,3 +442,35 @@
 - [x] Créer le dashboard admin pour valider documents/paiements
 - [x] Ajouter l'actualisation automatique côté client
 - [x] Tester le flux complet client-admin
+
+
+## Fonctionnalités Complémentaires (v14)
+
+### 1. Notification Double (Email + WhatsApp)
+- [x] Intégrer l'API WhatsApp (Twilio ou autre)
+- [x] Créer le service de notification WhatsApp
+- [x] Ajouter le champ téléphone dans la table evaluations
+- [x] Envoyer notification WhatsApp après 48h avec bilan
+- [x] Tester l'envoi automatique
+
+### 2. Impression Reçus A5
+- [x] Créer le template HTML pour reçu A5
+- [x] Ajouter la fonction d'impression au format A5
+- [x] Intégrer le bouton d'impression dans le dashboard admin
+- [x] Tester l'impression depuis navigateur
+- [x] Optimiser pour imprimante thermique
+
+### 3. Traçabilité des Documents
+- [x] Ajouter le champ "source" dans client_documents
+- [x] Modifier les procédures pour enregistrer la source
+- [x] Afficher la source dans le dashboard client
+- [x] Afficher la source dans le dashboard admin
+- [x] Ajouter les filtres par source
+
+### 4. Module de Prise de Rendez-vous
+- [x] Créer la table appointments avec créneau horaire
+- [x] Créer les procédures tRPC pour réserver/consulter
+- [x] Créer le calendrier de réservation côté client
+- [x] Créer la gestion des créneaux côté admin
+- [x] Envoyer confirmation par email/WhatsApp
+- [x] Tester le flux complet
