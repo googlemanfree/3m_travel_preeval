@@ -16,7 +16,7 @@ import {
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -97,9 +97,9 @@ export const candidateRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
-      // Générer un OTP à 6 chiffres
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
-      const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      // Générer un token de vérification unique
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
       await db.insert(candidates).values({
         fullName: input.fullName,
@@ -110,8 +110,8 @@ export const candidateRouter = router({
         nationality: input.nationality ?? null,
         dossierStatus: "nouveau",
         emailVerified: false,
-        emailOtp: otp,
-        emailOtpExpiresAt: otpExpiresAt,
+        verificationToken,
+        verificationExpiresAt,
       });
 
       // Recuperer le candidateId insere
@@ -121,14 +121,14 @@ export const candidateRouter = router({
       }
       const candidateId = inserted[0].id;
 
-      // Envoyer l'email OTP
+      // Envoyer l'email de confirmation avec lien
       try {
-        await sendVerificationOtp(input.email, input.fullName, otp);
+        await sendVerificationLink(input.email, input.fullName, verificationToken);
       } catch (err) {
-        console.error("[Register] Email OTP send error:", err);
+        console.error("[Register] Email verification link send error:", err);
       }
 
-      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Veuillez vérifier votre email." };
+      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de confirmation a été envoyé à votre adresse email." };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -355,6 +355,33 @@ export const candidateRouter = router({
 
 
   // ── Vérification email par OTP ────────────────────────────────────────────
+  verifyEmailLink: publicProcedure
+    .input(z.object({ token: z.string().min(10) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
+      const candidate = rows[0];
+      if (candidate.emailVerified) {
+        const token = signCandidateToken(candidate.id);
+        return { success: true, token, message: "Email déjà vérifié." };
+      }
+      if (!candidate.verificationExpiresAt || new Date() > candidate.verificationExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez créer un nouveau compte." });
+      }
+      await db.update(candidates).set({ emailVerified: true, verificationToken: null, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      await db.insert(candidateMessages).values({
+        candidateId: candidate.id,
+        senderRole: "advisor",
+        content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
+        isRead: false,
+      });
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      const token = signCandidateToken(candidate.id);
+      return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
+    }),
+
   verifyEmail: publicProcedure
     .input(z.object({ candidateId: z.number(), otp: z.string().length(6) }))
     .mutation(async ({ input }) => {

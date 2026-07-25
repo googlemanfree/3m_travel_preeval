@@ -74,6 +74,24 @@ function emailBase(content: string): string {
 </html>`;
 }
 
+// ─── Email de lien de confirmation ──────────────────────────────────────────────
+
+export async function sendVerificationLink(to: string, fullName: string, verificationToken: string): Promise<void> {
+  const baseUrl = SITE_URL || "https://3mtravelagency.click";
+  const verifyUrl = `${baseUrl}/verify-email-link?token=${verificationToken}`;
+  const content = `
+    <p>Bonjour <strong>${fullName}</strong>,</p>
+    <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! Pour activer votre compte, cliquez sur le lien ci-dessous :</p>
+    <p style="text-align:center;">
+      <a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a>
+    </p>
+    <p style="font-size:13px;color:#6b7280;">Ce lien est valable <strong>24 heures</strong>. Après ce délai, vous devrez créer un nouveau compte.</p>
+    <p>Si vous n'avez pas créé de compte sur 3M Travel, ignorez cet email.</p>
+    <p style="font-size:12px;color:#9ca3af;word-break:break-all;">Lien direct : ${verifyUrl}</p>
+  `;
+  await sendEmail(to, "✓ Confirmez votre email - 3M Travel & Services", emailBase(content));
+}
+
 // ─── Email de vérification OTP ────────────────────────────────────────────────
 
 export async function sendVerificationOtp(to: string, fullName: string, otp: string): Promise<void> {

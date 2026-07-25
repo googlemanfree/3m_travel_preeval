@@ -11,8 +11,9 @@ import Procedures from "./pages/Procedures";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import VerifyEmail from "./pages/VerifyEmail";
-import ForgotPassword from "./pages/ForgotPassword";
+import VerifyEmail from "@/pages/VerifyEmail";
+import VerifyEmailLink from "@/pages/VerifyEmailLink";
+import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import OpenDossier from "./pages/OpenDossier";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -54,6 +55,7 @@ function Router() {
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
       <Route path={"/verify-email"} component={VerifyEmail} />
+      <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
 
