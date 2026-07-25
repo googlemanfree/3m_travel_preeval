@@ -7,7 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, aiReportHistory, users, applications } from "../../drizzle/schema";
+import { evaluations, aiReportHistory, users, applications, clientDocuments } from "../../drizzle/schema";
 import { eq, desc, like, or } from "drizzle-orm";
 
 export const adminRouter = router({
@@ -389,6 +389,74 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la récupération des statistiques globales",
+        });
+      }
+    }),
+
+  /**
+   * Valider un document
+   */
+  approveDocument: protectedProcedure
+    .input(z.object({ documentId: z.number(), comment: z.string().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(clientDocuments)
+          .set({
+            verificationStatus: "approved",
+            verificationComment: input.comment || null,
+            verifiedByAdmin: ctx.user.email,
+            verifiedAt: new Date(),
+          })
+          .where(eq(clientDocuments.id, input.documentId));
+
+        return { success: true, message: "Document approuvé" };
+      } catch (err) {
+        console.error("[Admin Approve Document] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'approbation du document",
+        });
+      }
+    }),
+
+  /**
+   * Rejeter un document
+   */
+  rejectDocument: protectedProcedure
+    .input(z.object({ documentId: z.number(), comment: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(clientDocuments)
+          .set({
+            verificationStatus: "rejected",
+            verificationComment: input.comment,
+            verifiedByAdmin: ctx.user.email,
+            verifiedAt: new Date(),
+          })
+          .where(eq(clientDocuments.id, input.documentId));
+
+        return { success: true, message: "Document rejeté" };
+      } catch (err) {
+        console.error("[Admin Reject Document] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors du rejet du document",
         });
       }
     }),

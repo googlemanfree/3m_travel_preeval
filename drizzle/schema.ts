@@ -744,6 +744,13 @@ export const clientDocuments = mysqlTable("client_documents", {
   suggestedFolder: varchar("suggestedFolder", { length: 255 }),  // Dossier suggéré par l'IA
   extractedData: json("extractedData"),  // Données extraites: {documentNumber, issueDate, expiryDate, issuingCountry, holderName}
   status: mysqlEnum("status", ["pending", "received", "verified", "rejected"]).default("pending").notNull(),
+  // Validation par l'admin
+  verificationStatus: mysqlEnum("verificationStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  verificationComment: text("verificationComment"),  // Commentaire de l'admin
+  verifiedByAdmin: varchar("verifiedByAdmin", { length: 320 }),  // Email de l'admin qui a validé
+  verifiedAt: timestamp("verifiedAt"),  // Quand le document a été validé/rejeté
+  readabilityScore: int("readabilityScore"),  // Score de lisibilité 0-100
+  readabilityIssues: json("readabilityIssues"),  // Problèmes de lisibilité détectés
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
