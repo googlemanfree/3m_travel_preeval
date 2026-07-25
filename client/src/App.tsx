@@ -110,7 +110,7 @@ function Router() {
           <AdminAccompagnement />
         </AuthGuard>
       </Route>
-      <Route path={"/admin/procedures"}>
+      <Route path={"admin/procedures"}>
         <AuthGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
         </AuthGuard>
