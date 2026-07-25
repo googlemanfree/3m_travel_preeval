@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
+import { classifyDocument, classifyMultipleDocuments } from "../documentClassificationService";
 
 export const documentSubmissionRouter = router({
   analyzeDocumentReadability: publicProcedure
@@ -27,6 +28,46 @@ export const documentSubmissionRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de l'analyse du document",
+        });
+      }
+    }),
+  classifyDocument: publicProcedure
+    .input(z.object({
+      imageUrl: z.string().url(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const classification = await classifyDocument(input.imageUrl);
+        return {
+          success: true,
+          classification,
+        };
+      } catch (error) {
+        console.error("Error classifying document:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la classification du document",
+        });
+      }
+    }),
+  classifyMultipleDocuments: publicProcedure
+    .input(z.object({
+      imageUrls: z.array(z.string().url()),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        const classifications = await classifyMultipleDocuments(
+          input.imageUrls
+        );
+        return {
+          success: true,
+          classifications,
+        };
+      } catch (error) {
+        console.error("Error classifying documents:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la classification des documents",
         });
       }
     }),

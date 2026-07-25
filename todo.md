@@ -824,3 +824,20 @@
 - [ ] Intégration du composant dans la progression
 - [ ] Tests du flux complet d'analyse
 - [ ] Documentation pour les utilisateurs
+
+
+## Classification IA des Documents (v12)
+
+- [x] Service documentClassificationService.ts avec vision par IA
+- [x] 19 types de documents supportés (passeport, carte d'identité, diplôme, etc.)
+- [x] Procédures tRPC classifyDocument et classifyMultipleDocuments
+- [x] Composant SmartDocumentUpload avec classification en temps réel
+- [x] Service documentManagementService.ts pour gestion des documents
+- [x] Structure de dossiers organisée par type de document
+- [x] Extraction automatique des données (numéro, dates, pays, titulaire)
+- [x] Détection des avertissements et suggestions d'amélioration
+- [x] Sauvegarde de la classification en base de données
+- [x] Statistiques et rapports de classification
+- [ ] Intégration du composant SmartDocumentUpload dans la progression
+- [ ] Tests du flux complet de classification
+- [ ] Documentation pour les utilisateurs

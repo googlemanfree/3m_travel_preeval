@@ -1,4 +1,4 @@
-import { boolean, decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -702,8 +702,13 @@ export const clientDocuments = mysqlTable("client_documents", {
   candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
   documentType: mysqlEnum("documentType", [
     "passport",
+    "national_id",
+    "driver_license",
     "cv",
     "diploma",
+    "certificate",
+    "cover_letter",
+    "employment_contract",
     "birth_certificate",
     "marriage_certificate",
     "bank_statement",
@@ -711,6 +716,12 @@ export const clientDocuments = mysqlTable("client_documents", {
     "language_test",
     "medical_exam",
     "police_clearance",
+    "proof_of_residence",
+    "visa",
+    "travel_document",
+    "insurance_document",
+    "medical_document",
+    "educational_transcript",
     "other"
   ]).notNull(),
   documentName: varchar("documentName", { length: 255 }).notNull(),
@@ -726,6 +737,12 @@ export const clientDocuments = mysqlTable("client_documents", {
   receiptGeneratedAt: timestamp("receiptGeneratedAt"),  // Quand la décharge a été générée
   receiptUrl: text("receiptUrl"),  // URL de la décharge PDF
   receiptNumber: varchar("receiptNumber", { length: 50 }),  // Numéro de décharge unique
+  // Classification par IA
+  aiClassification: json("aiClassification"),  // Résultats de classification IA: {documentType, confidence, description, suggestedFolder, extractedInfo, warnings}
+  aiClassificationConfidence: int("aiClassificationConfidence"),  // Score de confiance 0-100
+  aiClassifiedAt: timestamp("aiClassifiedAt"),  // Quand la classification IA a été effectuée
+  suggestedFolder: varchar("suggestedFolder", { length: 255 }),  // Dossier suggéré par l'IA
+  extractedData: json("extractedData"),  // Données extraites: {documentNumber, issueDate, expiryDate, issuingCountry, holderName}
   status: mysqlEnum("status", ["pending", "received", "verified", "rejected"]).default("pending").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
