@@ -37,14 +37,8 @@ export default function AdminLogin() {
       localStorage.setItem('adminName', data.fullName);
       toast.success('Connexion réussie!');
 
-      // Rediriger vers le dashboard approprié
-      if (data.adminType === 'evaluation') {
-        navigate('/admin/evaluation');
-      } else if (data.adminType === 'accompagnement') {
-        navigate('/admin/accompagnement');
-      } else if (data.adminType === 'procedures') {
-        navigate('/admin/procedures');
-      }
+      // Rediriger vers le dashboard admin unifié
+      navigate('/admin');
     },
     onError: (error) => {
       toast.error(error.message);
