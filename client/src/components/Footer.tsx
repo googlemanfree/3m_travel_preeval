@@ -209,25 +209,25 @@ export default function Footer() {
                 <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">Yaoundé Biyem-Assi<br />Montée chapelle Obili</p>
               </div>
             </a>
-            <div className="flex items-center justify-center gap-3 text-center">
+            <a href="tel:+237620996045" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
               <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <div>
                 <p className="text-xs text-gray-400 mb-1">Téléphone</p>
-                <p className="text-sm text-white font-medium">
-                  <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">+237 620-996-045</a><br />
-                  <a href="tel:+237698104832" className="hover:text-blue-300 transition-colors">+237 698-104-832</a>
+                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">
+                  <span>+237 620-996-045</span><br />
+                  <span className="text-xs text-gray-300">ou +237 698-104-832</span>
                 </p>
               </div>
-            </div>
-            <div className="flex items-center justify-center gap-3 text-center">
+            </a>
+            <a href="mailto:hello@3mtravelagency.com" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
               <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
               <div>
                 <p className="text-xs text-gray-400 mb-1">Email</p>
-                <p className="text-sm text-white font-medium">
-                  <a href="mailto:hello@3mtravelagency.com" className="hover:text-blue-300 transition-colors">hello@3mtravelagency.com</a>
+                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">
+                  hello@3mtravelagency.com
                 </p>
               </div>
-            </div>
+            </a>
           </div>
         </motion.div>
 
