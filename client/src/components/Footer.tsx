@@ -13,6 +13,15 @@ const SOCIAL_LINKS = [
   { icon: Twitter, href: 'https://twitter.com/3mtravelagency', label: 'Twitter', color: 'hover:text-blue-400' },
 ];
 
+const USEFUL_LINKS = [
+  { label: 'Destinations populaires', href: '/procedures' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Mentions legales', href: '#' },
+  { label: 'Plan du site', href: '#' },
+  { label: 'Accessibilite', href: '#' },
+  { label: 'Sitemap', href: '#' },
+];
+
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +84,7 @@ export default function Footer() {
       </motion.div>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
 
           {/* Colonne 1 — Identité */}
           <div>
@@ -144,6 +153,22 @@ export default function Footer() {
                 <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp</a>
               </div>
             </div>
+          </div>
+
+          {/* Colonne 5 — Liens utiles */}
+          <div>
+            <h4 className="font-bold text-white text-sm mb-3">Liens utiles</h4>
+            <ul className="space-y-2 text-sm">
+              {USEFUL_LINKS.map((link) => (
+                <li key={link.label}>
+                  {link.href.startsWith('/') ? (
+                    <Link href={link.href} className="hover:text-blue-300 transition-colors">{link.label}</Link>
+                  ) : (
+                    <a href={link.href} className="hover:text-blue-300 transition-colors">{link.label}</a>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
