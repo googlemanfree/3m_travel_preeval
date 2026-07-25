@@ -25,7 +25,7 @@ function createTransport() {
   return null;
 }
 
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
+export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
   const transport = createTransport();
   if (!transport) {
     // Mode dev : afficher dans la console

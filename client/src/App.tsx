@@ -38,6 +38,7 @@ import ConditionsUtilisation from "./pages/ConditionsUtilisation";
 import AdminEvaluation from "./pages/AdminEvaluation";
 import AdminAccompagnement from "./pages/AdminAccompagnement";
 import AdminProcedures from "./pages/AdminProcedures";
+import AdminLogin from "./pages/AdminLogin";
 
 function Router() {
   return (
@@ -97,6 +98,7 @@ function Router() {
       <Route path={"/traduction"} component={Traduction} />
 
       {/* Panneau admin */}
+      <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/admin/evaluation"}>
         <AuthGuard message="Accès réservé aux administrateurs.">

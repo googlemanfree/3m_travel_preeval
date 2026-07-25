@@ -475,3 +475,56 @@ export const aiReportHistory = mysqlTable("ai_report_history", {
 
 export type AIReportHistory = typeof aiReportHistory.$inferSelect;
 export type InsertAIReportHistory = typeof aiReportHistory.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPTES ADMIN SÉPARÉS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Comptes administrateurs avec authentification OTP
+ * Séparé du système OAuth pour une gestion admin indépendante
+ */
+export const adminAccounts = mysqlTable("admin_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  // Identifiants
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  adminType: mysqlEnum("adminType", ["evaluation", "accompagnement", "procedures"]).notNull(),
+  // OTP
+  otpCode: varchar("otpCode", { length: 6 }),  // Code OTP actuel
+  otpExpiresAt: timestamp("otpExpiresAt"),  // Expiration du code OTP
+  otpAttempts: int("otpAttempts").default(0).notNull(),  // Nombre de tentatives échouées
+  // Session
+  sessionToken: varchar("sessionToken", { length: 256 }),  // Token de session actuel
+  sessionExpiresAt: timestamp("sessionExpiresAt"),  // Expiration de la session
+  lastLoginAt: timestamp("lastLoginAt"),  // Dernière connexion
+  // Métadonnées
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  status: mysqlEnum("status", ["active", "inactive", "suspended"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AdminAccount = typeof adminAccounts.$inferSelect;
+export type InsertAdminAccount = typeof adminAccounts.$inferInsert;
+
+/**
+ * Logs d'audit pour tracer les actions admin
+ */
+export const adminLogs = mysqlTable("admin_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminId: int("adminId").notNull(),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  adminType: varchar("adminType", { length: 50 }).notNull(),
+  action: varchar("action", { length: 255 }).notNull(),  // Ex: "advance_status", "send_message", "add_notes"
+  targetId: int("targetId"),  // ID de l'évaluation/dossier affecté
+  targetEmail: varchar("targetEmail", { length: 320 }),  // Email du candidat affecté
+  details: text("details"),  // Détails JSON de l'action
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AdminLog = typeof adminLogs.$inferSelect;
+export type InsertAdminLog = typeof adminLogs.$inferInsert;
