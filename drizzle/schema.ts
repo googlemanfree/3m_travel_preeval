@@ -1,4 +1,4 @@
-import { boolean, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, decimal, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -528,3 +528,79 @@ export const adminLogs = mysqlTable("admin_logs", {
 
 export type AdminLog = typeof adminLogs.$inferSelect;
 export type InsertAdminLog = typeof adminLogs.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GESTION DES DOCUMENTS ET PAIEMENTS CLIENTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Documents remis par le client (CV, passeport, diplômes, etc.)
+ * Génère automatiquement une décharge/reçu
+ */
+export const clientDocuments = mysqlTable("client_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  documentType: mysqlEnum("documentType", [
+    "passport",
+    "cv",
+    "diploma",
+    "birth_certificate",
+    "marriage_certificate",
+    "bank_statement",
+    "employment_letter",
+    "language_test",
+    "medical_exam",
+    "police_clearance",
+    "other"
+  ]).notNull(),
+  documentName: varchar("documentName", { length: 255 }).notNull(),
+  documentUrl: text("documentUrl"),  // URL du fichier stocké
+  fileSize: int("fileSize"),  // Taille en bytes
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  // Gestion admin
+  receivedByAdmin: boolean("receivedByAdmin").default(false).notNull(),
+  adminNotes: text("adminNotes"),
+  receiptGeneratedAt: timestamp("receiptGeneratedAt"),  // Quand la décharge a été générée
+  receiptUrl: text("receiptUrl"),  // URL de la décharge PDF
+  receiptNumber: varchar("receiptNumber", { length: 50 }),  // Numéro de décharge unique
+  status: mysqlEnum("status", ["pending", "received", "verified", "rejected"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ClientDocument = typeof clientDocuments.$inferSelect;
+export type InsertClientDocument = typeof clientDocuments.$inferInsert;
+
+/**
+ * Paiements reçus du client
+ * Génère automatiquement une facture/reçu de paiement
+ */
+export const clientPayments = mysqlTable("client_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", [
+    "cash",
+    "bank_transfer",
+    "card",
+    "mobile_money",
+    "check",
+    "other"
+  ]).notNull(),
+  paymentDescription: varchar("paymentDescription", { length: 255 }).notNull(),  // Ex: "Frais d'évaluation", "Frais de dossier"
+  paidAt: timestamp("paidAt").defaultNow().notNull(),
+  // Gestion admin
+  confirmedByAdmin: boolean("confirmedByAdmin").default(false).notNull(),
+  adminNotes: text("adminNotes"),
+  invoiceGeneratedAt: timestamp("invoiceGeneratedAt"),  // Quand la facture a été générée
+  invoiceUrl: text("invoiceUrl"),  // URL de la facture PDF
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }),  // Numéro de facture unique
+  status: mysqlEnum("status", ["pending", "confirmed", "verified", "cancelled"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ClientPayment = typeof clientPayments.$inferSelect;
+export type InsertClientPayment = typeof clientPayments.$inferInsert;
