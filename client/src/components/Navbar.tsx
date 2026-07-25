@@ -117,6 +117,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivre mon dossier</span>
           </Link>
 
+          {/* Admin link - only show if authenticated and admin */}
           {isAdmin && (
             <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
               <Shield className="w-3.5 h-3.5" />
@@ -144,15 +145,18 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               Ouvrir un dossier
             </Button>
           </Link>
-          <Link href="/admin/login">
-            <Button
-              variant="outline"
-              className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
-            >
-              <Shield className="w-4 h-4 mr-1.5" />
-              Admin
-            </Button>
-          </Link>
+          {/* Admin login button - only show if NOT admin */}
+          {!isAdmin && (
+            <Link href="/admin/login">
+              <Button
+                variant="outline"
+                className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
+              >
+                <Shield className="w-4 h-4 mr-1.5" />
+                Admin
+              </Button>
+            </Link>
+          )}
           <Link href="/dashboard">
             <Button
               variant="outline"
