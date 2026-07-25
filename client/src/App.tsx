@@ -40,6 +40,7 @@ import AdminAccompagnement from "./pages/AdminAccompagnement";
 import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import Hotels from "./pages/Hotels";
+import FloatingServices from "./components/FloatingServices";
 
 function Router() {
   return (
@@ -135,6 +136,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <FloatingServices />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
