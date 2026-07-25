@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import AnimatedCounterStats from "@/components/AnimatedCounterStats";
+import AnimatedCounterStatsWithTooltips from "@/components/AnimatedCounterStatsWithTooltips";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 
@@ -529,7 +529,7 @@ export default function Home() {
 
 
       {/* ─── COMPTEUR DYNAMIQUE ─────────────────────────────────────────── */}
-      <AnimatedCounterStats />
+      <AnimatedCounterStatsWithTooltips />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-16 bg-white">
