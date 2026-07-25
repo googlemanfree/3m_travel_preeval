@@ -11,6 +11,8 @@ import { profileEvaluationRouter } from "./routers/profileEvaluation";
 import { contactRouter } from "./routers/contact";
 import { adminRouter } from "./routers/admin";
 import { adminAuthRouter } from "./routers/adminAuth";
+import { clientDocumentsRouter } from "./routers/clientDocuments";
+import { translationRouter } from "./routers/translation";
 
 
 export const appRouter = router({
@@ -36,6 +38,8 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   adminAuth: adminAuthRouter,
+  clientDocuments: clientDocumentsRouter,
+  translation: translationRouter,
 });
 
 export type AppRouter = typeof appRouter;

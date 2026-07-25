@@ -99,6 +99,13 @@
       "when": 1784947180632,
       "tag": "0013_faulty_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1784950822310,
+      "tag": "0014_parched_vulcan",
+      "breakpoints": true
     }
   ]
 }

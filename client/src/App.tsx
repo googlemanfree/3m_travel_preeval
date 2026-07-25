@@ -26,7 +26,7 @@ import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
-import Traduction from "./pages/Traduction";
+import TranslationOrder from "./pages/TranslationOrder";
 import AssuranceInscription from "./pages/AssuranceInscription";
 import Evisa from "./pages/Evisa";
 import EvisaDemande from "./pages/EvisaDemande";
@@ -68,7 +68,7 @@ function Router() {
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
-      <Route path={"/traduction"} component={Traduction} />
+      <Route path={"/traduction/order"} component={TranslationOrder} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
@@ -97,7 +97,6 @@ function Router() {
       <Route path={"/assurance"} component={Assurance} />
 
       {/* Traduction assermentée */}
-      <Route path={"/traduction"} component={Traduction} />
 
       {/* Panneau admin */}
       <Route path={"/admin/login"} component={AdminLogin} />
