@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,21 @@ interface UserWithApplications {
   applications: any[];
   applicationCount: number;
   lastApplication: any;
+}
+
+function ViewUserButton({ userId }: { userId: number }) {
+  const [, navigate] = useLocation();
+  return (
+    <Button
+      onClick={() => navigate(`/admin/users/${userId}`)}
+      variant="outline"
+      size="sm"
+      className="flex items-center gap-2"
+    >
+      <Eye className="w-4 h-4" />
+      Voir
+    </Button>
+  );
 }
 
 export default function AdminUsersManagement() {
@@ -273,14 +289,7 @@ export default function AdminUsersManagement() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="w-4 h-4" />
-                            Voir
-                          </Button>
+                          <ViewUserButton userId={user.id} />
                         </td>
                       </motion.tr>
                     ))}

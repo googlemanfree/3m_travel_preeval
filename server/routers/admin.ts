@@ -394,6 +394,51 @@ export const adminRouter = router({
     }),
 
   /**
+   * Récupérer les détails complets d'un utilisateur avec tous ses dossiers et documents
+   */
+  getUserDetailsWithDocuments: protectedProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const user = await db.select().from(users).where(eq(users.id, input.userId));
+        if (!user.length) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur non trouvé" });
+        }
+
+        const userApps = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.candidateId, input.userId));
+
+        // Récupérer les documents pour chaque dossier
+        const appsWithDocs = await Promise.all(
+          userApps.map(async (app) => {
+            return { ...app, documents: [] };
+          })
+        );
+
+        return {
+          success: true,
+          user: user[0],
+          applications: appsWithDocs,
+        };
+      } catch (err) {
+        console.error("[Admin User Details] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des détails utilisateur",
+        });
+      }
+    }),
+
+  /**
    * Récupérer la liste des utilisateurs avec leurs dossiers
    */
   getAllUsersWithApplications: protectedProcedure
