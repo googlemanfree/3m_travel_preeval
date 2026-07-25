@@ -479,10 +479,10 @@
 ## Module de Traduction Certifiée (v15)
 
 ### Phase 1 : Tables DB et Tarification
-- [ ] Créer la table `translation_requests` avec statuts (pending_payment, pending_translation, completed, rejected)
-- [ ] Créer la table `translation_pricing` avec tarifs par type de document et paire de langues
-- [ ] Créer la table `translation_languages` avec liste des langues supportées
-- [ ] Ajouter le rôle "translator" dans la table users
+- [x] Créer la table `translation_requests` avec statuts (pending_payment, pending_translation, completed, rejected)
+- [x] Créer la table `translation_pricing` avec tarifs par type de document et paire de langues
+- [x] Créer la table `translation_languages` avec liste des langues supportées
+- [x] Ajouter le rôle "translator" dans la table users
 
 ### Phase 2 : Procédures tRPC
 - [ ] Créer la procédure `createTranslationRequest` (sans paiement)
@@ -494,7 +494,7 @@
 
 ### Phase 3 : Dashboard Traducteur
 - [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
-- [ ] Ajouter la section "En Cours" et "Complétées"
+- [ ] Ajouter la section "En Cours" et "Completées"
 - [ ] Ajouter le formulaire d'upload du document traduit
 - [ ] Ajouter les filtres par langue, type de document, date
 
