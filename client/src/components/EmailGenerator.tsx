@@ -6,7 +6,6 @@ import {
   Copy,
   Download,
   Loader,
-  X,
   RefreshCw,
   Eye,
   EyeOff,
@@ -14,10 +13,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { SchedulingLink } from "./SchedulingLink";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Candidate {
   fullName: string;
@@ -38,45 +35,52 @@ interface EmailGeneratorProps {
   };
 }
 
+type ToneType = "professionnel" | "chaleureux" | "concis" | "encourageant";
+
 interface GeneratedEmail {
   subject: string;
   body: string;
-  tone: "professionnel" | "encourageant" | "neutre";
+  tone: ToneType;
 }
+
+const TONE_CONFIGS: Record<ToneType, { label: string; description: string; icon: string }> = {
+  professionnel: {
+    label: "Professionnel",
+    description: "Formel et structuré",
+    icon: "💼",
+  },
+  chaleureux: {
+    label: "Chaleureux",
+    description: "Amical et accessible",
+    icon: "🤝",
+  },
+  concis: {
+    label: "Concis",
+    description: "Direct et efficace",
+    icon: "⚡",
+  },
+  encourageant: {
+    label: "Encourageant",
+    description: "Motivant et positif",
+    icon: "🌟",
+  },
+};
 
 export function EmailGenerator({ candidate, aiSummary }: EmailGeneratorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [email, setEmail] = useState<GeneratedEmail | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedTone, setSelectedTone] = useState<"professionnel" | "encourageant" | "neutre">(
-    "professionnel"
-  );
+  const [selectedTone, setSelectedTone] = useState<ToneType>("professionnel");
   const [isCopied, setIsCopied] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [schedulingLink, setSchedulingLink] = useState("");
   const [includeScheduling, setIncludeScheduling] = useState(false);
 
-  const generateEmail = async (tone: "professionnel" | "encourageant" | "neutre") => {
-    setIsGenerating(true);
-    setSelectedTone(tone);
-
-    try {
-      // Simuler un appel API pour générer l'email
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const toneDescriptions = {
-        professionnel:
-          "Maintenez un ton formel et professionnel, en mettant l'accent sur les critères objectifs.",
-        encourageant:
-          "Utilisez un ton bienveillant et encourageant, en soulignant les points positifs du candidat.",
-        neutre:
-          "Utilisez un ton neutre et informatif, en présentant les faits de manière équilibrée.",
-      };
-
-      const emailTemplates = {
-        professionnel: {
-          subject: `Suivi de votre candidature pour ${candidate.destination} - ${candidate.visaType}`,
-          body: `Madame, Monsieur ${candidate.fullName},
+  const generateEmailContent = (tone: ToneType): GeneratedEmail => {
+    const templates: Record<ToneType, { subject: string; body: string }> = {
+      professionnel: {
+        subject: `Suivi de votre candidature pour ${candidate.destination} - ${candidate.visaType}`,
+        body: `Madame, Monsieur ${candidate.fullName},
 
 Nous vous remercions de votre candidature pour un visa ${candidate.visaType} vers ${candidate.destination}.
 
@@ -96,10 +100,47 @@ Veuillez prendre connaissance de nos recommandations et nous contacter si vous a
 
 Cordialement,
 L'équipe 3M Travel & Services`,
-        },
-        encourageant: {
-          subject: `Bonne nouvelle concernant votre candidature pour ${candidate.destination} ! 🎉`,
-          body: `Cher(e) ${candidate.fullName},
+      },
+      chaleureux: {
+        subject: `Merci pour votre candidature pour ${candidate.destination} ! 🌟`,
+        body: `Bonjour ${candidate.fullName},
+
+Nous sommes ravi d'avoir reçu votre candidature pour un visa ${candidate.visaType} vers ${candidate.destination}.
+
+Votre profil a retenu notre attention pour plusieurs raisons :
+
+${aiSummary?.strengths.map((s) => `✨ ${s}`).join("\n") || "✨ Profil intéressant et motivé"}
+
+Nous voyons un vrai potentiel dans votre projet ! Voici quelques suggestions pour renforcer encore votre dossier :
+
+${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. Préparez vos documents\n2. Restez positif et motivé"}
+
+Nous serions heureux de discuter davantage de votre projet lors d'un entretien. N'hésitez pas à nous contacter si vous avez des questions !
+
+Cordialement,
+L'équipe 3M Travel & Services 🌍`,
+      },
+      concis: {
+        subject: `Candidature ${candidate.visaType} - ${candidate.destination}`,
+        body: `${candidate.fullName},
+
+Votre dossier a été examiné.
+
+Points forts :
+${aiSummary?.strengths.map((s) => `• ${s}`).join("\n") || "• Profil solide"}
+
+Points à améliorer :
+${aiSummary?.weaknesses.length ? aiSummary.weaknesses.map((w) => `• ${w}`).join("\n") : "• Aucun problème majeur"}
+
+Prochaines étapes :
+${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. Soumettre les documents\n2. Planifier un entretien"}
+
+Cordialement,
+3M Travel & Services`,
+      },
+      encourageant: {
+        subject: `Bonne nouvelle concernant votre candidature pour ${candidate.destination} ! 🎉`,
+        body: `Cher(e) ${candidate.fullName},
 
 Nous sommes heureux de vous informer que nous avons examiné votre candidature pour un visa ${candidate.visaType} vers ${candidate.destination}, et nous avons d'excellentes nouvelles !
 
@@ -118,37 +159,23 @@ Nous sommes vraiment enthousiaste à l'idée de vous accompagner dans cette bell
 
 Cordialement,
 L'équipe 3M Travel & Services 🌍`,
-        },
-        neutre: {
-          subject: `Analyse de votre candidature - ${candidate.destination} ${candidate.visaType}`,
-          body: `Madame, Monsieur ${candidate.fullName},
+      },
+    };
 
-Suite à l'examen de votre dossier de candidature pour un visa ${candidate.visaType} vers ${candidate.destination}, voici notre analyse :
+    return {
+      subject: templates[tone].subject,
+      body: templates[tone].body,
+      tone,
+    };
+  };
 
-ÉVALUATION :
-${aiSummary?.overallAssessment || "Votre profil a été évalué selon nos critères standards."}
+  const generateEmail = async (tone: ToneType) => {
+    setIsGenerating(true);
+    setSelectedTone(tone);
 
-POINTS POSITIFS :
-${aiSummary?.strengths.map((s) => `• ${s}`).join("\n") || "• Dossier conforme"}
-
-POINTS À DÉVELOPPER :
-${aiSummary?.weaknesses.length ? aiSummary.weaknesses.map((w) => `• ${w}`).join("\n") : "• Aucun problème majeur"}
-
-ACTIONS RECOMMANDÉES :
-${aiSummary?.recommendations.map((r, i) => `${i + 1}. ${r}`).join("\n") || "1. Soumettre les documents\n2. Attendre la confirmation"}
-
-Pour toute question, veuillez nous contacter.
-
-Cordialement,
-3M Travel & Services`,
-        },
-      };
-
-      setEmail({
-        subject: emailTemplates[tone].subject,
-        body: emailTemplates[tone].body,
-        tone,
-      });
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setEmail(generateEmailContent(tone));
     } catch (error) {
       console.error("Erreur lors de la génération de l'email", error);
     } finally {
@@ -232,30 +259,27 @@ Cordialement,
                 <Label className="text-base font-semibold mb-4 block">
                   Choisissez le ton de l'email :
                 </Label>
-                <div className="grid grid-cols-3 gap-4">
-                  {(["professionnel", "encourageant", "neutre"] as const).map((tone) => (
-                    <motion.button
-                      key={tone}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => generateEmail(tone)}
-                      disabled={isGenerating}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        selectedTone === tone
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-gray-200 hover:border-gray-300"
-                      } ${isGenerating ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      <p className="font-semibold text-gray-900 capitalize">{tone}</p>
-                      <p className="text-xs text-gray-600 mt-2">
-                        {tone === "professionnel"
-                          ? "Formel et structuré"
-                          : tone === "encourageant"
-                            ? "Bienveillant et positif"
-                            : "Équilibré et factuel"}
-                      </p>
-                    </motion.button>
-                  ))}
+                <div className="grid grid-cols-4 gap-3">
+                  {(Object.entries(TONE_CONFIGS) as Array<[ToneType, typeof TONE_CONFIGS[ToneType]]>).map(
+                    ([tone, config]) => (
+                      <motion.button
+                        key={tone}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => generateEmail(tone)}
+                        disabled={isGenerating}
+                        className={`p-3 rounded-lg border-2 transition-all text-center ${
+                          selectedTone === tone
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-gray-200 hover:border-gray-300"
+                        } ${isGenerating ? "opacity-50 cursor-not-allowed" : ""}`}
+                      >
+                        <p className="text-2xl mb-1">{config.icon}</p>
+                        <p className="text-xs font-semibold text-gray-900">{config.label}</p>
+                        <p className="text-xs text-gray-600 mt-1">{config.description}</p>
+                      </motion.button>
+                    )
+                  )}
                 </div>
               </div>
 
@@ -286,7 +310,8 @@ Cordialement,
                   </div>
                   <div>
                     <Label className="text-xs text-gray-600">Ton</Label>
-                    <p className="font-semibold text-gray-900 capitalize">{email.tone}</p>
+                    <p className="font-semibold text-gray-900">{TONE_CONFIGS[email.tone].label}</p>
+                    <p className="text-xs text-gray-600">{TONE_CONFIGS[email.tone].description}</p>
                   </div>
                 </div>
               </Card>
@@ -359,6 +384,7 @@ Cordialement,
                       className="bg-gray-50 p-4 rounded-lg border whitespace-pre-wrap text-sm text-gray-700 max-h-96 overflow-y-auto"
                     >
                       {email.body}
+                      {includeScheduling && schedulingLink && `\n\nLien de réservation : ${schedulingLink}`}
                     </motion.div>
                   )}
                 </AnimatePresence>
