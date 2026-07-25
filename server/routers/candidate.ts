@@ -360,8 +360,13 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      console.log(`[verifyEmailLink] Searching for token: ${input.token.substring(0, 8)}...`);
       const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
-      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
+      console.log(`[verifyEmailLink] Found ${rows.length} matching candidate(s)`);
+      if (!rows.length) {
+        console.log(`[verifyEmailLink] No candidate found with token. Checking database...`);
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
+      }
       const candidate = rows[0];
       if (candidate.emailVerified) {
         const token = signCandidateToken(candidate.id);

@@ -615,8 +615,9 @@
 ### Phase 5 : Dashboard Admin Amélioré
 - [x] Ajouter un widget "Dossiers en Agence" au dashboard
 - [x] Afficher les statistiques : total, en cours, approuvés, refusés
-- [ ] Créer un graphique de progression des dossiers
-- [ ] Ajouter les alertes pour les dossiers en attente
+- [x] Créer un graphique de progression des dossiers
+- [x] Ajouter les alertes pour les dossiers en attente
+- [x] Ajouter des infobulles explicatives sur chaque étape de la barre de progression
 
 ### Phase 6 : Espace Client pour Dossiers en Agence
 - [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
