@@ -474,3 +474,57 @@
 - [x] Créer la gestion des créneaux côté admin
 - [x] Envoyer confirmation par email/WhatsApp
 - [x] Tester le flux complet
+
+
+## Module de Traduction Certifiée (v15)
+
+### Phase 1 : Tables DB et Tarification
+- [ ] Créer la table `translation_requests` avec statuts (pending_payment, pending_translation, completed, rejected)
+- [ ] Créer la table `translation_pricing` avec tarifs par type de document et paire de langues
+- [ ] Créer la table `translation_languages` avec liste des langues supportées
+- [ ] Ajouter le rôle "translator" dans la table users
+
+### Phase 2 : Procédures tRPC
+- [ ] Créer la procédure `createTranslationRequest` (sans paiement)
+- [ ] Créer la procédure `getTranslationPricing` pour tarification dynamique
+- [ ] Créer la procédure `getTranslationRequests` pour lister les demandes
+- [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
+- [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
+- [ ] Créer la procédure `downloadTranslatedDocument` (client)
+
+### Phase 3 : Dashboard Traducteur
+- [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
+- [ ] Ajouter la section "En Cours" et "Complétées"
+- [ ] Ajouter le formulaire d'upload du document traduit
+- [ ] Ajouter les filtres par langue, type de document, date
+
+### Phase 4 : Tunnel de Commande Client
+- [ ] Créer la page `/translation/order` avec sélection du type de document
+- [ ] Ajouter le sélecteur de langues source/cible
+- [ ] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
+- [ ] Afficher le tarif calculé en temps réel
+- [ ] Ajouter le bouton "Procéder au Paiement"
+
+### Phase 5 : Paiement Obligatoire
+- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
+- [ ] Créer le callback de validation du paiement
+- [ ] Déclencher la notification admin uniquement après paiement validé
+- [ ] Générer la facture PDF après paiement
+- [ ] Envoyer confirmation par email/WhatsApp
+
+### Phase 6 : Téléchargement Sécurisé
+- [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
+- [ ] Ajouter la section "Mes Traductions" dans l'Espace Client
+- [ ] Afficher le statut de chaque traduction
+- [ ] Permettre le téléchargement après complétion
+- [ ] Ajouter les logs de téléchargement
+
+### Phase 7 : Tests et Validation
+- [ ] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
+- [ ] Tester les cas d'erreur (paiement échoué, fichier invalide, etc.)
+- [ ] Vérifier la sécurité des téléchargements
+- [ ] Vérifier les notifications email/WhatsApp
+
+### Phase 8 : Checkpoint Final
+- [ ] Créer le checkpoint avec le module de traduction complet
+- [ ] Documenter les étapes d'utilisation

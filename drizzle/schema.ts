@@ -721,3 +721,148 @@ export const appointmentSlots = mysqlTable("appointment_slots", {
 
 export type AppointmentSlot = typeof appointmentSlots.$inferSelect;
 export type InsertAppointmentSlot = typeof appointmentSlots.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE DE TRADUCTION CERTIFIÉE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Langues supportées pour la traduction certifiée
+ */
+export const translationLanguages = mysqlTable("translation_languages", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 10 }).notNull().unique(),  // fr, en, de, es, etc.
+  name: varchar("name", { length: 100 }).notNull(),  // Français, English, Deutsch, etc.
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type TranslationLanguage = typeof translationLanguages.$inferSelect;
+export type InsertTranslationLanguage = typeof translationLanguages.$inferInsert;
+
+/**
+ * Tarification des traductions par type de document et paire de langues
+ */
+export const translationPricing = mysqlTable("translation_pricing", {
+  id: int("id").autoincrement().primaryKey(),
+  documentType: mysqlEnum("documentType", [
+    "birth_certificate",
+    "diploma",
+    "transcript",
+    "criminal_record",
+    "marriage_certificate",
+    "divorce_decree",
+    "employment_letter",
+    "bank_statement",
+    "passport",
+    "driver_license",
+    "medical_report",
+    "other"
+  ]).notNull(),
+  sourceLanguageCode: varchar("sourceLanguageCode", { length: 10 }).notNull(),
+  targetLanguageCode: varchar("targetLanguageCode", { length: 10 }).notNull(),
+  pricePerPage: decimal("pricePerPage", { precision: 10, scale: 2 }).notNull(),  // Prix par page
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  turnaroundDays: int("turnaroundDays").default(3).notNull(),  // Délai de traitement en jours
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TranslationPricing = typeof translationPricing.$inferSelect;
+export type InsertTranslationPricing = typeof translationPricing.$inferInsert;
+
+/**
+ * Demandes de traduction certifiée
+ * RÈGLE STRICTE : Statut reste "pending_payment" jusqu'à validation du paiement
+ */
+export const translationRequests = mysqlTable("translation_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId"),  // Lié à une évaluation (optionnel)
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  candidatePhone: varchar("candidatePhone", { length: 50 }),
+  
+  // Détails de la traduction
+  documentType: mysqlEnum("documentType", [
+    "birth_certificate",
+    "diploma",
+    "transcript",
+    "criminal_record",
+    "marriage_certificate",
+    "divorce_decree",
+    "employment_letter",
+    "bank_statement",
+    "passport",
+    "driver_license",
+    "medical_report",
+    "other"
+  ]).notNull(),
+  sourceLanguageCode: varchar("sourceLanguageCode", { length: 10 }).notNull(),
+  targetLanguageCode: varchar("targetLanguageCode", { length: 10 }).notNull(),
+  numberOfPages: int("numberOfPages").notNull(),
+  
+  // Fichier source
+  sourceDocumentUrl: text("sourceDocumentUrl").notNull(),
+  sourceDocumentName: varchar("sourceDocumentName", { length: 255 }).notNull(),
+  sourceDocumentSize: int("sourceDocumentSize"),
+  
+  // Tarification
+  pricePerPage: decimal("pricePerPage", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  
+  // Paiement
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "completed", "failed", "refunded"]).default("pending").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),  // mobile_money, card, cash
+  paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),
+  paymentDate: timestamp("paymentDate"),
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }),
+  invoiceUrl: text("invoiceUrl"),
+  
+  // Traduction
+  status: mysqlEnum("status", [
+    "pending_payment",      // En attente de paiement
+    "pending_translation",  // Paiement reçu, en attente de traduction
+    "in_progress",          // Traduction en cours
+    "completed",            // Traduction complétée
+    "rejected"              // Demande rejetée
+  ]).default("pending_payment").notNull(),
+  
+  assignedToTranslator: varchar("assignedToTranslator", { length: 320 }),  // Email du traducteur
+  translatorNotes: text("translatorNotes"),
+  
+  // Fichier traduit
+  translatedDocumentUrl: text("translatedDocumentUrl"),
+  translatedDocumentName: varchar("translatedDocumentName", { length: 255 }),
+  translatedDocumentSize: int("translatedDocumentSize"),
+  completionDate: timestamp("completionDate"),
+  
+  // Notifications
+  paymentNotificationSent: boolean("paymentNotificationSent").default(false).notNull(),
+  completionNotificationSent: boolean("completionNotificationSent").default(false).notNull(),
+  
+  // Métadonnées
+  adminNotes: text("adminNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TranslationRequest = typeof translationRequests.$inferSelect;
+export type InsertTranslationRequest = typeof translationRequests.$inferInsert;
+
+/**
+ * Logs de téléchargement des documents traduits (audit)
+ */
+export const translationDownloadLogs = mysqlTable("translation_download_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  translationRequestId: int("translationRequestId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  downloadedAt: timestamp("downloadedAt").defaultNow().notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+});
+
+export type TranslationDownloadLog = typeof translationDownloadLogs.$inferSelect;
+export type InsertTranslationDownloadLog = typeof translationDownloadLogs.$inferInsert;
