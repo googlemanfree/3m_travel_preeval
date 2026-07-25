@@ -201,9 +201,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="evaluation" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
               📋 Évaluation
             </TabsTrigger>
-            <TabsTrigger value="accompagnement" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-              🚀 Accompagnement
-            </TabsTrigger>
+
             <TabsTrigger value="procedures" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
               🌍 Procédures
             </TabsTrigger>
@@ -315,28 +313,7 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Accompagnement */}
-          <TabsContent value="accompagnement" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Gestion de l'Accompagnement
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-slate-300">
-                  ✅ Avancer rapidement les statuts des dossiers<br/>
-                  ✅ Contacter les candidats<br/>
-                  ✅ Ajouter des notes et commentaires<br/>
-                  ✅ Gérer les dossiers en attente de contact
-                </p>
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  Gérer l'accompagnement →
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           {/* Procédures */}
           <TabsContent value="procedures" className="mt-6">

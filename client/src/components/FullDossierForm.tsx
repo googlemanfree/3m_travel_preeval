@@ -522,31 +522,7 @@ function Step1VisaDestination({ form, set, errors, inputClass }: StepProps) {
         {errors.destination && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{errors.destination}</p>}
       </div>
 
-      <div>
-        <Label className="text-sm font-semibold text-gray-700 mb-1.5 block">Formule d'accompagnement</Label>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { value: "integral", label: "Intégral", desc: "Paiement unique", price: "65 000 FCFA" },
-            { value: "echelonne", label: "Échelonné", desc: "En 2 versements", price: "35 000 + 30 000" },
-            { value: "garanti", label: "Garanti", desc: "Remboursé si refus", price: "75 000 FCFA" },
-          ].map(f => (
-            <button
-              key={f.value}
-              type="button"
-              onClick={() => set("formulaChosen", f.value)}
-              className={`p-3 rounded-xl border-2 text-center transition-all ${
-                form.formulaChosen === f.value
-                  ? "border-amber-500 bg-amber-50"
-                  : "border-gray-200 hover:border-amber-300"
-              }`}
-            >
-              <div className="text-xs font-bold text-gray-800">{f.label}</div>
-              <div className="text-xs text-gray-500">{f.desc}</div>
-              <div className="text-xs font-semibold text-amber-600 mt-1">{f.price}</div>
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
