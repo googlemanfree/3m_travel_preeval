@@ -765,3 +765,49 @@
 ### Phase 5 : Déploiement
 - [ ] Créer un checkpoint avec le bouton de paiement sécurisé
 - [ ] Vérifier que le site fonctionne correctement en production
+
+
+## Zone de Téléchargement Sécurisée (v30)
+
+### Phase 1 : Analyse
+- [x] Analyser l'étape 5 (Paiement Confirmé) et les besoins de téléchargement
+- [x] Identifier les formats acceptés (PDF, JPEG, PNG, WebP)
+- [x] Définir les limites de sécurité
+
+### Phase 2 : Composant SecureDocumentUpload
+- [x] Créer le composant SecureDocumentUpload.tsx avec :
+  - Zone de glisser-déposer animée
+  - Parcourir les fichiers
+  - Validation des formats et tailles
+  - Aperçu des fichiers avec icônes
+  - Barre de progression du téléchargement
+  - Gestion des erreurs
+  - Message de sécurité SSL
+  - Animations fluides avec Framer Motion
+
+### Phase 3 : Intégration dans DossierProgressBar
+- [x] Importer SecureDocumentUpload dans DossierProgressBar.tsx
+- [x] Ajouter la zone de téléchargement aux statuts "en_attente_documents" et "paye"
+- [x] Passer les props dossierNumber et onUploadComplete
+- [x] Ajouter les animations d'entrée
+
+### Phase 4 : Validation et Sécurité
+- [x] Validation des formats (PDF, JPEG, PNG, WebP)
+- [x] Limite de taille par fichier (10 MB)
+- [x] Limite du nombre de fichiers (10 max)
+- [x] Messages d'erreur clairs et informatifs
+- [x] Chiffrement des données (message de sécurité)
+- [x] Accès restreint aux administrateurs
+
+### Phase 5 : Tests et Validation
+- [x] Vérifier que le site compile sans erreurs
+- [x] Vérifier que la zone s'affiche correctement
+- [ ] Tester le glisser-déposer
+- [ ] Tester le parcourir des fichiers
+- [ ] Tester la validation des formats
+- [ ] Tester la validation des tailles
+- [ ] Tester le téléchargement
+
+### Phase 6 : Déploiement
+- [ ] Créer un checkpoint avec la zone de téléchargement
+- [ ] Vérifier que le site fonctionne correctement en production

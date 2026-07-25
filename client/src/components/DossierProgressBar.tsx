@@ -12,6 +12,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { PaymentModal } from "./PaymentModal";
+import { SecureDocumentUpload } from "./SecureDocumentUpload";
 
 export interface DossierProgressBarProps {
   status:
@@ -373,6 +374,27 @@ export function DossierProgressBar({
           )}
         </div>
       </motion.div>
+
+      {/* Zone de téléchargement sécurisée */}
+      {(status === "en_attente_documents" || status === "paye") && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          viewport={{ once: true }}
+          className="mt-6"
+        >
+          <SecureDocumentUpload
+            dossierNumber={dossierNumber}
+            onUploadComplete={() => {
+              // Recharger le dossier après upload
+              if (onPaymentSuccess) {
+                onPaymentSuccess();
+              }
+            }}
+          />
+        </motion.div>
+      )}
 
       {/* CTA selon le statut */}
       <motion.div
