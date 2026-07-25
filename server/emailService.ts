@@ -167,7 +167,6 @@ export async function sendDossierConfirmationEmail(
   fullName: string,
   dossierNumber: string,
   destination: string,
-  formula: string,
   amount: number
 ): Promise<void> {
   const dashboardUrl = `${SITE_URL}/dashboard`;
@@ -182,7 +181,7 @@ export async function sendDossierConfirmationEmail(
     </div>
     <table style="width:100%;border-collapse:collapse;margin:16px 0;">
       <tr><td style="padding:8px;background:#f8faff;border-radius:6px;font-size:13px;color:#6b7280;">Destination</td><td style="padding:8px;font-weight:700;">${destination.toUpperCase()}</td></tr>
-      <tr><td style="padding:8px;font-size:13px;color:#6b7280;">Formule</td><td style="padding:8px;font-weight:700;">${formula}</td></tr>
+
       <tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280;">Montant</td><td style="padding:8px;font-weight:700;">${amount.toLocaleString("fr-FR")} FCFA</td></tr>
     </table>
     <p><strong>Prochaines étapes :</strong></p>
@@ -208,7 +207,6 @@ export async function sendAdminNewDossierAlert(
   email: string,
   phone: string,
   destination: string,
-  formula: string,
   paymentStatus: string
 ): Promise<void> {
   const adminEmail = process.env.ADMIN_EMAIL ?? "contact@3mtravelagency.click";

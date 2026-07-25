@@ -232,7 +232,6 @@ export const applicationRouter = router({
         input.fullName,
         dossierNumber,
         input.destination.toUpperCase(),
-        input.formulaChosen,
         177000 // Montant en FCFA
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
 
@@ -243,7 +242,6 @@ export const applicationRouter = router({
         input.email,
         input.whatsappNumber,
         input.destination,
-        input.formulaChosen,
         "PENDING"
       )).catch(err => console.error("[Email] Admin alert error:", err));
 
