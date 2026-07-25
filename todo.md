@@ -214,7 +214,7 @@
 - [x] Ajouter l'état isAnalyzingCV pour contrôler la visibilité de l'animation
 - [x] Ajouter une barre de progression globale et des messages d'encouragement
 - [x] Tester l'animation en uploadant un CV et vérifier les étapes
-- [ ] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
+- [x] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
 
 
 ## Configuration SMTP — Emails de Confirmation (v10)
@@ -238,15 +238,15 @@
 - [x] Aucune erreur TypeScript
 
 ## Formulaire Complet de Constitution de Dossier (v11)
-- [ ] Analyser le formulaire actuel (ScoringForm, OpenDossier) et identifier les champs manquants
-- [ ] Étendre le schéma DB : état civil, coordonnées complètes, études/diplômes, situation pro, expérience, ressources financières, situation familiale, champs spécifiques par type de visa
-- [ ] Créer FullDossierForm : 7 étapes (Visa & Destination → État civil → Coordonnées → Études/Diplômes → Situation pro/financière → Situation familiale → Documents & Paiement)
-- [ ] Étapes dynamiques selon le type de visa (ex: étape "Regroupement familial" uniquement si visa famille)
-- [ ] Upload documents : passeport, CV, diplômes, relevés bancaires, contrat de travail, lettre d'invitation
-- [ ] Scoring automatique mis à jour avec les nouveaux critères
-- [ ] Mettre à jour les procédures tRPC createApplication pour accepter tous les nouveaux champs
-- [ ] Remplacer ScoringForm par FullDossierForm dans le tunnel Procedures et OpenDossier
-- [ ] Barre de progression claire avec noms d'étapes et indicateur de complétion
+- [x] Analyser le formulaire actuel (ScoringForm, OpenDossier) et identifier les champs manquants
+- [x] Étendre le schéma DB : état civil, coordonnées complètes, études/diplômes, situation pro, expérience, ressources financières, situation familiale, champs spécifiques par type de visa
+- [x] Créer FullDossierForm : 7 étapes (Visa & Destination → État civil → Coordonnées → Études/Diplômes → Situation pro/financière → Situation familiale → Documents & Paiement)
+- [x] Étapes dynamiques selon le type de visa (ex: étape "Regroupement familial" uniquement si visa famille)
+- [x] Upload documents : passeport, CV, diplômes, relevés bancaires, contrat de travail, lettre d'invitation
+- [x] Scoring automatique mis à jour avec les nouveaux critères
+- [x] Mettre à jour les procédures tRPC createApplication pour accepter tous les nouveaux champs
+- [x] Remplacer ScoringForm par FullDossierForm dans le tunnel Procedures et OpenDossier
+- [x] Barre de progression claire avec noms d'étapes et indicateur de complétion
 
 ## Formulaire Complet de Constitution de Dossier (v11)
 - [x] Schéma DB étendu : 27 nouvelles colonnes (état civil, diplômes, emploi, finances, famille, type de visa)
@@ -263,13 +263,13 @@
 - [x] Aucune erreur TypeScript
 
 ## Protocole d'Accord — Signature Électronique (v12)
-- [ ] Ajouter colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
-- [ ] Procédure tRPC signAgreement : enregistrer la signature avec horodatage et IP
-- [ ] Composant AgreementProtocol : document d'accord complet (engagements agence + candidat, honoraires en référence discrète)
-- [ ] Signature électronique : champ nom + case à cocher + date auto + bouton "Je signe et accepte"
-- [ ] Intégrer AgreementProtocol dans le tunnel après l'évaluation positive (avant vérification email)
-- [ ] Afficher le récapitulatif de la signature dans le panneau admin (fiche PDF)
-- [ ] Tester le flux complet : évaluation → accord → signature → vérification email → paiement
+- [x] Ajouter colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
+- [x] Procédure tRPC signAgreement : enregistrer la signature avec horodatage et IP
+- [x] Composant AgreementProtocol : document d'accord complet (engagements agence + candidat, honoraires en référence discrète)
+- [x] Signature électronique : champ nom + case à cocher + date auto + bouton "Je signe et accepte"
+- [x] Intégrer AgreementProtocol dans le tunnel après l'évaluation positive (avant vérification email)
+- [x] Afficher le récapitulatif de la signature dans le panneau admin (fiche PDF)
+- [x] Tester le flux complet : évaluation → accord → signature → vérification email → paiement
 
 ## Protocole d'Accord — Signature Électronique (v11)
 - [x] Colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
@@ -292,8 +292,8 @@
 - [x] Section prochaines étapes personnalisées selon le statut
 - [x] Lien "Suivre mon dossier" dans la Navbar desktop et mobile
 - [x] Route /mon-dossier ajoutée dans App.tsx
-- [ ] Admin : bouton "Répondre" aux messages candidats depuis le panneau admin (procédure replyToCandidate disponible, UI à créer)
-- [ ] Lien "Suivre mon dossier" dans la page /payment-success
+- [x] Admin : bouton "Répondre" aux messages candidats depuis le panneau admin (procédure replyToCandidate disponible, UI créée)
+- [x] Lien "Suivre mon dossier" dans la page /payment-success
 
 ## Bibliothèque de Ressources PDF (v14)
 - [x] Upload de 212 fichiers PDF/DOCX sur S3 (Visa Travail, Études, Visiteur, Guides, Formulaires)
