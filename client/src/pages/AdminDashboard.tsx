@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2, RefreshCw, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 
@@ -176,7 +176,7 @@ export default function AdminDashboard() {
 
         {/* Onglets */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800 border border-slate-700">
+          <TabsList className="grid w-full grid-cols-5 bg-slate-800 border border-slate-700">
             <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
               📊 Vue d'ensemble
             </TabsTrigger>
@@ -188,6 +188,9 @@ export default function AdminDashboard() {
             </TabsTrigger>
             <TabsTrigger value="procedures" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
               🌍 Procédures
+            </TabsTrigger>
+            <TabsTrigger value="agency" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
+              🏢 Agence
             </TabsTrigger>
           </TabsList>
 
@@ -335,6 +338,34 @@ export default function AdminDashboard() {
                 </p>
                 <Button className="w-full bg-purple-600 hover:bg-purple-700">
                   Gérer les procédures →
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Dossiers en Agence */}
+          <TabsContent value="agency" className="mt-6">
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-indigo-400" />
+                  Dossiers en Agence
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-slate-300">
+                  ✅ Ajouter manuellement des candidats reçus en agence<br/>
+                  ✅ Gérer les statuts et l'avancement des dossiers<br/>
+                  ✅ Ajouter des notes internes confidentielles<br/>
+                  ✅ Envoyer des notifications email automatiques<br/>
+                  ✅ Filtrer et rechercher par nom, destination, statut
+                </p>
+                <Button
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => navigate('/admin/agency-dossiers')}
+                >
+                  <Building2 className="w-4 h-4 mr-2" />
+                  Gérer les Dossiers en Agence →
                 </Button>
               </CardContent>
             </Card>

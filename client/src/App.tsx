@@ -43,6 +43,7 @@ import Hotels from "./pages/Hotels";
 import FloatingServices from "./components/FloatingServices";
 import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
+import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { ScrollToTop } from "./components/ScrollToTop";
 
 function Router() {
@@ -129,6 +130,8 @@ function Router() {
           <AdminsList />
         </AuthGuard>
       </Route>
+      <Route path={"/admin/agency-dossiers"} component={AdminAgencyDossiers} />
+      <Route path={"admin/agency-dossiers"} component={AdminAgencyDossiers} />
 
       <Route path="/hotels">
         <Hotels />
