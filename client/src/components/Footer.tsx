@@ -1,9 +1,79 @@
-import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle, Facebook, Instagram, Linkedin, Twitter, Send } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { toast } from "sonner";
+
+const SOCIAL_LINKS = [
+  { icon: Facebook, href: 'https://facebook.com/3mtravelagency', label: 'Facebook', color: 'hover:text-blue-600' },
+  { icon: Instagram, href: 'https://instagram.com/3mtravelagency', label: 'Instagram', color: 'hover:text-pink-600' },
+  { icon: Linkedin, href: 'https://linkedin.com/company/3mtravelagency', label: 'LinkedIn', color: 'hover:text-blue-700' },
+  { icon: Twitter, href: 'https://twitter.com/3mtravelagency', label: 'Twitter', color: 'hover:text-blue-400' },
+];
 
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast.error('Veuillez entrer une adresse email');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success('Inscription réussie ! Vérifiez votre email.');
+      setEmail('');
+    } catch (error) {
+      toast.error('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-[#0f2460] text-gray-300 mt-auto">
+      {/* Newsletter Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="bg-gradient-to-r from-blue-600 to-blue-800 py-8 px-4"
+      >
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-4">
+            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
+              Restez informé de nos meilleures offres
+            </h3>
+            <p className="text-blue-100 text-sm">Inscrivez-vous à notre newsletter pour recevoir les dernières actualités</p>
+          </div>
+          
+          <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <Input
+              type="email"
+              placeholder="Votre adresse email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1 bg-white text-gray-900 placeholder-gray-500 text-sm"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-white text-blue-600 hover:bg-blue-50 font-semibold whitespace-nowrap text-sm"
+            >
+              {isLoading ? 'Inscription...' : <span className="flex items-center gap-1"><Send className="w-4 h-4" />S'inscrire</span>}
+            </Button>
+          </form>
+        </div>
+      </motion.div>
+
       <div className="max-w-7xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 
@@ -77,8 +147,29 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Social Media Section */}
+        <div className="flex justify-center gap-4 py-6 border-t border-gray-700 mt-8">
+          {SOCIAL_LINKS.map((social) => {
+            const Icon = social.icon;
+            return (
+              <motion.a
+                key={social.label}
+                href={social.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                whileHover={{ scale: 1.2, rotate: 5 }}
+                whileTap={{ scale: 0.95 }}
+                className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center transition duration-200 ${social.color}`}
+                title={social.label}
+              >
+                <Icon className="w-5 h-5" />
+              </motion.a>
+            );
+          })}
+        </div>
+
         {/* Barre légale */}
-        <div className="border-t border-gray-700 mt-8 pt-6 text-xs text-gray-500 text-center space-y-1">
+        <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">
           <p>
             <span className="text-gray-400 font-medium">3M Travel & Services SARL</span> — RC/YAO/2019/A/2567 | NIU : M112417203369H
           </p>
