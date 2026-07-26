@@ -6,6 +6,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProcedureDetailModal from "@/components/ProcedureDetailModal";
+import { CredibilityBadge } from "@/components/CredibilityBadge";
 import FullDossierForm from "@/components/FullDossierForm";
 import type { ProcedureInfo } from "@/components/ProcedureDetailModal";
 import {
@@ -1526,6 +1527,20 @@ export default function Procedures() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* ─── SECTION CRÉDIBILITÉ ──────────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="mb-12 text-center">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Confiance & Transparence</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Nos Certifications & Coordonnées</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Nous sommes une agence officiellement enregistrée et transparente. Consultez nos informations de certification et nos coordonnées de contact.
+            </p>
+          </div>
+          <CredibilityBadge />
+        </div>
+      </section>
 
       <Footer />
     </div>

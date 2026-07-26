@@ -24,6 +24,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
+import { CredibilityBadge } from "@/components/CredibilityBadge";
+import { LocationMap } from "@/components/LocationMap";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -1173,6 +1175,44 @@ export default function Home() {
             </p>
           </motion.div>
           <SimpleMultiProjectForm />
+        </div>
+      </section>
+
+      {/* ─── SECTION CRÉDIBILITÉ & LOCALISATION ──────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-12 text-center"
+          >
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Confiance & Transparence</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Nous Sommes Officiellement Enregistrés</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              3M Travel & Services est une agence officielle certifiée et transparente. Découvrez nos certifications, notre localisation et nos coordonnées.
+            </p>
+          </motion.div>
+
+          {/* Badge de crédibilité */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="mb-12"
+          >
+            <CredibilityBadge />
+          </motion.div>
+
+          {/* Carte Google Maps */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">📍 Visitez-nous en Agence</h3>
+            <LocationMap />
+          </motion.div>
         </div>
       </section>
 
