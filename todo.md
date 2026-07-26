@@ -447,7 +447,7 @@
 - [x] Formulaire multi-projets simplifié (Travail, Études, Tourisme) intégré sur la page d'accueil
 - [x] Procédure tRPC submitEvaluation pour les évaluations multi-projets
 - [ ] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
-- [ ] Tests vitest pour le formulaire multi-projets et la procédure
+- [x] Tests vitest pour le formulaire multi-projets et la procédure
 
 ## Fonctionnalités Complémentaires (v14)
 
