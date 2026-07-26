@@ -63,7 +63,9 @@ import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import { SkipLink } from "./components/SkipLink";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
-import { AIAssistantWidget } from "./components/AIAssistantWidget";
+import { AIAssistantWidget } from "./components/AIAssistantWidgetMultilingual";
+import { LanguageProvider } from "./contexts/LanguageContext";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
 
 function Router() {
   // Enregistrer le service worker
@@ -258,8 +260,9 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
+      <LanguageProvider>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
           <SkipLink />
           <Toaster />
           <main id="main-content">
@@ -272,6 +275,7 @@ function App() {
           <AIAssistantWidget />
         </TooltipProvider>
       </ThemeProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }
