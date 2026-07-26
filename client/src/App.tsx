@@ -56,8 +56,11 @@ import AdminUserDetails from "./pages/AdminUserDetails";
 import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
+import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 
 function Router() {
+  // Gérer l'inactivité et la déconnexion automatique
+  useSessionTimeout();
   return (
     <Switch>
       {/* Pages publiques (SANS authentification) */}

@@ -9,6 +9,7 @@ import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../rout
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
+import { initEvaluationCron } from "../cron/evaluationCron";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -46,6 +47,12 @@ async function startServer() {
   // Scheduled jobs
   app.post("/api/scheduled/evaluation-job", handleEvaluationJob);
   app.post("/api/scheduled/evaluation-bilan-job", handleEvaluationBilanJob);
+  // Initialize Cron Jobs
+  try {
+    await initEvaluationCron();
+  } catch (error) {
+    console.error("[Server] Erreur lors de l'initialisation du Cron Job:", error);
+  }
   // tRPC API
   app.use(
     "/api/trpc",
