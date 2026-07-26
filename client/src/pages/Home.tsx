@@ -26,6 +26,8 @@ import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
 import { LocationMap } from "@/components/LocationMap";
+import StatisticsSection from "@/components/StatisticsSection";
+import WhyChooseUs from "@/components/WhyChooseUs";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -529,6 +531,12 @@ export default function Home() {
         logoUrl="/manus-storage/logo_3m_d0e23210.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      {/* ─── STATISTIQUES ─────────────────────────────────────────────────── */}
+      <StatisticsSection />
+
+      {/* ─── POURQUOI CHOISIR 3M ─────────────────────────────────────────── */}
+      <WhyChooseUs />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-12 md:py-20 bg-white">
