@@ -1037,4 +1037,189 @@ export const applicationRouter = router({
         });
       }
     }),
+
+  /**
+   * Phase 2 : Recevoir automatiquement un dossier soumis en ligne
+   * Utilisé pour enregistrer les dossiers provenant du formulaire en ligne
+   */
+  receiveOnlineDossier: publicProcedure
+    .input(z.object({
+      applicationId: z.number().int(),
+      documentsUrls: z.array(z.object({
+        type: z.string(),
+        url: z.string().url(),
+        key: z.string(),
+        name: z.string(),
+      })).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        // Récupérer le dossier existant
+        const [app] = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId))
+          .limit(1);
+
+        if (!app) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier non trouvé' });
+        }
+
+        // Mettre à jour le dossier avec la méthode de soumission
+        const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
+        const auditLog = `[DOSSIER REÇU EN LIGNE — ${timestamp}]\nDossier enregistré depuis le formulaire en ligne.`;
+
+        await db
+          .update(applications)
+          .set({
+            documentsSubmissionMethod: 'en_ligne',
+            documentsReceivedAt: new Date(),
+            documentsUrls: input.documentsUrls ? JSON.stringify(input.documentsUrls) : app.documentsUrls,
+            dossierStatus: 'documents_recus',
+            adminNote: app.adminNote ? `${app.adminNote}\n\n${auditLog}` : auditLog,
+            lastStatusUpdateAt: new Date(),
+          })
+          .where(eq(applications.id, input.applicationId));
+
+        // Envoyer une notification admin
+        try {
+          await sendAdminNewDossierAlert({
+            dossierNumber: app.dossierNumber,
+            fullName: app.fullName,
+            email: app.email,
+            destination: app.destination,
+            submissionMethod: 'en_ligne',
+            timestamp,
+          });
+        } catch (emailErr) {
+          console.error('[receiveOnlineDossier] Email notification error:', emailErr);
+        }
+
+        return {
+          success: true,
+          message: 'Dossier reçu et enregistré avec succès',
+          dossierNumber: app.dossierNumber,
+        };
+      } catch (err) {
+        console.error('[receiveOnlineDossier] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: err instanceof Error ? err.message : 'Erreur lors de la réception du dossier',
+        });
+      }
+    }),
+
+  /**
+   * Phase 3 : Créer un dossier manuellement depuis l'agence physique
+   * Utilisé pour enregistrer les candidats qui ouvrent leur dossier directement en agence
+   */
+  createAgencyDossier: protectedProcedure
+    .input(z.object({
+      fullName: z.string().min(2),
+      email: z.string().email(),
+      whatsappNumber: z.string().min(8),
+      age: z.number().int().min(18).max(65).optional(),
+      nationality: z.string().optional(),
+      academicLevel: z.string().optional(),
+      experienceYears: z.number().int().min(0).max(50).optional(),
+      languageSkills: z.string().optional(),
+      jobSector: z.string().optional(),
+      destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "oceanie", "caucase", "autre"]),
+      visaType: z.string().optional(),
+      formulaChosen: z.enum(["integral", "echelonne", "garanti"]).default("integral"),
+      agencyName: z.string(), // Douala ou Yaoundé
+      agencyStaff: z.string(), // Nom du conseiller qui a créé le dossier
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès réservé aux administrateurs.' });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        // Générer un numéro de dossier unique
+        let dossierNumber = generateDossierNumber();
+        let existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
+        while (existing.length > 0) {
+          dossierNumber = generateDossierNumber();
+          existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
+        }
+
+        // Créer le dossier
+        const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
+        const auditLog = `[DOSSIER CRÉÉ EN AGENCE — ${timestamp}]\nAgence: ${input.agencyName}\nConseil: ${input.agencyStaff}\nDossier créé manuellement en agence.`;
+
+        const result = await db.insert(applications).values({
+          dossierNumber,
+          fullName: input.fullName,
+          email: input.email,
+          whatsappNumber: input.whatsappNumber,
+          age: input.age,
+          nationality: input.nationality,
+          academicLevel: input.academicLevel,
+          experienceYears: input.experienceYears,
+          languageSkills: input.languageSkills,
+          jobSector: input.jobSector,
+          destination: input.destination,
+          visaType: input.visaType,
+          formulaChosen: input.formulaChosen,
+          documentsSubmissionMethod: 'agence_physique',
+          dossierStatus: 'nouveau',
+          paymentStatus: 'PENDING',
+          emailVerified: false,
+          agreementSigned: false,
+          adminNote: auditLog,
+          adminAssignedTo: input.agencyStaff,
+          lastStatusUpdateAt: new Date(),
+          lastStatusUpdatedBy: input.agencyStaff,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+
+        // Envoyer un email de confirmation au candidat
+        try {
+          await sendDossierConfirmationEmail({
+            dossierNumber,
+            fullName: input.fullName,
+            email: input.email,
+            destination: input.destination,
+            agencyName: input.agencyName,
+          });
+        } catch (emailErr) {
+          console.error('[createAgencyDossier] Email confirmation error:', emailErr);
+        }
+
+        // Envoyer une notification admin
+        try {
+          await sendAdminNewDossierAlert({
+            dossierNumber,
+            fullName: input.fullName,
+            email: input.email,
+            destination: input.destination,
+            submissionMethod: 'agence_physique',
+            timestamp,
+          });
+        } catch (emailErr) {
+          console.error('[createAgencyDossier] Admin notification error:', emailErr);
+        }
+
+        return {
+          success: true,
+          message: 'Dossier créé avec succès en agence',
+          dossierNumber,
+          applicationId: result.insertId,
+        };
+      } catch (err) {
+        console.error('[createAgencyDossier] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: err instanceof Error ? err.message : 'Erreur lors de la création du dossier',
+        });
+      }
+    }),
 });
