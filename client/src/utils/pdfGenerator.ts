@@ -45,15 +45,15 @@ export const exportFormDataAsPDF = (
       }
 
       // Label
-      pdf.setFont(undefined, "bold");
+      pdf.setFont(undefined as any, "bold");
       pdf.setTextColor(25, 45, 85);
       const label = key.replace(/([A-Z])/g, " $1").trim();
-      pdf.text(label as any, margin, yPosition);
+      pdf.text(label, margin, yPosition);
 
       // Valeur
-      pdf.setFont(undefined, "normal");
+      pdf.setFont(undefined as any, "normal");
       pdf.setTextColor(50, 50, 50);
-      pdf.text(String(value) as any, margin + 50, yPosition);
+      pdf.text(String(value), margin + 50, yPosition);
 
       yPosition += 8;
     }
