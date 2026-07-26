@@ -94,7 +94,10 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
             <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
           </Link>
           <Link href="/procedures" className={linkClass("procedures")}>
-            <span className="flex items-center gap-1 justify-center"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
+            <span className="flex items-center gap-1.5 justify-center">
+              <BookOpen className="w-4 h-4 flex-shrink-0" />
+              <span>Procédures</span>
+            </span>
           </Link>
 
           {/* Ressources Dropdown */}
@@ -161,7 +164,10 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
           </div>
 
           <Link href="/mon-dossier" className={linkClass("suivi")}>
-            <span className="flex items-center gap-1 justify-center"><Search className="w-3.5 h-3.5" />Suivi</span>
+            <span className="flex items-center gap-1.5 justify-center">
+              <Search className="w-4 h-4 flex-shrink-0" />
+              <span>Suivi</span>
+            </span>
           </Link>
         </nav>
 
