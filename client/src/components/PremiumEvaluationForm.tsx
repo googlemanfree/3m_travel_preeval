@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { useLocation } from "wouter";
 import PremiumEvaluationFormSteps47 from "./PremiumEvaluationFormSteps47";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -234,6 +235,8 @@ export default function PremiumEvaluationForm() {
     }
   };
 
+  const [, setLocation] = useLocation();
+
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) {
       toast.error("Veuillez remplir tous les champs obligatoires");
@@ -242,7 +245,7 @@ export default function PremiumEvaluationForm() {
 
     setIsSubmitting(true);
     try {
-      await submitMutation.mutateAsync({
+      const result = await submitMutation.mutateAsync({
         destination: formData.destination,
         projectType: formData.projectType,
         currentCountry: formData.currentCountry,
@@ -293,6 +296,10 @@ export default function PremiumEvaluationForm() {
       });
       setIsSuccess(true);
       toast.success("Formulaire soumis avec succès !");
+      // Rediriger vers la page de résultat après 2 secondes
+      setTimeout(() => {
+        setLocation(`/evaluation-result?destination=${formData.destination}&projectType=${formData.projectType}`);
+      }, 2000);
     } catch (error) {
       toast.error("Erreur lors de la soumission du formulaire");
       console.error(error);
