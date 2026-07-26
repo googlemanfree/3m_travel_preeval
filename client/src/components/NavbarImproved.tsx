@@ -6,7 +6,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Plane, BookOpen, User, Menu, X, Star, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,8 +20,19 @@ interface NavbarProps {
 
 export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+
+  // Détecteur de scroll pour l'effet de flou
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const isAdmin = isAuthenticated && user?.role === "admin";
   const [resourcesOpen, setResourcesOpen] = useState(false);
@@ -44,7 +55,11 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled
+        ? 'bg-white/80 backdrop-blur-md border-b border-gray-200/50 shadow-lg'
+        : 'bg-white border-b border-gray-200 shadow-sm'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
         {/* ── Logo Section ── */}

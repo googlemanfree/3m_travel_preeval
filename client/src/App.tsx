@@ -266,7 +266,7 @@ function App() {
           <TooltipProvider>
           <SkipLink />
           <Toaster />
-          <main id="main-content">
+          <main id="main-content" className="pt-16">
             <Router />
           </main>
           <FloatingServices />
