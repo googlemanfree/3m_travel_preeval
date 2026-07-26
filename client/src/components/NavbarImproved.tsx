@@ -9,7 +9,8 @@ import { Plane, BookOpen, User, Menu, X, Star, Shield, Globe, Map, FileText, Che
 import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
+import { MobileMenuImproved } from './MobileMenuImproved';
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
 
@@ -268,95 +269,13 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
       </div>
 
       {/* ── Mobile Menu ── */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="lg:hidden bg-white border-t border-gray-200 px-4 py-4 flex flex-col gap-3 shadow-lg"
-          >
-            <Link href="/" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              Accueil
-            </Link>
-            <Link href="/flights" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <Plane className="w-4 h-4 text-[#1E3A8A]" /> Vols
-            </Link>
-            <Link href="/procedures" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <BookOpen className="w-4 h-4 text-[#1E3A8A]" /> Procédures
-            </Link>
-            <Link href="/visa-types" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <FileText className="w-4 h-4 text-[#1E3A8A]" /> Types de Visa
-            </Link>
-            <Link href="/destinations" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <Map className="w-4 h-4 text-[#1E3A8A]" /> Destinations
-            </Link>
-            <Link href="/guide" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <Globe className="w-4 h-4 text-[#1E3A8A]" /> Guide Complet
-            </Link>
-            <Link href="/mon-dossier" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-[#1E3A8A] py-2 border-b border-gray-100 transition-colors">
-              <Search className="w-4 h-4 text-[#1E3A8A]" /> Suivi
-            </Link>
-
-            {/* Mobile Auth */}
-            {isAuthenticated ? (
-              <Link href="/mon-espace" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#152E5F] py-2 border-b border-gray-100 transition-colors">
-                <User className="w-4 h-4" /> Mon Espace
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#152E5F] py-2 border-b border-gray-100 transition-colors">
-                  <User className="w-4 h-4" /> Connexion
-                </Link>
-                <Link href="/register" onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-2 text-sm font-semibold text-[#1E3A8A] hover:text-[#152E5F] py-2 border-b border-gray-100 transition-colors">
-                  Inscription
-                </Link>
-              </>
-            )}
-
-            {/* Mobile Admin */}
-            {!isAdmin && (
-              <Link href="/admin/login" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100 transition-colors">
-                <Shield className="w-4 h-4" /> Connexion Admin
-              </Link>
-            )}
-            {isAdmin && (
-              <Link href="/admin" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100 transition-colors">
-                <Shield className="w-4 h-4" /> Administration
-              </Link>
-            )}
-
-            {/* Mobile Evaluation */}
-            {onEvalClick && (
-              <Button
-                onClick={() => { setMobileOpen(false); onEvalClick(); }}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold mt-2 rounded-lg transition-all duration-200"
-              >
-                <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
-              </Button>
-            )}
-
-            {/* Mobile Language Switcher */}
-            <div className="border-t border-gray-100 pt-3 mt-2">
-              <div className="text-xs font-semibold text-gray-600 mb-2">Langue</div>
-              <LanguageSwitcher showLabel={false} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MobileMenuImproved
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        isAuthenticated={isAuthenticated}
+        isAdmin={isAdmin}
+        onEvalClick={onEvalClick}
+      />
     </header>
   );
 }
