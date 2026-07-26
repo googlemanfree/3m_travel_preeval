@@ -175,6 +175,53 @@
   [role="button"] {
     @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
   }
+  
+  /* Transitions fluides au survol */
+  button:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover,
+  [type="button"]:not(:disabled):hover,
+  [type="submit"]:not(:disabled):hover,
+  [type="reset"]:not(:disabled):hover {
+    @apply transform scale-105 shadow-lg;
+  }
+  
+  /* Transition au clic */
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active,
+  [type="button"]:not(:disabled):active,
+  [type="submit"]:not(:disabled):active,
+  [type="reset"]:not(:disabled):active {
+    @apply transform scale-95;
+  }
+  
+  /* Focus visible */
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  [type="button"]:focus-visible,
+  [type="submit"]:focus-visible,
+  [type="reset"]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-blue-500;
+  }
+  
+  /* Respecter prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    button,
+    [role="button"],
+    [type="button"],
+    [type="submit"],
+    [type="reset"],
+    a {
+      @apply transition-none;
+    }
+    
+    button:not(:disabled):hover,
+    [role="button"]:not([aria-disabled="true"]):hover,
+    [type="button"]:not(:disabled):hover,
+    [type="submit"]:not(:disabled):hover,
+    [type="reset"]:not(:disabled):hover {
+      @apply transform-none shadow-none;
+    }
+  }
 }
 
 @layer components {
