@@ -8,8 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -58,7 +57,7 @@ export function MultiProjectEvaluationForm() {
 
   const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({
     onSuccess: () => {
-      toast.success("✅ Évaluation soumise ! Vérifiez votre email pour le bilan.");
+      toast.success("Évaluation soumise avec succès ! Vérifiez votre email.");
       setStep(1);
       setFormData({
         fullName: "",
@@ -70,7 +69,7 @@ export function MultiProjectEvaluationForm() {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "❌ Erreur lors de la soumission");
+      toast.error(error.message || "Erreur lors de la soumission");
     },
   });
 
@@ -88,8 +87,9 @@ export function MultiProjectEvaluationForm() {
   };
 
   const handleNext = () => {
+    // Validation étape 1
     if (!formData.fullName || !formData.email || !formData.whatsappPhone || !formData.nationality) {
-      toast.error("⚠️ Veuillez remplir tous les champs obligatoires");
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
     setStep(2);
@@ -104,423 +104,415 @@ export function MultiProjectEvaluationForm() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
   return (
     <motion.div
-      className="w-full max-w-3xl mx-auto"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      className="w-full max-w-2xl mx-auto"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
-      <Card className="p-8 bg-gradient-to-br from-white to-slate-50 shadow-xl border-0 rounded-2xl">
-        {/* Header */}
+      <Card className="p-8 bg-white shadow-lg border-0">
+        {/* Indicateur de progression */}
         <div className="mb-8">
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent mb-2">
-            Auto-Évaluation
-          </h2>
-          <p className="text-slate-600 text-sm font-medium">
-            Étape {step} de 2 • {step === 1 ? "Informations de base" : "Détails de votre projet"}
-          </p>
-        </div>
-
-        {/* Barre de progression fluide */}
-        <div className="mb-10">
-          <div className="flex gap-2">
-            {[1, 2].map((s) => (
-              <motion.div
-                key={s}
-                className={`flex-1 h-2.5 rounded-full transition-all duration-500 ${
-                  s <= step
-                    ? "bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg"
-                    : "bg-slate-200"
-                }`}
-                layoutId={`progress-${s}`}
-              />
-            ))}
+          <div className="flex items-center gap-4">
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white transition-all ${
+                step >= 1 ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            >
+              1
+            </div>
+            <div className={`flex-1 h-1 transition-all ${step >= 2 ? "bg-blue-600" : "bg-gray-300"}`} />
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white transition-all ${
+                step >= 2 ? "bg-blue-600" : "bg-gray-300"
+              }`}
+            >
+              2
+            </div>
+          </div>
+          <div className="flex justify-between mt-2 text-sm text-gray-600">
+            <span>Informations générales</span>
+            <span>Détails du projet</span>
           </div>
         </div>
 
-        {/* Contenu des étapes avec animations fluides */}
-        <AnimatePresence mode="wait">
-          {step === 1 && (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-slate-700 font-semibold text-sm">
-                    Nom & Prénom *
-                  </Label>
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="Jean Dupont"
-                    className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  />
-                </div>
+        {/* ÉTAPE 1 : Infos générales */}
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Informations Générales</h2>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700 font-semibold text-sm">
-                    Email *
-                  </Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="jean@example.com"
-                    className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="whatsappPhone" className="text-slate-700 font-semibold text-sm">
-                    WhatsApp *
-                  </Label>
-                  <Input
-                    id="whatsappPhone"
-                    name="whatsappPhone"
-                    value={formData.whatsappPhone}
-                    onChange={handleInputChange}
-                    placeholder="+237 6XX XXX XXX"
-                    className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="nationality" className="text-slate-700 font-semibold text-sm">
-                    Nationalité *
-                  </Label>
-                  <Input
-                    id="nationality"
-                    name="nationality"
-                    value={formData.nationality}
-                    onChange={handleInputChange}
-                    placeholder="Camerounais"
-                    className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="currentCity" className="text-slate-700 font-semibold text-sm">
-                    Ville actuelle
-                  </Label>
-                  <Input
-                    id="currentCity"
-                    name="currentCity"
-                    value={formData.currentCity}
-                    onChange={handleInputChange}
-                    placeholder="Yaoundé"
-                    className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="projectType" className="text-slate-700 font-semibold text-sm">
-                    Type de projet *
-                  </Label>
-                  <Select
-                    value={formData.projectType}
-                    onValueChange={(value) => handleSelectChange("projectType", value)}
-                  >
-                    <SelectTrigger className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="travail">💼 Visa Travail</SelectItem>
-                      <SelectItem value="etudes">🎓 Visa Études</SelectItem>
-                      <SelectItem value="tourisme">✈️ Visa Tourisme</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {step === 2 && (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -30 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-6"
-            >
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-blue-900 font-medium">
-                  {formData.projectType === "travail" && "📋 Détails - Visa Travail"}
-                  {formData.projectType === "etudes" && "📚 Détails - Visa Études"}
-                  {formData.projectType === "tourisme" && "🌍 Détails - Visa Tourisme"}
-                </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="fullName" className="text-gray-700 font-semibold">
+                  Nom complet *
+                </Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  placeholder="Jean Dupont"
+                  className="mt-2"
+                />
               </div>
 
-              {/* VISA TRAVAIL */}
-              {formData.projectType === "travail" && (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="sector" className="text-slate-700 font-semibold text-sm">
-                      Secteur d'activité
-                    </Label>
-                    <Input
-                      id="sector"
-                      name="sector"
-                      value={formData.sector || ""}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Informatique, Santé, Construction"
-                      className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="email" className="text-gray-700 font-semibold">
+                  Email *
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="jean@example.com"
+                  className="mt-2"
+                />
+              </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="yearsOfExperience" className="text-slate-700 font-semibold text-sm">
-                        Années d'expérience
-                      </Label>
-                      <Input
-                        id="yearsOfExperience"
-                        name="yearsOfExperience"
-                        type="number"
-                        value={formData.yearsOfExperience || ""}
-                        onChange={handleInputChange}
-                        placeholder="5"
-                        className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                      />
-                    </div>
+              <div>
+                <Label htmlFor="whatsappPhone" className="text-gray-700 font-semibold">
+                  WhatsApp *
+                </Label>
+                <Input
+                  id="whatsappPhone"
+                  name="whatsappPhone"
+                  value={formData.whatsappPhone}
+                  onChange={handleInputChange}
+                  placeholder="+237 6XX XXX XXX"
+                  className="mt-2"
+                />
+              </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="educationLevel" className="text-slate-700 font-semibold text-sm">
-                        Niveau d'études
-                      </Label>
-                      <Select
-                        value={formData.educationLevel || ""}
-                        onValueChange={(value) => handleSelectChange("educationLevel", value)}
-                      >
-                        <SelectTrigger className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all">
-                          <SelectValue placeholder="Sélectionner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="bac">Baccalauréat</SelectItem>
-                          <SelectItem value="licence">Licence</SelectItem>
-                          <SelectItem value="master">Master</SelectItem>
-                          <SelectItem value="doctorat">Doctorat</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+              <div>
+                <Label htmlFor="nationality" className="text-gray-700 font-semibold">
+                  Nationalité *
+                </Label>
+                <Input
+                  id="nationality"
+                  name="nationality"
+                  value={formData.nationality}
+                  onChange={handleInputChange}
+                  placeholder="Camerounais"
+                  className="mt-2"
+                />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="languages" className="text-slate-700 font-semibold text-sm">
-                      Langues parlées
-                    </Label>
-                    <Input
-                      id="languages"
-                      name="languages"
-                      value={formData.languages || ""}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Français (courant), Anglais (intermédiaire)"
-                      className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
+              <div>
+                <Label htmlFor="currentCity" className="text-gray-700 font-semibold">
+                  Ville actuelle
+                </Label>
+                <Input
+                  id="currentCity"
+                  name="currentCity"
+                  value={formData.currentCity}
+                  onChange={handleInputChange}
+                  placeholder="Yaoundé"
+                  className="mt-2"
+                />
+              </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Checkbox
-                      id="cvAvailable"
-                      checked={formData.cvAvailable || false}
-                      onCheckedChange={(checked) => handleCheckboxChange("cvAvailable", checked as boolean)}
-                    />
-                    <Label htmlFor="cvAvailable" className="text-slate-700 cursor-pointer text-sm">
-                      J'ai un CV à jour
-                    </Label>
-                  </div>
+              <div>
+                <Label htmlFor="projectType" className="text-gray-700 font-semibold">
+                  Type de projet *
+                </Label>
+                <Select
+                  value={formData.projectType}
+                  onValueChange={(value) => handleSelectChange("projectType", value)}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="travail">Visa Travail</SelectItem>
+                    <SelectItem value="etudes">Visa Études</SelectItem>
+                    <SelectItem value="tourisme">Visa Tourisme</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleNext}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all"
+            >
+              Continuer →
+            </Button>
+          </motion.div>
+        )}
+
+        {/* ÉTAPE 2 : Champs conditionnels */}
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="space-y-6"
+          >
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {formData.projectType === "travail" && "Détails - Visa Travail"}
+              {formData.projectType === "etudes" && "Détails - Visa Études"}
+              {formData.projectType === "tourisme" && "Détails - Visa Tourisme"}
+            </h2>
+
+            {/* VISA TRAVAIL */}
+            {formData.projectType === "travail" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="sector" className="text-gray-700 font-semibold">
+                    Secteur d'activité
+                  </Label>
+                  <Input
+                    id="sector"
+                    name="sector"
+                    value={formData.sector || ""}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Informatique, Santé, Construction"
+                    className="mt-2"
+                  />
                 </div>
-              )}
 
-              {/* VISA ÉTUDES */}
-              {formData.projectType === "etudes" && (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="diplomaLevel" className="text-slate-700 font-semibold text-sm">
-                      Dernier diplôme obtenu
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="yearsOfExperience" className="text-gray-700 font-semibold">
+                      Années d'expérience
+                    </Label>
+                    <Input
+                      id="yearsOfExperience"
+                      name="yearsOfExperience"
+                      type="number"
+                      value={formData.yearsOfExperience || ""}
+                      onChange={handleInputChange}
+                      placeholder="5"
+                      className="mt-2"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="educationLevel" className="text-gray-700 font-semibold">
+                      Niveau d'études
                     </Label>
                     <Select
-                      value={formData.diplomaLevel || ""}
-                      onValueChange={(value) => handleSelectChange("diplomaLevel", value)}
+                      value={formData.educationLevel || ""}
+                      onValueChange={(value) => handleSelectChange("educationLevel", value)}
                     >
-                      <SelectTrigger className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all">
+                      <SelectTrigger className="mt-2">
                         <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="bac">Baccalauréat</SelectItem>
                         <SelectItem value="licence">Licence</SelectItem>
                         <SelectItem value="master">Master</SelectItem>
-                        <SelectItem value="autre">Autre</SelectItem>
+                        <SelectItem value="doctorat">Doctorat</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                      <Label htmlFor="averageGrade" className="text-slate-700 font-semibold text-sm">
-                        Moyenne générale
-                      </Label>
-                      <Input
-                        id="averageGrade"
-                        name="averageGrade"
-                        value={formData.averageGrade || ""}
-                        onChange={handleInputChange}
-                        placeholder="Ex: 15/20"
-                        className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                      />
-                    </div>
+                <div>
+                  <Label htmlFor="languages" className="text-gray-700 font-semibold">
+                    Langues parlées
+                  </Label>
+                  <Input
+                    id="languages"
+                    name="languages"
+                    value={formData.languages || ""}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Français (courant), Anglais (intermédiaire)"
+                    className="mt-2"
+                  />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="financialGuarantee" className="text-slate-700 font-semibold text-sm">
-                        Garant financier
-                      </Label>
-                      <Input
-                        id="financialGuarantee"
-                        name="financialGuarantee"
-                        value={formData.financialGuarantee || ""}
-                        onChange={handleInputChange}
-                        placeholder="Ex: Parent, Sponsor"
-                        className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                      />
-                    </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="cvAvailable"
+                    checked={formData.cvAvailable || false}
+                    onCheckedChange={(checked) => handleCheckboxChange("cvAvailable", checked as boolean)}
+                  />
+                  <Label htmlFor="cvAvailable" className="text-gray-700 cursor-pointer">
+                    J'ai un CV à jour
+                  </Label>
+                </div>
+              </div>
+            )}
+
+            {/* VISA ÉTUDES */}
+            {formData.projectType === "etudes" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="diplomaLevel" className="text-gray-700 font-semibold">
+                    Dernier diplôme obtenu
+                  </Label>
+                  <Select
+                    value={formData.diplomaLevel || ""}
+                    onValueChange={(value) => handleSelectChange("diplomaLevel", value)}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bac">Baccalauréat</SelectItem>
+                      <SelectItem value="licence">Licence</SelectItem>
+                      <SelectItem value="master">Master</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="averageGrade" className="text-gray-700 font-semibold">
+                      Moyenne générale
+                    </Label>
+                    <Input
+                      id="averageGrade"
+                      name="averageGrade"
+                      value={formData.averageGrade || ""}
+                      onChange={handleInputChange}
+                      placeholder="Ex: 15/20"
+                      className="mt-2"
+                    />
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Checkbox
-                      id="admissionLetter"
-                      checked={formData.admissionLetter || false}
-                      onCheckedChange={(checked) => handleCheckboxChange("admissionLetter", checked as boolean)}
-                    />
-                    <Label htmlFor="admissionLetter" className="text-slate-700 cursor-pointer text-sm">
-                      J'ai une lettre d'admission
+                  <div>
+                    <Label htmlFor="financialGuarantee" className="text-gray-700 font-semibold">
+                      Garant financier
                     </Label>
+                    <Input
+                      id="financialGuarantee"
+                      name="financialGuarantee"
+                      value={formData.financialGuarantee || ""}
+                      onChange={handleInputChange}
+                      placeholder="Ex: Parent, Sponsor"
+                      className="mt-2"
+                    />
                   </div>
                 </div>
-              )}
 
-              {/* VISA TOURISME */}
-              {formData.projectType === "tourisme" && (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="visitReason" className="text-slate-700 font-semibold text-sm">
-                      Raison du voyage
-                    </Label>
-                    <Input
-                      id="visitReason"
-                      name="visitReason"
-                      value={formData.visitReason || ""}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Visite familiale, Tourisme"
-                      className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="travelHistory" className="text-slate-700 font-semibold text-sm">
-                      Historique de voyage
-                    </Label>
-                    <Input
-                      id="travelHistory"
-                      name="travelHistory"
-                      value={formData.travelHistory || ""}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Visas antérieurs, pays visités"
-                      className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="socialTies" className="text-slate-700 font-semibold text-sm">
-                      Attaches socio-économiques
-                    </Label>
-                    <Input
-                      id="socialTies"
-                      name="socialTies"
-                      value={formData.socialTies || ""}
-                      onChange={handleInputChange}
-                      placeholder="Ex: Emploi, Propriété, Famille"
-                      className="rounded-lg border-slate-300 focus:border-blue-500 focus:ring-blue-500 transition-all"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <Checkbox
-                      id="previousRefusal"
-                      checked={formData.previousRefusal || false}
-                      onCheckedChange={(checked) => handleCheckboxChange("previousRefusal", checked as boolean)}
-                    />
-                    <Label htmlFor="previousRefusal" className="text-slate-700 cursor-pointer text-sm">
-                      J'ai un historique de refus de visa
-                    </Label>
-                  </div>
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="admissionLetter"
+                    checked={formData.admissionLetter || false}
+                    onCheckedChange={(checked) => handleCheckboxChange("admissionLetter", checked as boolean)}
+                  />
+                  <Label htmlFor="admissionLetter" className="text-gray-700 cursor-pointer">
+                    J'ai une lettre d'admission
+                  </Label>
                 </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
 
-        {/* Boutons de navigation */}
-        <div className="mt-10 flex gap-3 justify-between">
-          {step === 2 && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2 }}
-            >
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="transcriptAvailable"
+                    checked={formData.transcriptAvailable || false}
+                    onCheckedChange={(checked) => handleCheckboxChange("transcriptAvailable", checked as boolean)}
+                  />
+                  <Label htmlFor="transcriptAvailable" className="text-gray-700 cursor-pointer">
+                    J'ai mes relevés de notes
+                  </Label>
+                </div>
+              </div>
+            )}
+
+            {/* VISA TOURISME */}
+            {formData.projectType === "tourisme" && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="visitReason" className="text-gray-700 font-semibold">
+                    Motif de visite
+                  </Label>
+                  <Select
+                    value={formData.visitReason || ""}
+                    onValueChange={(value) => handleSelectChange("visitReason", value)}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tourisme">Tourisme</SelectItem>
+                      <SelectItem value="famille">Visite famille</SelectItem>
+                      <SelectItem value="affaires">Affaires</SelectItem>
+                      <SelectItem value="conference">Conférence</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="travelHistory" className="text-gray-700 font-semibold">
+                    Historique de voyages
+                  </Label>
+                  <Textarea
+                    id="travelHistory"
+                    name="travelHistory"
+                    value={formData.travelHistory || ""}
+                    onChange={handleInputChange}
+                    placeholder="Pays visités, dates, durées..."
+                    className="mt-2"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    id="previousRefusal"
+                    checked={formData.previousRefusal || false}
+                    onCheckedChange={(checked) => handleCheckboxChange("previousRefusal", checked as boolean)}
+                  />
+                  <Label htmlFor="previousRefusal" className="text-gray-700 cursor-pointer">
+                    J'ai eu un refus de visa antérieur
+                  </Label>
+                </div>
+
+                <div>
+                  <Label htmlFor="socialTies" className="text-gray-700 font-semibold">
+                    Attaches socio-économiques
+                  </Label>
+                  <Textarea
+                    id="socialTies"
+                    name="socialTies"
+                    value={formData.socialTies || ""}
+                    onChange={handleInputChange}
+                    placeholder="Emploi, famille, propriété, etc."
+                    className="mt-2"
+                    rows={3}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-4 pt-6">
               <Button
-                variant="outline"
                 onClick={() => setStep(1)}
-                className="flex items-center gap-2 border-slate-300 hover:bg-slate-50 transition-all"
+                variant="outline"
+                className="flex-1 py-3 rounded-lg border-gray-300"
               >
-                <ChevronLeft className="w-4 h-4" />
-                Retour
+                ← Retour
               </Button>
-            </motion.div>
-          )}
-
-          {step === 1 ? (
-            <motion.div
-              className="w-full"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Button
-                onClick={handleNext}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl"
-              >
-                Continuer
-                <ChevronRight className="w-4 h-4" />
-              </Button>
-            </motion.div>
-          ) : (
-            <motion.div
-              className="flex-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-white font-semibold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition-all"
               >
-                {isSubmitting ? "⏳ Envoi en cours..." : "✓ Soumettre mon évaluation"}
-                {!isSubmitting && <CheckCircle2 className="w-4 h-4" />}
+                {isSubmitting ? "Envoi en cours..." : "Soumettre l'Évaluation"}
               </Button>
-            </motion.div>
-          )}
-        </div>
+            </div>
+          </motion.div>
+        )}
       </Card>
     </motion.div>
   );
