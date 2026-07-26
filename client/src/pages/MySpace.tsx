@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download } from "lucide-react";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
 import { QuickUploadModal } from "@/components/QuickUploadModal";
+import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
 
 export default function MySpace() {
@@ -18,6 +19,7 @@ export default function MySpace() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [showNotification, setShowNotification] = useState(true);
+  const [bilanActionModalOpen, setBilanActionModalOpen] = useState(false);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(

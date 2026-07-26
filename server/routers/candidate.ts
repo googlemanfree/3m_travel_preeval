@@ -839,4 +839,84 @@ export const candidateRouter = router({
         fileName: document[0].fileName,
       };
     }),
+
+  /**
+   * Envoyer une question suite au bilan
+   */
+  sendBilanQuestion: candidateProcedure
+    .input(z.object({
+      candidateEmail: z.string().email(),
+      dossierNumber: z.string(),
+      question: z.string().min(10),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      try {
+        const message = await db
+          .insert(candidateMessages)
+          .values({
+            candidateId: ctx.candidate.id,
+            senderRole: "candidate",
+            content: `[QUESTION BILAN ${input.dossierNumber}]\n\n${input.question}`,
+            isRead: false,
+          })
+          .$returningId();
+
+        return {
+          success: true,
+          message: "Question envoyee avec succes",
+          messageId: message[0].id,
+        };
+      } catch (err) {
+        console.error("[Send Bilan Question] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'envoi de la question",
+        });
+      }
+    }),
+
+  /**
+   * Demander un rendez-vous suite au bilan
+   */
+  requestBilanAppointment: candidateProcedure
+    .input(z.object({
+      candidateEmail: z.string().email(),
+      dossierNumber: z.string(),
+      preferredDate: z.string(),
+      preferredTime: z.string(),
+      reason: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      try {
+        const appointmentRequest = `[RENDEZ-VOUS ${input.dossierNumber}]\n\nDate preferee: ${input.preferredDate}\nHeure preferee: ${input.preferredTime}\n\nSujet: ${input.reason}`;
+
+        const message = await db
+          .insert(candidateMessages)
+          .values({
+            candidateId: ctx.candidate.id,
+            senderRole: "candidate",
+            content: appointmentRequest,
+            isRead: false,
+          })
+          .$returningId();
+
+        return {
+          success: true,
+          message: "Demande de rendez-vous envoyee",
+          requestId: message[0].id,
+        };
+      } catch (err) {
+        console.error("[Request Bilan Appointment] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la demande de rendez-vous",
+        });
+      }
+    }),
 });

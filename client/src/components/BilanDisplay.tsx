@@ -1,5 +1,4 @@
-import React from 'react';
-import { Download, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Download, AlertCircle, CheckCircle, TrendingUp, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +21,18 @@ interface Bilan {
 interface BilanDisplayProps {
   bilan: Bilan | null;
   isLoading?: boolean;
+  onActionClick?: () => void;
+  candidateEmail?: string;
+  dossierNumber?: string;
 }
 
-export function BilanDisplay({ bilan, isLoading = false }: BilanDisplayProps) {
+export function BilanDisplay({ 
+  bilan, 
+  isLoading = false,
+  onActionClick,
+  candidateEmail,
+  dossierNumber,
+}: BilanDisplayProps) {
   const getVerdictColor = (verdict: string) => {
     switch (verdict) {
       case 'tres_favorable':
@@ -50,7 +58,6 @@ export function BilanDisplay({ bilan, isLoading = false }: BilanDisplayProps) {
   const handleDownloadPDF = () => {
     if (!bilan) return;
     
-    // Créer un document PDF simple
     const content = `
       BILAN D'ADMISSIBILITÉ
       =====================
@@ -211,6 +218,23 @@ export function BilanDisplay({ bilan, isLoading = false }: BilanDisplayProps) {
             <p>Validé le: {new Date(bilan.validatedAt).toLocaleDateString('fr-FR')}</p>
           )}
         </div>
+
+        {/* Actions */}
+        {bilan.status === 'sent' && onActionClick && (
+          <div className="border-t pt-4 mt-4">
+            <Button
+              onClick={onActionClick}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+              size="lg"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Poser une Question ou Demander un Rendez-vous
+            </Button>
+            <p className="text-xs text-gray-500 text-center mt-2">
+              Vous avez des questions? Nos experts sont là pour vous aider!
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
