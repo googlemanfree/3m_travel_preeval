@@ -139,6 +139,24 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Boutons d'Accès Rapide */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <Button
+            onClick={() => navigate('/admin/evaluations')}
+            className="h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-lg font-semibold rounded-lg shadow-lg"
+          >
+            📋 Accéder aux évaluations →
+          </Button>
+          <Button
+            onClick={() => navigate('/admin/procedures')}
+            className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-lg font-semibold rounded-lg shadow-lg"
+          >
+            🔄 Gérer les procédures →
+          </Button>
+        </div>
+      </div>
+
       {/* Contenu */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Cartes de statistiques */}

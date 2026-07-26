@@ -40,6 +40,7 @@ import AdminEvaluation from "./pages/AdminEvaluation";
 import AdminAccompagnement from "./pages/AdminAccompagnement";
 import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
+import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
 import FloatingServices from "./components/FloatingServices";
 import { FloatingWhatsAppButton } from "./components/FloatingWhatsAppButton";
@@ -187,6 +188,11 @@ function Router() {
       <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/evaluations"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEvaluations />
         </AdminGuard>
       </Route>
       <Route path={"/admin/candidates"}>
