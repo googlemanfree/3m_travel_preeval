@@ -870,3 +870,16 @@
 - [x] Corriger /evaluation-widget → / dans About.tsx
 - [x] Tester tous les liens principaux (7/7 routes accessibles)
 - [x] Redémarrer le serveur et vérifier la compilation
+
+
+## Refonte Formulaire Auto-Évaluation 2 Étapes (En cours)
+
+- [ ] Adapter MultiProjectEvaluationForm à la nouvelle spécification 2 étapes
+- [ ] Implémenter workflow email J+0 (accusé de réception via contact@3mtravelagency.click)
+- [ ] Implémenter workflow email J+48 (bilan + validation admin)
+- [ ] Créer interface paiement flexible/générique (prête à brancher Flutterwave/Notch Pay/Campay)
+- [ ] Générer dossier N° au format #3M-YYYYMMDD-XXXX
+- [ ] Implémenter Cron job pour détection dossiers H+48
+- [ ] Supprimer SimpleMultiProjectForm et anciens formulaires redondants
+- [ ] Tester workflow complet (soumission → email → bilan → paiement)
+- [ ] Déployer et publier
