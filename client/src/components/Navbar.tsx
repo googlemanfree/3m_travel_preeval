@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
 
@@ -138,11 +137,6 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             </Link>
           )}
         </nav>
-
-        {/* ── Language Switcher desktop ── */}
-        <div className="hidden md:flex items-center">
-          <LanguageSwitcher showLabel={false} />
-        </div>
 
         {/* ── Actions desktop ── */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
@@ -281,10 +275,6 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
             </Button>
           )}
-          <div className="border-t border-gray-100 pt-3 mt-2">
-            <div className="text-xs font-semibold text-gray-600 mb-2">Langue</div>
-            <LanguageSwitcher showLabel={false} />
-          </div>
         </div>
       )}
     </header>
