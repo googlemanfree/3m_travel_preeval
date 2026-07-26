@@ -197,8 +197,16 @@ function Router() {
           <AdminUserDetails />
         </AdminGuard>
       </Route>
-      <Route path={"/admin/agency-dossiers"} component={AdminAgencyDossiers} />
-      <Route path={"admin/agency-dossiers"} component={AdminAgencyDossiers} />
+      <Route path={"/admin/agency-dossiers"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAgencyDossiers />
+        </AdminGuard>
+      </Route>
+      <Route path={"admin/agency-dossiers"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAgencyDossiers />
+        </AdminGuard>
+      </Route>
 
       <Route path="/hotels">
         <Hotels />
