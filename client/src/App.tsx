@@ -61,6 +61,8 @@ import { Blog } from "./pages/Blog";
 import TestFeatures from "./pages/TestFeatures";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import { SkipLink } from "./components/SkipLink";
+import { useServiceWorker } from "./hooks/useServiceWorker";
+import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -247,6 +249,9 @@ function Router() {
 }
 
 function App() {
+  // Enregistrer le service worker pour les performances et le mode offline
+  useServiceWorker();
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -259,6 +264,7 @@ function App() {
           <FloatingServices />
           <FloatingWhatsAppButton />
           <ScrollToTop />
+          <ServiceWorkerUpdateNotification />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
