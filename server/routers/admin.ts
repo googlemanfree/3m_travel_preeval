@@ -833,4 +833,50 @@ export const adminRouter = router({
         });
       }
     }),
+
+  /**
+   * Publier le bilan vers l'espace personnel du client
+   */
+  publishBilanToClient: protectedProcedure
+    .input(z.object({ bilanId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const bilan = await db
+          .select()
+          .from(bilans)
+          .where(eq(bilans.id, input.bilanId))
+          .limit(1);
+
+        if (bilan.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Bilan non trouve" });
+        }
+
+        await db
+          .update(bilans)
+          .set({
+            status: "sent",
+            sentAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return {
+          success: true,
+          message: "Bilan publie avec succes",
+          publishedAt: new Date(),
+        };
+      } catch (err) {
+        console.error("[Admin Publish Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la publication du bilan",
+        });
+      }
+    }),
 });

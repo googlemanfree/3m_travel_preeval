@@ -9,10 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { 
   Search, FileText, CheckCircle2, Clock, AlertCircle, 
-  Download, Mail, Eye, Edit2, Trash2 
+  Download, Mail, Eye, Edit2, Trash2, Send 
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
 export default function AdminEvaluations() {
   const { user, loading: authLoading } = useAuth();
@@ -36,6 +37,24 @@ export default function AdminEvaluations() {
   const { data: applicationsData } = trpc.admin.getAllApplications.useQuery(undefined, {
     enabled: !!user,
   });
+
+  // Mutation pour publier le bilan
+  const publishBilanMutation = trpc.admin.publishBilanToClient.useMutation({
+    onSuccess: () => {
+      toast.success("Bilan publié avec succès!");
+      // Rafraîchir la liste
+      window.location.reload();
+    },
+    onError: (err) => {
+      toast.error("Erreur lors de la publication du bilan");
+    },
+  });
+
+  const handlePublishBilan = (bilanId: number) => {
+    if (confirm("Êtes-vous sûr de vouloir publier ce bilan?")) {
+      publishBilanMutation.mutate({ bilanId });
+    }
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -222,6 +241,17 @@ export default function AdminEvaluations() {
                             <Edit2 className="w-4 h-4" />
                             Éditer
                           </Button>
+                          {bilan.status === 'validated' && (
+                            <Button
+                              size="sm"
+                              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => handlePublishBilan(bilan.id)}
+                              disabled={publishBilanMutation.isPending}
+                            >
+                              <Send className="w-4 h-4" />
+                              {publishBilanMutation.isPending ? "Publication..." : "Publier"}
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
