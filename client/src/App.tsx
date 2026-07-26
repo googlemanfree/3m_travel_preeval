@@ -42,6 +42,7 @@ import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import Hotels from "./pages/Hotels";
 import FloatingServices from "./components/FloatingServices";
+import { FloatingWhatsAppButton } from "./components/FloatingWhatsAppButton";
 import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
@@ -227,6 +228,7 @@ function App() {
           <Toaster />
           <Router />
           <FloatingServices />
+          <FloatingWhatsAppButton />
           <ScrollToTop />
         </TooltipProvider>
       </ThemeProvider>
