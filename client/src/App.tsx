@@ -4,7 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import AuthGuard from "./components/AuthGuard";
+import NavbarImproved from "./components/NavbarImproved";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import Procedures from "./pages/Procedures";
@@ -66,6 +66,7 @@ import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdat
 import { AIAssistantWidget } from "./components/AIAssistantWidgetMultilingual";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import AuthGuard from "./components/AuthGuard";
 
 function Router() {
   // Enregistrer le service worker
