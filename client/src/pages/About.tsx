@@ -454,7 +454,7 @@ export default function About() {
           <p className="text-lg text-blue-100 mb-8">
             Confiez vos formalités internationales à 3M Travel & Services et gagnez du temps dans vos démarches.
           </p>
-          <Link href="/evaluation-widget">
+          <Link href="/">
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

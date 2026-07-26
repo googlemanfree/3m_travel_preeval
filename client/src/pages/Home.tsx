@@ -1203,7 +1203,7 @@ export default function Home() {
                 ))}
                 <li><a href="/procedures" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">📚 Procédures & Guides</a></li>
                 <li><a href="/flights" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">✈️ Recherche de Vols</a></li>
-                <li><a href="/traduction" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">📄 Traduction Assermentée</a></li>
+                <li><a href="/traduction/order" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">📄 Traduction Assermentée</a></li>
                 <li><a href="/assurance" className="hover:text-[#7cb9e8] transition-colors font-semibold text-[#7cb9e8]/80">🛡️ Assurance Voyage</a></li>
               </ul>
             </div>

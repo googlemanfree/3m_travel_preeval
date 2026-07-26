@@ -861,3 +861,12 @@
 - [ ] Tests du flux de connexion/inscription
 - [ ] Tests de redirection automatique
 - [ ] Tests d'accès aux routes protégées
+
+
+## Corrections de Liens Cassés (Phase 6)
+- [x] Corriger /signup → /register dans Navbar.tsx (2 occurrences)
+- [x] Corriger /traduction → /traduction/order dans Home.tsx footer
+- [x] Corriger /components → / dans ComponentShowcase.tsx
+- [x] Corriger /evaluation-widget → / dans About.tsx
+- [x] Tester tous les liens principaux (7/7 routes accessibles)
+- [x] Redémarrer le serveur et vérifier la compilation

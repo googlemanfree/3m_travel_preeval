@@ -171,7 +171,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
                   Connexion
                 </Button>
               </Link>
-              <Link href="/signup">
+              <Link href="/register">
                 <Button
                   className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
                 >
@@ -239,7 +239,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
                 className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
                 <User className="w-4 h-4" /> Connexion
               </Link>
-              <Link href="/signup" onClick={() => setMobileOpen(false)}
+              <Link href="/register" onClick={() => setMobileOpen(false)}
                 className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
                 Inscription
               </Link>
