@@ -115,7 +115,7 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-48 z-50"
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-56 z-50"
                 >
                   <Link href="/visa-types" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1E3A8A] transition-colors">
                     <FileText className="w-4 h-4 text-[#1E3A8A]" />
@@ -151,7 +151,7 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
             </AnimatePresence>
           </div>
 
-          <Link href="/mon-dossier" className={linkClass("mon-dossier")}>
+          <Link href="/mon-dossier" className={linkClass("suivi")}>
             <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivi</span>
           </Link>
         </nav>
