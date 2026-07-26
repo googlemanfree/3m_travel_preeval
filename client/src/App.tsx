@@ -58,6 +58,7 @@ import AdminUserDetails from "./pages/AdminUserDetails";
 import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
+import TestFeatures from "./pages/TestFeatures";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 
 function Router() {
@@ -101,8 +102,8 @@ function Router() {
           <EvisaDemande />
         </AuthGuard>
       </Route>
-      <Route path={"/about"} component={About} />
-      <Route path={"/contact"} component={Contact} />
+      <Route path={"/blog"} component={Blog} />
+      <Route path={"/test-features"} component={TestFeatures} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction/order"}>
