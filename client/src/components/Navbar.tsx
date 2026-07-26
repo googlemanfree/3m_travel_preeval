@@ -96,7 +96,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
                   <FileText className="w-4 h-4 text-blue-600" />
                   Types de Visa
                 </Link>
-                <Link href="/procedures" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                <Link href="/destinations" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                   <Map className="w-4 h-4 text-blue-600" />
                   Destinations
                 </Link>
