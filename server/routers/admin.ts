@@ -7,7 +7,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, aiReportHistory, users, applications, clientDocuments } from "../../drizzle/schema";
+import { evaluations, aiReportHistory, users, applications, clientDocuments, bilans } from "../../drizzle/schema";
 import { eq, desc, like, or } from "drizzle-orm";
 
 export const adminRouter = router({
@@ -555,6 +555,181 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la récupération des utilisateurs",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION DES BILANS D'ADMISSIBILITÉ
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer les bilans en attente de validation
+   */
+  getPendingBilans: protectedProcedure
+    .query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const pendingBilans = await db
+          .select()
+          .from(bilans)
+          .where(eq(bilans.status, "draft"))
+          .orderBy(desc(bilans.generatedAt))
+          .limit(50);
+
+        return pendingBilans;
+      } catch (err) {
+        console.error("[Admin Get Pending Bilans] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des bilans",
+        });
+      }
+    }),
+
+  /**
+   * Valider et envoyer un bilan au candidat
+   */
+  validateAndSendBilan: protectedProcedure
+    .input(z.object({ bilanId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        // Récupérer le bilan
+        const bilan = await db.select().from(bilans).where(eq(bilans.id, input.bilanId)).limit(1);
+        if (!bilan || bilan.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Bilan non trouvé" });
+        }
+
+        // Mettre à jour le statut
+        await db
+          .update(bilans)
+          .set({
+            status: "sent",
+            validatedBy: ctx.user.name || "Admin",
+            validatedAt: new Date(),
+            sentAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return { success: true, message: "Bilan validé et envoyé" };
+      } catch (err) {
+        console.error("[Admin Validate Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la validation du bilan",
+        });
+      }
+    }),
+
+  /**
+   * Rejeter un bilan
+   */
+  rejectBilan: protectedProcedure
+    .input(z.object({ bilanId: z.number(), reason: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(bilans)
+          .set({
+            status: "rejected",
+            adminNotes: input.reason,
+            validatedBy: ctx.user.name || "Admin",
+            validatedAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return { success: true, message: "Bilan rejeté" };
+      } catch (err) {
+        console.error("[Admin Reject Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors du rejet du bilan",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION DES DOSSIERS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer tous les dossiers
+   */
+  getAllApplications: protectedProcedure
+    .query(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allApps = await db
+          .select()
+          .from(applications)
+          .orderBy(desc(applications.createdAt))
+          .limit(100);
+
+        return allApps;
+      } catch (err) {
+        console.error("[Admin Get All Applications] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des dossiers",
+        });
+      }
+    }),
+
+  /**
+   * Mettre à jour le statut d'un dossier
+   */
+  updateApplicationStatus: protectedProcedure
+    .input(z.object({ applicationId: z.number(), status: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(applications)
+          .set({
+            dossierStatus: input.status as any,
+            lastStatusUpdateAt: new Date(),
+            lastStatusUpdatedBy: ctx.user.name || "Admin",
+          })
+          .where(eq(applications.id, input.applicationId));
+
+        return { success: true, message: "Statut du dossier mis à jour" };
+      } catch (err) {
+        console.error("[Admin Update Application Status] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise à jour du statut",
         });
       }
     }),

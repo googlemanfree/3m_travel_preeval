@@ -870,3 +870,17 @@
 - [x] Corriger /evaluation-widget → / dans About.tsx
 - [x] Tester tous les liens principaux (7/7 routes accessibles)
 - [x] Redémarrer le serveur et vérifier la compilation
+
+
+## Phase Finale - Validation et Déploiement de l'Interface Admin (v15)
+- [x] Créer la table `bilans` en base de données pour stocker les bilans d'admissibilité
+- [x] Ajouter les procédures admin manquantes : getPendingBilans, validateAndSendBilan, rejectBilan
+- [x] Ajouter les procédures admin pour la gestion des dossiers : getAllApplications, updateApplicationStatus
+- [x] Tester les procédures admin avec vitest
+- [x] Créer un compte admin de test pour validation
+- [x] Vérifier la connectivité de la base de données
+- [x] Créer des données de test (application + bilan)
+- [x] Valider le workflow complet : création bilan → validation → envoi
+- [x] Tester l'interface admin avec les données de test
+- [x] Vérifier que tous les tests passent (7/7 tests d'intégration réussis)
+- [x] Confirmer que l'interface admin est fonctionnelle et prête pour le déploiement
