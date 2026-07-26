@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -1158,6 +1159,20 @@ export default function Home() {
               </Button>
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* ─── FORMULAIRE MULTI-PROJETS SIMPLIFIÉ ─────────────────────────────── */}
+      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-12">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nouvelle Évaluation</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluation Multi-Projets</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Choisissez votre type de projet (Travail, Études, Tourisme) et obtenez une évaluation personnalisée en 24h.
+            </p>
+          </motion.div>
+          <SimpleMultiProjectForm />
         </div>
       </section>
 

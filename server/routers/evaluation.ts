@@ -39,7 +39,109 @@ const evaluationInput = z.object({
   cvMimeType: z.string().optional(),
 });
 
+// Schéma pour le formulaire multi-projets
+const multiProjectEvaluationInput = z.object({
+  // Étape 1 : Infos générales
+  fullName: z.string().min(2, "Le nom complet est requis"),
+  email: z.string().email("Email invalide"),
+  whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide"),
+  currentCity: z.string().optional(),
+  nationality: z.string().optional(),
+  projectType: z.enum(["travail", "etudes", "tourisme"]),
+
+  // Étape 2 : Champs conditionnels
+  // TRAVAIL
+  sector: z.string().optional(),
+  yearsOfExperience: z.number().optional(),
+  educationLevel: z.string().optional(),
+  languages: z.string().optional(),
+  cvAvailable: z.boolean().optional(),
+
+  // ÉTUDES
+  diplomaLevel: z.string().optional(),
+  averageGrade: z.string().optional(),
+  admissionLetter: z.boolean().optional(),
+  financialGuarantee: z.string().optional(),
+  transcriptAvailable: z.boolean().optional(),
+
+  // TOURISME
+  visitReason: z.string().optional(),
+  travelHistory: z.string().optional(),
+  previousRefusal: z.boolean().optional(),
+  socialTies: z.string().optional(),
+});
+
 export const evaluationRouter = router({
+  submitEvaluation: publicProcedure
+    .input(multiProjectEvaluationInput)
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
+
+      // Créer un enregistrement d'évaluation multi-projets
+      const evaluationData = {
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.whatsappPhone,
+        nationality: input.nationality,
+        dateOfBirth: undefined,
+        destinationCategory: "autre" as const,
+        destinationCountry: undefined,
+        visaType: "autre" as const,
+        educationLevel: input.educationLevel,
+        employmentStatus: undefined,
+        message: JSON.stringify({
+          projectType: input.projectType,
+          currentCity: input.currentCity,
+          sector: input.sector,
+          yearsOfExperience: input.yearsOfExperience,
+          languages: input.languages,
+          cvAvailable: input.cvAvailable,
+          diplomaLevel: input.diplomaLevel,
+          averageGrade: input.averageGrade,
+          admissionLetter: input.admissionLetter,
+          financialGuarantee: input.financialGuarantee,
+          transcriptAvailable: input.transcriptAvailable,
+          visitReason: input.visitReason,
+          travelHistory: input.travelHistory,
+          previousRefusal: input.previousRefusal,
+          socialTies: input.socialTies,
+        }),
+        cvFileUrl: undefined,
+        cvFileName: undefined,
+        status: "pending" as const,
+      };
+
+      await db.insert(evaluations).values(evaluationData);
+
+      // Notifier le propriétaire
+      const projectTypeLabels: Record<string, string> = {
+        travail: "Visa Travail",
+        etudes: "Visa Études",
+        tourisme: "Visa Tourisme",
+      };
+
+      try {
+        await notifyOwner({
+          title: `Nouvelle évaluation multi-projets : ${input.fullName}`,
+          content: `
+**Candidat :** ${input.fullName}
+**Email :** ${input.email}
+**WhatsApp :** ${input.whatsappPhone}
+**Nationalité :** ${input.nationality || "Non précisée"}
+**Type de projet :** ${projectTypeLabels[input.projectType]}
+**Ville actuelle :** ${input.currentCity || "Non précisée"}
+          `.trim(),
+        });
+      } catch (notifErr) {
+        console.warn("[MultiProjectEvaluation] Notification failed:", notifErr);
+      }
+
+      return { success: true, message: "Votre demande a été soumise avec succès. Vérifiez votre email." };
+    }),
+
   submit: publicProcedure
     .input(evaluationInput)
     .mutation(async ({ input }) => {
