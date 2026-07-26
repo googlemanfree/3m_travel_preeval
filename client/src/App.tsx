@@ -70,11 +70,7 @@ function Router() {
           <Flights />
         </AuthGuard>
       </Route>
-      <Route path={"/procedures"}>
-        <AuthGuard message="Vous devez créer un compte pour consulter les procédures détaillées.">
-          <Procedures />
-        </AuthGuard>
-      </Route>
+      <Route path={"/procedures"} component={Procedures} />
       <Route path={"/assurance"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à nos offres d'assurance.">
           <Assurance />
@@ -104,21 +100,9 @@ function Router() {
           <TranslationOrder />
         </AuthGuard>
       </Route>
-      <Route path={"/guide"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder aux guides.">
-          <Guide />
-        </AuthGuard>
-      </Route>
-      <Route path={"/visa-types"}>
-        <AuthGuard message="Vous devez créer un compte pour voir les types de visa.">
-          <VisaTypes />
-        </AuthGuard>
-      </Route>
-      <Route path={"/destinations"}>
-        <AuthGuard message="Vous devez créer un compte pour voir les destinations.">
-          <Destinations />
-        </AuthGuard>
-      </Route>
+      <Route path={"/guide"} component={Guide} />
+      <Route path={"/visa-types"} component={VisaTypes} />
+      <Route path={"/destinations"} component={Destinations} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />
@@ -154,18 +138,10 @@ function Router() {
       <Route path={"/how-it-works"} component={HowItWorks} />
 
       {/* Bibliothèque de ressources PDF */}
-      <Route path={"/ressources"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder aux ressources.">
-          <Ressources />
-        </AuthGuard>
-      </Route>
+      <Route path={"/ressources"} component={Ressources} />
 
       {/* Fiches détaillées par pays */}
-      <Route path={"/fiches"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder aux fiches pays.">
-          <Fiches />
-        </AuthGuard>
-      </Route>
+      <Route path={"/fiches"} component={Fiches} />
 
       {/* Routes Hotels */}
 
