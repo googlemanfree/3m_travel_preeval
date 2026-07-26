@@ -806,6 +806,53 @@ export const applicationRouter = router({
     }),
 
   /**
+   * Récupère le dossier de l'utilisateur connecté (candidat)
+   * Utilisé pour "Mon Espace" quand l'utilisateur est authentifié
+   */
+  getMyDossierData: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      // Chercher le dossier par email de l'utilisateur connecté
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.email, ctx.user.email ?? ''))
+        .limit(1);
+
+      if (!app) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucun dossier trouvé pour votre email.' });
+      }
+
+      // Retourner les infos du dossier
+      return {
+        id: app.id,
+        dossierNumber: app.dossierNumber,
+        fullName: app.fullName,
+        email: app.email,
+        destination: app.destination,
+        visaType: app.visaType,
+        formulaChosen: app.formulaChosen,
+        dossierStatus: app.dossierStatus,
+        paymentStatus: app.paymentStatus,
+        paymentDate: app.paymentDate,
+        emailVerified: app.emailVerified,
+        agreementSigned: app.agreementSigned,
+        agreementSignedAt: app.agreementSignedAt,
+        adminNote: app.adminNote,
+        passportUrl: app.passportUrl,
+        cvUrl: app.cvUrl,
+        diplomaUrl: app.diplomaUrl,
+        documentsUrls: app.documentsUrls,
+        scoringTotal: app.scoringTotal,
+        scoringBadge: app.scoringBadge,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+      };
+    }),
+
+  /**
    * Envoyer un message au conseiller depuis le tableau de bord candidat
    */
   sendCandidateMessage: publicProcedure

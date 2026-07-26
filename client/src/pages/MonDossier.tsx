@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,6 +144,7 @@ function isStepActive(stepKey: string, dossier: DossierData): boolean {
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function MonDossier() {
+  const { user, isAuthenticated } = useAuth();
   const [dossierNumber, setDossierNumber] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -150,14 +152,29 @@ export default function MonDossier() {
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  // Query de suivi (activée seulement après soumission)
-  const { data: dossier, isLoading, error, refetch } = trpc.application.getDossierStatus.useQuery(
-    credentials ?? { dossierNumber: "", email: "" },
+  // Query pour utilisateur connecté
+  const { data: myDossier, isLoading: myDossierLoading, error: myDossierError, refetch: refetchMyDossier } = trpc.application.getMyDossierData.useQuery(
+    undefined,
     {
-      enabled: !!credentials,
+      enabled: isAuthenticated,
       retry: false,
     }
   );
+
+  // Query de suivi (activée seulement après soumission du formulaire)
+  const { data: dossier, isLoading: publicDossierLoading, error: publicDossierError, refetch } = trpc.application.getDossierStatus.useQuery(
+    credentials ?? { dossierNumber: "", email: "" },
+    {
+      enabled: !!credentials && !isAuthenticated,
+      retry: false,
+    }
+  );
+
+  // Déterminer les données à afficher
+  const dossierData = isAuthenticated ? myDossier : dossier;
+  const isLoading = isAuthenticated ? myDossierLoading : publicDossierLoading;
+  const error = isAuthenticated ? myDossierError : publicDossierError;
+  const refetchData = isAuthenticated ? refetchMyDossier : refetch;
 
   const sendMessageMutation = trpc.application.sendCandidateMessage.useMutation({
     onSuccess: () => {
@@ -209,8 +226,8 @@ export default function MonDossier() {
             </p>
           </div>
 
-          {/* Formulaire de connexion */}
-          {!submitted || error ? (
+          {/* Afficher le formulaire seulement pour les utilisateurs non authentifiés */}
+          {!isAuthenticated && (!submitted || error) ? (
             <Card className="max-w-md mx-auto shadow-lg border-0">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -252,8 +269,8 @@ export default function MonDossier() {
                         <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <h3 className="font-semibold text-red-900 text-sm">Erreur de chargement</h3>
-                          <p className="text-red-700 text-sm mt-1">{error.message || 'Impossible de charger votre dossier. Vérifiez le numéro et l\'email.'}</p>
-                          <Button onClick={() => refetch()} className="mt-2 bg-red-600 hover:bg-red-700 text-white text-xs" disabled={isLoading}>
+                          <p className="text-red-700 text-sm mt-1">{error.message || 'Impossible de charger votre dossierData. Vérifiez le numéro et l\'email.'}</p>
+                          <Button onClick={() => refetchData()} className="mt-2 bg-red-600 hover:bg-red-700 text-white text-xs" disabled={isLoading}>
                             Réessayer
                           </Button>
                         </div>
@@ -277,19 +294,19 @@ export default function MonDossier() {
           ) : isLoading ? (
             <div className="text-center py-16">
               <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Chargement de votre dossier...</p>
+              <p className="text-gray-500">Chargement de votre dossierData...</p>
             </div>
-          ) : dossier ? (
+          ) : dossierData ? (
             <div className="space-y-6">
               {/* Barre de progression visuelle */}
               <DossierProgressBar
-                status={dossier.dossierStatus as any}
-                createdAt={dossier.createdAt}
+                status={dossierData.dossierStatus as any}
+                createdAt={dossierData.createdAt}
                 evaluationCompletedAt={undefined}
                 documentsReceivedAt={undefined}
                 submittedToAgenciesAt={undefined}
-                dossierNumber={dossier.dossierNumber}
-                email={dossier.email}
+                dossierNumber={dossierData.dossierNumber}
+                email={dossierData.email}
                 onPaymentSuccess={() => {
                   // Recharger le dossier après le paiement
                   window.location.reload();
@@ -302,17 +319,17 @@ export default function MonDossier() {
                   <div className="flex items-start justify-between flex-wrap gap-4">
                     <div>
                       <p className="text-blue-200 text-sm font-medium mb-1">Dossier</p>
-                      <h2 className="text-2xl font-bold">{dossier.dossierNumber}</h2>
-                      <p className="text-blue-100 mt-1">{dossier.fullName}</p>
+                      <h2 className="text-2xl font-bold">{dossierData.dossierNumber}</h2>
+                      <p className="text-blue-100 mt-1">{dossierData.fullName}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-blue-200 text-sm mb-1">Destination</p>
                       <p className="text-xl font-semibold flex items-center gap-1 justify-end">
                         <Plane className="w-5 h-5" />
-                        {dossier.destination}
+                        {dossierData.destination}
                       </p>
-                      {dossier.visaType && (
-                        <p className="text-blue-200 text-sm mt-1">Visa {dossier.visaType}</p>
+                      {dossierData.visaType && (
+                        <p className="text-blue-200 text-sm mt-1">Visa {dossierData.visaType}</p>
                       )}
                     </div>
                   </div>
@@ -322,7 +339,7 @@ export default function MonDossier() {
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Statut actuel</p>
                       {(() => {
-                        const config = getStatusConfig(dossier.dossierStatus as DossierStatus);
+                        const config = getStatusConfig(dossierData.dossierStatus as DossierStatus);
                         const Icon = config.icon;
                         return (
                           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border font-semibold text-sm ${config.bgColor} ${config.color}`}>
@@ -335,17 +352,17 @@ export default function MonDossier() {
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Soumis le</p>
                       <p className="font-medium text-gray-800">
-                        {new Date(dossier.createdAt).toLocaleDateString("fr-FR", {
+                        {new Date(dossierData.createdAt).toLocaleDateString("fr-FR", {
                           day: "numeric", month: "long", year: "numeric"
                         })}
                       </p>
                     </div>
-                    {dossier.scoringTotal !== null && (
+                    {dossierData.scoringTotal !== null && (
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Score d'éligibilité</p>
-                        <p className="font-bold text-blue-700 text-lg">{dossier.scoringTotal}/100</p>
-                        {dossier.scoringBadge && (
-                          <Badge variant="outline" className="text-xs mt-1">{dossier.scoringBadge}</Badge>
+                        <p className="font-bold text-blue-700 text-lg">{dossierData.scoringTotal}/100</p>
+                        {dossierData.scoringBadge && (
+                          <Badge variant="outline" className="text-xs mt-1">{dossierData.scoringBadge}</Badge>
                         )}
                       </div>
                     )}
@@ -423,7 +440,7 @@ export default function MonDossier() {
               </Card>
 
               {/* Note admin (si présente) */}
-              {dossier.adminNote && (
+              {dossierData.adminNote && (
                 <Card className="shadow-md border-0 border-l-4 border-l-blue-500">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -433,7 +450,7 @@ export default function MonDossier() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {dossier.adminNote.split("\n\n").map((block, i) => {
+                      {dossierData.adminNote.split("\n\n").map((block, i) => {
                         const isAdvisor = block.startsWith("[RÉPONSE CONSEILLER");
                         const isCandidate = block.startsWith("[MSG CANDIDAT");
                         return (
@@ -457,7 +474,7 @@ export default function MonDossier() {
               )}
 
               {/* Documents soumis */}
-              {(dossier.passportUrl || dossier.cvUrl || dossier.diplomaUrl) && (
+              {(dossierData.passportUrl || dossierData.cvUrl || dossierData.diplomaUrl) && (
                 <Card className="shadow-md border-0">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base flex items-center gap-2">
@@ -467,9 +484,9 @@ export default function MonDossier() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {dossier.passportUrl && (
+                      {dossierData.passportUrl && (
                         <a
-                          href={dossier.passportUrl}
+                          href={dossierData.passportUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
@@ -479,9 +496,9 @@ export default function MonDossier() {
                           <ChevronRight className="w-3 h-3 ml-auto" />
                         </a>
                       )}
-                      {dossier.cvUrl && (
+                      {dossierData.cvUrl && (
                         <a
-                          href={dossier.cvUrl}
+                          href={dossierData.cvUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
@@ -491,9 +508,9 @@ export default function MonDossier() {
                           <ChevronRight className="w-3 h-3 ml-auto" />
                         </a>
                       )}
-                      {dossier.diplomaUrl && (
+                      {dossierData.diplomaUrl && (
                         <a
-                          href={dossier.diplomaUrl}
+                          href={dossierData.diplomaUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
@@ -517,7 +534,7 @@ export default function MonDossier() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {dossier.dossierStatus === "nouveau" && !dossier.agreementSigned && (
+                  {dossierData.dossierStatus === "nouveau" && !dossierData.agreementSigned && (
                     <div className="flex items-start gap-3">
                       <Shield className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div>
@@ -528,32 +545,32 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.agreementSigned && dossier.paymentStatus !== "SUCCESS" && (
+                  {dossierData.agreementSigned && dossierData.paymentStatus !== "SUCCESS" && (
                     <div className="flex items-start gap-3">
                       <CreditCard className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold text-gray-900">Effectuez votre paiement</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Réglez les frais d'ouverture de dossier (65 000 FCFA) pour démarrer le traitement de votre dossier.
+                          Réglez les frais d'ouverture de dossier (65 000 FCFA) pour démarrer le traitement de votre dossierData.
                         </p>
-                        <a href={`/verify-application-email?dossier=${dossier.dossierNumber}`} className="inline-flex items-center gap-1 mt-2 text-blue-600 font-medium text-sm hover:underline">
+                        <a href={`/verify-application-email?dossier=${dossierData.dossierNumber}`} className="inline-flex items-center gap-1 mt-2 text-blue-600 font-medium text-sm hover:underline">
                           Procéder au paiement <ChevronRight className="w-3 h-3" />
                         </a>
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "paye" && (
+                  {dossierData.dossierStatus === "paye" && (
                     <div className="flex items-start gap-3">
                       <Clock className="w-8 h-8 text-orange-500 flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-semibold text-gray-900">Dossier en cours d'examen</p>
                         <p className="text-sm text-gray-600 mt-1">
-                          Votre paiement a été confirmé. Nos conseillers examinent votre dossier. Délai estimé : 3 à 5 jours ouvrables.
+                          Votre paiement a été confirmé. Nos conseillers examinent votre dossierData. Délai estimé : 3 à 5 jours ouvrables.
                         </p>
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "en_attente_documents" && (
+                  {dossierData.dossierStatus === "en_attente_documents" && (
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-8 h-8 text-yellow-500 flex-shrink-0 mt-0.5" />
                       <div>
@@ -564,7 +581,7 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "en_cours_recrutement" && (
+                  {dossierData.dossierStatus === "en_cours_recrutement" && (
                     <div className="flex items-start gap-3">
                       <Clock className="w-8 h-8 text-blue-500 flex-shrink-0 mt-0.5" />
                       <div>
@@ -575,7 +592,7 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "soumis_agences" && (
+                  {dossierData.dossierStatus === "soumis_agences" && (
                     <div className="flex items-start gap-3">
                       <CheckCircle2 className="w-8 h-8 text-purple-500 flex-shrink-0 mt-0.5" />
                       <div>
@@ -586,7 +603,7 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "visa_approuve" && (
+                  {dossierData.dossierStatus === "visa_approuve" && (
                     <div className="flex items-start gap-3">
                       <Star className="w-8 h-8 text-emerald-500 flex-shrink-0 mt-0.5" />
                       <div>
@@ -597,7 +614,7 @@ export default function MonDossier() {
                       </div>
                     </div>
                   )}
-                  {dossier.dossierStatus === "refuse" && (
+                  {dossierData.dossierStatus === "refuse" && (
                     <div className="flex items-start gap-3">
                       <AlertCircle className="w-8 h-8 text-red-500 flex-shrink-0 mt-0.5" />
                       <div>
