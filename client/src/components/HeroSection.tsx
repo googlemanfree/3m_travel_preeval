@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
-  onEvalClick: () => void;
+  onEvalClick?: () => void;
   logoUrl: string;
   whatsappNumber: string;
 }
