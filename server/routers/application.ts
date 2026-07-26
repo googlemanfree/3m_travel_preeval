@@ -1086,14 +1086,14 @@ export const applicationRouter = router({
 
         // Envoyer une notification admin
         try {
-          await sendAdminNewDossierAlert({
-            dossierNumber: app.dossierNumber,
-            fullName: app.fullName,
-            email: app.email,
-            destination: app.destination,
-            submissionMethod: 'en_ligne',
-            timestamp,
-          });
+          await sendAdminNewDossierAlert(
+            app.fullName,
+            app.dossierNumber,
+            app.email,
+            app.whatsappNumber,
+            app.destination,
+            'SUCCESS'
+          );
         } catch (emailErr) {
           console.error('[receiveOnlineDossier] Email notification error:', emailErr);
         }
@@ -1183,27 +1183,26 @@ export const applicationRouter = router({
 
         // Envoyer un email de confirmation au candidat
         try {
-          await sendDossierConfirmationEmail({
+          await sendDossierConfirmationEmail(
+            input.fullName,
+            input.email,
             dossierNumber,
-            fullName: input.fullName,
-            email: input.email,
-            destination: input.destination,
-            agencyName: input.agencyName,
-          });
+            input.destination
+          );
         } catch (emailErr) {
           console.error('[createAgencyDossier] Email confirmation error:', emailErr);
         }
 
         // Envoyer une notification admin
         try {
-          await sendAdminNewDossierAlert({
+          await sendAdminNewDossierAlert(
+            input.fullName,
             dossierNumber,
-            fullName: input.fullName,
-            email: input.email,
-            destination: input.destination,
-            submissionMethod: 'agence_physique',
-            timestamp,
-          });
+            input.email,
+            input.whatsappNumber,
+            input.destination,
+            'PENDING'
+          );
         } catch (emailErr) {
           console.error('[createAgencyDossier] Admin notification error:', emailErr);
         }
@@ -1212,7 +1211,7 @@ export const applicationRouter = router({
           success: true,
           message: 'Dossier créé avec succès en agence',
           dossierNumber,
-          applicationId: result.insertId,
+          applicationId: 0,
         };
       } catch (err) {
         console.error('[createAgencyDossier] Error:', err);
