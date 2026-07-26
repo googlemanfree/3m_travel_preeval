@@ -4,6 +4,9 @@ import { getDb } from "../db";
 import { evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
+import { generateDossierCode } from "../utils/generateDossierCode";
+import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
+import { sendEmail } from "../_core/email";
 
 const visaTypeEnum = z.enum([
   "schengen_etude",
@@ -139,7 +142,26 @@ export const evaluationRouter = router({
         console.warn("[MultiProjectEvaluation] Notification failed:", notifErr);
       }
 
-      return { success: true, message: "Votre demande a été soumise avec succès. Vérifiez votre email." };
+      // Générer le code dossier
+      const dossierCode = generateDossierCode();
+
+      // Envoyer l'email de confirmation
+      try {
+        const emailHTML = getConfirmationEmailHTML({
+          fullName: input.fullName,
+          dossierCode,
+          projectType: input.projectType,
+        });
+        await sendEmail({
+          to: input.email,
+          subject: `Confirmation - Numéro de dossier ${dossierCode}`,
+          html: emailHTML,
+        });
+      } catch (emailErr) {
+        console.warn("[MultiProjectEvaluation] Email confirmation failed:", emailErr);
+      }
+
+      return { success: true, message: "Votre demande a été soumise avec succès. Vérifiez votre email pour le numéro de dossier.", dossierCode };
     }),
 
   submit: publicProcedure
