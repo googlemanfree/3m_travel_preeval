@@ -7,11 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download } from "lucide-react";
+import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
+import { QuickUploadModal } from "@/components/QuickUploadModal";
+import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
 
 export default function MySpace() {
   const { user, loading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState("");
+  const [showNotification, setShowNotification] = useState(true);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
@@ -62,6 +68,31 @@ export default function MySpace() {
   const app = dossierData.data?.application;
   const documents = dossierData.data?.documents || [];
   const messages = dossierData.data?.messages || [];
+
+  // Détecter les documents manquants
+  const missingDocuments = useMissingDocuments(
+    app ? { projectType: app.projectType, academicLevel: app.academicLevel } : null,
+    documents
+  );
+  const completeness = useDocumentCompleteness(
+    app ? { projectType: app.projectType, academicLevel: app.academicLevel } : null,
+    documents
+  );
+
+  // Gestionnaire pour ouvrir le modal de téléversement
+  const handleQuickUpload = (documentType: string) => {
+    setSelectedDocumentType(documentType);
+    setUploadModalOpen(true);
+  };
+
+  // Gestionnaire pour le téléversement
+  const handleUploadFile = async (file: File, documentType: string) => {
+    // TODO: Implémenter l'upload via tRPC
+    console.log(`Uploading ${file.name} for ${documentType}`);
+  };
+
+  // Afficher la notification si des documents manquent
+  const shouldShowNotification = missingDocuments.length > 0 && app?.status === "en_evaluation";
 
   // Déterminer le badge de statut
   const getStatusBadge = (status: string) => {
