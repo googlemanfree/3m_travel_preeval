@@ -133,16 +133,12 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           className="flex flex-col sm:flex-row gap-8 justify-center border-t border-white/10 pt-8"
         >
           <div>
-            <p className="text-2xl md:text-3xl font-bold">+1 500</p>
-            <p className="text-sm text-slate-400">Dossiers Évalués</p>
-          </div>
-          <div>
-            <p className="text-2xl md:text-3xl font-bold">98%</p>
-            <p className="text-sm text-slate-400">Satisfaction</p>
+            <p className="text-2xl md:text-3xl font-bold">500+</p>
+            <p className="text-sm text-slate-400">Visas Obtenus</p>
           </div>
           <div>
             <p className="text-2xl md:text-3xl font-bold">24h</p>
-            <p className="text-sm text-slate-400">Délai de Réponse</p>
+            <p className="text-sm text-slate-400">Réponse Rapide</p>
           </div>
         </motion.div>
       </div>

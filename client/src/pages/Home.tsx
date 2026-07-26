@@ -458,14 +458,14 @@ export default function Home() {
           <div className="text-center mb-8 md:mb-12">
             <p className="text-xs md:text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3 md:mb-4">Tout ce dont vous avez besoin</h2>
-            <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
+            <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">Vos solutions de voyage et d'immigration en un seul endroit.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "#" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/assurance" },
+              { icon: Plane,    title: "Billets d'avion",    desc: "Tarifs compétitifs sur tous les vols",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
+              { icon: FileText, title: "Assistance Visa",    desc: "Demandes de visa simplifiées",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages et réservations",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "#" },
+              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/assurance" },
             ].map((s, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
                 <a href={s.href} className="block h-full group">
@@ -510,10 +510,10 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
-              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
-              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-[#0369a1] bg-[#e0f2fe]" },
-              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-[#7cb9e8] bg-[#f0f9ff]" },
+              { icon: Shield,       title: "Expertise réglementée",      desc: "Experts en visa et immigration",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
+              { icon: Users,        title: "Accompagnement personnalisé", desc: "Solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
+              { icon: Clock,        title: "Réponse rapide",              desc: "Réponse sous 24h",               color: "text-[#0369a1] bg-[#e0f2fe]" },
+              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "500+ visas obtenus",    color: "text-[#7cb9e8] bg-[#f0f9ff]" },
             ].map((item, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
                 <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
@@ -552,19 +552,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── FORMULAIRE MULTI-PROJETS SIMPLIFIÉ ─────────────────────────────── */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
-        <div className="max-w-4xl mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nouvelle Évaluation</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluation Multi-Projets</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Choisissez votre type de projet (Travail, Études, Tourisme) et obtenez une évaluation personnalisée en 24h.
-            </p>
-          </motion.div>
-          <SimpleMultiProjectForm />
-        </div>
-      </section>
 
       {/* ─── SECTION CRÉDIBILITÉ & LOCALISATION ──────────────────────────────── */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
@@ -726,17 +713,6 @@ export default function Home() {
 
 const TESTIMONIALS = [
   {
-    name: "Aminata Diallo",
-    country: "France",
-    flag: "🇫🇷",
-    visa: "Visa Étude",
-    rating: 5,
-    avatar: "AD",
-    color: "bg-[#1e3a8a]",
-    text: "Grâce à 3M Travel & Services, j'ai obtenu mon visa étudiant pour la France en seulement 3 semaines. L'équipe m'a accompagnée à chaque étape, de la constitution du dossier jusqu'à l'obtention du visa. Je recommande vivement !",
-    date: "Mars 2025",
-  },
-  {
     name: "Jean-Pierre Mbarga",
     country: "Canada",
     flag: "🇨🇦",
@@ -744,7 +720,7 @@ const TESTIMONIALS = [
     rating: 5,
     avatar: "JM",
     color: "bg-[#2563eb]",
-    text: "Mon dossier de résidence permanente au Canada semblait complexe, mais l'équipe de 3M a su le gérer avec professionnalisme. Aujourd'hui je vis au Canada avec toute ma famille. Merci infiniment !",
+    text: "Mon dossier de résidence permanente au Canada semblait complexe, mais l'équipe de 3M a su le gérer avec professionnalisme. Aujourd'hui je vis au Canada avec toute ma famille.",
     date: "Janvier 2025",
   },
   {
@@ -755,30 +731,8 @@ const TESTIMONIALS = [
     rating: 5,
     avatar: "FN",
     color: "bg-[#0369a1]",
-    text: "J'avais essayé seule pendant des mois sans succès. En confiant mon dossier à 3M Travel, j'ai obtenu mon visa de travail pour l'Allemagne en 6 semaines. Service impeccable et très réactif.",
+    text: "J'avais essayé seule sans succès. En confiant mon dossier à 3M Travel, j'ai obtenu mon visa de travail pour l'Allemagne en 6 semaines. Service impeccable et très réactif.",
     date: "Février 2025",
-  },
-  {
-    name: "Emmanuel Talla",
-    country: "Belgique",
-    flag: "🇧🇪",
-    visa: "Visa Tourisme",
-    rating: 5,
-    avatar: "ET",
-    color: "bg-[#1e3a8a]",
-    text: "Excellente expérience ! 3M Travel a géré mon visa Schengen pour la Belgique avec une rapidité impressionnante. Conseils clairs, suivi régulier et résultat positif. Je ferai appel à eux pour mon prochain voyage.",
-    date: "Avril 2025",
-  },
-  {
-    name: "Marie-Claire Essomba",
-    country: "Canada",
-    flag: "🇨🇦",
-    visa: "Visa Étude",
-    rating: 5,
-    avatar: "ME",
-    color: "bg-[#2563eb]",
-    text: "Admise dans une université canadienne, j'avais besoin d'un visa rapidement. 3M Travel a monté un dossier solide et j'ai obtenu mon visa en temps record. Professionnalisme et efficacité au rendez-vous !",
-    date: "Juin 2025",
   },
   {
     name: "Patrick Nguema",
@@ -788,7 +742,7 @@ const TESTIMONIALS = [
     rating: 5,
     avatar: "PN",
     color: "bg-[#0369a1]",
-    text: "Après deux refus de visa, j'ai fait appel à 3M Travel & Services. Ils ont analysé mes dossiers précédents, identifié les erreurs et monté un nouveau dossier béton. Résultat : visa accordé du premier coup !",
+    text: "Après deux refus de visa, 3M Travel a analysé mes dossiers, identifié les erreurs et monté un nouveau dossier. Résultat : visa accordé du premier coup !",
     date: "Mai 2025",
   },
 ];
@@ -859,12 +813,10 @@ function TestimonialsSection() {
             Des centaines de clients nous font confiance chaque année. Voici ce qu'ils disent de leur expérience.
           </p>
           {/* Stats bar */}
-          <div className="flex flex-wrap justify-center gap-8 mt-8">
+          <div className="flex flex-wrap justify-center gap-12 mt-8">
             {[
               { value: "500+", label: "Visas obtenus" },
-              { value: "98%", label: "Taux de succès" },
               { value: "24h", label: "Délai de réponse" },
-              { value: "8", label: "Pays couverts" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
                 <div className="text-2xl font-extrabold text-[#1e3a8a]">{stat.value}</div>
