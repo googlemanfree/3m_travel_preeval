@@ -719,4 +719,124 @@ export const candidateRouter = router({
       },
     };
   }),
+
+  /**
+   * Recuperer les documents du candidat avec details
+   */
+  getMyDocuments: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const documents = await db
+      .select()
+      .from(candidateFiles)
+      .where(eq(candidateFiles.candidateId, ctx.candidate.id))
+      .orderBy(desc(candidateFiles.uploadedAt));
+
+    return {
+      success: true,
+      documents: documents.map(doc => ({
+        id: doc.id,
+        fileName: doc.fileName,
+        fileType: doc.fileType,
+        uploadedAt: doc.uploadedAt,
+        fileUrl: doc.fileUrl,
+        status: doc.status,
+      })),
+    };
+  }),
+
+  /**
+   * Recuperer le bilan du candidat
+   */
+  getMyBilan: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const { applications, bilans } = await import("../../drizzle/schema");
+
+    // Recuperer l'application du candidat
+    const app = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.candidateId, ctx.candidate.id))
+      .orderBy(desc(applications.createdAt))
+      .limit(1);
+
+    if (!app || app.length === 0) {
+      return {
+        success: false,
+        message: "Aucun dossier trouve",
+        bilan: null,
+      };
+    }
+
+    // Recuperer le bilan associe
+    const bilanData = await db
+      .select()
+      .from(bilans)
+      .where(eq(bilans.applicationId, app[0].id))
+      .limit(1);
+
+    if (!bilanData || bilanData.length === 0) {
+      return {
+        success: true,
+        message: "Bilan non encore disponible",
+        bilan: null,
+      };
+    }
+
+    const bilan = bilanData[0];
+
+    return {
+      success: true,
+      bilan: {
+        id: bilan.id,
+        score: bilan.score,
+        verdict: bilan.verdict,
+        strengths: bilan.strengths,
+        weaknesses: bilan.weaknesses,
+        recommendations: bilan.recommendations,
+        status: bilan.status,
+        createdAt: bilan.createdAt,
+        sentAt: bilan.sentAt,
+        validatedAt: bilan.validatedAt,
+        adminNotes: bilan.adminNotes,
+      },
+    };
+  }),
+
+  /**
+   * Telecharger un document
+   */
+  downloadDocument: candidateProcedure
+    .input(z.object({ documentId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const document = await db
+        .select()
+        .from(candidateFiles)
+        .where(
+          and(
+            eq(candidateFiles.id, input.documentId),
+            eq(candidateFiles.candidateId, ctx.candidate.id)
+          )
+        )
+        .limit(1);
+
+      if (!document || document.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document non trouve",
+        });
+      }
+
+      return {
+        success: true,
+        downloadUrl: document[0].fileUrl,
+        fileName: document[0].fileName,
+      };
+    }),
 });
