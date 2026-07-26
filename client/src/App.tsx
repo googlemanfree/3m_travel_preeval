@@ -48,6 +48,7 @@ import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
+import ClientDashboard from "./pages/ClientDashboard";
 import { HowItWorks } from "./pages/HowItWorks";
 import MySpace from "./pages/MySpace";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -224,6 +225,12 @@ function Router() {
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminAgencyDossiers />
         </AdminGuard>
+      </Route>
+
+      <Route path="/client-dashboard">
+        <AuthGuard>
+          <ClientDashboard />
+        </AuthGuard>
       </Route>
 
       <Route path="/hotels">
