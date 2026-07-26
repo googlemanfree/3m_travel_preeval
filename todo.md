@@ -884,3 +884,49 @@
 - [x] Tester l'interface admin avec les données de test
 - [x] Vérifier que tous les tests passent (7/7 tests d'intégration réussis)
 - [x] Confirmer que l'interface admin est fonctionnelle et prête pour le déploiement
+
+
+## Espace Candidat Complet - Protocole d'Accord et Gestion des Documents (v16)
+- [ ] Créer la table `agreement_protocols` pour stocker les protocoles d'accord signés
+- [ ] Créer la table `document_submissions` pour tracker les documents soumis par les candidats
+- [ ] Créer la page `/mon-espace` : tableau de bord candidat avec toutes les données
+- [ ] Afficher les informations personnelles du candidat (nom, email, téléphone, destination, etc.)
+- [ ] Afficher l'historique du dossier (dates clés, statuts, actions)
+- [ ] Afficher les documents remis (avec dates et statuts)
+- [ ] Afficher les sommes versées et l'historique des paiements
+- [ ] Afficher l'avancement du dossier (WES, TCF, etc.)
+- [ ] Créer le composant Protocole d'Accord avec signature numérique
+- [ ] Implémenter la signature du protocole (checkbox + date)
+- [ ] Après signature : transférer les documents aux admins
+- [ ] Après signature : envoyer un message de confirmation au candidat
+- [ ] Créer la procédure tRPC : signAgreementProtocol
+- [ ] Créer la procédure tRPC : submitDocuments (après signature)
+- [ ] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
+- [ ] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
+- [ ] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
+- [ ] Implémenter l'évaluation IA du profil avec tous les documents
+- [ ] Créer la procédure tRPC : evaluateProfileWithAI
+- [ ] Afficher le rapport d'évaluation IA dans l'espace candidat
+- [ ] Synchroniser les documents entre candidat et admin en temps réel
+- [ ] Créer une notification admin quand les documents sont soumis
+- [ ] Créer une notification candidat quand les documents sont reçus par l'admin
+- [ ] Ajouter une barre de progression du dossier (Évaluation → Bilan → Traduction → Soumission → Visa)
+- [ ] Tester le workflow complet : signature → soumission → évaluation IA → notification
+
+
+## Espace Candidat Complet - Implémentation Complète (v17)
+- [x] Créer les procédures tRPC pour le protocole d'accord
+- [x] Créer les procédures tRPC pour la soumission de documents
+- [x] Créer les procédures tRPC pour récupérer les données du dossier
+- [x] Créer la page Mon Espace avec tous les onglets
+- [x] Ajouter la route /mon-espace dans App.tsx
+- [x] Mettre à jour la navigation pour pointer vers /mon-espace
+- [ ] Tester le workflow complet : connexion → Mon Espace → signature → soumission
+- [ ] Tester l'affichage des données du candidat
+- [ ] Tester la synchronisation admin-candidat
+- [ ] Tester les notifications email
+- [ ] Vérifier que les documents sont visibles dans l'interface admin
+- [ ] Vérifier que l'évaluation IA fonctionne correctement
+- [ ] Tester les messages entre candidat et conseiller
+- [ ] Créer un test vitest pour le workflow candidat complet
+- [ ] Déployer et vérifier en production

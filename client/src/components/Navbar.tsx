@@ -163,7 +163,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           )}
           {/* Show Mon Espace if authenticated, otherwise show Login/Signup */}
           {isAuthenticated ? (
-            <Link href="/dashboard">
+            <Link href="/mon-espace">
               <Button
                 variant="outline"
                 className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
@@ -241,7 +241,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           </Link>
 
           {isAuthenticated ? (
-            <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+            <Link href="/mon-espace" onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
               <User className="w-4 h-4" /> Mon Espace
             </Link>

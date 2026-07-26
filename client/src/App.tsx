@@ -48,6 +48,7 @@ import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
 import { HowItWorks } from "./pages/HowItWorks";
+import MySpace from "./pages/MySpace";
 import { ScrollToTop } from "./components/ScrollToTop";
 import AdminGuard from "./components/AdminGuard";
 import AdminUsersManagement from "./pages/AdminUsersManagement";
@@ -128,6 +129,13 @@ function Router() {
       <Route path={"/mon-dossier"}>
         <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
           <MonDossier />
+        </AuthGuard>
+      </Route>
+
+      {/* Mon Espace Candidat */}
+      <Route path={"/mon-espace"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
+          <MySpace />
         </AuthGuard>
       </Route>
 

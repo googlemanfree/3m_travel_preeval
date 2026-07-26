@@ -527,4 +527,196 @@ export const candidateRouter = router({
   getDossierSteps: publicProcedure.query(() => {
     return DOSSIER_STEPS;
   }),
+
+  // ── Protocole d'Accord — Signature numérique ──────────────────────────────
+  signAgreementProtocol: candidateProcedure
+    .input(
+      z.object({
+        dossierNumber: z.string(),
+        signatureName: z.string().min(2, "Le nom est requis"),
+        ipAddress: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Récupérer l'application
+      const { applications } = await import("../../drizzle/schema");
+      const app = await db
+        .select()
+        .from(applications)
+        .where(
+          and(
+            eq(applications.dossierNumber, input.dossierNumber),
+            eq(applications.candidateId, ctx.candidate.id)
+          )
+        )
+        .limit(1);
+
+      if (!app || app.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
+      }
+
+      // Mettre à jour le protocole d'accord
+      const now = Math.floor(Date.now() / 1000); // Unix timestamp en secondes
+      await db
+        .update(applications)
+        .set({
+          agreementSigned: true,
+          agreementSignedAt: now,
+          agreementSignatureName: input.signatureName,
+          agreementIpAddress: input.ipAddress,
+          dossierStatus: "en_evaluation",
+          lastStatusUpdateAt: new Date(),
+        })
+        .where(eq(applications.id, app[0].id));
+
+      // Envoyer un email de confirmation
+      try {
+        const { sendEmail } = await import("../emailService");
+        const confirmationHTML = `
+          <h2>Protocole d'Accord Signé</h2>
+          <p>Bonjour ${app[0].fullName},</p>
+          <p>Votre protocole d'accord a été signé avec succès le ${new Date().toLocaleDateString("fr-FR")}.</p>
+          <p><strong>Numéro de dossier :</strong> ${input.dossierNumber}</p>
+          <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
+          <p>Cordialement,<br/>3M Travel & Services</p>
+        `;
+        await sendEmail(app[0].email, `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, confirmationHTML);
+      } catch (err) {
+        console.warn("Email confirmation failed:", err);
+      }
+
+      return { success: true, message: "Protocole d'accord signé avec succès" };
+    }),
+
+  // ── Soumettre des documents après signature ────────────────────────────────
+  submitDocuments: candidateProcedure
+    .input(
+      z.object({
+        dossierNumber: z.string(),
+        documents: z.array(
+          z.object({
+            fileType: z.string(),
+            fileName: z.string(),
+            fileUrl: z.string(),
+            fileKey: z.string(),
+            fileSizeBytes: z.number().optional(),
+            mimeType: z.string().optional(),
+          })
+        ),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const { applications } = await import("../../drizzle/schema");
+      const app = await db
+        .select()
+        .from(applications)
+        .where(
+          and(
+            eq(applications.dossierNumber, input.dossierNumber),
+            eq(applications.candidateId, ctx.candidate.id)
+          )
+        )
+        .limit(1);
+
+      if (!app || app.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
+      }
+
+      if (!app[0].agreementSigned) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Vous devez signer le protocole d'accord avant de soumettre des documents",
+        });
+      }
+
+      // Mettre à jour le statut de l'application
+      await db
+        .update(applications)
+        .set({
+          dossierStatus: "documents_recus",
+          documentsReceivedAt: new Date(),
+          documentsSubmissionMethod: "en_ligne",
+          lastStatusUpdateAt: new Date(),
+        })
+        .where(eq(applications.id, app[0].id));
+
+      // Envoyer un email de confirmation
+      try {
+        const { sendEmail } = await import("../emailService");
+        const confirmationHTML = `
+          <h2>Documents Reçus</h2>
+          <p>Bonjour ${app[0].fullName},</p>
+          <p>Vos ${input.documents.length} document(s) ont été reçus avec succès.</p>
+          <p><strong>Numéro de dossier :</strong> ${input.dossierNumber}</p>
+          <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
+          <p>Cordialement,<br/>3M Travel & Services</p>
+        `;
+        await sendEmail(app[0].email, `📄 Documents Reçus - Dossier ${input.dossierNumber}`, confirmationHTML);
+      } catch (err) {
+        console.warn("Email confirmation failed:", err);
+      }
+
+      return {
+        success: true,
+        message: "Documents soumis avec succès",
+        documentsCount: input.documents.length,
+      };
+    }),
+
+  // ── Récupérer toutes les données du dossier ────────────────────────────────
+  getMyDossierData: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const { applications } = await import("../../drizzle/schema");
+    const app = await db
+      .select()
+      .from(applications)
+      .where(eq(applications.candidateId, ctx.candidate.id))
+      .orderBy(desc(applications.createdAt))
+      .limit(1);
+
+    if (!app || app.length === 0) {
+      return {
+        success: false,
+        message: "Aucun dossier trouvé",
+        data: null,
+      };
+    }
+
+    const application = app[0];
+
+    // Récupérer les documents
+    const documents = await db
+      .select()
+      .from(candidateFiles)
+      .where(eq(candidateFiles.candidateId, ctx.candidate.id));
+
+    // Récupérer les messages
+    const messages = await db
+      .select()
+      .from(candidateMessages)
+      .where(eq(candidateMessages.candidateId, ctx.candidate.id))
+      .orderBy(desc(candidateMessages.createdAt));
+
+    return {
+      success: true,
+      data: {
+        application,
+        documents,
+        messages,
+        dossierStatus: application.dossierStatus,
+        agreementSigned: application.agreementSigned,
+        paymentStatus: application.paymentStatus,
+        scoringTotal: application.scoringTotal,
+        evaluationScore: application.evaluationScore,
+      },
+    };
+  }),
 });
