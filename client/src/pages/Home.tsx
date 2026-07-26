@@ -21,7 +21,7 @@ import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { NavbarSimplified } from "@/components/NavbarSimplified";
+import NavbarImproved from "@/components/NavbarImproved";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
@@ -524,7 +524,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <NavbarSimplified onEvalClick={() => setShowEvalModal(true)} />
+      <NavbarImproved activePage="home" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
