@@ -296,9 +296,9 @@ export default function MonDossier() {
           ) : isLoading ? (
             <div className="text-center py-16">
               <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Chargement de votre dossierData...</p>
+              <p className="text-gray-500">Chargement de votre dossier...</p>
             </div>
-          ) : dossierData ? (
+          ) : dossierData && dossierData.dossierStatus ? (
             <div className="space-y-6">
               {/* Barre de progression visuelle */}
               <DossierProgressBar

@@ -88,15 +88,26 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
         </Link>
 
         {/* ── Navigation Desktop ── */}
-        <nav className="hidden lg:flex items-center gap-8 flex-1 justify-center">
-          <Link href="/" className={linkClass("home")}>Accueil</Link>
-          <Link href="/flights" className={linkClass("flights")}>
-            <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
-          </Link>
-        </nav>
+        <nav className="hidden lg:flex items-center gap-8 flex-1 justify-center" />
 
         {/* ── Actions Section ── */}
         <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
+          {/* Navigation Links */}
+          <Link href="/" className={linkClass("home")}>
+            <span className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-[#1E3A8A]">
+              <span>Accueil</span>
+            </span>
+          </Link>
+          <Link href="/flights" className={linkClass("flights")}>
+            <span className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-[#1E3A8A]">
+              <Plane className="w-4 h-4 flex-shrink-0" />
+              <span>Vols</span>
+            </span>
+          </Link>
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-gray-300" />
+
           {/* Quick Links */}
           <Link href="/procedures" className={linkClass("procedures")}>
             <span className="flex items-center gap-1.5">
