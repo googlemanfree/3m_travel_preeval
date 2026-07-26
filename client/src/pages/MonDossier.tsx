@@ -247,12 +247,20 @@ export default function MonDossier() {
                     />
                   </div>
                   {error && (
-                    <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-lg">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      {error.message}
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-red-900 text-sm">Erreur de chargement</h3>
+                          <p className="text-red-700 text-sm mt-1">{error.message || 'Impossible de charger votre dossier. Vérifiez le numéro et l\'email.'}</p>
+                          <Button onClick={() => refetch()} className="mt-2 bg-red-600 hover:bg-red-700 text-white text-xs" disabled={isLoading}>
+                            Réessayer
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
-                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isLoading || !!error}>
                     {isLoading ? "Recherche en cours..." : "Accéder à mon dossier"}
                   </Button>
                 </form>
