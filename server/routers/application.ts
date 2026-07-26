@@ -1184,10 +1184,11 @@ export const applicationRouter = router({
         // Envoyer un email de confirmation au candidat
         try {
           await sendDossierConfirmationEmail(
-            input.fullName,
             input.email,
+            input.fullName,
             dossierNumber,
-            input.destination
+            input.destination,
+            65000
           );
         } catch (emailErr) {
           console.error('[createAgencyDossier] Email confirmation error:', emailErr);
