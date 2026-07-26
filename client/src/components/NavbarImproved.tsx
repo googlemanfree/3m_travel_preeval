@@ -93,8 +93,13 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
           <Link href="/flights" className={linkClass("flights")}>
             <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
           </Link>
+        </nav>
+
+        {/* ── Actions Section ── */}
+        <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
+          {/* Quick Links */}
           <Link href="/procedures" className={linkClass("procedures")}>
-            <span className="flex items-center gap-1.5 justify-center">
+            <span className="flex items-center gap-1.5">
               <BookOpen className="w-4 h-4 flex-shrink-0" />
               <span>Procédures</span>
             </span>
@@ -102,10 +107,10 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
 
           {/* Ressources Dropdown */}
           <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
-            <button className={`text-sm font-semibold transition-all duration-200 flex items-center gap-1 ${
+            <button className={`text-sm font-bold transition-all duration-200 flex items-center gap-1 ${
               ["visa-types", "destinations", "guide", "tarifs", "avis", "blog"].includes(active ?? "")
                 ? "text-[#1E3A8A] border-b-2 border-[#1E3A8A] pb-0.5"
-                : "text-gray-600 hover:text-[#1E3A8A]"
+                : "text-gray-700 hover:text-[#1E3A8A]"
             }`}>
               <Globe className="w-3.5 h-3.5" />
               Ressources
@@ -118,7 +123,7 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-56 z-50"
+                  className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-56 z-50"
                 >
                   <Link href="/visa-types" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1E3A8A] transition-colors">
                     <FileText className="w-4 h-4 text-[#1E3A8A]" />
@@ -164,15 +169,12 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
           </div>
 
           <Link href="/mon-dossier" className={linkClass("suivi")}>
-            <span className="flex items-center gap-1.5 justify-center">
+            <span className="flex items-center gap-1.5">
               <Search className="w-4 h-4 flex-shrink-0" />
               <span>Suivi</span>
             </span>
           </Link>
-        </nav>
 
-        {/* ── Actions Section ── */}
-        <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
           {/* Language Switcher */}
           <LanguageSwitcher showLabel={false} />
 
