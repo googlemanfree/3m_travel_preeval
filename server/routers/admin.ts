@@ -733,4 +733,104 @@ export const adminRouter = router({
         });
       }
     }),
+
+  /**
+   * Modifier les donnees d'une application (par l'admin)
+   */
+  updateApplicationData: protectedProcedure
+    .input(z.object({
+      applicationId: z.number(),
+      data: z.object({
+        destinationCountry: z.string().optional(),
+        projectType: z.string().optional(),
+        studyLevel: z.string().optional(),
+        fieldOfStudy: z.string().optional(),
+        adminNotes: z.string().optional(),
+      }),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const updateData: any = {};
+        if (input.data.destinationCountry) updateData.destinationCountry = input.data.destinationCountry;
+        if (input.data.projectType) updateData.projectType = input.data.projectType;
+        if (input.data.studyLevel) updateData.studyLevel = input.data.studyLevel;
+        if (input.data.fieldOfStudy) updateData.fieldOfStudy = input.data.fieldOfStudy;
+        if (input.data.adminNotes) updateData.adminNotes = input.data.adminNotes;
+        updateData.lastStatusUpdateAt = new Date();
+        updateData.lastStatusUpdatedBy = ctx.user.name || "Admin";
+
+        await db
+          .update(applications)
+          .set(updateData)
+          .where(eq(applications.id, input.applicationId));
+
+        return { success: true, message: "Donnees du dossier mises a jour" };
+      } catch (err) {
+        console.error("[Admin Update Application Data] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise a jour des donnees",
+        });
+      }
+    }),
+
+  /**
+   * Recuperer les details complets d'une application
+   */
+  getApplicationDetails: protectedProcedure
+    .input(z.object({ applicationId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const app = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId))
+          .limit(1);
+
+        if (app.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Application non trouvee" });
+        }
+
+        // Récupérer les documents du candidat
+        const documents = await db
+          .select()
+          .from(clientDocuments)
+          .where(eq(clientDocuments.candidateEmail, app[0].email))
+          .limit(50);
+
+        const reports = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.applicationId, input.applicationId))
+          .orderBy(desc(aiReportHistory.createdAt))
+          .limit(10);
+
+        return {
+          success: true,
+          application: app[0],
+          documents,
+          reports,
+        };
+      } catch (err) {
+        console.error("[Admin Get Application Details] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la recuperation des details",
+        });
+      }
+    }),
 });

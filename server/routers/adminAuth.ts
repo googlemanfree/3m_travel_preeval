@@ -21,9 +21,36 @@ function generateSessionToken(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
+/**
+ * Récupérer la liste des emails admin autorisés
+ */
+export async function getAuthorizedAdminEmails() {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const admins = await db
+      .select({ email: adminAccounts.email, fullName: adminAccounts.fullName, adminType: adminAccounts.adminType })
+      .from(adminAccounts)
+      .where(eq(adminAccounts.status, "active"));
+    return admins;
+  } catch (err) {
+    console.error("[Admin Auth] Error fetching authorized emails:", err);
+    return [];
+  }
+}
+
 export const adminAuthRouter = router({
   /**
-   * Demander un code OTP par email
+   * Récupérer la liste des emails admin autorisés
+   */
+  getAuthorizedEmails: publicProcedure
+    .query(async () => {
+      return await getAuthorizedAdminEmails();
+    }),
+
+  /**
+   * Démander un code OTP par email
    */
   requestOTP: publicProcedure
     .input(z.object({

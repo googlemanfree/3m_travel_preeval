@@ -21,6 +21,9 @@ export default function AdminLogin() {
   const [showOtpHint, setShowOtpHint] = useState(false);
   const [attemptCount, setAttemptCount] = useState(0);
 
+  // Récupérer les emails admin autorisés
+  const { data: authorizedEmails = [] } = trpc.adminAuth.getAuthorizedEmails.useQuery();
+
   // Mutations
   const requestOTPMutation = trpc.adminAuth.requestOTP.useMutation({
     onSuccess: (data) => {
@@ -96,7 +99,7 @@ export default function AdminLogin() {
     if (error.includes('email') || error.includes('autorisé')) {
       return {
         title: '❌ Email Non Autorisé',
-        suggestion: 'Utilisez l\'une des adresses autorisées listées ci-dessous',
+        suggestion: authorizedEmails.length > 0 ? `Utilisez l'une des adresses autorisées : ${authorizedEmails.map(a => a.email).join(', ')}` : 'Aucun email admin autorisé configuré',
         icon: <AlertTriangle className="w-6 h-6 text-orange-600" />,
       };
     }
