@@ -71,11 +71,11 @@ export default function MySpace() {
 
   // Détecter les documents manquants
   const missingDocuments = useMissingDocuments(
-    app ? { projectType: app.projectType, academicLevel: app.academicLevel } : null,
+    app ? { projectType: (app as any).projectType || "", academicLevel: app.academicLevel || "" } : null,
     documents
   );
   const completeness = useDocumentCompleteness(
-    app ? { projectType: app.projectType, academicLevel: app.academicLevel } : null,
+    app ? { projectType: (app as any).projectType || "", academicLevel: app.academicLevel || "" } : null,
     documents
   );
 
@@ -92,7 +92,7 @@ export default function MySpace() {
   };
 
   // Afficher la notification si des documents manquent
-  const shouldShowNotification = missingDocuments.length > 0 && app?.status === "en_evaluation";
+  const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && (app as any)?.dossierStatus === "en_evaluation";
 
   // Déterminer le badge de statut
   const getStatusBadge = (status: string) => {
@@ -133,8 +133,23 @@ export default function MySpace() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Mon Espace Candidat</h1>
-          <p className="text-blue-100">Bienvenue, {user?.name || "candidat"}</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Mon Espace Candidat</h1>
+              <p className="text-blue-100">Bienvenue, {user?.name || "candidat"}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-right">
+                <p className="text-sm text-blue-100">Numéro de dossier</p>
+                <p className="text-2xl font-bold">{app?.dossierNumber}</p>
+              </div>
+              <a href={`/mon-dossier?dossier=${app?.dossierNumber}`}>
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold">
+                  📋 Suivre mon dossier
+                </Button>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -144,10 +159,10 @@ export default function MySpace() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Numéro de Dossier</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Statut</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600">{app?.dossierNumber}</p>
+              {getStatusBadge(app?.dossierStatus || "nouveau")}
             </CardContent>
           </Card>
 
