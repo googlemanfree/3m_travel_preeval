@@ -124,6 +124,31 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           </a>
         </motion.div>
 
+        {/* Boutons Connexion/Inscription */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={5.5}
+          className="flex flex-col sm:flex-row gap-3 justify-center mb-8"
+        >
+          <a href="/login">
+            <Button
+              variant="outline"
+              className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
+            >
+              🔐 Se Connecter
+            </Button>
+          </a>
+          <a href="/register">
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
+            >
+              ✍️ Créer un Compte
+            </Button>
+          </a>
+        </motion.div>
+
         {/* Statistiques */}
         <motion.div
           initial="hidden"

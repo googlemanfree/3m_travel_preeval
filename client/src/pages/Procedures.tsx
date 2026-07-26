@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProcedureDetailModal from "@/components/ProcedureDetailModal";
@@ -1097,6 +1099,32 @@ const QUICK_TAGS = [
 ];
 
 export default function Procedures() {
+  const { user, loading: authLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+
+  // Rediriger si non authentifié
+  useEffect(() => {
+    if (!authLoading && !user) {
+      setLocation("/login?redirect=/procedures");
+    }
+  }, [user, authLoading, setLocation]);
+
+  // Afficher un écran de chargement pendant la vérification
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Vérification de votre authentification...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ne pas afficher le contenu si non authentifié
+  if (!user) {
+    return null;
+  }
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [evalStep, setEvalStep] = useState(1);
