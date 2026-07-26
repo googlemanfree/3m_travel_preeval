@@ -5,7 +5,7 @@
 
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
+import { Plane, BookOpen, User, Menu, X, Star, Shield, Globe, Map, FileText, ChevronDown, Search, Download, CheckCircle2, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -140,6 +140,15 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
                   <Link href="/blog" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#1E3A8A] transition-colors">
                     <BookOpen className="w-4 h-4 text-[#1E3A8A]" />
                     Blog
+                  </Link>
+                  <div className="border-t border-gray-100 my-1" />
+                  <Link href="/simulateur-eligibilite" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E3A8A] hover:bg-blue-50 transition-colors">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Simulateur d'éligibilité
+                  </Link>
+                  <Link href="/comparateur-destinations" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E3A8A] hover:bg-blue-50 transition-colors">
+                    <TrendingUp className="w-4 h-4" />
+                    Comparateur de destinations
                   </Link>
                   <div className="border-t border-gray-100 my-1" />
                   <Link href="/ressources" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E3A8A] hover:bg-blue-50 transition-colors">

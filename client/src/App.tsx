@@ -48,6 +48,8 @@ import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
+import EligibilitySimulator from "./pages/EligibilitySimulator";
+import DestinationComparator from "./pages/DestinationComparator";
 import ClientDashboard from "./pages/ClientDashboard";
 import { HowItWorks } from "./pages/HowItWorks";
 import MySpace from "./pages/MySpace";
@@ -246,6 +248,14 @@ function Router() {
 
       <Route path="/hotels">
         <Hotels />
+      </Route>
+
+      <Route path="/simulateur-eligibilite">
+        <EligibilitySimulator />
+      </Route>
+
+      <Route path="/comparateur-destinations">
+        <DestinationComparator />
       </Route>
 
       <Route path={"/404"} component={NotFound} />
