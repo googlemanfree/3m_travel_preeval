@@ -48,10 +48,10 @@ export default function NavbarImproved({ onEvalClick, activePage }: NavbarProps)
   );
 
   const linkClass = (page: string) =>
-    `text-sm font-semibold transition-all duration-200 ${
+    `text-sm font-bold transition-all duration-200 ${
       active === page
         ? "text-[#1E3A8A] border-b-2 border-[#1E3A8A] pb-0.5"
-        : "text-gray-600 hover:text-[#1E3A8A]"
+        : "text-gray-700 hover:text-[#1E3A8A]"
     }`;
 
   return (
