@@ -60,6 +60,7 @@ import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
 import TestFeatures from "./pages/TestFeatures";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
+import { SkipLink } from "./components/SkipLink";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -250,8 +251,11 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <SkipLink />
           <Toaster />
-          <Router />
+          <main id="main-content">
+            <Router />
+          </main>
           <FloatingServices />
           <FloatingWhatsAppButton />
           <ScrollToTop />
