@@ -49,10 +49,26 @@
      Bleu ciel         : #7CB9E8  (anneau intérieur / texte 3M clair)
      Blanc             : #FFFFFF  (fond principal)
   ── */
-  --brand-royal:  #1e3a8a;
-  --brand-mid:    #2563eb;
-  --brand-sky:    #7cb9e8;
-  --brand-light:  #dbeafe;
+  /* Palette 3M Travel - Nuancee */
+  --brand-royal:  #1e3a8a;  /* Bleu fonce - logo exterieur */
+  --brand-mid:    #2563eb;  /* Bleu moyen - principal */
+  --brand-sky:    #7cb9e8;  /* Bleu ciel - accents */
+  --brand-light:  #dbeafe;  /* Bleu tres clair */
+  
+  /* Gris neutres pour equilibre */
+  --gray-900:     #0f172a;  /* Texte principal */
+  --gray-700:     #374151;  /* Texte secondaire */
+  --gray-600:     #4b5563;  /* Texte tertaire */
+  --gray-500:     #6b7280;  /* Placeholders */
+  --gray-400:     #9ca3af;  /* Borders */
+  --gray-300:     #d1d5db;  /* Light borders */
+  --gray-200:     #e5e7eb;  /* Very light */
+  --gray-100:     #f3f4f6;  /* Almost white */
+  
+  /* Accents complementaires */
+  --accent-amber:  #f59e0b;  /* Ambre - CTA */
+  --accent-green:  #10b981;  /* Vert - Success */
+  --accent-red:    #ef4444;  /* Rouge - Erreur */
 
   --primary: #1e3a8a;           /* bleu royal logo */
   --primary-foreground: #ffffff;
@@ -131,6 +147,17 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Retirer underlines des liens */
+  a {
+    @apply no-underline;
+  }
+  
+  a:hover {
+    @apply underline;
+  }
+  
+  /* Augmenter taille des boutons pour accessibilité */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [type="button"]:not(:disabled),
@@ -140,7 +167,13 @@
   select:not(:disabled),
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
-    @apply cursor-pointer;
+    @apply cursor-pointer min-h-12 min-w-12;
+  }
+  
+  /* Styles pour boutons */
+  button,
+  [role="button"] {
+    @apply px-4 py-2 rounded-lg font-semibold transition-all duration-200;
   }
 }
 
