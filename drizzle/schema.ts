@@ -1126,3 +1126,60 @@ export const agencyDossierHistory = mysqlTable("agency_dossier_history", {
 
 export type AgencyDossierHistory = typeof agencyDossierHistory.$inferSelect;
 export type InsertAgencyDossierHistory = typeof agencyDossierHistory.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BILANS D'ADMISSIBILITÉ (GÉNÉRÉS PAR IA)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Bilans d'admissibilité générés automatiquement par IA Manus (H+48)
+ * Validés par l'admin avant envoi au candidat
+ */
+export const bilans = mysqlTable("bilans", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au dossier
+  applicationId: int("applicationId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull(),
+  
+  // Candidat
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  
+  // Bilan généré par IA
+  score: int("score").notNull(),  // 0-100
+  verdict: mysqlEnum("verdict", [
+    "tres_favorable",
+    "favorable_sous_reserve",
+    "risque_non_admissible"
+  ]).notNull(),
+  strengths: text("strengths").notNull(),  // JSON array
+  weaknesses: text("weaknesses").notNull(),  // JSON array
+  recommendations: text("recommendations").notNull(),  // JSON array
+  
+  // Statut de validation
+  status: mysqlEnum("status", [
+    "draft",  // Généré par IA, en attente de validation
+    "validated",  // Validé par l'admin
+    "sent",  // Email envoyé au candidat
+    "rejected"  // Rejeté par l'admin
+  ]).default("draft").notNull(),
+  
+  // Validation admin
+  validatedBy: varchar("validatedBy", { length: 255 }),  // Nom de l'admin
+  validatedAt: timestamp("validatedAt"),
+  adminNotes: text("adminNotes"),  // Notes de l'admin avant validation
+  
+  // Envoi email
+  sentAt: timestamp("sentAt"),
+  emailTemplate: varchar("emailTemplate", { length: 50 }).default("bilan_standard"),  // bilan_standard, bilan_favorable, etc.
+  
+  // Timestamps
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Bilan = typeof bilans.$inferSelect;
+export type InsertBilan = typeof bilans.$inferInsert;

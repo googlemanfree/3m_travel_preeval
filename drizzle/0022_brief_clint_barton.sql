@@ -1,0 +1,22 @@
+CREATE TABLE `bilans` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`applicationId` int NOT NULL,
+	`dossierNumber` varchar(20) NOT NULL,
+	`candidateEmail` varchar(320) NOT NULL,
+	`candidateName` varchar(255) NOT NULL,
+	`score` int NOT NULL,
+	`verdict` enum('tres_favorable','favorable_sous_reserve','risque_non_admissible') NOT NULL,
+	`strengths` text NOT NULL,
+	`weaknesses` text NOT NULL,
+	`recommendations` text NOT NULL,
+	`status` enum('draft','validated','sent','rejected') NOT NULL DEFAULT 'draft',
+	`validatedBy` varchar(255),
+	`validatedAt` timestamp,
+	`adminNotes` text,
+	`sentAt` timestamp,
+	`emailTemplate` varchar(50) DEFAULT 'bilan_standard',
+	`generatedAt` timestamp NOT NULL DEFAULT (now()),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `bilans_id` PRIMARY KEY(`id`)
+);
