@@ -853,6 +853,138 @@ export const applicationRouter = router({
     }),
 
   /**
+   * Met à jour les informations du dossier de l'utilisateur connecté
+   */
+  updateMyDossierData: protectedProcedure
+    .input(z.object({
+      fullName: z.string().min(2).max(255).optional(),
+      whatsappNumber: z.string().max(50).optional(),
+      age: z.number().int().min(18).max(120).optional(),
+      nationality: z.string().max(100).optional(),
+      academicLevel: z.string().max(100).optional(),
+      experienceYears: z.number().int().min(0).max(70).optional(),
+      languageSkills: z.string().max(255).optional(),
+      jobSector: z.string().max(100).optional(),
+      dateOfBirth: z.string().max(20).optional(),
+      placeOfBirth: z.string().max(150).optional(),
+      gender: z.enum(["homme", "femme", "autre"]).optional(),
+      maritalStatus: z.enum(["celibataire", "marie", "divorce", "veuf", "union_libre"]).optional(),
+      currentAddress: z.string().optional(),
+      currentCity: z.string().max(100).optional(),
+      currentCountry: z.string().max(100).optional(),
+      diplomaTitle: z.string().max(255).optional(),
+      diplomaInstitution: z.string().max(255).optional(),
+      diplomaYear: z.number().int().optional(),
+      fieldOfStudy: z.string().max(150).optional(),
+      currentEmployer: z.string().max(255).optional(),
+      currentJobTitle: z.string().max(150).optional(),
+      monthlyIncome: z.number().int().optional(),
+      incomeCurrency: z.string().max(10).optional(),
+      bankBalance: z.number().int().optional(),
+      bankBalanceCurrency: z.string().max(10).optional(),
+      hasSponsorship: z.boolean().optional(),
+      sponsorName: z.string().max(255).optional(),
+      sponsorRelation: z.string().max(100).optional(),
+      numberOfChildren: z.number().int().min(0).optional(),
+      spouseFullName: z.string().max(255).optional(),
+      spouseNationality: z.string().max(100).optional(),
+      familyMemberInDestination: z.boolean().optional(),
+      familyMemberRelation: z.string().max(100).optional(),
+      familyMemberStatus: z.string().max(100).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      // Chercher le dossier par email de l'utilisateur connecté
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.email, ctx.user.email ?? ''))
+        .limit(1);
+
+      if (!app) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Aucun dossier trouvé pour votre email.' });
+      }
+
+      // Construire l'objet de mise à jour avec les champs fournis
+      const updateData: any = {};
+      if (input.fullName !== undefined) updateData.fullName = input.fullName;
+      if (input.whatsappNumber !== undefined) updateData.whatsappNumber = input.whatsappNumber;
+      if (input.age !== undefined) updateData.age = input.age;
+      if (input.nationality !== undefined) updateData.nationality = input.nationality;
+      if (input.academicLevel !== undefined) updateData.academicLevel = input.academicLevel;
+      if (input.experienceYears !== undefined) updateData.experienceYears = input.experienceYears;
+      if (input.languageSkills !== undefined) updateData.languageSkills = input.languageSkills;
+      if (input.jobSector !== undefined) updateData.jobSector = input.jobSector;
+      if (input.dateOfBirth !== undefined) updateData.dateOfBirth = input.dateOfBirth;
+      if (input.placeOfBirth !== undefined) updateData.placeOfBirth = input.placeOfBirth;
+      if (input.gender !== undefined) updateData.gender = input.gender;
+      if (input.maritalStatus !== undefined) updateData.maritalStatus = input.maritalStatus;
+      if (input.currentAddress !== undefined) updateData.currentAddress = input.currentAddress;
+      if (input.currentCity !== undefined) updateData.currentCity = input.currentCity;
+      if (input.currentCountry !== undefined) updateData.currentCountry = input.currentCountry;
+      if (input.diplomaTitle !== undefined) updateData.diplomaTitle = input.diplomaTitle;
+      if (input.diplomaInstitution !== undefined) updateData.diplomaInstitution = input.diplomaInstitution;
+      if (input.diplomaYear !== undefined) updateData.diplomaYear = input.diplomaYear;
+      if (input.fieldOfStudy !== undefined) updateData.fieldOfStudy = input.fieldOfStudy;
+      if (input.currentEmployer !== undefined) updateData.currentEmployer = input.currentEmployer;
+      if (input.currentJobTitle !== undefined) updateData.currentJobTitle = input.currentJobTitle;
+      if (input.monthlyIncome !== undefined) updateData.monthlyIncome = input.monthlyIncome;
+      if (input.incomeCurrency !== undefined) updateData.incomeCurrency = input.incomeCurrency;
+      if (input.bankBalance !== undefined) updateData.bankBalance = input.bankBalance;
+      if (input.bankBalanceCurrency !== undefined) updateData.bankBalanceCurrency = input.bankBalanceCurrency;
+      if (input.hasSponsorship !== undefined) updateData.hasSponsorship = input.hasSponsorship;
+      if (input.sponsorName !== undefined) updateData.sponsorName = input.sponsorName;
+      if (input.sponsorRelation !== undefined) updateData.sponsorRelation = input.sponsorRelation;
+      if (input.numberOfChildren !== undefined) updateData.numberOfChildren = input.numberOfChildren;
+      if (input.spouseFullName !== undefined) updateData.spouseFullName = input.spouseFullName;
+      if (input.spouseNationality !== undefined) updateData.spouseNationality = input.spouseNationality;
+      if (input.familyMemberInDestination !== undefined) updateData.familyMemberInDestination = input.familyMemberInDestination;
+      if (input.familyMemberRelation !== undefined) updateData.familyMemberRelation = input.familyMemberRelation;
+      if (input.familyMemberStatus !== undefined) updateData.familyMemberStatus = input.familyMemberStatus;
+
+      // Mettre à jour le dossier
+      await db
+        .update(applications)
+        .set(updateData)
+        .where(eq(applications.id, app.id));
+
+      // Enregistrer un log d'audit (optionnel - ignorer si la table n'existe pas)
+      try {
+        // Log d'audit - à implémenter selon votre schéma
+        console.log('[updateMyDossierData] Dossier mis à jour:', {
+          dossierNumber: app.dossierNumber,
+          updatedFields: Object.keys(input).filter(k => input[k as keyof typeof input] !== undefined),
+          performedBy: ctx.user.email,
+        });
+      } catch (err) {
+        console.error('[updateMyDossierData] Audit log error:', err);
+      }
+
+      // Envoyer une notification admin
+      try {
+        await sendAdminNewDossierAlert(
+          app.fullName,
+          app.dossierNumber,
+          app.email,
+          app.whatsappNumber || '',
+          app.destination,
+          app.paymentStatus || 'PENDING'
+        );
+      } catch (emailErr) {
+        console.error('[updateMyDossierData] Email notification error:', emailErr);
+      }
+
+      // Retourner les données mises à jour
+      return {
+        success: true,
+        message: 'Vos informations ont été mises à jour avec succès.',
+        dossierNumber: app.dossierNumber,
+      };
+    }),
+
+  /**
    * Envoyer un message au conseiller depuis le tableau de bord candidat
    */
   sendCandidateMessage: publicProcedure

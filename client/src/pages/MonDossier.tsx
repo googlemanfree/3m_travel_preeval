@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EditDossierModal } from "@/components/EditDossierModal";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -151,6 +152,7 @@ export default function MonDossier() {
   const [credentials, setCredentials] = useState<{ dossierNumber: string; email: string } | null>(null);
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Query pour utilisateur connecté
   const { data: myDossier, isLoading: myDossierLoading, error: myDossierError, refetch: refetchMyDossier } = trpc.application.getMyDossierData.useQuery(
@@ -367,8 +369,24 @@ export default function MonDossier() {
                       </div>
                     )}
                   </div>
+                  {isAuthenticated && (
+                    <Button
+                      onClick={() => setIsEditModalOpen(true)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Modifier mes informations
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
+
+              {/* Modal de modification */}
+              <EditDossierModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                dossierData={dossierData}
+                onSuccess={() => refetchData()}
+              />
 
               {/* Timeline d'avancement */}
               <Card className="shadow-md border-0">
