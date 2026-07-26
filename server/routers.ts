@@ -14,6 +14,7 @@ import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
+import { aiAssistantRouter } from "./routers/ai-assistant.router";
 
 const COOKIE_NAME = "manus_session";
 
@@ -44,6 +45,7 @@ export const appRouter = router({
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
   documentSubmission: documentSubmissionRouter,
+  aiAssistant: aiAssistantRouter,
 });
 
 export type AppRouter = typeof appRouter;

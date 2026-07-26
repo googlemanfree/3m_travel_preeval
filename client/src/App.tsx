@@ -63,8 +63,12 @@ import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import { SkipLink } from "./components/SkipLink";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
+import { AIAssistantWidget } from "./components/AIAssistantWidget";
 
 function Router() {
+  // Enregistrer le service worker
+  useServiceWorker();
+  
   // Gérer l'inactivité et la déconnexion automatique
   useSessionTimeout();
   return (
@@ -265,6 +269,7 @@ function App() {
           <FloatingWhatsAppButton />
           <ScrollToTop />
           <ServiceWorkerUpdateNotification />
+          <AIAssistantWidget />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
