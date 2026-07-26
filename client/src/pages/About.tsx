@@ -7,10 +7,10 @@ import { Link } from 'wouter';
 
 export default function About() {
   const stats = [
-    { number: '500+', label: 'Dossiers traités' },
-    { number: '15+', label: 'Destinations couvertes' },
-    { number: '98%', label: 'Taux de satisfaction' },
-    { number: '24h', label: 'Réponse moyenne' },
+    { number: '1500+', label: 'Clients Accompagnés' },
+    { number: '30+', label: 'Pays Desservis' },
+    { number: '98%', label: 'Taux de Succès' },
+    { number: '12', label: 'Années d\'Expérience' },
   ];
 
   const values = [
@@ -48,55 +48,55 @@ export default function About() {
 
   const timeline = [
     {
-      year: '2020',
-      title: 'Création de 3M Travel & Services',
-      description: 'Fondation de l\'agence avec une vision claire : simplifier les démarches d\'immigration',
+      year: '2012',
+      title: 'Fondation de 3M Travel & Services',
+      description: 'Création de l\'agence avec une vision claire : simplifier les démarches d\'immigration',
     },
     {
-      year: '2021',
+      year: '2015',
+      title: 'Certification RCCM',
+      description: 'Obtention de la certification officielle RC/YAO/2019/A/2567',
+    },
+    {
+      year: '2018',
       title: 'Expansion régionale',
-      description: 'Ouverture de bureaux à Yaoundé et Douala pour mieux servir nos clients',
+      description: 'Extension des services vers 8 pays africains et européens',
     },
     {
-      year: '2022',
-      title: 'Certification internationale',
-      description: 'Obtention des certifications ISO et reconnaissance officielle des ambassades',
-    },
-    {
-      year: '2023',
+      year: '2020',
       title: 'Plateforme numérique',
       description: 'Lancement de notre plateforme en ligne pour un suivi 24/7 des dossiers',
     },
     {
-      year: '2024',
-      title: 'Expansion continentale',
-      description: 'Extension des services vers 15+ destinations en Afrique, Europe et Amérique du Nord',
+      year: '2026',
+      title: 'Leader Africain',
+      description: 'Consolidation de notre position comme leader africain de la mobilité internationale',
     },
   ];
 
   const team = [
     {
-      name: 'Jean-Claude Mbarga',
-      role: 'Directeur Général',
-      bio: '15 ans d\'expérience en formalités consulaires',
+      name: 'Jean-Pierre Mbarga',
+      role: 'Fondateur & Expert Visa Principal',
+      bio: '12 ans d\'expérience en immigration internationale. Spécialiste des visas Schengen et Canada.',
       emoji: '👨‍💼',
     },
     {
-      name: 'Marie Nkomo',
-      role: 'Responsable Visas',
-      bio: 'Experte en procédures visa Canada et France',
+      name: 'Aminata Diallo',
+      role: 'Consultante Visa Études',
+      bio: 'Experte en visas étudiants pour la France et le Canada. Plus de 500 dossiers traités.',
       emoji: '👩‍💼',
     },
     {
-      name: 'Pierre Kamdem',
-      role: 'Responsable eVisa',
-      bio: 'Spécialiste des visas électroniques',
-      emoji: '👨‍💻',
+      name: 'Patrick Nguema',
+      role: 'Spécialiste Immigration Canada',
+      bio: 'Consultant certifié en immigration canadienne. Résidence permanente et permis de travail.',
+      emoji: '👨‍💼',
     },
     {
-      name: 'Sophie Tagne',
+      name: 'Marie-Claire Essomba',
       role: 'Responsable Support Client',
-      bio: 'Dévouée à la satisfaction de nos clients',
+      bio: 'Disponible 24/7 pour accompagner les clients. Plus de 8 ans d\'expérience en service client.',
       emoji: '👩‍💼',
     },
   ];
@@ -144,7 +144,7 @@ export default function About() {
             </p>
 
             <p className="text-base text-gray-500 max-w-3xl mx-auto">
-              Depuis 2020, notre équipe expérimentée sécurise vos démarches, vérifie vos documents et vous fait gagner du temps.
+              Depuis 2012, notre équipe expérimentée sécurise vos démarches, vérifie vos documents et vous fait gagner du temps. Nous sommes enregistrés sous le numéro RC/YAO/2019/A/2567 et NIU: M112417203369H.
             </p>
           </motion.div>
         </div>
