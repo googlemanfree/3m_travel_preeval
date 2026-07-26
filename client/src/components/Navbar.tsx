@@ -137,14 +137,6 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               Évaluation gratuite
             </Button>
           )}
-          <Link href="/open-dossier">
-            <Button
-              className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
-            >
-              <FolderOpen className="w-4 h-4 mr-1.5" />
-              Ouvrir un dossier
-            </Button>
-          </Link>
           {/* Admin login button - only show if NOT admin */}
           {!isAdmin && (
             <Link href="/admin/login">
@@ -235,10 +227,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             <Search className="w-4 h-4 text-blue-600" /> Suivre mon dossier
           </Link>
-          <Link href="/open-dossier" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-            <FolderOpen className="w-4 h-4" /> Ouvrir un dossier
-          </Link>
+
           {isAuthenticated ? (
             <Link href="/dashboard" onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
