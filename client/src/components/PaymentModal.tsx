@@ -114,6 +114,8 @@ export function PaymentModal({
                 </div>
                 <button
                   onClick={onClose}
+                  type="button"
+                  aria-label="Fermer la fenêtre de paiement"
                   className="hover:bg-white/20 p-2 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />

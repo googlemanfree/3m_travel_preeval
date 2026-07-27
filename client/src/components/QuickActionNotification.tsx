@@ -109,6 +109,8 @@ export function QuickActionNotification({
       {dismissible && (
         <button
           onClick={handleDismiss}
+          type="button"
+          aria-label="Ignorer la notification"
           className="flex-shrink-0 text-gray-400 hover:text-gray-600"
         >
           <X className="w-4 h-4" />

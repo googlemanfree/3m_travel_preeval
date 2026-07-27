@@ -132,10 +132,10 @@ export default function AdminInvite({ isOpen, onClose, onInviteSent }: AdminInvi
           <div className="space-y-6">
             {/* Email Input */}
             <div>
-              <Label className="text-sm font-semibold">Adresse email</Label>
+              <Label htmlFor="email" className="text-sm font-semibold">Adresse email</Label>
               <div className="relative mt-2">
                 <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input
+                <Input id="email"
                   type="email"
                   placeholder="admin@example.com"
                   value={email}
@@ -151,8 +151,8 @@ export default function AdminInvite({ isOpen, onClose, onInviteSent }: AdminInvi
 
             {/* Role Selection */}
             <div>
-              <Label className="text-sm font-semibold">Rôle</Label>
-              <select
+              <Label htmlFor="role" className="text-sm font-semibold">Rôle</Label>
+              <select id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -265,11 +265,11 @@ export default function AdminInvite({ isOpen, onClose, onInviteSent }: AdminInvi
 
             {/* Invitation Link */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-              <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+              <Label htmlFor="inviteLink" className="text-sm font-semibold text-gray-700 mb-2 block">
                 Lien d'invitation sécurisé
               </Label>
               <div className="flex gap-2">
-                <input
+                <input id="inviteLink"
                   type="text"
                   value={inviteLink}
                   readOnly
