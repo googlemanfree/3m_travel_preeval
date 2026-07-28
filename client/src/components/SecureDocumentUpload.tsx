@@ -61,6 +61,8 @@ export function SecureDocumentUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [previewDocument, setPreviewDocument] = useState<UploadedDocument | null>(null);
+  const [overallProgress, setOverallProgress] = useState(0);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getFileIcon = (type: string) => {
@@ -132,10 +134,15 @@ export function SecureDocumentUpload({
     }
 
     setIsUploading(true);
+    setUploadingCount(0);
+    setOverallProgress(0);
 
     try {
       // Simuler le téléchargement avec progression
-      for (const doc of validDocuments) {
+      for (let index = 0; index < validDocuments.length; index++) {
+        const doc = validDocuments[index];
+        setUploadingCount(index + 1);
+
         setDocuments((prev) =>
           prev.map((d) =>
             d.id === doc.id ? { ...d, status: "uploading", progress: 0 } : d
@@ -150,6 +157,12 @@ export function SecureDocumentUpload({
               d.id === doc.id ? { ...d, progress: i } : d
             )
           );
+          
+          // Calculer la progression globale
+          const currentProgress = Math.round(
+            ((index * 100 + i) / (validDocuments.length * 100)) * 100
+          );
+          setOverallProgress(currentProgress);
         }
 
         // Marquer comme succès
@@ -159,6 +172,8 @@ export function SecureDocumentUpload({
           )
         );
       }
+      
+      setOverallProgress(100);
 
       toast.success(`${validDocuments.length} document(s) téléchargé(s) avec succès`);
 
@@ -362,8 +377,37 @@ export function SecureDocumentUpload({
         )}
       </AnimatePresence>
 
+      {/* Indicateur de progression global */}
+      {isUploading && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+              <span className="font-medium text-blue-900">
+                Envoi en cours... {uploadingCount}/{documents.length} document(s)
+              </span>
+            </div>
+            <span className="text-sm font-semibold text-blue-700">{overallProgress}%</span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+            <motion.div
+              className="bg-gradient-to-r from-blue-600 to-blue-700 h-full rounded-full"
+              animate={{ width: `${overallProgress}%` }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            />
+          </div>
+          <p className="text-xs text-blue-600">
+            Veuillez patienter, vos documents sont en cours de validation et d'envoi...
+          </p>
+        </motion.div>
+      )}
+
       {/* Boutons d'action */}
-      {documents.length > 0 && (
+      {documents.length > 0 && !isUploading && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
