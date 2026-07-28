@@ -14,11 +14,9 @@ import {
   Loader2,
   Zap,
   TrendingUp,
-  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { DocumentPreview } from "./DocumentPreview";
 
 export interface UploadedDocument {
   id: string;
@@ -60,9 +58,6 @@ export function SecureDocumentUpload({
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [previewDocument, setPreviewDocument] = useState<UploadedDocument | null>(null);
-  const [overallProgress, setOverallProgress] = useState(0);
-  const [uploadingCount, setUploadingCount] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getFileIcon = (type: string) => {
@@ -134,15 +129,10 @@ export function SecureDocumentUpload({
     }
 
     setIsUploading(true);
-    setUploadingCount(0);
-    setOverallProgress(0);
 
     try {
       // Simuler le téléchargement avec progression
-      for (let index = 0; index < validDocuments.length; index++) {
-        const doc = validDocuments[index];
-        setUploadingCount(index + 1);
-
+      for (const doc of validDocuments) {
         setDocuments((prev) =>
           prev.map((d) =>
             d.id === doc.id ? { ...d, status: "uploading", progress: 0 } : d
@@ -157,12 +147,6 @@ export function SecureDocumentUpload({
               d.id === doc.id ? { ...d, progress: i } : d
             )
           );
-          
-          // Calculer la progression globale
-          const currentProgress = Math.round(
-            ((index * 100 + i) / (validDocuments.length * 100)) * 100
-          );
-          setOverallProgress(currentProgress);
         }
 
         // Marquer comme succès
@@ -172,8 +156,6 @@ export function SecureDocumentUpload({
           )
         );
       }
-      
-      setOverallProgress(100);
 
       toast.success(`${validDocuments.length} document(s) téléchargé(s) avec succès`);
 
@@ -348,26 +330,15 @@ export function SecureDocumentUpload({
                     </div>
 
                     {doc.status !== "uploading" && (
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button
-                          onClick={() => setPreviewDocument(doc)}
-                          type="button"
-                          aria-label={`Previsualiser le document ${doc.name ?? ""}`}
-                          className="p-1 hover:bg-blue-100 rounded transition-colors text-blue-600"
-                          title="Previsualiser"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => removeDocument(doc.id)}
-                          type="button"
-                          aria-label={`Supprimer le document ${doc.name ?? ""}`}
-                          className="p-1 hover:bg-gray-200 rounded transition-colors"
-                          disabled={isUploading}
-                        >
-                          <X className="w-4 h-4 text-gray-600" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => removeDocument(doc.id)}
+                        type="button"
+                        aria-label={`Supprimer le document ${doc.name ?? ""}`.trim()}
+                        className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
+                        disabled={isUploading}
+                      >
+                        <X className="w-4 h-4 text-gray-600" />
+                      </button>
                     )}
                   </div>
                 </motion.div>
@@ -377,37 +348,8 @@ export function SecureDocumentUpload({
         )}
       </AnimatePresence>
 
-      {/* Indicateur de progression global */}
-      {isUploading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-3 p-4 bg-blue-50 border border-blue-200 rounded-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
-              <span className="font-medium text-blue-900">
-                Envoi en cours... {uploadingCount}/{documents.length} document(s)
-              </span>
-            </div>
-            <span className="text-sm font-semibold text-blue-700">{overallProgress}%</span>
-          </div>
-          <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
-            <motion.div
-              className="bg-gradient-to-r from-blue-600 to-blue-700 h-full rounded-full"
-              animate={{ width: `${overallProgress}%` }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            />
-          </div>
-          <p className="text-xs text-blue-600">
-            Veuillez patienter, vos documents sont en cours de validation et d'envoi...
-          </p>
-        </motion.div>
-      )}
-
       {/* Boutons d'action */}
-      {documents.length > 0 && !isUploading && (
+      {documents.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -448,25 +390,6 @@ export function SecureDocumentUpload({
           Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M Travel peuvent y accéder.
         </p>
       </div>
-
-      {/* Composant de prévisualisation */}
-      {previewDocument && (
-        <DocumentPreview
-          file={previewDocument.file}
-          fileName={previewDocument.name}
-          fileType={previewDocument.type}
-          isOpen={!!previewDocument}
-          onClose={() => setPreviewDocument(null)}
-          onConfirm={() => {
-            setPreviewDocument(null);
-            toast.success("Document confirmé et prêt à être soumis");
-          }}
-          onDelete={() => {
-            removeDocument(previewDocument.id);
-            toast.success("Document supprimé avec succès");
-          }}
-        />
-      )}
     </div>
   );
 }

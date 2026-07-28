@@ -40,7 +40,7 @@ const services: Service[] = [
     name: "Assurance voyage",
     icon: "🛡️",
     color: "bg-green-600",
-    path: "/assurance",
+    path: "#",
     description: "Protection complète",
   },
   {
@@ -48,7 +48,7 @@ const services: Service[] = [
     name: "Traduction Certifiée",
     icon: "📄",
     color: "bg-purple-600",
-    path: "/traduction/order",
+    path: "#",
     description: "Documents officiels",
   },
   {
@@ -125,7 +125,6 @@ export default function FloatingServices() {
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-            aria-label="Contacter via WhatsApp"
             >
               💬 WhatsApp
             </a>
@@ -138,7 +137,6 @@ export default function FloatingServices() {
         <div
           className="fixed inset-0 z-30"
           onClick={() => setIsOpen(false)}
-          aria-label="Fermer le menu"
         />
       )}
 
