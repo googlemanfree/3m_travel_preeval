@@ -48,6 +48,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
     location === "/" ? "home" :
     location.startsWith("/flights") ? "flights" :
     location.startsWith("/procedures") ? "procedures" :
+    location.startsWith("/mon-dossier") ? "mon-dossier" :
     location.startsWith("/dashboard") ? "dashboard" :
     location.startsWith("/visa-types") ? "visa-types" :
     location.startsWith("/destinations") ? "destinations" :
