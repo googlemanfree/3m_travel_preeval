@@ -32,7 +32,7 @@ interface Candidate {
   report: CVReport | null;
 }
 
-const EVALUATION_API_URL = process.env.VITE_EVALUATION_API_URL || 'https://evaluation-api.3mtravelagency.click';
+const EVALUATION_API_URL = import.meta.env.VITE_EVALUATION_API_URL || 'https://evaluation-api.3mtravelagency.click';
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
