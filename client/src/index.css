@@ -140,6 +140,102 @@
   --sidebar-ring: oklch(0.488 0.243 264.376);
 }
 
+/* Mode contraste élevé pour accessibilité visuelle */
+.high-contrast {
+  /* Texte et fond avec contraste maximal */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  
+  /* Primaire avec contraste fort */
+  --primary: #000080; /* Bleu très foncé */
+  --primary-foreground: #ffffff;
+  
+  /* Secondaire et accents */
+  --secondary: #f3f4f6;
+  --secondary-foreground: #000000;
+  --muted: #cccccc;
+  --muted-foreground: #000000;
+  --accent: #ff6600; /* Orange vif pour les CTA */
+  --accent-foreground: #000000;
+  
+  /* Destructive avec contraste fort */
+  --destructive: #cc0000; /* Rouge vif */
+  --destructive-foreground: #ffffff;
+  
+  /* Borders et inputs */
+  --border: #000000;
+  --input: #ffffff;
+  --input-border: #000000;
+  --ring: #000000;
+  
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #000080;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ff6600;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #000000;
+  --sidebar-ring: #000000;
+  
+  /* Charts */
+  --chart-1: #000080;
+  --chart-2: #0066cc;
+  --chart-3: #0099ff;
+  --chart-4: #ff6600;
+  --chart-5: #cc0000;
+}
+
+.high-contrast * {
+  border-width: 2px !important;
+}
+
+.high-contrast button,
+.high-contrast [role="button"],
+.high-contrast input[type="button"],
+.high-contrast input[type="submit"],
+.high-contrast input[type="reset"],
+.high-contrast a {
+  border: 2px solid #000000 !important;
+  font-weight: bold;
+}
+
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  border: 2px solid #000000 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.high-contrast input::placeholder,
+.high-contrast textarea::placeholder {
+  color: #666666 !important;
+  font-weight: bold;
+}
+
+.high-contrast a {
+  text-decoration: underline !important;
+  color: #000080 !important;
+}
+
+.high-contrast a:visited {
+  color: #660066 !important;
+}
+
+.high-contrast button:focus-visible,
+.high-contrast [role="button"]:focus-visible,
+.high-contrast input:focus-visible,
+.high-contrast textarea:focus-visible,
+.high-contrast select:focus-visible {
+  outline: 3px solid #000000 !important;
+  outline-offset: 2px !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
