@@ -4,7 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import NavbarImproved from "./components/NavbarImproved";
+import AuthGuard from "./components/AuthGuard";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import Procedures from "./pages/Procedures";
@@ -48,8 +48,7 @@ import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
-import EligibilitySimulator from "./pages/EligibilitySimulator";
-import DestinationComparator from "./pages/DestinationComparator";
+import ScheduleAgency from "./pages/ScheduleAgency";
 import ClientDashboard from "./pages/ClientDashboard";
 import { HowItWorks } from "./pages/HowItWorks";
 import MySpace from "./pages/MySpace";
@@ -60,20 +59,9 @@ import AdminUserDetails from "./pages/AdminUserDetails";
 import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
-import TestFeatures from "./pages/TestFeatures";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
-import { SkipLink } from "./components/SkipLink";
-import { useServiceWorker } from "./hooks/useServiceWorker";
-import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
-import { AIAssistantWidget } from "./components/AIAssistantWidgetMultilingual";
-import { LanguageProvider } from "./contexts/LanguageContext";
-import { LanguageSwitcher } from "./components/LanguageSwitcher";
-import AuthGuard from "./components/AuthGuard";
 
 function Router() {
-  // Enregistrer le service worker
-  useServiceWorker();
-  
   // Gérer l'inactivité et la déconnexion automatique
   useSessionTimeout();
   return (
@@ -114,8 +102,8 @@ function Router() {
           <EvisaDemande />
         </AuthGuard>
       </Route>
-      <Route path={"/blog"} component={Blog} />
-      <Route path={"/test-features"} component={TestFeatures} />
+      <Route path={"/about"} component={About} />
+      <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction/order"}>
@@ -163,6 +151,9 @@ function Router() {
           <SubmitDocuments />
         </AuthGuard>
       </Route>
+
+      {/* Prise de rendez-vous en agence */}
+      <Route path={"/schedule-agency"} component={ScheduleAgency} />
 
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />
@@ -250,14 +241,6 @@ function Router() {
         <Hotels />
       </Route>
 
-      <Route path="/simulateur-eligibilite">
-        <EligibilitySimulator />
-      </Route>
-
-      <Route path="/comparateur-destinations">
-        <DestinationComparator />
-      </Route>
-
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -266,27 +249,17 @@ function Router() {
 }
 
 function App() {
-  // Enregistrer le service worker pour les performances et le mode offline
-  useServiceWorker();
-
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <ThemeProvider defaultTheme="light">
-          <TooltipProvider>
-          <SkipLink />
+      <ThemeProvider defaultTheme="light">
+        <TooltipProvider>
           <Toaster />
-          <main id="main-content" className="pt-16">
-            <Router />
-          </main>
+          <Router />
           <FloatingServices />
           <FloatingWhatsAppButton />
           <ScrollToTop />
-          <ServiceWorkerUpdateNotification />
-          <AIAssistantWidget />
         </TooltipProvider>
       </ThemeProvider>
-      </LanguageProvider>
     </ErrorBoundary>
   );
 }

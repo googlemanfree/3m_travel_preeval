@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, Clock, Phone, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { trpc } from "@/lib/trpc";
 
 interface AppointmentFormData {
   agency: "douala" | "yaounde";
@@ -34,6 +35,9 @@ export default function ScheduleAgency() {
   const [loading, setLoading] = useState(false);
   const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
   const [confirmationData, setConfirmationData] = useState<any>(null);
+  const [submitError, setSubmitError] = useState("");
+
+  const createAppointment = trpc.appointment.create.useMutation();
 
   const agencies = {
     douala: {
@@ -65,33 +69,42 @@ export default function ScheduleAgency() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
 
     // Validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-      alert("Veuillez remplir tous les champs");
+      setSubmitError("Veuillez remplir tous les champs");
       return;
     }
 
     if (!formData.date || !formData.time) {
-      alert("Veuillez sélectionner une date et une heure");
+      setSubmitError("Veuillez sélectionner une date et une heure");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Simulation de l'envoi
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const result = await createAppointment.mutateAsync({
+        agency: formData.agency,
+        date: formData.date,
+        time: formData.time,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        country: formData.country,
+        visaType: formData.visaType,
+      });
 
-      const appointmentRef = `RDV-${Date.now()}`;
       setConfirmationData({
         ...formData,
-        reference: appointmentRef,
-        agency: agencies[formData.agency],
+        reference: result.reference,
+        agency: result.agency,
       });
       setAppointmentConfirmed(true);
-    } catch (error) {
-      alert("Erreur lors de la prise de rendez-vous. Veuillez réessayer.");
+    } catch (error: any) {
+      setSubmitError(error?.message || "Erreur lors de la prise de rendez-vous. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
@@ -106,8 +119,8 @@ export default function ScheduleAgency() {
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                 <div>
-                  <CardTitle>Rendez-vous Confirmé!</CardTitle>
-                  <CardDescription>Votre rendez-vous a été enregistré avec succès</CardDescription>
+                  <CardTitle>Demande de rendez-vous envoyée !</CardTitle>
+                  <CardDescription>Votre demande a été enregistrée avec succès</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -119,7 +132,7 @@ export default function ScheduleAgency() {
                     <p className="text-sm text-gray-600">Référence</p>
                     <p className="font-bold text-lg">{confirmationData.reference}</p>
                   </div>
-                  <Badge>Confirmé</Badge>
+                  <Badge className="bg-amber-100 text-amber-800">En attente de confirmation</Badge>
                 </div>
 
                 <div className="border-t pt-4 space-y-3">
@@ -181,7 +194,7 @@ export default function ScheduleAgency() {
                     ✓ Un email de confirmation a été envoyé à <strong>{confirmationData.email}</strong>
                   </p>
                   <p className="text-sm mt-2">
-                    ✓ Un message WhatsApp a été envoyé au <strong>{confirmationData.phone}</strong>
+                    Notre équipe vous contactera au <strong>{confirmationData.phone}</strong> pour confirmer définitivement le créneau.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -356,6 +369,14 @@ export default function ScheduleAgency() {
                   />
                 </div>
               </div>
+
+              {/* Erreur */}
+              {submitError && (
+                <Alert className="border-red-200 bg-red-50">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-700">{submitError}</AlertDescription>
+                </Alert>
+              )}
 
               {/* Bouton Submit */}
               <Button
