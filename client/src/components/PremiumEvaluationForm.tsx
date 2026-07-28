@@ -427,11 +427,11 @@ export default function PremiumEvaluationForm() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Orientation & Projet</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-destination" className="text-sm font-semibold mb-2 block">
                     Pays de destination visé <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.destination} onValueChange={(v) => handleInputChange("destination", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-destination">
                       <SelectValue placeholder="Sélectionnez un pays" />
                     </SelectTrigger>
                     <SelectContent>
@@ -445,11 +445,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-projectType" className="text-sm font-semibold mb-2 block">
                     Type de projet <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.projectType} onValueChange={(v) => handleInputChange("projectType", v as ProjectType)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-projectType">
                       <SelectValue placeholder="Sélectionnez le type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -463,10 +463,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-currentCountry" className="text-sm font-semibold mb-2 block">
                     Ville et Pays de résidence actuelle <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-currentCountry"
                     placeholder="Ex: Douala, Cameroun"
                     value={formData.currentCountry}
                     onChange={(e) => handleInputChange("currentCountry", e.target.value)}
@@ -474,11 +474,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-communicationLanguage" className="text-sm font-semibold mb-2 block">
                     Langue de communication <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.communicationLanguage} onValueChange={(v) => handleInputChange("communicationLanguage", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-communicationLanguage">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -503,10 +503,10 @@ export default function PremiumEvaluationForm() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">2. Identité, Passeport & Famille</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-fullName" className="text-sm font-semibold mb-2 block">
                     Nom complet <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-fullName"
                     placeholder="Comme sur le passeport"
                     value={formData.fullName}
                     onChange={(e) => handleInputChange("fullName", e.target.value)}
@@ -514,11 +514,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-gender" className="text-sm font-semibold mb-2 block">
                     Sexe <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.gender} onValueChange={(v) => handleInputChange("gender", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-gender">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -530,10 +530,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-dateOfBirth" className="text-sm font-semibold mb-2 block">
                     Date de naissance <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-dateOfBirth"
                     type="date"
                     value={formData.dateOfBirth}
                     onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
@@ -541,10 +541,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-nationality" className="text-sm font-semibold mb-2 block">
                     Nationalité <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-nationality"
                     placeholder="Ex: Camerounaise"
                     value={formData.nationality}
                     onChange={(e) => handleInputChange("nationality", e.target.value)}
@@ -552,10 +552,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-whatsappPhone" className="text-sm font-semibold mb-2 block">
                     Téléphone WhatsApp <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-whatsappPhone"
                     placeholder="+237 6XXXXXXXX"
                     value={formData.whatsappPhone}
                     onChange={(e) => handleInputChange("whatsappPhone", e.target.value)}
@@ -563,10 +563,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-email" className="text-sm font-semibold mb-2 block">
                     Email <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-email"
                     type="email"
                     placeholder="votre@email.com"
                     value={formData.email}
@@ -575,10 +575,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-passportNumber" className="text-sm font-semibold mb-2 block">
                     Numéro de passeport <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-passportNumber"
                     placeholder="Ex: AB123456"
                     value={formData.passportNumber}
                     onChange={(e) => handleInputChange("passportNumber", e.target.value)}
@@ -586,10 +586,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-passportExpiryDate" className="text-sm font-semibold mb-2 block">
                     Date d'expiration passeport <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-passportExpiryDate"
                     type="date"
                     value={formData.passportExpiryDate}
                     onChange={(e) => handleInputChange("passportExpiryDate", e.target.value)}
@@ -597,11 +597,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-passportCopyAvailable" className="text-sm font-semibold mb-2 block">
                     Copie passeport disponible ? <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.passportCopyAvailable} onValueChange={(v) => handleInputChange("passportCopyAvailable", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-passportCopyAvailable">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -613,11 +613,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-maritalStatus" className="text-sm font-semibold mb-2 block">
                     État civil <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.maritalStatus} onValueChange={(v) => handleInputChange("maritalStatus", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-maritalStatus">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -631,10 +631,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-numberOfChildren" className="text-sm font-semibold mb-2 block">
                     Nombre d'enfants / Personnes à charge
                   </Label>
-                  <Input
+                  <Input id="formData-numberOfChildren"
                     type="number"
                     min="0"
                     value={formData.numberOfChildren}
@@ -643,11 +643,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-familyInDestination" className="text-sm font-semibold mb-2 block">
                     Famille dans le pays cible ?
                   </Label>
                   <Select value={formData.familyInDestination} onValueChange={(v) => handleInputChange("familyInDestination", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-familyInDestination">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -673,11 +673,11 @@ export default function PremiumEvaluationForm() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Études, Emploi & Finances</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-educationLevel" className="text-sm font-semibold mb-2 block">
                     Niveau d'études <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.educationLevel} onValueChange={(v) => handleInputChange("educationLevel", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-educationLevel">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -691,10 +691,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-fieldOfStudy" className="text-sm font-semibold mb-2 block">
                     Domaine d'études <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-fieldOfStudy"
                     placeholder="Ex: Informatique, Droit"
                     value={formData.fieldOfStudy}
                     onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
@@ -702,10 +702,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-currentProfession" className="text-sm font-semibold mb-2 block">
                     Profession actuelle <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-currentProfession"
                     placeholder="Ex: Ingénieur, Enseignant"
                     value={formData.currentProfession}
                     onChange={(e) => handleInputChange("currentProfession", e.target.value)}
@@ -713,10 +713,10 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-yearsOfExperience" className="text-sm font-semibold mb-2 block">
                     Années d'expérience <span className="text-red-500">*</span>
                   </Label>
-                  <Input
+                  <Input id="formData-yearsOfExperience"
                     type="number"
                     min="0"
                     value={formData.yearsOfExperience}
@@ -725,11 +725,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-monthlyIncome" className="text-sm font-semibold mb-2 block">
                     Revenu mensuel estimé <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.monthlyIncome} onValueChange={(v) => handleInputChange("monthlyIncome", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-monthlyIncome">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -741,11 +741,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div>
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-bankBalance" className="text-sm font-semibold mb-2 block">
                     Épargne bancaire <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.bankBalance} onValueChange={(v) => handleInputChange("bankBalance", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-bankBalance">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
@@ -758,11 +758,11 @@ export default function PremiumEvaluationForm() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
+                  <Label htmlFor="formData-sponsor" className="text-sm font-semibold mb-2 block">
                     Garant / Sponsor financier <span className="text-red-500">*</span>
                   </Label>
                   <Select value={formData.sponsor} onValueChange={(v) => handleInputChange("sponsor", v)}>
-                    <SelectTrigger>
+                    <SelectTrigger id="formData-sponsor">
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>

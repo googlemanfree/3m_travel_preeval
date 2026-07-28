@@ -204,7 +204,8 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
         <button
           className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
           onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Menu"
+          aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>

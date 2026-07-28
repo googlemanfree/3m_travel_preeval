@@ -419,6 +419,8 @@ export function SecureDocumentUploadWithAI({
                     {doc.status !== "uploading" && doc.status !== "analyzing" && (
                       <button
                         onClick={() => removeDocument(doc.id)}
+                        type="button"
+                        aria-label={`Supprimer le document ${doc.name ?? ""}`.trim()}
                         className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
                         disabled={isUploading}
                       >
