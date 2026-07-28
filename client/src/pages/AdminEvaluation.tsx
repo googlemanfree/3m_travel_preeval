@@ -133,6 +133,15 @@ export default function AdminEvaluation() {
                     key={report.id}
                     className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition"
                     onClick={() => setSelectedReport(report)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Voir le rapport de ${report.candidateName}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedReport(report);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

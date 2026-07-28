@@ -79,8 +79,7 @@ export default function Login() {
         <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-8 text-center text-white">
           <img src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 shadow-lg object-cover" />
           <h1 className="text-2xl font-black">Mon Espace Candidat</h1>
-          <h2 className="text-lg font-semibold text-blue-100 mt-2">Connexion Sécurisée - Suivi de Dossier Visa</h2>
-          <p className="text-blue-200 text-sm mt-1">Connectez-vous pour accéder à votre dossier d'immigration et suivre votre demande de visa</p>
+          <p className="text-blue-200 text-sm mt-1">Connectez-vous pour accéder à votre dossier</p>
         </div>
 
         {/* Bandeau d'alerte si redirigé depuis une page protégée */}
@@ -98,7 +97,6 @@ export default function Login() {
 
         {/* Formulaire */}
         <div className="p-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">Accédez à Votre Dossier d'Immigration</h2>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Adresse email</Label>
@@ -134,6 +132,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

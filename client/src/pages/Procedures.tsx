@@ -1022,6 +1022,15 @@ function RegionCard({ region, onSelect }: { region: Region; onSelect: () => void
   return (
     <div
       onClick={onSelect}
+      role="button"
+      tabIndex={0}
+      aria-label={`Voir les procédures pour ${region.name}`}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className="group cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative h-48 overflow-hidden">
@@ -1247,7 +1256,7 @@ export default function Procedures() {
                 className="flex-1 px-4 py-4 text-gray-800 bg-transparent outline-none text-base placeholder-gray-400"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="mr-3 text-gray-400 hover:text-gray-600 transition-colors">
+                <button onClick={() => setSearchQuery("")} type="button" aria-label="Effacer la recherche" className="mr-3 text-gray-400 hover:text-gray-600 transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               )}

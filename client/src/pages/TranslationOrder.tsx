@@ -190,7 +190,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="documentType">Type de Document</Label>
           <Select onValueChange={setDocumentType} value={documentType}>
-            <SelectTrigger>
+            <SelectTrigger id="documentType">
               <SelectValue placeholder="Sélectionner le type de document" />
             </SelectTrigger>
             <SelectContent>
@@ -206,7 +206,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="sourceLanguage">Langue Source</Label>
           <Select onValueChange={setSourceLanguage} value={sourceLanguage}>
-            <SelectTrigger>
+            <SelectTrigger id="sourceLanguage">
               <SelectValue placeholder="Sélectionner la langue source" />
             </SelectTrigger>
             <SelectContent>
@@ -222,7 +222,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="targetLanguage">Langue Cible</Label>
           <Select onValueChange={setTargetLanguage} value={targetLanguage}>
-            <SelectTrigger>
+            <SelectTrigger id="targetLanguage">
               <SelectValue placeholder="Sélectionner la langue cible" />
             </SelectTrigger>
             <SelectContent>

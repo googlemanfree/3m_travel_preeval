@@ -95,6 +95,16 @@ export default function AdminProcedures() {
                     <div
                       key={dest.destination}
                       onClick={() => setSelectedDestination(dest.destination)}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selectedDestination === dest.destination}
+                      aria-label={`Voir la destination ${dest.destination}`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedDestination(dest.destination);
+                        }
+                      }}
                       className={`p-4 rounded-lg cursor-pointer transition ${
                         selectedDestination === dest.destination
                           ? 'bg-purple-100 border-2 border-purple-600'
