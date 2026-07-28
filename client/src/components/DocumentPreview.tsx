@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ZoomIn, ZoomOut, RotateCw, FileText } from "lucide-react";
+import { X, Download, ZoomIn, ZoomOut, RotateCw, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface DocumentPreviewProps {
@@ -10,6 +10,7 @@ interface DocumentPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: () => void;
+  onDelete?: () => void;
 }
 
 export function DocumentPreview({
@@ -19,6 +20,7 @@ export function DocumentPreview({
   isOpen,
   onClose,
   onConfirm,
+  onDelete,
 }: DocumentPreviewProps) {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [zoom, setZoom] = useState(100);
@@ -223,15 +225,31 @@ export function DocumentPreview({
 
             {/* Footer */}
             <div className="flex items-center justify-between gap-3 p-4 border-t border-gray-200 bg-white">
-              <Button
-                variant="outline"
-                onClick={handleDownload}
-                className="gap-2"
-                aria-label="Télécharger le document"
-              >
-                <Download className="w-4 h-4" />
-                Télécharger
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownload}
+                  className="gap-2"
+                  aria-label="Télécharger le document"
+                >
+                  <Download className="w-4 h-4" />
+                  Télécharger
+                </Button>
+                {onDelete && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onDelete();
+                      onClose();
+                    }}
+                    className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    aria-label="Supprimer le document"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Supprimer
+                  </Button>
+                )}
+              </div>
               <div className="flex gap-3">
                 <Button
                   variant="outline"
