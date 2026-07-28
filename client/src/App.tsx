@@ -141,7 +141,7 @@ function Router() {
 
       {/* Mon Espace Candidat */}
       <Route path={"/mon-espace"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
+        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat." autoRedirect={true}>
           <MySpace />
         </AuthGuard>
       </Route>
