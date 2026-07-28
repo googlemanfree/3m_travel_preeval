@@ -930,3 +930,191 @@
 - [ ] Tester les messages entre candidat et conseiller
 - [ ] Créer un test vitest pour le workflow candidat complet
 - [ ] Déployer et vérifier en production
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PHASE 2 : AMÉLIORATION COMPLÈTE DU SITE - PROFESSIONNALISME & CONVERSION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+## Phase 1 : Audit et Planification
+- [ ] Analyser le site actuel et documenter l'état existant
+- [ ] Créer une stratégie de conversion basée sur les meilleures pratiques
+- [ ] Définir les KPIs à suivre (taux de conversion, temps de chargement, etc.)
+- [ ] Planifier l'architecture des nouvelles pages et fonctionnalités
+
+## Phase 2 : Page d'Accueil - Statistiques & Atouts
+- [ ] Créer une section "Statistiques" avec compteurs animés (clients, visas, pays, années)
+- [ ] Ajouter une section "Pourquoi choisir 3M Travel & Services SARL" avec 6 atouts clés
+- [ ] Améliorer les CTA : "Demander un devis", "Prendre rendez-vous", "WhatsApp"
+- [ ] Ajouter des animations légères et professionnelles aux sections
+- [ ] Optimiser le hero section avec une meilleure hiérarchie visuelle
+
+## Phase 3 : Preuves de Confiance
+- [ ] Créer une section d'avis clients avec système de notation (5 étoiles)
+- [ ] Implémenter un carousel d'avis avec photos et témoignages
+- [ ] Créer une galerie de réussites (cas d'études avec autorisation)
+- [ ] Ajouter une section "Certifications & Accréditations" avec logos/documents
+- [ ] Afficher clairement RCCM, NIU et autres documents officiels
+- [ ] Intégrer des badges de confiance (certifications, partenariats)
+
+## Phase 4 : Pages de Services - Uniformisation
+- [ ] Créer un template unifié pour toutes les pages de services
+- [ ] Ajouter une FAQ spécifique à chaque service (5-8 questions)
+- [ ] Implémenter un formulaire de demande d'information sur chaque page
+- [ ] Ajouter des sections "Avantages", "Processus", "Tarifs" cohérentes
+- [ ] Intégrer des CTA visibles et contextuels sur chaque page
+
+## Phase 5 : Blog/Actualités
+- [ ] Créer une section Blog avec gestion des articles
+- [ ] Implémenter un système de catégories (Visas, Études, Voyages, Immigration)
+- [ ] Ajouter un formulaire de création d'article pour l'admin
+- [ ] Créer des templates pour les articles de blog
+- [ ] Ajouter un système de commentaires (modérés)
+- [ ] Implémenter un système de partage social sur les articles
+
+## Phase 6 : Système de Réservation en Ligne
+- [ ] Créer une page de réservation de rendez-vous
+- [ ] Intégrer un calendrier interactif avec disponibilités
+- [ ] Ajouter la sélection de l'heure et du type de service
+- [ ] Implémenter la confirmation par email/SMS
+- [ ] Créer un système de rappel (24h avant le RDV)
+- [ ] Ajouter une intégration Google Calendar (optionnel)
+
+## Phase 7 : Simulateur d'Éligibilité
+- [ ] Créer un questionnaire interactif multi-étapes
+- [ ] Ajouter des questions selon le type de projet (études, travail, tourisme, regroupement familial)
+- [ ] Implémenter un système de scoring automatique
+- [ ] Générer un rapport d'éligibilité personnalisé
+- [ ] Ajouter une CTA pour prendre rendez-vous après le résultat
+
+## Phase 8 : Optimisation SEO
+- [ ] Auditer et améliorer les balises meta (title, description, keywords)
+- [ ] Implémenter les données structurées (Schema.org - LocalBusiness, Service, FAQPage)
+- [ ] Optimiser les images (compression, lazy loading, alt text)
+- [ ] Améliorer la vitesse du site (Core Web Vitals)
+- [ ] Créer un sitemap XML et robots.txt optimisés
+- [ ] Ajouter les balises Open Graph pour le partage social
+- [ ] Implémenter le suivi Google Analytics 4 et Search Console
+
+## Phase 9 : Présentation Entreprise
+- [ ] Créer une page "À Propos" avec histoire, mission, vision
+- [ ] Ajouter une page "Notre Équipe" avec photos et bios
+- [ ] Créer une galerie photo des bureaux
+- [ ] Ajouter une vidéo de présentation de l'entreprise (si disponible)
+- [ ] Implémenter une section "Nos Partenaires"
+
+## Phase 10 : UX/Design - Navigation & Animations
+- [ ] Simplifier la navigation principale (menu épuré)
+- [ ] Ajouter un breadcrumb sur toutes les pages
+- [ ] Rendre les boutons d'action plus visibles (contraste, taille)
+- [ ] Ajouter des animations légères (fade, slide, hover effects)
+- [ ] Optimiser les temps de chargement (< 3s)
+- [ ] Tester et optimiser l'affichage mobile (responsive design)
+- [ ] Ajouter un footer amélioré avec liens utiles et contact
+
+## Phase 11 : Tests, Optimisations Finales & Déploiement
+- [ ] Tester tous les formulaires et CTA
+- [ ] Vérifier la compatibilité cross-browser
+- [ ] Tester les performances sur mobile et desktop
+- [ ] Vérifier le SEO avec des outils (Lighthouse, SEMrush, etc.)
+- [ ] Effectuer des tests A/B sur les CTA principaux
+- [ ] Déployer en production et monitorer les performances
+- [ ] Mettre en place un système de feedback utilisateur
+
+
+## PHASE 12 : OPTIMISATIONS PERFORMANCES & UX (Nouvelle)
+
+### Polices & Scripts
+- [x] Optimiser chargement polices (font-display: swap)
+- [x] Preload font weights critiques
+- [x] Créer hook useLazyScript
+- [x] Créer hook useLazyImage
+- [ ] Intégrer LazyImage dans Home.tsx
+- [ ] Intégrer LazyScript pour Google Maps
+- [ ] Code splitting par route (React.lazy)
+
+### Images & Iframes
+- [x] Créer composant LazyImage
+- [x] Créer composant OptimizedImage (WebP)
+- [x] Créer composant LazyIframe
+- [ ] Convertir images en WebP
+- [ ] Compresser toutes les images
+- [ ] Ajouter srcset pour images responsives
+
+### Cache & Service Worker
+- [x] Créer Service Worker (sw.js)
+- [x] Configurer cache headers (vercel.json)
+- [x] Créer hook useServiceWorker
+- [x] Créer notification de mise à jour
+- [ ] Intégrer useServiceWorker dans App.tsx
+- [ ] Ajouter ServiceWorkerUpdateNotification
+
+### Tests & Validation
+- [ ] Lighthouse audit complet
+- [ ] Performance testing (WebPageTest)
+- [ ] Mobile testing
+- [ ] Accessibilité testing WCAG 2.1 AAA
+- [ ] Tests de chargement des images
+- [ ] Tests du service worker offline
+
+### Monitoring
+- [ ] Configurer Web Vitals monitoring
+- [ ] Configurer error tracking
+- [ ] Configurer performance monitoring
+- [ ] Configurer analytics
+
+### Documentation
+- [x] Créer OPTIMISATIONS_IMPLEMENTEES.md
+- [x] Créer OPTIMISATIONS_PERFORMANCES_UX.md
+- [ ] Documenter utilisation des nouveaux composants
+- [ ] Créer guide de performance
+
+## PHASE 12 : OPTIMISATIONS PERFORMANCES & UX - FINALISÉ
+
+### Polices & Scripts
+- [x] Optimiser chargement polices (font-display: swap)
+- [x] Preload font weights critiques
+- [x] Créer hook useLazyScript
+- [x] Créer hook useLazyImage
+- [x] Intégrer LazyImage dans Home.tsx
+- [x] Intégrer LazyScript pour Google Maps
+- [ ] Code splitting par route (React.lazy)
+
+### Images & Iframes
+- [x] Créer composant LazyImage
+- [x] Créer composant OptimizedImage (WebP)
+- [x] Créer composant LazyIframe
+- [x] Créer composant SkeletonImage
+- [ ] Convertir images en WebP
+- [ ] Compresser toutes les images
+- [ ] Ajouter srcset pour images responsives
+
+### Cache & Service Worker
+- [x] Créer Service Worker (sw.js)
+- [x] Configurer cache headers (vercel.json)
+- [x] Créer hook useServiceWorker
+- [x] Créer notification de mise à jour
+- [x] Intégrer useServiceWorker dans App.tsx
+- [x] Ajouter ServiceWorkerUpdateNotification
+
+### Tests & Validation
+- [x] Créer tests de performance (47 tests)
+- [ ] Lighthouse audit complet
+- [ ] Performance testing (WebPageTest)
+- [ ] Mobile testing
+- [ ] Accessibilité testing WCAG 2.1 AAA
+- [ ] Tests de chargement des images
+- [ ] Tests du service worker offline
+
+### Monitoring
+- [ ] Configurer Web Vitals monitoring
+- [ ] Configurer error tracking
+- [ ] Configurer performance monitoring
+- [ ] Configurer analytics
+
+### Documentation
+- [x] Créer OPTIMISATIONS_IMPLEMENTEES.md
+- [x] Créer OPTIMISATIONS_PERFORMANCES_UX.md
+- [x] Créer RAPPORT_FINAL_OPTIMISATIONS.md
+- [ ] Documenter utilisation des nouveaux composants
+- [ ] Créer guide de performance

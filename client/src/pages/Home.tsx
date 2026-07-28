@@ -21,15 +21,18 @@ import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import Navbar from "@/components/Navbar";
+import NavbarImproved from "@/components/NavbarImproved";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
 import { LocationMap } from "@/components/LocationMap";
+import StatisticsSection from "@/components/StatisticsSection";
+import WhyChooseUs from "@/components/WhyChooseUs";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
 import CountrySearchResults from '@/components/CountrySearchResults';
+import { ScrollAnimationWrapper, ScrollAnimationGrid } from '@/components/ScrollAnimationWrapper';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────────
 const WHATSAPP_NUMBER = "237698104832";
@@ -521,7 +524,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <Navbar activePage="home" onEvalClick={() => setShowEvalModal(true)} />
+      <NavbarImproved activePage="home" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
@@ -530,10 +533,21 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
+      {/* ─── STATISTIQUES ─────────────────────────────────────────────────── */}
+      <ScrollAnimationWrapper animation="slideUp" duration={0.7}>
+        <StatisticsSection />
+      </ScrollAnimationWrapper>
+
+      {/* ─── POURQUOI CHOISIR 3M ─────────────────────────────────────────── */}
+      <ScrollAnimationWrapper animation="slideUp" duration={0.7} delay={0.1}>
+        <WhyChooseUs />
+      </ScrollAnimationWrapper>
+
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
-      <section id="services" className="py-12 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8 md:mb-12">
+      <ScrollAnimationWrapper animation="slideUp" duration={0.7}>
+        <section id="services" className="py-12 md:py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-8 md:mb-12">
             <p className="text-xs md:text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
             <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3 md:mb-4">Tout ce dont vous avez besoin</h2>
             <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
@@ -564,6 +578,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ScrollAnimationWrapper>
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">

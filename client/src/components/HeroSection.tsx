@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LazyImage } from "@/components/LazyImage";
 
 interface HeroSectionProps {
   onEvalClick: () => void;
@@ -53,10 +54,11 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           custom={1}
           className="mb-6"
         >
-          <img
+          <LazyImage
             src={logoUrl}
             alt="3M Travel Agency"
             className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/30 mx-auto shadow-lg"
+            loading="eager"
           />
         </motion.div>
 
