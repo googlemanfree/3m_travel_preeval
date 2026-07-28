@@ -322,6 +322,8 @@ export default function AdminLogin() {
                   </div>
                   <button
                     onClick={() => setLocalError('')}
+                    type="button"
+                    aria-label="Fermer le message d'erreur"
                     className="text-red-600 hover:text-red-800 transition-colors flex-shrink-0"
                   >
                     <XCircle className="w-5 h-5" />

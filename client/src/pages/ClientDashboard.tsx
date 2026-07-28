@@ -374,6 +374,8 @@ export default function ClientDashboard() {
                         </div>
                         <button
                           onClick={() => handleRemoveFile(idx)}
+                          type="button"
+                          aria-label={`Supprimer le fichier ${file.name}`}
                           className="text-red-600 hover:text-red-700"
                         >
                           <Trash2 className="w-5 h-5" />
