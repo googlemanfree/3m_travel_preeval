@@ -56,6 +56,12 @@ import {
   StickyNote,
   History,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -331,21 +337,39 @@ export default function AdminAgencyDossiers() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => refetch()}
-              className="text-white border-white hover:bg-white/10"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-white text-blue-700 hover:bg-blue-50 font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter un Dossier
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => refetch()}
+                    className="text-white border-white hover:bg-white/10"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualiser
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Recharger la liste des dossiers</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-white text-blue-700 hover:bg-blue-50 font-semibold"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un Dossier
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Créer un nouveau dossier manuellement</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -513,42 +537,74 @@ export default function AdminAgencyDossiers() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDetailModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
-                                  title="Voir le détail"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openStatusModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
-                                  title="Changer le statut"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openNotesModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
-                                  title="Ajouter des notes"
-                                >
-                                  <StickyNote className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDeleteModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openDetailModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Voir les détails du dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openStatusModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Modifier le statut du dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openNotesModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
+                                      >
+                                        <StickyNote className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Ajouter des notes au dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openDeleteModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Supprimer ce dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           </motion.tr>
