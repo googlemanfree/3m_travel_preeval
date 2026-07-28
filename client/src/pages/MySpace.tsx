@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
@@ -332,7 +332,7 @@ export default function MySpace() {
                             {doc.status}
                           </Badge>
                           <Button variant="ghost" size="sm" asChild>
-                            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" aria-label={`Télécharger ${doc.fileName}`}>
                               <Download className="w-4 h-4" />
                             </a>
                           </Button>
