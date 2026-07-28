@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
-import { useState } from "react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download, Eye, EyeOff } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
@@ -17,10 +17,32 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const [highContrast, setHighContrast] = useState(false);
 
   const isAdmin = isAuthenticated && user?.role === "admin";
 
   const [resourcesOpen, setResourcesOpen] = useState(false);
+
+  // Charger la préférence de contraste élevé depuis localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem("high-contrast-mode");
+    if (stored === "true") {
+      setHighContrast(true);
+      document.documentElement.classList.add("high-contrast");
+    }
+  }, []);
+
+  // Basculer le mode contraste élevé
+  const toggleHighContrast = () => {
+    const newValue = !highContrast;
+    setHighContrast(newValue);
+    localStorage.setItem("high-contrast-mode", String(newValue));
+    if (newValue) {
+      document.documentElement.classList.add("high-contrast");
+    } else {
+      document.documentElement.classList.remove("high-contrast");
+    }
+  };
 
   const active = activePage ?? (
     location === "/" ? "home" :
@@ -140,6 +162,20 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
 
         {/* ── Actions desktop ── */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          {/* Bouton mode contraste élevé */}
+          <button
+            onClick={toggleHighContrast}
+            className="p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors border border-gray-300 hover:border-gray-400"
+            aria-label={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
+            aria-pressed={highContrast}
+            title={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
+          >
+            {highContrast ? (
+              <Eye className="w-5 h-5 text-blue-700" />
+            ) : (
+              <EyeOff className="w-5 h-5" />
+            )}
+          </button>
           {onEvalClick && (
             <Button
               onClick={onEvalClick}
@@ -268,6 +304,25 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               <Shield className="w-4 h-4" /> Administration
             </Link>
           )}
+          {/* Bouton mode contraste élevé mobile */}
+          <button
+            onClick={toggleHighContrast}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100 w-full"
+            aria-label={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
+            aria-pressed={highContrast}
+          >
+            {highContrast ? (
+              <>
+                <Eye className="w-4 h-4 text-blue-600" />
+                Mode contraste désactivé
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-4 h-4 text-blue-600" />
+                Activer le contraste élevé
+              </>
+            )}
+          </button>
           {onEvalClick && (
             <Button
               onClick={() => { setMobileOpen(false); onEvalClick(); }}
