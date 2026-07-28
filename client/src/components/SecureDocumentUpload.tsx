@@ -417,6 +417,10 @@ export function SecureDocumentUpload({
             setPreviewDocument(null);
             toast.success("Document confirmé et prêt à être soumis");
           }}
+          onDelete={() => {
+            removeDocument(previewDocument.id);
+            toast.success("Document supprimé avec succès");
+          }}
         />
       )}
     </div>
