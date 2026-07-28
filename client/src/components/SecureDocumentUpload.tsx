@@ -14,9 +14,11 @@ import {
   Loader2,
   Zap,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { DocumentPreview } from "./DocumentPreview";
 
 export interface UploadedDocument {
   id: string;
@@ -58,6 +60,7 @@ export function SecureDocumentUpload({
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState<UploadedDocument | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getFileIcon = (type: string) => {
@@ -330,15 +333,26 @@ export function SecureDocumentUpload({
                     </div>
 
                     {doc.status !== "uploading" && (
-                      <button
-                        onClick={() => removeDocument(doc.id)}
-                        type="button"
-                        aria-label={`Supprimer le document ${doc.name ?? ""}`.trim()}
-                        className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
-                        disabled={isUploading}
-                      >
-                        <X className="w-4 h-4 text-gray-600" />
-                      </button>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <button
+                          onClick={() => setPreviewDocument(doc)}
+                          type="button"
+                          aria-label={`Previsualiser le document ${doc.name ?? ""}`}
+                          className="p-1 hover:bg-blue-100 rounded transition-colors text-blue-600"
+                          title="Previsualiser"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => removeDocument(doc.id)}
+                          type="button"
+                          aria-label={`Supprimer le document ${doc.name ?? ""}`}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          disabled={isUploading}
+                        >
+                          <X className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </motion.div>
@@ -390,6 +404,21 @@ export function SecureDocumentUpload({
           Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M Travel peuvent y accéder.
         </p>
       </div>
+
+      {/* Composant de prévisualisation */}
+      {previewDocument && (
+        <DocumentPreview
+          file={previewDocument.file}
+          fileName={previewDocument.name}
+          fileType={previewDocument.type}
+          isOpen={!!previewDocument}
+          onClose={() => setPreviewDocument(null)}
+          onConfirm={() => {
+            setPreviewDocument(null);
+            toast.success("Document confirmé et prêt à être soumis");
+          }}
+        />
+      )}
     </div>
   );
 }
