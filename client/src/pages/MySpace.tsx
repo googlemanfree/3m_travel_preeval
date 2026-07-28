@@ -6,20 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
 
 export default function MySpace() {
-  const { isAuthenticated, candidate } = useCandidateAuth();
+  const { isAuthenticated, candidate, logout } = useCandidateAuth();
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [showNotification, setShowNotification] = useState(true);
   const [bilanActionModalOpen, setBilanActionModalOpen] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
@@ -33,6 +36,13 @@ export default function MySpace() {
       setLocation("/login");
     }
   }, [isAuthenticated, setLocation]);
+
+  // Gestionnaire de déconnexion
+  const handleLogout = () => {
+    logout();
+    toast.success("Vous avez été déconnecté avec succès");
+    setLocation("/login");
+  };
 
   if (!isAuthenticated || isLoading) {
     return (
@@ -117,9 +127,19 @@ export default function MySpace() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-gray-900">Mon Espace</h1>
-          <p className="text-gray-600 mt-1">Bienvenue, {candidateName} !</p>
+        <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Mon Espace</h1>
+            <p className="text-blue-100 mt-1">Bienvenue, {candidateName} !</p>
+          </div>
+          <Button
+            onClick={() => setShowLogoutDialog(true)}
+            variant="outline"
+            className="bg-white/20 border-white text-white hover:bg-white/30"
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Deconnexion
+          </Button>
         </div>
       </div>
 
@@ -326,6 +346,33 @@ export default function MySpace() {
         documentType={selectedDocumentType}
         onUpload={handleUploadFile}
       />
+
+      {/* Boîte de dialogue de déconnexion */}
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmer la déconnexion</DialogTitle>
+            <DialogDescription>
+              Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre espace.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowLogoutDialog(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Deconnexion
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Bilan Action Modal - à implémenter */}
     </div>
