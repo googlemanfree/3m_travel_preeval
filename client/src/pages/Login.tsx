@@ -46,7 +46,7 @@ export default function Login() {
         emailVerified: candidateData.emailVerified ?? true,
       });
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
-      navigate(from ? decodeURIComponent(from) : "/dashboard");
+      navigate(from ? decodeURIComponent(from) : "/mon-espace");
     },
     onError: (err) => {
       // Si l'email n'est pas vérifié, proposer de renvoyer le code
