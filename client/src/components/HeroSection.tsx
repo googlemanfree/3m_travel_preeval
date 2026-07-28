@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LazyImage } from "@/components/LazyImage";
 
 interface HeroSectionProps {
   onEvalClick: () => void;
@@ -54,11 +53,10 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           custom={1}
           className="mb-6"
         >
-          <LazyImage
+          <img
             src={logoUrl}
             alt="3M Travel Agency"
             className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/30 mx-auto shadow-lg"
-            loading="eager"
           />
         </motion.div>
 
@@ -122,31 +120,6 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
               className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-lg"
             >
               💬 Contact WhatsApp
-            </Button>
-          </a>
-        </motion.div>
-
-        {/* Boutons Connexion/Inscription */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-          custom={5.5}
-          className="flex flex-col sm:flex-row gap-3 justify-center mb-8"
-        >
-          <a href="/login">
-            <Button
-              variant="outline"
-              className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
-            >
-              🔐 Se Connecter
-            </Button>
-          </a>
-          <a href="/register">
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
-            >
-              ✍️ Créer un Compte
             </Button>
           </a>
         </motion.div>
