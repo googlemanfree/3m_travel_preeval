@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download, Eye, EyeOff } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
@@ -17,38 +17,15 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const [highContrast, setHighContrast] = useState(false);
 
   const isAdmin = isAuthenticated && user?.role === "admin";
 
   const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  // Charger la préférence de contraste élevé depuis localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem("high-contrast-mode");
-    if (stored === "true") {
-      setHighContrast(true);
-      document.documentElement.classList.add("high-contrast");
-    }
-  }, []);
-
-  // Basculer le mode contraste élevé
-  const toggleHighContrast = () => {
-    const newValue = !highContrast;
-    setHighContrast(newValue);
-    localStorage.setItem("high-contrast-mode", String(newValue));
-    if (newValue) {
-      document.documentElement.classList.add("high-contrast");
-    } else {
-      document.documentElement.classList.remove("high-contrast");
-    }
-  };
-
   const active = activePage ?? (
     location === "/" ? "home" :
     location.startsWith("/flights") ? "flights" :
     location.startsWith("/procedures") ? "procedures" :
-    location.startsWith("/mon-dossier") ? "mon-dossier" :
     location.startsWith("/dashboard") ? "dashboard" :
     location.startsWith("/visa-types") ? "visa-types" :
     location.startsWith("/destinations") ? "destinations" :
@@ -63,15 +40,15 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
     }`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-blue-200 shadow-md">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
         {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-3 flex-shrink-0 min-w-0 hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
           <img
             src={LOGO_URL}
             alt="3M Travel & Services"
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-blue-300 flex-shrink-0"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-200 flex-shrink-0"
             onError={e => {
               const t = e.target as HTMLImageElement;
               t.style.display = "none";
@@ -81,53 +58,37 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
           />
           {/* Fallback si logo indisponible */}
           <div
-            className="w-12 h-12 rounded-full bg-blue-700 flex items-center justify-center text-white font-black text-sm flex-shrink-0"
+            className="w-10 h-10 rounded-full bg-blue-700 items-center justify-center text-white font-black text-sm flex-shrink-0"
             style={{ display: "none" }}
           >
             3M
           </div>
-          <div className="min-w-0 hidden sm:block">
-            <div className="font-black text-blue-800 text-base leading-tight truncate">3M Travel & Services</div>
-            <div className="text-xs text-blue-600 font-medium truncate">Votre mobilité, notre expertise</div>
+          <div className="min-w-0">
+            <div className="font-black text-blue-800 text-sm leading-tight truncate">3M Travel & Services</div>
+            <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
           </div>
         </Link>
 
         {/* ── Nav desktop ── */}
-        <nav className="hidden lg:flex items-center gap-1">
-          <Link href="/" className={`px-3 py-2 rounded-md text-sm font-semibold transition-all ${
-            active === "home"
-              ? "text-blue-700 bg-blue-50"
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          }`}>Accueil</Link>
-          
-          <Link href="/flights" className={`px-3 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${
-            active === "flights"
-              ? "text-blue-700 bg-blue-50"
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          }`}>
-            <Plane className="w-4 h-4" />
-            Vols
+        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className={linkClass("home")}>Accueil</Link>
+          <Link href="/flights" className={linkClass("flights")}>
+            <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
           </Link>
-          
-          <Link href="/procedures" className={`px-3 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${
-            active === "procedures"
-              ? "text-blue-700 bg-blue-50"
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          }`}>
-            <BookOpen className="w-4 h-4" />
-            Procédures
+          <Link href="/procedures" className={linkClass("procedures")}>
+            <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
           </Link>
 
           {/* Menu déroulant Ressources */}
           <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
-            <button className={`px-3 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${
+            <button className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
               ["visa-types", "destinations", "guide", "tarifs", "avis", "blog"].includes(active ?? "")
-                ? "text-blue-700 bg-blue-50"
-                : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
+                ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
+                : "text-gray-600 hover:text-blue-700"
             }`}>
-              <Globe className="w-4 h-4" />
+              <Globe className="w-3.5 h-3.5" />
               Ressources
-              <ChevronDown className={`w-4 h-4 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-3 h-3 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
             </button>
             {resourcesOpen && (
               <div className="absolute top-full left-0 mt-1 bg-white border border-blue-100 rounded-lg shadow-lg py-2 min-w-48 z-50">
@@ -164,50 +125,27 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             )}
           </div>
 
-          <Link href="/mon-dossier" className={`px-3 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-1.5 ${
-            active === "mon-dossier"
-              ? "text-blue-700 bg-blue-50"
-              : "text-gray-700 hover:text-blue-700 hover:bg-blue-50"
-          }`}>
-            <Search className="w-4 h-4" />
-            Suivi
+          <Link href="/mon-dossier" className={linkClass("mon-dossier")}>
+            <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivre mon dossier</span>
           </Link>
 
           {/* Admin link - only show if authenticated and admin */}
           {isAdmin && (
-            <Link href="/admin" className="px-3 py-2 rounded-md text-sm font-semibold text-purple-700 hover:text-purple-900 hover:bg-purple-50 flex items-center gap-1.5 transition-all">
-              <Shield className="w-4 h-4" />
+            <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
+              <Shield className="w-3.5 h-3.5" />
               Admin
             </Link>
           )}
         </nav>
 
         {/* ── Actions desktop ── */}
-        <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
-          {/* Bouton mode contraste élevé */}
-          <button
-            onClick={toggleHighContrast}
-            className={`p-2.5 rounded-lg transition-all border ${
-              highContrast
-                ? "bg-blue-100 text-blue-700 border-blue-300"
-                : "text-gray-600 border-gray-300 hover:bg-gray-100 hover:border-gray-400"
-            }`}
-            aria-label={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
-            aria-pressed={highContrast}
-            title={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
-          >
-            {highContrast ? (
-              <Eye className="w-5 h-5" />
-            ) : (
-              <EyeOff className="w-5 h-5" />
-            )}
-          </button>
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
           {onEvalClick && (
             <Button
               onClick={onEvalClick}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-5 py-2.5 rounded-lg shadow-md transition-all hover:shadow-lg"
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-4 shadow-md"
             >
-              <Star className="w-4 h-4 mr-2" />
+              <Star className="w-4 h-4 mr-1.5" />
               Évaluation gratuite
             </Button>
           )}
@@ -216,7 +154,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             <Link href="/admin/login">
               <Button
                 variant="outline"
-                className="border-2 border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4 py-2.5 rounded-lg transition-all"
+                className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
               >
                 <Shield className="w-4 h-4 mr-1.5" />
                 Admin
@@ -228,7 +166,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             <Link href="/mon-espace">
               <Button
                 variant="outline"
-                className="border-2 border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4 py-2.5 rounded-lg transition-all"
+                className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
               >
                 <User className="w-4 h-4 mr-1.5" />
                 Mon Espace
@@ -239,7 +177,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               <Link href="/login">
                 <Button
                   variant="outline"
-                  className="border-2 border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4 py-2.5 rounded-lg transition-all"
+                  className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
                 >
                   <User className="w-4 h-4 mr-1.5" />
                   Connexion
@@ -247,7 +185,7 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               </Link>
               <Link href="/register">
                 <Button
-                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-5 py-2.5 rounded-lg shadow-md transition-all hover:shadow-lg"
+                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
                 >
                   Inscription
                 </Button>
@@ -330,25 +268,6 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
               <Shield className="w-4 h-4" /> Administration
             </Link>
           )}
-          {/* Bouton mode contraste élevé mobile */}
-          <button
-            onClick={toggleHighContrast}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100 w-full"
-            aria-label={highContrast ? "Désactiver le mode contraste élevé" : "Activer le mode contraste élevé"}
-            aria-pressed={highContrast}
-          >
-            {highContrast ? (
-              <>
-                <Eye className="w-4 h-4 text-blue-600" />
-                Mode contraste désactivé
-              </>
-            ) : (
-              <>
-                <EyeOff className="w-4 h-4 text-blue-600" />
-                Activer le contraste élevé
-              </>
-            )}
-          </button>
           {onEvalClick && (
             <Button
               onClick={() => { setMobileOpen(false); onEvalClick(); }}
