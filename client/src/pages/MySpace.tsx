@@ -96,6 +96,63 @@ export default function MySpace() {
   // Afficher la notification si des documents manquent
   const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && (app as any)?.dossierStatus === "en_evaluation";
 
+  // Calculer le pourcentage d'avancement global du dossier
+  const calculateProgressPercentage = () => {
+    let progress = 0;
+    let totalSteps = 0;
+
+    // Étape 1: Documents uploadés (25%)
+    if (documents && documents.length > 0) {
+      progress += 25;
+    }
+    totalSteps += 25;
+
+    // Étape 2: Informations personnelles complètes (20%)
+    if (app?.fullName && app?.email && app?.whatsappNumber && app?.nationality) {
+      progress += 20;
+    }
+    totalSteps += 20;
+
+    // Étape 3: Profil académique/professionnel (20%)
+    if (app?.academicLevel && app?.experienceYears && app?.jobSector) {
+      progress += 20;
+    }
+    totalSteps += 20;
+
+    // Étape 4: Accord signé (15%)
+    if (app?.agreementSigned) {
+      progress += 15;
+    }
+    totalSteps += 15;
+
+    // Étape 5: Paiement effectué (20%)
+    if (app?.paymentStatus === "SUCCESS") {
+      progress += 20;
+    }
+    totalSteps += 20;
+
+    return Math.min(Math.round((progress / totalSteps) * 100), 100);
+  };
+
+  const progressPercentage = calculateProgressPercentage();
+
+  // Déterminer la couleur de la barre de progression
+  const getProgressColor = (percentage: number) => {
+    if (percentage < 33) return "bg-red-500";
+    if (percentage < 66) return "bg-yellow-500";
+    if (percentage < 100) return "bg-blue-500";
+    return "bg-green-500";
+  };
+
+  // Déterminer le message de progression
+  const getProgressMessage = (percentage: number) => {
+    if (percentage === 0) return "Commencez par remplir vos informations";
+    if (percentage < 33) return "Dossier en cours de remplissage";
+    if (percentage < 66) return "Dossier partiellement complet";
+    if (percentage < 100) return "Dossier presque complet";
+    return "Dossier complètement rempli";
+  };
+
   // Déterminer le badge de statut
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: string; icon: React.ReactNode }> = {
@@ -150,6 +207,54 @@ export default function MySpace() {
                   📋 Suivre mon dossier
                 </Button>
               </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Barre de progression */}
+      <div className="bg-white border-b border-gray-200 px-4 py-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">Avancement de votre dossier</h2>
+              <p className="text-sm text-gray-600">{getProgressMessage(progressPercentage)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-blue-600">{progressPercentage}%</p>
+              <p className="text-xs text-gray-500">Complétude</p>
+            </div>
+          </div>
+          
+          {/* Barre de progression animée */}
+          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-sm">
+            <div
+              className={`h-full ${getProgressColor(progressPercentage)} transition-all duration-500 ease-out rounded-full`}
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+
+          {/* Détails de progression */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-6">
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${documents && documents.length > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-xs text-gray-600">Documents</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${app?.fullName && app?.email && app?.whatsappNumber && app?.nationality ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-xs text-gray-600">Infos perso</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${app?.academicLevel && app?.experienceYears && app?.jobSector ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-xs text-gray-600">Profil</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${app?.agreementSigned ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-xs text-gray-600">Accord</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${app?.paymentStatus === 'SUCCESS' ? 'bg-green-500' : 'bg-gray-300'}`} />
+              <span className="text-xs text-gray-600">Paiement</span>
             </div>
           </div>
         </div>
