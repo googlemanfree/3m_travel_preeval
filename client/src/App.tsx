@@ -60,6 +60,7 @@ import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
+import EvaluationSpace from "./pages/EvaluationSpace";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -144,6 +145,9 @@ function Router() {
           <MySpace />
         </AuthGuard>
       </Route>
+
+      {/* Espace Candidat - Consultation Évaluation */}
+      <Route path={"/evaluation-space"} component={EvaluationSpace} />
 
       {/* Depot des documents */}
       <Route path={"/submit-documents"}>
