@@ -73,6 +73,12 @@ export default function Navbar() {
                 <a href="/eligibility-simulator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition rounded-t-xl">
                   <Shield className="w-4 h-4 text-green-500" /> Simulateur
                 </a>
+                <a href="/budget-calculator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                  <FileText className="w-4 h-4 text-orange-500" /> Calculateur Budget
+                </a>
+                <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                  <Globe className="w-4 h-4 text-purple-500" /> Galerie Visas
+                </a>
                 <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
                   <FileText className="w-4 h-4 text-blue-500" /> Blog
                 </a>
@@ -182,6 +188,15 @@ export default function Navbar() {
           ))}
           {/* Liens secondaires */}
           <div className="border-t border-gray-100 pt-2 mt-2 space-y-1">
+            <a href="/eligibility-simulator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
+              <Shield className="w-4 h-4 text-green-400" /> Simulateur
+            </a>
+            <a href="/budget-calculator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
+              <FileText className="w-4 h-4 text-orange-400" /> Calculateur Budget
+            </a>
+            <a href="/visa-gallery" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
+              <Globe className="w-4 h-4 text-purple-400" /> Galerie Visas
+            </a>
             <a href="/blog" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
               <FileText className="w-4 h-4 text-blue-400" /> Blog
             </a>
