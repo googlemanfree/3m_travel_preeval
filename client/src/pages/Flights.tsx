@@ -445,7 +445,7 @@ export default function Flights() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <Navbar activePage="flights" />
+      <Navbar />
 
       {/* Search Panel */}
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] py-10 px-4">
