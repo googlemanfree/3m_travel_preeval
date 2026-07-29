@@ -105,7 +105,7 @@ export default function MySpace() {
   };
 
   // Afficher la notification si des documents manquent
-  const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && (app as any)?.dossierStatus === "en_evaluation";
+  const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && app && (app as any)?.dossierStatus === "en_evaluation";
 
   // Calculer le pourcentage d'avancement global du dossier
   const calculateProgress = (): number => {
