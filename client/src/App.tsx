@@ -63,6 +63,8 @@ import CandidateAgencyDossier from "./pages/CandidateAgencyDossier";
 import { Blog } from "./pages/Blog";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import EvaluationSpace from "./pages/EvaluationSpace";
+import { useServiceWorker } from "./hooks/useServiceWorker";
+import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -270,6 +272,7 @@ function Router() {
 }
 
 function App() {
+  useServiceWorker();
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
@@ -279,6 +282,7 @@ function App() {
           <FloatingServices />
           <FloatingWhatsAppButton />
           <ScrollToTop />
+          <ServiceWorkerUpdateNotification />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
