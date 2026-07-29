@@ -63,6 +63,7 @@ import CandidateAgencyDossier from "./pages/CandidateAgencyDossier";
 import { Blog } from "./pages/Blog";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import EvaluationSpace from "./pages/EvaluationSpace";
+import EligibilitySimulator from "./pages/EligibilitySimulator";
 import { useServiceWorker } from "./hooks/useServiceWorker";
 import { ServiceWorkerUpdateNotification } from "./components/ServiceWorkerUpdateNotification";
 
@@ -264,6 +265,9 @@ function Router() {
         <Hotels />
       </Route>
 
+      <Route path="/eligibility-simulator" component={EligibilitySimulator} />
+      <Route path={"simulator"} component={EligibilitySimulator} />
+      <Route path={"404"} component={NotFound} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
