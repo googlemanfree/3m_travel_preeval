@@ -58,6 +58,8 @@ import AdminUsersManagement from "./pages/AdminUsersManagement";
 import AdminUserDetails from "./pages/AdminUserDetails";
 import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
+import TranslatorDashboard from "./pages/TranslatorDashboard";
+import CandidateAgencyDossier from "./pages/CandidateAgencyDossier";
 import { Blog } from "./pages/Blog";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import EvaluationSpace from "./pages/EvaluationSpace";
@@ -176,6 +178,21 @@ function Router() {
       {/* Routes Hotels */}
 
       {/* Traduction assermentée */}
+      <Route path={"/traduction"} component={TranslationOrder} />
+
+      {/* Espace Candidat - Dossier en Agence */}
+      <Route path={"/candidate/agency-dossier"}>
+        <AuthGuard message="Vous devez vous connecter pour consulter votre dossier en agence." autoRedirect>
+          <CandidateAgencyDossier />
+        </AuthGuard>
+      </Route>
+
+      {/* Dashboard Traducteur */}
+      <Route path={"/translator/dashboard"}>
+        <AuthGuard message="Vous devez être connecté en tant que traducteur pour accéder à ce tableau de bord.">
+          <TranslatorDashboard />
+        </AuthGuard>
+      </Route>
 
       {/* Panneau admin */}
       <Route path={"/admin/login"} component={AdminLogin} />
