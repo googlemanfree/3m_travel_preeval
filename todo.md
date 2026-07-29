@@ -1031,7 +1031,7 @@
 - [x] Créer hook useLazyImage
 - [ ] Intégrer LazyImage dans Home.tsx
 - [ ] Intégrer LazyScript pour Google Maps
-- [ ] Code splitting par route (React.lazy)
+- [x] Code splitting par route (React.lazy)
 
 ### Images & Iframes
 - [x] Créer composant LazyImage

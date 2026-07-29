@@ -162,6 +162,13 @@
       "when": 1785062375131,
       "tag": "0022_brief_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1785368551474,
+      "tag": "0023_tricky_diamondback",
+      "breakpoints": true
     }
   ]
 }
