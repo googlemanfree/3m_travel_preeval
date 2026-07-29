@@ -446,7 +446,7 @@
 
 - [x] Formulaire multi-projets simplifié (Travail, Études, Tourisme) intégré sur la page d'accueil
 - [x] Procédure tRPC submitEvaluation pour les évaluations multi-projets
-- [ ] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
+- [x] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
 - [x] Tests vitest pour le formulaire multi-projets et la procédure
 
 ## Fonctionnalités Complémentaires (v14)
@@ -490,26 +490,26 @@
 - [x] Ajouter le rôle "translator" dans la table users
 
 ### Phase 2 : Procédures tRPC
-- [ ] Créer la procédure `createTranslationRequest` (sans paiement)
-- [ ] Créer la procédure `getTranslationPricing` pour tarification dynamique
-- [ ] Créer la procédure `getTranslationRequests` pour lister les demandes
-- [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
-- [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
-- [ ] Créer la procédure `downloadTranslatedDocument` (client)
-- [ ] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
+- [x] Créer la procédure `createTranslationRequest` (sans paiement)
+- [x] Créer la procédure `getTranslationPricing` pour tarification dynamique
+- [x] Créer la procédure `getTranslationRequests` pour lister les demandes
+- [x] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
+- [x] Créer la procédure `uploadTranslatedDocument` (traducteur)
+- [x] Créer la procédure `downloadTranslatedDocument` (client)
+- [x] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
 
 ### Phase 3 : Dashboard Traducteur
-- [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
-- [ ] Ajouter la section "En Cours" et "Completées"
-- [ ] Ajouter le formulaire d'upload du document traduit
-- [ ] Ajouter les filtres par langue, type de document, date
+- [x] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
+- [x] Ajouter la section "En Cours" et "Completées"
+- [x] Ajouter le formulaire d'upload du document traduit
+- [x] Ajouter les filtres par langue, type de document, date
 
 ### Phase 4 : Tunnel de Commande Client
-- [ ] Créer la page `/translation/order` avec sélection du type de document
-- [ ] Ajouter le sélecteur de langues source/cible
-- [ ] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
-- [ ] Afficher le tarif calculé en temps réel
-- [ ] Ajouter le bouton "Procéder au Paiement"
+- [x] Créer la page `/translation/order` avec sélection du type de document
+- [x] Ajouter le sélecteur de langues source/cible
+- [x] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
+- [x] Afficher le tarif calculé en temps réel
+- [x] Ajouter le bouton "Procéder au Paiement"
 
 ### Phase 5 : Paiement Obligatoire
 - [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
@@ -625,10 +625,10 @@
 - [x] Ajouter des infobulles explicatives sur chaque étape de la barre de progression
 
 ### Phase 6 : Espace Client pour Dossiers en Agence
-- [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
-- [ ] Afficher la barre de progression du dossier
-- [ ] Ajouter la section "Messages de l'Agence"
-- [ ] Permettre le téléchargement des documents requis
+- [x] Créer la page `/candidate/agency-dossier` pour consulter le statut
+- [x] Afficher la barre de progression du dossier
+- [x] Ajouter la section "Messages de l'Agence"
+- [x] Permettre le téléchargement des documents requis
 
 ### Phase 7 : Tests et Validation
 - [ ] Tester l'ajout d'un dossier par l'admin
