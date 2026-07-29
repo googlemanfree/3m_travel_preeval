@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useAuth } from '@/_core/hooks/useAuth';
+import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
+
+// Vérifier que useState est bien importé
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [location] = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Fermer le menu profil au clic en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const isActive = (path: string) => location === path;
 
@@ -67,18 +85,92 @@ export default function Navbar() {
 
           {/* 3. BOUTONS D'ACTION DESKTOP */}
           <div className="hidden lg:flex items-center space-x-4">
-            <a 
-              href="/open-dossier" 
-              className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2"
-            >
-              ⭐ Évaluation gratuite
-            </a>
-            <a 
-              href="/mon-espace" 
-              className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2"
-            >
-              👤 Mon Espace
-            </a>
+            {isAuthenticated && user ? (
+              <div className="relative" ref={profileMenuRef}>
+                <button
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl font-semibold text-sm transition"
+                  aria-label="Menu Profil"
+                >
+                  <User className="w-4 h-4" />
+                  {user.name}
+                  <ChevronDown className={`w-4 h-4 transition ${isProfileOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Menu déroulant profil */}
+                {isProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2">
+                    {/* En-tête profil */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="font-semibold text-gray-900">{user.name}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">{user.role === 'admin' ? '👑 Administrateur' : '👤 Utilisateur'}</p>
+                    </div>
+
+                    {/* Liens du menu */}
+                    <div className="py-2">
+                      <a
+                        href="/mon-espace"
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Mon Espace
+                      </a>
+                      <a
+                        href="/mon-dossier"
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Mes Dossiers
+                      </a>
+                      {user.role === 'admin' && (
+                        <a
+                          href="/admin/login"
+                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Panneau Admin
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Bouton déconnexion */}
+                    <div className="border-t border-gray-100 py-2">
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          // Déconnexion
+                          localStorage.removeItem('auth_token');
+                          window.location.href = '/';
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition font-medium"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Déconnexion
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <a 
+                  href="/open-dossier" 
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2"
+                >
+                  ⭐ Évaluation gratuite
+                </a>
+                <a 
+                  href="/mon-espace" 
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2"
+                >
+                  👤 Mon Espace
+                </a>
+              </>
+            )}
           </div>
 
           {/* 4. BOUTON HAMBURGER (Visible uniquement sur mobile < lg) */}
