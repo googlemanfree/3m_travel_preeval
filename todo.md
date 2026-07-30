@@ -512,11 +512,11 @@
 - [ ] Ajouter le bouton "Procéder au Paiement"
 
 ### Phase 5 : Paiement Obligatoire
-- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
-- [ ] Créer le callback de validation du paiement
-- [ ] Déclencher la notification admin uniquement après paiement validé
-- [ ] Générer la facture PDF après paiement
-- [ ] Envoyer confirmation par email/WhatsApp
+- [x] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
+- [x] Créer le callback de validation du paiement
+- [x] Déclencher la notification admin uniquement après paiement validé
+- [x] Générer la facture PDF après paiement
+- [x] Envoyer confirmation par email/WhatsApp
 
 ### Phase 6 : Téléchargement Sécurisé
 - [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
@@ -1078,7 +1078,7 @@
 - [x] Créer hook useLazyImage
 - [x] Intégrer LazyImage dans Home.tsx
 - [x] Intégrer LazyScript pour Google Maps
-- [ ] Code splitting par route (React.lazy)
+- [x] Code splitting par route (React.lazy)
 
 ### Images & Iframes
 - [x] Créer composant LazyImage
