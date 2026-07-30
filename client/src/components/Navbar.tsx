@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import NavbarSearchBar from "./NavbarSearchBar";
 
 const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
 
@@ -68,6 +69,11 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
             <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
           </div>
         </Link>
+
+        {/* ── Barre de recherche desktop ── */}
+        <div className="hidden lg:block flex-1 max-w-sm">
+          <NavbarSearchBar compact={true} />
+        </div>
 
         {/* ── Nav desktop ── */}
         <nav className="hidden md:flex items-center gap-6">
@@ -207,6 +213,9 @@ export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
       {/* ── Mobile menu ── */}
       {mobileOpen && (
         <div className="md:hidden bg-white border-t border-blue-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
+          <div className="mb-2">
+            <NavbarSearchBar compact={true} />
+          </div>
           <Link href="/" onClick={() => setMobileOpen(false)}
             className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
             Accueil
