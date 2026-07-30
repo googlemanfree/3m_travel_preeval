@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import CVAnalysisLoader from '@/components/CVAnalysisLoader';
 
 const CITIES = ['Yaoundé', 'Douala', 'Bafoussam', 'Garoua', 'Buea', 'Limbe', 'Bamenda'];
 const COUNTRIES = ['Canada', 'France', 'Australie', 'Belgique', 'États-Unis', 'Royaume-Uni', 'Suisse', 'Allemagne', 'Pays-Bas', 'Nouvelle-Zélande'];
@@ -42,6 +43,8 @@ export default function EvaluationForm() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -88,8 +91,16 @@ export default function EvaluationForm() {
   const handleSubmit = async () => {
     if (!validateStep2()) return;
 
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
     setIsSubmitting(true);
+
     try {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setAnalysisProgress((prev) => Math.min(prev + Math.random() * 15, 90));
+      }, 500);
+
       const formDataToSend = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (key === 'cv' && value) {
@@ -101,15 +112,25 @@ export default function EvaluationForm() {
 
       // TODO: Call tRPC mutation to submit evaluation
       console.log('Form submitted:', formData);
+
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
+
+      // Simulate delay for analysis
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     } catch (error) {
       console.error('Submission error:', error);
     } finally {
       setIsSubmitting(false);
+      setIsAnalyzing(false);
+      setAnalysisProgress(0);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+    <>
+      <CVAnalysisLoader isLoading={isAnalyzing} progress={analysisProgress} />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -447,5 +468,6 @@ export default function EvaluationForm() {
         </motion.div>
       </div>
     </div>
+    </>
   );
 }
