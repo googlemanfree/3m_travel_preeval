@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
