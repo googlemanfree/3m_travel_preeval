@@ -7,7 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthGuard from "./components/AuthGuard";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
-import ProceduresSimplified from "./pages/ProceduresSimplified";
+import ProceduresSimplifiedWithFilters from "./pages/ProceduresSimplifiedWithFilters";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -86,7 +86,7 @@ function Router() {
           <Flights />
         </AuthGuard>
       </Route>
-      <Route path={"/procedures"} component={ProceduresSimplified} />
+      <Route path={"/procedures"} component={ProceduresSimplifiedWithFilters} />
       <Route path={"/assurance"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à nos offres d'assurance.">
           <Assurance />

@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Search, ChevronDown, ChevronUp, Star, MessageCircle, FileText, Globe, CheckCircle, Badge as BadgeIcon } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Star, MessageCircle, FileText, Globe, CheckCircle, Badge as BadgeIcon, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
@@ -20,15 +21,15 @@ const REGIONS = [
         id: "toronto",
         name: "Toronto",
         procedures: [
-          { id: 1, title: "Visa d'études", type: "student", destination: "Canada" },
-          { id: 2, title: "Permis de travail", type: "work", destination: "Canada" },
+          { id: 1, title: "Visa d'études", type: "student", destination: "Canada", popularity: 95 },
+          { id: 2, title: "Permis de travail", type: "work", destination: "Canada", popularity: 80 },
         ]
       },
       {
         id: "vancouver",
         name: "Vancouver",
         procedures: [
-          { id: 3, title: "Immigration permanente", type: "permanent", destination: "Canada" },
+          { id: 3, title: "Immigration permanente", type: "permanent", destination: "Canada", popularity: 75 },
         ]
       }
     ]
@@ -43,15 +44,15 @@ const REGIONS = [
         id: "france",
         name: "France",
         procedures: [
-          { id: 4, title: "Visa d'études", type: "student", destination: "France" },
-          { id: 5, title: "Visa de long séjour", type: "long_stay", destination: "France" },
+          { id: 4, title: "Visa d'études", type: "student", destination: "France", popularity: 90 },
+          { id: 5, title: "Visa de long séjour", type: "long_stay", destination: "France", popularity: 70 },
         ]
       },
       {
         id: "germany",
         name: "Allemagne",
         procedures: [
-          { id: 6, title: "Visa d'études", type: "student", destination: "Allemagne" },
+          { id: 6, title: "Visa d'études", type: "student", destination: "Allemagne", popularity: 85 },
         ]
       }
     ]
@@ -66,15 +67,15 @@ const REGIONS = [
         id: "london",
         name: "Londres",
         procedures: [
-          { id: 7, title: "Visa d'études", type: "student", destination: "UK" },
-          { id: 8, title: "Visa de travail", type: "work", destination: "UK" },
+          { id: 7, title: "Visa d'études", type: "student", destination: "UK", popularity: 92 },
+          { id: 8, title: "Visa de travail", type: "work", destination: "UK", popularity: 88 },
         ]
       }
     ]
   }
 ];
 
-export default function ProceduresSimplified() {
+export default function ProceduresSimplifiedWithFilters() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
@@ -107,21 +108,68 @@ export default function ProceduresSimplified() {
   );
 
   const filteredRegions = useMemo(() => {
-    if (!searchQuery) return REGIONS;
-    const query = searchQuery.toLowerCase();
-    return REGIONS.filter(region =>
-      region.name.toLowerCase().includes(query) ||
-      region.destinations.some(dest =>
-        dest.name.toLowerCase().includes(query) ||
-        dest.procedures.some(proc => proc.title.toLowerCase().includes(query))
-      )
-    );
-  }, [searchQuery]);
+    let results = REGIONS;
+    
+    // Filtrer par recherche
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      results = results.filter(region =>
+        region.name.toLowerCase().includes(query) ||
+        region.destinations.some(dest =>
+          dest.name.toLowerCase().includes(query) ||
+          dest.procedures.some(proc => proc.title.toLowerCase().includes(query))
+        )
+      );
+    }
+    
+    // Filtrer par type de visa
+    if (selectedTypes.length > 0) {
+      results = results.map(region => ({
+        ...region,
+        destinations: region.destinations.map(dest => ({
+          ...dest,
+          procedures: dest.procedures.filter(proc => selectedTypes.includes(proc.type))
+        })).filter(dest => dest.procedures.length > 0)
+      })).filter(region => region.destinations.length > 0);
+    }
+    
+    // Trier les procédures
+    results = results.map(region => ({
+      ...region,
+      destinations: region.destinations.map(dest => ({
+        ...dest,
+        procedures: [...dest.procedures].sort((a, b) => {
+          if (sortBy === "name") return a.title.localeCompare(b.title);
+          if (sortBy === "type") return a.type.localeCompare(b.type);
+          if (sortBy === "popularity") return (b.popularity || 0) - (a.popularity || 0);
+          return 0;
+        })
+      }))
+    }));
+    
+    return results;
+  }, [searchQuery, selectedTypes, sortBy]);
 
   const handleSelectProcedure = (procedure: any) => {
     setSelectedProcedure(procedure);
     setShowDetailModal(true);
   };
+
+  const toggleTypeFilter = (type: string) => {
+    setSelectedTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const resetFilters = () => {
+    setSelectedTypes([]);
+    setSortBy("name");
+    setSearchQuery("");
+  };
+
+  const hasActiveFilters = selectedTypes.length > 0 || searchQuery.length > 0 || sortBy !== "name";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -193,31 +241,99 @@ export default function ProceduresSimplified() {
               <p className="text-gray-500 text-sm">Cliquez sur une région pour explorer toutes les procédures disponibles</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRegions.map(region => (
-                <Card
-                  key={region.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                  onClick={() => setActiveRegion(region.id)}
+            {/* ── Panneau de filtrage ── */}
+            <div className="mb-8 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  onClick={() => setShowFilters(!showFilters)}
+                  variant={showFilters ? "default" : "outline"}
+                  className="gap-2"
                 >
-                  <div className="relative h-40 overflow-hidden">
-                    <img
-                      src={region.image}
-                      alt={region.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="text-lg font-black text-gray-900">{region.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{region.subtitle}</p>
-                    <div className="mt-3 text-xs text-gray-500">
-                      {region.destinations.length} destinations · {region.destinations.reduce((sum, d) => sum + d.procedures.length, 0)} procédures
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  <Filter className="w-4 h-4" />
+                  Filtres avancés
+                  {hasActiveFilters && <Badge className="ml-2 bg-blue-600">Actifs</Badge>}
+                </Button>
+                {hasActiveFilters && (
+                  <Button onClick={resetFilters} variant="outline" className="gap-2">
+                    <X className="w-4 h-4" />
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
+
+              {/* Tri */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Trier par :</label>
+                <select
+                  value={sortBy}
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="name">Nom (A-Z)</option>
+                  <option value="popularity">Popularité</option>
+                  <option value="type">Type de visa</option>
+                </select>
+              </div>
             </div>
+
+            {/* ── Panneau de filtres ── */}
+            {showFilters && (
+              <Card className="mb-8 p-6 bg-white border-blue-200">
+                <h3 className="font-black text-gray-900 mb-4">Filtrer par type de visa</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {allVisaTypes.map(type => (
+                    <label key={type} className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={selectedTypes.includes(type)}
+                        onChange={() => toggleTypeFilter(type)}
+                      />
+                      <span className="text-sm text-gray-700 capitalize">{type}</span>
+                    </label>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* ── Résultats ── */}
+            {filteredRegions.length === 0 ? (
+              <Card className="p-8 text-center">
+                <p className="text-gray-600 mb-4">Aucune procédure ne correspond à vos critères.</p>
+                <Button onClick={resetFilters} variant="outline">
+                  Réinitialiser les filtres
+                </Button>
+              </Card>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-6">
+                  {filteredRegions.reduce((sum, r) => sum + r.destinations.reduce((s, d) => s + d.procedures.length, 0), 0)} procédures trouvées
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredRegions.map(region => (
+                    <Card
+                      key={region.id}
+                      className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                      onClick={() => setActiveRegion(region.id)}
+                    >
+                      <div className="relative h-40 overflow-hidden">
+                        <img
+                          src={region.image}
+                          alt={region.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="text-lg font-black text-gray-900">{region.name}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{region.subtitle}</p>
+                        <div className="mt-3 text-xs text-gray-500">
+                          {region.destinations.length} destinations · {region.destinations.reduce((sum, d) => sum + d.procedures.length, 0)} procédures
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Stats rapides */}
             <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
