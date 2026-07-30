@@ -1337,10 +1337,22 @@ export default function Home() {
         </div>
       </footer>
 
+      {/* ─── CARROUSEL VISAS ACCORDÉS (Preuve Sociale) ────────────────────────── */}
+      <VisasCarousel />
+
+      {/* ─── SIMULATEUR EXPRESS 30 SECONDES ────────────────────────────────────── */}
+      <SimulatorExpress />
+
+      {/* ─── FOOTER LÉGAL & INSTITUTIONNEL ─────────────────────────────────────── */}
+      <FooterLegal />
+
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
-      {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
+      {/* ─── WIDGET WHATSAPP FLOTTANT ─────────────────────────────────────── */}
+      <WhatsAppWidget />
+
+      {/* ─── BOUTON WHATSAPP FLOTTANT (Legacy) ─────────────────────────────────────── */}
       <WhatsAppButton />
     </div>
   );
