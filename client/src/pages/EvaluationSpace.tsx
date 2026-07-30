@@ -17,17 +17,43 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CommentsSection } from "@/components/CommentsSection";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
+  const { user, isAuthenticated } = useAuth();
   const [dossierNumber, setDossierNumber] = useState<string | null>(null);
+  const [searchCode, setSearchCode] = useState<string>('');
+  const [userDossierLoading, setUserDossierLoading] = useState(true);
 
-  // Récupérer le numéro de dossier depuis les paramètres d'URL
+  // Récupérer le numéro de dossier depuis les paramètres d'URL ou depuis l'utilisateur connecté
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const dossier = params.get("dossier");
-    setDossierNumber(dossier);
-  }, []);
+    
+    if (dossier) {
+      setDossierNumber(dossier);
+      setUserDossierLoading(false);
+    } else if (isAuthenticated && user?.email) {
+      // Charger le dossier de l'utilisateur connecté
+      const fetchUserDossier = async () => {
+        try {
+          const response = await fetch(`/api/candidates/user-dossier?email=${encodeURIComponent(user.email || '')}`);
+          const data = await response.json();
+          if (data.success && data.candidate?.folderCode) {
+            setDossierNumber(data.candidate.folderCode as string);
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement du dossier utilisateur:', error);
+        } finally {
+          setUserDossierLoading(false);
+        }
+      };
+      fetchUserDossier();
+    } else {
+      setUserDossierLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
   // Récupérer le bilan
   const { data: bilanData, isLoading, error } = trpc.evaluationAI.getBilan.useQuery(
@@ -35,20 +61,88 @@ export default function EvaluationSpace() {
     { enabled: !!dossierNumber }
   );
 
-  if (!dossierNumber) {
+  if (userDossierLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto py-12">
           <Card className="p-8 text-center">
-            <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Dossier non trouvé</h2>
-            <p className="text-gray-600 mb-6">
-              Veuillez vérifier le lien ou le numéro de dossier
-            </p>
-            <Button onClick={() => setLocation("/")} className="bg-blue-600 hover:bg-blue-700">
-              Retour à l'accueil
-            </Button>
+            <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Chargement de votre espace...</h2>
+            <p className="text-gray-600">Veuillez patienter</p>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dossierNumber) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-2xl mx-auto py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Card className="p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                  !
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Dossier non trouvé</h2>
+                <p className="text-gray-600 text-sm">
+                  Veuillez vérifier votre numéro de dossier ou effectuer une recherche ci-dessous.
+                </p>
+              </div>
+
+              {/* Champ de recherche manuel */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (searchCode.trim()) {
+                    setLocation(`/mon-espace?dossier=${encodeURIComponent(searchCode)}`);
+                  }
+                }}
+                className="flex gap-2 mb-6"
+              >
+                <input
+                  type="text"
+                  placeholder="Ex: #3M-20260730-1234"
+                  value={searchCode}
+                  onChange={(e) => setSearchCode(e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
+                  Rechercher
+                </Button>
+              </form>
+
+              {/* Boutons d'action */}
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={() => setLocation("/evaluation")}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition"
+                >
+                  ⭐ Déposer une nouvelle évaluation
+                </Button>
+                <Button
+                  onClick={() => setLocation("/")}
+                  variant="outline"
+                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition"
+                >
+                  Retour à l'accueil
+                </Button>
+                <a
+                  href="https://wa.me/33612345678?text=Bonjour%2C%20j'ai%20besoin%20d'aide%20pour%20accéder%20à%20mon%20dossier"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition text-center"
+                >
+                  💬 Support WhatsApp
+                </a>
+              </div>
+            </Card>
+          </motion.div>
         </div>
       </div>
     );
