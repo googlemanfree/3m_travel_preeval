@@ -1,0 +1,21 @@
+CREATE TABLE `blog_posts` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`title` varchar(255) NOT NULL,
+	`slug` varchar(255) NOT NULL,
+	`excerpt` text,
+	`content` text NOT NULL,
+	`category` enum('Visas','Études','Voyages','Immigration','Conseils','Actualités') NOT NULL DEFAULT 'Conseils',
+	`authorName` varchar(100) NOT NULL DEFAULT 'Équipe 3M Travel',
+	`authorId` int,
+	`imageUrl` varchar(500),
+	`tags` text,
+	`isPublished` boolean NOT NULL DEFAULT false,
+	`isFeatured` boolean NOT NULL DEFAULT false,
+	`viewCount` int NOT NULL DEFAULT 0,
+	`readTimeMinutes` int NOT NULL DEFAULT 5,
+	`publishedAt` timestamp,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `blog_posts_id` PRIMARY KEY(`id`),
+	CONSTRAINT `blog_posts_slug_unique` UNIQUE(`slug`)
+);

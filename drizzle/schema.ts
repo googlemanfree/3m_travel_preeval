@@ -1183,3 +1183,156 @@ export const bilans = mysqlTable("bilans", {
 
 export type Bilan = typeof bilans.$inferSelect;
 export type InsertBilan = typeof bilans.$inferInsert;
+
+// ============================================================
+// TABLE: dossier_progress — Suivi des étapes d'un dossier
+// ============================================================
+export const dossierProgress = mysqlTable("dossier_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull(),
+  
+  // Étapes (1=Soumission, 2=Vérification, 3=Traitement, 4=Décision, 5=Finalisation)
+  currentStep: int("currentStep").default(1).notNull(),
+  
+  // Statuts des étapes (JSON: { step1: "completed", step2: "in_progress", ... })
+  stepsStatus: text("stepsStatus").notNull().default('{"step1":"completed","step2":"pending","step3":"pending","step4":"pending","step5":"pending"}'),
+  
+  // Timestamps des étapes
+  step1CompletedAt: timestamp("step1CompletedAt"),
+  step2CompletedAt: timestamp("step2CompletedAt"),
+  step3CompletedAt: timestamp("step3CompletedAt"),
+  step4CompletedAt: timestamp("step4CompletedAt"),
+  step5CompletedAt: timestamp("step5CompletedAt"),
+  
+  // Notes par étape
+  adminNotes: text("adminNotes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DossierProgress = typeof dossierProgress.$inferSelect;
+export type InsertDossierProgress = typeof dossierProgress.$inferInsert;
+
+// ============================================================
+// TABLE: callback_requests — Demandes de rappel téléphonique
+// ============================================================
+export const callbackRequests = mysqlTable("callback_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Informations du demandeur
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 30 }).notNull(),
+  email: varchar("email", { length: 320 }),
+  
+  // Préférences
+  preferredTime: varchar("preferredTime", { length: 100 }),  // "matin", "après-midi", "soir"
+  preferredDate: varchar("preferredDate", { length: 20 }),
+  subject: varchar("subject", { length: 255 }),
+  message: text("message"),
+  
+  // Statut
+  status: mysqlEnum("status", ["pending", "scheduled", "completed", "cancelled"]).default("pending").notNull(),
+  scheduledAt: timestamp("scheduledAt"),
+  completedAt: timestamp("completedAt"),
+  adminNotes: text("adminNotes"),
+  
+  // Référence dossier (optionnel)
+  applicationId: int("applicationId"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CallbackRequest = typeof callbackRequests.$inferSelect;
+export type InsertCallbackRequest = typeof callbackRequests.$inferInsert;
+
+// ============================================================
+// TABLE: approved_visas — Galerie des visas accordés
+// ============================================================
+export const approvedVisas = mysqlTable("approved_visas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Informations anonymisées
+  firstName: varchar("firstName", { length: 100 }).notNull(),  // Prénom seulement
+  country: varchar("country", { length: 100 }).notNull(),
+  visaType: varchar("visaType", { length: 100 }).notNull(),  // "Étudiant", "Travail", etc.
+  destination: varchar("destination", { length: 100 }).notNull(),
+  
+  // Date d'obtention
+  approvedDate: varchar("approvedDate", { length: 20 }).notNull(),  // "Juillet 2024"
+  
+  // Témoignage (optionnel)
+  testimonial: text("testimonial"),
+  
+  // Visibilité
+  isPublic: boolean("isPublic").default(true).notNull(),
+  
+  // Image (optionnel, anonymisée)
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ApprovedVisa = typeof approvedVisas.$inferSelect;
+export type InsertApprovedVisa = typeof approvedVisas.$inferInsert;
+
+// ============================================================
+// TABLE: country_costs — Frais par pays pour le calculateur
+// ============================================================
+export const countryCosts = mysqlTable("country_costs", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  country: varchar("country", { length: 100 }).notNull(),
+  visaType: varchar("visaType", { length: 100 }).notNull(),  // "Étudiant", "Travail", "Tourisme"
+  
+  // Frais en FCFA
+  visaFee: int("visaFee").notNull(),           // Frais de visa consulaire
+  serviceFee: int("serviceFee").notNull(),      // Frais de service 3M
+  guaranteeFee: int("guaranteeFee").default(0), // Frais de garantie financière
+  translationFee: int("translationFee").default(0), // Frais de traduction
+  otherFees: int("otherFees").default(0),       // Autres frais
+  
+  // Délai moyen
+  processingDays: int("processingDays").notNull(),
+  
+  // Taux de succès
+  successRate: int("successRate").default(85),  // Pourcentage
+  
+  // Actif
+  isActive: boolean("isActive").default(true).notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type CountryCost = typeof countryCosts.$inferSelect;
+export type InsertCountryCost = typeof countryCosts.$inferInsert;
+
+// ============================================================
+// TABLE: blog_posts — Articles du blog 3M Travel
+// ============================================================
+export const blogPosts = mysqlTable("blog_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  category: mysqlEnum("category", ["Visas", "Études", "Voyages", "Immigration", "Conseils", "Actualités"]).default("Conseils").notNull(),
+  authorName: varchar("authorName", { length: 100 }).default("Équipe 3M Travel").notNull(),
+  authorId: int("authorId"),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  tags: text("tags"),          // JSON array de tags
+  isPublished: boolean("isPublished").default(false).notNull(),
+  isFeatured: boolean("isFeatured").default(false).notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  readTimeMinutes: int("readTimeMinutes").default(5).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
