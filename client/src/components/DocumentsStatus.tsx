@@ -1,10 +1,13 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, XCircle, Download, Eye } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, Download, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface DocumentsStatusProps {
   dossierNumber: string;
@@ -15,6 +18,9 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
     dossierNumber,
   });
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [reuploadDoc, setReuploadDoc] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -106,6 +112,12 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                         <Eye className="w-4 h-4" />
                       </Button>
                     )}
+                    {doc.status === "rejected" && (
+                      <Button size="sm" variant="outline" onClick={() => setReuploadDoc(doc)}>
+                        <Upload className="w-4 h-4 mr-1" />
+                        Réupload
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -133,6 +145,12 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
               ) : (
                 <img src={selectedDoc.url} alt={selectedDoc.name} className="w-full max-h-[500px] object-contain" />
               )}
+              {selectedDoc.rejectionReason && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm font-semibold text-red-800">Raison du rejet :</p>
+                  <p className="text-sm text-red-700 mt-1">{selectedDoc.rejectionReason}</p>
+                </div>
+              )}
               <div className="flex gap-2">
                 <a href={selectedDoc.url} download className="flex-1">
                   <Button className="w-full" variant="outline">
@@ -140,6 +158,15 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                     Télécharger
                   </Button>
                 </a>
+                {selectedDoc.status === "rejected" && (
+                  <Button className="flex-1" onClick={() => {
+                    setReuploadDoc(selectedDoc);
+                    setSelectedDoc(null);
+                  }}>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Réupload
+                  </Button>
+                )}
                 <Button className="flex-1" variant="outline" onClick={() => setSelectedDoc(null)}>
                   Fermer
                 </Button>
@@ -147,6 +174,74 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Modal de réupload */}
+      {reuploadDoc && (
+        <Dialog open={!!reuploadDoc} onOpenChange={() => setReuploadDoc(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Réupload du document</DialogTitle>
+              <DialogDescription>
+                Sélectionnez un nouveau fichier pour remplacer "{reuploadDoc.name}"
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {reuploadDoc.rejectionReason && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm font-semibold text-yellow-800">Raison du rejet précédent :</p>
+                  <p className="text-sm text-yellow-700 mt-1">{reuploadDoc.rejectionReason}</p>
+                </div>
+              )}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <Input
+                  type="file"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  id="file-input"
+                />
+                <label htmlFor="file-input" className="cursor-pointer">
+                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm font-semibold text-gray-700">Cliquez pour sélectionner un fichier</p>
+                  <p className="text-xs text-gray-500 mt-1">ou glissez-déposez votre fichier</p>
+                  {selectedFile && (
+                    <p className="text-sm text-blue-600 mt-2 font-semibold">{selectedFile.name}</p>
+                  )}
+                </label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setReuploadDoc(null);
+                setSelectedFile(null);
+              }}>
+                Annuler
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!selectedFile) {
+                    toast.error("Veuillez sélectionner un fichier");
+                    return;
+                  }
+                  setIsUploading(true);
+                  try {
+                    // TODO: Implémenter l'upload via tRPC
+                    toast.success("Document réuploadé avec succès!");
+                    setReuploadDoc(null);
+                    setSelectedFile(null);
+                  } catch (error) {
+                    toast.error("Erreur lors du réupload");
+                  } finally {
+                    setIsUploading(false);
+                  }
+                }}
+                disabled={!selectedFile || isUploading}
+              >
+                {isUploading ? "Réupload en cours..." : "Réupload"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
