@@ -6,13 +6,85 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
+
+// Composant onglet Traductions
+function TranslationsTab() {
+  const { data: translations, isLoading } = trpc.translation.getMyTranslations.useQuery();
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      pending_payment: "En attente de paiement",
+      pending_translation: "En attente de traducteur",
+      in_progress: "En cours",
+      completed: "Terminée",
+      rejected: "Rejetée",
+    };
+    return map[status] || status;
+  };
+
+  const statusColor = (status: string) => {
+    if (status === "completed") return "bg-green-500";
+    if (status === "rejected") return "bg-red-500";
+    if (status === "in_progress") return "bg-blue-500";
+    return "bg-yellow-500";
+  };
+
+  if (isLoading) return <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" /></div>;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="flex items-center gap-2">
+          <Languages className="w-5 h-5 text-purple-500" />
+          Mes Traductions Certifiées
+        </CardTitle>
+        <Button variant="outline" size="sm" onClick={() => window.location.href = '/traduction'}>
+          <ExternalLink className="w-4 h-4 mr-2" />
+          Commander
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {!translations || translations.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <Languages className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p>Aucune traduction commandée</p>
+            <Button className="mt-4" onClick={() => window.location.href = '/traduction'}>Commander une traduction</Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {translations.map((t: any) => (
+              <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold">{t.documentType?.replace(/_/g, ' ')}</p>
+                    <Badge className={statusColor(t.status)}>{statusLabel(t.status)}</Badge>
+                  </div>
+                  <p className="text-sm text-gray-500">{t.sourceLanguage} → {t.targetLanguage}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : '—'}</p>
+                </div>
+                {t.status === 'completed' && t.translatedFileUrl && (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={t.translatedFileUrl} target="_blank" rel="noopener noreferrer">
+                      <Download className="w-4 h-4 mr-2" />
+                      Télécharger
+                    </a>
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function MySpace() {
   const { isAuthenticated, candidate, logout } = useCandidateAuth();
@@ -175,10 +247,11 @@ export default function MySpace() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="translations">Traductions</TabsTrigger>
             <TabsTrigger value="agreement">Accord</TabsTrigger>
           </TabsList>
 
@@ -306,6 +379,11 @@ export default function MySpace() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Traductions */}
+          <TabsContent value="translations" className="space-y-6">
+            <TranslationsTab />
           </TabsContent>
 
           {/* Accord */}
