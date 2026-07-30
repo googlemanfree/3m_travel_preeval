@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthGuard from "./components/AuthGuard";
+import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import ProceduresResources from "./pages/ProceduresResources";
@@ -62,6 +63,7 @@ import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
+import React from "react";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -251,15 +253,42 @@ function Router() {
 }
 
 function App() {
+  // État pour gérer la restauration de la session
+  const [sessionRestored, setSessionRestored] = React.useState(false);
+
+  React.useEffect(() => {
+    // Vérifier si une session est présente dans localStorage
+    const savedToken = localStorage.getItem('3m_auth_token');
+    const savedUser = localStorage.getItem('3m_user');
+
+    if (savedToken && savedUser) {
+      // Attendre un peu pour montrer le loader
+      const timer = setTimeout(() => {
+        localStorage.setItem('3m_session_restored', 'true');
+        setSessionRestored(true);
+      }, 800);
+      return () => clearTimeout(timer);
+    } else {
+      // Pas de session, marquer comme restauré immédiatement
+      localStorage.setItem('3m_session_restored', 'true');
+      setSessionRestored(true);
+    }
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
+          <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
-          <Router />
-          <FloatingServices />
-          <FloatingWhatsAppButton />
-          <ScrollToTop />
+          {sessionRestored && (
+            <>
+              <Router />
+              <FloatingServices />
+              <FloatingWhatsAppButton />
+              <ScrollToTop />
+            </>
+          )}
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
