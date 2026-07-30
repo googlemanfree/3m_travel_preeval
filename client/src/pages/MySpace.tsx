@@ -16,6 +16,9 @@ import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissing
 import { DossierLoadingAnimation } from "@/components/DossierLoadingAnimation";
 import { DossierStatusPipeline, type StatusStep } from "@/components/DossierStatusPipeline";
 import { DashboardStats } from "@/components/DashboardStats";
+import { PaymentHistory } from "@/components/PaymentHistory";
+import { DocumentsStatus } from "@/components/DocumentsStatus";
+import { DossierOverview } from "@/components/DossierOverview";
 
 // Composant onglet Paiements
 function PaymentsTab() {
@@ -474,8 +477,9 @@ export default function MySpace() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
+            <TabsTrigger value="tracking">Suivi</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="translations">Traductions</TabsTrigger>
@@ -552,6 +556,17 @@ export default function MySpace() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Suivi */}
+          <TabsContent value="tracking" className="space-y-6">
+            {app && (
+              <>
+                <DossierOverview dossierNumber={app.dossierNumber || ""} />
+                <PaymentHistory dossierNumber={app.dossierNumber || ""} />
+                <DocumentsStatus dossierNumber={app.dossierNumber || ""} />
+              </>
+            )}
           </TabsContent>
 
           {/* Documents */}
