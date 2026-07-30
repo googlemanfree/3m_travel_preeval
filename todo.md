@@ -930,3 +930,16 @@
 - [ ] Tester les messages entre candidat et conseiller
 - [ ] Créer un test vitest pour le workflow candidat complet
 - [ ] Déployer et vérifier en production
+
+
+## Dashboard Admin Unifié — Gestion Centralisée des Dossiers (v25)
+- [x] Procédure tRPC `admin.listCandidates` : liste paginée avec filtres (statut, recherche texte)
+- [x] Procédure tRPC `admin.updateCandidateStatus` : mise à jour statut + notification email optionnelle
+- [x] Procédure tRPC `admin.importAgencyDossier` : saisie manuelle d'un dossier agence avec email de bienvenue
+- [x] Procédure tRPC `admin.getCandidateDetails` : fiche détaillée d'un candidat
+- [x] Page AdminDashboard.tsx refondée : tableau unifié (dossiers en ligne + agence), recherche, filtres par statut
+- [x] Statistiques rapides : 6 compteurs (Total, Éval. 48h, Bilan dispo, Documents, Soumis, Visa accordé)
+- [x] Badges de source (En ligne / Agence) et badges de statut colorés
+- [x] Modale Fiche Candidat : infos complètes, score, barre de progression, mise à jour statut
+- [x] Modale Saisir dossier agence : formulaire complet avec statut initial configurable
+- [x] Bouton déconnexion dans l'en-tête du dashboard
