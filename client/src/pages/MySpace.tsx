@@ -14,6 +14,8 @@ import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
 import { DossierLoadingAnimation } from "@/components/DossierLoadingAnimation";
+import { DossierStatusPipeline, type StatusStep } from "@/components/DossierStatusPipeline";
+import { DashboardStats } from "@/components/DashboardStats";
 
 // Composant onglet Paiements
 function PaymentsTab() {
@@ -167,6 +169,8 @@ export default function MySpace() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showDossierAnimation, setShowDossierAnimation] = useState(true);
   const [animationStatus, setAnimationStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [pipelineSteps, setPipelineSteps] = useState<StatusStep[]>([]);
+  const [completionPercentage, setCompletionPercentage] = useState(0);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
@@ -288,6 +292,113 @@ export default function MySpace() {
 
   const progress = calculateProgress();
 
+  // Fonction pour mapper les statuts du dossier aux étapes du pipeline
+  const generatePipelineSteps = (app: any): StatusStep[] => {
+    const statusMap: Record<string, number> = {
+      "nouveau": 0,
+      "en_evaluation": 1,
+      "bilan_envoye": 2,
+      "en_attente_paiement": 3,
+      "paye": 4,
+      "en_attente_documents": 5,
+      "documents_recus": 6,
+      "soumis_agences": 7,
+      "en_cours_recrutement": 8,
+      "contrat_obtenu": 9,
+      "visa_approuve": 10,
+      "refuse": 11,
+    };
+
+    const currentStatusIndex = statusMap[app?.dossierStatus] ?? 0;
+
+    const steps: StatusStep[] = [
+      {
+        key: "nouveau",
+        label: "Dossier Créé",
+        description: "Votre dossier a été enregistré dans notre système",
+        date: app?.createdAt ? new Date(app.createdAt) : undefined,
+        completed: currentStatusIndex >= 0,
+        current: currentStatusIndex === 0,
+        failed: false,
+      },
+      {
+        key: "en_evaluation",
+        label: "Évaluation",
+        description: "Nos experts analysent votre profil",
+        date: undefined,
+        completed: currentStatusIndex >= 1,
+        current: currentStatusIndex === 1,
+        failed: false,
+      },
+      {
+        key: "bilan_envoye",
+        label: "Bilan Envoyé",
+        description: "Vous avez reçu votre bilan d'évaluation",
+        date: undefined,
+        completed: currentStatusIndex >= 2,
+        current: currentStatusIndex === 2,
+        failed: false,
+      },
+      {
+        key: "paye",
+        label: "Paiement Reçu",
+        description: "Votre paiement a été confirmé",
+        date: app?.paymentDate ? new Date(app.paymentDate) : undefined,
+        completed: currentStatusIndex >= 4,
+        current: currentStatusIndex === 4,
+        failed: app?.paymentStatus === "FAILED",
+      },
+      {
+        key: "en_attente_documents",
+        label: "Documents en Attente",
+        description: "Veuillez télécharger les documents requis",
+        date: undefined,
+        completed: currentStatusIndex >= 5,
+        current: currentStatusIndex === 5,
+        failed: false,
+      },
+      {
+        key: "documents_recus",
+        label: "Documents Reçus",
+        description: "Vérification de vos documents",
+        date: undefined,
+        completed: currentStatusIndex >= 6,
+        current: currentStatusIndex === 6,
+        failed: false,
+      },
+      {
+        key: "soumis_agences",
+        label: "Soumis aux Agences",
+        description: "Votre dossier est envoyé aux partenaires",
+        date: undefined,
+        completed: currentStatusIndex >= 7,
+        current: currentStatusIndex === 7,
+        failed: false,
+      },
+      {
+        key: "visa_approuve",
+        label: "Visa Approuvé",
+        description: "Félicitations ! Votre visa est approuvé",
+        date: undefined,
+        completed: currentStatusIndex >= 10,
+        current: currentStatusIndex === 10,
+        failed: app?.dossierStatus === "refuse",
+      },
+    ];
+
+    return steps;
+  };
+
+  // Mettre à jour le pipeline quand les données du dossier changent
+  useEffect(() => {
+    if (app) {
+      const steps = generatePipelineSteps(app);
+      setPipelineSteps(steps);
+      const completedCount = steps.filter((s) => s.completed).length;
+      setCompletionPercentage(Math.round((completedCount / steps.length) * 100));
+    }
+  }, [app]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Animation de chargement du dossier */}
@@ -338,6 +449,20 @@ export default function MySpace() {
           </CardContent>
         </Card>
 
+        {/* Statistiques du Dashboard */}
+        {app && (
+          <DashboardStats
+            dossierNumber={app.dossierNumber || "—"}
+            destination={app.destination || "—"}
+            visaType={app.visaType || "—"}
+            createdAt={app.createdAt ? new Date(app.createdAt) : new Date()}
+            paymentStatus={app.paymentStatus || "PENDING"}
+            dossierStatus={app.dossierStatus || "nouveau"}
+            documentsCount={documents.length}
+            completionPercentage={progress}
+          />
+        )}
+
         {/* Notification des documents manquants */}
         {shouldShowNotification && missingDocuments && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -359,6 +484,15 @@ export default function MySpace() {
 
           {/* Aperçu */}
           <TabsContent value="overview" className="space-y-6">
+            {/* Pipeline de statuts */}
+            {pipelineSteps.length > 0 && (
+              <DossierStatusPipeline
+                steps={pipelineSteps}
+                currentStatus={app?.dossierStatus || "nouveau"}
+                completionPercentage={completionPercentage}
+              />
+            )}
+
             <Card>
               <CardHeader>
                 <CardTitle>Informations personnelles</CardTitle>
