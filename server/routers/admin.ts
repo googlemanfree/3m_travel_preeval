@@ -1452,4 +1452,154 @@ export const adminRouter = router({
         });
       }
     }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION DES MODÈLES D'EMAIL
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer la prévisualisation d'un modèle d'email
+   */
+  getEmailTemplatePreview: protectedProcedure
+    .input(
+      z.object({
+        templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
+        testEmail: z.string().email("Email invalide"),
+        testName: z.string().min(2, "Nom trop court"),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const { templateId, testEmail, testName } = input;
+
+      try {
+        let html = "";
+
+        switch (templateId) {
+          case "verification": {
+            const testToken = "test-token-" + Date.now();
+            const verifyUrl = `https://3mtravelagency.click/verify-email-link?token=${testToken}`;
+            html = generateVerificationEmailHtml(testName, verifyUrl);
+            break;
+          }
+          case "otp": {
+            const testOtp = "123456";
+            html = generateOtpEmailHtml(testName, testOtp);
+            break;
+          }
+          case "password-reset": {
+            const testToken = "test-token-" + Date.now();
+            const resetUrl = `https://3mtravelagency.click/reset-password?token=${testToken}`;
+            html = generatePasswordResetEmailHtml(testName, resetUrl);
+            break;
+          }
+          case "welcome": {
+            html = generateWelcomeEmailHtml(testName, "canada");
+            break;
+          }
+          case "dossier-confirmation": {
+            const testDossierNumber = `DOS-${Date.now()}`;
+            html = generateDossierConfirmationEmailHtml(testName, testDossierNumber, "CANADA", 500000);
+            break;
+          }
+          default:
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Type de modèle invalide" });
+        }
+
+        return { html, templateId, testEmail, testName };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[getEmailTemplatePreview] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la génération de la prévisualisation",
+        });
+      }
+    }),
+
+  /**
+   * Envoyer un email de test
+   */
+  sendTestEmail: protectedProcedure
+    .input(
+      z.object({
+        templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
+        email: z.string().email("Email invalide"),
+        testName: z.string().min(2, "Nom trop court"),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const { templateId, email, testName } = input;
+
+      try {
+        const { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail, sendDossierConfirmationEmail } = await import("../emailService");
+
+        switch (templateId) {
+          case "verification": {
+            const testToken = "test-token-" + Date.now();
+            await sendVerificationLink(email, testName, testToken);
+            break;
+          }
+          case "otp": {
+            const testOtp = "123456";
+            await sendVerificationOtp(email, testName, testOtp);
+            break;
+          }
+          case "password-reset": {
+            const testToken = "test-token-" + Date.now();
+            await sendPasswordResetEmail(email, testName, testToken);
+            break;
+          }
+          case "welcome": {
+            await sendWelcomeEmail(email, testName, "canada");
+            break;
+          }
+          case "dossier-confirmation": {
+            const testDossierNumber = `DOS-TEST-${Date.now()}`;
+            await sendDossierConfirmationEmail(email, testName, testDossierNumber, "CANADA", 500000);
+            break;
+          }
+          default:
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Type de modèle invalide" });
+        }
+
+        return { success: true, message: `Email de test envoyé à ${email}` };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[sendTestEmail] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'envoi de l'email de test",
+        });
+      }
+    }),
 });
+
+// ─── Générateurs HTML des modèles ─────────────────────────────────────────────
+
+function generateVerificationEmailHtml(fullName: string, verifyUrl: string): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Roboto',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.header h1{font-size:28px;margin:12px 0 0;font-weight:900}.body{padding:40px 32px}.greeting{font-size:16px;color:#1f2937;margin-bottom:24px;line-height:1.6}.cta-section{background:linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);border-left:4px solid #2563EB;padding:20px;border-radius:8px;margin:28px 0}.cta-text{color:#1f2937;font-size:15px;line-height:1.6;margin-bottom:16px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700;font-size:15px}.btn-center{text-align:center}.security-badge{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:6px;margin:20px 0;font-size:13px;color:#92400e}.footer{background:linear-gradient(to bottom,#f9fafb,#f3f4f6);padding:32px 32px;text-align:center;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Votre partenaire mobilité internationale</p></div><div class="body"><p class="greeting">Bonjour <strong>${fullName}</strong>,</p><p class="cta-text">Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p><p class="cta-text">Pour finaliser votre inscription, confirmez votre email :</p><div class="cta-section"><div class="btn-center"><a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a></div></div><div class="security-badge">🔒 <strong>Sécurité :</strong> Ce lien est personnel et valable 24 heures.</div><p class="cta-text">Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p></div><div class="footer"><p>© 2024 3M Travel & Services. Tous droits réservés.</p></div></div></div></body></html>`;
+}
+
+function generateOtpEmailHtml(fullName: string, otp: string): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.otp-box{background:#eff6ff;border:2px dashed #2563EB;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.otp-code{font-size:40px;font-weight:900;color:#1E3A8A;letter-spacing:12px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Code de Vérification</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Voici votre code de vérification :</p><div class="otp-box"><div class="otp-code">${otp}</div><div style="font-size:13px;color:#6b7280;margin-top:8px;">Ce code expire dans 15 minutes</div></div><p style="font-size:13px;color:#6b7280;">Pour votre sécurité, ne partagez jamais ce code.</p></div><div class="footer"><p>© 2024 3M Travel & Services</p></div></div></div></body></html>`;
+}
+
+function generatePasswordResetEmailHtml(fullName: string, resetUrl: string): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Réinitialisation de Mot de Passe</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>Vous avez demandé la réinitialisation de votre mot de passe. Cliquez ci-dessous :</p><div class="btn-center" style="margin:24px 0"><a href="${resetUrl}" class="btn">🔑 Réinitialiser mon mot de passe</a></div><p style="font-size:13px;color:#6b7280;">Ce lien est valable 1 heure.</p></div><div class="footer"><p>© 2024 3M Travel & Services</p></div></div></div></body></html>`;
+}
+
+function generateWelcomeEmailHtml(fullName: string, destination: string): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.btn{display:inline-block;background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 100%);color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:700}.btn-center{text-align:center}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Bienvenue!</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>🎉 Votre compte 3M Travel est maintenant <strong>activé</strong> !</p><p>Vous pouvez maintenant :</p><ul style="margin:16px 0;padding-left:20px;color:#374151;line-height:2"><li>📁 Uploader vos documents</li><li>💬 Contacter votre conseiller</li><li>📊 Suivre votre dossier</li></ul><div class="btn-center" style="margin:24px 0"><a href="https://3mtravelagency.click/dashboard" class="btn">🚀 Accéder à mon espace</a></div></div><div class="footer"><p>© 2024 3M Travel & Services</p></div></div></div></body></html>`;
+}
+
+function generateDossierConfirmationEmailHtml(fullName: string, dossierNumber: string, destination: string, amount: number): string {
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0f2460 0%,#1e3a8a 50%,#2563eb 100%);margin:0;padding:20px}.wrapper{max-width:600px;margin:0 auto}.container{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(30,58,138,0.2)}.header{background:linear-gradient(135deg,#1E3A8A 0%,#2563EB 50%,#3B82F6 100%);padding:40px 32px;text-align:center;color:#fff}.body{padding:40px 32px}.dossier-box{background:#f0fdf4;border:2px solid #16a34a;border-radius:12px;padding:20px;text-align:center;margin:24px 0}.dossier-number{font-size:32px;font-weight:900;color:#15803d;letter-spacing:6px}.footer{background:#f3f4f6;padding:20px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb}</style></head><body><div class="wrapper"><div class="container"><div class="header"><h1>3M Travel & Services</h1><p>Confirmation de Dossier</p></div><div class="body"><p>Bonjour <strong>${fullName}</strong>,</p><p>✅ Votre dossier a été <strong>créé avec succès</strong> !</p><div class="dossier-box"><div style="font-size:13px;color:#6b7280;margin-bottom:6px">NUMÉRO DE DOSSIER</div><div class="dossier-number">${dossierNumber}</div></div><table style="width:100%;border-collapse:collapse;margin:16px 0"><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Destination</td><td style="padding:8px;font-weight:700">${destination}</td></tr><tr><td style="padding:8px;background:#f8faff;font-size:13px;color:#6b7280">Montant</td><td style="padding:8px;font-weight:700">${amount.toLocaleString("fr-FR")} FCFA</td></tr></table><p style="font-size:13px;color:#6b7280">Un conseiller vous contactera sous 24h.</p></div><div class="footer"><p>© 2024 3M Travel & Services</p></div></div></div></body></html>`;
+}

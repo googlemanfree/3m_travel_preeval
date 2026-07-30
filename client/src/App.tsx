@@ -65,6 +65,7 @@ import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import AppointmentBooking from "./pages/AppointmentBooking";
+import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 
@@ -247,6 +248,11 @@ function Router() {
       <Route path={"admin/agency-dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminAgencyDossiers />
+        </AdminGuard>
+      </Route>
+      <Route path="/admin/email-templates">
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEmailTemplates />
         </AdminGuard>
       </Route>
 
