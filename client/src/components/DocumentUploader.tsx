@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown } from "lucide-react";
+import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown, Edit2, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
+import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 
 interface DocumentFile {
   id: string;
@@ -33,6 +34,8 @@ export function DocumentUploader({
   const [isDragging, setIsDragging] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("other");
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
@@ -111,6 +114,23 @@ export function DocumentUploader({
     setFiles((prev) =>
       prev.map((f) => (f.id === id ? { ...f, category } : f))
     );
+  };
+
+  const handleEditCategory = (fileId: string) => {
+    setEditingFileId(fileId);
+    setShowEditModal(true);
+  };
+
+  const handleSaveCategory = (newCategory: string) => {
+    if (editingFileId) {
+      updateFileCategory(editingFileId, newCategory);
+    }
+    setShowEditModal(false);
+    setEditingFileId(null);
+  };
+
+  const getEditingFile = () => {
+    return files.find((f) => f.id === editingFileId);
   };
 
   const uploadFile = async (file: DocumentFile, fileObj: File) => {
@@ -367,12 +387,26 @@ export function DocumentUploader({
                     )}
 
                     {file.status === "pending" && (
-                      <button
-                        onClick={() => removeFile(file.id)}
-                        className="text-gray-400 hover:text-red-600 transition flex-shrink-0"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleEditCategory(file.id)}
+                          className="text-blue-600 hover:text-blue-700 transition p-1 rounded hover:bg-blue-50"
+                          title="Modifier la catégorie"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => removeFile(file.id)}
+                          className="text-red-600 hover:text-red-700 transition p-1 rounded hover:bg-red-50"
+                          title="Supprimer le fichier"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
+                      </div>
                     )}
                   </motion.div>
                 );
@@ -404,6 +438,20 @@ export function DocumentUploader({
           avant de téléverser. Cela nous aidera à traiter votre dossier plus rapidement.
         </p>
       </motion.div>
+
+      {/* Edit Category Modal */}
+      {editingFileId && (
+        <EditDocumentCategoryModal
+          isOpen={showEditModal}
+          fileName={getEditingFile()?.name || ""}
+          currentCategory={getEditingFile()?.category || "other"}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingFileId(null);
+          }}
+          onSave={handleSaveCategory}
+        />
+      )}
     </Card>
   );
 }
