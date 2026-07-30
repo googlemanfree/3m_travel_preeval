@@ -512,9 +512,9 @@
 - [x] Ajouter le bouton "Procéder au Paiement"
 
 ### Phase 5 : Paiement Obligatoire
-- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
-- [ ] Créer le callback de validation du paiement
-- [ ] Déclencher la notification admin uniquement après paiement validé
+- [x] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
+- [x] Créer le callback de validation du paiement
+- [x] Déclencher la notification admin uniquement après paiement validé
 - [ ] Générer la facture PDF après paiement
 - [ ] Envoyer confirmation par email/WhatsApp
 
@@ -1029,7 +1029,15 @@
 - [x] Preload font weights critiques
 - [x] Créer hook useLazyScript
 - [x] Créer hook useLazyImage
-- [ ] Intégrer LazyImage dans Home.tsx
+- [x] Intégrer LazyImage dans Home.tsx
+- [x] Intégrer LazyImage dans Dashboard.tsx
+- [x] Intégrer LazyImage dans Login.tsx
+- [x] Intégrer LazyImage dans ForgotPassword.tsx
+- [x] Intégrer LazyImage dans Register.tsx
+- [x] Intégrer LazyImage dans ResetPassword.tsx
+- [x] Intégrer LazyImage dans VerifyEmail.tsx
+- [x] Intégrer LazyImage dans VerifyEmailLink.tsx
+- [x] Intégrer LazyImage dans AuthGuard.tsx
 - [ ] Intégrer LazyScript pour Google Maps
 - [x] Code splitting par route (React.lazy)
 

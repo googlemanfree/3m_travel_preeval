@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PendingActionsCards } from "@/components/PendingActionsCards";
+import { LazyImage } from "@/components/LazyImage";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -243,7 +244,7 @@ export default function Dashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="3M Travel" className="w-9 h-9 rounded-lg object-cover" />
+            <LazyImage src={LOGO_URL} alt="3M Travel" className="w-9 h-9 rounded-lg object-cover" />
             <div>
               <div className="font-black text-[#1E3A8A] text-sm leading-tight">3M Travel & Services</div>
               <div className="text-xs text-gray-400">Espace Candidat</div>

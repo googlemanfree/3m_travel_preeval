@@ -5,6 +5,7 @@ import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LazyImage } from "@/components/LazyImage";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
@@ -94,7 +95,7 @@ export default function ResetPassword() {
       >
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100">
-            <img src={LOGO_URL} alt="3M Travel" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
+            <LazyImage src={LOGO_URL} alt="3M Travel" className="w-14 h-14 rounded-xl mx-auto mb-4 object-contain" />
             {success ? (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />

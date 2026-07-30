@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LazyImage } from "@/components/LazyImage";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -105,7 +106,7 @@ export default function Register() {
           <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
         </div>
         <div className="relative z-10 text-center max-w-md">
-          <img src={LOGO_URL} alt="3M Travel" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
+          <LazyImage src={LOGO_URL} alt="3M Travel" className="w-24 h-24 rounded-2xl mx-auto mb-6 shadow-2xl object-cover" />
           <h1 className="text-4xl font-black mb-4">Votre Espace Candidat</h1>
           <p className="text-blue-200 text-lg mb-8">Créez votre compte et suivez l'avancement de votre dossier d'immigration en temps réel.</p>
           <div className="space-y-4 text-left">
