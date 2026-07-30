@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Download, Filter, X, Eye, BookOpen } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, Download, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Footer from '@/components/Footer';
 import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 import { SummaryModal } from '@/components/SummaryModal';
+import { CountryCard } from '@/components/CountryCard';
 
 interface Resource {
   country: string;
@@ -323,49 +325,22 @@ const ProceduresResources = () => {
         {filteredResources.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredResources.map((resource, index) => (
-              <div
+              <CountryCard
                 key={index}
-                className={`p-6 rounded-lg border-2 transition-all hover:shadow-lg ${getTypeColor(resource.type)}`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="text-4xl">{resource.flag}</div>
-                  <span className="text-xs font-bold px-3 py-1 bg-white rounded-full text-[#0a2540]">
-                    {getTypeLabel(resource.type)}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-bold text-[#0a2540] mb-2">{resource.country}</h3>
-                
-                <p className="text-sm text-gray-600 mb-4">
-                  Guide complet pour votre demande de visa
-                </p>
-
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={() => handleViewSummary(resource.country, resource.flag)}
-                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    Voir le résumé
-                  </Button>
-                  <Button
-                    onClick={() => handlePreview(resource.file)}
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2 border-[#0a2540] text-[#0a2540] rounded-lg font-medium text-sm hover:bg-blue-50"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Aperçu PDF
-                  </Button>
-                  <a
-                    href={`/manus-storage/${resource.file}`}
-                    download
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors font-medium text-sm"
-                  >
-                    <Download className="w-4 h-4" />
-                    Télécharger
-                  </a>
-                </div>
-              </div>
+                country={resource.country}
+                flagEmoji={resource.flag}
+                capital="Capitale"
+                type={getTypeLabel(resource.type)}
+                typeColor={getTypeColor(resource.type)}
+                onViewSummary={() => handleViewSummary(resource.country, resource.flag)}
+                onPreview={() => handlePreview(resource.file)}
+                onDownload={() => {
+                  const link = document.createElement('a');
+                  link.href = `/manus-storage/${resource.file}`;
+                  link.download = resource.file;
+                  link.click();
+                }}
+              />
             ))}
           </div>
         ) : (
@@ -385,23 +360,41 @@ const ProceduresResources = () => {
 
         {/* Info Section */}
         <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-6 bg-blue-50 rounded-lg border border-blue-200">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0 }}
+            viewport={{ once: true }}
+            className="p-6 bg-blue-50 rounded-lg border border-blue-200 hover:shadow-lg transition-shadow"
+          >
             <div className="text-3xl mb-2">📖</div>
             <h3 className="font-bold text-[#0a2540] mb-2">107 Destinations</h3>
             <p className="text-sm text-gray-600">Guides pour tous les pays et régions du monde</p>
-          </div>
+          </motion.div>
           
-          <div className="p-6 bg-green-50 rounded-lg border border-green-200">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            viewport={{ once: true }}
+            className="p-6 bg-green-50 rounded-lg border border-green-200 hover:shadow-lg transition-shadow"
+          >
             <div className="text-3xl mb-2">✅</div>
             <h3 className="font-bold text-[#0a2540] mb-2">À Jour 2026</h3>
             <p className="text-sm text-gray-600">Tous les documents sont mis à jour régulièrement</p>
-          </div>
+          </motion.div>
           
-          <div className="p-6 bg-purple-50 rounded-lg border border-purple-200">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            viewport={{ once: true }}
+            className="p-6 bg-purple-50 rounded-lg border border-purple-200 hover:shadow-lg transition-shadow"
+          >
             <div className="text-3xl mb-2">🎯</div>
             <h3 className="font-bold text-[#0a2540] mb-2">Gratuit</h3>
             <p className="text-sm text-gray-600">Téléchargez tous les guides gratuitement</p>
-          </div>
+          </motion.div>
         </div>
 
         {/* CTA Section */}
