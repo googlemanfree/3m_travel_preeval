@@ -3,6 +3,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 // Configuration du worker PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -26,6 +27,7 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPageLoading, setIsPageLoading] = useState(false);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -38,11 +40,15 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
   };
 
   const handlePreviousPage = () => {
+    setIsPageLoading(true);
     setCurrentPage((prev) => Math.max(prev - 1, 1));
+    setTimeout(() => setIsPageLoading(false), 300);
   };
 
   const handleNextPage = () => {
+    setIsPageLoading(true);
     setCurrentPage((prev) => Math.min(prev + 1, numPages || 1));
+    setTimeout(() => setIsPageLoading(false), 300);
   };
 
   const handleZoomIn = () => {
@@ -125,27 +131,69 @@ export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
         </div>
 
         {/* Visionneuse PDF */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-100">
+        <div className="flex-1 overflow-auto flex items-center justify-center bg-gray-100 relative">
+          {/* Skeleton Loading */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center gap-2">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
-              <p className="text-sm text-gray-600">Chargement du PDF...</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-gray-50"
+            >
+              {/* Squelette du PDF */}
+              <div className="w-64 h-96 bg-gray-200 rounded-lg animate-pulse" />
+              
+              {/* Indicateur de chargement */}
+              <div className="flex flex-col items-center gap-3">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="h-8 w-8 rounded-full border-4 border-gray-300 border-t-blue-600"
+                />
+                <p className="text-sm font-medium text-gray-600">Chargement du PDF...</p>
+                <p className="text-xs text-gray-500">Veuillez patienter</p>
+              </div>
+            </motion.div>
           )}
-          <Document
-            file={pdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={<div className="text-center text-gray-500">Chargement...</div>}
-            error={<div className="text-center text-red-500">Erreur lors du chargement du PDF</div>}
+
+          {/* Indicateur de chargement de page */}
+          {isPageLoading && !isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="h-6 w-6 rounded-full border-3 border-gray-300 border-t-blue-600"
+              />
+            </motion.div>
+          )}
+
+          {/* Contenu PDF */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isLoading ? 0 : 1 }}
+            transition={{ duration: 0.3 }}
+            className="w-full h-full flex items-center justify-center"
           >
-            <Page
-              pageNumber={currentPage}
-              scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            />
-          </Document>
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={<div className="text-center text-gray-500">Chargement...</div>}
+              error={<div className="text-center text-red-500">Erreur lors du chargement du PDF</div>}
+            >
+              <Page
+                pageNumber={currentPage}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+          </motion.div>
         </div>
       </DialogContent>
     </Dialog>

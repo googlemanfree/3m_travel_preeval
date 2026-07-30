@@ -139,13 +139,9 @@ export const CountrySearchResults: React.FC<CountrySearchResultsProps> = ({
         <PDFPreviewModal
           isOpen={showPDFModal}
           onClose={() => setShowPDFModal(false)}
-          countryName={selectedCountry.name}
+          fileName={`Guide - ${selectedCountry.name}`}
           pdfUrl={selectedCountry.pdfGuide}
-          onDownload={() => {}}
-          onSelectSimilar={(countryId) => {
-            // Optionnel: charger le nouveau pays
-            console.log('Guide similaire sélectionné:', countryId);
-          }}
+          downloadUrl={selectedCountry.pdfGuide}
         />
       )}
     </AnimatePresence>
