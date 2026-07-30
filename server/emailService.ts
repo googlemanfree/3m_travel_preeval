@@ -284,3 +284,88 @@ export async function sendEvaluationReportEmail(
   }
   await transport.sendMail(mailOptions);
 }
+
+// ─── Notifications de traduction ────────────────────────────────────────────
+
+export async function sendTranslationPaymentConfirmationEmail(
+  to: string,
+  candidateName: string,
+  documentType: string,
+  invoiceNumber: string,
+  totalPrice: string,
+  currency: string,
+  invoiceUrl?: string
+): Promise<void> {
+  const content = `
+    <div style="padding: 32px 24px;">
+      <h2 style="color: #1E3A8A; margin: 0 0 16px; font-size: 18px;">Paiement confirmé ✅</h2>
+      <p style="color: #666; margin: 0 0 24px; font-size: 14px;">
+        Bonjour <strong>${candidateName}</strong>,
+      </p>
+      <p style="color: #666; margin: 0 0 24px; font-size: 14px;">
+        Nous confirmons la réception de votre paiement pour la traduction suivante :
+      </p>
+      <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #1E3A8A;">
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Type de document :</strong> ${documentType}
+        </p>
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Numéro de facture :</strong> ${invoiceNumber}
+        </p>
+        <p style="margin: 0; color: #333; font-size: 13px;">
+          <strong>Montant :</strong> ${totalPrice} ${currency}
+        </p>
+      </div>
+      <p style="color: #666; margin: 0 0 24px; font-size: 14px;">
+        Votre document sera traduit et vous sera envoyé dans les délais convenus. Vous recevrez une notification par email dès que la traduction sera prête pour téléchargement.
+      </p>
+      <p style="color: #999; margin: 0; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
+        Merci pour votre confiance. Pour toute question, contactez-nous à hello@3mtravelagency.com
+      </p>
+    </div>
+  `;
+  
+  await sendEmail(to, `✅ Paiement confirmé — Facture ${invoiceNumber}`, emailBase(content));
+}
+
+export async function sendAdminTranslationPaymentAlert(
+  adminEmail: string,
+  candidateName: string,
+  candidateEmail: string,
+  documentType: string,
+  numberOfPages: number,
+  totalPrice: string,
+  currency: string,
+  invoiceNumber: string
+): Promise<void> {
+  const content = `
+    <div style="padding: 32px 24px;">
+      <h2 style="color: #1E3A8A; margin: 0 0 16px; font-size: 18px;">Nouvelle commande de traduction 📝</h2>
+      <p style="color: #666; margin: 0 0 24px; font-size: 14px;">
+        Une nouvelle commande de traduction a été payée et est prête pour traitement.
+      </p>
+      <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 24px; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Client :</strong> ${candidateName} (${candidateEmail})
+        </p>
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Type de document :</strong> ${documentType}
+        </p>
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Nombre de pages :</strong> ${numberOfPages}
+        </p>
+        <p style="margin: 0 0 8px; color: #333; font-size: 13px;">
+          <strong>Montant :</strong> ${totalPrice} ${currency}
+        </p>
+        <p style="margin: 0; color: #333; font-size: 13px;">
+          <strong>Numéro de facture :</strong> ${invoiceNumber}
+        </p>
+      </div>
+      <p style="color: #999; margin: 0; font-size: 12px;">
+        Veuillez assigner cette traduction à un traducteur et mettre à jour le statut.
+      </p>
+    </div>
+  `;
+  
+  await sendEmail(adminEmail, `📝 Nouvelle commande de traduction — ${invoiceNumber}`, emailBase(content));
+}

@@ -90,53 +90,6 @@ export const heartbeatRouter = router({
       }
     }),
 
-  /** Créer un job Heartbeat pour l'envoi des bilans après 48h */
-  createBilanJob: protectedProcedure
-    .input(z.object({
-      cronExpression: z.string().default("0 0 * * * *"), // Toutes les heures
-      description: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      try {
-        const userSession = ctx.user.openId || process.env.OWNER_OPEN_ID || "";
-        
-        if (!userSession) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Impossible de créer le job : identifiant utilisateur manquant",
-          });
-        }
-
-        const result = await createHeartbeatJob(
-          {
-            name: "evaluation-bilan-48h",
-            cron: input.cronExpression,
-            path: "/api/scheduled/evaluation-bilan-job",
-            method: "POST",
-            description: input.description || "Envoi automatique des bilans d'admissibilité après 48h",
-          },
-          userSession
-        );
-
-        return {
-          success: true,
-          taskUid: result.taskUid,
-          nextExecutionAt: result.nextExecutionAt,
-          message: "Job de bilan 48h créé avec succès",
-        };
-      } catch (err) {
-        console.error("[Heartbeat] Create bilan job error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la création du job de bilan",
-        });
-      }
-    }),
-
   /** Supprimer un job Heartbeat */
   deleteJob: protectedProcedure
     .input(z.object({

@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
-import { startLogin } from '@/const';
-import { LogOut, User, Settings, ChevronDown, Menu, X, Plane, BookOpen, Globe, FolderOpen, Shield, Info, Mail, FileText, MoreHorizontal } from 'lucide-react';
-import { AutoBreadcrumb } from './Breadcrumb';
+import { LogOut, User, Settings, ChevronDown } from 'lucide-react';
+
+// Vérifier que useState est bien importé
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
+  // Fermer le menu profil au clic en dehors
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -24,129 +25,131 @@ export default function Navbar() {
 
   const isActive = (path: string) => location === path;
 
-  const navLinks = [
-    { href: '/flights', label: 'Vols', icon: Plane },
-    { href: '/procedures', label: 'Procédures', icon: BookOpen },
-    { href: '/ressources', label: 'Ressources', icon: Globe },
-    { href: '/mon-dossier', label: 'Suivi', icon: FolderOpen },
-  ];
-
-  const adminLink = { href: '/admin/login', label: 'Admin', icon: Shield, subtle: true };
-
   return (
-    <div>
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
-
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3 flex-shrink-0">
-            <img
-              src="/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg"
-              alt="3M Travel & Services"
-              className="h-10 lg:h-12 w-auto"
+        <div className="flex justify-between items-center h-20">
+          
+          {/* 1. LOGO */}
+          <a href="/" className="flex items-center gap-3">
+            <img 
+              src="/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg" 
+              alt="3M Travel & Services" 
+              className="h-12 w-auto" 
             />
             <div className="hidden sm:block">
-              <span className="block text-base lg:text-lg font-bold text-[#0a2540] leading-tight">3M Travel & Services</span>
+              <span className="block text-lg font-bold text-[#0a2540] leading-tight">3M Travel & Services</span>
               <span className="block text-xs text-blue-600 font-medium">Votre mobilité, notre expertise</span>
             </div>
           </a>
 
-          {/* Navigation desktop */}
-          <nav className="hidden lg:flex items-center gap-5">
-            {navLinks.map(({ href, label, icon: Icon }) => (
-              <a
-                key={href}
-                href={href}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-colors hover:text-blue-600 ${
-                  isActive(href) ? 'text-blue-600' : 'text-gray-700'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </a>
-            ))}
-            {/* Menu Plus */}
-            <div className="relative group">
-              <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">
-                <MoreHorizontal className="w-4 h-4" /> Plus
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <a href="/eligibility-simulator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition rounded-t-xl">
-                  <Shield className="w-4 h-4 text-green-500" /> Simulateur
-                </a>
-                <a href="/budget-calculator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <FileText className="w-4 h-4 text-orange-500" /> Calculateur Budget
-                </a>
-                <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Globe className="w-4 h-4 text-purple-500" /> Galerie Visas
-                </a>
-                <a href="/schedule-agency" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Mail className="w-4 h-4 text-teal-500" /> Prendre RDV
-                </a>
-                <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <FileText className="w-4 h-4 text-blue-500" /> Blog
-                </a>
-                <a href="/about" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Info className="w-4 h-4 text-blue-500" /> À Propos
-                </a>
-                <a href="/contact" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Mail className="w-4 h-4 text-blue-500" /> Contact
-                </a>
-                <div className="border-t border-gray-100">
-                  <a href="/admin/login" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 transition rounded-b-xl">
-                    <Shield className="w-4 h-4" /> Admin
-                  </a>
-                </div>
-              </div>
-            </div>
+          {/* 2. NAVIGATION DESKTOP (Alignée horizontalement, masquée sur mobile) */}
+          <nav className="hidden lg:flex items-center space-x-8 text-sm font-semibold text-gray-700">
+            <a 
+              href="/" 
+              className={`hover:text-blue-600 transition ${isActive('/') ? 'text-blue-600' : ''}`}
+            >
+              Accueil
+            </a>
+            <a 
+              href="/flights" 
+              className={`hover:text-blue-600 transition flex items-center gap-1 ${isActive('/flights') ? 'text-blue-600' : ''}`}
+            >
+              ✈️ Vols
+            </a>
+            <a 
+              href="/procedures" 
+              className={`hover:text-blue-600 transition flex items-center gap-1 ${isActive('/procedures') ? 'text-blue-600' : ''}`}
+            >
+              📖 Procédures
+            </a>
+            <a 
+              href="/ressources" 
+              className={`hover:text-blue-600 transition flex items-center gap-1 ${isActive('/ressources') ? 'text-blue-600' : ''}`}
+            >
+              🌐 Ressources
+            </a>
+            <a 
+              href="/mon-dossier" 
+              className={`hover:text-blue-600 transition flex items-center gap-1 ${isActive('/mon-dossier') ? 'text-blue-600' : ''}`}
+            >
+              📂 Suivi
+            </a>
+            <a 
+              href="/admin/login" 
+              className={`hover:text-blue-600 transition flex items-center gap-1 text-gray-500 ${isActive('/admin/login') ? 'text-blue-600' : ''}`}
+            >
+              🛡️ Admin
+            </a>
           </nav>
 
-          {/* Actions desktop */}
-          <div className="hidden lg:flex items-center gap-3">
+          {/* 3. BOUTONS D'ACTION DESKTOP */}
+          <div className="hidden lg:flex items-center space-x-4">
             {isAuthenticated && user ? (
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-semibold text-sm transition"
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl font-semibold text-sm transition"
+                  aria-label="Menu Profil"
                 >
-                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <span className="max-w-[120px] truncate">{user.name}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
+                  <User className="w-4 h-4" />
+                  {user.name}
+                  <ChevronDown className={`w-4 h-4 transition ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
+                {/* Menu déroulant profil */}
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50 animate-in fade-in slide-in-from-top-2">
+                    {/* En-tête profil */}
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="font-semibold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                      <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-                        user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-700'
-                      }`}>
-                        {user.role === 'admin' ? '👑 Administrateur' : '👤 Utilisateur'}
-                      </span>
+                      <p className="font-semibold text-gray-900">{user.name}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">{user.role === 'admin' ? '👑 Administrateur' : '👤 Utilisateur'}</p>
                     </div>
-                    <div className="py-1">
-                      <a href="/mon-espace" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                        <User className="w-4 h-4 text-blue-500" /> Mon Espace
+
+                    {/* Liens du menu */}
+                    <div className="py-2">
+                      <a
+                        href="/mon-espace"
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Mon Espace
                       </a>
-                      <a href="/mon-dossier" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                        <FolderOpen className="w-4 h-4 text-blue-500" /> Mes Dossiers
+                      <a
+                        href="/mon-dossier"
+                        className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Mes Dossiers
                       </a>
                       {user.role === 'admin' && (
-                        <a href="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                          <Settings className="w-4 h-4 text-amber-500" /> Panneau Admin
+                        <a
+                          href="/admin/login"
+                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 transition"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Settings className="w-4 h-4" />
+                          Panneau Admin
                         </a>
                       )}
                     </div>
-                    <div className="border-t border-gray-100 py-1">
+
+                    {/* Bouton déconnexion */}
+                    <div className="border-t border-gray-100 py-2">
                       <button
-                        onClick={() => { setIsProfileOpen(false); logout(); }}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium"
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          // Déconnexion
+                          localStorage.removeItem('auth_token');
+                          window.location.href = '/';
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition font-medium"
                       >
-                        <LogOut className="w-4 h-4" /> Déconnexion
+                        <LogOut className="w-4 h-4" />
+                        Déconnexion
                       </button>
                     </div>
                   </div>
@@ -154,103 +157,106 @@ export default function Navbar() {
               </div>
             ) : (
               <>
-                <a href="/open-dossier" className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm transition">
+                <a 
+                  href="/open-dossier" 
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition flex items-center gap-2"
+                >
                   ⭐ Évaluation gratuite
                 </a>
-                <button onClick={() => startLogin()} className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm transition">
-                  Connexion
-                </button>
+                <a 
+                  href="/mon-espace" 
+                  className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2"
+                >
+                  👤 Mon Espace
+                </a>
               </>
             )}
           </div>
 
-          {/* Hamburger mobile */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition"
-            aria-label="Menu"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* 4. BOUTON HAMBURGER (Visible uniquement sur mobile < lg) */}
+          <div className="flex lg:hidden items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-700 hover:text-blue-600 p-2 rounded-lg focus:outline-none"
+              aria-label="Toggle Menu"
+            >
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
         </div>
       </div>
 
-      {/* Menu mobile */}
+      {/* 5. MENU MOBILE DÉROULANT (S'affiche UNIQUEMENT au clic sur mobile) */}
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1 shadow-lg">
-          {navLinks.map(({ href, label, icon: Icon }) => (
-            <a
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm font-medium transition ${
-                isActive(href) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-              }`}
+        <div className="lg:hidden bg-white border-t border-gray-100 px-4 pt-3 pb-6 space-y-3 shadow-lg">
+          <a 
+            href="/" 
+            className="block py-2 text-gray-700 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Accueil
+          </a>
+          <a 
+            href="/flights" 
+            className="block py-2 text-gray-700 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            ✈️ Vols
+          </a>
+          <a 
+            href="/procedures" 
+            className="block py-2 text-gray-700 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            📖 Procédures
+          </a>
+          <a 
+            href="/ressources" 
+            className="block py-2 text-gray-700 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            🌐 Ressources
+          </a>
+          <a 
+            href="/mon-dossier" 
+            className="block py-2 text-gray-700 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            📂 Suivi
+          </a>
+          <a 
+            href="/admin/login" 
+            className="block py-2 text-gray-500 font-medium hover:text-blue-600" 
+            onClick={() => setIsMenuOpen(false)}
+          >
+            🛡️ Admin
+          </a>
+          
+          <div className="pt-4 space-y-2 border-t border-gray-100">
+            <a 
+              href="/open-dossier" 
+              className="block w-full text-center bg-amber-500 text-white py-3 rounded-xl font-bold"
               onClick={() => setIsMenuOpen(false)}
             >
-              <Icon className="w-4 h-4" />
-              {label}
+              ⭐ Évaluation gratuite
             </a>
-          ))}
-          {/* Liens secondaires */}
-          <div className="border-t border-gray-100 pt-2 mt-2 space-y-1">
-            <a href="/eligibility-simulator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Shield className="w-4 h-4 text-green-400" /> Simulateur
+            <a 
+              href="/mon-espace" 
+              className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              👤 Mon Espace
             </a>
-            <a href="/budget-calculator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <FileText className="w-4 h-4 text-orange-400" /> Calculateur Budget
-            </a>
-            <a href="/visa-gallery" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Globe className="w-4 h-4 text-purple-400" /> Galerie Visas
-            </a>
-            <a href="/blog" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <FileText className="w-4 h-4 text-blue-400" /> Blog
-            </a>
-            <a href="/about" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Info className="w-4 h-4 text-blue-400" /> À Propos
-            </a>
-            <a href="/contact" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Mail className="w-4 h-4 text-blue-400" /> Contact
-            </a>
-          </div>
-          <div className="pt-2 space-y-2 border-t border-gray-100 mt-2">
-            {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-3 px-3 py-2 bg-blue-50 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setIsMenuOpen(false); logout(); }}
-                  className="w-full flex items-center gap-2 py-2.5 px-3 text-red-600 text-sm font-medium hover:bg-red-50 rounded-lg transition"
-                >
-                  <LogOut className="w-4 h-4" /> Déconnexion
-                </button>
-              </>
-            ) : (
-              <>
-                <a href="/open-dossier" className="block w-full text-center bg-amber-500 text-white py-3 rounded-xl font-bold text-sm" onClick={() => setIsMenuOpen(false)}>
-                  ⭐ Évaluation gratuite
-                </a>
-                <button onClick={() => { setIsMenuOpen(false); startLogin(); }} className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold text-sm">
-                  Connexion
-                </button>
-              </>
-            )}
           </div>
         </div>
       )}
     </header>
-      {/* Breadcrumb automatique sous le header */}
-      <div className="bg-gray-50 border-b border-gray-100 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4">
-          <AutoBreadcrumb />
-        </div>
-      </div>
-    </div>
   );
 }

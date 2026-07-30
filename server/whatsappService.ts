@@ -165,3 +165,72 @@ Merci !
 
   return sendWhatsAppMessage(params.phoneNumber, message);
 }
+
+/**
+ * Envoyer la confirmation de paiement de traduction par WhatsApp
+ */
+export async function sendTranslationPaymentConfirmationWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  documentType: string;
+  totalPrice: string;
+  currency: string;
+  invoiceNumber: string;
+  paymentMethod: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const methodLabel = {
+    cash: "Espèces",
+    bank_transfer: "Virement bancaire",
+    card: "Carte bancaire",
+    mobile_money: "Mobile Money",
+    check: "Chèque",
+  }[params.paymentMethod] || params.paymentMethod;
+
+  const message = `
+📝 *Traduction - Paiement Confirmé*
+
+Bonjour ${params.candidateName},
+
+Votre paiement pour la traduction a été enregistré :
+
+📄 *Document :* ${params.documentType}
+💰 *Montant :* ${params.totalPrice} ${params.currency}
+📋 *Facture :* ${params.invoiceNumber}
+💳 *Méthode :* ${methodLabel}
+
+Votre document sera traduit et vous sera envoyé dans les délais convenus.
+
+Merci !
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer la notification de traduction prête par WhatsApp
+ */
+export async function sendTranslationReadyWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  documentType: string;
+  invoiceNumber: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+🎉 *Votre traduction est prête !*
+
+Bonjour ${params.candidateName},
+
+Nous sommes heureux de vous annoncer que votre traduction est maintenant disponible pour téléchargement.
+
+📄 *Document :* ${params.documentType}
+📋 *Facture :* ${params.invoiceNumber}
+
+Connectez-vous à votre espace client pour télécharger votre document.
+
+Merci !
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}

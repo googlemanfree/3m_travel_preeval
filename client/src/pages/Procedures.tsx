@@ -1111,37 +1111,12 @@ export default function Procedures() {
   const { user, loading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // ─── Tous les hooks doivent être déclarés avant tout return conditionnel ───
-  const [activeRegion, setActiveRegion] = useState<string | null>(null);
-  const [showEvalModal, setShowEvalModal] = useState(false);
-  const [evalStep, setEvalStep] = useState(1);
-  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
-  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showScoringForm, setShowScoringForm] = useState(false);
-
   // Rediriger si non authentifié
   useEffect(() => {
     if (!authLoading && !user) {
       setLocation("/login?redirect=/procedures");
     }
   }, [user, authLoading, setLocation]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // Afficher un écran de chargement pendant la vérification
   if (authLoading) {
@@ -1159,6 +1134,18 @@ export default function Procedures() {
   if (!user) {
     return null;
   }
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [evalStep, setEvalStep] = useState(1);
+  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showScoringForm, setShowScoringForm] = useState(false);
 
   const handleStartProcedure = (info: ProcedureInfo) => {
     setSelectedProcedure(info);
@@ -1199,6 +1186,17 @@ export default function Procedures() {
     acc[item.regionId].push(item);
     return acc;
   }, {});
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSelectResult = (regionId: string, destinationId?: string) => {
     setActiveRegion(regionId);
