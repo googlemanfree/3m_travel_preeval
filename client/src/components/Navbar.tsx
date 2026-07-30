@@ -25,20 +25,24 @@ export default function Navbar() {
   const handleLogout = () => {
     setIsProfileOpen(false);
     setIsMenuOpen(false);
-    // Vider tout le stockage de session
+    // Vider TOUT le stockage de session (candidat + OAuth)
     try {
       localStorage.removeItem('3m_candidate_token');
       localStorage.removeItem('3m_candidate_info');
       sessionStorage.removeItem('3m_candidate_token');
       sessionStorage.removeItem('3m_candidate_info');
       sessionStorage.removeItem('manus-cookie');
+      // Vider aussi le cache tRPC en mémoire
+      localStorage.clear();
+      sessionStorage.clear();
     } catch { /* ignore */ }
     if (isCandidateAuthenticated) {
       candidateLogout();
-      window.location.href = '/login';
     } else {
       oauthLogout();
     }
+    // Forcer un rechargement complet pour vider le cache tRPC en mémoire
+    window.location.href = '/';
   };
 
   useEffect(() => {
