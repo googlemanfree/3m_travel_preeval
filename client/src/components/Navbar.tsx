@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { useLocation } from 'wouter';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const menuItems = [
+  { href: '/', label: 'Accueil', icon: '🏠' },
+  { href: '/vols', label: 'Vols', icon: '✈️' },
+  { href: '/procedures', label: 'Procédures', icon: '📖' },
+  { href: '/ressources', label: 'Ressources', icon: '🌐' },
+  { href: '/mon-espace', label: 'Suivi de dossier', icon: '📂' },
+];
 
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
@@ -15,6 +24,29 @@ export default function Navbar() {
     logout();
     setIsProfileOpen(false);
     setLocation('/');
+  };
+
+  // Animation du hamburger
+  const hamburgerVariants = {
+    open: { rotate: 90 },
+    closed: { rotate: 0 }
+  };
+
+  // Animation du menu mobile
+  const menuVariants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 }
+  };
+
+  // Animation des items du menu
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: (i: number) => ({
+      opacity: 1,
+      x: 0,
+      transition: { delay: i * 0.05 }
+    })
   };
 
   return (
@@ -33,22 +65,15 @@ export default function Navbar() {
 
           {/* 2. NAVIGATION DESKTOP ÉLÉGANTE */}
           <nav className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80">
-            <a href="/" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm">
-              Accueil
-            </a>
-            <a href="/vols" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-none hover:shadow-sm">
-              <span>✈️</span> Vols
-            </a>
-            <a href="/procedures" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-none hover:shadow-sm">
-              <span>📖</span> Procédures
-            </a>
-            <a href="/ressources" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-none hover:shadow-sm">
-              <span>🌐</span> Ressources
-            </a>
-            <a href="/mon-espace" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-none hover:shadow-sm">
-              <span>📂</span> Suivi
-            </a>
-
+            {menuItems.map((item) => (
+              <a 
+                key={item.href}
+                href={item.href} 
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm"
+              >
+                <span>{item.icon}</span> {item.label}
+              </a>
+            ))}
           </nav>
 
           {/* 3. ZONE D'ACTION / PROFIL CANDIDAT */}
@@ -130,11 +155,14 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* 4. HAMBURGER MOBILE */}
+          {/* 4. HAMBURGER MOBILE AVEC ANIMATION */}
           <div className="flex lg:hidden items-center">
-            <button
+            <motion.button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition focus:outline-none"
+              animate={isMenuOpen ? "open" : "closed"}
+              variants={hamburgerVariants}
+              transition={{ duration: 0.3 }}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {isMenuOpen ? (
@@ -143,57 +171,111 @@ export default function Navbar() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
                 )}
               </svg>
-            </button>
+            </motion.button>
           </div>
 
         </div>
       </div>
 
-      {/* 5. MENU MOBILE FLUIDE */}
-      {isMenuOpen && (
-        <div className="lg:hidden bg-white/95 backdrop-blur-2xl border-t border-gray-100 px-4 pt-3 pb-8 space-y-2 shadow-2xl animate-in slide-in-from-top-3 duration-200">
-          {candidate && (
-            <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50/50 rounded-2xl mb-3 flex items-center gap-3 border border-blue-100/60">
-              <div className="w-10 h-10 bg-blue-600 text-white font-black rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
-                {getInitial(candidate.fullName)}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || 'Candidat'}</p>
-                <p className="text-xs text-blue-600 font-medium truncate">{candidate.email}</p>
-              </div>
+      {/* 5. MENU MOBILE FLUIDE AVEC ANIMATIONS */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="lg:hidden bg-white/95 backdrop-blur-2xl border-t border-gray-100 px-4 pt-3 pb-8 shadow-2xl"
+            variants={menuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          >
+            {/* Profil utilisateur */}
+            {candidate && (
+              <motion.div
+                className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50/50 rounded-2xl mb-4 flex items-center gap-3 border border-blue-100/60"
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                custom={0}
+              >
+                <div className="w-10 h-10 bg-blue-600 text-white font-black rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
+                  {getInitial(candidate.fullName)}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || 'Candidat'}</p>
+                  <p className="text-xs text-blue-600 font-medium truncate">{candidate.email}</p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Items de navigation */}
+            <div className="space-y-1 mb-4">
+              {menuItems.map((item, index) => (
+                <motion.a
+                  key={item.href}
+                  href={item.href}
+                  className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  custom={candidate ? index + 1 : index}
+                >
+                  <span>{item.icon}</span> {item.label}
+                </motion.a>
+              ))}
             </div>
-          )}
 
-          <a href="/" className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>Accueil</a>
-          <a href="/vols" className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>✈️ Vols</a>
-          <a href="/procedures" className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>📖 Procédures</a>
-          <a href="/ressources" className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>🌐 Ressources</a>
-          <a href="/mon-espace" className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>📂 Suivi de dossier</a>
+            {/* Divider */}
+            <motion.div
+              className="border-t border-gray-100 my-3"
+              variants={itemVariants}
+              initial="hidden"
+              animate="visible"
+              custom={menuItems.length + 1}
+            />
 
-          <div className="pt-3 border-t border-gray-100">
+            {/* Boutons d'action */}
             {candidate ? (
-              <button
+              <motion.button
                 onClick={() => {
                   handleLogout();
                   setIsMenuOpen(false);
                 }}
                 className="w-full text-center bg-rose-50 text-rose-600 py-3 rounded-xl font-bold transition hover:bg-rose-100"
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                custom={menuItems.length + 2}
               >
                 🚪 Se déconnecter
-              </button>
+              </motion.button>
             ) : (
-              <div className="space-y-2">
-                <a href="/evaluation" className="block w-full text-center bg-amber-500 text-white py-3 rounded-xl font-bold shadow-md shadow-amber-500/20" onClick={() => setIsMenuOpen(false)}>
+              <motion.div
+                className="space-y-2"
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                custom={menuItems.length + 2}
+              >
+                <a 
+                  href="/evaluation" 
+                  className="block w-full text-center bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all" 
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   ⭐ Évaluer mon profil
                 </a>
-                <a href="/login" className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold" onClick={() => setIsMenuOpen(false)}>
+                <a 
+                  href="/login" 
+                  className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold border border-blue-100 transition-all" 
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   👤 Mon Espace
                 </a>
-              </div>
+              </motion.div>
             )}
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
