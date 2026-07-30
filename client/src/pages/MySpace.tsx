@@ -13,6 +13,7 @@ import { QuickActionNotification, MissingDocumentsList } from "@/components/Quic
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
+import { DossierLoadingAnimation } from "@/components/DossierLoadingAnimation";
 
 // Composant onglet Paiements
 function PaymentsTab() {
@@ -164,6 +165,8 @@ export default function MySpace() {
   const [showNotification, setShowNotification] = useState(true);
   const [bilanActionModalOpen, setBilanActionModalOpen] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showDossierAnimation, setShowDossierAnimation] = useState(true);
+  const [animationStatus, setAnimationStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
@@ -177,6 +180,27 @@ export default function MySpace() {
       setLocation("/login");
     }
   }, [isAuthenticated, setLocation]);
+
+  // Gérer l'animation de chargement
+  useEffect(() => {
+    if (!isLoading && dossierData) {
+      if (dossierData.success) {
+        setAnimationStatus('success');
+        setTimeout(() => setShowDossierAnimation(false), 2000);
+      } else {
+        setAnimationStatus('error');
+        setTimeout(() => setShowDossierAnimation(false), 2000);
+      }
+    }
+  }, [isLoading, dossierData]);
+
+  // Afficher l'animation au chargement initial
+  useEffect(() => {
+    if (isAuthenticated && isLoading) {
+      setShowDossierAnimation(true);
+      setAnimationStatus('loading');
+    }
+  }, [isAuthenticated, isLoading]);
 
   // Gestionnaire de déconnexion
   const handleLogout = () => {
@@ -266,6 +290,14 @@ export default function MySpace() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Animation de chargement du dossier */}
+      <DossierLoadingAnimation
+        isLoading={showDossierAnimation && isLoading}
+        status={animationStatus}
+        message={animationStatus === 'loading' ? 'Vérification de votre dossier...' : animationStatus === 'success' ? 'Dossier trouvé avec succès!' : 'Erreur lors de la vérification'}
+        dossierNumber={(app as any)?.dossierNumber || candidate?.id || ''}
+      />
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
         <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-between">
