@@ -140,7 +140,7 @@ export const adminRouter = router({
         await db
           .update(dossierProgress)
           .set({
-            currentStep: stepMap[input.newStatus] || 0,
+            currentStep: String(stepMap[input.newStatus] || 0),
             updatedAt: new Date(),
           })
           .where(eq(dossierProgress.id, progress.id));
