@@ -75,11 +75,11 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
       // Candidate Info
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(11);
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.text('Informations du Candidat', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Nom: ${result.candidateName}`, 20, yPosition);
       yPosition += 6;
@@ -91,12 +91,12 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
       yPosition += 12;
 
       // Score Section
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('Score d\'Admissibilité', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Score: ${result.score}/100`, 20, yPosition);
       yPosition += 6;
@@ -104,12 +104,12 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
       yPosition += 12;
 
       // CV Analysis
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('Analyse du CV', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.text(`Diplôme Détecté: ${result.cvAnalysis.detectedDegree}`, 20, yPosition);
       yPosition += 6;
@@ -120,12 +120,12 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
       yPosition += 12;
 
       // Strengths
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('Points Forts', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       result.strengths?.forEach((strength) => {
         const lines = doc.splitTextToSize(`• ${strength || ''}`, 170) as string[];
@@ -135,12 +135,12 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
       yPosition += 4;
 
       // Weaknesses
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('Points à Améliorer', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       result.weaknesses?.forEach((weakness) => {
         const lines = doc.splitTextToSize(`• ${weakness || ''}`, 170) as string[];
@@ -155,12 +155,12 @@ export default function AnalysisResults({ result, onNewEvaluation }: AnalysisRes
         yPosition = 20;
       }
 
-      doc.setFont(undefined, 'bold');
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.text('Recommandations', 20, yPosition);
       yPosition += 8;
 
-      doc.setFont(undefined, 'normal');
+      doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       result.recommendations?.forEach((rec, index) => {
         const lines = doc.splitTextToSize(`${index + 1}. ${rec || ''}`, 170) as string[];
