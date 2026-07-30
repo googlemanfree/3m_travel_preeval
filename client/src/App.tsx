@@ -8,6 +8,7 @@ import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
+import Vols from "./pages/Vols";
 import ProceduresResources from "./pages/ProceduresResources";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -86,6 +87,11 @@ function Router() {
       <Route path={"/flights"}>
         <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
           <Flights />
+        </AuthGuard>
+      </Route>
+      <Route path={"/vols"}>
+        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la réservation de vols.">
+          <Vols />
         </AuthGuard>
       </Route>
       <Route path="/procedures" component={ProceduresResources} />
