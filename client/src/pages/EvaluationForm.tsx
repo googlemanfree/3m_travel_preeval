@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import CVAnalysisLoader from '@/components/CVAnalysisLoader';
+import CVAnalysisError from '@/components/CVAnalysisError';
 
 const CITIES = ['Yaoundé', 'Douala', 'Bafoussam', 'Garoua', 'Buea', 'Limbe', 'Bamenda'];
 const COUNTRIES = ['Canada', 'France', 'Australie', 'Belgique', 'États-Unis', 'Royaume-Uni', 'Suisse', 'Allemagne', 'Pays-Bas', 'Nouvelle-Zélande'];
@@ -45,6 +46,8 @@ export default function EvaluationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [analysisError, setAnalysisError] = useState<'timeout' | 'network' | 'invalid_file' | 'unknown' | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -94,8 +97,25 @@ export default function EvaluationForm() {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
     setIsSubmitting(true);
+    setAnalysisError(null);
 
     try {
+      // Validate CV file
+      if (formData.cv) {
+        const file = formData.cv as File;
+        if (file.size > 10 * 1024 * 1024) {
+          setAnalysisError('invalid_file');
+          setIsAnalyzing(false);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // Set timeout for analysis (30 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 30000);
+      });
+
       // Simulate progress
       const progressInterval = setInterval(() => {
         setAnalysisProgress((prev) => Math.min(prev + Math.random() * 15, 90));
@@ -117,9 +137,19 @@ export default function EvaluationForm() {
       setAnalysisProgress(100);
 
       // Simulate delay for analysis
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-    } catch (error) {
+      await Promise.race([
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+        timeoutPromise,
+      ]);
+    } catch (error: any) {
       console.error('Submission error:', error);
+      if (error.message === 'TIMEOUT') {
+        setAnalysisError('timeout');
+      } else if (error.message.includes('network') || error.message.includes('fetch')) {
+        setAnalysisError('network');
+      } else {
+        setAnalysisError('unknown');
+      }
     } finally {
       setIsSubmitting(false);
       setIsAnalyzing(false);
@@ -127,9 +157,26 @@ export default function EvaluationForm() {
     }
   };
 
+  const handleRetry = () => {
+    setRetryCount((prev) => prev + 1);
+    setAnalysisError(null);
+    handleSubmit();
+  };
+
+  const handleCancelError = () => {
+    setAnalysisError(null);
+    setStep(1);
+  };
+
   return (
     <>
       <CVAnalysisLoader isLoading={isAnalyzing} progress={analysisProgress} />
+      <CVAnalysisError
+        isVisible={analysisError !== null}
+        errorType={analysisError || 'unknown'}
+        onRetry={handleRetry}
+        onCancel={handleCancelError}
+      />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <motion.div
