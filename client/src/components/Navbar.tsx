@@ -7,7 +7,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [, navigate] = useLocation();
-  const { candidateUser, candidateLogout } = useCandidateAuth();
+  const { candidate, logout } = useCandidateAuth();
 
   // Extrait la première lettre pour l'Avatar
   const getInitial = (name?: string) => {
@@ -16,7 +16,7 @@ export default function Navbar() {
   };
 
   const handleLogout = () => {
-    candidateLogout();
+    logout();
     setIsProfileDropdownOpen(false);
     setIsMenuOpen(false);
     navigate("/");
@@ -52,7 +52,7 @@ export default function Navbar() {
 
           {/* ZONE DROITE : UTILISATEUR CONNECTÉ OU BOUTONS D'ACTION */}
           <div className="hidden lg:flex items-center space-x-4 shrink-0">
-            {candidateUser ? (
+            {candidate ? (
               /* --- UTILISATEUR CONNECTÉ : AVATAR ET NOM --- */
               <div className="relative">
                 <button
@@ -60,10 +60,10 @@ export default function Navbar() {
                   className="flex items-center gap-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-xl transition"
                 >
                   <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold rounded-full flex items-center justify-center text-sm shadow-sm">
-                    {getInitial(candidateUser.fullName)}
+                    {getInitial(candidate?.fullName)}
                   </div>
                   <span className="text-sm font-bold text-[#0a2540]">
-                    {candidateUser.fullName || "Mon Compte"}
+                    {candidate?.fullName || "Mon Compte"}
                   </span>
                   <ChevronDown className="w-4 h-4 text-gray-500" />
                 </button>
@@ -73,7 +73,7 @@ export default function Navbar() {
                   <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-xs text-gray-400">Connecté en tant que</p>
-                      <p className="text-sm font-bold text-[#0a2540] truncate">{candidateUser.email}</p>
+                      <p className="text-sm font-bold text-[#0a2540] truncate">{candidate?.email}</p>
                     </div>
                     <a
                       href="/mon-espace"
@@ -143,13 +143,13 @@ export default function Navbar() {
       {/* MENU MOBILE DÉROULANT */}
       {isMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-100 px-4 pt-3 pb-6 space-y-3 shadow-xl">
-          {candidateUser && (
+          {candidate && (
             <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl mb-3 flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold rounded-full flex items-center justify-center">
-                {getInitial(candidateUser.fullName)}
+                {getInitial(candidate?.fullName)}
               </div>
               <div>
-                <p className="text-sm font-bold text-[#0a2540]">{candidateUser.fullName || "Mon Compte"}</p>
+                <p className="text-sm font-bold text-[#0a2540]">{candidate?.fullName || "Mon Compte"}</p>
                 <p className="text-xs text-blue-600 font-medium">Connecté</p>
               </div>
             </div>
@@ -163,7 +163,7 @@ export default function Navbar() {
           <a href="/admin" className="block py-2 text-gray-500 font-medium hover:text-blue-600" onClick={() => setIsMenuOpen(false)}>🛡️ Admin</a>
           
           <div className="pt-4 space-y-2 border-t border-gray-100">
-            {candidateUser ? (
+            {candidate ? (
               <>
                 <a 
                   href="/mon-espace" 
