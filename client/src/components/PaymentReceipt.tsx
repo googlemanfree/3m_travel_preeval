@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, Check, Calendar, DollarSign, FileText, Share2 } from "lucide-react";
+import { Download, Check, Calendar, DollarSign, FileText, Share2, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 
 interface PaymentReceiptProps {
   dossierNumber: string;
@@ -17,6 +18,8 @@ interface PaymentReceiptProps {
   paymentDate: Date;
   paymentMethod?: string;
 }
+
+const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 
 export default function PaymentReceipt({
   dossierNumber,
@@ -31,8 +34,36 @@ export default function PaymentReceipt({
 }: PaymentReceiptProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [qrCode, setQrCode] = useState<string>("");
 
   const receiptRef = useRef<HTMLDivElement>(null);
+  const qrRef = useRef<HTMLCanvasElement>(null);
+
+  // Générer le code QR
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        // Créer les données du QR code
+        const qrData = `3M-PAYMENT|${dossierNumber}|${transactionId}|${amount}|${currency}|${paymentDate.toISOString()}`;
+        
+        // Générer le code QR en tant que data URL
+        const qrDataUrl = await QRCode.toDataURL(qrData, {
+          width: 200,
+          margin: 1,
+          color: {
+            dark: "#1e3a8a",
+            light: "#ffffff",
+          },
+        });
+        
+        setQrCode(qrDataUrl);
+      } catch (err) {
+        console.error("Error generating QR code:", err);
+      }
+    };
+
+    generateQR();
+  }, [dossierNumber, transactionId, amount, currency, paymentDate]);
 
   const downloadPDF = async () => {
     if (!receiptRef.current) return;
@@ -129,8 +160,17 @@ export default function PaymentReceipt({
         ref={receiptRef}
         className="bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-lg"
       >
-        {/* En-tête */}
+        {/* En-tête avec Logo */}
         <div className="text-center mb-8 pb-8 border-b-2 border-gray-100">
+          {/* Logo */}
+          <div className="mb-4 flex justify-center">
+            <img
+              src={LOGO_URL}
+              alt="3M Travel Logo"
+              className="h-16 object-contain"
+            />
+          </div>
+
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4">
             <FileText className="w-4 h-4" />
             REÇU DE PAIEMENT OFFICIEL
@@ -205,16 +245,35 @@ export default function PaymentReceipt({
           </div>
         </div>
 
-        {/* Statut */}
-        <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
-          <div className="flex items-center gap-3">
-            <Check className="w-6 h-6 text-green-600" />
-            <div>
-              <p className="font-bold text-green-900">PAIEMENT CONFIRMÉ</p>
-              <p className="text-green-700 text-sm">
-                Votre dossier est maintenant actif et prêt pour le traitement.
-              </p>
+        {/* Statut et Code QR */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Statut */}
+          <div className="bg-green-50 rounded-xl p-6 border-2 border-green-200">
+            <div className="flex items-center gap-3">
+              <Check className="w-6 h-6 text-green-600" />
+              <div>
+                <p className="font-bold text-green-900">PAIEMENT CONFIRMÉ</p>
+                <p className="text-green-700 text-sm">
+                  Votre dossier est maintenant actif et prêt pour le traitement.
+                </p>
+              </div>
             </div>
+          </div>
+
+          {/* Code QR d'Authenticité */}
+          <div className="bg-blue-50 rounded-xl p-6 border-2 border-blue-200 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <p className="font-bold text-blue-900 text-sm">VÉRIFICATION D'AUTHENTICITÉ</p>
+            </div>
+            {qrCode && (
+              <div className="bg-white p-2 rounded-lg border-2 border-blue-200 mb-3">
+                <img src={qrCode} alt="QR Code" className="w-28 h-28" />
+              </div>
+            )}
+            <p className="text-blue-700 text-xs text-center">
+              Scannez ce code QR pour vérifier l'authenticité
+            </p>
           </div>
         </div>
 
@@ -225,6 +284,9 @@ export default function PaymentReceipt({
           </p>
           <p className="text-gray-400 text-xs mt-2">
             © 2026 3M Travel & Services. Tous droits réservés.
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Reçu généré le {new Date().toLocaleDateString("fr-FR")}
           </p>
         </div>
       </motion.div>
