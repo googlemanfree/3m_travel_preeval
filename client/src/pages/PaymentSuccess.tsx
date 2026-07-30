@@ -4,7 +4,9 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PaymentReceipt from "@/components/PaymentReceipt";
 import { CheckCircle, Download, MessageCircle, Home, Loader2, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function PaymentSuccess() {
   const params = new URLSearchParams(window.location.search);
@@ -37,11 +39,21 @@ export default function PaymentSuccess() {
         ) : (
           <div className="max-w-lg w-full text-center space-y-8">
             {/* Icône succès */}
-            <div className="flex justify-center">
-              <div className="w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center animate-[scale-in_0.5s_cubic-bezier(0.23,1,0.32,1)]">
-                <CheckCircle className="w-12 h-12 text-emerald-400" />
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+              className="flex justify-center"
+            >
+              <div className="w-24 h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <CheckCircle className="w-12 h-12 text-emerald-400" />
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
 
             <div>
               <h1 className="text-3xl md:text-4xl font-black mb-3">
@@ -54,12 +66,27 @@ export default function PaymentSuccess() {
               </p>
             </div>
 
-            {/* Numéro de dossier */}
-            <div className="bg-white/5 border border-emerald-500/30 rounded-2xl p-6">
-              <p className="text-slate-400 text-sm mb-2">Votre numéro de dossier</p>
-              <p className="text-3xl font-black text-emerald-400 tracking-wider">{dossierNumber}</p>
-              <p className="text-slate-400 text-xs mt-2">Conservez ce numéro précieusement — il vous sera demandé à chaque étape</p>
-            </div>
+            {/* Afficher le reçu de paiement */}
+            {application && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="bg-white/5 border border-emerald-500/30 rounded-2xl p-6"
+              >
+                <PaymentReceipt
+                  dossierNumber={dossierNumber}
+                  candidateName={application.fullName}
+                  email={application.email}
+                  destination={application.destination}
+                  amount={application.paymentAmount || 65000}
+                  currency={application.paymentCurrency || "XAF"}
+                  transactionId={application.paymentTransactionId || "N/A"}
+                  paymentDate={application.paymentDate ? new Date(application.paymentDate) : new Date()}
+                  paymentMethod={application.paymentMethod || "CinetPay"}
+                />
+              </motion.div>
+            )}
 
             {/* Prochaines étapes */}
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-left space-y-4">
