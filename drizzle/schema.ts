@@ -1277,3 +1277,5 @@ export const blogPosts = mysqlTable("blog_posts", {
 });
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+
