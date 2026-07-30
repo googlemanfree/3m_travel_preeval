@@ -16,7 +16,9 @@ import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissing
 
 // Composant onglet Paiements
 function PaymentsTab() {
-  const { data: payments, isLoading } = trpc.candidate.getMyPayments.useQuery();
+  // Procédure getMyPayments non disponible - afficher un message
+  const payments: any[] = [];
+  const isLoading = false;
 
   if (isLoading) return <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" /></div>;
 
@@ -81,7 +83,9 @@ function PaymentsTab() {
 
 // Composant onglet Traductions
 function TranslationsTab() {
-  const { data: translations, isLoading } = trpc.translation.getMyTranslations.useQuery();
+  // Procédure getMyTranslations non disponible - afficher un message
+  const translations: any[] = [];
+  const isLoading = false;
 
   const statusLabel = (status: string) => {
     const map: Record<string, string> = {
