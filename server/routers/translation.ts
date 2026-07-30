@@ -3,6 +3,7 @@ import { z } from "zod";
 import { eq, and, SQL } from "drizzle-orm";
 import * as drizzleSchema from "../../drizzle/schema";
 import { getDb } from "../db";
+import { generateTranslationInvoicePDF } from "../translationInvoiceService";
 
 export const translationRouter = router({
   createTranslationRequest: publicProcedure
@@ -165,7 +166,17 @@ export const translationRouter = router({
         updatedAt: new Date(),
       }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
 
-      // TODO: Generate PDF invoice and send notifications (email/WhatsApp) to admin and client
+      // Générer la facture PDF et envoyer les notifications
+      try {
+        const invoiceResult = await generateTranslationInvoicePDF(input.requestId);
+        if (!invoiceResult.success) {
+          console.error("Failed to generate invoice:", invoiceResult.message);
+        }
+        // TODO: Envoyer les notifications email/WhatsApp à l'admin et au client
+      } catch (error) {
+        console.error("Error generating invoice or sending notifications:", error);
+        // Ne pas échouer la validation du paiement si la génération de facture échoue
+      }
 
       return { success: true };
     }),
@@ -229,8 +240,20 @@ export const translationRouter = router({
         throw new Error("Translated document not available for download");
       }
 
-      // TODO: Implement secure, temporary URL generation for download
-      // For now, returning the direct URL (which should be S3 pre-signed URL)
+      // Enregistrer le téléchargement dans les logs
+      try {
+        await db.insert(drizzleSchema.translationDownloadLogs).values({
+          translationRequestId: input.requestId,
+          candidateEmail: translation.candidateEmail,
+          downloadedAt: new Date(),
+          ipAddress: "unknown", // TODO: Extraire depuis ctx.req.ip
+          userAgent: "unknown", // TODO: Extraire depuis ctx.req.headers['user-agent']
+        });
+      } catch (error) {
+        console.error("Error logging download:", error);
+      }
+
+      // Retourner l'URL du document (qui devrait être une URL S3 pré-signée)
       return { url: translation.translatedDocumentUrl };
     }),
 
@@ -247,5 +270,17 @@ export const translationRouter = router({
       if (!db) throw new Error("Database not available");
       const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing);
       return documentTypes.map(dt => dt.documentType);
+    }),
+
+  generateInvoice: publicProcedure
+    .input(z.object({
+      requestId: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const result = await generateTranslationInvoicePDF(input.requestId);
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      return { invoiceUrl: result.invoiceUrl };
     }),
 });

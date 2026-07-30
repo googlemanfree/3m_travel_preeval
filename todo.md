@@ -515,7 +515,7 @@
 - [x] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
 - [x] Créer le callback de validation du paiement
 - [x] Déclencher la notification admin uniquement après paiement validé
-- [ ] Générer la facture PDF après paiement
+- [x] Générer la facture PDF après paiement
 - [ ] Envoyer confirmation par email/WhatsApp
 
 ### Phase 6 : Téléchargement Sécurisé
@@ -523,7 +523,7 @@
 - [x] Ajouter la section "Mes Traductions" dans l'Espace Client
 - [x] Afficher le statut de chaque traduction
 - [x] Permettre le téléchargement après complétion
-- [ ] Ajouter les logs de téléchargement
+- [x] Ajouter les logs de téléchargement
 
 ### Phase 7 : Tests et Validation
 - [ ] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
