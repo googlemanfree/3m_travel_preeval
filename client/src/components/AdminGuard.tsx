@@ -24,7 +24,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
 
     // Le token existe, considérer l'utilisateur comme autorisé
     setIsAuthorized(true);
-  }, []);
+  }, [navigate]);
 
   if (isAuthorized === null) {
     return (
