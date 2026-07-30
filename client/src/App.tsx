@@ -15,6 +15,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
 import VerifyEmailLink from "@/pages/VerifyEmailLink";
+import VerifyEmailSent from "@/pages/VerifyEmailSent";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import OpenDossier from "./pages/OpenDossier";
@@ -80,6 +81,7 @@ function Router() {
       <Route path={"/mon-espace"} component={EvaluationSpace} />
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
+      <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
 

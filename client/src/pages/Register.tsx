@@ -58,10 +58,11 @@ export default function Register() {
 
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
-      // Rediriger vers la page de vérification OTP avec l'URL de redirection
-      toast.success("Compte créé ! Un code de vérification a été envoyé à votre adresse email.");
-      const redirectUrl = from ? `&redirect=${encodeURIComponent(from)}` : "";
-      navigate(`/verify-email?id=${data.candidateId}${redirectUrl}`);
+      // Sauvegarder l'email pour le renvoi de vérification
+      localStorage.setItem("registrationEmail", form.email);
+      // Rediriger vers la page d'attente de vérification
+      toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
+      navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
     },
     onError: (err) => {
       toast.error(err.message);
