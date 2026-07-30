@@ -1102,6 +1102,18 @@ export default function Procedures() {
   const { user, loading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
+  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [evalStep, setEvalStep] = useState(1);
+  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showScoringForm, setShowScoringForm] = useState(false);
+
   // Rediriger si non authentifié
   useEffect(() => {
     if (!authLoading && !user) {
@@ -1125,18 +1137,6 @@ export default function Procedures() {
   if (!user) {
     return null;
   }
-  const [activeRegion, setActiveRegion] = useState<string | null>(null);
-  const [showEvalModal, setShowEvalModal] = useState(false);
-  const [evalStep, setEvalStep] = useState(1);
-  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
-  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showScoringForm, setShowScoringForm] = useState(false);
 
   const handleStartProcedure = (info: ProcedureInfo) => {
     setSelectedProcedure(info);
