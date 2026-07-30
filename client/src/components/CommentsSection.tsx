@@ -23,17 +23,24 @@ export function CommentsSection({
   const [newComment, setNewComment] = useState("");
   const [isQuestion, setIsQuestion] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Récupérer les commentaires
+  // Récupérer les commentaires avec pagination
   const { data: commentsData, isLoading, refetch } = trpc.evaluationComments.getComments.useQuery(
     {
       dossierNumber,
       email,
+      page: currentPage,
+      limit: 5,
     },
     {
       enabled: !!dossierNumber && !!email,
     }
   );
+
+  const handleLoadMore = () => {
+    setCurrentPage((prev) => prev + 1);
+  };
 
   // Poster un commentaire
   const postCommentMutation = trpc.evaluationComments.postComment.useMutation({
@@ -209,6 +216,37 @@ export function CommentsSection({
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Bouton Voir plus */}
+        {commentsData?.hasMore && (
+          <div className="mt-6 text-center">
+            <Button
+              onClick={handleLoadMore}
+              variant="outline"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2" />
+                  Chargement...
+                </>
+              ) : (
+                "Voir plus de commentaires"
+              )}
+            </Button>
+            <p className="text-xs text-gray-500 mt-2">
+              {commentsData?.comments?.length || 0} sur {commentsData?.total || 0} commentaires affichés
+            </p>
+          </div>
+        )}
+
+        {/* Message si tous les commentaires sont affichés */}
+        {!commentsData?.hasMore && (commentsData?.total ?? 0) > 0 && (
+          <div className="mt-4 text-center text-sm text-gray-500">
+            Tous les commentaires sont affichés
           </div>
         )}
       </CardContent>

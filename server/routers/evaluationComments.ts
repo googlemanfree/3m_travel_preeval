@@ -157,6 +157,8 @@ export const evaluationCommentsRouter = router({
       z.object({
         dossierNumber: z.string(),
         email: z.string().email(),
+        page: z.number().int().positive().default(1),
+        limit: z.number().int().positive().default(5),
       })
     )
     .query(async ({ input }) => {
@@ -181,10 +183,20 @@ export const evaluationCommentsRouter = router({
         // Retourner uniquement les commentaires principaux
         const mainComments = threaded.filter((c) => !c.parentCommentId);
 
+        // Calculer la pagination
+        const total = mainComments.length;
+        const totalPages = Math.ceil(total / input.limit);
+        const skip = (input.page - 1) * input.limit;
+        const paginatedComments = mainComments.slice(skip, skip + input.limit);
+
         return {
           success: true,
-          comments: mainComments,
-          total: mainComments.length,
+          comments: paginatedComments,
+          total,
+          page: input.page,
+          limit: input.limit,
+          totalPages,
+          hasMore: input.page < totalPages,
         };
       } catch (error) {
         console.error("Erreur lors de la récupération des commentaires:", error);
