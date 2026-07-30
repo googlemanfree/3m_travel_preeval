@@ -932,6 +932,13 @@
 - [ ] Déployer et vérifier en production
 
 
+## Grille des 6 Services Majeurs — Page d'Accueil (v26)
+- [x] Créer le composant ServicesSection.tsx avec les 6 cartes (Visa, Vols, Hôtels, Assurance, Traduction, Procédures)
+- [x] Liens internes (wouter Link) pour Visa → /evaluation, Vols → /vols, Procédures → /procedures
+- [x] Liens externes WhatsApp pour Hôtels, Assurance, Traduction
+- [x] Intégrer ServicesSection dans Home.tsx entre la section "Nos Services" et la section "Évaluation"
+- [x] Grille responsive 1/2/3 colonnes avec hover shadow + translate
+
 ## Dashboard Admin Unifié — Gestion Centralisée des Dossiers (v25)
 - [x] Procédure tRPC `admin.listCandidates` : liste paginée avec filtres (statut, recherche texte)
 - [x] Procédure tRPC `admin.updateCandidateStatus` : mise à jour statut + notification email optionnelle

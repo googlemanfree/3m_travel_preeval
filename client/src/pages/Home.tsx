@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 
 import Navbar from "@/components/Navbar";
+import ServicesSection from "@/components/ServicesSection";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
@@ -565,6 +566,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ─── SECTION NOS DOMAINES D'EXPERTISE ──────────────────────────── */}
+      <ServicesSection />
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">
