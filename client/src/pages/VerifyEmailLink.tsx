@@ -14,11 +14,22 @@ export default function VerifyEmailLink() {
   const { login } = useCandidateAuth();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const token = params.get("token") ?? "";
-  const redirect = params.get("redirect") ?? "/dashboard";
+  const redirect = params.get("redirect") ?? "/login"; // Redirection par défaut vers /login
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [candidateData, setCandidateData] = useState<any>(null);
+  const [countdown, setCountdown] = useState(3); // Compte à rebours de 3 secondes
+
+  // Compte à rebours avant redirection
+  useEffect(() => {
+    if (status === "success" && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (status === "success" && countdown === 0) {
+      navigate(decodeURIComponent(redirect));
+    }
+  }, [status, countdown, redirect, navigate]);
 
   const verifyMutation = trpc.candidate.verifyEmailLink.useMutation({
     onSuccess: (data) => {
@@ -36,7 +47,7 @@ export default function VerifyEmailLink() {
         });
       }
       toast.success("Bienvenue dans votre espace 3M Travel !");
-      setTimeout(() => navigate(decodeURIComponent(redirect)), 3000);
+      // Le compte à rebours démarre automatiquement via l'effet useEffect
     },
     onError: (err) => {
       setStatus("error");
@@ -82,16 +93,30 @@ export default function VerifyEmailLink() {
             )}
 
             {status === "success" && (
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
+              <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 0.6, repeat: 2 }}
+                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
                   className="inline-block"
                 >
                   <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
                 </motion.div>
-                <h1 className="text-2xl font-bold text-gray-900">Compte Activé ! 🎉</h1>
-                <p className="text-gray-500 mt-2 text-sm">Votre email a été confirmé avec succès</p>
+                <motion.h1 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-2xl font-bold text-gray-900"
+                >
+                  Compte Activé ! 🎉
+                </motion.h1>
+                <motion.p 
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-gray-500 mt-2 text-sm"
+                >
+                  Votre email a été confirmé avec succès
+                </motion.p>
               </motion.div>
             )}
 
@@ -129,7 +154,7 @@ export default function VerifyEmailLink() {
               >
                 <h3 className="text-green-900 font-semibold mb-2">✓ Email Confirmé</h3>
                 <p className="text-green-700 text-sm">
-                  Bienvenue dans votre espace candidat 3M Travel & Services. Vous pouvez maintenant accéder à votre dossier et suivre votre procédure.
+                  Votre compte 3M Travel & Services est maintenant activé. Vous allez être redirigé vers la page de connexion pour accéder à votre espace.
                 </p>
               </motion.div>
 
@@ -139,14 +164,36 @@ export default function VerifyEmailLink() {
                 transition={{ delay: 0.5 }}
                 className="space-y-3"
               >
-                <p className="text-gray-600 text-center mb-4">
-                  Redirection vers votre espace dans quelques secondes...
+                {/* Compte à rebours visuel */}
+                <motion.div
+                  className="flex justify-center items-center gap-4 mb-6"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <div className="text-center">
+                    <p className="text-gray-600 text-sm mb-2">Redirection automatique dans</p>
+                    <motion.div
+                      key={countdown}
+                      initial={{ scale: 1.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.5, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-5xl font-black text-green-600"
+                    >
+                      {countdown}s
+                    </motion.div>
+                  </div>
+                </motion.div>
+
+                <p className="text-gray-600 text-center mb-4 text-sm">
+                  Vous allez être redirigé vers la page de connexion...
                 </p>
                 <Button
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate(decodeURIComponent(redirect))}
                   className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
                 >
-                  Accéder au Dashboard
+                  Aller à la Connexion
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </motion.div>
@@ -154,22 +201,22 @@ export default function VerifyEmailLink() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
+                transition={{ delay: 0.8 }}
                 className="mt-6 pt-6 border-t border-gray-100 text-center"
               >
-                <p className="text-gray-500 text-xs mb-3">Prochaines étapes :</p>
+                <p className="text-gray-500 text-xs mb-3">Après connexion, vous pourrez :</p>
                 <div className="flex justify-around text-center">
                   <div>
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">1</div>
-                    <p className="text-gray-600 text-xs">Profil</p>
+                    <p className="text-gray-600 text-xs">Compléter Profil</p>
                   </div>
                   <div>
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">2</div>
-                    <p className="text-gray-600 text-xs">Documents</p>
+                    <p className="text-gray-600 text-xs">Uploader Docs</p>
                   </div>
                   <div>
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">3</div>
-                    <p className="text-gray-600 text-xs">Évaluation</p>
+                    <p className="text-gray-600 text-xs">Suivi Dossier</p>
                   </div>
                 </div>
               </motion.div>
