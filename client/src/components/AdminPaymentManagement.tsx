@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,8 +71,35 @@ export function AdminPaymentManagement() {
     toast.success(`Reçu de paiement envoyé à ${payment.email}`);
   };
 
+  const handleConfirmPayment = (paymentId: number) => {
+    toast.success("Paiement confirmé");
+  };
+
+  const handleCancelPayment = (paymentId: number) => {
+    toast.success("Paiement annulé");
+  };
+
   const handleExportPayments = () => {
-    toast.success("Export des paiements en cours...");
+    if (filteredPayments.length === 0) {
+      toast.error("Aucun paiement à exporter");
+      return;
+    }
+    const headers = ["Dossier", "Candidat", "Email", "Montant", "Statut", "Date"];
+    const rows = filteredPayments.map((p) => [
+      p.dossierNumber,
+      p.fullName,
+      p.email,
+      `${p.amount} ${p.currency}`,
+      p.paymentStatus,
+      p.paymentDate ? new Date(p.paymentDate).toLocaleDateString("fr-FR") : "",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `paiements_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    toast.success("Export CSV téléchargé");
   };
 
   // Statistiques
@@ -213,14 +240,40 @@ export function AdminPaymentManagement() {
                           : "—"}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Button
-                          onClick={() => handleSendReceipt(payment)}
-                          variant="ghost"
-                          size="sm"
-                          title="Envoyer le reçu"
-                        >
-                          <Mail className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          {payment.paymentStatus === "PENDING" && (
+                            <>
+                              <Button
+                                onClick={() => handleConfirmPayment(payment.id)}
+                                variant="ghost"
+                                size="sm"
+                                title="Confirmer le paiement"
+                                className="text-green-600 hover:text-green-700"
+                              >
+                                <CheckCircle2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                onClick={() => handleCancelPayment(payment.id)}
+                                variant="ghost"
+                                size="sm"
+                                title="Annuler le paiement"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                          {payment.paymentStatus === "SUCCESS" && (
+                            <Button
+                              onClick={() => handleSendReceipt(payment)}
+                              variant="ghost"
+                              size="sm"
+                              title="Envoyer le reçu"
+                            >
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

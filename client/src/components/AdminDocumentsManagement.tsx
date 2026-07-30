@@ -81,10 +81,20 @@ export function AdminDocumentsManagement() {
 
   const handleApproveDocument = (docId: number) => {
     toast.success("Document approuvé");
+    // TODO: Implémenter l'approbation via tRPC
   };
 
   const handleRejectDocument = (docId: number) => {
     toast.success("Document rejeté");
+    // TODO: Implémenter le rejet via tRPC avec raison
+  };
+
+  const handleDownloadDocument = (url: string, docName: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = docName;
+    link.click();
+    toast.success("Téléchargement en cours...");
   };
 
   const handleExportDocuments = () => {
