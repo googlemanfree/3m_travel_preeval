@@ -20,6 +20,7 @@ import { evaluationAIRouter } from "./routers/evaluationAI";
 import { evaluationAdminRouter } from "./routers/evaluationAdmin";
 import { evaluationCommentsRouter } from "./routers/evaluationComments";
 import { paymentRouter } from "./routers/payment";
+import { documentsRouter } from "./routers/documents";
 
 const COOKIE_NAME = "manus_session";
 
@@ -58,6 +59,7 @@ export const appRouter = router({
   candidateAuthOTP: candidateAuthOTPRouter,
   monitoring: monitoringRouter,
   payment: paymentRouter,
+  documents: documentsRouter,
 });
 
 export type AppRouter = typeof appRouter;

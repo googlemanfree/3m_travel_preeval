@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../routers/candidateUpload";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
+import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
@@ -44,6 +45,7 @@ async function startServer() {
   registerCandidateUploadRoute(app);
   registerPublicUploadRoute(app);
   registerCinetPayWebhook(app);
+  setupDocumentsRoutes(app);
   // Scheduled jobs
   app.post("/api/scheduled/evaluation-job", handleEvaluationJob);
   app.post("/api/scheduled/evaluation-bilan-job", handleEvaluationBilanJob);
