@@ -40,34 +40,83 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
 function emailBase(content: string): string {
   return `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4ff; margin: 0; padding: 20px; }
-  .container { max-width: 560px; margin: 0 auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(30,58,138,0.1); }
-  .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center; }
-  .header img { width: 56px; height: 56px; border-radius: 12px; margin-bottom: 12px; }
-  .header h1 { color: #fff; font-size: 22px; margin: 0; font-weight: 800; }
-  .header p { color: #bfdbfe; font-size: 13px; margin: 6px 0 0; }
-  .body { padding: 32px 28px; }
-  .otp-box { background: #eff6ff; border: 2px dashed #2563EB; border-radius: 12px; padding: 20px; text-align: center; margin: 24px 0; }
-  .otp-code { font-size: 40px; font-weight: 900; color: #1E3A8A; letter-spacing: 12px; }
-  .otp-label { font-size: 12px; color: #6b7280; margin-top: 8px; }
-  .btn { display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0; }
-  .footer { background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; }
-  p { color: #374151; line-height: 1.6; font-size: 15px; }
-</style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3M Travel & Services</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; background: linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%); margin: 0; padding: 20px; }
+    .wrapper { max-width: 600px; margin: 0 auto; }
+    .container { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(30,58,138,0.2); }
+    .header { background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%); padding: 40px 32px; text-align: center; position: relative; overflow: hidden; }
+    .header::before { content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+    .header::after { content: ''; position: absolute; bottom: -30%; left: -5%; width: 250px; height: 250px; background: rgba(255,255,255,0.03); border-radius: 50%; }
+    .header-content { position: relative; z-index: 1; }
+    .logo-badge { display: inline-block; background: rgba(255,255,255,0.15); border-radius: 50%; padding: 12px; margin-bottom: 16px; }
+    .logo-badge img { width: 48px; height: 48px; border-radius: 8px; display: block; }
+    .header h1 { color: #fff; font-size: 28px; margin: 12px 0 0; font-weight: 900; letter-spacing: -0.5px; }
+    .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin: 8px 0 0; font-weight: 500; }
+    .body { padding: 40px 32px; }
+    .greeting { font-size: 16px; color: #1f2937; margin-bottom: 24px; line-height: 1.6; }
+    .greeting strong { color: #1E3A8A; font-weight: 700; }
+    .section-title { font-size: 14px; font-weight: 700; color: #1E3A8A; text-transform: uppercase; letter-spacing: 0.5px; margin: 24px 0 12px; }
+    .cta-section { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-left: 4px solid #2563EB; padding: 20px; border-radius: 8px; margin: 28px 0; }
+    .cta-text { color: #1f2937; font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+    .btn { display: inline-block; background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: #fff; text-decoration: none; padding: 14px 36px; border-radius: 8px; font-weight: 700; font-size: 15px; margin: 0; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(30,58,138,0.3); }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(30,58,138,0.4); }
+    .btn-center { text-align: center; }
+    .security-badge { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #92400e; line-height: 1.5; }
+    .security-badge strong { color: #b45309; }
+    .info-box { background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0; font-size: 13px; color: #4b5563; line-height: 1.6; }
+    .divider { height: 1px; background: #e5e7eb; margin: 24px 0; }
+    .footer { background: linear-gradient(to bottom, #f9fafb, #f3f4f6); padding: 32px 32px; text-align: center; border-top: 1px solid #e5e7eb; }
+    .footer-title { font-size: 12px; font-weight: 700; color: #1f2937; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .footer-content { font-size: 12px; color: #6b7280; line-height: 1.8; }
+    .footer-content strong { color: #1f2937; font-weight: 600; }
+    .social-links { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
+    .social-links a { color: #2563EB; text-decoration: none; font-size: 12px; margin: 0 8px; }
+    .social-links a:hover { text-decoration: underline; }
+    .legal { font-size: 11px; color: #9ca3af; margin-top: 12px; }
+    ul { margin: 16px 0; padding-left: 20px; }
+    ul li { margin: 8px 0; color: #374151; font-size: 14px; line-height: 1.6; }
+    a { color: #2563EB; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>3M Travel & Services</h1>
-    <p>Votre partenaire mobilité internationale</p>
-  </div>
-  <div class="body">${content}</div>
-  <div class="footer">
-    <p>3M Travel & Services — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
-    <p>Yaoundé, Cameroun | +237 620-996-045 | contact@3mtravelagency.click</p>
-    <p style="margin-top:8px;font-size:11px;">Cet email a été envoyé automatiquement. Ne pas répondre à cet email.</p>
+<div class="wrapper">
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <div class="logo-badge">
+          <img src="https://manus-storage.s3.amazonaws.com/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg" alt="3M Travel Logo" />
+        </div>
+        <h1>3M Travel & Services</h1>
+        <p>Votre partenaire mobilité internationale</p>
+      </div>
+    </div>
+    <div class="body">
+      ${content}
+    </div>
+    <div class="footer">
+      <div class="footer-title">À propos de 3M Travel & Services</div>
+      <div class="footer-content">
+        <p><strong>Agence de Voyage Agréée</strong></p>
+        <p>RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+        <p>📍 Yaoundé, Cameroun</p>
+        <p>📞 +237 620-996-045</p>
+        <p>✉️ contact@3mtravelagency.click</p>
+        <div class="social-links">
+          <a href="https://wa.me/237620996045">WhatsApp</a> |
+          <a href="https://3mtravelagency.click">Site Web</a>
+        </div>
+      </div>
+      <div class="legal">
+        <p>Cet email a été envoyé automatiquement. Ne pas répondre à cet email.</p>
+        <p>© 2024 3M Travel & Services. Tous droits réservés.</p>
+      </div>
+    </div>
   </div>
 </div>
 </body>
@@ -81,14 +130,41 @@ export async function sendVerificationLink(to: string, fullName: string, verific
   const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
   console.log(`[sendVerificationLink] Sending verification link to ${to}: ${verifyUrl}`);
   const content = `
-    <p>Bonjour <strong>${fullName}</strong>,</p>
-    <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! Pour activer votre compte, cliquez sur le lien ci-dessous :</p>
-    <p style="text-align:center;">
-      <a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a>
-    </p>
-    <p style="font-size:13px;color:#6b7280;">Ce lien est valable <strong>24 heures</strong>. Après ce délai, vous devrez créer un nouveau compte.</p>
-    <p>Si vous n'avez pas créé de compte sur 3M Travel, ignorez cet email.</p>
-    <p style="font-size:12px;color:#9ca3af;word-break:break-all;">Lien direct : ${verifyUrl}</p>
+    <p class="greeting">Bonjour <strong>${fullName}</strong>,</p>
+    
+    <p class="cta-text">Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p>
+    
+    <p class="cta-text">Nous sommes ravis de vous accueillir. Pour finaliser votre inscription et activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
+    
+    <div class="cta-section">
+      <div class="btn-center">
+        <a href="${verifyUrl}" class="btn">✓ Confirmer mon email</a>
+      </div>
+    </div>
+    
+    <div class="security-badge">
+      🔒 <strong>Sécurité :</strong> Ce lien est personnel et valable 24 heures. Ne le partagez avec personne.
+    </div>
+    
+    <div class="info-box">
+      <strong>⏱️ Délai d'expiration :</strong> Ce lien expire dans 24 heures. Après ce délai, vous devrez créer un nouveau compte.
+    </div>
+    
+    <p class="cta-text"><strong>Prochaines étapes :</strong></p>
+    <ul>
+      <li>Confirmez votre email en cliquant sur le lien ci-dessus</li>
+      <li>Complétez votre profil candidat</li>
+      <li>Uploadez vos documents (CV, passeport, diplômes)</li>
+      <li>Un conseiller vous contactera sous 24h</li>
+    </ul>
+    
+    <div class="divider"></div>
+    
+    <p class="cta-text">Si vous n'avez pas créé de compte sur 3M Travel, vous pouvez ignorer cet email en toute sécurité. Votre adresse email ne sera pas utilisée.</p>
+    
+    <p class="cta-text"><strong>Besoin d'aide ?</strong><br>Contactez notre équipe sur <a href="https://wa.me/237620996045">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.click">contact@3mtravelagency.click</a></p>
+    
+    <p class="cta-text">Cordialement,<br><strong>L'équipe 3M Travel & Services</strong></p>
   `;
   await sendEmail(to, "✓ Confirmez votre email - 3M Travel & Services", emailBase(content));
 }
