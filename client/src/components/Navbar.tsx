@@ -24,6 +24,15 @@ export default function Navbar() {
 
   const handleLogout = () => {
     setIsProfileOpen(false);
+    setIsMenuOpen(false);
+    // Vider tout le stockage de session
+    try {
+      localStorage.removeItem('3m_candidate_token');
+      localStorage.removeItem('3m_candidate_info');
+      sessionStorage.removeItem('3m_candidate_token');
+      sessionStorage.removeItem('3m_candidate_info');
+      sessionStorage.removeItem('manus-cookie');
+    } catch { /* ignore */ }
     if (isCandidateAuthenticated) {
       candidateLogout();
       window.location.href = '/login';
@@ -138,37 +147,69 @@ export default function Navbar() {
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="font-semibold text-gray-900 truncate">{displayName}</p>
-                      <p className="text-sm text-gray-500 truncate">{displayEmail}</p>
-                      <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-                        isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-700'
+                  <div
+                    className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
+                    style={{ animation: 'dropdownIn 0.18s cubic-bezier(0.23,1,0.32,1)' }}
+                  >
+                    {/* En-tête profil */}
+                    <div className="px-4 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold shadow">
+                          {displayName?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-900 truncate text-sm">{displayName}</p>
+                          <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
+                        </div>
+                      </div>
+                      <span className={`inline-flex items-center gap-1 mt-2 text-xs px-2.5 py-1 rounded-full font-semibold ${
+                        isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
                       }`}>
                         {isAdmin ? '👑 Administrateur' : '👤 Candidat'}
                       </span>
                     </div>
-                    <div className="py-1">
+
+                    {/* Liens de navigation */}
+                    <div className="py-1.5">
                       {isCandidate && (
-                        <a href="/mon-espace" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                          <User className="w-4 h-4 text-blue-500" /> Mon Espace
+                        <a
+                          href="/mon-espace"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <User className="w-4 h-4 text-blue-500" />
+                          <span>Mon Espace</span>
                         </a>
                       )}
-                      <a href="/mon-dossier" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                        <FolderOpen className="w-4 h-4 text-blue-500" /> Mes Dossiers
+                      <a
+                        href="/mon-dossier"
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        <FolderOpen className="w-4 h-4 text-blue-500" />
+                        <span>Mes Dossiers</span>
                       </a>
                       {isAdmin && (
-                        <a href="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                          <Settings className="w-4 h-4 text-amber-500" /> Panneau Admin
+                        <a
+                          href="/admin"
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          <Settings className="w-4 h-4 text-amber-500" />
+                          <span>Panneau Admin</span>
                         </a>
                       )}
                     </div>
-                    <div className="border-t border-gray-100 py-1">
+
+                    {/* Séparateur + Déconnexion */}
+                    <div className="border-t border-gray-100 p-2">
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium"
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-semibold"
                       >
-                        <LogOut className="w-4 h-4" /> Déconnexion
+                        <LogOut className="w-4 h-4" />
+                        <span>Se déconnecter</span>
+                        <span className="ml-auto text-xs text-red-400">Vider la session</span>
                       </button>
                     </div>
                   </div>
