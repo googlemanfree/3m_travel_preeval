@@ -1310,3 +1310,29 @@ export const countryCosts = mysqlTable("country_costs", {
 
 export type CountryCost = typeof countryCosts.$inferSelect;
 export type InsertCountryCost = typeof countryCosts.$inferInsert;
+
+// ============================================================
+// TABLE: blog_posts — Articles du blog 3M Travel
+// ============================================================
+export const blogPosts = mysqlTable("blog_posts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  category: mysqlEnum("category", ["Visas", "Études", "Voyages", "Immigration", "Conseils", "Actualités"]).default("Conseils").notNull(),
+  authorName: varchar("authorName", { length: 100 }).default("Équipe 3M Travel").notNull(),
+  authorId: int("authorId"),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  tags: text("tags"),          // JSON array de tags
+  isPublished: boolean("isPublished").default(false).notNull(),
+  isFeatured: boolean("isFeatured").default(false).notNull(),
+  viewCount: int("viewCount").default(0).notNull(),
+  readTimeMinutes: int("readTimeMinutes").default(5).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+

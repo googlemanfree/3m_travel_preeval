@@ -79,6 +79,9 @@ export default function Navbar() {
                 <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
                   <Globe className="w-4 h-4 text-purple-500" /> Galerie Visas
                 </a>
+                <a href="/schedule-agency" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                  <Mail className="w-4 h-4 text-teal-500" /> Prendre RDV
+                </a>
                 <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
                   <FileText className="w-4 h-4 text-blue-500" /> Blog
                 </a>
