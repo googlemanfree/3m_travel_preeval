@@ -21,6 +21,7 @@ import { evaluationAdminRouter } from "./routers/evaluationAdmin";
 import { evaluationCommentsRouter } from "./routers/evaluationComments";
 import { paymentRouter } from "./routers/payment";
 import { documentsRouter } from "./routers/documents";
+import { userDashboardRouter } from "./routers/userDashboard";
 
 const COOKIE_NAME = "manus_session";
 
@@ -60,6 +61,7 @@ export const appRouter = router({
   monitoring: monitoringRouter,
   payment: paymentRouter,
   documents: documentsRouter,
+  userDashboard: userDashboardRouter,
 });
 
 export type AppRouter = typeof appRouter;

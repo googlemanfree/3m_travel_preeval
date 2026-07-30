@@ -958,3 +958,15 @@
 - [x] Renommer la route principale admin de /admin vers /admin/dashboard
 - [x] Insérer les 2 comptes admin autorisés dans admin_accounts : aureoldonfack@gmail.com et 3mtravelandservices@gmail.com (INSERT IGNORE)
 - [x] Le routeur adminAuth.ts rejette déjà tout email absent de admin_accounts (vérification DB existante)
+
+
+## Tableau de Bord Utilisateur — Suivi Paiements & Documents (v27)
+- [ ] Créer procédures tRPC : getPaymentHistory, getDocumentsStatus, getDossierOverview
+- [ ] Créer composant PaymentHistory avec timeline et statuts
+- [ ] Créer composant DocumentsStatus avec badges et progression
+- [ ] Créer composant DossierOverview avec infos synthétiques
+- [ ] Intégrer tableau de bord dans /mon-espace
+- [ ] Ajouter graphiques de progression (Chart.js ou Recharts)
+- [ ] Ajouter bouton actualisation manuelle
+- [ ] Ajouter export PDF de l'historique
+- [ ] Tester et déployer
