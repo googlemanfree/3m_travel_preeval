@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { startLogin } from '@/const';
 import { LogOut, User, Settings, ChevronDown, Menu, X, Plane, BookOpen, Globe, FolderOpen, Shield, Info, Mail, FileText, MoreHorizontal } from 'lucide-react';
+import { AutoBreadcrumb } from './Breadcrumb';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,6 +34,7 @@ export default function Navbar() {
   const adminLink = { href: '/admin/login', label: 'Admin', icon: Shield, subtle: true };
 
   return (
+    <div>
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -243,5 +245,12 @@ export default function Navbar() {
         </div>
       )}
     </header>
+      {/* Breadcrumb automatique sous le header */}
+      <div className="bg-gray-50 border-b border-gray-100 hidden md:block">
+        <div className="max-w-7xl mx-auto px-4">
+          <AutoBreadcrumb />
+        </div>
+      </div>
+    </div>
   );
 }
