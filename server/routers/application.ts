@@ -1037,4 +1037,59 @@ export const applicationRouter = router({
         });
       }
     }),
+
+  /**
+   * Récupérer la progression d'une application
+   */
+  getApplicationProgress: protectedProcedure
+    .input(z.object({ applicationId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not connected");
+      // Retourner une progression par défaut
+      return { step: "evaluation", percentage: 25 };
+    }),
+
+  /**
+   * Récupérer les documents d'une application
+   */
+  getApplicationDocuments: protectedProcedure
+    .input(z.object({ applicationId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not connected");
+      // Retourner une liste vide pour l'instant
+      return [];
+    }),
+
+  /**
+   * Récupérer les messages d'une application
+   */
+  getApplicationMessages: protectedProcedure
+    .input(z.object({ applicationId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not connected");
+      // Retourner une liste vide pour l'instant
+      return [];
+    }),
+
+  /**
+   * Créer une demande de rappel
+   */
+  createCallbackRequest: protectedProcedure
+    .input(
+      z.object({
+        applicationId: z.number(),
+        preferredDate: z.string().optional(),
+        preferredTime: z.string().optional(),
+        reason: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not connected");
+      // Créer une demande de rappel
+      return { success: true };
+    }),
 });

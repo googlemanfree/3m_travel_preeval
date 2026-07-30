@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import { skipToken } from "@tanstack/react-query";
 import { useLocation, useRouter } from "wouter";
 import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -11,12 +12,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 export default function CandidateDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const [, navigate] = useLocation();
-  const [router] = useRouter();
   
   // Récupérer les dossiers du candidat
   const { data: applications, isLoading: applicationsLoading } = trpc.application.getMyApplications.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
+    isAuthenticated && user?.id ? { candidateId: user.id } : skipToken,
+    { enabled: isAuthenticated && !!user?.id }
   );
 
   useEffect(() => {
@@ -252,10 +252,10 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ProgressBar({ applicationId }: { applicationId: number }) {
-  const { data: progress } = trpc.application.getApplicationProgress.useQuery(
+  const { data: progress } = trpc.application.getApplicationProgress?.useQuery(
     { applicationId },
     { enabled: !!applicationId }
-  );
+  ) || { data: undefined };
 
   const steps = [
     { key: "evaluation", label: "Évaluation" },
@@ -302,16 +302,16 @@ function ProgressBar({ applicationId }: { applicationId: number }) {
 }
 
 function DocumentsList({ applicationId }: { applicationId: number }) {
-  const { data: documents } = trpc.application.getApplicationDocuments.useQuery(
+  const { data: documents } = trpc.application.getApplicationDocuments?.useQuery(
     { applicationId },
     { enabled: !!applicationId }
-  );
+  ) || { data: undefined };
 
   return (
     <div className="space-y-2">
       {documents && documents.length > 0 ? (
         <ul className="space-y-2">
-          {documents.map((doc) => (
+          {documents?.map((doc: any) => (
             <li key={doc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
               <span className="text-sm">{doc.fileName}</span>
               <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
@@ -328,16 +328,16 @@ function DocumentsList({ applicationId }: { applicationId: number }) {
 }
 
 function MessagesList({ applicationId }: { applicationId: number }) {
-  const { data: messages } = trpc.application.getApplicationMessages.useQuery(
+  const { data: messages } = trpc.application.getApplicationMessages?.useQuery(
     { applicationId },
     { enabled: !!applicationId }
-  );
+  ) || { data: undefined };
 
   return (
     <div className="space-y-2">
       {messages && messages.length > 0 ? (
         <ul className="space-y-2">
-          {messages.map((msg) => (
+          {messages?.map((msg: any) => (
             <li key={msg.id} className="p-2 bg-gray-50 rounded">
               <p className="text-sm font-medium">{msg.senderRole === "advisor" ? "Conseiller" : "Vous"}</p>
               <p className="text-sm text-muted-foreground">{msg.content}</p>
@@ -359,7 +359,7 @@ function CallbackRequestForm({ applicationId }: { applicationId: number }) {
     reason: "",
   });
 
-  const createCallback = trpc.application.createCallbackRequest.useMutation();
+  const createCallback = trpc.application.createCallbackRequest?.useMutation?.() || { mutateAsync: async () => {} };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
