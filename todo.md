@@ -520,9 +520,9 @@
 
 ### Phase 6 : Téléchargement Sécurisé
 - [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
-- [ ] Ajouter la section "Mes Traductions" dans l'Espace Client
-- [ ] Afficher le statut de chaque traduction
-- [ ] Permettre le téléchargement après complétion
+- [x] Ajouter la section "Mes Traductions" dans l'Espace Client
+- [x] Afficher le statut de chaque traduction
+- [x] Permettre le téléchargement après complétion
 - [ ] Ajouter les logs de téléchargement
 
 ### Phase 7 : Tests et Validation
