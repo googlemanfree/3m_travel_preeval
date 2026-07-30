@@ -64,6 +64,7 @@ import { Blog } from "./pages/Blog";
 import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
+import AppointmentBooking from "./pages/AppointmentBooking";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 
@@ -79,6 +80,7 @@ function Router() {
       <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"} component={Evaluation} />
       <Route path={"/mon-espace"} component={EvaluationSpace} />
+      <Route path={"/rdv"} component={AppointmentBooking} />
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
