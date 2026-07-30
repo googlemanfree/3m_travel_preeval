@@ -1332,52 +1332,50 @@ export default function Procedures() {
       {/* ── Contenu principal ── */}
       <div className="max-w-7xl mx-auto px-4 py-10">
 
-        {/* Vue régions (grille) */}
-        {!activeRegion && (
-          <>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Choisissez votre région de destination</h2>
-              <p className="text-gray-500 text-sm">Cliquez sur une région pour explorer toutes les procédures disponibles</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {REGIONS.map(region => (
-                <RegionCard key={region.id} region={region} onSelect={() => setActiveRegion(region.id)} />
-              ))}
-            </div>
+        {/* Vue régions (grille) - Masquée avec CSS quand activeRegion est défini */}
+        <div className={activeRegion ? "hidden" : ""}>
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-gray-900 mb-2">Choisissez votre région de destination</h2>
+            <p className="text-gray-500 text-sm">Cliquez sur une région pour explorer toutes les procédures disponibles</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {REGIONS.map(region => (
+              <RegionCard key={region.id} region={region} onSelect={() => setActiveRegion(region.id)} />
+            ))}
+          </div>
 
-            {/* Stats rapides */}
-            <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: "Procédures", value: `${totalProcedures}+`, icon: FileText, color: "text-blue-600" },
-                { label: "Pays couverts", value: "30+", icon: Globe, color: "text-green-600" },
-                { label: "Dossiers traités", value: "1 247+", icon: CheckCircle, color: "text-purple-600" },
-                { label: "Taux de succès", value: "89%", icon: Star, color: "text-amber-600" },
-              ].map(stat => (
-                <Card key={stat.label} className="text-center p-4">
-                  <stat.icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-2xl font-black text-gray-900">{stat.value}</div>
-                  <div className="text-xs text-gray-500">{stat.label}</div>
-                </Card>
-              ))}
-            </div>
-          </>
-        )}
+          {/* Stats rapides */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Procédures", value: `${totalProcedures}+`, icon: FileText, color: "text-blue-600" },
+              { label: "Pays couverts", value: "30+", icon: Globe, color: "text-green-600" },
+              { label: "Dossiers traités", value: "1 247+", icon: CheckCircle, color: "text-purple-600" },
+              { label: "Taux de succès", value: "89%", icon: Star, color: "text-amber-600" },
+            ].map(stat => (
+              <Card key={stat.label} className="text-center p-4">
+                <stat.icon className={`w-6 h-6 mx-auto mb-2 ${stat.color}`} />
+                <div className="text-2xl font-black text-gray-900">{stat.value}</div>
+                <div className="text-xs text-gray-500">{stat.label}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
 
-        {/* Vue détail région */}
-        {activeRegion && selectedRegion && (
-          <>
-            <div className="flex items-center gap-3 mb-6">
-              <button
-                onClick={() => setActiveRegion(null)}
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
-              >
-                ← Toutes les régions
-              </button>
-              <span className="text-gray-300">|</span>
-              <h2 className="text-xl font-black text-gray-900">{selectedRegion.name}</h2>
-            </div>
+        {/* Vue détail région - Masquée avec CSS quand activeRegion n'est pas défini */}
+        <div className={!activeRegion || !selectedRegion ? "hidden" : ""}>
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setActiveRegion(null)}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+            >
+              ← Toutes les régions
+            </button>
+            <span className="text-gray-300">|</span>
+            <h2 className="text-xl font-black text-gray-900">{selectedRegion?.name}</h2>
+          </div>
 
-            {/* Hero région */}
+          {/* Hero région */}
+          {selectedRegion && (
             <div className="relative rounded-2xl overflow-hidden mb-8 h-48">
               <img src={selectedRegion.image} alt={selectedRegion.name} className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent flex items-center px-8">
@@ -1387,31 +1385,33 @@ export default function Procedures() {
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Destinations */}
+          {/* Destinations */}
+          {selectedRegion && (
             <div className="space-y-3">
               {selectedRegion.destinations.map(dest => (
                 <DestinationSection key={dest.id} dest={dest} onStartProcedure={handleStartProcedure} />
               ))}
             </div>
+          )}
 
-            {/* CTA bas de page */}
-            <div className="mt-10 bg-blue-700 rounded-2xl p-6 text-white text-center">
-              <h3 className="text-xl font-black mb-2">Vous ne savez pas quelle procédure choisir ?</h3>
-              <p className="text-blue-100 text-sm mb-4">Nos conseillers analysent votre profil gratuitement et vous orientent vers la meilleure voie.</p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold">
-                  <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+          {/* CTA bas de page */}
+          <div className="mt-10 bg-blue-700 rounded-2xl p-6 text-white text-center">
+            <h3 className="text-xl font-black mb-2">Vous ne savez pas quelle procédure choisir ?</h3>
+            <p className="text-blue-100 text-sm mb-4">Nos conseillers analysent votre profil gratuitement et vous orientent vers la meilleure voie.</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold">
+                <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+              </Button>
+              <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="border-white text-white hover:bg-white/10">
+                  <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp direct
                 </Button>
-                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="border-white text-white hover:bg-white/10">
-                    <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp direct
-                  </Button>
-                </a>
-              </div>
+              </a>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       {/* ── Modal Évaluation ── */}
