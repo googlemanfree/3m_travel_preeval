@@ -47,10 +47,18 @@ export function AdminDocumentsManagement() {
     try {
       // TODO: Appeler la procédure tRPC pour approuver le document
       // await trpc.admin.approveDocument.mutate({ documentId: docId });
-      toast.success("Document approuvé avec succès");
+      toast.success("✓ Document approuvé", {
+        description: "Le candidat a été notifié de l'approbation",
+        duration: 4000,
+      });
+      await new Promise(resolve => setTimeout(resolve, 500));
       refetch();
     } catch (error) {
-      toast.error("Erreur lors de l'approbation du document");
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error("✗ Erreur lors de l'approbation", {
+        description: errorMessage,
+        duration: 4000,
+      });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -64,7 +72,10 @@ export function AdminDocumentsManagement() {
 
   const submitRejection = async () => {
     if (!rejectingDocId || !rejectionReason.trim()) {
-      toast.error("Veuillez fournir une raison de rejet");
+      toast.error("Raison manquante", {
+        description: "Veuillez fournir une raison pour le rejet du document",
+        duration: 3000,
+      });
       return;
     }
 
@@ -72,12 +83,20 @@ export function AdminDocumentsManagement() {
     try {
       // TODO: Appeler la procédure tRPC pour rejeter le document
       // await trpc.admin.rejectDocument.mutate({ documentId: rejectingDocId, reason: rejectionReason });
-      toast.success("Document rejeté avec succès");
+      toast.success("✓ Document rejeté", {
+        description: "Le candidat a reçu la raison du rejet par email",
+        duration: 4000,
+      });
       setRejectingDocId(null);
       setRejectionReason("");
+      await new Promise(resolve => setTimeout(resolve, 500));
       refetch();
     } catch (error) {
-      toast.error("Erreur lors du rejet du document");
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error("✗ Erreur lors du rejet", {
+        description: errorMessage,
+        duration: 4000,
+      });
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -154,42 +173,72 @@ export function AdminDocumentsManagement() {
 
   const handleDownloadPreviewedDocument = () => {
     if (!previewingDoc) return;
-    const link = document.createElement("a");
-    link.href = previewingDoc.documentUrl;
-    link.download = previewingDoc.documentName;
-    link.click();
-    toast.success("Téléchargement en cours...");
+    try {
+      const link = document.createElement("a");
+      link.href = previewingDoc.documentUrl;
+      link.download = previewingDoc.documentName;
+      link.click();
+      toast.success("✓ Téléchargement en cours", {
+        description: previewingDoc.documentName,
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("✗ Erreur lors du téléchargement", {
+        description: "Impossible de télécharger le document",
+        duration: 3000,
+      });
+    }
   };
 
   const handleDownloadDocument = (url: string, docName: string) => {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = docName;
-    link.click();
-    toast.success("Téléchargement en cours...");
+    try {
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = docName;
+      link.click();
+      toast.success("✓ Téléchargement en cours", {
+        description: docName,
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("✗ Erreur lors du téléchargement", {
+        description: "Impossible de télécharger le document",
+        duration: 3000,
+      });
+    }
   };
 
   const handleExportDocuments = () => {
-    // Créer un CSV avec les documents filtrés
-    const headers = ["ID", "Dossier", "Candidat", "Type", "Document", "Statut", "Date"];
-    const rows = filteredDocuments.map((d) => [
-      d.id,
-      d.dossierNumber,
-      d.candidateName,
-      getDocumentTypeLabel(d.documentType),
-      d.documentName,
-      d.verificationStatus,
-      new Date(d.submittedAt).toLocaleDateString("fr-FR"),
-    ]);
+    try {
+      // Créer un CSV avec les documents filtrés
+      const headers = ["ID", "Dossier", "Candidat", "Type", "Document", "Statut", "Date"];
+      const rows = filteredDocuments.map((d) => [
+        d.id,
+        d.dossierNumber,
+        d.candidateName,
+        getDocumentTypeLabel(d.documentType),
+        d.documentName,
+        d.verificationStatus,
+        new Date(d.submittedAt).toLocaleDateString("fr-FR"),
+      ]);
 
-    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `documents_${new Date().toISOString().split("T")[0]}.csv`;
-    link.click();
-    toast.success("Export réussi");
+      const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `documents_${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      toast.success("✓ Export réussi", {
+        description: `${filteredDocuments.length} document(s) exporté(s)`,
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error("✗ Erreur lors de l'export", {
+        description: "Impossible de générer le fichier CSV",
+        duration: 3000,
+      });
+    }
   };
 
   // Statistiques
