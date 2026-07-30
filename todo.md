@@ -446,7 +446,7 @@
 
 - [x] Formulaire multi-projets simplifié (Travail, Études, Tourisme) intégré sur la page d'accueil
 - [x] Procédure tRPC submitEvaluation pour les évaluations multi-projets
-- [x] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
+- [ ] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
 - [x] Tests vitest pour le formulaire multi-projets et la procédure
 
 ## Fonctionnalités Complémentaires (v14)
@@ -490,40 +490,40 @@
 - [x] Ajouter le rôle "translator" dans la table users
 
 ### Phase 2 : Procédures tRPC
-- [x] Créer la procédure `createTranslationRequest` (sans paiement)
-- [x] Créer la procédure `getTranslationPricing` pour tarification dynamique
-- [x] Créer la procédure `getTranslationRequests` pour lister les demandes
-- [x] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
-- [x] Créer la procédure `uploadTranslatedDocument` (traducteur)
-- [x] Créer la procédure `downloadTranslatedDocument` (client)
-- [x] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
+- [ ] Créer la procédure `createTranslationRequest` (sans paiement)
+- [ ] Créer la procédure `getTranslationPricing` pour tarification dynamique
+- [ ] Créer la procédure `getTranslationRequests` pour lister les demandes
+- [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
+- [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
+- [ ] Créer la procédure `downloadTranslatedDocument` (client)
+- [ ] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
 
 ### Phase 3 : Dashboard Traducteur
-- [x] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
-- [x] Ajouter la section "En Cours" et "Completées"
-- [x] Ajouter le formulaire d'upload du document traduit
-- [x] Ajouter les filtres par langue, type de document, date
+- [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
+- [ ] Ajouter la section "En Cours" et "Completées"
+- [ ] Ajouter le formulaire d'upload du document traduit
+- [ ] Ajouter les filtres par langue, type de document, date
 
 ### Phase 4 : Tunnel de Commande Client
-- [x] Créer la page `/translation/order` avec sélection du type de document
-- [x] Ajouter le sélecteur de langues source/cible
-- [x] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
-- [x] Afficher le tarif calculé en temps réel
-- [x] Ajouter le bouton "Procéder au Paiement"
+- [ ] Créer la page `/translation/order` avec sélection du type de document
+- [ ] Ajouter le sélecteur de langues source/cible
+- [ ] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
+- [ ] Afficher le tarif calculé en temps réel
+- [ ] Ajouter le bouton "Procéder au Paiement"
 
 ### Phase 5 : Paiement Obligatoire
-- [x] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
-- [x] Créer le callback de validation du paiement
-- [x] Déclencher la notification admin uniquement après paiement validé
-- [x] Générer la facture PDF après paiement
+- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
+- [ ] Créer le callback de validation du paiement
+- [ ] Déclencher la notification admin uniquement après paiement validé
+- [ ] Générer la facture PDF après paiement
 - [ ] Envoyer confirmation par email/WhatsApp
 
 ### Phase 6 : Téléchargement Sécurisé
 - [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
-- [x] Ajouter la section "Mes Traductions" dans l'Espace Client
-- [x] Afficher le statut de chaque traduction
-- [x] Permettre le téléchargement après complétion
-- [x] Ajouter les logs de téléchargement
+- [ ] Ajouter la section "Mes Traductions" dans l'Espace Client
+- [ ] Afficher le statut de chaque traduction
+- [ ] Permettre le téléchargement après complétion
+- [ ] Ajouter les logs de téléchargement
 
 ### Phase 7 : Tests et Validation
 - [ ] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
@@ -560,32 +560,32 @@
 ## Modules de Réassurance et Suivi Dynamique (v14)
 
 ### 1. Barre de Progression de Dossier
-- [x] Créer la table `dossier_progress` pour tracker les étapes
-- [x] Implémenter la procédure tRPC `getDossierProgress`
-- [x] Créer le composant ProgressBar avec 5 étapes
-- [x] Ajouter les timestamps et les statuts
-- [x] Afficher la barre dans l'Espace Client
+- [ ] Créer la table `dossier_progress` pour tracker les étapes
+- [ ] Implémenter la procédure tRPC `getDossierProgress`
+- [ ] Créer le composant ProgressBar avec 5 étapes
+- [ ] Ajouter les timestamps et les statuts
+- [ ] Afficher la barre dans l'Espace Client
 
 ### 2. Système de Callback 15 min
-- [x] Créer la table `callback_requests` pour les demandes
-- [x] Implémenter la procédure tRPC `requestCallback`
-- [x] Créer le bouton "Demander un rappel" dans l'Espace Client
+- [ ] Créer la table `callback_requests` pour les demandes
+- [ ] Implémenter la procédure tRPC `requestCallback`
+- [ ] Créer le bouton "Demander un rappel" dans l'Espace Client
 - [ ] Envoyer notification admin + SMS/WhatsApp
-- [x] Ajouter le formulaire de rappel avec horaires disponibles
+- [ ] Ajouter le formulaire de rappel avec horaires disponibles
 
 ### 3. Galerie de Visas Accordés
-- [x] Créer la table `approved_visas` pour les visas accordés
-- [x] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
-- [x] Créer le dashboard admin pour gérer les visas
-- [x] Créer la galerie publique sur le site (anonymisée)
-- [x] Ajouter les filtres par pays et date
+- [ ] Créer la table `approved_visas` pour les visas accordés
+- [ ] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
+- [ ] Créer le dashboard admin pour gérer les visas
+- [ ] Créer la galerie publique sur le site (anonymisée)
+- [ ] Ajouter les filtres par pays et date
 
 ### 4. Calculateur de Budget
-- [x] Créer la table `country_costs` avec les frais par pays
-- [x] Implémenter la procédure tRPC `calculateBudget`
-- [x] Créer le formulaire du calculateur (pays, type visa, etc.)
-- [x] Afficher le détail des frais (droits, garanties, visa)
-- [x] Ajouter les graphiques de répartition des coûts
+- [ ] Créer la table `country_costs` avec les frais par pays
+- [ ] Implémenter la procédure tRPC `calculateBudget`
+- [ ] Créer le formulaire du calculateur (pays, type visa, etc.)
+- [ ] Afficher le détail des frais (droits, garanties, visa)
+- [ ] Ajouter les graphiques de répartition des coûts
 
 
 ## Management des Dossiers en Agence (v26)
@@ -625,10 +625,10 @@
 - [x] Ajouter des infobulles explicatives sur chaque étape de la barre de progression
 
 ### Phase 6 : Espace Client pour Dossiers en Agence
-- [x] Créer la page `/candidate/agency-dossier` pour consulter le statut
-- [x] Afficher la barre de progression du dossier
-- [x] Ajouter la section "Messages de l'Agence"
-- [x] Permettre le téléchargement des documents requis
+- [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
+- [ ] Afficher la barre de progression du dossier
+- [ ] Ajouter la section "Messages de l'Agence"
+- [ ] Permettre le téléchargement des documents requis
 
 ### Phase 7 : Tests et Validation
 - [ ] Tester l'ajout d'un dossier par l'admin
@@ -899,11 +899,11 @@
 - [ ] Implémenter la signature du protocole (checkbox + date)
 - [ ] Après signature : transférer les documents aux admins
 - [ ] Après signature : envoyer un message de confirmation au candidat
-- [x] Créer la procédure tRPC : signAgreementProtocol
-- [x] Créer la procédure tRPC : submitDocuments (après signature)
-- [x] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
-- [x] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
-- [x] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
+- [ ] Créer la procédure tRPC : signAgreementProtocol
+- [ ] Créer la procédure tRPC : submitDocuments (après signature)
+- [ ] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
+- [ ] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
+- [ ] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
 - [ ] Implémenter l'évaluation IA du profil avec tous les documents
 - [ ] Créer la procédure tRPC : evaluateProfileWithAI
 - [ ] Afficher le rapport d'évaluation IA dans l'espace candidat
@@ -937,80 +937,80 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 ## Phase 1 : Audit et Planification
-- [x] Analyser le site actuel et documenter l'état existant
-- [x] Créer une stratégie de conversion basée sur les meilleures pratiques
-- [x] Définir les KPIs à suivre (taux de conversion, temps de chargement, etc.)
-- [x] Planifier l'architecture des nouvelles pages et fonctionnalités
+- [ ] Analyser le site actuel et documenter l'état existant
+- [ ] Créer une stratégie de conversion basée sur les meilleures pratiques
+- [ ] Définir les KPIs à suivre (taux de conversion, temps de chargement, etc.)
+- [ ] Planifier l'architecture des nouvelles pages et fonctionnalités
 
 ## Phase 2 : Page d'Accueil - Statistiques & Atouts
-- [x] Créer une section "Statistiques" avec compteurs animés (clients, visas, pays, années)
-- [x] Ajouter une section "Pourquoi choisir 3M Travel & Services SARL" avec 6 atouts clés
-- [x] Améliorer les CTA : "Demander un devis", "Prendre rendez-vous", "WhatsApp"
-- [x] Ajouter des animations légères et professionnelles aux sections
-- [x] Optimiser le hero section avec une meilleure hiérarchie visuelle
+- [ ] Créer une section "Statistiques" avec compteurs animés (clients, visas, pays, années)
+- [ ] Ajouter une section "Pourquoi choisir 3M Travel & Services SARL" avec 6 atouts clés
+- [ ] Améliorer les CTA : "Demander un devis", "Prendre rendez-vous", "WhatsApp"
+- [ ] Ajouter des animations légères et professionnelles aux sections
+- [ ] Optimiser le hero section avec une meilleure hiérarchie visuelle
 
 ## Phase 3 : Preuves de Confiance
-- [x] Créer une section d'avis clients avec système de notation (5 étoiles)
-- [x] Implémenter un carousel d'avis avec photos et témoignages
-- [x] Créer une galerie de réussites (cas d'études avec autorisation)
-- [x] Ajouter une section "Certifications & Accréditations" avec logos/documents
-- [x] Afficher clairement RCCM, NIU et autres documents officiels
-- [x] Intégrer des badges de confiance (certifications, partenariats)
+- [ ] Créer une section d'avis clients avec système de notation (5 étoiles)
+- [ ] Implémenter un carousel d'avis avec photos et témoignages
+- [ ] Créer une galerie de réussites (cas d'études avec autorisation)
+- [ ] Ajouter une section "Certifications & Accréditations" avec logos/documents
+- [ ] Afficher clairement RCCM, NIU et autres documents officiels
+- [ ] Intégrer des badges de confiance (certifications, partenariats)
 
 ## Phase 4 : Pages de Services - Uniformisation
-- [x] Créer un template unifié pour toutes les pages de services
-- [x] Ajouter une FAQ spécifique à chaque service (5-8 questions)
-- [x] Implémenter un formulaire de demande d'information sur chaque page
-- [x] Ajouter des sections "Avantages", "Processus", "Tarifs" cohérentes
-- [x] Intégrer des CTA visibles et contextuels sur chaque page
+- [ ] Créer un template unifié pour toutes les pages de services
+- [ ] Ajouter une FAQ spécifique à chaque service (5-8 questions)
+- [ ] Implémenter un formulaire de demande d'information sur chaque page
+- [ ] Ajouter des sections "Avantages", "Processus", "Tarifs" cohérentes
+- [ ] Intégrer des CTA visibles et contextuels sur chaque page
 
 ## Phase 5 : Blog/Actualités
-- [x] Créer une section Blog avec gestion des articles
-- [x] Implémenter un système de catégories (Visas, Études, Voyages, Immigration)
-- [x] Ajouter un formulaire de création d'article pour l'admin
-- [x] Créer des templates pour les articles de blog
+- [ ] Créer une section Blog avec gestion des articles
+- [ ] Implémenter un système de catégories (Visas, Études, Voyages, Immigration)
+- [ ] Ajouter un formulaire de création d'article pour l'admin
+- [ ] Créer des templates pour les articles de blog
 - [ ] Ajouter un système de commentaires (modérés)
 - [ ] Implémenter un système de partage social sur les articles
 
 ## Phase 6 : Système de Réservation en Ligne
-- [x] Créer une page de réservation de rendez-vous
-- [x] Intégrer un calendrier interactif avec disponibilités
-- [x] Ajouter la sélection de l'heure et du type de service
+- [ ] Créer une page de réservation de rendez-vous
+- [ ] Intégrer un calendrier interactif avec disponibilités
+- [ ] Ajouter la sélection de l'heure et du type de service
 - [ ] Implémenter la confirmation par email/SMS
 - [ ] Créer un système de rappel (24h avant le RDV)
 - [ ] Ajouter une intégration Google Calendar (optionnel)
 
 ## Phase 7 : Simulateur d'Éligibilité
-- [x] Créer un questionnaire interactif multi-étapes
-- [x] Ajouter des questions selon le type de projet (études, travail, tourisme, regroupement familial)
-- [x] Implémenter un système de scoring automatique
-- [x] Générer un rapport d'éligibilité personnalisé
-- [x] Ajouter une CTA pour prendre rendez-vous après le résultat
+- [ ] Créer un questionnaire interactif multi-étapes
+- [ ] Ajouter des questions selon le type de projet (études, travail, tourisme, regroupement familial)
+- [ ] Implémenter un système de scoring automatique
+- [ ] Générer un rapport d'éligibilité personnalisé
+- [ ] Ajouter une CTA pour prendre rendez-vous après le résultat
 
 ## Phase 8 : Optimisation SEO
-- [x] Auditer et améliorer les balises meta (title, description, keywords)
-- [x] Implémenter les données structurées (Schema.org - LocalBusiness, Service, FAQPage)
-- [x] Optimiser les images (compression, lazy loading, alt text)
-- [x] Améliorer la vitesse du site (Core Web Vitals)
-- [x] Créer un sitemap XML et robots.txt optimisés
-- [x] Ajouter les balises Open Graph pour le partage social
+- [ ] Auditer et améliorer les balises meta (title, description, keywords)
+- [ ] Implémenter les données structurées (Schema.org - LocalBusiness, Service, FAQPage)
+- [ ] Optimiser les images (compression, lazy loading, alt text)
+- [ ] Améliorer la vitesse du site (Core Web Vitals)
+- [ ] Créer un sitemap XML et robots.txt optimisés
+- [ ] Ajouter les balises Open Graph pour le partage social
 - [ ] Implémenter le suivi Google Analytics 4 et Search Console
 
 ## Phase 9 : Présentation Entreprise
-- [x] Créer une page "À Propos" avec histoire, mission, vision
-- [x] Ajouter une page "Notre Équipe" avec photos et bios
+- [ ] Créer une page "À Propos" avec histoire, mission, vision
+- [ ] Ajouter une page "Notre Équipe" avec photos et bios
 - [ ] Créer une galerie photo des bureaux
 - [ ] Ajouter une vidéo de présentation de l'entreprise (si disponible)
 - [ ] Implémenter une section "Nos Partenaires"
 
 ## Phase 10 : UX/Design - Navigation & Animations
-- [x] Simplifier la navigation principale (menu épuré)
-- [x] Ajouter un breadcrumb sur toutes les pages
-- [x] Rendre les boutons d'action plus visibles (contraste, taille)
-- [x] Ajouter des animations légères (fade, slide, hover effects)
-- [x] Optimiser les temps de chargement (< 3s)
+- [ ] Simplifier la navigation principale (menu épuré)
+- [ ] Ajouter un breadcrumb sur toutes les pages
+- [ ] Rendre les boutons d'action plus visibles (contraste, taille)
+- [ ] Ajouter des animations légères (fade, slide, hover effects)
+- [ ] Optimiser les temps de chargement (< 3s)
 - [ ] Tester et optimiser l'affichage mobile (responsive design)
-- [x] Ajouter un footer amélioré avec liens utiles et contact
+- [ ] Ajouter un footer amélioré avec liens utiles et contact
 
 ## Phase 11 : Tests, Optimisations Finales & Déploiement
 - [ ] Tester tous les formulaires et CTA
@@ -1029,17 +1029,9 @@
 - [x] Preload font weights critiques
 - [x] Créer hook useLazyScript
 - [x] Créer hook useLazyImage
-- [x] Intégrer LazyImage dans Home.tsx
-- [x] Intégrer LazyImage dans Dashboard.tsx
-- [x] Intégrer LazyImage dans Login.tsx
-- [x] Intégrer LazyImage dans ForgotPassword.tsx
-- [x] Intégrer LazyImage dans Register.tsx
-- [x] Intégrer LazyImage dans ResetPassword.tsx
-- [x] Intégrer LazyImage dans VerifyEmail.tsx
-- [x] Intégrer LazyImage dans VerifyEmailLink.tsx
-- [x] Intégrer LazyImage dans AuthGuard.tsx
-- [x] Intégrer LazyScript pour Google Maps
-- [x] Code splitting par route (React.lazy)
+- [ ] Intégrer LazyImage dans Home.tsx
+- [ ] Intégrer LazyScript pour Google Maps
+- [ ] Code splitting par route (React.lazy)
 
 ### Images & Iframes
 - [x] Créer composant LazyImage
@@ -1054,8 +1046,8 @@
 - [x] Configurer cache headers (vercel.json)
 - [x] Créer hook useServiceWorker
 - [x] Créer notification de mise à jour
-- [x] Intégrer useServiceWorker dans App.tsx
-- [x] Ajouter ServiceWorkerUpdateNotification
+- [ ] Intégrer useServiceWorker dans App.tsx
+- [ ] Ajouter ServiceWorkerUpdateNotification
 
 ### Tests & Validation
 - [ ] Lighthouse audit complet

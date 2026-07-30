@@ -5,7 +5,6 @@ import { Eye, EyeOff, LogIn, Mail, Lock, ArrowRight, Shield } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { LazyImage } from "@/components/LazyImage";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -78,7 +77,7 @@ export default function Login() {
       >
         {/* Header coloré */}
         <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-8 text-center text-white">
-          <LazyImage src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 shadow-lg object-cover" />
+          <img src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 shadow-lg object-cover" />
           <h1 className="text-2xl font-black">Mon Espace Candidat</h1>
           <p className="text-blue-200 text-sm mt-1">Connectez-vous pour accéder à votre dossier</p>
         </div>

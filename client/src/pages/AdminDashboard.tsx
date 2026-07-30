@@ -154,18 +154,6 @@ export default function AdminDashboard() {
           >
             🔄 Gérer les procédures →
           </Button>
-          <Button
-            onClick={() => navigate('/admin/approved-visas')}
-            className="h-16 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-700 hover:to-yellow-800 text-white text-lg font-semibold rounded-lg shadow-lg"
-          >
-            🏆 Galerie des Visas Accordés →
-          </Button>
-          <Button
-            onClick={() => navigate('/admin/blog')}
-            className="h-16 bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white text-lg font-semibold rounded-lg shadow-lg"
-          >
-            📝 Gérer le Blog →
-          </Button>
         </div>
       </div>
 

@@ -6,7 +6,10 @@
 import { getDb } from "./db";
 import { translationRequests } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { storagePut } from "./storage";
+import { sendTranslationPaymentConfirmationEmail, sendAdminTranslationPaymentAlert } from "./emailService";
+import { sendTranslationPaymentConfirmationWhatsApp } from "./whatsappService";
+
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.com";
 
 /**
  * Génère le contenu HTML d'une facture de traduction
@@ -247,23 +250,64 @@ export async function generateTranslationInvoicePDF(translationId: number): Prom
       sourceLanguage: translation.sourceLanguageCode,
       targetLanguage: translation.targetLanguageCode,
       numberOfPages: translation.numberOfPages,
-      pricePerPage: translation.pricePerPage,
-      totalPrice: translation.totalPrice,
+      pricePerPage: translation.pricePerPage.toString(),
+      totalPrice: translation.totalPrice.toString(),
       currency: translation.currency,
       paymentMethod: translation.paymentMethod || "Mobile Money",
       paymentTransactionId: translation.paymentTransactionId || undefined,
     });
 
-    // Convertir HTML en PDF et stocker dans S3
-    // Pour maintenant, générer un numéro de facture et enregistrer dans la DB
+    // Générer un numéro de facture
     const invoiceNumber = translation.invoiceNumber || `TRN-${translationId}-${Date.now()}`;
 
     // Mettre à jour la DB avec le numéro de facture
     await db.update(translationRequests).set({
       invoiceNumber,
-      invoiceUrl: `/translation/invoice/${invoiceNumber}`, // URL temporaire
+      invoiceUrl: `/translation/invoice/${invoiceNumber}`,
       paymentNotificationSent: true,
     }).where(eq(translationRequests.id, translationId));
+
+    // Envoyer les notifications
+    try {
+      // Email au client
+      await sendTranslationPaymentConfirmationEmail(
+        translation.candidateEmail,
+        translation.candidateName,
+        translation.documentType,
+        invoiceNumber,
+        translation.totalPrice.toString(),
+        translation.currency,
+        `/translation/invoice/${invoiceNumber}`
+      );
+
+      // WhatsApp au client
+      if (translation.candidatePhone) {
+        await sendTranslationPaymentConfirmationWhatsApp({
+          phoneNumber: translation.candidatePhone,
+          candidateName: translation.candidateName,
+          documentType: translation.documentType,
+          totalPrice: translation.totalPrice.toString(),
+          currency: translation.currency,
+          invoiceNumber,
+          paymentMethod: translation.paymentMethod || "Mobile Money",
+        });
+      }
+
+      // Email à l'admin
+      await sendAdminTranslationPaymentAlert(
+        ADMIN_EMAIL,
+        translation.candidateName,
+        translation.candidateEmail,
+        translation.documentType,
+        translation.numberOfPages,
+        translation.totalPrice.toString(),
+        translation.currency,
+        invoiceNumber
+      );
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      // Ne pas échouer si les notifications échouent
+    }
 
     console.log(`[Translation Invoice Generated] Translation #${translationId}: ${invoiceNumber}`);
 
