@@ -16,6 +16,8 @@ import { agencyDossierRouter } from "./routers/agencyDossier";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
 import { candidateAuthOTPRouter } from "./routers/candidateAuthOTP";
 import { monitoringRouter } from "./routers/monitoring";
+import { evaluationAIRouter } from "./routers/evaluationAI";
+import { evaluationAdminRouter } from "./routers/evaluationAdmin";
 
 const COOKIE_NAME = "manus_session";
 
@@ -34,6 +36,8 @@ export const appRouter = router({
   }),
 
   evaluation: evaluationRouter,
+  evaluationAI: evaluationAIRouter,
+  evaluationAdmin: evaluationAdminRouter,
   profileEvaluation: profileEvaluationRouter,
   flights: flightsRouter,
   candidate: candidateRouter,

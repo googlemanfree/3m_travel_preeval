@@ -60,6 +60,7 @@ import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
 import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
+import EvaluationSpace from "./pages/EvaluationSpace";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 
 function Router() {
@@ -73,6 +74,7 @@ function Router() {
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"} component={Evaluation} />
+      <Route path={"/mon-espace"} component={EvaluationSpace} />
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
@@ -142,7 +144,7 @@ function Router() {
       </Route>
 
       {/* Mon Espace Candidat */}
-      <Route path={"/mon-espace"}>
+      <Route path={"/mon-espace-candidat"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
           <MySpace />
         </AuthGuard>

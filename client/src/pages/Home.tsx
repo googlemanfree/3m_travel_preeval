@@ -26,6 +26,7 @@ import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
 import { LocationMap } from "@/components/LocationMap";
+import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -1329,7 +1330,7 @@ export default function Home() {
       </footer>
 
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
-      <EligibilityModal open={showEvalModal} onClose={() => setShowEvalModal(false)} />
+      <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
       {/* ─── BOUTON WHATSAPP FLOTTANT ─────────────────────────────────────── */}
       <WhatsAppButton />
