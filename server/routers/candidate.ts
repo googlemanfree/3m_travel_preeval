@@ -99,8 +99,8 @@ export const candidateRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
-      // Générer un token de vérification unique (SANS expiration)
-      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      // Générer un token de vérification JWT (24h)
+      const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
       await db.insert(candidates).values({
         fullName: input.fullName,
@@ -128,6 +128,9 @@ export const candidateRouter = router({
       } catch (err) {
         console.error("[Register] Email verification link send error:", err);
       }
+
+      // Stocker le token JWT en base de données
+      await db.update(candidates).set({ verificationToken }).where(eq(candidates.email, input.email));
 
       return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de confirmation a été envoyé à votre adresse email." };
     }),
@@ -422,12 +425,24 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      console.log(`[verifyEmailLink] Searching for token: ${input.token.substring(0, 8)}...`);
-      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
+      
+      // Vérifier le JWT
+      let email: string;
+      try {
+        const decoded = jwt.verify(input.token, JWT_SECRET) as unknown as { email: string };
+        email = decoded.email?.toLowerCase().trim();
+        if (!email) throw new Error("Email manquant du token");
+      } catch (err) {
+        console.error("[verifyEmailLink] JWT verification failed:", err);
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Lien de vérification invalide ou expiré." });
+      }
+      
+      console.log(`[verifyEmailLink] Verifying email: ${email}`);
+      const rows = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
       console.log(`[verifyEmailLink] Found ${rows.length} matching candidate(s)`);
       if (!rows.length) {
-        console.log(`[verifyEmailLink] No candidate found with token. Checking database...`);
-        throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
+        console.log(`[verifyEmailLink] No candidate found with email: ${email}`);
+        throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur introuvable." });
       }
       const candidate = rows[0];
       if (candidate.emailVerified) {
