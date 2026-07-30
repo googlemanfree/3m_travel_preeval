@@ -50,6 +50,7 @@ const ROUTE_LABELS: Record<string, string> = {
   "/admin/candidates": "Candidats",
   "/admin/users": "Utilisateurs",
   "/admin/agency-dossiers": "Dossiers Agence",
+  "/admin/approved-visas": "Galerie des Visas Accordés",
 };
 
 /**

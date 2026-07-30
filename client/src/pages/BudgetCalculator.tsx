@@ -239,6 +239,36 @@ export default function BudgetCalculator() {
                     </div>
                   </div>
 
+                  {/* Graphique de répartition */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                      Répartition des frais
+                    </h4>
+                    {[
+                      { label: "Frais consulaires", amount: budget.breakdown.visaFee, color: "bg-blue-500" },
+                      { label: "Services 3M", amount: budget.breakdown.serviceFee, color: "bg-indigo-500" },
+                      ...(budget.breakdown.guaranteeFee > 0 ? [{ label: "Garantie", amount: budget.breakdown.guaranteeFee, color: "bg-purple-500" }] : []),
+                      ...(budget.breakdown.translationFee > 0 ? [{ label: "Traduction", amount: budget.breakdown.translationFee, color: "bg-teal-500" }] : []),
+                      ...(budget.breakdown.otherFees > 0 ? [{ label: "Autres", amount: budget.breakdown.otherFees, color: "bg-gray-400" }] : []),
+                    ].map((item) => {
+                      const pct = budget.total > 0 ? Math.round((item.amount / budget.total) * 100) : 0;
+                      return (
+                        <div key={item.label} className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>{item.label}</span>
+                            <span className="font-medium">{pct}%</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${item.color} rounded-full transition-all duration-700`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
                   {/* Note */}
                   <div className="flex items-start gap-2 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
                     <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />

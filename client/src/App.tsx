@@ -72,6 +72,7 @@ const EligibilitySimulator = lazy(() => import("./pages/EligibilitySimulator"));
 const BudgetCalculator = lazy(() => import("./pages/BudgetCalculator"));
 const VisaGallery = lazy(() => import("./pages/VisaGallery"));
 const AdminBlog = lazy(() => import("./pages/AdminBlog"));
+const AdminApprovedVisas = lazy(() => import("./pages/AdminApprovedVisas"));
 
 // Fallback de chargement léger
 const PageLoader = () => (
@@ -289,6 +290,11 @@ function Router() {
       <Route path="/admin/blog">
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminBlog />
+        </AdminGuard>
+      </Route>
+      <Route path="/admin/approved-visas">
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminApprovedVisas />
         </AdminGuard>
       </Route>
       <Route path={"404"} component={NotFound} />
