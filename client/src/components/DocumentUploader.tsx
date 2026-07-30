@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, File, X, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
 
 interface DocumentFile {
   id: string;
@@ -12,6 +13,7 @@ interface DocumentFile {
   status: "pending" | "uploading" | "success" | "error";
   progress: number;
   error?: string;
+  category?: string;
 }
 
 interface DocumentUploaderProps {
@@ -29,6 +31,8 @@ export function DocumentUploader({
 }: DocumentUploaderProps) {
   const [files, setFiles] = useState<DocumentFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("other");
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatFileSize = (bytes: number) => {
@@ -70,6 +74,7 @@ export function DocumentUploader({
           status: validation.valid ? ("pending" as const) : ("error" as const),
           progress: 0,
           error: validation.error,
+          category: selectedCategory,
         };
       });
 
@@ -102,6 +107,12 @@ export function DocumentUploader({
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
+  const updateFileCategory = (id: string, category: string) => {
+    setFiles((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, category } : f))
+    );
+  };
+
   const uploadFile = async (file: DocumentFile, fileObj: File) => {
     try {
       setFiles((prev) =>
@@ -110,7 +121,6 @@ export function DocumentUploader({
         )
       );
 
-      // Simulate upload with progress
       for (let i = 0; i <= 100; i += 10) {
         await new Promise((resolve) => setTimeout(resolve, 100));
         setFiles((prev) =>
@@ -159,6 +169,7 @@ export function DocumentUploader({
     }
   };
 
+  const selectedCategoryObj = getCategoryById(selectedCategory);
   const pendingCount = files.filter((f) => f.status === "pending").length;
   const successCount = files.filter((f) => f.status === "success").length;
   const errorCount = files.filter((f) => f.status === "error").length;
@@ -173,6 +184,58 @@ export function DocumentUploader({
         <p className="text-gray-600 text-sm">
           Déposez vos documents manquants pour accélérer le traitement de votre dossier
         </p>
+      </div>
+
+      {/* Category Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          Catégorie du document
+        </label>
+        <div className="relative">
+          <button
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-lg hover:border-blue-400 transition"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{selectedCategoryObj?.icon}</span>
+              <span className="text-gray-900 font-medium">{selectedCategoryObj?.label}</span>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-gray-400 transition ${showCategoryDropdown ? "rotate-180" : ""}`} />
+          </button>
+
+          <AnimatePresence>
+            {showCategoryDropdown && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+              >
+                {DOCUMENT_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => {
+                      setSelectedCategory(category.id);
+                      setShowCategoryDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-blue-50 transition ${
+                      selectedCategory === category.id ? "bg-blue-100" : ""
+                    }`}
+                  >
+                    <span className="text-xl">{category.icon}</span>
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{category.label}</p>
+                      <p className="text-xs text-gray-600">{category.description}</p>
+                    </div>
+                    {selectedCategory === category.id && (
+                      <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    )}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Upload Zone */}
@@ -251,60 +314,69 @@ export function DocumentUploader({
             </div>
 
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {files.map((file) => (
-                <motion.div
-                  key={file.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition"
-                >
-                  <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
+              {files.map((file) => {
+                const fileCategoryObj = getCategoryById(file.category || "other");
+                return (
+                  <motion.div
+                    key={file.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition"
+                  >
+                    <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
 
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {file.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(file.size)}
-                    </p>
-
-                    {file.status === "uploading" && (
-                      <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
-                        <motion.div
-                          className="bg-blue-600 h-1.5 rounded-full"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${file.progress}%` }}
-                          transition={{ duration: 0.3 }}
-                        />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {file.name}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${fileCategoryObj?.color}`}>
+                          <span>{fileCategoryObj?.icon}</span>
+                          {fileCategoryObj?.label}
+                        </span>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(file.size)}
+                        </p>
                       </div>
+
+                      {file.status === "uploading" && (
+                        <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                          <motion.div
+                            className="bg-blue-600 h-1.5 rounded-full"
+                            initial={{ width: 0 }}
+                            animate={{ width: `${file.progress}%` }}
+                            transition={{ duration: 0.3 }}
+                          />
+                        </div>
+                      )}
+
+                      {file.error && (
+                        <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                      )}
+                    </div>
+
+                    {file.status === "success" && (
+                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
+                    )}
+                    {file.status === "error" && (
+                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    )}
+                    {file.status === "uploading" && (
+                      <Loader2 className="w-5 h-5 text-blue-600 flex-shrink-0 animate-spin" />
                     )}
 
-                    {file.error && (
-                      <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                    {file.status === "pending" && (
+                      <button
+                        onClick={() => removeFile(file.id)}
+                        className="text-gray-400 hover:text-red-600 transition flex-shrink-0"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     )}
-                  </div>
-
-                  {file.status === "success" && (
-                    <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                  )}
-                  {file.status === "error" && (
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  )}
-                  {file.status === "uploading" && (
-                    <Loader2 className="w-5 h-5 text-blue-600 flex-shrink-0 animate-spin" />
-                  )}
-
-                  {file.status === "pending" && (
-                    <button
-                      onClick={() => removeFile(file.id)}
-                      className="text-gray-400 hover:text-red-600 transition flex-shrink-0"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
 
             {pendingCount > 0 && (
@@ -328,9 +400,8 @@ export function DocumentUploader({
         className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg"
       >
         <p className="text-sm text-blue-900">
-          <strong>💡 Conseil :</strong> Téléversez vos documents dès que possible pour
-          accélérer le traitement de votre dossier. Une décharge sera générée
-          automatiquement pour chaque document reçu.
+          <strong>💡 Conseil :</strong> Sélectionnez la catégorie appropriée pour chaque document
+          avant de téléverser. Cela nous aidera à traiter votre dossier plus rapidement.
         </p>
       </motion.div>
     </Card>
