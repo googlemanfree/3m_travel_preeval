@@ -127,7 +127,7 @@ function FileUploadZone({
         <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
           <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
           <span className="text-sm text-green-700 flex-1 truncate">{uploaded.name}</span>
-          <button onClick={onRemove} type="button" aria-label={`Supprimer le fichier ${uploaded.name}`} className="text-gray-400 hover:text-red-500 transition-colors">
+          <button onClick={onRemove} className="text-gray-400 hover:text-red-500 transition-colors">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -136,15 +136,6 @@ function FileUploadZone({
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => inputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          aria-label="Choisir ou déposer un fichier"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
           className="border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-4 text-center cursor-pointer transition-colors group"
         >
           {uploading ? (
@@ -461,33 +452,33 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
               <h3 className="font-bold text-gray-800">Vos informations personnelles</h3>
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="form-fullName">Nom complet <span className="text-red-500">*</span></Label>
-                  <Input id="form-fullName" value={form.fullName} onChange={e => set("fullName", e.target.value)}
+                  <Label>Nom complet <span className="text-red-500">*</span></Label>
+                  <Input value={form.fullName} onChange={e => set("fullName", e.target.value)}
                     placeholder="Ex : Jean-Pierre Mbarga" className="mt-1" />
                   {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="form-email">Adresse e-mail <span className="text-red-500">*</span></Label>
-                  <Input id="form-email" type="email" value={form.email} onChange={e => set("email", e.target.value)}
+                  <Label>Adresse e-mail <span className="text-red-500">*</span></Label>
+                  <Input type="email" value={form.email} onChange={e => set("email", e.target.value)}
                     placeholder="votre@email.com" className="mt-1" />
                   {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="form-whatsappNumber">Numéro WhatsApp <span className="text-red-500">*</span></Label>
-                  <Input id="form-whatsappNumber" value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
+                  <Label>Numéro WhatsApp <span className="text-red-500">*</span></Label>
+                  <Input value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
                     placeholder="+237 6XX XXX XXX" className="mt-1" />
                   {errors.whatsappNumber && <p className="text-xs text-red-500 mt-1">{errors.whatsappNumber}</p>}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label htmlFor="form-age">Âge <span className="text-red-500">*</span></Label>
-                    <Input id="form-age" type="number" min={18} max={65} value={form.age}
+                    <Label>Âge <span className="text-red-500">*</span></Label>
+                    <Input type="number" min={18} max={65} value={form.age}
                       onChange={e => set("age", e.target.value)} placeholder="Ex : 28" className="mt-1" />
                     {errors.age && <p className="text-xs text-red-500 mt-1">{errors.age}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="form-nationality">Nationalité</Label>
-                    <Input id="form-nationality" value={form.nationality} onChange={e => set("nationality", e.target.value)}
+                    <Label>Nationalité</Label>
+                    <Input value={form.nationality} onChange={e => set("nationality", e.target.value)}
                       placeholder="Camerounaise" className="mt-1" />
                   </div>
                 </div>
@@ -526,9 +517,9 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
 
               <div className="space-y-3">
                 <div>
-                  <Label htmlFor="form-academicLevel">Niveau d'études <span className="text-red-500">*</span></Label>
+                  <Label>Niveau d'études <span className="text-red-500">*</span></Label>
                   <Select value={form.academicLevel} onValueChange={v => set("academicLevel", v)}>
-                    <SelectTrigger id="form-academicLevel" className="mt-1">
+                    <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Sélectionnez votre diplôme" />
                     </SelectTrigger>
                     <SelectContent>
@@ -543,9 +534,9 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                 </div>
 
                 <div>
-                  <Label htmlFor="form-experienceYears">Années d'expérience professionnelle <span className="text-red-500">*</span></Label>
+                  <Label>Années d'expérience professionnelle <span className="text-red-500">*</span></Label>
                   <Select value={form.experienceYears} onValueChange={v => set("experienceYears", v)}>
-                    <SelectTrigger id="form-experienceYears" className="mt-1">
+                    <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Sélectionnez votre expérience" />
                     </SelectTrigger>
                     <SelectContent>
@@ -560,9 +551,9 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                 </div>
 
                 <div>
-                  <Label htmlFor="form-languageLevel">Compétences linguistiques <span className="text-red-500">*</span></Label>
+                  <Label>Compétences linguistiques <span className="text-red-500">*</span></Label>
                   <Select value={form.languageLevel} onValueChange={v => set("languageLevel", v)}>
-                    <SelectTrigger id="form-languageLevel" className="mt-1">
+                    <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Sélectionnez votre niveau" />
                     </SelectTrigger>
                     <SelectContent>
@@ -577,9 +568,9 @@ export default function ScoringForm({ procedure, open, onClose }: ScoringFormPro
                 </div>
 
                 <div>
-                  <Label htmlFor="form-jobSector">Secteur d'activité <span className="text-red-500">*</span></Label>
+                  <Label>Secteur d'activité <span className="text-red-500">*</span></Label>
                   <Select value={form.jobSector} onValueChange={v => set("jobSector", v)}>
-                    <SelectTrigger id="form-jobSector" className="mt-1">
+                    <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Sélectionnez votre secteur" />
                     </SelectTrigger>
                     <SelectContent>

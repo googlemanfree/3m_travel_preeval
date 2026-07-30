@@ -168,10 +168,10 @@ function PassengerSelector({
         <div className="text-xs text-gray-500">{sub}</div>
       </div>
       <div className="flex items-center gap-3">
-        <button onClick={onDec} disabled={value <= min} type="button" aria-label={`Diminuer : ${label}`}
+        <button onClick={onDec} disabled={value <= min}
           className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#2563EB] hover:text-[#2563EB] disabled:opacity-30 transition-colors font-bold">−</button>
         <span className="w-6 text-center font-bold text-[#1E3A8A]">{value}</span>
-        <button onClick={onInc} disabled={value >= max} type="button" aria-label={`Augmenter : ${label}`}
+        <button onClick={onInc} disabled={value >= max}
           className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#2563EB] hover:text-[#2563EB] disabled:opacity-30 transition-colors font-bold">+</button>
       </div>
     </div>
@@ -445,7 +445,7 @@ export default function Flights() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <Navbar />
+      <Navbar activePage="flights" />
 
       {/* Search Panel */}
       <div className="bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#3B82F6] py-10 px-4">
@@ -481,7 +481,7 @@ export default function Flights() {
 
               {/* Swap button */}
               <div className="relative">
-                <button onClick={swapAirports} type="button" aria-label="Inverser le départ et l'arrivée"
+                <button onClick={swapAirports}
                   className="absolute left-0 top-7 -translate-x-3 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                 </button>

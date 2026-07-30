@@ -261,9 +261,9 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
                 </div>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg border">
-                <Label htmlFor="status" className="text-xs text-gray-600">Statut actuel</Label>
+                <Label className="text-xs text-gray-600">Statut actuel</Label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger id="status" className="mt-2">
+                  <SelectTrigger className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

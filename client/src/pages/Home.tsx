@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from "react";
 import { useLocation } from 'wouter';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -521,7 +521,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <Navbar />
+      <Navbar activePage="home" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
@@ -529,27 +529,6 @@ export default function Home() {
         logoUrl="/manus-storage/logo_3m_d0e23210.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
-
-      {/* ─── STATISTIQUES ──────────────────────────────────────────────── */}
-      <section className="py-10 bg-white border-b border-gray-100">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { value: "1 500+", label: "Dossiers Évalués",    color: "text-[#1e3a8a]" },
-              { value: "98%",    label: "Satisfaction Client", color: "text-[#2563eb]" },
-              { value: "24h",    label: "Délai de Réponse",   color: "text-[#0369a1]" },
-              { value: "30+",    label: "Pays Couverts",       color: "text-[#059669]" },
-            ].map((stat, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }} viewport={{ once: true }}
-                className="text-center p-4">
-                <div className={`text-3xl md:text-4xl font-black ${stat.color} mb-1`}>{stat.value}</div>
-                <div className="text-sm text-gray-500 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-12 md:py-20 bg-white">
@@ -1005,15 +984,6 @@ export default function Home() {
                               cvFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-gray-50"
                             }`}
                             onClick={() => !cvFile && fileInputRef.current?.click()}
-                            role={cvFile ? undefined : "button"}
-                            tabIndex={cvFile ? undefined : 0}
-                            aria-label={cvFile ? undefined : "Choisir un fichier CV"}
-                            onKeyDown={(e) => {
-                              if (!cvFile && (e.key === "Enter" || e.key === " ")) {
-                                e.preventDefault();
-                                fileInputRef.current?.click();
-                              }
-                            }}
                           >
                             <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" onChange={handleFileChange} className="hidden" />
                             {cvFile ? (
@@ -1028,7 +998,6 @@ export default function Home() {
                                   </div>
                                 </div>
                                 <button type="button" onClick={(e) => { e.stopPropagation(); removeFile(); }}
-                                  aria-label={`Supprimer le fichier ${cvFile.name}`}
                                   className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors">
                                   <X className="w-3.5 h-3.5 text-red-600" />
                                 </button>
@@ -1145,36 +1114,25 @@ export default function Home() {
       </section>
 
       {/* ─── POURQUOI NOUS ───────────────────────────────────────────────── */}
-      <section className="py-16 bg-gradient-to-b from-white to-blue-50">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-12">
+          <div className="text-center mb-12">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Pourquoi nous choisir</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">L'expertise 3M à votre service</h2>
-            <p className="text-gray-500 max-w-2xl mx-auto">6 raisons pour lesquelles nos clients nous font confiance pour réaliser leurs projets de mobilité internationale.</p>
-          </motion.div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">L'expertise à votre service</h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: Shield,       title: "Agence Officielle & Certifiée",    desc: "Enregistrée au RCCM de Yaoundé, NIU validé. Votre dossier est entre des mains professionnelles et légales.",   color: "text-[#1e3a8a] bg-[#dbeafe]", badge: "RCCM" },
-              { icon: Users,        title: "Accompagnement Personnalisé",       desc: "Un conseiller dédié analyse votre profil et vous propose des solutions sur mesure adaptées à votre situation.",  color: "text-[#2563eb] bg-[#eff6ff]", badge: "1-1" },
-              { icon: Clock,        title: "Réponse Garantie en 24h",           desc: "Nos experts vous répondent sous 24 heures après soumission de votre dossier. Aucune attente inutile.",        color: "text-[#0369a1] bg-[#e0f2fe]", badge: "24h" },
-              { icon: CheckCircle2, title: "Taux de Succès Élevé",             desc: "Plus de 1 500 dossiers traités avec succès. Notre expertise vous donne les meilleures chances d'obtenir votre visa.", color: "text-[#7cb9e8] bg-[#f0f9ff]", badge: "98%" },
-              { icon: Globe,        title: "Réseau International",              desc: "Partenariats avec des agences de recrutement dans 30+ pays. Accès à des opportunités exclusives au Canada, France, Allemagne...", color: "text-[#059669] bg-[#d1fae5]", badge: "30+ pays" },
-              { icon: Star,         title: "Satisfaction Client 98%",           desc: "98% de nos clients recommandent 3M Travel & Services. Des centaines d'avis positifs témoignent de notre qualité de service.", color: "text-[#d97706] bg-[#fef3c7]", badge: "★ 4.9/5" },
+              { icon: Shield,       title: "Expertise réglementée",      desc: "Professionnels experts en visa et immigration internationale",   color: "text-[#1e3a8a] bg-[#dbeafe]" },
+              { icon: Users,        title: "Accompagnement personnalisé", desc: "Analyse de votre profil pour des solutions sur mesure",         color: "text-[#2563eb] bg-[#eff6ff]" },
+              { icon: Clock,        title: "Réponse rapide",              desc: "Retour de nos experts sous 24h après soumission",               color: "text-[#0369a1] bg-[#e0f2fe]" },
+              { icon: CheckCircle2, title: "Taux de succès élevé",        desc: "Des centaines de dossiers traités avec succès chaque année",    color: "text-[#7cb9e8] bg-[#f0f9ff]" },
             ].map((item, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}
-                className="relative bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-blue-200 group">
-                <div className="flex items-start gap-4">
-                  <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                    <item.icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-bold text-gray-900 text-sm">{item.title}</h3>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">{item.badge}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-                  </div>
+              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp} className="text-center p-6">
+                <div className={`w-14 h-14 rounded-2xl ${item.color} flex items-center justify-center mx-auto mb-4`}>
+                  <item.icon className="w-7 h-7" />
                 </div>
+                <h3 className="font-bold text-gray-900 mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -2026,8 +1984,8 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
             <>
               {/* Nom & Prénom */}
               <div>
-                <Label htmlFor="form-nom" className="text-xs font-semibold text-gray-700 mb-1 block">Nom & Prénom <span className="text-red-500">*</span></Label>
-                <input id="form-nom"
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Nom & Prénom <span className="text-red-500">*</span></Label>
+                <input
                   type="text"
                   placeholder="Ex: Jean Dupont"
                   value={form.nom}
@@ -2039,9 +1997,9 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
 
               {/* Ville */}
               <div>
-                <Label htmlFor="form-ville" className="text-xs font-semibold text-gray-700 mb-1 block">Ville actuelle <span className="text-red-500">*</span></Label>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Ville actuelle <span className="text-red-500">*</span></Label>
                 <Select value={form.ville} onValueChange={v => { setForm(p => ({ ...p, ville: v })); setErrors(p => ({ ...p, ville: undefined })); }}>
-                  <SelectTrigger id="form-ville" className={errors.ville ? "border-red-400 bg-red-50" : ""}>
+                  <SelectTrigger className={errors.ville ? "border-red-400 bg-red-50" : ""}>
                     <SelectValue placeholder="Sélectionner votre ville" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2053,9 +2011,9 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
 
               {/* Diplôme */}
               <div>
-                <Label htmlFor="form-diplome" className="text-xs font-semibold text-gray-700 mb-1 block">Dernier diplôme <span className="text-red-500">*</span></Label>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Dernier diplôme <span className="text-red-500">*</span></Label>
                 <Select value={form.diplome} onValueChange={v => { setForm(p => ({ ...p, diplome: v })); setErrors(p => ({ ...p, diplome: undefined })); }}>
-                  <SelectTrigger id="form-diplome" className={errors.diplome ? "border-red-400 bg-red-50" : ""}>
+                  <SelectTrigger className={errors.diplome ? "border-red-400 bg-red-50" : ""}>
                     <SelectValue placeholder="Sélectionner votre diplôme" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2067,9 +2025,9 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
 
               {/* Expérience */}
               <div>
-                <Label htmlFor="form-experience" className="text-xs font-semibold text-gray-700 mb-1 block">Années d'expérience <span className="text-red-500">*</span></Label>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Années d'expérience <span className="text-red-500">*</span></Label>
                 <Select value={form.experience} onValueChange={v => { setForm(p => ({ ...p, experience: v })); setErrors(p => ({ ...p, experience: undefined })); }}>
-                  <SelectTrigger id="form-experience" className={errors.experience ? "border-red-400 bg-red-50" : ""}>
+                  <SelectTrigger className={errors.experience ? "border-red-400 bg-red-50" : ""}>
                     <SelectValue placeholder="Sélectionner votre niveau" />
                   </SelectTrigger>
                   <SelectContent>
@@ -2099,9 +2057,9 @@ Je souhaite recevoir mon rapport de scoring officiel.`;
 
               {/* Secteur */}
               <div>
-                <Label htmlFor="form-secteur" className="text-xs font-semibold text-gray-700 mb-1 block">Secteur d'activité <span className="text-red-500">*</span></Label>
+                <Label className="text-xs font-semibold text-gray-700 mb-1 block">Secteur d'activité <span className="text-red-500">*</span></Label>
                 <Select value={form.secteur} onValueChange={v => { setForm(p => ({ ...p, secteur: v })); setErrors(p => ({ ...p, secteur: undefined })); }}>
-                  <SelectTrigger id="form-secteur" className={errors.secteur ? "border-red-400 bg-red-50" : ""}>
+                  <SelectTrigger className={errors.secteur ? "border-red-400 bg-red-50" : ""}>
                     <SelectValue placeholder="Sélectionner votre secteur" />
                   </SelectTrigger>
                   <SelectContent>

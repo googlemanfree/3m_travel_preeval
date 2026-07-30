@@ -46,7 +46,7 @@ export default function Login() {
         emailVerified: candidateData.emailVerified ?? true,
       });
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
-      navigate(from ? decodeURIComponent(from) : "/mon-espace");
+      navigate(from ? decodeURIComponent(from) : "/dashboard");
     },
     onError: (err) => {
       // Si l'email n'est pas vérifié, proposer de renvoyer le code
@@ -132,7 +132,6 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

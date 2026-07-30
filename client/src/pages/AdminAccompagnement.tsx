@@ -135,15 +135,6 @@ export default function AdminAccompagnement() {
                     key={eval_.id}
                     className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition"
                     onClick={() => setSelectedEval(eval_)}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Voir le dossier de ${eval_.fullName}`}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelectedEval(eval_);
-                      }
-                    }}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

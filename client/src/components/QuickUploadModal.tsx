@@ -130,15 +130,6 @@ export function QuickUploadModal({
                 onDrop={handleDrop}
                 className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-blue-50 hover:bg-blue-100 transition cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                aria-label="Choisir ou déposer un document"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
               >
                 <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                 <p className="text-sm font-medium text-gray-700">
@@ -171,8 +162,6 @@ export function QuickUploadModal({
                     </div>
                     <button
                       onClick={() => setSelectedFile(null)}
-                      type="button"
-                      aria-label={`Retirer le fichier ${selectedFile.name}`}
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <X className="w-4 h-4" />
