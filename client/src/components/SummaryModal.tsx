@@ -18,6 +18,7 @@ interface SummaryModalProps {
     processingTime: string;
     cost: string;
   };
+  attractions?: { name: string; icon: string; description: string }[];
 }
 
 export const SummaryModal: React.FC<SummaryModalProps> = ({
@@ -26,6 +27,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
   country,
   flag,
   summary,
+  attractions = [],
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -144,11 +146,44 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
             </div>
           </motion.div>
 
+          {/* Attractions Section */}
+          {attractions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="p-8 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border-2 border-indigo-300 shadow-md"
+            >
+              <h3 className="text-xl font-bold text-indigo-900 mb-6 flex items-center gap-2">
+                <span className="text-2xl">🎯</span> Attractions Touristiques Principales
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {attractions.map((attraction, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 + index * 0.05 }}
+                    className="p-4 bg-white rounded-lg border border-indigo-200 hover:border-indigo-400 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl flex-shrink-0">{attraction.icon}</span>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-indigo-900 text-base">{attraction.name}</h4>
+                        <p className="text-sm text-gray-700 mt-1 leading-relaxed">{attraction.description}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Information Box */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: attractions.length > 0 ? 0.5 : 0.4 }}
             className="p-6 bg-amber-50 rounded-xl border-2 border-amber-300 shadow-md"
           >
             <p className="text-gray-800 font-medium">

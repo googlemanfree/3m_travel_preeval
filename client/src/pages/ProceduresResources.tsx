@@ -24,6 +24,106 @@ interface SummaryData {
   cost: string;
 }
 
+// Données des attractions touristiques
+const ATTRACTIONS: Record<string, { name: string; icon: string; description: string }[]> = {
+  'Allemagne': [
+    { name: 'Porte de Brandebourg', icon: '🏛️', description: 'Monument emblématique de Berlin' },
+    { name: 'Château de Neuschwanstein', icon: '🏰', description: 'Château de conte de fées en Bavière' },
+    { name: 'Île des Musées', icon: '🎨', description: 'Complexe de 5 musées de classe mondiale' },
+    { name: 'Forêt Noire', icon: '🌲', description: 'Région montagneuse pittoresque' },
+  ],
+  'Australie': [
+    { name: 'Opéra de Sydney', icon: '🎭', description: 'Chef-d\'œuvre architectural' },
+    { name: 'Grande Barrière de Corail', icon: '🪸', description: 'Plus grand récif corallien du monde' },
+    { name: 'Uluru', icon: '🏜️', description: 'Monolithe sacré du désert rouge' },
+    { name: 'Douze Apôtres', icon: '🪨', description: 'Formations rocheuses côtières spectaculaires' },
+  ],
+  'Canada': [
+    { name: 'Chutes du Niagara', icon: '💧', description: 'Cascades majestueuses entre deux pays' },
+    { name: 'Parc Banff', icon: '🏔️', description: 'Paysages montagneux époustouflants' },
+    { name: 'Lac Louise', icon: '🏞️', description: 'Lac turquoise entouré de montagnes' },
+    { name: 'CN Tower', icon: '🗼', description: 'Tour emblématique de Toronto' },
+  ],
+  'France': [
+    { name: 'Tour Eiffel', icon: '🗼', description: 'Monument le plus iconique de Paris' },
+    { name: 'Musée du Louvre', icon: '🎨', description: 'Plus grand musée d\'art du monde' },
+    { name: 'Château de Versailles', icon: '👑', description: 'Palais royal somptueux' },
+    { name: 'Mont-Saint-Michel', icon: '⛪', description: 'Abbaye sur îlot rocheux en Normandie' },
+  ],
+  'États-Unis': [
+    { name: 'Statue de la Liberté', icon: '🗽', description: 'Symbole de liberté à New York' },
+    { name: 'Grand Canyon', icon: '🏜️', description: 'Gorge spectaculaire en Arizona' },
+    { name: 'Yellowstone', icon: '🌋', description: 'Premier parc national du monde' },
+    { name: 'Hollywood', icon: '🎬', description: 'Cœur de l\'industrie cinématographique' },
+  ],
+  'Royaume-Uni': [
+    { name: 'Big Ben', icon: '🕐', description: 'Tour de l\'horloge emblématique' },
+    { name: 'Stonehenge', icon: '🪨', description: 'Monument préhistorique mystérieux' },
+    { name: 'Palais de Buckingham', icon: '👑', description: 'Résidence officielle du monarque' },
+    { name: 'Tower Bridge', icon: '🌉', description: 'Pont gothique iconique de Londres' },
+  ],
+  'Suisse': [
+    { name: 'Cervin', icon: '⛰️', description: 'Montagne emblématique des Alpes' },
+    { name: 'Lac Léman', icon: '🏞️', description: 'Lac alpin cristallin' },
+    { name: 'Jungfrau', icon: '🏔️', description: 'Sommet des Alpes bernoises' },
+    { name: 'Interlaken', icon: '🎿', description: 'Destination alpine de renommée mondiale' },
+  ],
+  'Nouvelle-Zélande': [
+    { name: 'Milford Sound', icon: '🏞️', description: 'Fjord spectaculaire de Fiordland' },
+    { name: 'Hobbiton', icon: '🎬', description: 'Décor du Seigneur des Anneaux' },
+    { name: 'Geyser de Rotorua', icon: '🌋', description: 'Geysers géothermiques actifs' },
+    { name: 'Baie des Îles', icon: '🌊', description: 'Archipel pittoresque du nord' },
+  ],
+  'Irlande': [
+    { name: 'Falaises de Moher', icon: '🪨', description: 'Falaises côtières spectaculaires' },
+    { name: 'Château de Blarney', icon: '🏰', description: 'Château historique avec la Pierre de Blarney' },
+    { name: 'Anneau de Kerry', icon: '🚗', description: 'Route panoramique circulaire' },
+    { name: 'Tombe de Newgrange', icon: '⛪', description: 'Monument mégalithique ancien' },
+  ],
+  'Italie': [
+    { name: 'Colosseum', icon: '🏛️', description: 'Amphithéâtre romain antique' },
+    { name: 'Basilique Saint-Pierre', icon: '⛪', description: 'Plus grande église du monde' },
+    { name: 'Gondoles de Venise', icon: '🚤', description: 'Canaux romantiques et pittoresques' },
+    { name: 'Tour de Pise', icon: '🗼', description: 'Tour penchée emblématique' },
+  ],
+  'Pologne': [
+    { name: 'Château de Wawel', icon: '🏰', description: 'Résidence royale à Cracovie' },
+    { name: 'Vieille Ville de Gdańsk', icon: '🏘️', description: 'Architecture hanséatique colorée' },
+    { name: 'Auschwitz', icon: '🕯️', description: 'Site historique de mémoire' },
+    { name: 'Parc Tatra', icon: '⛰️', description: 'Montagnes spectaculaires du sud' },
+  ],
+  'Portugal': [
+    { name: 'Palais de Pena', icon: '👑', description: 'Palais romantique coloré' },
+    { name: 'Monastère des Hiéronymites', icon: '⛪', description: 'Chef-d\'œuvre de l\'architecture manuéline' },
+    { name: 'Falaises de l\'Algarve', icon: '🏖️', description: 'Plages dorées et falaises ocre' },
+    { name: 'Librairie Lello', icon: '📚', description: 'Une des plus belles librairies du monde' },
+  ],
+  'Qatar': [
+    { name: 'Musée d\'Art Islamique', icon: '🎨', description: 'Collection d\'art islamique exceptionnelle' },
+    { name: 'Souq Waqif', icon: '🏪', description: 'Marché traditionnel animé' },
+    { name: 'Corniche de Doha', icon: '🌊', description: 'Promenade côtière moderne' },
+    { name: 'Désert du Qatar', icon: '🏜️', description: 'Safaris et dunes dorées' },
+  ],
+  'Malaisie': [
+    { name: 'Petronas Twin Towers', icon: '🏢', description: 'Gratte-ciel emblématiques de Kuala Lumpur' },
+    { name: 'Grottes de Batu', icon: '⛩️', description: 'Grottes sacrées hindoues' },
+    { name: 'Îles Perhentian', icon: '🏝️', description: 'Paradis tropical avec plages immaculées' },
+    { name: 'Forêt tropicale de Taman Negara', icon: '🌴', description: 'Jungle ancienne et biodiversité' },
+  ],
+  'Kenya': [
+    { name: 'Safari du Serengeti', icon: '🦁', description: 'Migration annuelle des gnous' },
+    { name: 'Mont Kenya', icon: '⛰️', description: 'Deuxième plus haute montagne d\'Afrique' },
+    { name: 'Lac Nakuru', icon: '🦩', description: 'Lac alcalin avec flamants roses' },
+    { name: 'Île de Lamu', icon: '🏝️', description: 'Île côtière avec architecture swahilie' },
+  ],
+  'Schengen': [
+    { name: 'Alpes Européennes', icon: '⛰️', description: 'Chaîne montagneuse majeure' },
+    { name: 'Côte Méditerranéenne', icon: '🏖️', description: 'Plages et villages côtiers pittoresques' },
+    { name: 'Villes Historiques', icon: '🏰', description: 'Patrimoine architectural européen' },
+    { name: 'Parcs Naturels', icon: '🌲', description: 'Réserves naturelles protégées' },
+  ],
+};
+
 // Données des résumés
 const SUMMARIES: Record<string, SummaryData> = {
   'Allemagne': {
@@ -436,6 +536,7 @@ const ProceduresResources = () => {
           country={selectedSummary.country}
           flag={selectedSummary.flag}
           summary={selectedSummary.data}
+          attractions={ATTRACTIONS[selectedSummary.country] || []}
         />
       )}
       <Footer />
