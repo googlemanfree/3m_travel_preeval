@@ -899,11 +899,11 @@
 - [ ] Implémenter la signature du protocole (checkbox + date)
 - [ ] Après signature : transférer les documents aux admins
 - [ ] Après signature : envoyer un message de confirmation au candidat
-- [ ] Créer la procédure tRPC : signAgreementProtocol
-- [ ] Créer la procédure tRPC : submitDocuments (après signature)
-- [ ] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
-- [ ] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
-- [ ] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
+- [x] Créer la procédure tRPC : signAgreementProtocol
+- [x] Créer la procédure tRPC : submitDocuments (après signature)
+- [x] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
+- [x] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
+- [x] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
 - [ ] Implémenter l'évaluation IA du profil avec tous les documents
 - [ ] Créer la procédure tRPC : evaluateProfileWithAI
 - [ ] Afficher le rapport d'évaluation IA dans l'espace candidat
@@ -958,11 +958,11 @@
 - [x] Intégrer des badges de confiance (certifications, partenariats)
 
 ## Phase 4 : Pages de Services - Uniformisation
-- [ ] Créer un template unifié pour toutes les pages de services
-- [ ] Ajouter une FAQ spécifique à chaque service (5-8 questions)
-- [ ] Implémenter un formulaire de demande d'information sur chaque page
-- [ ] Ajouter des sections "Avantages", "Processus", "Tarifs" cohérentes
-- [ ] Intégrer des CTA visibles et contextuels sur chaque page
+- [x] Créer un template unifié pour toutes les pages de services
+- [x] Ajouter une FAQ spécifique à chaque service (5-8 questions)
+- [x] Implémenter un formulaire de demande d'information sur chaque page
+- [x] Ajouter des sections "Avantages", "Processus", "Tarifs" cohérentes
+- [x] Intégrer des CTA visibles et contextuels sur chaque page
 
 ## Phase 5 : Blog/Actualités
 - [x] Créer une section Blog avec gestion des articles

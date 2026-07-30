@@ -6,13 +6,78 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
+
+// Composant onglet Paiements
+function PaymentsTab() {
+  const { data: payments, isLoading } = trpc.candidate.getMyPayments.useQuery();
+
+  if (isLoading) return <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" /></div>;
+
+  const statusLabel = (status: string) => {
+    const map: Record<string, string> = { pending: "En attente", confirmed: "Confirmé", verified: "Vérifié", cancelled: "Annulé" };
+    return map[status] || status;
+  };
+  const statusColor = (status: string) => {
+    if (status === "confirmed" || status === "verified") return "bg-green-500";
+    if (status === "cancelled") return "bg-red-500";
+    return "bg-yellow-500";
+  };
+  const methodLabel = (method: string) => {
+    const map: Record<string, string> = { cash: "Espèces", bank_transfer: "Virement", card: "Carte", mobile_money: "Mobile Money", check: "Chèque", other: "Autre" };
+    return map[method] || method;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-green-500" />
+          Historique des Paiements
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {!payments || payments.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p>Aucun paiement enregistré</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {payments.map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold">{p.paymentDescription}</p>
+                    <Badge className={statusColor(p.status)}>{statusLabel(p.status)}</Badge>
+                  </div>
+                  <p className="text-sm text-gray-500">{methodLabel(p.paymentMethod)} • {p.currency}</p>
+                  <p className="text-xs text-gray-400 mt-1">{p.paidAt ? new Date(p.paidAt).toLocaleDateString('fr-FR') : '—'}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-green-600">{Number(p.amount).toLocaleString('fr-FR')} {p.currency}</p>
+                  {p.invoiceUrl && (
+                    <Button variant="ghost" size="sm" asChild className="mt-1">
+                      <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="w-4 h-4 mr-1" /> Facture
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 // Composant onglet Traductions
 function TranslationsTab() {
@@ -247,11 +312,12 @@ export default function MySpace() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="translations">Traductions</TabsTrigger>
+            <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="agreement">Accord</TabsTrigger>
           </TabsList>
 
@@ -384,6 +450,11 @@ export default function MySpace() {
           {/* Traductions */}
           <TabsContent value="translations" className="space-y-6">
             <TranslationsTab />
+          </TabsContent>
+
+          {/* Paiements */}
+          <TabsContent value="payments" className="space-y-6">
+            <PaymentsTab />
           </TabsContent>
 
           {/* Accord */}
