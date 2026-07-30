@@ -591,58 +591,72 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-50">
       {/* En-tête fixe */}
       <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white fixed top-0 left-0 right-0 z-50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
               <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-                Actualiser
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setShowImportModal(true)}
-                className="bg-white text-blue-900 hover:bg-blue-50 gap-1.5 font-semibold"
-              >
-                <Plus className="w-4 h-4" />
-                Saisir dossier agence
-              </Button>
-              
-              {/* Profil Admin */}
-              <div className="flex items-center gap-2 pl-3 border-l border-white/20">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-md shadow-orange-900/30 text-sm">
-                  {getInitials(adminName)}
-                </div>
-                <div className="hidden sm:flex flex-col">
-                  <p className="text-sm font-semibold text-white leading-tight">{adminName}</p>
-                  <p className="text-xs text-blue-200">Admin</p>
-                </div>
+            
+            {/* Barre de recherche rapide */}
+            <div className="flex-1 max-w-xs">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Chercher un dossier ou utilisateur..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-white/10 border border-white/20 text-white placeholder-gray-300 rounded-lg focus:bg-white/15 focus:border-white/40 transition-all"
+                />
               </div>
-              
-              <Button
-                size="sm"
-                onClick={() => logoutMutation.mutate({ sessionToken })}
-                disabled={logoutMutation.isPending}
-                className="bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-md shadow-red-900/30 transition-all duration-150 border-0"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
-              </Button>
             </div>
+          </div>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              Actualiser
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setShowImportModal(true)}
+              className="bg-white text-blue-900 hover:bg-blue-50 gap-1.5 font-semibold"
+            >
+              <Plus className="w-4 h-4" />
+              Saisir dossier agence
+            </Button>
+            
+            {/* Profil Admin */}
+            <div className="flex items-center gap-2 pl-3 border-l border-white/20">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-md shadow-orange-900/30 text-sm">
+                {getInitials(adminName)}
+              </div>
+              <div className="hidden sm:flex flex-col">
+                <p className="text-sm font-semibold text-white leading-tight">{adminName}</p>
+                <p className="text-xs text-blue-200">Admin</p>
+              </div>
+            </div>
+            
+            <Button
+              size="sm"
+              onClick={() => logoutMutation.mutate({ sessionToken })}
+              disabled={logoutMutation.isPending}
+              className="bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-md shadow-red-900/30 transition-all duration-150 border-0"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
+            </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 mt-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 mt-32">
         {/* Statistiques */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
