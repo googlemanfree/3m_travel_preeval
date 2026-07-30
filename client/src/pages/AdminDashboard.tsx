@@ -608,12 +608,12 @@ export default function AdminDashboard() {
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
                 onClick={() => logoutMutation.mutate({ sessionToken })}
-                className="text-white hover:bg-white/10 gap-1.5"
+                disabled={logoutMutation.isPending}
+                className="bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-md shadow-red-900/30 transition-all duration-150 border-0"
               >
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Déconnexion</span>
+                <span>{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
               </Button>
             </div>
           </div>
