@@ -1,10 +1,8 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 export default function PolitiqueConfidentialite() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       {/* En-tête */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">

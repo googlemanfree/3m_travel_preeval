@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import {
   Search, Download, FileText, Briefcase, GraduationCap,
@@ -145,7 +144,6 @@ export default function Ressources() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-[#1E3A8A] to-[#1e5fa8] text-white py-14 px-4">

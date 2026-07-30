@@ -4,7 +4,6 @@ import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, Chec
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Navbar from '@/components/Navbar';
 import { ChatModal } from '@/components/ChatModal';
 import { trpc } from '@/lib/trpc';
 
@@ -100,7 +99,6 @@ export default function Contact() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">

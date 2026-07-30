@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DESTINATIONS, VISA_TYPES } from "@shared/visaData";
 import { useLocation } from "wouter";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const CONTINENT_COLORS: Record<string, string> = {
@@ -46,7 +45,6 @@ export default function Destinations() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Navbar />
 
       {/* En-tête */}
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16">

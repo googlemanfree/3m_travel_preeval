@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PaymentReceipt from "@/components/PaymentReceipt";
 import { CheckCircle, Download, MessageCircle, Home, Loader2, ArrowRight } from "lucide-react";
@@ -28,7 +27,6 @@ export default function PaymentSuccess() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-emerald-950 to-slate-900 text-white">
-      <Navbar />
 
       <div className="pt-24 pb-16 px-4 flex flex-col items-center justify-center min-h-[80vh]">
         {isLoading ? (

@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import FullDossierForm from "@/components/FullDossierForm";
 import type { VisaCategory } from "@/components/FullDossierForm";
@@ -12,7 +11,6 @@ export default function OpenDossier() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-      <Navbar />
       <div className="pt-24 pb-16 px-4">
         <div className="max-w-2xl mx-auto">
           {/* En-tête de la page */}

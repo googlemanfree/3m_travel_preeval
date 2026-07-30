@@ -11,7 +11,6 @@ import {
   Search, FileText, CheckCircle2, Clock, AlertCircle, 
   Download, Mail, Eye, Edit2, Trash2, Send 
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
 
@@ -106,7 +105,6 @@ export default function AdminEvaluations() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
 
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">

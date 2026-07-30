@@ -68,6 +68,7 @@ import AppointmentBooking from "./pages/AppointmentBooking";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
+import Navbar from "./components/Navbar";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -304,7 +305,11 @@ function App() {
           <Toaster />
           {sessionRestored && (
             <>
+              {/* Header global visible sur toutes les pages */}
+              <Navbar />
+              {/* Contenu des pages */}
               <Router />
+              {/* Widgets flottants */}
               <FloatingServices />
               <FloatingWhatsAppButton />
               <ScrollToTop />

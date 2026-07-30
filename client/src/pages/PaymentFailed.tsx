@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { XCircle, RefreshCw, MessageCircle, Home } from "lucide-react";
 
@@ -16,7 +15,6 @@ export default function PaymentFailed() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-slate-900 text-white">
-      <Navbar />
 
       <div className="pt-24 pb-16 px-4 flex flex-col items-center justify-center min-h-[80vh]">
         <div className="max-w-lg w-full text-center space-y-8">

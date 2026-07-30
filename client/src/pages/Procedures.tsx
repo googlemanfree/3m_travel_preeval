@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProcedureDetailModal from "@/components/ProcedureDetailModal";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
@@ -1218,7 +1217,6 @@ export default function Procedures() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">

@@ -21,7 +21,6 @@ import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import Navbar from "@/components/Navbar";
 import ServicesSection from "@/components/ServicesSection";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
@@ -527,7 +526,6 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <Navbar />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection

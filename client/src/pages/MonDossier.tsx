@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { DossierProgressBar } from "@/components/DossierProgressBar";
 import { toast } from "sonner";
@@ -192,7 +191,6 @@ export default function MonDossier() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
 
       <main className="flex-1 py-12">
         <div className="max-w-4xl mx-auto px-4">

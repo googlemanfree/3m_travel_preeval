@@ -5,7 +5,6 @@ import { CheckCircle2, Copy, Download, MessageSquare, FileText, ArrowRight } fro
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
 
 interface DossierConfirmationProps {
   dossierNumber?: string;
@@ -65,7 +64,6 @@ Conservez ce numéro précieusement pour suivre votre dossier.
   if (!dossierData) {
     return (
       <div className="min-h-screen bg-white">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
@@ -91,7 +89,6 @@ Conservez ce numéro précieusement pour suivre votre dossier.
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      <Navbar />
 
       <motion.div
         className="max-w-2xl mx-auto px-4 py-12"

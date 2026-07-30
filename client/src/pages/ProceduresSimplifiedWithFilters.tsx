@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 
@@ -173,7 +172,6 @@ export default function ProceduresSimplifiedWithFilters() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">

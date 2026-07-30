@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Heart, Globe, Clock, CheckCircle, AlertCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
 import { Link } from 'wouter';
 
 export default function Assurance() {
@@ -76,7 +75,6 @@ export default function Assurance() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f1e4a] to-[#1a2a5a]">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">

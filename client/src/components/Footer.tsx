@@ -118,14 +118,10 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <img
-                src="/manus-storage/logo_3m_d0e23210.jpeg"
-                alt="3M Travel"
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-blue-400/30"
+                src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
+                alt="3M Travel & Services"
+                className="h-10 w-auto object-contain"
               />
-              <div>
-                <div className="font-black text-white text-sm leading-tight">3M Travel & Services</div>
-                <div className="text-xs text-blue-300">Votre mobilité, notre expertise</div>
-              </div>
             </div>
             <p className="text-xs text-gray-400 leading-relaxed">
               Agence officielle d'accompagnement à l'immigration et à la mobilité internationale.

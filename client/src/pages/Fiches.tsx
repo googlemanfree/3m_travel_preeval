@@ -8,7 +8,6 @@ import {
   ChevronDown, ChevronUp, Download, ArrowRight, Info,
   Building, Users, Star
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
@@ -295,7 +294,6 @@ export default function Fiches() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <Navbar />
 
       {/* Hero */}
       <section className="bg-gradient-to-r from-blue-700 to-indigo-700 text-white py-14">

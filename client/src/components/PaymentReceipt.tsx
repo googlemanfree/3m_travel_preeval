@@ -19,7 +19,7 @@ interface PaymentReceiptProps {
   paymentMethod?: string;
 }
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
 export default function PaymentReceipt({
   dossierNumber,

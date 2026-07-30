@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Award, Users, CheckCircle, Globe, Zap, Shield, ArrowRight, Heart } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import Navbar from '@/components/Navbar';
 import { Link } from 'wouter';
 
 export default function About() {
@@ -124,7 +123,6 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">

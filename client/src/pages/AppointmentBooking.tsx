@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import Navbar from '@/components/Navbar';
 import { toast } from 'sonner';
 
 type AppointmentType = 'agency' | 'visio';
@@ -93,7 +92,6 @@ export default function AppointmentBooking() {
 
   return (
     <div className="min-h-screen bg-white font-sans">
-      <Navbar />
 
       {/* Hero */}
       <section className="py-12 md:py-20 bg-gradient-to-br from-[#0B192C] to-[#1E3E62]">

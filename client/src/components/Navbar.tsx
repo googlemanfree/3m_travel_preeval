@@ -23,24 +23,12 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-20">
           
           {/* 1. LOGO & BRANDING MODERNE */}
-          <a href="/" className="flex items-center gap-3.5 group">
-            <div className="relative">
-              <div className="h-11 w-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-                3M
-              </div>
-              <span className="absolute -bottom-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-            </div>
-            <div>
-              <span className="block text-lg font-black text-[#0a2540] tracking-tight leading-none group-hover:text-blue-600 transition-colors">
-                3M Travel <span className="text-blue-600">&</span> Services
-              </span>
-              <span className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-1">
-                Votre mobilité, notre expertise
-              </span>
-            </div>
+          <a href="/" className="flex items-center gap-3 group hover:opacity-80 transition-opacity">
+            <img
+              src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
+              alt="3M Travel & Services"
+              className="h-12 w-auto object-contain"
+            />
           </a>
 
           {/* 2. NAVIGATION DESKTOP ÉLÉGANTE */}

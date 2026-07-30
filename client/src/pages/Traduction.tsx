@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, CheckCircle, Globe, Zap, Shield, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
 
 export default function Traduction() {
   const [activeTab, setActiveTab] = useState<'documents' | 'process' | 'benefits'>('documents');
@@ -90,7 +89,6 @@ export default function Traduction() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0f1e4a] to-[#1a2a5a]">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">

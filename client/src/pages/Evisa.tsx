@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { CheckCircle, Globe, FileText, Clock, Shield, Zap, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import Navbar from '@/components/Navbar';
 import { Link } from 'wouter';
 
 export default function Evisa() {
@@ -108,7 +107,6 @@ export default function Evisa() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">
