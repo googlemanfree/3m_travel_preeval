@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { trpc } from "@/lib/trpc";
 interface Document {
   id: number;
   dossierNumber: string;

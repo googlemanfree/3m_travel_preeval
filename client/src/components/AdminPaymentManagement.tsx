@@ -24,19 +24,35 @@ export function AdminPaymentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
 
-  // Récupérer les paiements (à implémenter côté backend)
-  const payments: Payment[] = [];
-
-  const filteredPayments = payments.filter((p) => {
-    const matchesSearch =
-      p.dossierNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = filterStatus === "all" || p.paymentStatus === filterStatus;
-
-    return matchesSearch && matchesStatus;
+  // Récupérer les paiements via tRPC
+  const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
+    paymentStatus: filterStatus === "all" ? "ALL" : filterStatus,
+    search: searchTerm,
+    limit: 100,
+    offset: 0,
   });
+
+  // Transformer les applications en paiements
+  const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
+    id: app.id,
+    dossierNumber: app.dossierNumber,
+    fullName: app.fullName,
+    email: app.email,
+    amount: app.paymentAmount || 65000,
+    currency: app.paymentCurrency || "XAF",
+    paymentStatus: app.paymentStatus || "PENDING",
+    paymentMethod: app.paymentMethod,
+    paymentDate: app.paymentDate,
+    transactionId: app.paymentTransactionId,
+  }));
+
+  // Les paiements sont déjà filtrés par la requête tRPC
+  const filteredPayments = payments;
+
+  // Ajouter un indicateur de chargement
+  if (isLoading) {
+    return <div className="text-center py-8 text-gray-500">Chargement des paiements...</div>;
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
