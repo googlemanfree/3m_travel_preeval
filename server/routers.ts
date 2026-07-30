@@ -10,6 +10,7 @@ import { profileEvaluationRouter } from "./routers/profileEvaluation";
 import { contactRouter } from "./routers/contact";
 import { adminRouter } from "./routers/admin";
 import { adminAuthRouter } from "./routers/adminAuth";
+import { adminRouter as adminDossierRouter } from "./routers/adminRouter";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
@@ -40,6 +41,7 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   adminAuth: adminAuthRouter,
+  adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
