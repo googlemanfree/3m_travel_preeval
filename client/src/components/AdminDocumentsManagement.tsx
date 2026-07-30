@@ -28,6 +28,7 @@ export function AdminDocumentsManagement() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+  const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Récupérer les documents via tRPC
@@ -147,8 +148,17 @@ export function AdminDocumentsManagement() {
     return labels[type] || type;
   };
 
-  const handleViewDocument = (url: string) => {
-    window.open(url, "_blank");
+  const handleViewDocument = (doc: Document) => {
+    setPreviewingDoc(doc);
+  };
+
+  const handleDownloadPreviewedDocument = () => {
+    if (!previewingDoc) return;
+    const link = document.createElement("a");
+    link.href = previewingDoc.documentUrl;
+    link.download = previewingDoc.documentName;
+    link.click();
+    toast.success("Téléchargement en cours...");
   };
 
   const handleDownloadDocument = (url: string, docName: string) => {
@@ -318,7 +328,7 @@ export function AdminDocumentsManagement() {
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <Button
-                              onClick={() => handleViewDocument(doc.documentUrl)}
+                              onClick={() => handleViewDocument(doc)}
                               variant="ghost"
                               size="sm"
                               title="Voir le document"
@@ -359,6 +369,78 @@ export function AdminDocumentsManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Modale de prévisualisation */}
+        <Dialog open={previewingDoc !== null} onOpenChange={(open) => !open && setPreviewingDoc(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>{previewingDoc?.documentName}</DialogTitle>
+              <DialogDescription>
+                {previewingDoc?.candidateName} - {getDocumentTypeLabel(previewingDoc?.documentType || "")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-auto">
+              {previewingDoc?.documentUrl && (
+                <>
+                  {previewingDoc.documentUrl.toLowerCase().endsWith(".pdf") ? (
+                    <iframe
+                      src={previewingDoc.documentUrl}
+                      className="w-full h-96 border border-gray-300 rounded-lg"
+                      title="Document preview"
+                    />
+                  ) : previewingDoc.documentUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                    <img
+                      src={previewingDoc.documentUrl}
+                      alt={previewingDoc.documentName}
+                      className="w-full max-h-96 object-contain border border-gray-300 rounded-lg"
+                    />
+                  ) : (
+                    <div className="p-4 bg-gray-100 rounded-lg text-center text-gray-600">
+                      <p>Format non prévisualisable</p>
+                      <p className="text-sm mt-2">Cliquez sur "Télécharger" pour consulter le document</p>
+                    </div>
+                  )}
+                </>
+              )}
+              {previewingDoc?.rejectionReason && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm font-semibold text-red-800">Raison du rejet :</p>
+                  <p className="text-sm text-red-700 mt-1">{previewingDoc.rejectionReason}</p>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleDownloadPreviewedDocument}>
+                <Download className="w-4 h-4 mr-2" />
+                Télécharger
+              </Button>
+              {previewingDoc?.verificationStatus === "pending" && (
+                <>
+                  <Button
+                    onClick={() => {
+                      if (previewingDoc) handleApproveDocument(previewingDoc.id);
+                      setPreviewingDoc(null);
+                    }}
+                    disabled={isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isLoading ? "Approbation..." : "Approuver"}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (previewingDoc) handleRejectDocument(previewingDoc.id);
+                      setPreviewingDoc(null);
+                    }}
+                    disabled={isLoading}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Rejeter
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Modale de rejet */}
         <Dialog open={rejectingDocId !== null} onOpenChange={(open) => !open && setRejectingDocId(null)}>
