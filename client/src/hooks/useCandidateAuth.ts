@@ -31,20 +31,8 @@ function readCandidate(): CandidateInfo | null {
 }
 
 export function useCandidateAuth() {
-  const [token, setToken] = useState<string | null>(() => readToken());
-  const [candidate, setCandidate] = useState<CandidateInfo | null>(() => readCandidate());
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialiser depuis le stockage au montage
-  useEffect(() => {
-    const storedToken = readToken();
-    const storedCandidate = readCandidate();
-    if (storedToken) {
-      setToken(storedToken);
-      setCandidate(storedCandidate);
-    }
-    setIsInitialized(true);
-  }, []);
+  const [token, setToken] = useState<string | null>(readToken);
+  const [candidate, setCandidate] = useState<CandidateInfo | null>(readCandidate);
 
   /**
    * Appelé par Login.tsx qui gère lui-même l'écriture dans localStorage/sessionStorage
@@ -64,9 +52,9 @@ export function useCandidateAuth() {
     setCandidate(null);
   }, []);
 
-  const isAuthenticated = !!token && isInitialized;
+  const isAuthenticated = !!token;
 
-  return { token, candidate, isAuthenticated, login, logout, isInitialized };
+  return { token, candidate, isAuthenticated, login, logout };
 }
 
 /** Récupère le token candidat depuis localStorage ou sessionStorage (pour les appels tRPC directs) */

@@ -14,14 +14,12 @@ const SOCIAL_LINKS = [
 ];
 
 const USEFUL_LINKS = [
-  { label: 'Blog & Actualités', href: '/blog' },
-  { label: 'Simulateur d\'éligibilité', href: '/eligibility-simulator' },
-  { label: 'Calculateur de budget', href: '/budget-calculator' },
-  { label: 'Galerie des visas', href: '/visa-gallery' },
-  { label: 'Prendre rendez-vous', href: '/schedule-agency' },
-  { label: 'À Propos', href: '/about' },
-  { label: 'Politique de confidentialité', href: '/politique-confidentialite' },
-  { label: 'Conditions d\'utilisation', href: '/conditions-utilisation' },
+  { label: 'Destinations populaires', href: '/procedures' },
+  { label: 'Contact', href: '/contact' },
+  { label: 'Mentions legales', href: '#' },
+  { label: 'Plan du site', href: '#' },
+  { label: 'Accessibilite', href: '#' },
+  { label: 'Sitemap', href: '#' },
 ];
 
 export default function Footer() {

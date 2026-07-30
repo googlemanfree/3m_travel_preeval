@@ -13,7 +13,6 @@ import {
   candidateFiles,
   candidateMessages,
   candidates,
-  clientPayments,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
@@ -882,19 +881,6 @@ export const candidateRouter = router({
   /**
    * Demander un rendez-vous suite au bilan
    */
-  getMyPayments: candidateProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-    const payments = await db
-      .select()
-      .from(clientPayments)
-      .where(eq(clientPayments.candidateEmail, ctx.candidate.email))
-      .orderBy(desc(clientPayments.paidAt));
-
-    return payments;
-  }),
-
   requestBilanAppointment: candidateProcedure
     .input(z.object({
       candidateEmail: z.string().email(),

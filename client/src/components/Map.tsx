@@ -104,7 +104,6 @@ function loadMapScript() {
     };
     script.onerror = () => {
       console.error("Failed to load Google Maps script");
-      resolve(null); // Résoudre même en cas d'erreur pour ne pas bloquer l'app
     };
     document.head.appendChild(script);
   });
@@ -127,13 +126,12 @@ export function MapView({
   const map = useRef<google.maps.Map | null>(null);
 
   const init = usePersistFn(async () => {
-    try {
-      await loadMapScript();
-      if (!mapContainer.current || !window.google) {
-        console.warn("Map container or Google Maps not available");
-        return;
-      }
-      map.current = new window.google.maps.Map(mapContainer.current, {
+    await loadMapScript();
+    if (!mapContainer.current) {
+      console.error("Map container not found");
+      return;
+    }
+    map.current = new window.google.maps.Map(mapContainer.current, {
       zoom: initialZoom,
       center: initialCenter,
       mapTypeControl: true,
@@ -142,11 +140,8 @@ export function MapView({
       streetViewControl: true,
       mapId: "DEMO_MAP_ID",
     });
-      if (onMapReady && map.current) {
-        onMapReady(map.current);
-      }
-    } catch (error) {
-      console.error("Error initializing map:", error);
+    if (onMapReady) {
+      onMapReady(map.current);
     }
   });
 
