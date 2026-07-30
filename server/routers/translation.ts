@@ -86,6 +86,22 @@ export const translationRouter = router({
       }
     }),
 
+  getMyTranslations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { db, user } = ctx;
+      if (!db) throw new Error("Database not available");
+      if (!user) throw new Error("Unauthorized");
+
+      const userEmail = user.email;
+      const results = await db
+        .select()
+        .from(drizzleSchema.translationRequests)
+        .where(eq(drizzleSchema.translationRequests.candidateEmail, userEmail as string))
+        .orderBy(drizzleSchema.translationRequests.createdAt);
+
+      return results;
+    }),
+
   getTranslationPricing: publicProcedure
     .input(z.object({
       documentType: z.enum([

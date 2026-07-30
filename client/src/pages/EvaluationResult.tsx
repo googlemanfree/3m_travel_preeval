@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, FileText, MapPin, AlertCircle } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 
 // Checklist documents par pays et type de visa
 const DOCUMENTS_BY_COUNTRY_VISA: Record<string, Record<string, string[]>> = {
@@ -130,7 +130,7 @@ interface EvaluationResultProps {
 }
 
 export default function EvaluationResult() {
-  const { user } = useAuth();
+  const { isAuthenticated } = useCandidateAuth();
   const [location, setLocation] = useLocation();
   const [country, setCountry] = useState("Canada");
   const [visaType, setVisaType] = useState("Étudiant");
@@ -153,7 +153,7 @@ export default function EvaluationResult() {
   };
 
   const handleDepositOnline = () => {
-    if (!user) {
+    if (!isAuthenticated) {
       setLocation("/login");
       return;
     }

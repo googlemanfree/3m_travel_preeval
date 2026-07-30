@@ -262,7 +262,8 @@ export default function Dashboard() {
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
-              title="Actualiser les donnees"
+              title="Actualiser les données"
+              aria-label="Actualiser les données"
             >
               <svg className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -271,7 +272,7 @@ export default function Dashboard() {
             <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors">
               <Home className="w-5 h-5" />
             </Link>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se deconnecter">
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se déconnecter" aria-label="Se déconnecter">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
@@ -548,9 +549,9 @@ export default function Dashboard() {
                     </h2>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-sm font-semibold text-gray-700">Type de document</Label>
+                        <Label htmlFor="uploadType" className="text-sm font-semibold text-gray-700">Type de document</Label>
                         <Select value={uploadType} onValueChange={setUploadType}>
-                          <SelectTrigger className="mt-1">
+                          <SelectTrigger id="uploadType" className="mt-1">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -801,9 +802,9 @@ function ProfileEditor({ profile, onSaved }: { profile: any; onSaved: () => void
       </div>
 
       <div className="mt-5">
-        <Label className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
+        <Label htmlFor="form-destination" className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
         <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
-          <SelectTrigger className="mt-1">
+          <SelectTrigger id="form-destination" className="mt-1">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

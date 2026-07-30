@@ -252,10 +252,8 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ProgressBar({ applicationId }: { applicationId: number }) {
-  const { data: progress } = trpc.application.getApplicationProgress?.useQuery(
-    { applicationId },
-    { enabled: !!applicationId }
-  ) || { data: undefined };
+  // Procédure getApplicationProgress non disponible - utiliser les données de l'application
+  const progress: any = undefined;
 
   const steps = [
     { key: "evaluation", label: "Évaluation" },
@@ -266,7 +264,7 @@ function ProgressBar({ applicationId }: { applicationId: number }) {
     { key: "visa", label: "Visa" },
   ];
 
-  const currentStepIndex = progress ? steps.findIndex((s) => s.key === progress.step) : 0;
+  const currentStepIndex = progress ? steps.findIndex((s) => s.key === progress?.step) : 0;
   const progressPercentage = ((currentStepIndex + 1) / steps.length) * 100;
 
   return (
@@ -302,16 +300,14 @@ function ProgressBar({ applicationId }: { applicationId: number }) {
 }
 
 function DocumentsList({ applicationId }: { applicationId: number }) {
-  const { data: documents } = trpc.application.getApplicationDocuments?.useQuery(
-    { applicationId },
-    { enabled: !!applicationId }
-  ) || { data: undefined };
+  // Procédure getApplicationDocuments non disponible
+  const documents: any[] = [];
 
   return (
     <div className="space-y-2">
       {documents && documents.length > 0 ? (
         <ul className="space-y-2">
-          {documents?.map((doc: any) => (
+          {(documents as any[])?.map((doc: any) => (
             <li key={doc.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
               <span className="text-sm">{doc.fileName}</span>
               <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
@@ -328,16 +324,14 @@ function DocumentsList({ applicationId }: { applicationId: number }) {
 }
 
 function MessagesList({ applicationId }: { applicationId: number }) {
-  const { data: messages } = trpc.application.getApplicationMessages?.useQuery(
-    { applicationId },
-    { enabled: !!applicationId }
-  ) || { data: undefined };
+  // Procédure getApplicationMessages non disponible
+  const messages: any[] = [];
 
   return (
     <div className="space-y-2">
       {messages && messages.length > 0 ? (
         <ul className="space-y-2">
-          {messages?.map((msg: any) => (
+          {(messages as any[])?.map((msg: any) => (
             <li key={msg.id} className="p-2 bg-gray-50 rounded">
               <p className="text-sm font-medium">{msg.senderRole === "advisor" ? "Conseiller" : "Vous"}</p>
               <p className="text-sm text-muted-foreground">{msg.content}</p>
@@ -359,14 +353,13 @@ function CallbackRequestForm({ applicationId }: { applicationId: number }) {
     reason: "",
   });
 
-  const createCallback = trpc.application.createCallbackRequest?.useMutation?.() || { mutateAsync: async () => {} };
+  // Procédure createCallbackRequest non disponible
+  const createCallback = { mutateAsync: async () => {} };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await createCallback.mutateAsync({
-      applicationId,
-      ...formData,
-    });
+    // Procédure non disponible - afficher un message
+    alert('Fonctionnalité en développement');
     setFormData({ preferredDate: "", preferredTime: "", reason: "" });
   };
 
@@ -400,9 +393,9 @@ function CallbackRequestForm({ applicationId }: { applicationId: number }) {
           placeholder="Décrivez la raison de votre demande de rappel..."
         />
       </div>
-      <Button type="submit" className="w-full" disabled={createCallback.isPending}>
+      <Button type="submit" className="w-full" disabled={false}>
         <Phone className="w-4 h-4 mr-2" />
-        {createCallback.isPending ? "En cours..." : "Demander un Rappel"}
+        Demander un Rappel
       </Button>
     </form>
   );

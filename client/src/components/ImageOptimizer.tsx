@@ -6,9 +6,12 @@
  * Lazy loading intégré
  */
 
-import { LazyImage, OptimizedImage, ResponsiveImage } from './LazyImage';
+import { LazyImage, ResponsiveImage, SkeletonImage } from './LazyImage';
 
-export { LazyImage, OptimizedImage, ResponsiveImage };
+export { LazyImage, ResponsiveImage, SkeletonImage };
+
+// Alias pour compatibilité
+export const OptimizedImage = ResponsiveImage;
 
 /**
  * Hook pour détecter le support des formats d'image

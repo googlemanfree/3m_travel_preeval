@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and private pages
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /mon-espace
+Disallow: /mon-dossier
+Disallow: /open-dossier
+Disallow: /translator/dashboard
+
+# Sitemap
+Sitemap: https://3mtravelagency.click/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1

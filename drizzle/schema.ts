@@ -1188,10 +1188,10 @@ export type InsertBilan = typeof bilans.$inferInsert;
 export const dossierProgress = mysqlTable("dossier_progress", {
   id: int("id").autoincrement().primaryKey(),
   applicationId: int("applicationId").notNull(),
-  currentStep: varchar("currentStep", { length: 50 }).notNull().default("nouveau"),
-  completedSteps: text("completedSteps"),
-  notes: text("notes"),
-  updatedBy: varchar("updatedBy", { length: 255 }),
+  dossierNumber: varchar("dossierNumber", { length: 20 }),
+  currentStep: int("currentStep").notNull().default(1),
+  stepsStatus: text("stepsStatus"), // JSON object with step statuses
+  adminNotes: text("adminNotes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1205,9 +1205,15 @@ export const callbackRequests = mysqlTable("callback_requests", {
   phone: varchar("phone", { length: 30 }).notNull(),
   email: varchar("email", { length: 320 }),
   subject: varchar("subject", { length: 255 }),
+  message: text("message"),
   preferredTime: varchar("preferredTime", { length: 100 }),
-  status: mysqlEnum("status", ["pending", "contacted", "resolved", "cancelled"]).default("pending").notNull(),
+  preferredDate: varchar("preferredDate", { length: 50 }),
+  applicationId: int("applicationId"),
+  status: mysqlEnum("status", ["pending", "scheduled", "completed", "cancelled"]).default("pending").notNull(),
   notes: text("notes"),
+  adminNotes: text("adminNotes"),
+  scheduledAt: timestamp("scheduledAt"),
+  completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1271,5 +1277,3 @@ export const blogPosts = mysqlTable("blog_posts", {
 });
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
-
-

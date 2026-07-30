@@ -43,6 +43,16 @@ export default function Guide() {
                         : "bg-blue-200 text-blue-600 hover:bg-blue-300"
                     }`}
                     onClick={() => setExpandedStep(expandedStep === proc.step ? null : proc.step)}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expandedStep === proc.step}
+                    aria-label={`Étape ${proc.step} : ${proc.title}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setExpandedStep(expandedStep === proc.step ? null : proc.step);
+                      }
+                    }}
                   >
                     {proc.step}
                   </div>

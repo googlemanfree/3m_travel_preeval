@@ -4,6 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
 
 export default function AdminEvaluation() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
@@ -110,15 +117,24 @@ export default function AdminEvaluation() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Rapports en Attente</CardTitle>
-              <Button
-                onClick={() => refetchReports()}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Actualiser
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={() => refetchReports()}
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Actualiser
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Recharger la liste des rapports en attente</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </CardHeader>
           <CardContent>
@@ -133,6 +149,15 @@ export default function AdminEvaluation() {
                     key={report.id}
                     className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition"
                     onClick={() => setSelectedReport(report)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Voir le rapport de ${report.candidateName}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedReport(report);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -149,17 +174,26 @@ export default function AdminEvaluation() {
                         <Badge variant={report.sendStatus === 'sent' ? 'default' : 'secondary'}>
                           {report.sendStatus}
                         </Badge>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            retryReportMutation.mutate({ reportId: report.reportId });
-                          }}
-                          size="sm"
-                          variant="outline"
-                          disabled={retryReportMutation.isPending}
-                        >
-                          Retenter
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  retryReportMutation.mutate({ reportId: report.reportId });
+                                }}
+                                size="sm"
+                                variant="outline"
+                                disabled={retryReportMutation.isPending}
+                              >
+                                Retenter
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Renvoyer ce rapport au candidat</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     </div>
                   </div>
@@ -175,13 +209,22 @@ export default function AdminEvaluation() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Détails du Rapport</CardTitle>
-                <Button
-                  onClick={() => setSelectedReport(null)}
-                  variant="ghost"
-                  size="sm"
-                >
-                  ✕
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => setSelectedReport(null)}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        ✕
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Fermer les détails du rapport</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardHeader>
             <CardContent>

@@ -56,6 +56,12 @@ import {
   StickyNote,
   History,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -331,21 +337,39 @@ export default function AdminAgencyDossiers() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => refetch()}
-              className="text-white border-white hover:bg-white/10"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-white text-blue-700 hover:bg-blue-50 font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter un Dossier
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={() => refetch()}
+                    className="text-white border-white hover:bg-white/10"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualiser
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Recharger la liste des dossiers</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-white text-blue-700 hover:bg-blue-50 font-semibold"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Ajouter un Dossier
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Créer un nouveau dossier manuellement</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -513,42 +537,74 @@ export default function AdminAgencyDossiers() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDetailModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
-                                  title="Voir le détail"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openStatusModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
-                                  title="Changer le statut"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openNotesModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
-                                  title="Ajouter des notes"
-                                >
-                                  <StickyNote className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDeleteModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openDetailModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Voir les détails du dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openStatusModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Modifier le statut du dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openNotesModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
+                                      >
+                                        <StickyNote className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Ajouter des notes au dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openDeleteModal(d)}
+                                        className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Supprimer ce dossier</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </TableCell>
                           </motion.tr>
@@ -583,10 +639,10 @@ export default function AdminAgencyDossiers() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label htmlFor="form-fullName" className="text-slate-300">
                     Nom complet <span className="text-red-400">*</span>
                   </Label>
-                  <Input
+                  <Input id="form-fullName"
                     value={form.fullName}
                     onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                     placeholder="Jean Dupont"
@@ -595,8 +651,8 @@ export default function AdminAgencyDossiers() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Nationalité</Label>
-                  <Input
+                  <Label htmlFor="form-nationality" className="text-slate-300">Nationalité</Label>
+                  <Input id="form-nationality"
                     value={form.nationality}
                     onChange={(e) => setForm({ ...form, nationality: e.target.value })}
                     placeholder="Camerounaise"
@@ -604,10 +660,10 @@ export default function AdminAgencyDossiers() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label htmlFor="form-email" className="text-slate-300">
                     Email <span className="text-red-400">*</span>
                   </Label>
-                  <Input
+                  <Input id="form-email"
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -617,10 +673,10 @@ export default function AdminAgencyDossiers() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label htmlFor="form-phone" className="text-slate-300">
                     Téléphone <span className="text-red-400">*</span>
                   </Label>
-                  <Input
+                  <Input id="form-phone"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="+237 6XX XXX XXX"
@@ -629,8 +685,8 @@ export default function AdminAgencyDossiers() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Date de naissance</Label>
-                  <Input
+                  <Label htmlFor="form-dateOfBirth" className="text-slate-300">Date de naissance</Label>
+                  <Input id="form-dateOfBirth"
                     type="date"
                     value={form.dateOfBirth}
                     onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
@@ -647,14 +703,14 @@ export default function AdminAgencyDossiers() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label htmlFor="form-destination" className="text-slate-300">
                     Destination <span className="text-red-400">*</span>
                   </Label>
                   <Select
                     value={form.destination}
                     onValueChange={(v) => setForm({ ...form, destination: v })}
                   >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger id="form-destination" className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Choisir un pays" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
@@ -665,14 +721,14 @@ export default function AdminAgencyDossiers() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">
+                  <Label htmlFor="form-visaType" className="text-slate-300">
                     Type de Visa <span className="text-red-400">*</span>
                   </Label>
                   <Select
                     value={form.visaType}
                     onValueChange={(v) => setForm({ ...form, visaType: v })}
                   >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger id="form-visaType" className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Choisir le type" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
@@ -692,12 +748,12 @@ export default function AdminAgencyDossiers() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Niveau d'études</Label>
+                  <Label htmlFor="form-educationLevel" className="text-slate-300">Niveau d'études</Label>
                   <Select
                     value={form.educationLevel}
                     onValueChange={(v) => setForm({ ...form, educationLevel: v })}
                   >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger id="form-educationLevel" className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
@@ -708,12 +764,12 @@ export default function AdminAgencyDossiers() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Situation professionnelle</Label>
+                  <Label htmlFor="form-employmentStatus" className="text-slate-300">Situation professionnelle</Label>
                   <Select
                     value={form.employmentStatus}
                     onValueChange={(v) => setForm({ ...form, employmentStatus: v })}
                   >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                    <SelectTrigger id="form-employmentStatus" className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
@@ -724,8 +780,8 @@ export default function AdminAgencyDossiers() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Revenu mensuel (FCFA)</Label>
-                  <Input
+                  <Label htmlFor="form-monthlyIncome" className="text-slate-300">Revenu mensuel (FCFA)</Label>
+                  <Input id="form-monthlyIncome"
                     type="number"
                     value={form.monthlyIncome}
                     onChange={(e) => setForm({ ...form, monthlyIncome: e.target.value })}
@@ -734,8 +790,8 @@ export default function AdminAgencyDossiers() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-slate-300">Solde bancaire (FCFA)</Label>
-                  <Input
+                  <Label htmlFor="form-bankBalance" className="text-slate-300">Solde bancaire (FCFA)</Label>
+                  <Input id="form-bankBalance"
                     type="number"
                     value={form.bankBalance}
                     onChange={(e) => setForm({ ...form, bankBalance: e.target.value })}
@@ -748,11 +804,11 @@ export default function AdminAgencyDossiers() {
 
             {/* Notes internes */}
             <div className="space-y-1.5">
-              <Label className="text-slate-300 flex items-center gap-2">
+              <Label htmlFor="form-adminNotes" className="text-slate-300 flex items-center gap-2">
                 <StickyNote className="w-4 h-4 text-blue-400" />
                 Notes internes (visibles uniquement par les admins)
               </Label>
-              <Textarea
+              <Textarea id="form-adminNotes"
                 value={form.adminNotes}
                 onChange={(e) => setForm({ ...form, adminNotes: e.target.value })}
                 placeholder="Observations, remarques, points d'attention..."
@@ -902,9 +958,9 @@ export default function AdminAgencyDossiers() {
                 Dossier de <strong className="text-white">{selectedDossier.fullName}</strong>
               </p>
               <div className="space-y-1.5">
-                <Label className="text-slate-300">Nouveau statut</Label>
+                <Label htmlFor="newStatus" className="text-slate-300">Nouveau statut</Label>
                 <Select value={newStatus} onValueChange={(v) => setNewStatus(v as DossierStatus)}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectTrigger id="newStatus" className="bg-slate-700 border-slate-600 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
@@ -917,8 +973,8 @@ export default function AdminAgencyDossiers() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-slate-300">Message au candidat (optionnel)</Label>
-                <Textarea
+                <Label htmlFor="statusNote" className="text-slate-300">Message au candidat (optionnel)</Label>
+                <Textarea id="statusNote"
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
                   placeholder="Précisions sur le changement de statut..."
@@ -978,8 +1034,8 @@ export default function AdminAgencyDossiers() {
                 Dossier de <strong className="text-white">{selectedDossier.fullName}</strong>
               </p>
               <div className="space-y-1.5">
-                <Label className="text-slate-300">Notes (visibles uniquement par les admins)</Label>
-                <Textarea
+                <Label htmlFor="noteText" className="text-slate-300">Notes (visibles uniquement par les admins)</Label>
+                <Textarea id="noteText"
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="Observations, remarques, points d'attention..."
