@@ -15,6 +15,7 @@ import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
 import { candidateAuthOTPRouter } from "./routers/candidateAuthOTP";
+import { monitoringRouter } from "./routers/monitoring";
 
 const COOKIE_NAME = "manus_session";
 
@@ -48,6 +49,7 @@ export const appRouter = router({
   agencyDossier: agencyDossierRouter,
   documentSubmission: documentSubmissionRouter,
   candidateAuthOTP: candidateAuthOTPRouter,
+  monitoring: monitoringRouter,
 });
 
 export type AppRouter = typeof appRouter;
