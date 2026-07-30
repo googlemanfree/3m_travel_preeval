@@ -59,6 +59,7 @@ import { Tarifs } from "./pages/Tarifs";
 import { Avis } from "./pages/Avis";
 import { Blog } from "./pages/Blog";
 import SearchDemo from "./pages/SearchDemo";
+import Evaluation from "./pages/Evaluation";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 
 function Router() {
@@ -71,6 +72,7 @@ function Router() {
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
+      <Route path={"/evaluation"} component={Evaluation} />
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/forgot-password"} component={ForgotPassword} />

@@ -1218,7 +1218,7 @@ export default function Procedures() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar activePage="procedures" onEvalClick={() => setShowEvalModal(true)} />
+      <Navbar />
 
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">

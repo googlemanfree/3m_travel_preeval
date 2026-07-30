@@ -521,7 +521,7 @@ export default function Home() {
     <div className="min-h-screen bg-white font-sans">
 
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
-      <Navbar activePage="home" onEvalClick={() => setShowEvalModal(true)} />
+      <Navbar />
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
       <HeroSection
