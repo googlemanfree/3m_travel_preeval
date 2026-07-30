@@ -1,187 +1,40 @@
-import { useState, useEffect } from "react";
-import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download } from "lucide-react";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
 
-// Composant onglet Paiements
-function PaymentsTab() {
-  const { data: payments, isLoading } = trpc.candidate.getMyPayments.useQuery();
-
-  if (isLoading) return <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" /></div>;
-
-  const statusLabel = (status: string) => {
-    const map: Record<string, string> = { pending: "En attente", confirmed: "Confirmé", verified: "Vérifié", cancelled: "Annulé" };
-    return map[status] || status;
-  };
-  const statusColor = (status: string) => {
-    if (status === "confirmed" || status === "verified") return "bg-green-500";
-    if (status === "cancelled") return "bg-red-500";
-    return "bg-yellow-500";
-  };
-  const methodLabel = (method: string) => {
-    const map: Record<string, string> = { cash: "Espèces", bank_transfer: "Virement", card: "Carte", mobile_money: "Mobile Money", check: "Chèque", other: "Autre" };
-    return map[method] || method;
-  };
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-green-500" />
-          Historique des Paiements
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!payments || payments.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <CreditCard className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Aucun paiement enregistré</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {payments.map((p: any) => (
-              <div key={p.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{p.paymentDescription}</p>
-                    <Badge className={statusColor(p.status)}>{statusLabel(p.status)}</Badge>
-                  </div>
-                  <p className="text-sm text-gray-500">{methodLabel(p.paymentMethod)} • {p.currency}</p>
-                  <p className="text-xs text-gray-400 mt-1">{p.paidAt ? new Date(p.paidAt).toLocaleDateString('fr-FR') : '—'}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-green-600">{Number(p.amount).toLocaleString('fr-FR')} {p.currency}</p>
-                  {p.invoiceUrl && (
-                    <Button variant="ghost" size="sm" asChild className="mt-1">
-                      <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="w-4 h-4 mr-1" /> Facture
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Composant onglet Traductions
-function TranslationsTab() {
-  const { data: translations, isLoading } = trpc.translation.getMyTranslations.useQuery();
-
-  const statusLabel = (status: string) => {
-    const map: Record<string, string> = {
-      pending_payment: "En attente de paiement",
-      pending_translation: "En attente de traducteur",
-      in_progress: "En cours",
-      completed: "Terminée",
-      rejected: "Rejetée",
-    };
-    return map[status] || status;
-  };
-
-  const statusColor = (status: string) => {
-    if (status === "completed") return "bg-green-500";
-    if (status === "rejected") return "bg-red-500";
-    if (status === "in_progress") return "bg-blue-500";
-    return "bg-yellow-500";
-  };
-
-  if (isLoading) return <div className="text-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" /></div>;
-
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Languages className="w-5 h-5 text-purple-500" />
-          Mes Traductions Certifiées
-        </CardTitle>
-        <Button variant="outline" size="sm" onClick={() => window.location.href = '/traduction'}>
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Commander
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {!translations || translations.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Languages className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Aucune traduction commandée</p>
-            <Button className="mt-4" onClick={() => window.location.href = '/traduction'}>Commander une traduction</Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {translations.map((t: any) => (
-              <div key={t.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-semibold">{t.documentType?.replace(/_/g, ' ')}</p>
-                    <Badge className={statusColor(t.status)}>{statusLabel(t.status)}</Badge>
-                  </div>
-                  <p className="text-sm text-gray-500">{t.sourceLanguage} → {t.targetLanguage}</p>
-                  <p className="text-xs text-gray-400 mt-1">{t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : '—'}</p>
-                </div>
-                {t.status === 'completed' && t.translatedFileUrl && (
-                  <Button variant="outline" size="sm" asChild>
-                    <a href={t.translatedFileUrl} target="_blank" rel="noopener noreferrer">
-                      <Download className="w-4 h-4 mr-2" />
-                      Télécharger
-                    </a>
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function MySpace() {
-  const { isAuthenticated, candidate, logout } = useCandidateAuth();
+  const { user, loading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedDocumentType, setSelectedDocumentType] = useState("");
   const [showNotification, setShowNotification] = useState(true);
   const [bilanActionModalOpen, setBilanActionModalOpen] = useState(false);
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
     undefined,
-    { enabled: isAuthenticated }
+    { enabled: !!user }
   );
 
   // Rediriger si non authentifié
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!authLoading && !user) {
       setLocation("/login");
     }
-  }, [isAuthenticated, setLocation]);
+  }, [user, authLoading, setLocation]);
 
-  // Gestionnaire de déconnexion
-  const handleLogout = () => {
-    logout();
-    toast.success("Vous avez été déconnecté avec succès");
-    setLocation("/login");
-  };
-
-  if (!isAuthenticated || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -214,18 +67,17 @@ export default function MySpace() {
     );
   }
 
-  const app = dossierData?.data?.application;
-  const documents = dossierData?.data?.documents || [];
-  const messages = dossierData?.data?.messages || [];
-  const candidateName = candidate?.fullName || "Candidat";
+  const app = dossierData.data?.application;
+  const documents = dossierData.data?.documents || [];
+  const messages = dossierData.data?.messages || [];
 
   // Détecter les documents manquants
   const missingDocuments = useMissingDocuments(
-    app ? { projectType: "", academicLevel: app.academicLevel || "" } : null,
+    app ? { projectType: (app as any).projectType || "", academicLevel: app.academicLevel || "" } : null,
     documents
   );
   const completeness = useDocumentCompleteness(
-    app ? { projectType: "", academicLevel: app.academicLevel || "" } : null,
+    app ? { projectType: (app as any).projectType || "", academicLevel: app.academicLevel || "" } : null,
     documents
   );
 
@@ -242,174 +94,249 @@ export default function MySpace() {
   };
 
   // Afficher la notification si des documents manquent
-  const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && app && (app as any)?.dossierStatus === "en_evaluation";
+  const shouldShowNotification = missingDocuments && missingDocuments.length > 0 && (app as any)?.dossierStatus === "en_evaluation";
 
-  // Calculer le pourcentage d'avancement global du dossier
-  const calculateProgress = (): number => {
-    if (!app) return 0;
-    
-    let progress = 0;
-    if (documents.length > 0) progress += 25;
-    if (app.fullName && app.email) progress += 20;
-    if (app.academicLevel) progress += 20;
-    if (app.agreementSigned) progress += 15;
-    if (app.paymentStatus === "SUCCESS") progress += 20;
-    
-    return Math.min(progress, 100);
+  // Déterminer le badge de statut
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; variant: string; icon: React.ReactNode }> = {
+      nouveau: { label: "Nouveau dossier", variant: "secondary", icon: <Clock className="w-4 h-4" /> },
+      en_evaluation: { label: "Évaluation en cours", variant: "default", icon: <Clock className="w-4 h-4" /> },
+      documents_recus: { label: "Documents reçus", variant: "default", icon: <FileText className="w-4 h-4" /> },
+      bilan_envoye: { label: "Bilan envoyé", variant: "default", icon: <CheckCircle2 className="w-4 h-4" /> },
+      paye: { label: "Payé", variant: "default", icon: <CheckCircle2 className="w-4 h-4" /> },
+      visa_approuve: { label: "Visa approuvé", variant: "default", icon: <CheckCircle2 className="w-4 h-4" /> },
+      refuse: { label: "Refusé", variant: "destructive", icon: <AlertCircle className="w-4 h-4" /> },
+    };
+
+    const statusInfo = statusMap[status] || { label: status, variant: "secondary", icon: <Clock className="w-4 h-4" /> };
+    return (
+      <Badge variant={statusInfo.variant as any} className="gap-2">
+        {statusInfo.icon}
+        {statusInfo.label}
+      </Badge>
+    );
   };
 
-  const progress = calculateProgress();
+  // Déterminer le badge de paiement
+  const getPaymentBadge = (status: string) => {
+    const paymentMap: Record<string, { label: string; variant: string }> = {
+      PENDING: { label: "En attente", variant: "secondary" },
+      SUCCESS: { label: "Payé", variant: "default" },
+      FAILED: { label: "Échoué", variant: "destructive" },
+      CANCELLED: { label: "Annulé", variant: "destructive" },
+    };
+
+    const paymentInfo = paymentMap[status] || { label: status, variant: "secondary" };
+    return <Badge variant={paymentInfo.variant as any}>{paymentInfo.label}</Badge>;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Mon Espace</h1>
-            <p className="text-blue-100 mt-1">Bienvenue, {candidateName} !</p>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Mon Espace Candidat</h1>
+              <p className="text-blue-100">Bienvenue, {user?.name || "candidat"}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="text-right">
+                <p className="text-sm text-blue-100">Numéro de dossier</p>
+                <p className="text-2xl font-bold">{app?.dossierNumber}</p>
+              </div>
+              <a href={`/mon-dossier?dossier=${app?.dossierNumber}`}>
+                <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold">
+                  📋 Suivre mon dossier
+                </Button>
+              </a>
+            </div>
           </div>
-          <Button
-            onClick={() => setShowLogoutDialog(true)}
-            variant="outline"
-            className="bg-white/20 border-white text-white hover:bg-white/30"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Deconnexion
-          </Button>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Barre de progression */}
-        <Card className="mb-8 bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg">Avancement de votre dossier</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="w-full bg-gray-200 rounded-full h-4">
-                <div
-                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-500"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Progression globale</span>
-                <span className="text-2xl font-bold text-blue-600">{progress}%</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto p-4 py-8">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Statut</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {getStatusBadge(app?.dossierStatus || "nouveau")}
+            </CardContent>
+          </Card>
 
-        {/* Notification des documents manquants */}
-        {shouldShowNotification && missingDocuments && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-yellow-800 font-semibold">Documents manquants</p>
-              <p className="text-yellow-700 text-sm mt-1">{missingDocuments.join(", ")}</p>
-            </div>
-          )}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Destination</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold capitalize">{app?.destination}</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">{app?.scoringTotal || app?.evaluationScore || "-"}/100</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600">{documents.length}</p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
-            <TabsTrigger value="translations">Traductions</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="agreement">Accord</TabsTrigger>
           </TabsList>
 
           {/* Aperçu */}
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Informations personnelles</CardTitle>
+                <CardTitle>Statut du Dossier</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Nom complet</p>
-                    <p className="font-semibold">{app?.fullName || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Email</p>
-                    <p className="font-semibold">{app?.email || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Destination</p>
-                    <p className="font-semibold">{app?.destination || "—"}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Nationalité</p>
-                    <p className="font-semibold">{app?.nationality || "—"}</p>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">État actuel :</span>
+                  {getStatusBadge(app?.dossierStatus || "nouveau")}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Paiement :</span>
+                  {getPaymentBadge(app?.paymentStatus || "PENDING")}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Protocole d'accord :</span>
+                  {app?.agreementSigned ? (
+                    <Badge variant="default" className="gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Signé
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      Non signé
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Statut du dossier</CardTitle>
+                <CardTitle>Informations Personnelles</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <Badge className={
-                    app?.dossierStatus === "visa_approuve" ? "bg-green-500" :
-                    app?.dossierStatus === "refuse" ? "bg-red-500" :
-                    app?.dossierStatus === "en_evaluation" ? "bg-yellow-500" :
-                    "bg-blue-500"
-                  }>
-                    {app?.dossierStatus === "visa_approuve" ? "Visa Approuvé" :
-                     app?.dossierStatus === "refuse" ? "Rejeté" :
-                     app?.dossierStatus === "en_evaluation" ? "En évaluation" :
-                     app?.dossierStatus === "contrat_obtenu" ? "Contrat Obtenu" :
-                     app?.dossierStatus === "en_cours_recrutement" ? "En cours" :
-                     app?.dossierStatus === "soumis_agences" ? "Soumis" :
-                     app?.dossierStatus === "documents_recus" ? "Documents reçus" :
-                     app?.dossierStatus === "en_attente_documents" ? "En attente docs" :
-                     app?.dossierStatus === "paye" ? "Payé" :
-                     app?.dossierStatus === "en_attente_paiement" ? "En attente paiement" :
-                     app?.dossierStatus === "bilan_envoye" ? "Bilan envoyé" :
-                     app?.dossierStatus === "nouveau" ? "Nouveau" :
-                     "En attente"}
-                  </Badge>
-                  <span className="text-gray-600">
-                    Dernière mise à jour : {app?.updatedAt ? new Date(app.updatedAt).toLocaleDateString('fr-FR') : "—"}
-                  </span>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Nom complet</p>
+                  <p className="font-medium">{app?.fullName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="font-medium">{app?.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Téléphone WhatsApp</p>
+                  <p className="font-medium">{app?.whatsappNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Nationalité</p>
+                  <p className="font-medium">{app?.nationality || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Date de naissance</p>
+                  <p className="font-medium">{app?.dateOfBirth || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Formule choisie</p>
+                  <p className="font-medium capitalize">{app?.formulaChosen || "-"}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Profil Académique & Professionnel</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-600">Niveau d'études</p>
+                  <p className="font-medium">{app?.academicLevel || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Années d'expérience</p>
+                  <p className="font-medium">{app?.experienceYears || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Compétences linguistiques</p>
+                  <p className="font-medium">{app?.languageSkills || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Secteur d'activité</p>
+                  <p className="font-medium">{app?.jobSector || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Employeur actuel</p>
+                  <p className="font-medium">{app?.currentEmployer || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Poste actuel</p>
+                  <p className="font-medium">{app?.currentJobTitle || "-"}</p>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Documents */}
-          <TabsContent value="documents" className="space-y-6">
+          <TabsContent value="documents" className="space-y-4">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Mes documents</CardTitle>
-                <Button onClick={() => handleQuickUpload("")}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Ajouter un document
-                </Button>
+              <CardHeader>
+                <CardTitle>Vos Documents</CardTitle>
+                <CardDescription>
+                  {documents.length} document(s) uploadé(s)
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">Aucun document uploadé</p>
                 ) : (
                   <div className="space-y-3">
-                    {documents.map((doc: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
-                          <FileText className="w-5 h-5 text-blue-500" />
+                          <FileText className="w-5 h-5 text-blue-600" />
                           <div>
-                            <p className="font-semibold">{doc.filename}</p>
-                            <p className="text-sm text-gray-600">{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('fr-FR') : '—'}</p>
+                            <p className="font-medium">{doc.fileName}</p>
+                            <p className="text-sm text-gray-500">{doc.fileType}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={doc.status === "verified" ? "default" : "secondary"}>
+                            {doc.status}
+                          </Badge>
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                              <Download className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -419,26 +346,30 @@ export default function MySpace() {
           </TabsContent>
 
           {/* Messages */}
-          <TabsContent value="messages" className="space-y-6">
+          <TabsContent value="messages" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Mes messages</CardTitle>
+                <CardTitle>Messagerie</CardTitle>
+                <CardDescription>
+                  {messages.length} message(s)
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {messages.length === 0 ? (
                   <p className="text-gray-500 text-center py-8">Aucun message</p>
                 ) : (
                   <div className="space-y-3">
-                    {messages.map((msg: any, idx: number) => (
-                      <div key={idx} className="p-3 border rounded-lg">
-                        <div className="flex items-start gap-3">
-                          <MessageSquare className="w-5 h-5 text-indigo-500 mt-1" />
-                          <div className="flex-1">
-                            <p className="font-semibold">{msg.subject}</p>
-                            <p className="text-sm text-gray-600 mt-1">{msg.content}</p>
-                            <p className="text-xs text-gray-400 mt-2">{msg.sentAt ? new Date(msg.sentAt).toLocaleDateString('fr-FR') : '—'}</p>
-                          </div>
+                    {messages.map((msg) => (
+                      <div key={msg.id} className="p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant={msg.senderRole === "advisor" ? "default" : "secondary"}>
+                            {msg.senderRole === "advisor" ? "Conseiller" : "Vous"}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {new Date(msg.createdAt).toLocaleDateString("fr-FR")}
+                          </span>
                         </div>
+                        <p className="text-sm">{msg.content}</p>
                       </div>
                     ))}
                   </div>
@@ -447,83 +378,49 @@ export default function MySpace() {
             </Card>
           </TabsContent>
 
-          {/* Traductions */}
-          <TabsContent value="translations" className="space-y-6">
-            <TranslationsTab />
-          </TabsContent>
-
-          {/* Paiements */}
-          <TabsContent value="payments" className="space-y-6">
-            <PaymentsTab />
-          </TabsContent>
-
           {/* Accord */}
-          <TabsContent value="agreement" className="space-y-6">
+          <TabsContent value="agreement" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Accord de service</CardTitle>
+                <CardTitle>Protocole d'Accord</CardTitle>
+                <CardDescription>
+                  Signature électronique de l'accord de service
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Vous devez accepter nos conditions d'utilisation pour continuer.
-                  </p>
-                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    {app?.agreementSigned ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-700">Accord signé le {app.agreementSignedAt ? new Date(app.agreementSignedAt).toLocaleDateString('fr-FR') : '—'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        <span className="text-amber-700">Accord non signé</span>
-                      </>
-                    )}
+              <CardContent className="space-y-4">
+                {app?.agreementSigned ? (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      <p className="font-medium text-green-900">Protocole signé</p>
+                    </div>
+                    <p className="text-sm text-green-800">
+                      Signé par : {app.agreementSignatureName}
+                    </p>
+                    <p className="text-sm text-green-800">
+                      Date : {app.agreementSignedAt ? new Date(app.agreementSignedAt * 1000).toLocaleDateString("fr-FR") : "-"}
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      <p className="font-medium text-yellow-900">Protocole non signé</p>
+                    </div>
+                    <p className="text-sm text-yellow-800 mb-4">
+                      Vous devez signer le protocole d'accord avant de pouvoir soumettre vos documents.
+                    </p>
+                    <Button className="bg-yellow-600 hover:bg-yellow-700">
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Signer le protocole
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Modals */}
-      <QuickUploadModal
-        isOpen={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-        documentType={selectedDocumentType}
-        onUpload={handleUploadFile}
-      />
-
-      {/* Boîte de dialogue de déconnexion */}
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmer la déconnexion</DialogTitle>
-            <DialogDescription>
-              Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre espace.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowLogoutDialog(false)}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Deconnexion
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Bilan Action Modal - à implémenter */}
     </div>
   );
 }

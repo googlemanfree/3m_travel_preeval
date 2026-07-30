@@ -183,7 +183,7 @@ export default function Ressources() {
               className="pl-9 pr-9 h-10 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
             />
             {search && (
-              <button onClick={() => setSearch("")} type="button" aria-label="Effacer la recherche" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 <X className="w-4 h-4" />
               </button>
             )}

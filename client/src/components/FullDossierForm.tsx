@@ -373,7 +373,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
             <p className="text-blue-200 text-sm">Étape {currentStepIndex + 1} sur {totalSteps} — {activeSteps[currentStepIndex]?.title}</p>
           </div>
           {onClose && (
-            <button onClick={onClose} type="button" aria-label="Fermer le formulaire" className="text-blue-200 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-600">
+            <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-600">
               <X className="w-5 h-5" />
             </button>
           )}
@@ -508,9 +508,9 @@ function Step1VisaDestination({ form, set, errors, inputClass }: StepProps) {
       </div>
 
       <div>
-        <Label htmlFor="form-destination" className="text-sm font-semibold text-gray-700 mb-1.5 block">Destination *</Label>
+        <Label className="text-sm font-semibold text-gray-700 mb-1.5 block">Destination *</Label>
         <Select value={form.destination} onValueChange={v => set("destination", v)}>
-          <SelectTrigger id="form-destination" className={inputClass("destination")}>
+          <SelectTrigger className={inputClass("destination")}>
             <SelectValue placeholder="Choisissez votre destination" />
           </SelectTrigger>
           <SelectContent>
@@ -534,43 +534,43 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <Label htmlFor="form-fullName" className="text-sm font-semibold text-gray-700 mb-1 block">Nom complet *</Label>
-          <Input id="form-fullName" value={form.fullName} onChange={e => set("fullName", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom complet *</Label>
+          <Input value={form.fullName} onChange={e => set("fullName", e.target.value)}
             placeholder="Prénom et Nom de famille" className={inputClass("fullName")} />
           {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="form-email" className="text-sm font-semibold text-gray-700 mb-1 block">Email *</Label>
-            <Input id="form-email" type="email" value={form.email} onChange={e => set("email", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Email *</Label>
+            <Input type="email" value={form.email} onChange={e => set("email", e.target.value)}
               placeholder="votre@email.com" className={inputClass("email")} />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
           </div>
           <div>
-            <Label htmlFor="form-whatsappNumber" className="text-sm font-semibold text-gray-700 mb-1 block">WhatsApp *</Label>
-            <Input id="form-whatsappNumber" value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">WhatsApp *</Label>
+            <Input value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
               placeholder="+237 6XX XXX XXX" className={inputClass("whatsappNumber")} />
             {errors.whatsappNumber && <p className="text-red-500 text-xs mt-1">{errors.whatsappNumber}</p>}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="form-dateOfBirth" className="text-sm font-semibold text-gray-700 mb-1 block">Date de naissance *</Label>
-            <Input id="form-dateOfBirth" type="date" value={form.dateOfBirth} onChange={e => set("dateOfBirth", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Date de naissance *</Label>
+            <Input type="date" value={form.dateOfBirth} onChange={e => set("dateOfBirth", e.target.value)}
               className={inputClass("dateOfBirth")} />
             {errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>}
           </div>
           <div>
-            <Label htmlFor="form-placeOfBirth" className="text-sm font-semibold text-gray-700 mb-1 block">Lieu de naissance</Label>
-            <Input id="form-placeOfBirth" value={form.placeOfBirth} onChange={e => set("placeOfBirth", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Lieu de naissance</Label>
+            <Input value={form.placeOfBirth} onChange={e => set("placeOfBirth", e.target.value)}
               placeholder="Ville, Pays" className={inputClass("placeOfBirth")} />
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <Label htmlFor="form-gender" className="text-sm font-semibold text-gray-700 mb-1 block">Genre</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Genre</Label>
             <Select value={form.gender} onValueChange={v => set("gender", v)}>
-              <SelectTrigger id="form-gender" className={inputClass("gender")}><SelectValue placeholder="Genre" /></SelectTrigger>
+              <SelectTrigger className={inputClass("gender")}><SelectValue placeholder="Genre" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="homme">Homme</SelectItem>
                 <SelectItem value="femme">Femme</SelectItem>
@@ -579,9 +579,9 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="form-maritalStatus" className="text-sm font-semibold text-gray-700 mb-1 block">Situation</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Situation</Label>
             <Select value={form.maritalStatus} onValueChange={v => set("maritalStatus", v)}>
-              <SelectTrigger id="form-maritalStatus" className={inputClass("maritalStatus")}><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectTrigger className={inputClass("maritalStatus")}><SelectValue placeholder="Statut" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="celibataire">Célibataire</SelectItem>
                 <SelectItem value="marie">Marié(e)</SelectItem>
@@ -592,26 +592,26 @@ function Step2Identity({ form, set, errors, inputClass }: StepProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="form-nationality" className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité *</Label>
-            <Input id="form-nationality" value={form.nationality} onChange={e => set("nationality", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité *</Label>
+            <Input value={form.nationality} onChange={e => set("nationality", e.target.value)}
               placeholder="Ex: Camerounaise" className={inputClass("nationality")} />
             {errors.nationality && <p className="text-red-500 text-xs mt-1">{errors.nationality}</p>}
           </div>
         </div>
         <div>
-          <Label htmlFor="form-currentAddress" className="text-sm font-semibold text-gray-700 mb-1 block">Adresse actuelle</Label>
-          <Input id="form-currentAddress" value={form.currentAddress} onChange={e => set("currentAddress", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Adresse actuelle</Label>
+          <Input value={form.currentAddress} onChange={e => set("currentAddress", e.target.value)}
             placeholder="Rue, Quartier" className={inputClass("currentAddress")} />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="form-currentCity" className="text-sm font-semibold text-gray-700 mb-1 block">Ville</Label>
-            <Input id="form-currentCity" value={form.currentCity} onChange={e => set("currentCity", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Ville</Label>
+            <Input value={form.currentCity} onChange={e => set("currentCity", e.target.value)}
               placeholder="Ex: Yaoundé" className={inputClass("currentCity")} />
           </div>
           <div>
-            <Label htmlFor="form-currentCountry" className="text-sm font-semibold text-gray-700 mb-1 block">Pays de résidence</Label>
-            <Input id="form-currentCountry" value={form.currentCountry} onChange={e => set("currentCountry", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Pays de résidence</Label>
+            <Input value={form.currentCountry} onChange={e => set("currentCountry", e.target.value)}
               placeholder="Ex: Cameroun" className={inputClass("currentCountry")} />
           </div>
         </div>
@@ -626,9 +626,9 @@ function Step3Education({ form, set, errors, inputClass }: StepProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="form-academicLevel" className="text-sm font-semibold text-gray-700 mb-1 block">Niveau d'études *</Label>
+        <Label className="text-sm font-semibold text-gray-700 mb-1 block">Niveau d'études *</Label>
         <Select value={form.academicLevel} onValueChange={v => set("academicLevel", v)}>
-          <SelectTrigger id="form-academicLevel" className={inputClass("academicLevel")}><SelectValue placeholder="Sélectionnez votre niveau" /></SelectTrigger>
+          <SelectTrigger className={inputClass("academicLevel")}><SelectValue placeholder="Sélectionnez votre niveau" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="brevet">Brevet / BEPC</SelectItem>
             <SelectItem value="bac">Baccalauréat</SelectItem>
@@ -644,25 +644,25 @@ function Step3Education({ form, set, errors, inputClass }: StepProps) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-diplomaTitle" className="text-sm font-semibold text-gray-700 mb-1 block">Intitulé du diplôme principal</Label>
-          <Input id="form-diplomaTitle" value={form.diplomaTitle} onChange={e => set("diplomaTitle", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Intitulé du diplôme principal</Label>
+          <Input value={form.diplomaTitle} onChange={e => set("diplomaTitle", e.target.value)}
             placeholder="Ex: Master en Informatique" className={inputClass("diplomaTitle")} />
         </div>
         <div>
-          <Label htmlFor="form-diplomaInstitution" className="text-sm font-semibold text-gray-700 mb-1 block">Établissement</Label>
-          <Input id="form-diplomaInstitution" value={form.diplomaInstitution} onChange={e => set("diplomaInstitution", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Établissement</Label>
+          <Input value={form.diplomaInstitution} onChange={e => set("diplomaInstitution", e.target.value)}
             placeholder="Université / École" className={inputClass("diplomaInstitution")} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-diplomaYear" className="text-sm font-semibold text-gray-700 mb-1 block">Année d'obtention</Label>
-          <Input id="form-diplomaYear" type="number" value={form.diplomaYear} onChange={e => set("diplomaYear", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Année d'obtention</Label>
+          <Input type="number" value={form.diplomaYear} onChange={e => set("diplomaYear", e.target.value)}
             placeholder="Ex: 2020" min="1990" max="2025" className={inputClass("diplomaYear")} />
         </div>
         <div>
-          <Label htmlFor="form-fieldOfStudy" className="text-sm font-semibold text-gray-700 mb-1 block">Domaine d'études</Label>
-          <Input id="form-fieldOfStudy" value={form.fieldOfStudy} onChange={e => set("fieldOfStudy", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Domaine d'études</Label>
+          <Input value={form.fieldOfStudy} onChange={e => set("fieldOfStudy", e.target.value)}
             placeholder="Ex: Informatique, Médecine..." className={inputClass("fieldOfStudy")} />
         </div>
       </div>
@@ -676,9 +676,9 @@ function Step4Employment({ form, set, errors, inputClass }: StepProps) {
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="form-employmentStatus" className="text-sm font-semibold text-gray-700 mb-1 block">Situation professionnelle actuelle *</Label>
+        <Label className="text-sm font-semibold text-gray-700 mb-1 block">Situation professionnelle actuelle *</Label>
         <Select value={form.employmentStatus} onValueChange={v => set("employmentStatus", v)}>
-          <SelectTrigger id="form-employmentStatus" className={inputClass("employmentStatus")}><SelectValue placeholder="Votre situation" /></SelectTrigger>
+          <SelectTrigger className={inputClass("employmentStatus")}><SelectValue placeholder="Votre situation" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="salarie">Salarié(e) — CDI</SelectItem>
             <SelectItem value="salarie_cdd">Salarié(e) — CDD</SelectItem>
@@ -694,21 +694,21 @@ function Step4Employment({ form, set, errors, inputClass }: StepProps) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-currentEmployer" className="text-sm font-semibold text-gray-700 mb-1 block">Employeur actuel</Label>
-          <Input id="form-currentEmployer" value={form.currentEmployer} onChange={e => set("currentEmployer", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Employeur actuel</Label>
+          <Input value={form.currentEmployer} onChange={e => set("currentEmployer", e.target.value)}
             placeholder="Nom de l'entreprise" className={inputClass("currentEmployer")} />
         </div>
         <div>
-          <Label htmlFor="form-currentJobTitle" className="text-sm font-semibold text-gray-700 mb-1 block">Poste occupé</Label>
-          <Input id="form-currentJobTitle" value={form.currentJobTitle} onChange={e => set("currentJobTitle", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Poste occupé</Label>
+          <Input value={form.currentJobTitle} onChange={e => set("currentJobTitle", e.target.value)}
             placeholder="Ex: Ingénieur logiciel" className={inputClass("currentJobTitle")} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-jobSector" className="text-sm font-semibold text-gray-700 mb-1 block">Secteur d'activité</Label>
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Secteur d'activité</Label>
           <Select value={form.jobSector} onValueChange={v => set("jobSector", v)}>
-            <SelectTrigger id="form-jobSector" className={inputClass("jobSector")}><SelectValue placeholder="Secteur" /></SelectTrigger>
+            <SelectTrigger className={inputClass("jobSector")}><SelectValue placeholder="Secteur" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="informatique">Informatique / Tech</SelectItem>
               <SelectItem value="sante">Santé / Médical</SelectItem>
@@ -723,9 +723,9 @@ function Step4Employment({ form, set, errors, inputClass }: StepProps) {
           </Select>
         </div>
         <div>
-          <Label htmlFor="form-experienceYears" className="text-sm font-semibold text-gray-700 mb-1 block">Années d'expérience</Label>
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Années d'expérience</Label>
           <Select value={form.experienceYears} onValueChange={v => set("experienceYears", v)}>
-            <SelectTrigger id="form-experienceYears" className={inputClass("experienceYears")}><SelectValue placeholder="Expérience" /></SelectTrigger>
+            <SelectTrigger className={inputClass("experienceYears")}><SelectValue placeholder="Expérience" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="0">Aucune expérience</SelectItem>
               <SelectItem value="1">Moins d'1 an</SelectItem>
@@ -771,14 +771,14 @@ function Step5Finances({ form, set, errors, inputClass }: StepProps) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-monthlyIncome" className="text-sm font-semibold text-gray-700 mb-1 block">Revenu mensuel net</Label>
-          <Input id="form-monthlyIncome" type="number" value={form.monthlyIncome} onChange={e => set("monthlyIncome", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Revenu mensuel net</Label>
+          <Input type="number" value={form.monthlyIncome} onChange={e => set("monthlyIncome", e.target.value)}
             placeholder="Ex: 250000" className={inputClass("monthlyIncome")} />
         </div>
         <div>
-          <Label htmlFor="form-incomeCurrency" className="text-sm font-semibold text-gray-700 mb-1 block">Devise</Label>
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Devise</Label>
           <Select value={form.incomeCurrency} onValueChange={v => set("incomeCurrency", v)}>
-            <SelectTrigger id="form-incomeCurrency" className={inputClass("incomeCurrency")}><SelectValue /></SelectTrigger>
+            <SelectTrigger className={inputClass("incomeCurrency")}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="XAF">FCFA (XAF)</SelectItem>
               <SelectItem value="EUR">Euro (EUR)</SelectItem>
@@ -790,14 +790,14 @@ function Step5Finances({ form, set, errors, inputClass }: StepProps) {
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-bankBalance" className="text-sm font-semibold text-gray-700 mb-1 block">Solde bancaire disponible</Label>
-          <Input id="form-bankBalance" type="number" value={form.bankBalance} onChange={e => set("bankBalance", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Solde bancaire disponible</Label>
+          <Input type="number" value={form.bankBalance} onChange={e => set("bankBalance", e.target.value)}
             placeholder="Ex: 1500000" className={inputClass("bankBalance")} />
         </div>
         <div>
-          <Label htmlFor="form-bankBalanceCurrency" className="text-sm font-semibold text-gray-700 mb-1 block">Devise</Label>
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Devise</Label>
           <Select value={form.bankBalanceCurrency} onValueChange={v => set("bankBalanceCurrency", v)}>
-            <SelectTrigger id="form-bankBalanceCurrency" className={inputClass("bankBalanceCurrency")}><SelectValue /></SelectTrigger>
+            <SelectTrigger className={inputClass("bankBalanceCurrency")}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="XAF">FCFA (XAF)</SelectItem>
               <SelectItem value="EUR">Euro (EUR)</SelectItem>
@@ -821,13 +821,13 @@ function Step5Finances({ form, set, errors, inputClass }: StepProps) {
       {form.hasSponsorship && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="form-sponsorName" className="text-sm font-semibold text-gray-700 mb-1 block">Nom du garant</Label>
-            <Input id="form-sponsorName" value={form.sponsorName} onChange={e => set("sponsorName", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom du garant</Label>
+            <Input value={form.sponsorName} onChange={e => set("sponsorName", e.target.value)}
               placeholder="Nom complet" className={inputClass("sponsorName")} />
           </div>
           <div>
-            <Label htmlFor="form-sponsorRelation" className="text-sm font-semibold text-gray-700 mb-1 block">Lien de parenté</Label>
-            <Input id="form-sponsorRelation" value={form.sponsorRelation} onChange={e => set("sponsorRelation", e.target.value)}
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Lien de parenté</Label>
+            <Input value={form.sponsorRelation} onChange={e => set("sponsorRelation", e.target.value)}
               placeholder="Ex: Parent, Ami, Employeur" className={inputClass("sponsorRelation")} />
           </div>
         </motion.div>
@@ -843,9 +843,9 @@ function Step6Family({ form, set, errors, inputClass }: StepProps) {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <Label htmlFor="form-numberOfChildren" className="text-sm font-semibold text-gray-700 mb-1 block">Nombre d'enfants</Label>
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nombre d'enfants</Label>
           <Select value={form.numberOfChildren} onValueChange={v => set("numberOfChildren", v)}>
-            <SelectTrigger id="form-numberOfChildren" className={inputClass("numberOfChildren")}><SelectValue /></SelectTrigger>
+            <SelectTrigger className={inputClass("numberOfChildren")}><SelectValue /></SelectTrigger>
             <SelectContent>
               {[0,1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
               <SelectItem value="6">6 ou plus</SelectItem>
@@ -853,14 +853,14 @@ function Step6Family({ form, set, errors, inputClass }: StepProps) {
           </Select>
         </div>
         <div>
-          <Label htmlFor="form-spouseFullName" className="text-sm font-semibold text-gray-700 mb-1 block">Nom du conjoint(e)</Label>
-          <Input id="form-spouseFullName" value={form.spouseFullName} onChange={e => set("spouseFullName", e.target.value)}
+          <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nom du conjoint(e)</Label>
+          <Input value={form.spouseFullName} onChange={e => set("spouseFullName", e.target.value)}
             placeholder="Si marié(e)" className={inputClass("spouseFullName")} />
         </div>
       </div>
       <div>
-        <Label htmlFor="form-spouseNationality" className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité du conjoint(e)</Label>
-        <Input id="form-spouseNationality" value={form.spouseNationality} onChange={e => set("spouseNationality", e.target.value)}
+        <Label className="text-sm font-semibold text-gray-700 mb-1 block">Nationalité du conjoint(e)</Label>
+        <Input value={form.spouseNationality} onChange={e => set("spouseNationality", e.target.value)}
           placeholder="Ex: Française, Canadienne..." className={inputClass("spouseNationality")} />
       </div>
       <div>
@@ -877,9 +877,9 @@ function Step6Family({ form, set, errors, inputClass }: StepProps) {
       {form.familyMemberInDestination && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="form-familyMemberRelation" className="text-sm font-semibold text-gray-700 mb-1 block">Lien de parenté</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Lien de parenté</Label>
             <Select value={form.familyMemberRelation} onValueChange={v => set("familyMemberRelation", v)}>
-              <SelectTrigger id="form-familyMemberRelation" className={inputClass("familyMemberRelation")}><SelectValue placeholder="Relation" /></SelectTrigger>
+              <SelectTrigger className={inputClass("familyMemberRelation")}><SelectValue placeholder="Relation" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="conjoint">Conjoint(e)</SelectItem>
                 <SelectItem value="parent">Parent (père/mère)</SelectItem>
@@ -890,9 +890,9 @@ function Step6Family({ form, set, errors, inputClass }: StepProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="form-familyMemberStatus" className="text-sm font-semibold text-gray-700 mb-1 block">Statut dans le pays</Label>
+            <Label className="text-sm font-semibold text-gray-700 mb-1 block">Statut dans le pays</Label>
             <Select value={form.familyMemberStatus} onValueChange={v => set("familyMemberStatus", v)}>
-              <SelectTrigger id="form-familyMemberStatus" className={inputClass("familyMemberStatus")}><SelectValue placeholder="Statut" /></SelectTrigger>
+              <SelectTrigger className={inputClass("familyMemberStatus")}><SelectValue placeholder="Statut" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="citoyen">Citoyen</SelectItem>
                 <SelectItem value="resident_permanent">Résident permanent</SelectItem>

@@ -198,11 +198,11 @@ export default function Register() {
 
             {/* Destination */}
             <div>
-              <Label htmlFor="form-destination" className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
+              <Label className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
               <div className="relative mt-1">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
                 <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
-                  <SelectTrigger id="form-destination" className="pl-10">
+                  <SelectTrigger className="pl-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -231,7 +231,6 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(v => !v)}
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -45,7 +45,6 @@ export default function TranslationOrder() {
   const [pricePerPage, setPricePerPage] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('EUR');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
 
   const createTranslationRequest = trpc.translation.createTranslationRequest.useMutation({
     onSuccess: () => {
@@ -131,47 +130,24 @@ export default function TranslationOrder() {
       return;
     }
 
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("fileType", "traduction");
+    // TODO: Implement file upload to S3 and get fileUrl
+    const fileUrl = "https://example.com/placeholder.pdf"; // Placeholder
 
-      const res = await fetch("/api/candidate/upload-public", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Erreur upload" }));
-        throw new Error(err.error || "Erreur lors de l'envoi du document");
-      }
-
-      const { fileUrl } = await res.json();
-
-      createTranslationRequest.mutate({
-        documentType: documentType as any,
-        sourceLanguage,
-        targetLanguage,
-        fileUrl,
-        fileName,
-        fileSize,
-        numberOfPages: Number(numberOfPages),
-        pricePerPage: pricePerPage,
-        totalPrice: String(totalPrice),
-        currency,
-        candidateName,
-        email,
-        whatsapp,
-      });
-    } catch (err: any) {
-      toast({
-        title: "Erreur",
-        description: err.message || "Erreur lors de l'envoi du document. Veuillez réessayer.",
-      });
-    } finally {
-      setIsUploading(false);
-    }
+    createTranslationRequest.mutate({
+      documentType: documentType as any,
+      sourceLanguage,
+      targetLanguage,
+      fileUrl,
+      fileName,
+      fileSize,
+      numberOfPages: Number(numberOfPages),
+      pricePerPage: pricePerPage,
+      totalPrice: String(totalPrice),
+      currency,
+      candidateName,
+      email,
+      whatsapp,
+    });
   };
 
   return (
@@ -214,7 +190,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="documentType">Type de Document</Label>
           <Select onValueChange={setDocumentType} value={documentType}>
-            <SelectTrigger id="documentType">
+            <SelectTrigger>
               <SelectValue placeholder="Sélectionner le type de document" />
             </SelectTrigger>
             <SelectContent>
@@ -230,7 +206,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="sourceLanguage">Langue Source</Label>
           <Select onValueChange={setSourceLanguage} value={sourceLanguage}>
-            <SelectTrigger id="sourceLanguage">
+            <SelectTrigger>
               <SelectValue placeholder="Sélectionner la langue source" />
             </SelectTrigger>
             <SelectContent>
@@ -246,7 +222,7 @@ export default function TranslationOrder() {
         <div>
           <Label htmlFor="targetLanguage">Langue Cible</Label>
           <Select onValueChange={setTargetLanguage} value={targetLanguage}>
-            <SelectTrigger id="targetLanguage">
+            <SelectTrigger>
               <SelectValue placeholder="Sélectionner la langue cible" />
             </SelectTrigger>
             <SelectContent>
@@ -294,8 +270,8 @@ export default function TranslationOrder() {
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isUploading || createTranslationRequest.isPending || getTranslationPricing.isFetching}>
-          {isUploading ? 'Envoi du document...' : createTranslationRequest.isPending ? 'Soumission en cours...' : 'Soumettre la Demande'}
+        <Button type="submit" className="w-full" disabled={createTranslationRequest.isPending || getTranslationPricing.isFetching}>
+          {createTranslationRequest.isPending ? 'Soumission en cours...' : 'Soumettre la Demande'}
         </Button>
       </form>
     </div>

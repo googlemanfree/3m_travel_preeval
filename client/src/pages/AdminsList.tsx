@@ -211,10 +211,10 @@ export default function AdminsList() {
         <div className="bg-white rounded-lg shadow p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="searchQuery" className="text-sm font-semibold">Rechercher</Label>
+              <Label className="text-sm font-semibold">Rechercher</Label>
               <div className="relative mt-2">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <Input id="searchQuery"
+                <Input
                   placeholder="Nom ou email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -223,8 +223,8 @@ export default function AdminsList() {
               </div>
             </div>
             <div>
-              <Label htmlFor="roleFilter" className="text-sm font-semibold">Rôle</Label>
-              <select id="roleFilter"
+              <Label className="text-sm font-semibold">Rôle</Label>
+              <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -236,8 +236,8 @@ export default function AdminsList() {
               </select>
             </div>
             <div>
-              <Label htmlFor="statusFilter" className="text-sm font-semibold">Statut</Label>
-              <select id="statusFilter"
+              <Label className="text-sm font-semibold">Statut</Label>
+              <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"

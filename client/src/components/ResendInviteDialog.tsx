@@ -224,8 +224,8 @@ export default function ResendInviteDialog({
               </div>
 
               <div>
-                <Label htmlFor="customSubject" className="text-sm font-semibold">Sujet</Label>
-                <Input id="customSubject"
+                <Label className="text-sm font-semibold">Sujet</Label>
+                <Input
                   value={customSubject}
                   onChange={(e) => setCustomSubject(e.target.value)}
                   className="mt-2"
@@ -234,8 +234,8 @@ export default function ResendInviteDialog({
               </div>
 
               <div>
-                <Label htmlFor="customBody" className="text-sm font-semibold">Message</Label>
-                <textarea id="customBody"
+                <Label className="text-sm font-semibold">Message</Label>
+                <textarea
                   value={customBody}
                   onChange={(e) => setCustomBody(e.target.value)}
                   className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"

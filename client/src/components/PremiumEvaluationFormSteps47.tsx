@@ -563,8 +563,6 @@ export default function PremiumEvaluationFormSteps47({
                   </div>
                   <button
                     onClick={() => removeFile(index)}
-                    type="button"
-                    aria-label={`Supprimer le fichier ${file.name}`}
                     className="p-2 hover:bg-red-100 rounded-lg transition"
                   >
                     <X className="w-5 h-5 text-red-600" />

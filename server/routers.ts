@@ -8,15 +8,12 @@ import { applicationRouter } from "./routers/application";
 import { heartbeatRouter } from "./routers/heartbeat";
 import { profileEvaluationRouter } from "./routers/profileEvaluation";
 import { contactRouter } from "./routers/contact";
-import { appointmentRouter } from "./routers/appointment";
 import { adminRouter } from "./routers/admin";
 import { adminAuthRouter } from "./routers/adminAuth";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
-import { extrasRouter } from "./routers/extras";
-import { blogRouter } from "./routers/blog";
 
 const COOKIE_NAME = "manus_session";
 
@@ -41,15 +38,12 @@ export const appRouter = router({
   application: applicationRouter,
   heartbeat: heartbeatRouter,
   contact: contactRouter,
-  appointment: appointmentRouter,
   admin: adminRouter,
   adminAuth: adminAuthRouter,
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
   documentSubmission: documentSubmissionRouter,
-  extras: extrasRouter,
-  blog: blogRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -371,45 +371,6 @@ export const agencyDossierRouter = router({
     }),
 
   /**
-   * Candidat : récupérer ses propres dossiers en agence par email
-   */
-  getMyDossiers: protectedProcedure
-    .input(z.object({
-      email: z.string().email().optional(),
-    }))
-    .query(async ({ input, ctx }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      // Un candidat ne peut voir que ses propres dossiers
-      const emailToSearch = input.email || ctx.user?.email || "";
-      if (!emailToSearch) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Email requis" });
-      }
-
-      // Admin peut voir tous les dossiers, candidat uniquement les siens
-      if (ctx.user?.role !== "admin" && emailToSearch !== ctx.user?.email) {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès non autorisé" });
-      }
-
-      try {
-        const dossiers = await db
-          .select()
-          .from(agencyDossiers)
-          .where(eq(agencyDossiers.email, emailToSearch))
-          .orderBy(desc(agencyDossiers.createdAt));
-
-        return dossiers;
-      } catch (err) {
-        console.error("[Agency Dossier] Get my dossiers error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des dossiers",
-        });
-      }
-    }),
-
-  /**
    * Supprimer un dossier
    */
   deleteDossier: protectedProcedure

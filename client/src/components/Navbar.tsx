@@ -1,338 +1,282 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/_core/hooks/useAuth';
-import { useCandidateAuth } from '@/hooks/useCandidateAuth';
-import { startLogin } from '@/const';
-import { LogOut, User, Settings, ChevronDown, Menu, X, Plane, BookOpen, Globe, FolderOpen, Shield, Info, Mail, FileText, MoreHorizontal } from 'lucide-react';
-import { AutoBreadcrumb } from './Breadcrumb';
+import { Link, useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
-export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
+
+interface NavbarProps {
+  /** Highlight the CTA eval button — pass an onClick to open the eval modal */
+  onEvalClick?: () => void;
+  /** Active page for underline indicator */
+  activePage?: "home" | "flights" | "procedures" | "dashboard";
+}
+
+export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isAuthenticated: isOAuthAuthenticated, logout: oauthLogout } = useAuth();
-  const { candidate, isAuthenticated: isCandidateAuthenticated, logout: candidateLogout } = useCandidateAuth();
-  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const { user, isAuthenticated } = useAuth();
 
-  // Le candidat connecté (JWT) est prioritaire sur l'utilisateur OAuth (admin)
-  // On affiche le candidat si connecté, sinon l'utilisateur OAuth admin
-  const isAuthenticated = isCandidateAuthenticated || isOAuthAuthenticated;
-  const displayName = isCandidateAuthenticated ? candidate?.fullName : user?.name;
-  const displayEmail = isCandidateAuthenticated ? candidate?.email : user?.email;
-  const isAdmin = !isCandidateAuthenticated && user?.role === 'admin';
-  const isCandidate = isCandidateAuthenticated;
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
-  const handleLogout = () => {
-    setIsProfileOpen(false);
-    setIsMenuOpen(false);
-    // Vider TOUT le stockage de session (candidat + OAuth)
-    try {
-      localStorage.removeItem('3m_candidate_token');
-      localStorage.removeItem('3m_candidate_info');
-      sessionStorage.removeItem('3m_candidate_token');
-      sessionStorage.removeItem('3m_candidate_info');
-      sessionStorage.removeItem('manus-cookie');
-      // Vider aussi le cache tRPC en mémoire
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch { /* ignore */ }
-    if (isCandidateAuthenticated) {
-      candidateLogout();
-    } else {
-      oauthLogout();
-    }
-    // Forcer un rechargement complet pour vider le cache tRPC en mémoire
-    window.location.href = '/';
-  };
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const active = activePage ?? (
+    location === "/" ? "home" :
+    location.startsWith("/flights") ? "flights" :
+    location.startsWith("/procedures") ? "procedures" :
+    location.startsWith("/dashboard") ? "dashboard" :
+    location.startsWith("/visa-types") ? "visa-types" :
+    location.startsWith("/destinations") ? "destinations" :
+    location.startsWith("/guide") ? "guide" : undefined
+  );
 
-  const isActive = (path: string) => location === path;
-
-  const navLinks = [
-    { href: '/flights', label: 'Vols', icon: Plane },
-    { href: '/procedures', label: 'Procédures', icon: BookOpen },
-    { href: '/ressources', label: 'Ressources', icon: Globe },
-    { href: '/mon-dossier', label: 'Suivi', icon: FolderOpen },
-  ];
-
-  const adminLink = { href: '/admin/login', label: 'Admin', icon: Shield, subtle: true };
+  const linkClass = (page: string) =>
+    `text-sm font-semibold transition-colors ${
+      active === page
+        ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
+        : "text-gray-600 hover:text-blue-700"
+    }`;
 
   return (
-    <div>
-    <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
 
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3 flex-shrink-0">
-            <img
-              src="/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg"
-              alt="3M Travel & Services"
-              className="h-10 lg:h-12 w-auto"
-            />
-            <div className="hidden sm:block">
-              <span className="block text-base lg:text-lg font-bold text-[#0a2540] leading-tight">3M Travel & Services</span>
-              <span className="block text-xs text-blue-600 font-medium">Votre mobilité, notre expertise</span>
-            </div>
-          </a>
+        {/* ── Logo ── */}
+        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
+          <img
+            src={LOGO_URL}
+            alt="3M Travel & Services"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-200 flex-shrink-0"
+            onError={e => {
+              const t = e.target as HTMLImageElement;
+              t.style.display = "none";
+              const fallback = t.nextElementSibling as HTMLElement | null;
+              if (fallback) fallback.style.display = "flex";
+            }}
+          />
+          {/* Fallback si logo indisponible */}
+          <div
+            className="w-10 h-10 rounded-full bg-blue-700 items-center justify-center text-white font-black text-sm flex-shrink-0"
+            style={{ display: "none" }}
+          >
+            3M
+          </div>
+          <div className="min-w-0">
+            <div className="font-black text-blue-800 text-sm leading-tight truncate">3M Travel & Services</div>
+            <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
+          </div>
+        </Link>
 
-          {/* Navigation desktop */}
-          <nav className="hidden lg:flex items-center gap-5">
-            {navLinks.map(({ href, label, icon: Icon }) => (
-              <a
-                key={href}
-                href={href}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-colors hover:text-blue-600 ${
-                  isActive(href) ? 'text-blue-600' : 'text-gray-700'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </a>
-            ))}
-            {/* Menu Plus */}
-            <div className="relative group">
-              <button className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors">
-                <MoreHorizontal className="w-4 h-4" /> Plus
-              </button>
-              <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <a href="/eligibility-simulator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition rounded-t-xl">
-                  <Shield className="w-4 h-4 text-green-500" /> Simulateur
-                </a>
-                <a href="/budget-calculator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <FileText className="w-4 h-4 text-orange-500" /> Calculateur Budget
-                </a>
-                <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Globe className="w-4 h-4 text-purple-500" /> Galerie Visas
-                </a>
-                <a href="/schedule-agency" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Mail className="w-4 h-4 text-teal-500" /> Prendre RDV
-                </a>
-                <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <FileText className="w-4 h-4 text-blue-500" /> Blog
-                </a>
-                <a href="/about" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Info className="w-4 h-4 text-blue-500" /> À Propos
-                </a>
-                <a href="/contact" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
-                  <Mail className="w-4 h-4 text-blue-500" /> Contact
-                </a>
-                <div className="border-t border-gray-100">
-                  <a href="/admin/login" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 transition rounded-b-xl">
-                    <Shield className="w-4 h-4" /> Admin
-                  </a>
-                </div>
+        {/* ── Nav desktop ── */}
+        <nav className="hidden md:flex items-center gap-6">
+          <Link href="/" className={linkClass("home")}>Accueil</Link>
+          <Link href="/flights" className={linkClass("flights")}>
+            <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
+          </Link>
+          <Link href="/procedures" className={linkClass("procedures")}>
+            <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
+          </Link>
+
+          {/* Menu déroulant Ressources */}
+          <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
+            <button className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
+              ["visa-types", "destinations", "guide", "tarifs", "avis", "blog"].includes(active ?? "")
+                ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
+                : "text-gray-600 hover:text-blue-700"
+            }`}>
+              <Globe className="w-3.5 h-3.5" />
+              Ressources
+              <ChevronDown className={`w-3 h-3 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
+            </button>
+            {resourcesOpen && (
+              <div className="absolute top-full left-0 mt-1 bg-white border border-blue-100 rounded-lg shadow-lg py-2 min-w-48 z-50">
+                <Link href="/visa-types" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Types de Visa
+                </Link>
+                <Link href="/destinations" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Map className="w-4 h-4 text-blue-600" />
+                  Destinations
+                </Link>
+                <Link href="/guide" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  Guide Complet
+                </Link>
+                <Link href="/tarifs" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <FileText className="w-4 h-4 text-blue-600" />
+                  Tarifs & Garanties
+                </Link>
+                <Link href="/avis" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <Star className="w-4 h-4 text-blue-600" />
+                  Avis Clients
+                </Link>
+                <Link href="/blog" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                  <BookOpen className="w-4 h-4 text-blue-600" />
+                  Blog
+                </Link>
+                <div className="border-t border-gray-100 my-1" />
+                <Link href="/ressources" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">
+                  <Download className="w-4 h-4 text-blue-600" />
+                  Télécharger les guides PDF
+                </Link>
               </div>
-            </div>
-          </nav>
-
-          {/* Actions desktop */}
-          <div className="hidden lg:flex items-center gap-3">
-            {isAuthenticated && displayName ? (
-              <div className="relative" ref={profileMenuRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-semibold text-sm transition"
-                >
-                  <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                    {displayName?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <span className="max-w-[120px] truncate">{displayName}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {isProfileOpen && (
-                  <div
-                    className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
-                    style={{ animation: 'dropdownIn 0.18s cubic-bezier(0.23,1,0.32,1)' }}
-                  >
-                    {/* En-tête profil */}
-                    <div className="px-4 py-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-b border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center text-base font-bold shadow">
-                          {displayName?.charAt(0).toUpperCase() || 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 truncate text-sm">{displayName}</p>
-                          <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 mt-2 text-xs px-2.5 py-1 rounded-full font-semibold ${
-                        isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {isAdmin ? '👑 Administrateur' : '👤 Candidat'}
-                      </span>
-                    </div>
-
-                    {/* Liens de navigation */}
-                    <div className="py-1.5">
-                      {isCandidate && (
-                        <a
-                          href="/mon-espace"
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <User className="w-4 h-4 text-blue-500" />
-                          <span>Mon Espace</span>
-                        </a>
-                      )}
-                      <a
-                        href="/mon-dossier"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
-                        <FolderOpen className="w-4 h-4 text-blue-500" />
-                        <span>Mes Dossiers</span>
-                      </a>
-                      {isAdmin && (
-                        <a
-                          href="/admin"
-                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-amber-50 hover:text-amber-700 transition-colors"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Settings className="w-4 h-4 text-amber-500" />
-                          <span>Panneau Admin</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Séparateur + Déconnexion */}
-                    <div className="border-t border-gray-100 p-2">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors font-semibold"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Se déconnecter</span>
-                        <span className="ml-auto text-xs text-red-400">Vider la session</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <a href="/open-dossier" className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-sm transition">
-                  ⭐ Évaluation gratuite
-                </a>
-                <button onClick={() => startLogin()} className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-bold text-sm transition">
-                  Connexion
-                </button>
-              </>
             )}
           </div>
 
-          {/* Hamburger mobile */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-700 hover:text-blue-600 hover:bg-gray-100 transition"
-            aria-label="Menu"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <Link href="/mon-dossier" className={linkClass("mon-dossier")}>
+            <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivre mon dossier</span>
+          </Link>
+
+          {/* Admin link - only show if authenticated and admin */}
+          {isAdmin && (
+            <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
+              <Shield className="w-3.5 h-3.5" />
+              Admin
+            </Link>
+          )}
+        </nav>
+
+        {/* ── Actions desktop ── */}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          {onEvalClick && (
+            <Button
+              onClick={onEvalClick}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-4 shadow-md"
+            >
+              <Star className="w-4 h-4 mr-1.5" />
+              Évaluation gratuite
+            </Button>
+          )}
+          {/* Admin login button - only show if NOT admin */}
+          {!isAdmin && (
+            <Link href="/admin/login">
+              <Button
+                variant="outline"
+                className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
+              >
+                <Shield className="w-4 h-4 mr-1.5" />
+                Admin
+              </Button>
+            </Link>
+          )}
+          {/* Show Mon Espace if authenticated, otherwise show Login/Signup */}
+          {isAuthenticated ? (
+            <Link href="/mon-espace">
+              <Button
+                variant="outline"
+                className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
+              >
+                <User className="w-4 h-4 mr-1.5" />
+                Mon Espace
+              </Button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button
+                  variant="outline"
+                  className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
+                >
+                  <User className="w-4 h-4 mr-1.5" />
+                  Connexion
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button
+                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
+                >
+                  Inscription
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
+
+        {/* ── Mobile burger ── */}
+        <button
+          className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label="Menu"
+        >
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
 
-      {/* Menu mobile */}
-      {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-1 shadow-lg">
-          {navLinks.map(({ href, label, icon: Icon }) => (
-            <a
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm font-medium transition ${
-                isActive(href) ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
-              }`}
-              onClick={() => setIsMenuOpen(false)}
+      {/* ── Mobile menu ── */}
+      {mobileOpen && (
+        <div className="md:hidden bg-white border-t border-blue-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
+          <Link href="/" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            Accueil
+          </Link>
+          <Link href="/flights" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Plane className="w-4 h-4 text-blue-600" /> Vols
+          </Link>
+          <Link href="/procedures" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <BookOpen className="w-4 h-4 text-blue-600" /> Procédures
+          </Link>
+          <Link href="/visa-types" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <FileText className="w-4 h-4 text-blue-600" /> Types de Visa
+          </Link>
+          <Link href="/destinations" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Map className="w-4 h-4 text-blue-600" /> Destinations
+          </Link>
+          <Link href="/guide" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Globe className="w-4 h-4 text-blue-600" /> Guide Complet
+          </Link>
+          <Link href="/ressources" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+            <Download className="w-4 h-4 text-blue-600" /> Télécharger les guides PDF
+          </Link>
+          <Link href="/mon-dossier" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
+            <Search className="w-4 h-4 text-blue-600" /> Suivre mon dossier
+          </Link>
+
+          {isAuthenticated ? (
+            <Link href="/mon-espace" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+              <User className="w-4 h-4" /> Mon Espace
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+                <User className="w-4 h-4" /> Connexion
+              </Link>
+              <Link href="/register" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
+                Inscription
+              </Link>
+            </>
+          )}
+          <Link href="/admin/login" onClick={() => setMobileOpen(false)}
+            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
+            <Shield className="w-4 h-4" /> Connexion Admin
+          </Link>
+          {isAdmin && (
+            <Link href="/admin" onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
+              <Shield className="w-4 h-4" /> Administration
+            </Link>
+          )}
+          {onEvalClick && (
+            <Button
+              onClick={() => { setMobileOpen(false); onEvalClick(); }}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold mt-1"
             >
-              <Icon className="w-4 h-4" />
-              {label}
-            </a>
-          ))}
-          {/* Liens secondaires */}
-          <div className="border-t border-gray-100 pt-2 mt-2 space-y-1">
-            <a href="/eligibility-simulator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Shield className="w-4 h-4 text-green-400" /> Simulateur
-            </a>
-            <a href="/budget-calculator" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <FileText className="w-4 h-4 text-orange-400" /> Calculateur Budget
-            </a>
-            <a href="/visa-gallery" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Globe className="w-4 h-4 text-purple-400" /> Galerie Visas
-            </a>
-            <a href="/blog" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <FileText className="w-4 h-4 text-blue-400" /> Blog
-            </a>
-            <a href="/about" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Info className="w-4 h-4 text-blue-400" /> À Propos
-            </a>
-            <a href="/contact" className="flex items-center gap-3 py-2 px-3 rounded-lg text-sm text-gray-600 hover:bg-gray-50" onClick={() => setIsMenuOpen(false)}>
-              <Mail className="w-4 h-4 text-blue-400" /> Contact
-            </a>
-          </div>
-          <div className="pt-2 space-y-2 border-t border-gray-100 mt-2">
-            {isAuthenticated && displayName ? (
-              <>
-                <div className="flex items-center gap-3 px-3 py-2 bg-blue-50 rounded-lg">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                    {displayName?.charAt(0).toUpperCase() || 'U'}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">{displayName}</p>
-                    <p className="text-xs text-gray-500">{displayEmail}</p>
-                    <span className={`text-xs font-medium ${
-                      isAdmin ? 'text-amber-600' : 'text-blue-600'
-                    }`}>
-                      {isAdmin ? '👑 Admin' : '👤 Candidat'}
-                    </span>
-                  </div>
-                </div>
-                {isCandidate && (
-                  <a href="/mon-espace" className="flex items-center gap-2 py-2.5 px-3 text-blue-700 text-sm font-medium hover:bg-blue-50 rounded-lg transition" onClick={() => setIsMenuOpen(false)}>
-                    <User className="w-4 h-4" /> Mon Espace
-                  </a>
-                )}
-                {isAdmin && (
-                  <a href="/admin" className="flex items-center gap-2 py-2.5 px-3 text-amber-700 text-sm font-medium hover:bg-amber-50 rounded-lg transition" onClick={() => setIsMenuOpen(false)}>
-                    <Settings className="w-4 h-4" /> Panneau Admin
-                  </a>
-                )}
-                <button
-                  onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                  className="w-full flex items-center gap-2 py-2.5 px-3 text-red-600 text-sm font-medium hover:bg-red-50 rounded-lg transition"
-                >
-                  <LogOut className="w-4 h-4" /> Déconnexion
-                </button>
-              </>
-            ) : (
-              <>
-                <a href="/open-dossier" className="block w-full text-center bg-amber-500 text-white py-3 rounded-xl font-bold text-sm" onClick={() => setIsMenuOpen(false)}>
-                  ⭐ Évaluation gratuite
-                </a>
-                <button onClick={() => { setIsMenuOpen(false); startLogin(); }} className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold text-sm">
-                  Connexion
-                </button>
-              </>
-            )}
-          </div>
+              <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
+            </Button>
+          )}
         </div>
       )}
     </header>
-      {/* Breadcrumb automatique sous le header */}
-      <div className="bg-gray-50 border-b border-gray-100 hidden md:block">
-        <div className="max-w-7xl mx-auto px-4">
-          <AutoBreadcrumb />
-        </div>
-      </div>
-    </div>
   );
 }

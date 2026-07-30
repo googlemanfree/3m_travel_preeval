@@ -1022,15 +1022,6 @@ function RegionCard({ region, onSelect }: { region: Region; onSelect: () => void
   return (
     <div
       onClick={onSelect}
-      role="button"
-      tabIndex={0}
-      aria-label={`Voir les procédures pour ${region.name}`}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
       className="group cursor-pointer rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
       <div className="relative h-48 overflow-hidden">
@@ -1111,37 +1102,12 @@ export default function Procedures() {
   const { user, loading: authLoading } = useAuth();
   const [location, setLocation] = useLocation();
 
-  // ─── Tous les hooks doivent être déclarés avant tout return conditionnel ───
-  const [activeRegion, setActiveRegion] = useState<string | null>(null);
-  const [showEvalModal, setShowEvalModal] = useState(false);
-  const [evalStep, setEvalStep] = useState(1);
-  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
-  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showScoringForm, setShowScoringForm] = useState(false);
-
   // Rediriger si non authentifié
   useEffect(() => {
     if (!authLoading && !user) {
       setLocation("/login?redirect=/procedures");
     }
   }, [user, authLoading, setLocation]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // Afficher un écran de chargement pendant la vérification
   if (authLoading) {
@@ -1159,6 +1125,18 @@ export default function Procedures() {
   if (!user) {
     return null;
   }
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [evalStep, setEvalStep] = useState(1);
+  const [evalData, setEvalData] = useState({ nom: "", email: "", tel: "", destination: "", type: "", niveau: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // ─── États du tunnel de conversion ────────────────────────────────────────────────────────────
+  const [selectedProcedure, setSelectedProcedure] = useState<ProcedureInfo | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showScoringForm, setShowScoringForm] = useState(false);
 
   const handleStartProcedure = (info: ProcedureInfo) => {
     setSelectedProcedure(info);
@@ -1200,6 +1178,17 @@ export default function Procedures() {
     return acc;
   }, {});
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleSelectResult = (regionId: string, destinationId?: string) => {
     setActiveRegion(regionId);
     setSearchQuery("");
@@ -1229,7 +1218,7 @@ export default function Procedures() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      <Navbar activePage="procedures" onEvalClick={() => setShowEvalModal(true)} />
 
       {/* ── Hero ── */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 text-white py-14 px-4">
@@ -1258,7 +1247,7 @@ export default function Procedures() {
                 className="flex-1 px-4 py-4 text-gray-800 bg-transparent outline-none text-base placeholder-gray-400"
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} type="button" aria-label="Effacer la recherche" className="mr-3 text-gray-400 hover:text-gray-600 transition-colors">
+                <button onClick={() => setSearchQuery("")} className="mr-3 text-gray-400 hover:text-gray-600 transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               )}

@@ -83,9 +83,6 @@ export default function FloatingServices() {
             : "bg-gradient-to-br from-blue-600 to-blue-800"
         }`}
         title="Services"
-        aria-label={isOpen ? "Fermer le menu des services" : "Ouvrir le menu des services"}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
       >
         <span className={`transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`}>
           ⚙️
