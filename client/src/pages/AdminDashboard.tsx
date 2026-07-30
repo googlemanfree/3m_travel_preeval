@@ -542,6 +542,16 @@ export default function AdminDashboard() {
 
   const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  
+  // Générer les initiales pour l'avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
     { search: search || undefined, status: statusFilter !== "ALL" ? statusFilter : undefined },
@@ -587,7 +597,7 @@ export default function AdminDashboard() {
               <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
               <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
@@ -606,6 +616,18 @@ export default function AdminDashboard() {
                 <Plus className="w-4 h-4" />
                 Saisir dossier agence
               </Button>
+              
+              {/* Profil Admin */}
+              <div className="flex items-center gap-2 pl-3 border-l border-white/20">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-md shadow-orange-900/30 text-sm">
+                  {getInitials(adminName)}
+                </div>
+                <div className="hidden sm:flex flex-col">
+                  <p className="text-sm font-semibold text-white leading-tight">{adminName}</p>
+                  <p className="text-xs text-blue-200">Admin</p>
+                </div>
+              </div>
+              
               <Button
                 size="sm"
                 onClick={() => logoutMutation.mutate({ sessionToken })}
