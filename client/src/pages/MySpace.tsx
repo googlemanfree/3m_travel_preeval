@@ -171,6 +171,7 @@ export default function MySpace() {
   const [animationStatus, setAnimationStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [pipelineSteps, setPipelineSteps] = useState<StatusStep[]>([]);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [isResendingEmail, setIsResendingEmail] = useState(false);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(

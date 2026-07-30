@@ -522,6 +522,31 @@ export const candidateRouter = router({
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
     }),
 
+  // ── Renvoyer l'email de vérification ────────────────────────────────────────
+  resendVerificationEmail: publicProcedure
+    .input(z.object({ candidateId: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+      const candidate = rows[0];
+      if (candidate.emailVerified) {
+        return { success: true, message: "Votre email est déjà vérifié." };
+      }
+      // Générer un nouveau token de vérification
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      await db.update(candidates).set({ verificationToken, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      // Renvoyer l'email de vérification
+      try {
+        await sendVerificationLink(candidate.email, candidate.fullName, verificationToken);
+      } catch (err) {
+        console.error("[resendVerificationEmail] Error sending email:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi de l'email." });
+      }
+      return { success: true, message: "Email de vérification renvoyé avec succès." };
+    }),
+
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
   getDossierSteps: publicProcedure.query(() => {
     return DOSSIER_STEPS;
