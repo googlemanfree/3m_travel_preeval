@@ -151,7 +151,7 @@ export function SimpleMultiProjectForm() {
                 value={formData.projectType}
                 onValueChange={(value) => handleSelectChange("projectType", value)}
               >
-                <SelectTrigger className="mt-2">
+                <SelectTrigger id="projectType" className="mt-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -205,7 +205,7 @@ export function SimpleMultiProjectForm() {
                     value={formData.educationLevel || ""}
                     onValueChange={(value) => handleSelectChange("educationLevel", value)}
                   >
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger id="educationLevel" className="mt-2">
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>

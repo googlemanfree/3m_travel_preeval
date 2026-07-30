@@ -234,7 +234,7 @@ export function MultiProjectEvaluationForm() {
                   value={formData.projectType}
                   onValueChange={(value) => handleSelectChange("projectType", value)}
                 >
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger id="projectType" className="mt-2">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -312,7 +312,7 @@ export function MultiProjectEvaluationForm() {
                       value={formData.educationLevel || ""}
                       onValueChange={(value) => handleSelectChange("educationLevel", value)}
                     >
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger id="educationLevel" className="mt-2">
                         <SelectValue placeholder="Sélectionner" />
                       </SelectTrigger>
                       <SelectContent>
@@ -363,7 +363,7 @@ export function MultiProjectEvaluationForm() {
                     value={formData.diplomaLevel || ""}
                     onValueChange={(value) => handleSelectChange("diplomaLevel", value)}
                   >
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger id="diplomaLevel" className="mt-2">
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
@@ -440,7 +440,7 @@ export function MultiProjectEvaluationForm() {
                     value={formData.visitReason || ""}
                     onValueChange={(value) => handleSelectChange("visitReason", value)}
                   >
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger id="visitReason" className="mt-2">
                       <SelectValue placeholder="Sélectionner" />
                     </SelectTrigger>
                     <SelectContent>
