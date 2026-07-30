@@ -91,7 +91,7 @@ export default function Navbar() {
               <a
                 key={href}
                 href={href}
-                className={`flex items-center gap-1.5 text-sm font-semibold transition-colors hover:text-blue-600 ${
+                className={`flex items-center gap-1.5 text-sm font-semibold transition-colors hover:text-blue-600 no-underline ${
                   isActive(href) ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
@@ -105,29 +105,29 @@ export default function Navbar() {
                 <MoreHorizontal className="w-4 h-4" /> Plus
               </button>
               <div className="absolute top-full left-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-gray-100 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <a href="/eligibility-simulator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition rounded-t-xl">
+                <a href="/eligibility-simulator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition rounded-t-xl no-underline">
                   <Shield className="w-4 h-4 text-green-500" /> Simulateur
                 </a>
-                <a href="/budget-calculator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/budget-calculator" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <FileText className="w-4 h-4 text-orange-500" /> Calculateur Budget
                 </a>
-                <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/visa-gallery" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <Globe className="w-4 h-4 text-purple-500" /> Galerie Visas
                 </a>
-                <a href="/schedule-agency" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/schedule-agency" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <Mail className="w-4 h-4 text-teal-500" /> Prendre RDV
                 </a>
-                <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/blog" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <FileText className="w-4 h-4 text-blue-500" /> Blog
                 </a>
-                <a href="/about" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/about" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <Info className="w-4 h-4 text-blue-500" /> À Propos
                 </a>
-                <a href="/contact" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition">
+                <a href="/contact" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition no-underline">
                   <Mail className="w-4 h-4 text-blue-500" /> Contact
                 </a>
                 <div className="border-t border-gray-100">
-                  <a href="/admin/login" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 transition rounded-b-xl">
+                  <a href="/admin/login" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-400 hover:bg-gray-50 transition rounded-b-xl no-underline">
                     <Shield className="w-4 h-4" /> Admin
                   </a>
                 </div>

@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
@@ -13,6 +12,7 @@ import { QuickActionNotification, MissingDocumentsList } from "@/components/Quic
 import { QuickUploadModal } from "@/components/QuickUploadModal";
 import { BilanActionModal } from "@/components/BilanActionModal";
 import { useMissingDocuments, useDocumentCompleteness } from "@/hooks/useMissingDocuments";
+import { useEffect, useState } from "react";
 
 // Composant onglet Paiements
 function PaymentsTab() {
@@ -64,7 +64,7 @@ function PaymentsTab() {
                   <p className="text-xl font-bold text-green-600">{Number(p.amount).toLocaleString('fr-FR')} {p.currency}</p>
                   {p.invoiceUrl && (
                     <Button variant="ghost" size="sm" asChild className="mt-1">
-                      <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                      <a href={p.invoiceUrl} target="_blank" rel="noopener noreferrer" className="no-underline">
                         <Download className="w-4 h-4 mr-1" /> Facture
                       </a>
                     </Button>
@@ -110,7 +110,7 @@ function TranslationsTab() {
           <Languages className="w-5 h-5 text-purple-500" />
           Mes Traductions Certifiées
         </CardTitle>
-        <Button variant="outline" size="sm" onClick={() => window.location.href = '/traduction'}>
+        <Button variant="outline" size="sm" onClick={() => window.location.href = '/traduction'} className="no-underline">
           <ExternalLink className="w-4 h-4 mr-2" />
           Commander
         </Button>
@@ -135,7 +135,7 @@ function TranslationsTab() {
                   <p className="text-xs text-gray-400 mt-1">{t.createdAt ? new Date(t.createdAt).toLocaleDateString('fr-FR') : '—'}</p>
                 </div>
                 {t.status === 'completed' && t.translatedFileUrl && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="no-underline">
                     <a href={t.translatedFileUrl} target="_blank" rel="noopener noreferrer">
                       <Download className="w-4 h-4 mr-2" />
                       Télécharger
@@ -164,7 +164,11 @@ export default function MySpace() {
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
     undefined,
-    { enabled: isAuthenticated }
+    { 
+      enabled: isAuthenticated,
+      retry: 1,
+      retryDelay: 1000
+    }
   );
 
   // Rediriger si non authentifié
@@ -192,21 +196,54 @@ export default function MySpace() {
     );
   }
 
-  if (error || !dossierData?.success) {
+  // Gestion des erreurs
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4">
         <div className="max-w-4xl mx-auto">
           <Card className="border-red-200 bg-red-50">
             <CardHeader>
-              <CardTitle className="text-red-600">Erreur</CardTitle>
+              <CardTitle className="text-red-600">Erreur de chargement</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-red-700">
-                {error?.message || dossierData?.message || "Impossible de charger vos données"}
+              <p className="text-red-700 mb-4">
+                {error?.message || "Impossible de charger vos données. Veuillez réessayer."}
               </p>
-              <Button onClick={() => setLocation("/")} className="mt-4">
-                Retour à l'accueil
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Réessayer
+                </Button>
+                <Button onClick={() => setLocation("/")}>
+                  Retour à l'accueil
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dossierData || !dossierData.success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-4">
+        <div className="max-w-4xl mx-auto">
+          <Card className="border-yellow-200 bg-yellow-50">
+            <CardHeader>
+              <CardTitle className="text-yellow-600">Données non disponibles</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-yellow-700 mb-4">
+                {dossierData?.message || "Vos données ne sont pas encore disponibles."}
+              </p>
+              <div className="flex gap-2">
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Actualiser
+                </Button>
+                <Button onClick={() => setLocation("/")}>
+                  Retour à l'accueil
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -273,9 +310,10 @@ export default function MySpace() {
             onClick={() => setShowLogoutDialog(true)}
             variant="outline"
             className="bg-white/20 border-white text-white hover:bg-white/30"
+            aria-label="Se déconnecter"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Deconnexion
+            Déconnexion
           </Button>
         </div>
       </div>
@@ -388,7 +426,7 @@ export default function MySpace() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Mes documents</CardTitle>
-                <Button onClick={() => handleQuickUpload("")}>
+                <Button onClick={() => handleQuickUpload("")} aria-label="Ajouter un nouveau document">
                   <FileText className="w-4 h-4 mr-2" />
                   Ajouter un document
                 </Button>
@@ -407,7 +445,7 @@ export default function MySpace() {
                             <p className="text-sm text-gray-600">{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('fr-FR') : '—'}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label="Télécharger le document">
                           <Download className="w-4 h-4" />
                         </Button>
                       </div>
@@ -464,66 +502,37 @@ export default function MySpace() {
                 <CardTitle>Accord de service</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-gray-600">
-                    Vous devez accepter nos conditions d'utilisation pour continuer.
-                  </p>
-                  <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    {app?.agreementSigned ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                        <span className="text-green-700">Accord signé le {app.agreementSignedAt ? new Date(app.agreementSignedAt).toLocaleDateString('fr-FR') : '—'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-5 h-5 text-amber-500" />
-                        <span className="text-amber-700">Accord non signé</span>
-                      </>
-                    )}
-                  </div>
-                </div>
+                <p className="text-gray-600 mb-4">
+                  {app?.agreementSigned ? "Vous avez signé l'accord de service." : "Vous n'avez pas encore signé l'accord de service."}
+                </p>
+                {!app?.agreementSigned && (
+                  <Button onClick={() => setBilanActionModalOpen(true)}>Signer l'accord</Button>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
 
-      {/* Modals */}
-      <QuickUploadModal
-        isOpen={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-        documentType={selectedDocumentType}
-        onUpload={handleUploadFile}
-      />
-
-      {/* Boîte de dialogue de déconnexion */}
+      {/* Logout Dialog */}
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmer la déconnexion</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir vous déconnecter ? Vous devrez vous reconnecter pour accéder à votre espace.
+              Êtes-vous sûr de vouloir vous déconnecter ?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowLogoutDialog(false)}
-            >
+            <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
               Annuler
             </Button>
-            <Button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Deconnexion
+            <Button variant="destructive" onClick={handleLogout}>
+              Déconnexion
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Bilan Action Modal - à implémenter */}
     </div>
   );
 }
