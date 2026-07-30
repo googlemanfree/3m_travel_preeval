@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { CommentsSection } from "@/components/CommentsSection";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -25,6 +26,29 @@ export default function EvaluationSpace() {
   const [dossierNumber, setDossierNumber] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState<string>('');
   const [userDossierLoading, setUserDossierLoading] = useState(true);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Fonction pour télécharger le bilan en PDF
+  const handleDownloadBilanPDF = async () => {
+    if (!bilanData) return;
+    
+    setIsExportingPDF(true);
+    try {
+      await exportBilanToPDF({
+        dossierNumber: bilanData.dossierNumber || dossierNumber || '',
+        fullName: bilanData.fullName,
+        score: bilanData.score || 0,
+        verdict: bilanData.verdict || '',
+        strengths: bilanData.strengths,
+        weaknesses: bilanData.weaknesses,
+        recommendations: bilanData.recommendations,
+      });
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du PDF:', error);
+    } finally {
+      setIsExportingPDF(false);
+    }
+  };
 
   // Récupérer le numéro de dossier depuis les paramètres d'URL ou depuis l'utilisateur connecté
   useEffect(() => {
@@ -409,10 +433,20 @@ export default function EvaluationSpace() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => window.print()}
+              onClick={handleDownloadBilanPDF}
+              disabled={isExportingPDF}
             >
-              <Download className="w-4 h-4 mr-2" />
-              Télécharger
+              {isExportingPDF ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Export...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Télécharger PDF
+                </>
+              )}
             </Button>
             <Button
               variant="outline"
