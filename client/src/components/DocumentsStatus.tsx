@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 interface DocumentsStatusProps {
@@ -21,6 +22,7 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
   const [reuploadDoc, setReuploadDoc] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [reuploadComment, setReuploadComment] = useState("");
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -209,11 +211,25 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                   )}
                 </label>
               </div>
+              <div>
+                <label htmlFor="comment" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Commentaire (optionnel)
+                </label>
+                <Textarea
+                  id="comment"
+                  placeholder="Expliquez les modifications apportées au document ou toute autre information utile pour l'administrateur..."
+                  value={reuploadComment}
+                  onChange={(e) => setReuploadComment(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                <p className="text-xs text-gray-500 mt-1">{reuploadComment.length}/500 caractères</p>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => {
                 setReuploadDoc(null);
                 setSelectedFile(null);
+                setReuploadComment("");
               }}>
                 Annuler
               </Button>
@@ -225,10 +241,18 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                   }
                   setIsUploading(true);
                   try {
-                    // TODO: Implémenter l'upload via tRPC
+                    // TODO: Implémenter l'upload via tRPC avec le commentaire
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    formData.append('dossierNumber', dossierNumber);
+                    formData.append('documentId', reuploadDoc.id);
+                    formData.append('comment', reuploadComment);
+                    
+                    // Appel tRPC : await trpc.documents.reuploadDocument.mutate(formData)
                     toast.success("Document réuploadé avec succès!");
                     setReuploadDoc(null);
                     setSelectedFile(null);
+                    setReuploadComment("");
                   } catch (error) {
                     toast.error("Erreur lors du réupload");
                   } finally {
