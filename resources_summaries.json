@@ -1,0 +1,188 @@
+{
+  "summaries": {
+    "Allemagne": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail allemand est destiné aux ressortissants étrangers souhaitant exercer une activité professionnelle en Allemagne. Les conditions principales incluent : une offre d'emploi valide, une qualification professionnelle reconnue, et un salaire conforme aux normes allemandes. La durée du visa varie de 1 à 4 ans selon le contrat de travail. Les frais de visa sont d'environ 75€. Le traitement prend généralement 4 à 8 semaines. Les conjoints et enfants peuvent être inclus dans la demande. L'Allemagne offre un excellent marché du travail avec des opportunités dans les secteurs technologiques, industriels et de services.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-4 ans",
+      "processingTime": "4-8 semaines",
+      "cost": "75€"
+    },
+    "Australie": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail australien (Skilled Migration Program) est destiné aux professionnels qualifiés. Les conditions incluent : une profession figurant sur la liste des compétences demandées, une évaluation professionnelle positive, et une maîtrise suffisante de l'anglais. Le visa peut être temporaire (1-4 ans) ou permanent. Les frais varient de 3 000 à 4 500 AUD. Le traitement prend 3 à 12 mois selon le type de visa. L'Australie offre un excellent cadre de vie et des opportunités professionnelles dans de nombreux secteurs.",
+      "requirements": ["Évaluation professionnelle", "Test d'anglais (IELTS)", "Points suffisants", "Preuve financière", "Antécédents judiciaires"],
+      "duration": "1-4 ans ou permanent",
+      "processingTime": "3-12 mois",
+      "cost": "3 000-4 500 AUD"
+    },
+    "Canada": {
+      "type": "Visa Travail",
+      "summary": "Le Canada offre plusieurs programmes de travail : le Programme de l'expérience québécoise, le Programme des travailleurs qualifiés, et les permis de travail temporaires. Les conditions varient selon le programme mais incluent généralement : une offre d'emploi, une évaluation des compétences, et la maîtrise du français ou de l'anglais. Les frais varient de 100 à 550 CAD. Le traitement prend 2 à 6 mois. Le Canada est très attractif pour les immigrants avec des perspectives de résidence permanente.",
+      "requirements": ["Offre d'emploi", "Évaluation des compétences", "Test de langue", "Preuve financière", "Examen médical"],
+      "duration": "1-3 ans ou permanent",
+      "processingTime": "2-6 mois",
+      "cost": "100-550 CAD"
+    },
+    "France": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail français est destiné aux ressortissants étrangers ayant une offre d'emploi en France. Les conditions incluent : une offre d'emploi d'une entreprise française, une qualification professionnelle appropriée, et une maîtrise suffisante du français. La durée du visa est généralement de 1 an, renouvelable. Les frais sont d'environ 99€. Le traitement prend 4 à 6 semaines. La France offre un excellent système social et de nombreuses opportunités professionnelles.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1 an renouvelable",
+      "processingTime": "4-6 semaines",
+      "cost": "99€"
+    },
+    "États-Unis": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail américain (H-1B, L-1, O-1) est destiné aux professionnels qualifiés. Les conditions incluent : une offre d'emploi d'une entreprise américaine, une qualification professionnelle spécialisée, et un processus de certification du travail. Les frais varient de 190 à 460 USD. Le traitement prend 2 à 6 mois. Les États-Unis offrent des opportunités exceptionnelles dans les secteurs technologiques, financiers et professionnels.",
+      "requirements": ["Offre d'emploi", "Certification du travail", "Qualification spécialisée", "Preuve financière", "Examen médical"],
+      "duration": "3-6 ans",
+      "processingTime": "2-6 mois",
+      "cost": "190-460 USD"
+    },
+    "Royaume-Uni": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail britannique (Skilled Worker Visa) est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'un employeur agréé, un salaire minimum requis, et une maîtrise suffisante de l'anglais. La durée du visa est de 2 à 5 ans, renouvelable. Les frais sont d'environ 719 GBP. Le traitement prend 3 à 8 semaines. Le Royaume-Uni offre un marché du travail dynamique et des perspectives de résidence permanente.",
+      "requirements": ["Offre d'emploi", "Employeur agréé", "Salaire minimum", "Test d'anglais", "Preuve financière"],
+      "duration": "2-5 ans renouvelable",
+      "processingTime": "3-8 semaines",
+      "cost": "719 GBP"
+    },
+    "Suisse": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail suisse est destiné aux professionnels qualifiés ayant une offre d'emploi en Suisse. Les conditions incluent : une offre d'emploi d'une entreprise suisse, une qualification reconnue, et une maîtrise d'une langue suisse. La durée du visa varie de 1 à 5 ans selon le contrat. Les frais sont d'environ 120 CHF. Le traitement prend 2 à 4 semaines. La Suisse offre des salaires élevés et une excellente qualité de vie.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Maîtrise de la langue"],
+      "duration": "1-5 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "120 CHF"
+    },
+    "Nouvelle-Zélande": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail néo-zélandais est destiné aux professionnels qualifiés. Les conditions incluent : une profession demandée, une évaluation professionnelle positive, et une maîtrise suffisante de l'anglais. Le visa peut être temporaire (1-3 ans) ou permanent. Les frais varient de 2 500 à 3 500 NZD. Le traitement prend 2 à 8 mois. La Nouvelle-Zélande offre un excellent environnement de travail et des perspectives de résidence permanente.",
+      "requirements": ["Évaluation professionnelle", "Test d'anglais", "Points suffisants", "Preuve financière", "Antécédents judiciaires"],
+      "duration": "1-3 ans ou permanent",
+      "processingTime": "2-8 mois",
+      "cost": "2 500-3 500 NZD"
+    },
+    "Irlande": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail irlandais est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise irlandaise, une qualification appropriée, et une maîtrise suffisante de l'anglais. La durée du visa est de 1 à 2 ans, renouvelable. Les frais sont d'environ 300€. Le traitement prend 2 à 4 semaines. L'Irlande offre un marché du travail dynamique, notamment dans les secteurs technologiques et financiers.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Maîtrise de l'anglais"],
+      "duration": "1-2 ans renouvelable",
+      "processingTime": "2-4 semaines",
+      "cost": "300€"
+    },
+    "Italie": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail italien est destiné aux ressortissants étrangers ayant une offre d'emploi en Italie. Les conditions incluent : une offre d'emploi d'une entreprise italienne, une qualification professionnelle, et une maîtrise suffisante de l'italien ou de l'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d'environ 50€. Le traitement prend 4 à 8 semaines. L'Italie offre une riche culture et des opportunités dans le tourisme, la mode et l'industrie.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-2 ans",
+      "processingTime": "4-8 semaines",
+      "cost": "50€"
+    },
+    "Pologne": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail polonais est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise polonaise, une qualification appropriée, et une maîtrise suffisante du polonais ou de l'anglais. La durée du visa varie de 1 à 3 ans. Les frais sont d'environ 40€. Le traitement prend 2 à 4 semaines. La Pologne offre des opportunités croissantes dans les secteurs technologiques et industriels.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-3 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "40€"
+    },
+    "Portugal": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail portugais est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise portugaise, une qualification appropriée, et une maîtrise suffisante du portugais ou de l'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d'environ 75€. Le traitement prend 3 à 6 semaines. Le Portugal offre un coût de vie avantageux et des opportunités dans le tourisme et la technologie.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-2 ans",
+      "processingTime": "3-6 semaines",
+      "cost": "75€"
+    },
+    "Qatar": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail qatari est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise qatarie, une qualification appropriée, et une maîtrise suffisante de l'anglais. La durée du visa varie de 2 à 5 ans. Les frais sont d'environ 100 QAR. Le traitement prend 2 à 4 semaines. Le Qatar offre des salaires élevés et des opportunités dans l'énergie, la construction et les services.",
+      "requirements": ["Offre d'emploi", "Examen médical", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "2-5 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "100 QAR"
+    },
+    "Malaisie": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail malais est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise malaise, une qualification appropriée, et une maîtrise suffisante de l'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d'environ 200 MYR. Le traitement prend 2 à 4 semaines. La Malaisie offre un coût de vie avantageux et des opportunités dans la technologie et les services.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-2 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "200 MYR"
+    },
+    "Kenya": {
+      "type": "Visa Travail",
+      "summary": "Le visa de travail kényan est destiné aux professionnels qualifiés ayant une offre d'emploi. Les conditions incluent : une offre d'emploi d'une entreprise kényan, une qualification appropriée, et une maîtrise suffisante de l'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d'environ 50 000 KES. Le traitement prend 2 à 4 semaines. Le Kenya offre des opportunités dans le tourisme, l'agriculture et les services.",
+      "requirements": ["Offre d'emploi", "Diplôme reconnu", "Preuve financière", "Assurance maladie", "Contrat de travail"],
+      "duration": "1-2 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "50 000 KES"
+    },
+    "France_Études": {
+      "type": "Visa Études",
+      "summary": "Le visa d'études français est destiné aux étudiants étrangers souhaitant poursuivre leurs études en France. Les conditions incluent : une acceptation d'une université française, une preuve de moyens financiers, et une maîtrise suffisante du français. La durée du visa correspond à la durée des études (généralement 1 à 4 ans). Les frais sont d'environ 99€. Le traitement prend 4 à 6 semaines. La France offre une excellente éducation et une riche vie culturelle.",
+      "requirements": ["Lettre d'acceptation universitaire", "Preuve financière", "Assurance maladie", "Maîtrise du français", "Relevés académiques"],
+      "duration": "1-4 ans",
+      "processingTime": "4-6 semaines",
+      "cost": "99€"
+    },
+    "Canada_Études": {
+      "type": "Visa Études",
+      "summary": "Le visa d'études canadien est destiné aux étudiants étrangers souhaitant poursuivre leurs études au Canada. Les conditions incluent : une acceptation d'une université canadienne, une preuve de moyens financiers, et une maîtrise suffisante de l'anglais ou du français. La durée du visa correspond à la durée des études. Les frais sont d'environ 150 CAD. Le traitement prend 2 à 4 semaines. Le Canada offre une excellente éducation et des perspectives de résidence permanente après les études.",
+      "requirements": ["Lettre d'acceptation universitaire", "Preuve financière", "Assurance maladie", "Test de langue", "Relevés académiques"],
+      "duration": "1-4 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "150 CAD"
+    },
+    "Australie_Études": {
+      "type": "Visa Études",
+      "summary": "Le visa d'études australien est destiné aux étudiants étrangers souhaitant poursuivre leurs études en Australie. Les conditions incluent : une acceptation d'une université australienne, une preuve de moyens financiers, et une maîtrise suffisante de l'anglais. La durée du visa correspond à la durée des études. Les frais sont d'environ 620 AUD. Le traitement prend 1 à 3 mois. L'Australie offre une excellente éducation et des perspectives de résidence permanente après les études.",
+      "requirements": ["Lettre d'acceptation universitaire", "Preuve financière", "Assurance maladie", "Test d'anglais (IELTS)", "Relevés académiques"],
+      "duration": "1-4 ans",
+      "processingTime": "1-3 mois",
+      "cost": "620 AUD"
+    },
+    "Royaume-Uni_Études": {
+      "type": "Visa Études",
+      "summary": "Le visa d'études britannique est destiné aux étudiants étrangers souhaitant poursuivre leurs études au Royaume-Uni. Les conditions incluent : une acceptation d'une université britannique, une preuve de moyens financiers, et une maîtrise suffisante de l'anglais. La durée du visa correspond à la durée des études. Les frais sont d'environ 719 GBP. Le traitement prend 3 à 8 semaines. Le Royaume-Uni offre une excellente éducation et des perspectives de résidence permanente après les études.",
+      "requirements": ["Lettre d'acceptation universitaire", "Preuve financière", "Assurance maladie", "Test d'anglais", "Relevés académiques"],
+      "duration": "1-4 ans",
+      "processingTime": "3-8 semaines",
+      "cost": "719 GBP"
+    },
+    "États-Unis_Études": {
+      "type": "Visa Études",
+      "summary": "Le visa d'études américain (F-1) est destiné aux étudiants étrangers souhaitant poursuivre leurs études aux États-Unis. Les conditions incluent : une acceptation d'une université américaine, une preuve de moyens financiers, et une maîtrise suffisante de l'anglais. La durée du visa correspond à la durée des études. Les frais sont d'environ 160 USD. Le traitement prend 2 à 4 semaines. Les États-Unis offrent une excellente éducation et des perspectives de carrière exceptionnelles.",
+      "requirements": ["Lettre d'acceptation universitaire", "Preuve financière", "Assurance maladie", "Test d'anglais (TOEFL)", "Relevés académiques"],
+      "duration": "1-4 ans",
+      "processingTime": "2-4 semaines",
+      "cost": "160 USD"
+    },
+    "Schengen": {
+      "type": "Visa Visiteur",
+      "summary": "Le visa Schengen est destiné aux visiteurs souhaitant voyager dans l'espace Schengen (26 pays européens). Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l'absence d'antécédents judiciaires. La durée du visa est généralement de 90 jours sur 180 jours. Les frais sont d'environ 80€. Le traitement prend 2 à 4 semaines. L'espace Schengen offre une mobilité exceptionnelle en Europe.",
+      "requirements": ["Passeport valide", "Preuve financière", "Assurance voyage", "Billet de retour", "Justificatif d'hébergement"],
+      "duration": "90 jours sur 180 jours",
+      "processingTime": "2-4 semaines",
+      "cost": "80€"
+    },
+    "Canada_Visiteur": {
+      "type": "Visa Visiteur",
+      "summary": "Le visa de visiteur canadien est destiné aux touristes et visiteurs souhaitant visiter le Canada. Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l'absence d'antécédents judiciaires. La durée du visa est généralement de 6 mois. Les frais sont d'environ 100 CAD. Le traitement prend 2 à 4 semaines. Le Canada offre des paysages magnifiques et une riche culture.",
+      "requirements": ["Passeport valide", "Preuve financière", "Assurance voyage", "Billet de retour", "Justificatif d'hébergement"],
+      "duration": "6 mois",
+      "processingTime": "2-4 semaines",
+      "cost": "100 CAD"
+    },
+    "Australie_Visiteur": {
+      "type": "Visa Visiteur",
+      "summary": "Le visa de visiteur australien est destiné aux touristes et visiteurs souhaitant visiter l'Australie. Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l'absence d'antécédents judiciaires. La durée du visa est généralement de 3 à 12 mois. Les frais sont d'environ 20 AUD. Le traitement prend 1 à 3 jours. L'Australie offre des paysages spectaculaires et une riche faune.",
+      "requirements": ["Passeport valide", "Preuve financière", "Assurance voyage", "Billet de retour", "Justificatif d'hébergement"],
+      "duration": "3-12 mois",
+      "processingTime": "1-3 jours",
+      "cost": "20 AUD"
+    }
+  }
+}

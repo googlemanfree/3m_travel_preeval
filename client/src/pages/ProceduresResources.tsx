@@ -1,9 +1,10 @@
-import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 import React, { useState, useMemo } from 'react';
-import { Search, Download, Filter, X } from 'lucide-react';
+import { Search, Download, Filter, X, Eye, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import Footer from '@/components/Footer';
+import { PDFPreviewModal } from '@/components/PDFPreviewModal';
+import { SummaryModal } from '@/components/SummaryModal';
 
 interface Resource {
   country: string;
@@ -12,6 +13,163 @@ interface Resource {
   type: string;
 }
 
+interface SummaryData {
+  type: string;
+  summary: string;
+  requirements: string[];
+  duration: string;
+  processingTime: string;
+  cost: string;
+}
+
+// Données des résumés
+const SUMMARIES: Record<string, SummaryData> = {
+  'Allemagne': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail allemand est destiné aux ressortissants étrangers souhaitant exercer une activité professionnelle en Allemagne. Les conditions principales incluent : une offre d\'emploi valide, une qualification professionnelle reconnue, et un salaire conforme aux normes allemandes. La durée du visa varie de 1 à 4 ans selon le contrat de travail. Les frais de visa sont d\'environ 75€. Le traitement prend généralement 4 à 8 semaines. Les conjoints et enfants peuvent être inclus dans la demande. L\'Allemagne offre un excellent marché du travail avec des opportunités dans les secteurs technologiques, industriels et de services.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-4 ans',
+    processingTime: '4-8 semaines',
+    cost: '75€'
+  },
+  'Australie': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail australien (Skilled Migration Program) est destiné aux professionnels qualifiés. Les conditions incluent : une profession figurant sur la liste des compétences demandées, une évaluation professionnelle positive, et une maîtrise suffisante de l\'anglais. Le visa peut être temporaire (1-4 ans) ou permanent. Les frais varient de 3 000 à 4 500 AUD. Le traitement prend 3 à 12 mois selon le type de visa. L\'Australie offre un excellent cadre de vie et des opportunités professionnelles dans de nombreux secteurs.',
+    requirements: ['Évaluation professionnelle', 'Test d\'anglais (IELTS)', 'Points suffisants', 'Preuve financière', 'Antécédents judiciaires'],
+    duration: '1-4 ans ou permanent',
+    processingTime: '3-12 mois',
+    cost: '3 000-4 500 AUD'
+  },
+  'Canada': {
+    type: 'Visa Travail',
+    summary: 'Le Canada offre plusieurs programmes de travail : le Programme de l\'expérience québécoise, le Programme des travailleurs qualifiés, et les permis de travail temporaires. Les conditions varient selon le programme mais incluent généralement : une offre d\'emploi, une évaluation des compétences, et la maîtrise du français ou de l\'anglais. Les frais varient de 100 à 550 CAD. Le traitement prend 2 à 6 mois. Le Canada est très attractif pour les immigrants avec des perspectives de résidence permanente.',
+    requirements: ['Offre d\'emploi', 'Évaluation des compétences', 'Test de langue', 'Preuve financière', 'Examen médical'],
+    duration: '1-3 ans ou permanent',
+    processingTime: '2-6 mois',
+    cost: '100-550 CAD'
+  },
+  'France': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail français est destiné aux ressortissants étrangers ayant une offre d\'emploi en France. Les conditions incluent : une offre d\'emploi d\'une entreprise française, une qualification professionnelle appropriée, et une maîtrise suffisante du français. La durée du visa est généralement de 1 an, renouvelable. Les frais sont d\'environ 99€. Le traitement prend 4 à 6 semaines. La France offre un excellent système social et de nombreuses opportunités professionnelles.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1 an renouvelable',
+    processingTime: '4-6 semaines',
+    cost: '99€'
+  },
+  'États-Unis': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail américain (H-1B, L-1, O-1) est destiné aux professionnels qualifiés. Les conditions incluent : une offre d\'emploi d\'une entreprise américaine, une qualification professionnelle spécialisée, et un processus de certification du travail. Les frais varient de 190 à 460 USD. Le traitement prend 2 à 6 mois. Les États-Unis offrent des opportunités exceptionnelles dans les secteurs technologiques, financiers et professionnels.',
+    requirements: ['Offre d\'emploi', 'Certification du travail', 'Qualification spécialisée', 'Preuve financière', 'Examen médical'],
+    duration: '3-6 ans',
+    processingTime: '2-6 mois',
+    cost: '190-460 USD'
+  },
+  'Royaume-Uni': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail britannique (Skilled Worker Visa) est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'un employeur agréé, un salaire minimum requis, et une maîtrise suffisante de l\'anglais. La durée du visa est de 2 à 5 ans, renouvelable. Les frais sont d\'environ 719 GBP. Le traitement prend 3 à 8 semaines. Le Royaume-Uni offre un marché du travail dynamique et des perspectives de résidence permanente.',
+    requirements: ['Offre d\'emploi', 'Employeur agréé', 'Salaire minimum', 'Test d\'anglais', 'Preuve financière'],
+    duration: '2-5 ans renouvelable',
+    processingTime: '3-8 semaines',
+    cost: '719 GBP'
+  },
+  'Suisse': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail suisse est destiné aux professionnels qualifiés ayant une offre d\'emploi en Suisse. Les conditions incluent : une offre d\'emploi d\'une entreprise suisse, une qualification reconnue, et une maîtrise d\'une langue suisse. La durée du visa varie de 1 à 5 ans selon le contrat. Les frais sont d\'environ 120 CHF. Le traitement prend 2 à 4 semaines. La Suisse offre des salaires élevés et une excellente qualité de vie.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Maîtrise de la langue'],
+    duration: '1-5 ans',
+    processingTime: '2-4 semaines',
+    cost: '120 CHF'
+  },
+  'Nouvelle-Zélande': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail néo-zélandais est destiné aux professionnels qualifiés. Les conditions incluent : une profession demandée, une évaluation professionnelle positive, et une maîtrise suffisante de l\'anglais. Le visa peut être temporaire (1-3 ans) ou permanent. Les frais varient de 2 500 à 3 500 NZD. Le traitement prend 2 à 8 mois. La Nouvelle-Zélande offre un excellent environnement de travail et des perspectives de résidence permanente.',
+    requirements: ['Évaluation professionnelle', 'Test d\'anglais', 'Points suffisants', 'Preuve financière', 'Antécédents judiciaires'],
+    duration: '1-3 ans ou permanent',
+    processingTime: '2-8 mois',
+    cost: '2 500-3 500 NZD'
+  },
+  'Irlande': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail irlandais est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise irlandaise, une qualification appropriée, et une maîtrise suffisante de l\'anglais. La durée du visa est de 1 à 2 ans, renouvelable. Les frais sont d\'environ 300€. Le traitement prend 2 à 4 semaines. L\'Irlande offre un marché du travail dynamique, notamment dans les secteurs technologiques et financiers.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Maîtrise de l\'anglais'],
+    duration: '1-2 ans renouvelable',
+    processingTime: '2-4 semaines',
+    cost: '300€'
+  },
+  'Italie': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail italien est destiné aux ressortissants étrangers ayant une offre d\'emploi en Italie. Les conditions incluent : une offre d\'emploi d\'une entreprise italienne, une qualification professionnelle, et une maîtrise suffisante de l\'italien ou de l\'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d\'environ 50€. Le traitement prend 4 à 8 semaines. L\'Italie offre une riche culture et des opportunités dans le tourisme, la mode et l\'industrie.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-2 ans',
+    processingTime: '4-8 semaines',
+    cost: '50€'
+  },
+  'Pologne': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail polonais est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise polonaise, une qualification appropriée, et une maîtrise suffisante du polonais ou de l\'anglais. La durée du visa varie de 1 à 3 ans. Les frais sont d\'environ 40€. Le traitement prend 2 à 4 semaines. La Pologne offre des opportunités croissantes dans les secteurs technologiques et industriels.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-3 ans',
+    processingTime: '2-4 semaines',
+    cost: '40€'
+  },
+  'Portugal': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail portugais est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise portugaise, une qualification appropriée, et une maîtrise suffisante du portugais ou de l\'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d\'environ 75€. Le traitement prend 3 à 6 semaines. Le Portugal offre un coût de vie avantageux et des opportunités dans le tourisme et la technologie.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-2 ans',
+    processingTime: '3-6 semaines',
+    cost: '75€'
+  },
+  'Qatar': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail qatari est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise qatarie, une qualification appropriée, et une maîtrise suffisante de l\'anglais. La durée du visa varie de 2 à 5 ans. Les frais sont d\'environ 100 QAR. Le traitement prend 2 à 4 semaines. Le Qatar offre des salaires élevés et des opportunités dans l\'énergie, la construction et les services.',
+    requirements: ['Offre d\'emploi', 'Examen médical', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '2-5 ans',
+    processingTime: '2-4 semaines',
+    cost: '100 QAR'
+  },
+  'Malaisie': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail malais est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise malaise, une qualification appropriée, et une maîtrise suffisante de l\'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d\'environ 200 MYR. Le traitement prend 2 à 4 semaines. La Malaisie offre un coût de vie avantageux et des opportunités dans la technologie et les services.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-2 ans',
+    processingTime: '2-4 semaines',
+    cost: '200 MYR'
+  },
+  'Kenya': {
+    type: 'Visa Travail',
+    summary: 'Le visa de travail kényan est destiné aux professionnels qualifiés ayant une offre d\'emploi. Les conditions incluent : une offre d\'emploi d\'une entreprise kényan, une qualification appropriée, et une maîtrise suffisante de l\'anglais. La durée du visa varie de 1 à 2 ans. Les frais sont d\'environ 50 000 KES. Le traitement prend 2 à 4 semaines. Le Kenya offre des opportunités dans le tourisme, l\'agriculture et les services.',
+    requirements: ['Offre d\'emploi', 'Diplôme reconnu', 'Preuve financière', 'Assurance maladie', 'Contrat de travail'],
+    duration: '1-2 ans',
+    processingTime: '2-4 semaines',
+    cost: '50 000 KES'
+  },
+  'Schengen': {
+    type: 'Visa Visiteur',
+    summary: 'Le visa Schengen est destiné aux visiteurs souhaitant voyager dans l\'espace Schengen (26 pays européens). Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l\'absence d\'antécédents judiciaires. La durée du visa est généralement de 90 jours sur 180 jours. Les frais sont d\'environ 80€. Le traitement prend 2 à 4 semaines. L\'espace Schengen offre une mobilité exceptionnelle en Europe.',
+    requirements: ['Passeport valide', 'Preuve financière', 'Assurance voyage', 'Billet de retour', 'Justificatif d\'hébergement'],
+    duration: '90 jours sur 180 jours',
+    processingTime: '2-4 semaines',
+    cost: '80€'
+  },
+  'Canada_Visiteur': {
+    type: 'Visa Visiteur',
+    summary: 'Le visa de visiteur canadien est destiné aux touristes et visiteurs souhaitant visiter le Canada. Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l\'absence d\'antécédents judiciaires. La durée du visa est généralement de 6 mois. Les frais sont d\'environ 100 CAD. Le traitement prend 2 à 4 semaines. Le Canada offre des paysages magnifiques et une riche culture.',
+    requirements: ['Passeport valide', 'Preuve financière', 'Assurance voyage', 'Billet de retour', 'Justificatif d\'hébergement'],
+    duration: '6 mois',
+    processingTime: '2-4 semaines',
+    cost: '100 CAD'
+  },
+  'Australie_Visiteur': {
+    type: 'Visa Visiteur',
+    summary: 'Le visa de visiteur australien est destiné aux touristes et visiteurs souhaitant visiter l\'Australie. Les conditions incluent : un passeport valide, une preuve de moyens financiers, une assurance voyage, et l\'absence d\'antécédents judiciaires. La durée du visa est généralement de 3 à 12 mois. Les frais sont d\'environ 20 AUD. Le traitement prend 1 à 3 jours. L\'Australie offre des paysages spectaculaires et une riche faune.',
+    requirements: ['Passeport valide', 'Preuve financière', 'Assurance voyage', 'Billet de retour', 'Justificatif d\'hébergement'],
+    duration: '3-12 mois',
+    processingTime: '1-3 jours',
+    cost: '20 AUD'
+  }
+};
+
 const ProceduresResources = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
@@ -19,6 +177,8 @@ const ProceduresResources = () => {
   const [previewFileName, setPreviewFileName] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState<{ country: string; flag: string; data: SummaryData } | null>(null);
 
   // Données des ressources
   const resourceTypes = [
@@ -72,13 +232,22 @@ const ProceduresResources = () => {
   };
 
   const getTypeLabel = (type: string) => {
+    const typeObj = resourceTypes.find(t => t.id === type);
+    return typeObj?.label || type;
+  };
+
   const handlePreview = (fileName: string) => {
     setPreviewFileName(fileName);
     setPreviewPdfUrl(`/manus-storage/${fileName}`);
     setIsPreviewOpen(true);
   };
-    const typeObj = resourceTypes.find(t => t.id === type);
-    return typeObj?.label || type;
+
+  const handleViewSummary = (country: string, flag: string) => {
+    const summaryData = SUMMARIES[country];
+    if (summaryData) {
+      setSelectedSummary({ country, flag, data: summaryData });
+      setSummaryOpen(true);
+    }
   };
 
   return (
@@ -171,14 +340,31 @@ const ProceduresResources = () => {
                   Guide complet pour votre demande de visa
                 </p>
 
-                <a
-                  href={`/manus-storage/${resource.file}`}
-                  download
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors font-medium text-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  Télécharger
-                </a>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={() => handleViewSummary(resource.country, resource.flag)}
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-sm"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Voir le résumé
+                  </Button>
+                  <Button
+                    onClick={() => handlePreview(resource.file)}
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2 border-[#0a2540] text-[#0a2540] rounded-lg font-medium text-sm hover:bg-blue-50"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Aperçu PDF
+                  </Button>
+                  <a
+                    href={`/manus-storage/${resource.file}`}
+                    download
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[#0a2540] text-white rounded-lg hover:bg-[#0a2540]/90 transition-colors font-medium text-sm"
+                  >
+                    <Download className="w-4 h-4" />
+                    Télécharger
+                  </a>
+                </div>
               </div>
             ))}
           </div>
@@ -250,6 +436,15 @@ const ProceduresResources = () => {
         fileName={previewFileName}
         downloadUrl={`/manus-storage/${previewFileName}`}
       />
+      {selectedSummary && (
+        <SummaryModal
+          isOpen={summaryOpen}
+          onClose={() => setSummaryOpen(false)}
+          country={selectedSummary.country}
+          flag={selectedSummary.flag}
+          summary={selectedSummary.data}
+        />
+      )}
       <Footer />
     </div>
   );
