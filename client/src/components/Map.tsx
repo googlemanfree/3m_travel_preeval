@@ -69,15 +69,16 @@
  *
  * -------------------------------
  * ✅ SUMMARY
- * - “map-attached” → AdvancedMarkerElement, DirectionsRenderer, Layers.
- * - “standalone” → Geocoder, DirectionsService, DistanceMatrixService, ElevationService.
- * - “data-only” → Place, Geometry utilities.
+ * - "map-attached" → AdvancedMarkerElement, DirectionsRenderer, Layers.
+ * - "standalone" → Geocoder, DirectionsService, DistanceMatrixService, ElevationService.
+ * - "data-only" → Place, Geometry utilities.
  */
 
 /// <reference types="@types/google.maps" />
 
 import { useEffect, useRef } from "react";
 import { usePersistFn } from "@/hooks/usePersistFn";
+import { useLazyScript } from "@/hooks/useLazyScript";
 import { cn } from "@/lib/utils";
 
 declare global {
@@ -92,19 +93,30 @@ const FORGE_BASE_URL =
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
 
+// Charger Google Maps de manière optimisée avec lazy loading
 function loadMapScript() {
-  return new Promise(resolve => {
+  return new Promise<void>((resolve, reject) => {
+    // Vérifier si Google Maps est déjà chargé
+    if (window.google?.maps) {
+      resolve();
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
     script.async = true;
+    script.defer = true;
     script.crossOrigin = "anonymous";
+
     script.onload = () => {
-      resolve(null);
-      script.remove(); // Clean up immediately
+      resolve();
     };
+
     script.onerror = () => {
       console.error("Failed to load Google Maps script");
+      reject(new Error("Failed to load Google Maps"));
     };
+
     document.head.appendChild(script);
   });
 }
@@ -125,12 +137,25 @@ export function MapView({
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
 
+  // Charger Google Maps de manière lazy avec useLazyScript
+  const { loading: mapsLoading } = useLazyScript({
+    src: `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`,
+    id: "google-maps",
+    attributes: { crossOrigin: "anonymous" },
+    immediate: true,
+  });
+
   const init = usePersistFn(async () => {
-    await loadMapScript();
+    // Attendre que le script soit chargé
+    if (mapsLoading || !window.google?.maps) {
+      return;
+    }
+
     if (!mapContainer.current) {
       console.error("Map container not found");
       return;
     }
+
     map.current = new window.google.maps.Map(mapContainer.current, {
       zoom: initialZoom,
       center: initialCenter,
@@ -140,14 +165,17 @@ export function MapView({
       streetViewControl: true,
       mapId: "DEMO_MAP_ID",
     });
+
     if (onMapReady) {
       onMapReady(map.current);
     }
   });
 
   useEffect(() => {
-    init();
-  }, [init]);
+    if (!mapsLoading) {
+      init();
+    }
+  }, [init, mapsLoading]);
 
   return (
     <div ref={mapContainer} className={cn("w-full h-[500px]", className)} />

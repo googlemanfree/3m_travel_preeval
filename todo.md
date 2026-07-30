@@ -1038,7 +1038,7 @@
 - [x] Intégrer LazyImage dans VerifyEmail.tsx
 - [x] Intégrer LazyImage dans VerifyEmailLink.tsx
 - [x] Intégrer LazyImage dans AuthGuard.tsx
-- [ ] Intégrer LazyScript pour Google Maps
+- [x] Intégrer LazyScript pour Google Maps
 - [x] Code splitting par route (React.lazy)
 
 ### Images & Iframes
