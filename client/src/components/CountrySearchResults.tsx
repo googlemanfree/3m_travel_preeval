@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, MapPin, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { CountryData } from '@/data/countriesData';
-import PDFPreviewModal from '@/components/PDFPreviewModal';
+import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 
 interface CountrySearchResultsProps {
   countries: CountryData[];

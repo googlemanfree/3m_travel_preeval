@@ -1,3 +1,4 @@
+import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 import React, { useState, useMemo } from 'react';
 import { Search, Download, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,9 @@ interface Resource {
 const ProceduresResources = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewFileName, setPreviewFileName] = useState<string>('');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
   // Données des ressources
@@ -68,6 +72,11 @@ const ProceduresResources = () => {
   };
 
   const getTypeLabel = (type: string) => {
+  const handlePreview = (fileName: string) => {
+    setPreviewFileName(fileName);
+    setPreviewPdfUrl(`/manus-storage/${fileName}`);
+    setIsPreviewOpen(true);
+  };
     const typeObj = resourceTypes.find(t => t.id === type);
     return typeObj?.label || type;
   };
@@ -234,6 +243,13 @@ const ProceduresResources = () => {
         </div>
       </div>
 
+      <PDFPreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        pdfUrl={previewPdfUrl || ''}
+        fileName={previewFileName}
+        downloadUrl={`/manus-storage/${previewFileName}`}
+      />
       <Footer />
     </div>
   );
