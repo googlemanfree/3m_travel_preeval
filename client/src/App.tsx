@@ -185,9 +185,14 @@ function Router() {
 
       {/* Traduction assermentée */}
 
-      {/* Panneau admin */}
+      {/* Panneau admin — URL secrète d'accès */}
+      <Route path={"/admin/access-secret"} component={AdminLogin} />
       <Route path={"/admin/login"} component={AdminLogin} />
+      {/* Redirection /admin → / pour masquer l'existence du panneau */}
       <Route path={"/admin"}>
+        {() => { window.location.replace('/'); return null; }}
+      </Route>
+      <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />
         </AdminGuard>

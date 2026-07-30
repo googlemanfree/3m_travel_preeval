@@ -950,3 +950,11 @@
 - [x] Modale Fiche Candidat : infos complètes, score, barre de progression, mise à jour statut
 - [x] Modale Saisir dossier agence : formulaire complet avec statut initial configurable
 - [x] Bouton déconnexion dans l'en-tête du dashboard
+
+## Sécurisation Accès Admin — URL Secrète & OTP (v27)
+- [x] Supprimer le bouton "🛡️ Admin" de la Navbar (desktop et mobile)
+- [x] Ajouter la route /admin/access-secret pointant vers AdminLogin (URL secrète)
+- [x] Rediriger /admin → / (window.location.replace) pour masquer l'existence du panneau
+- [x] Renommer la route principale admin de /admin vers /admin/dashboard
+- [x] Insérer les 2 comptes admin autorisés dans admin_accounts : aureoldonfack@gmail.com et 3mtravelandservices@gmail.com (INSERT IGNORE)
+- [x] Le routeur adminAuth.ts rejette déjà tout email absent de admin_accounts (vérification DB existante)

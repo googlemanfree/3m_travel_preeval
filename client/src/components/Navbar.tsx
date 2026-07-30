@@ -60,9 +60,7 @@ export default function Navbar() {
             <a href="/mon-espace" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 flex items-center gap-1.5 shadow-none hover:shadow-sm">
               <span>📂</span> Suivi
             </a>
-            <a href="/admin" className="px-3 py-2 text-xs font-bold text-gray-400 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200">
-              🛡️ Admin
-            </a>
+
           </nav>
 
           {/* 3. ZONE D'ACTION / PROFIL CANDIDAT */}
