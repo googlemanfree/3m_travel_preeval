@@ -63,7 +63,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
 
             <div className="space-y-3">
               <Button
-                onClick={() => navigate("/admin/login")}
+                onClick={() => navigate("/admin/access-secret")}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
               >
                 Se connecter en tant qu'Admin

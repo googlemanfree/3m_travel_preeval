@@ -50,8 +50,8 @@ export default function AdminLogin() {
       setAttemptCount(0);
       toast.success('Connexion réussie!');
 
-      // Rediriger vers le dashboard admin unifié
-      navigate('/admin');
+      // Rediriger vers le dashboard admin
+      setTimeout(() => navigate('/admin/dashboard'), 500);
     },
     onError: (error) => {
       const errorMsg = error.message || 'Une erreur est survenue';
