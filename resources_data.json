@@ -1,0 +1,61 @@
+{
+  "resources": {
+    "visa_travail": {
+      "count": 34,
+      "label": "Visa Travail",
+      "items": [
+        {"country": "Allemagne", "flag": "🇩🇪", "file": "3MTravel_VisaTravail_Allemagne_2026_64549fc5.docx"},
+        {"country": "Australie", "flag": "🇦🇺", "file": "3MTravel_VisaTravail_Australie_2026_916008e9.pdf"},
+        {"country": "Bulgarie", "flag": "🇧🇬", "file": "3MTravel_VisaTravail_Bulgarie_2026_75c99ff8.pdf"},
+        {"country": "Canada", "flag": "🍁", "file": "3MTravel_VisaTravail_Canada_Complet_2026_6ddf7e2c.pdf"},
+        {"country": "Chypre", "flag": "🇨🇾", "file": "3MTravel_VisaTravail_Chypre_2026_ac29e62b.pdf"},
+        {"country": "Croatie", "flag": "🇭🇷", "file": "3MTravel_VisaTravail_Croatie_2026_556f2566.pdf"},
+        {"country": "Estonie", "flag": "🇪🇪", "file": "3MTravel_VisaTravail_Estonie_2026_6faf4d25.pdf"},
+        {"country": "États-Unis", "flag": "🇺🇸", "file": "3MTravel_VisaTravail_EtatsUnis_2026_bc1ac42d.pdf"},
+        {"country": "France", "flag": "🇫🇷", "file": "3MTravel_VisaTravail_France_2026_65fca802.pdf"},
+        {"country": "Hongrie", "flag": "🇭🇺", "file": "3MTravel_VisaTravail_Hongrie_2026_a6adcc08.pdf"},
+        {"country": "Irlande", "flag": "🇮🇪", "file": "3MTravel_VisaTravail_Irlande_2026_1612755f.docx"},
+        {"country": "Islande", "flag": "🇮🇸", "file": "3MTravel_VisaTravail_Islande_2026_0374dd20.pdf"},
+        {"country": "Italie", "flag": "🇮🇹", "file": "3MTravel_VisaTravail_Italie_Complet_3M_FCFA_2026_4afb5c71.docx"},
+        {"country": "Kenya", "flag": "🇰🇪", "file": "3MTravel_VisaTravail_Kenya_2026_36500e5d.docx"},
+        {"country": "Lettonie", "flag": "🇱🇻", "file": "3MTravel_VisaTravail_Lettonie_2026_724960ba.pdf"},
+        {"country": "Liechtenstein", "flag": "🇱🇮", "file": "3MTravel_VisaTravail_Liechtenstein_2026_316445f5.pdf"},
+        {"country": "Lituanie", "flag": "🇱🇹", "file": "3MTravel_VisaTravail_Lituanie_2026_ac5cd4ab.pdf"},
+        {"country": "Luxembourg", "flag": "🇱🇺", "file": "3MTravel_VisaTravail_Luxembourg_2026_6eae8854.pdf"},
+        {"country": "Malaisie", "flag": "🇲🇾", "file": "3MTravel_VisaTravail_Malaisie_2026_d55d0436.docx"},
+        {"country": "Malte", "flag": "🇲🇹", "file": "3MTravel_VisaTravail_Malte_2026_935afe5a.pdf"},
+        {"country": "Maurice", "flag": "🇲🇺", "file": "3MTravel_VisaTravail_Maurice_2026_1_22c9681b.pdf"},
+        {"country": "Norvège", "flag": "🇳🇴", "file": "3MTravel_VisaTravail_Norvege_2026_601b7ba0.pdf"},
+        {"country": "Nouvelle-Zélande", "flag": "🇳🇿", "file": "3MTravel_VisaTravail_NouvelleZelande_2026_6faad320.pdf"},
+        {"country": "Pologne", "flag": "🇵🇱", "file": "3MTravel_VisaTravail_Pologne_2026_d7fe44ee.pdf"},
+        {"country": "Portugal", "flag": "🇵🇹", "file": "3MTravel_VisaTravail_Portugal_2026_8608abfa.pdf"},
+        {"country": "Qatar", "flag": "🇶🇦", "file": "3MTravel_VisaTravail_Qatar_2026_5de645a8.pdf"},
+        {"country": "Roumanie", "flag": "🇷🇴", "file": "3MTravel_VisaTravail_Roumanie_2026_bdb62ec5.pdf"},
+        {"country": "Royaume-Uni", "flag": "🇬🇧", "file": "3MTravel_VisaTravail_RoyaumeUni_2026_d17acd9e.pdf"},
+        {"country": "Sénégal", "flag": "🇸🇳", "file": "3MTravel_VisaTravail_Senegal_2026_1079428a.docx"},
+        {"country": "Slovaquie", "flag": "🇸🇰", "file": "3MTravel_VisaTravail_Slovaquie_2026_0dc020e6.pdf"},
+        {"country": "Slovénie", "flag": "🇸🇮", "file": "3MTravel_VisaTravail_Slovenie_2026_c7d51c34.pdf"},
+        {"country": "Suisse", "flag": "🇨🇭", "file": "3MTravel_VisaTravail_Suisse_2026_5f00cf79.docx"},
+        {"country": "Rép. Tchèque", "flag": "🇨🇿", "file": "3MTravel_VisaTravail_Tcheque_2026_a312f39d.pdf"},
+        {"country": "Gabon", "flag": "🇬🇦", "file": "3MTravel_VisaTravail_Gabon_2026_630965bf.docx"}
+      ]
+    },
+    "visa_etudes": {
+      "count": 22,
+      "label": "Visa Études"
+    },
+    "visa_visiteur": {
+      "count": 27,
+      "label": "Visa Visiteur"
+    },
+    "guides": {
+      "count": 23,
+      "label": "Guides Spécialisés"
+    },
+    "formulaires": {
+      "count": 1,
+      "label": "Formulaires"
+    }
+  },
+  "total_destinations": 107
+}
