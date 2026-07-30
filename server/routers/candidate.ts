@@ -539,26 +539,34 @@ export const candidateRouter = router({
 
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
-    .input(z.object({ candidateId: z.number() }))
+    .input(z.object({ email: z.string().email("Email invalide") }))
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
-      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      
+      const email = input.email.toLowerCase().trim();
+      const rows = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte trouvé avec cet email." });
+      
       const candidate = rows[0];
       if (candidate.emailVerified) {
-        return { success: true, message: "Votre email est déjà vérifié." };
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Votre email est déjà vérifié. Vous pouvez vous connecter." });
       }
-      // Générer un nouveau token de vérification
-      const verificationToken = crypto.randomUUID().replace(/-/g, "");
-      await db.update(candidates).set({ verificationToken, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      
+      // Générer un nouveau token JWT (24h)
+      const verificationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '24h' });
+      
+      // Mettre à jour le token en base de données
+      await db.update(candidates).set({ verificationToken }).where(eq(candidates.id, candidate.id));
+      
       // Renvoyer l'email de vérification
       try {
-        await sendVerificationLink(candidate.email, candidate.fullName, verificationToken);
+        await sendVerificationLink(email, candidate.fullName, verificationToken);
       } catch (err) {
         console.error("[resendVerificationEmail] Error sending email:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi de l'email." });
       }
+      
       return { success: true, message: "Email de vérification renvoyé avec succès." };
     }),
 
@@ -958,4 +966,6 @@ export const candidateRouter = router({
         });
       }
     }),
+
+
 });

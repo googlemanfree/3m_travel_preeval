@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, Mail, Lock, ArrowRight, Shield } from "lucide-react";
+import { Eye, EyeOff, LogIn, Mail, Lock, ArrowRight, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [showResendModal, setShowResendModal] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
 
   // Message d'avertissement si redirigé depuis une page protégée
   const params = new URLSearchParams(location.split("?")[1] ?? "");
@@ -58,6 +60,17 @@ export default function Login() {
     },
   });
 
+  const resendVerificationMutation = trpc.candidate.resendVerificationEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Email de vérification renvoyé ! Vérifiez votre boîte de réception.");
+      setShowResendModal(false);
+      setResendEmail("");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erreur lors de l'envoi de l'email.");
+    },
+  });
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
@@ -65,6 +78,15 @@ export default function Login() {
       return;
     }
     loginMutation.mutate({ email, password });
+  }
+
+  function handleResendVerification(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resendEmail) {
+      toast.error("Veuillez renseigner votre adresse email.");
+      return;
+    }
+    resendVerificationMutation.mutate({ email: resendEmail });
   }
 
   return (
@@ -157,8 +179,8 @@ export default function Login() {
             </Button>
           </form>
 
-          {/* Se souvenir de moi + Mot de passe oublié */}
-          <div className="flex items-center justify-between mt-1 mb-1">
+          {/* Se souvenir de moi + Mot de passe oublié + Renvoyer email */}
+          <div className="flex items-center justify-between mt-4 mb-2 flex-wrap gap-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -168,9 +190,19 @@ export default function Login() {
               />
               <span className="text-sm text-gray-600">Se souvenir de moi</span>
             </label>
-            <Link href="/forgot-password" className="text-sm text-[#2563EB] hover:underline font-medium">
-              Mot de passe oublié ?
-            </Link>
+            <div className="flex gap-2 text-sm">
+              <button
+                type="button"
+                onClick={() => setShowResendModal(true)}
+                className="text-[#2563EB] hover:underline font-medium transition-colors"
+              >
+                Renvoyer l'email
+              </button>
+              <span className="text-gray-300">•</span>
+              <Link href="/forgot-password" className="text-[#2563EB] hover:underline font-medium">
+                Mot de passe oublié ?
+              </Link>
+            </div>
           </div>
 
           {/* Sécurité */}
@@ -181,7 +213,7 @@ export default function Login() {
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-500">
-              Pas encore de compte ?{" "}
+              Pas encore de compte ?{" "}
               <Link href="/register" className="text-[#2563EB] font-semibold hover:underline">
                 Créer mon compte
               </Link>
@@ -192,6 +224,91 @@ export default function Login() {
           </div>
         </div>
       </motion.div>
+
+      {/* Modale de renvoi d'email de vérification */}
+      {showResendModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowResendModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Renvoyer l'email</h2>
+                <p className="text-blue-200 text-sm mt-1">Nous vous enverrons un nouveau lien de vérification</p>
+              </div>
+              <button
+                onClick={() => setShowResendModal(false)}
+                className="text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <form onSubmit={handleResendVerification} className="space-y-4">
+                <div>
+                  <Label htmlFor="resend-email" className="text-sm font-semibold text-gray-700">
+                    Adresse email
+                  </Label>
+                  <div className="relative mt-2">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="resend-email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      value={resendEmail}
+                      onChange={e => setResendEmail(e.target.value)}
+                      className="pl-10"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Entrez l'adresse email associée à votre compte. Nous vous enverrons un nouveau lien de vérification valable 24 heures.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={resendVerificationMutation.isPending}
+                  className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
+                >
+                  {resendVerificationMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Envoi en cours...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" /> Renvoyer l'email
+                    </span>
+                  )}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowResendModal(false)}
+                  className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
