@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
+import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { startLogin } from '@/const';
 import { LogOut, User, Settings, ChevronDown, Menu, X, Plane, BookOpen, Globe, FolderOpen, Shield, Info, Mail, FileText, MoreHorizontal } from 'lucide-react';
 import { AutoBreadcrumb } from './Breadcrumb';
@@ -9,8 +10,27 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [location] = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated: isOAuthAuthenticated, logout: oauthLogout } = useAuth();
+  const { candidate, isAuthenticated: isCandidateAuthenticated, logout: candidateLogout } = useCandidateAuth();
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  // Le candidat connecté (JWT) est prioritaire sur l'utilisateur OAuth (admin)
+  // On affiche le candidat si connecté, sinon l'utilisateur OAuth admin
+  const isAuthenticated = isCandidateAuthenticated || isOAuthAuthenticated;
+  const displayName = isCandidateAuthenticated ? candidate?.fullName : user?.name;
+  const displayEmail = isCandidateAuthenticated ? candidate?.email : user?.email;
+  const isAdmin = !isCandidateAuthenticated && user?.role === 'admin';
+  const isCandidate = isCandidateAuthenticated;
+
+  const handleLogout = () => {
+    setIsProfileOpen(false);
+    if (isCandidateAuthenticated) {
+      candidateLogout();
+      window.location.href = '/login';
+    } else {
+      oauthLogout();
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -104,38 +124,40 @@ export default function Navbar() {
 
           {/* Actions desktop */}
           <div className="hidden lg:flex items-center gap-3">
-            {isAuthenticated && user ? (
+            {isAuthenticated && displayName ? (
               <div className="relative" ref={profileMenuRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2 rounded-xl font-semibold text-sm transition"
                 >
                   <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                    {displayName?.charAt(0).toUpperCase() || 'U'}
                   </div>
-                  <span className="max-w-[120px] truncate">{user.name}</span>
+                  <span className="max-w-[120px] truncate">{displayName}</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-50">
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="font-semibold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                      <p className="font-semibold text-gray-900 truncate">{displayName}</p>
+                      <p className="text-sm text-gray-500 truncate">{displayEmail}</p>
                       <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${
-                        user.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-700'
+                        isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-700'
                       }`}>
-                        {user.role === 'admin' ? '👑 Administrateur' : '👤 Utilisateur'}
+                        {isAdmin ? '👑 Administrateur' : '👤 Candidat'}
                       </span>
                     </div>
                     <div className="py-1">
-                      <a href="/mon-espace" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
-                        <User className="w-4 h-4 text-blue-500" /> Mon Espace
-                      </a>
+                      {isCandidate && (
+                        <a href="/mon-espace" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
+                          <User className="w-4 h-4 text-blue-500" /> Mon Espace
+                        </a>
+                      )}
                       <a href="/mon-dossier" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
                         <FolderOpen className="w-4 h-4 text-blue-500" /> Mes Dossiers
                       </a>
-                      {user.role === 'admin' && (
+                      {isAdmin && (
                         <a href="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition" onClick={() => setIsProfileOpen(false)}>
                           <Settings className="w-4 h-4 text-amber-500" /> Panneau Admin
                         </a>
@@ -143,7 +165,7 @@ export default function Navbar() {
                     </div>
                     <div className="border-t border-gray-100 py-1">
                       <button
-                        onClick={() => { setIsProfileOpen(false); logout(); }}
+                        onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium"
                       >
                         <LogOut className="w-4 h-4" /> Déconnexion
@@ -213,19 +235,34 @@ export default function Navbar() {
             </a>
           </div>
           <div className="pt-2 space-y-2 border-t border-gray-100 mt-2">
-            {isAuthenticated && user ? (
+            {isAuthenticated && displayName ? (
               <>
                 <div className="flex items-center gap-3 px-3 py-2 bg-blue-50 rounded-lg">
                   <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
-                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                    {displayName?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
+                    <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+                    <p className="text-xs text-gray-500">{displayEmail}</p>
+                    <span className={`text-xs font-medium ${
+                      isAdmin ? 'text-amber-600' : 'text-blue-600'
+                    }`}>
+                      {isAdmin ? '👑 Admin' : '👤 Candidat'}
+                    </span>
                   </div>
                 </div>
+                {isCandidate && (
+                  <a href="/mon-espace" className="flex items-center gap-2 py-2.5 px-3 text-blue-700 text-sm font-medium hover:bg-blue-50 rounded-lg transition" onClick={() => setIsMenuOpen(false)}>
+                    <User className="w-4 h-4" /> Mon Espace
+                  </a>
+                )}
+                {isAdmin && (
+                  <a href="/admin" className="flex items-center gap-2 py-2.5 px-3 text-amber-700 text-sm font-medium hover:bg-amber-50 rounded-lg transition" onClick={() => setIsMenuOpen(false)}>
+                    <Settings className="w-4 h-4" /> Panneau Admin
+                  </a>
+                )}
                 <button
-                  onClick={() => { setIsMenuOpen(false); logout(); }}
+                  onClick={() => { setIsMenuOpen(false); handleLogout(); }}
                   className="w-full flex items-center gap-2 py-2.5 px-3 text-red-600 text-sm font-medium hover:bg-red-50 rounded-lg transition"
                 >
                   <LogOut className="w-4 h-4" /> Déconnexion

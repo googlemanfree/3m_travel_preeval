@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "66265ce8-1eb7-44ae-801f-f6fb5bb20360",
+  "id": "012bc051-5156-4228-a43f-0cc8003d5d0a",
   "prevId": "5179422d-5682-41a2-8aa1-2ca2bf01d47a",
   "tables": {
     "admin_accounts": {
@@ -1682,15 +1682,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(now())"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true,
-          "default": "(now())"
         }
       },
       "indexes": {},
@@ -1962,6 +1953,156 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "blog_posts": {
+      "name": "blog_posts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "enum('Visas','Études','Voyages','Immigration','Conseils','Actualités')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "authorName": {
+          "name": "authorName",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "authorId": {
+          "name": "authorId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "isPublished": {
+          "name": "isPublished",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "isFeatured": {
+          "name": "isFeatured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "readTimeMinutes": {
+          "name": "readTimeMinutes",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 5
+        },
+        "viewCount": {
+          "name": "viewCount",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "publishedAt": {
+          "name": "publishedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "(now())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "blog_posts_id": {
+          "name": "blog_posts_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "blog_posts_slug_unique": {
+          "name": "blog_posts_slug_unique",
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
     "callback_requests": {
       "name": "callback_requests",
       "columns": {
@@ -1972,8 +2113,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "name": {
-          "name": "name",
+        "fullName": {
+          "name": "fullName",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true,
@@ -1993,20 +2134,6 @@
           "notNull": false,
           "autoincrement": false
         },
-        "preferredTime": {
-          "name": "preferredTime",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "preferredDate": {
-          "name": "preferredDate",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "subject": {
           "name": "subject",
           "type": "varchar(255)",
@@ -2014,45 +2141,24 @@
           "notNull": false,
           "autoincrement": false
         },
-        "message": {
-          "name": "message",
-          "type": "text",
+        "preferredTime": {
+          "name": "preferredTime",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "status": {
           "name": "status",
-          "type": "enum('pending','scheduled','completed','cancelled')",
+          "type": "enum('pending','contacted','resolved','cancelled')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'pending'"
         },
-        "scheduledAt": {
-          "name": "scheduledAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "completedAt": {
-          "name": "completedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "adminNotes": {
-          "name": "adminNotes",
+        "notes": {
+          "name": "notes",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "applicationId": {
-          "name": "applicationId",
-          "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -3233,14 +3339,16 @@
           "type": "int",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": 0
         },
         "serviceFee": {
           "name": "serviceFee",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": 0
         },
         "guaranteeFee": {
           "name": "guaranteeFee",
@@ -3270,8 +3378,9 @@
           "name": "processingDays",
           "type": "int",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": false,
+          "autoincrement": false,
+          "default": 30
         },
         "successRate": {
           "name": "successRate",
@@ -3279,7 +3388,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": 85
+          "default": 75
         },
         "isActive": {
           "name": "isActive",
@@ -3337,67 +3446,31 @@
           "notNull": true,
           "autoincrement": false
         },
-        "dossierNumber": {
-          "name": "dossierNumber",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "currentStep": {
           "name": "currentStep",
-          "type": "int",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": 1
+          "default": "'nouveau'"
         },
-        "stepsStatus": {
-          "name": "stepsStatus",
+        "completedSteps": {
+          "name": "completedSteps",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "('{\"step1\":\"completed\",\"step2\":\"pending\",\"step3\":\"pending\",\"step4\":\"pending\",\"step5\":\"pending\"}')"
-        },
-        "step1CompletedAt": {
-          "name": "step1CompletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "step2CompletedAt": {
-          "name": "step2CompletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "step3CompletedAt": {
-          "name": "step3CompletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "step4CompletedAt": {
-          "name": "step4CompletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "step5CompletedAt": {
-          "name": "step5CompletedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "adminNotes": {
-          "name": "adminNotes",
+        "notes": {
+          "name": "notes",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedBy": {
+          "name": "updatedBy",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

@@ -88,7 +88,7 @@ export const extrasRouter = router({
       const db = await getDb();
       if (!db) throw new Error("Database unavailable");
       const [result] = await db.insert(callbackRequests).values({
-        name: input.name,
+        fullName: input.name,
         phone: input.phone,
         email: input.email,
         preferredTime: input.preferredTime,
