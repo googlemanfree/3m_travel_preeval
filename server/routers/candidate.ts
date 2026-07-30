@@ -17,6 +17,8 @@ import {
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { generateOTP, getOTPExpirationTime, validateOTP } from "../otpService";
+import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, getRemainingAttempts } from "../loginAttemptsService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
