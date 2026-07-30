@@ -13,6 +13,7 @@ interface CountryCardProps {
   onViewSummary: () => void;
   onPreview: () => void;
   onDownload: () => void;
+  onStartProcedure?: () => void;
 }
 
 // Données des capitales et couleurs par pays
@@ -43,6 +44,7 @@ export const CountryCard: React.FC<CountryCardProps> = ({
   onViewSummary,
   onPreview,
   onDownload,
+  onStartProcedure,
 }) => {
   const countryInfo = COUNTRY_DATA[country] || { capital: 'Capitale', gradient: 'from-blue-400 to-blue-600', icon: '🌍' };
 
@@ -85,6 +87,21 @@ export const CountryCard: React.FC<CountryCardProps> = ({
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-2 pt-2">
+          {onStartProcedure && (
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
+                onClick={onStartProcedure}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-bold text-sm shadow-lg"
+              >
+                <span className="text-lg">🚀</span>
+                Lancer ma procédure
+              </Button>
+            </motion.div>
+          )}
+
           <motion.div
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

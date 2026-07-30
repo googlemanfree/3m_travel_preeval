@@ -363,6 +363,11 @@ const ProceduresResources = () => {
     setSelectedContinent('Tous les continents');
   };
 
+  const handleStartProcedure = (country: string) => {
+    // Redirection vers la page d'évaluation avec le pays pré-sélectionné
+    window.location.href = `/evaluation?country=${encodeURIComponent(country)}`;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a2540] via-white to-white">
       {/* Hero Section */}
@@ -496,6 +501,7 @@ const ProceduresResources = () => {
                   link.download = resource.file;
                   link.click();
                 }}
+                onStartProcedure={() => handleStartProcedure(resource.country)}
               />
             ))}
           </div>
