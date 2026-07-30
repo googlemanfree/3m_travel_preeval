@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plane, MapPin, Calendar, Users, MessageCircle } from "lucide-react";
+import { Plane, MapPin, Calendar, Users, MessageCircle, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function Vols() {
   const [formData, setFormData] = useState({
@@ -12,14 +12,84 @@ export default function Vols() {
     passengers: "1",
   });
 
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [submitted, setSubmitted] = useState(false);
+
+  // Validation des champs
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.departure.trim()) {
+      newErrors.departure = "Le départ est requis";
+    }
+    if (!formData.destination.trim()) {
+      newErrors.destination = "La destination est requise";
+    }
+    if (!formData.date) {
+      newErrors.date = "La date est requise";
+    } else {
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        newErrors.date = "La date doit être dans le futur";
+      }
+    }
+    if (!formData.passengers) {
+      newErrors.passengers = "Le nombre de passagers est requis";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleBlur = (field: string) => {
+    setTouched({ ...touched, [field]: true });
+    validateForm();
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    // Valider le champ en temps réel si touché
+    if (touched[field]) {
+      validateForm();
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitted(true);
+
+    if (!validateForm()) {
+      return;
+    }
+
     const msg = `Bonjour 3M Travel, je souhaite réserver un vol de ${formData.departure} vers ${formData.destination} pour le ${formData.date} (${formData.passengers} passager(s)).`;
     window.open(
       `https://wa.me/237620996045?text=${encodeURIComponent(msg)}`,
       "_blank"
     );
+    
+    // Réinitialiser le formulaire après soumission
+    setTimeout(() => {
+      setFormData({
+        departure: "Yaoundé (NSI)",
+        destination: "",
+        date: "",
+        passengers: "1",
+      });
+      setErrors({});
+      setTouched({});
+      setSubmitted(false);
+    }, 1000);
   };
+
+  const isFormValid = 
+    Object.keys(errors).length === 0 && 
+    formData.destination.trim() !== "" && 
+    formData.date !== "" && 
+    formData.passengers !== "";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -63,11 +133,26 @@ export default function Vols() {
                     type="text"
                     value={formData.departure}
                     onChange={(e) =>
-                      setFormData({ ...formData, departure: e.target.value })
+                      handleChange("departure", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur("departure")}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition ${
+                      errors.departure && touched.departure
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     required
                   />
+                  {errors.departure && touched.departure && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-xs mt-1 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.departure}
+                    </motion.p>
+                  )}
                 </div>
 
                 {/* Destination */}
@@ -81,11 +166,26 @@ export default function Vols() {
                     placeholder="Ex: Paris (CDG), Montreal (YUL)"
                     value={formData.destination}
                     onChange={(e) =>
-                      setFormData({ ...formData, destination: e.target.value })
+                      handleChange("destination", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur("destination")}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition ${
+                      errors.destination && touched.destination
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     required
                   />
+                  {errors.destination && touched.destination && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-xs mt-1 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.destination}
+                    </motion.p>
+                  )}
                 </div>
 
                 {/* Date */}
@@ -98,11 +198,26 @@ export default function Vols() {
                     type="date"
                     value={formData.date}
                     onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
+                      handleChange("date", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur("date")}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition ${
+                      errors.date && touched.date
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                     required
                   />
+                  {errors.date && touched.date && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-xs mt-1 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.date}
+                    </motion.p>
+                  )}
                 </div>
 
                 {/* Passengers */}
@@ -114,9 +229,14 @@ export default function Vols() {
                   <select
                     value={formData.passengers}
                     onChange={(e) =>
-                      setFormData({ ...formData, passengers: e.target.value })
+                      handleChange("passengers", e.target.value)
                     }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onBlur={() => handleBlur("passengers")}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition ${
+                      errors.passengers && touched.passengers
+                        ? "border-red-500 focus:ring-red-500 bg-red-50"
+                        : "border-gray-300 focus:ring-blue-500"
+                    }`}
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                       <option key={num} value={num}>
@@ -124,19 +244,68 @@ export default function Vols() {
                       </option>
                     ))}
                   </select>
+                  {errors.passengers && touched.passengers && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-500 text-xs mt-1 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.passengers}
+                    </motion.p>
+                  )}
                 </div>
               </div>
 
               {/* Submit Button */}
               <div className="flex gap-4">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105"
+                <motion.div
+                  className="flex-1"
+                  whileHover={isFormValid ? { scale: 1.02 } : {}}
+                  whileTap={isFormValid ? { scale: 0.98 } : {}}
                 >
-                  <Plane className="w-5 h-5 mr-2" />
-                  Obtenir un devis rapide
-                </Button>
+                  <Button
+                    type="submit"
+                    disabled={!isFormValid}
+                    className={`w-full font-bold py-3 px-6 rounded-lg shadow-lg transition transform ${
+                      isFormValid
+                        ? "bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white cursor-pointer"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    <Plane className="w-5 h-5 mr-2 inline" />
+                    {submitted ? "Redirection..." : "Obtenir un devis rapide"}
+                  </Button>
+                </motion.div>
               </div>
+
+              {/* Validation Summary */}
+              {submitted && !isFormValid && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border border-red-200 rounded-lg p-4"
+                >
+                  <p className="text-red-900 font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5" />
+                    Veuillez corriger les erreurs ci-dessus
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Success Message */}
+              {submitted && isFormValid && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-green-50 border border-green-200 rounded-lg p-4"
+                >
+                  <p className="text-green-900 font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5" />
+                    Redirection vers WhatsApp en cours...
+                  </p>
+                </motion.div>
+              )}
 
               {/* Info Text */}
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
