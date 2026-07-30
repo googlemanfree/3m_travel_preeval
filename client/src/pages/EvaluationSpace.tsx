@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { CommentsSection } from "@/components/CommentsSection";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
+import { DocumentUploader } from "@/components/DocumentUploader";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -27,6 +28,7 @@ export default function EvaluationSpace() {
   const [searchCode, setSearchCode] = useState<string>('');
   const [userDossierLoading, setUserDossierLoading] = useState(true);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [showDocumentUploader, setShowDocumentUploader] = useState(false);
 
   // Fonction pour télécharger le bilan en PDF
   const handleDownloadBilanPDF = async () => {
@@ -422,6 +424,22 @@ export default function EvaluationSpace() {
               </Card>
             </motion.div>
           )}
+
+          {/* Document Uploader */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="mb-8"
+          >
+            <DocumentUploader
+              dossierNumber={dossierNumber || ""}
+              onUploadSuccess={() => {
+                // Optionally refresh the page or show a success message
+                console.log("Documents uploaded successfully");
+              }}
+            />
+          </motion.div>
 
           {/* Actions */}
           <motion.div
