@@ -9,7 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { evaluations, aiReportHistory, users, applications, clientDocuments, bilans, agencyDossiers, profileEvaluations } from "../../drizzle/schema";
 import { sendEmail } from "../emailService";
-import { eq, desc, like, or } from "drizzle-orm";
+import { eq, desc, like, or, and } from "drizzle-orm";
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -1377,6 +1377,78 @@ export const adminRouter = router({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Erreur lors de la récupération des détails du candidat",
+        });
+      }
+
+    }),
+  /**
+   * Lister les documents avec filtrage et recherche
+   */
+  listDocuments: protectedProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      verificationStatus: z.enum(["pending", "approved", "rejected"]).optional(),
+      limit: z.number().int().min(1).max(100).default(50),
+      offset: z.number().int().min(0).default(0),
+    }))
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        // Construire les conditions de filtrage
+        const conditions: any[] = [];
+
+        if (input.verificationStatus) {
+          conditions.push(eq(clientDocuments.verificationStatus, input.verificationStatus as any));
+        }
+
+        if (input.search) {
+          const searchTerm = `%${input.search}%`;
+          conditions.push(
+            or(
+              like(clientDocuments.documentName, searchTerm),
+              like(clientDocuments.candidateEmail, searchTerm)
+            )
+          );
+        }
+
+        // Construire la requête avec les conditions
+        let query: any = db.select().from(clientDocuments);
+        
+        if (conditions.length > 0) {
+          query = query.where(and(...(conditions as any)));
+        }
+
+        const documents = await query
+          .orderBy(desc(clientDocuments.receiptGeneratedAt))
+          .limit(input.limit)
+          .offset(input.offset);
+
+        return documents.map((doc: any) => ({
+          id: doc.id,
+          dossierNumber: "N/A",
+          candidateName: "N/A",
+          documentType: doc.documentType,
+          documentName: doc.documentName,
+          documentUrl: doc.documentUrl,
+          status: doc.status,
+          verificationStatus: doc.verificationStatus,
+          submittedAt: doc.receiptGeneratedAt,
+          verifiedAt: doc.verifiedAt,
+          verificationComment: doc.verificationComment,
+          receiptNumber: doc.receiptNumber,
+        }));
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[Admin List Documents] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des documents",
         });
       }
     }),
