@@ -99,9 +99,8 @@ export const candidateRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
-      // Générer un token de vérification unique
+      // Générer un token de vérification unique (SANS expiration)
       const verificationToken = crypto.randomUUID().replace(/-/g, "");
-      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
       await db.insert(candidates).values({
         fullName: input.fullName,
@@ -113,7 +112,7 @@ export const candidateRouter = router({
         dossierStatus: "nouveau",
         emailVerified: false,
         verificationToken,
-        verificationExpiresAt,
+        verificationExpiresAt: null, // Pas d'expiration
       });
 
       // Recuperer le candidateId insere
@@ -435,9 +434,7 @@ export const candidateRouter = router({
         const token = signCandidateToken(candidate.id);
         return { success: true, token, message: "Email déjà vérifié." };
       }
-      if (!candidate.verificationExpiresAt || new Date() > candidate.verificationExpiresAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez créer un nouveau compte." });
-      }
+      // Pas de vérification d'expiration - le lien n'expire jamais jusqu'à utilisation
       await db.update(candidates).set({ emailVerified: true, verificationToken: null, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
       await db.insert(candidateMessages).values({
         candidateId: candidate.id,
@@ -505,8 +502,8 @@ export const candidateRouter = router({
       if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
       const candidate = rows[0];
       const resetToken = crypto.randomUUID().replace(/-/g, "");
-      const resetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
-      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: resetExpiresAt }).where(eq(candidates.id, candidate.id));
+      // SANS expiration - le lien n'expire jamais jusqu'à utilisation
+      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
       try { await sendPasswordResetEmail(candidate.email, candidate.fullName, resetToken); } catch {}
       return { success: true, message: "Si cet email existe, un lien a été envoyé." };
     }),
@@ -519,9 +516,7 @@ export const candidateRouter = router({
       const rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
       if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou expiré." });
       const candidate = rows[0];
-      if (!candidate.passwordResetExpiresAt || new Date() > candidate.passwordResetExpiresAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez faire une nouvelle demande." });
-      }
+      // Pas de vérification d'expiration - le lien n'expire jamais jusqu'à utilisation
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
       await db.update(candidates).set({ passwordHash, passwordResetToken: null, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
