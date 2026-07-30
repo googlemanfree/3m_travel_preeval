@@ -8,6 +8,7 @@ import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 import { SummaryModal } from '@/components/SummaryModal';
 import { CountryCard } from '@/components/CountryCard';
 import { GASTRONOMY } from '@/data/gastronomy';
+import { CONTINENTS, AVAILABLE_CONTINENTS, CONTINENT_ICONS } from '@/data/continents';
 
 interface Resource {
   country: string;
@@ -282,6 +283,7 @@ const ProceduresResources = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [selectedSummary, setSelectedSummary] = useState<{ country: string; flag: string; data: SummaryData } | null>(null);
+  const [selectedContinent, setSelectedContinent] = useState<string>('Tous les continents');
 
   // Données des ressources
   const resourceTypes = [
@@ -325,9 +327,11 @@ const ProceduresResources = () => {
     return resources.filter((resource) => {
       const matchesSearch = resource.country.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = selectedType === 'all' || resource.type === selectedType;
-      return matchesSearch && matchesType;
+      const resourceContinent = CONTINENTS[resource.country] || 'Inconnu';
+      const matchesContinent = selectedContinent === 'Tous les continents' || resourceContinent === selectedContinent;
+      return matchesSearch && matchesType && matchesContinent;
     });
-  }, [searchTerm, selectedType]);
+  }, [searchTerm, selectedType, selectedContinent]);
 
   const getTypeColor = (type: string) => {
     const typeObj = resourceTypes.find(t => t.id === type);
@@ -351,6 +355,12 @@ const ProceduresResources = () => {
       setSelectedSummary({ country, flag, data: summaryData });
       setSummaryOpen(true);
     }
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedType('all');
+    setSelectedContinent('Tous les continents');
   };
 
   return (
@@ -380,37 +390,81 @@ const ProceduresResources = () => {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-12">
         {/* Filter Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-[#0a2540]">Filtrer par type</h2>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="md:hidden"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
-            </Button>
+        <div className="mb-8 space-y-6">
+          {/* Type Filters */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-[#0a2540]">Filtrer par type</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="md:hidden"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filtres
+              </Button>
+            </div>
+
+            {/* Filter Buttons */}
+            <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 ${showFilters ? 'block' : 'hidden md:grid'}`}>
+              {resourceTypes.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setSelectedType(type.id)}
+                  className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                    selectedType === type.id
+                      ? 'bg-[#0a2540] text-white border-[#0a2540]'
+                      : 'bg-white text-[#0a2540] border-gray-200 hover:border-[#0a2540]'
+                  }`}
+                >
+                  <div className="font-bold">{type.label}</div>
+                  <div className="text-xs opacity-75">{type.count} docs</div>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Filter Buttons */}
-          <div className={`grid grid-cols-2 md:grid-cols-5 gap-3 ${showFilters ? 'block' : 'hidden md:grid'}`}>
-            {resourceTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => setSelectedType(type.id)}
-                className={`p-3 rounded-lg border-2 transition-all text-sm font-medium ${
-                  selectedType === type.id
-                    ? 'bg-[#0a2540] text-white border-[#0a2540]'
-                    : 'bg-white text-[#0a2540] border-gray-200 hover:border-[#0a2540]'
-                }`}
-              >
-                <div className="font-bold">{type.label}</div>
-                <div className="text-xs opacity-75">{type.count} docs</div>
-              </button>
-            ))}
+          {/* Continent Filters */}
+          <div>
+            <h2 className="text-2xl font-bold text-[#0a2540] mb-4">Filtrer par continent</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {AVAILABLE_CONTINENTS.map((continent) => (
+                <motion.button
+                  key={continent}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setSelectedContinent(continent)}
+                  className={`p-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center gap-2 ${
+                    selectedContinent === continent
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-700'
+                      : 'bg-white text-[#0a2540] border-gray-200 hover:border-blue-400'
+                  }`}
+                >
+                  <span className="text-lg">{CONTINENT_ICONS[continent] || '🌍'}</span>
+                  <span>{continent}</span>
+                </motion.button>
+              ))}
+            </div>
           </div>
+
+          {/* Reset Filters Button */}
+          {(selectedType !== 'all' || selectedContinent !== 'Tous les continents' || searchTerm) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-end"
+            >
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                className="text-red-600 border-red-300 hover:bg-red-50"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Réinitialiser les filtres
+              </Button>
+            </motion.div>
+          )}
         </div>
 
         {/* Results Info */}
@@ -418,6 +472,7 @@ const ProceduresResources = () => {
           <p className="text-[#0a2540] font-medium">
             {filteredResources.length} document{filteredResources.length !== 1 ? 's' : ''} trouvé{filteredResources.length !== 1 ? 's' : ''}
             {selectedType !== 'all' && ` • Type: ${getTypeLabel(selectedType)}`}
+            {selectedContinent !== 'Tous les continents' && ` • Continent: ${selectedContinent}`}
             {searchTerm && ` • Recherche: "${searchTerm}"`}
           </p>
         </div>
