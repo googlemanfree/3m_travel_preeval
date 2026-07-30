@@ -965,27 +965,27 @@
 - [ ] Intégrer des CTA visibles et contextuels sur chaque page
 
 ## Phase 5 : Blog/Actualités
-- [ ] Créer une section Blog avec gestion des articles
-- [ ] Implémenter un système de catégories (Visas, Études, Voyages, Immigration)
-- [ ] Ajouter un formulaire de création d'article pour l'admin
-- [ ] Créer des templates pour les articles de blog
+- [x] Créer une section Blog avec gestion des articles
+- [x] Implémenter un système de catégories (Visas, Études, Voyages, Immigration)
+- [x] Ajouter un formulaire de création d'article pour l'admin
+- [x] Créer des templates pour les articles de blog
 - [ ] Ajouter un système de commentaires (modérés)
 - [ ] Implémenter un système de partage social sur les articles
 
 ## Phase 6 : Système de Réservation en Ligne
-- [ ] Créer une page de réservation de rendez-vous
-- [ ] Intégrer un calendrier interactif avec disponibilités
-- [ ] Ajouter la sélection de l'heure et du type de service
+- [x] Créer une page de réservation de rendez-vous
+- [x] Intégrer un calendrier interactif avec disponibilités
+- [x] Ajouter la sélection de l'heure et du type de service
 - [ ] Implémenter la confirmation par email/SMS
 - [ ] Créer un système de rappel (24h avant le RDV)
 - [ ] Ajouter une intégration Google Calendar (optionnel)
 
 ## Phase 7 : Simulateur d'Éligibilité
-- [ ] Créer un questionnaire interactif multi-étapes
-- [ ] Ajouter des questions selon le type de projet (études, travail, tourisme, regroupement familial)
-- [ ] Implémenter un système de scoring automatique
-- [ ] Générer un rapport d'éligibilité personnalisé
-- [ ] Ajouter une CTA pour prendre rendez-vous après le résultat
+- [x] Créer un questionnaire interactif multi-étapes
+- [x] Ajouter des questions selon le type de projet (études, travail, tourisme, regroupement familial)
+- [x] Implémenter un système de scoring automatique
+- [x] Générer un rapport d'éligibilité personnalisé
+- [x] Ajouter une CTA pour prendre rendez-vous après le résultat
 
 ## Phase 8 : Optimisation SEO
 - [x] Auditer et améliorer les balises meta (title, description, keywords)
@@ -997,8 +997,8 @@
 - [ ] Implémenter le suivi Google Analytics 4 et Search Console
 
 ## Phase 9 : Présentation Entreprise
-- [ ] Créer une page "À Propos" avec histoire, mission, vision
-- [ ] Ajouter une page "Notre Équipe" avec photos et bios
+- [x] Créer une page "À Propos" avec histoire, mission, vision
+- [x] Ajouter une page "Notre Équipe" avec photos et bios
 - [ ] Créer une galerie photo des bureaux
 - [ ] Ajouter une vidéo de présentation de l'entreprise (si disponible)
 - [ ] Implémenter une section "Nos Partenaires"

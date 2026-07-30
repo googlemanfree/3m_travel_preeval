@@ -169,6 +169,13 @@
       "when": 1785368551474,
       "tag": "0023_tricky_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1785369447732,
+      "tag": "0024_unique_blackheart",
+      "breakpoints": true
     }
   ]
 }
