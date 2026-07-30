@@ -1277,3 +1277,41 @@ export const blogPosts = mysqlTable("blog_posts", {
 });
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+
+/**
+ * Table des commentaires/questions sur les bilans d'évaluation
+ * Permet aux candidats de poser des questions et aux admins de répondre
+ */
+export const evaluationComments = mysqlTable("evaluation_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au dossier
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull(),
+  applicationId: int("applicationId"),
+  
+  // Auteur du commentaire
+  authorType: mysqlEnum("authorType", ["candidate", "admin"]).notNull(),
+  authorId: int("authorId"),  // candidateId ou adminId
+  authorName: varchar("authorName", { length: 255 }).notNull(),
+  authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
+  
+  // Contenu
+  content: text("content").notNull(),
+  
+  // Métadonnées
+  isQuestion: boolean("isQuestion").default(true).notNull(),  // true = question, false = réponse/commentaire
+  isResolved: boolean("isResolved").default(false).notNull(),
+  parentCommentId: int("parentCommentId"),  // Pour les réponses
+  
+  // Notifications
+  isRead: boolean("isRead").default(false).notNull(),
+  readAt: timestamp("readAt"),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EvaluationComment = typeof evaluationComments.$inferSelect;
+export type InsertEvaluationComment = typeof evaluationComments.$inferInsert;

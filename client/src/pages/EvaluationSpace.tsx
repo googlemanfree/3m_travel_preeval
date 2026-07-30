@@ -16,6 +16,7 @@ import {
   Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { CommentsSection } from "@/components/CommentsSection";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -336,6 +337,20 @@ export default function EvaluationSpace() {
             >
               Retour à l'accueil
             </Button>
+          </motion.div>
+
+          {/* Section des commentaires */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+          >
+            <CommentsSection
+              dossierNumber={dossierNumber || ""}
+              email={""}
+              fullName={""}
+              isAdmin={false}
+            />
           </motion.div>
 
           {/* Contact CTA */}
