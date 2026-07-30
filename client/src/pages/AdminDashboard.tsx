@@ -45,6 +45,9 @@ import {
   LogOut,
 } from "lucide-react";
 import { useLocation } from "wouter";
+import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
+import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -694,7 +697,16 @@ export default function AdminDashboard() {
           </span>
         </div>
 
-        {/* Filtres & Recherche */}
+        {/* Onglets : Dossiers, Paiements, Documents */}
+        <Tabs defaultValue="candidates" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="candidates">Dossiers</TabsTrigger>
+            <TabsTrigger value="payments">Paiements</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="candidates" className="space-y-6">
+            {/* Filtres & Recherche */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -837,6 +849,16 @@ export default function AdminDashboard() {
             </div>
           )}
         </Card>
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-6">
+            <AdminPaymentManagement />
+          </TabsContent>
+
+          <TabsContent value="documents" className="space-y-6">
+            <AdminDocumentsManagement />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Modales */}
