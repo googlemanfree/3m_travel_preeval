@@ -19,6 +19,7 @@ interface SummaryModalProps {
     cost: string;
   };
   attractions?: { name: string; icon: string; description: string }[];
+  gastronomy?: { name: string; icon: string; description: string }[];
 }
 
 export const SummaryModal: React.FC<SummaryModalProps> = ({
@@ -28,6 +29,7 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
   flag,
   summary,
   attractions = [],
+  gastronomy = [],
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -179,11 +181,44 @@ export const SummaryModal: React.FC<SummaryModalProps> = ({
             </motion.div>
           )}
 
+          {/* Gastronomy Section */}
+          {gastronomy.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: attractions.length > 0 ? 0.5 : 0.4 }}
+              className="p-8 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border-2 border-orange-300 shadow-md"
+            >
+              <h3 className="text-xl font-bold text-orange-900 mb-6 flex items-center gap-2">
+                <span className="text-2xl">🍽️</span> Gastronomie Locale
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {gastronomy.map((dish, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (attractions.length > 0 ? 0.55 : 0.45) + index * 0.05 }}
+                    className="p-4 bg-white rounded-lg border border-orange-200 hover:border-orange-400 hover:shadow-md transition-all"
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="text-3xl flex-shrink-0">{dish.icon}</span>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-orange-900 text-base">{dish.name}</h4>
+                        <p className="text-sm text-gray-700 mt-1 leading-relaxed">{dish.description}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
           {/* Information Box */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: attractions.length > 0 ? 0.5 : 0.4 }}
+            transition={{ delay: attractions.length > 0 && gastronomy.length > 0 ? 0.6 : attractions.length > 0 || gastronomy.length > 0 ? 0.5 : 0.4 }}
             className="p-6 bg-amber-50 rounded-xl border-2 border-amber-300 shadow-md"
           >
             <p className="text-gray-800 font-medium">

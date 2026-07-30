@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { PDFPreviewModal } from '@/components/PDFPreviewModal';
 import { SummaryModal } from '@/components/SummaryModal';
 import { CountryCard } from '@/components/CountryCard';
+import { GASTRONOMY } from '@/data/gastronomy';
 
 interface Resource {
   country: string;
@@ -537,6 +538,7 @@ const ProceduresResources = () => {
           flag={selectedSummary.flag}
           summary={selectedSummary.data}
           attractions={ATTRACTIONS[selectedSummary.country] || []}
+          gastronomy={GASTRONOMY[selectedSummary.country] || []}
         />
       )}
       <Footer />
