@@ -20,6 +20,7 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
 import { DocumentUploader } from "@/components/DocumentUploader";
+import { DocumentProgressBar } from "@/components/DocumentProgressBar";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -29,6 +30,8 @@ export default function EvaluationSpace() {
   const [userDossierLoading, setUserDossierLoading] = useState(true);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [showDocumentUploader, setShowDocumentUploader] = useState(false);
+  const [uploadedDocuments, setUploadedDocuments] = useState(0);
+  const [requiredDocuments, setRequiredDocuments] = useState(5);
 
   // Fonction pour télécharger le bilan en PDF
   const handleDownloadBilanPDF = async () => {
@@ -311,6 +314,20 @@ export default function EvaluationSpace() {
             <p className="text-gray-600">
               Dossier <strong>#{bilanData.dossierNumber}</strong>
             </p>
+          </motion.div>
+
+          {/* Document Progress Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-8"
+          >
+            <DocumentProgressBar
+              requiredDocuments={requiredDocuments}
+              uploadedDocuments={uploadedDocuments}
+              pendingDocuments={requiredDocuments - uploadedDocuments}
+            />
           </motion.div>
 
           {/* Score Card */}
