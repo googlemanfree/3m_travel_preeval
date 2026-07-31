@@ -24,6 +24,7 @@ import { documentsRouter } from "./routers/documents";
 import { userDashboardRouter } from "./routers/userDashboard";
 import { cvAIRouter } from "./routers/cvAI";
 import { adminDossierRouter } from "./routers/adminDossier";
+import { cinetpayPaymentRouter } from "./routers/cinetpayPayment";
 
 const COOKIE_NAME = "manus_session";
 
@@ -64,6 +65,7 @@ export const appRouter = router({
   candidateAuthOTP: candidateAuthOTPRouter,
   monitoring: monitoringRouter,
   payment: paymentRouter,
+  cinetpayPayment: cinetpayPaymentRouter,
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
 });

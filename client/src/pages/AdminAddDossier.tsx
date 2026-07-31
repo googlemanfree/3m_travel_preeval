@@ -21,7 +21,7 @@ export default function AdminAddDossier() {
   const [createdDossier, setCreatedDossier] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const createDossierMutation = trpc.admin.createManualDossier.useMutation({
+  const createDossierMutation = trpc.adminDossier.createManualDossier.useMutation({
     onSuccess: (data) => {
       if (data.success) {
         setCreatedDossier(data.dossier);

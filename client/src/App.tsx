@@ -66,6 +66,7 @@ import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import AppointmentBooking from "./pages/AppointmentBooking";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
+import { CinetPayPayment } from "./pages/CinetPayPayment";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -88,6 +89,7 @@ function Router() {
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
+      <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"}>
