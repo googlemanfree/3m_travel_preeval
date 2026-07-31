@@ -87,6 +87,24 @@ export default function CVGenerator() {
     }));
   };
 
+  const exportToPDF = async () => {
+    const element = document.getElementById('cv-preview-content');
+    if (!element) return;
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const opt: any = {
+        margin: 10,
+        filename: `CV_${cvData.fullName || 'CV'}.pdf`,
+        image: { type: 'png', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+      html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('Erreur lors de l\'export PDF:', error);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setCVData(prev => ({
       ...prev,
@@ -358,18 +376,18 @@ export default function CVGenerator() {
             {/* Prévisualisation */}
             <div className="bg-white rounded-3xl shadow-xl p-4">
               <h3 className="font-bold text-lg mb-4">👁️ Prévisualisation</h3>
-              <div className="h-96 overflow-hidden rounded-xl border-2 border-gray-200">
+              <div id="cv-preview-content" className="h-96 overflow-hidden rounded-xl border-2 border-gray-200">
                 <CVPreview data={cvData} template={selectedTemplate} theme={selectedTheme} />
               </div>
             </div>
 
-            {/* Bouton Télécharger */}
+            {/* Bouton Télécharger PDF */}
             <button
-              onClick={generatePDF}
+              onClick={exportToPDF}
               disabled={!cvData.fullName}
               className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              📥 Télécharger CV
+              📥 Télécharger en PDF
             </button>
           </motion.div>
         </div>
