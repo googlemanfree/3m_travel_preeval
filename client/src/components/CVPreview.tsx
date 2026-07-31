@@ -26,19 +26,40 @@ interface CVData {
 interface CVPreviewProps {
   data: CVData;
   template?: 'modern' | 'classic' | 'minimal';
+  theme?: ColorTheme;
 }
 
-export default function CVPreview({ data, template = 'modern' }: CVPreviewProps) {
+type ColorTheme = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal';
+
+interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  text: string;
+  border: string;
+}
+
+const THEME_COLORS: Record<ColorTheme, ThemeColors> = {
+  blue: { primary: '#1E3A8A', secondary: '#2563EB', accent: '#3B82F6', text: '#1F2937', border: '#DBEAFE' },
+  green: { primary: '#065F46', secondary: '#059669', accent: '#10B981', text: '#1F2937', border: '#D1FAE5' },
+  orange: { primary: '#92400E', secondary: '#D97706', accent: '#F59E0B', text: '#1F2937', border: '#FED7AA' },
+  purple: { primary: '#5B21B6', secondary: '#7C3AED', accent: '#A78BFA', text: '#1F2937', border: '#EDE9FE' },
+  red: { primary: '#7F1D1D', secondary: '#DC2626', accent: '#EF4444', text: '#1F2937', border: '#FEE2E2' },
+  teal: { primary: '#134E4A', secondary: '#0D9488', accent: '#14B8A6', text: '#1F2937', border: '#CCFBF1' }
+}
+
+export default function CVPreview({ data, template = 'modern', theme = 'blue' }: CVPreviewProps) {
+  const colors = THEME_COLORS[theme];
   const renderModernTemplate = () => (
     <div className="bg-white p-12 text-gray-900 space-y-8 font-sans">
       {/* Header */}
-      <div className="border-b-4 border-blue-600 pb-8">
+      <div style={{ borderBottomColor: colors.primary }} className="border-b-4 pb-8">
         <div className="flex gap-6 items-start mb-4">
           {data.profilePhoto && (
             <img src={data.profilePhoto} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
           )}
           <div className="flex-1">
-            <h1 className="text-4xl font-black text-blue-600 mb-2">{data.fullName || 'Nom Complet'}</h1>
+            <h1 style={{ color: colors.primary }} className="text-4xl font-black mb-2">{data.fullName || 'Nom Complet'}</h1>
           </div>
         </div>
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">

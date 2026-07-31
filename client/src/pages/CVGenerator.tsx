@@ -3,6 +3,25 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import CVPreview from '@/components/CVPreview';
 
+type ColorTheme = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal';
+
+interface ThemeColors {
+  primary: string;
+  secondary: string;
+  accent: string;
+  text: string;
+  border: string;
+}
+
+const THEME_COLORS: Record<ColorTheme, ThemeColors> = {
+  blue: { primary: '#1E3A8A', secondary: '#2563EB', accent: '#3B82F6', text: '#1F2937', border: '#DBEAFE' },
+  green: { primary: '#065F46', secondary: '#059669', accent: '#10B981', text: '#1F2937', border: '#D1FAE5' },
+  orange: { primary: '#92400E', secondary: '#D97706', accent: '#F59E0B', text: '#1F2937', border: '#FED7AA' },
+  purple: { primary: '#5B21B6', secondary: '#7C3AED', accent: '#A78BFA', text: '#1F2937', border: '#EDE9FE' },
+  red: { primary: '#7F1D1D', secondary: '#DC2626', accent: '#EF4444', text: '#1F2937', border: '#FEE2E2' },
+  teal: { primary: '#134E4A', secondary: '#0D9488', accent: '#14B8A6', text: '#1F2937', border: '#CCFBF1' }
+};
+
 interface CVData {
   fullName: string;
   email: string;
@@ -44,6 +63,7 @@ export default function CVGenerator() {
   const [skillInput, setSkillInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'minimal'>('modern');
+  const [selectedTheme, setSelectedTheme] = useState<ColorTheme>('blue');
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -311,11 +331,35 @@ export default function CVGenerator() {
               </div>
             </div>
 
+            {/* Sélection Thème */}
+            <div className="bg-white rounded-3xl shadow-xl p-6">
+              <h3 className="font-bold text-lg mb-4">🎯 Couleurs</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {(['blue', 'green', 'orange', 'purple', 'red', 'teal'] as ColorTheme[]).map(theme => (
+                  <button
+                    key={theme}
+                    onClick={() => setSelectedTheme(theme)}
+                    className={`px-3 py-2 rounded-lg font-semibold transition ${
+                      selectedTheme === theme
+                        ? 'ring-2 ring-offset-2 ring-gray-400'
+                        : ''
+                    }`}
+                    style={{
+                      backgroundColor: THEME_COLORS[theme].primary,
+                      color: 'white'
+                    }}
+                  >
+                    {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Prévisualisation */}
             <div className="bg-white rounded-3xl shadow-xl p-4">
               <h3 className="font-bold text-lg mb-4">👁️ Prévisualisation</h3>
               <div className="h-96 overflow-hidden rounded-xl border-2 border-gray-200">
-                <CVPreview data={cvData} template={selectedTemplate} />
+                <CVPreview data={cvData} template={selectedTemplate} theme={selectedTheme} />
               </div>
             </div>
 
