@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
+import EvaluationButton from './EvaluationButton';
 
 const menuItems = [
   { href: '/', label: 'Accueil', icon: '🏠' },
@@ -139,12 +140,7 @@ export default function Navbar() {
             ) : (
               /* --- BOUTONS D'ACTION INVITÉ --- */
               <>
-                <a 
-                  href="/evaluation" 
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all duration-200 active:scale-95"
-                >
-                  ⭐ Évaluer mon profil
-                </a>
+                <EvaluationButton variant="primary" size="md" />
                 <a 
                   href="/login" 
                   className="bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95"
