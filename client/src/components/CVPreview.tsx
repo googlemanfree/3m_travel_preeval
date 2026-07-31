@@ -5,6 +5,7 @@ interface CVData {
   email: string;
   phone: string;
   location: string;
+  profilePhoto: string;
   summary: string;
   experience: Array<{
     company: string;
@@ -32,7 +33,14 @@ export default function CVPreview({ data, template = 'modern' }: CVPreviewProps)
     <div className="bg-white p-12 text-gray-900 space-y-8 font-sans">
       {/* Header */}
       <div className="border-b-4 border-blue-600 pb-8">
-        <h1 className="text-4xl font-black text-blue-600 mb-2">{data.fullName || 'Nom Complet'}</h1>
+        <div className="flex gap-6 items-start mb-4">
+          {data.profilePhoto && (
+            <img src={data.profilePhoto} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+          )}
+          <div className="flex-1">
+            <h1 className="text-4xl font-black text-blue-600 mb-2">{data.fullName || 'Nom Complet'}</h1>
+          </div>
+        </div>
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
           {data.email && <span>📧 {data.email}</span>}
           {data.phone && <span>📱 {data.phone}</span>}

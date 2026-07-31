@@ -8,6 +8,7 @@ interface CVData {
   email: string;
   phone: string;
   location: string;
+  profilePhoto: string; // base64 ou URL
   summary: string;
   experience: Array<{
     company: string;
@@ -31,6 +32,7 @@ export default function CVGenerator() {
     email: '',
     phone: '',
     location: '',
+    profilePhoto: '',
     summary: '',
     experience: [{ company: '', position: '', duration: '', description: '' }],
     education: [{ school: '', degree: '', field: '', year: '' }],
@@ -42,6 +44,28 @@ export default function CVGenerator() {
   const [skillInput, setSkillInput] = useState('');
   const [languageInput, setLanguageInput] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<'modern' | 'classic' | 'minimal'>('modern');
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setCVData(prev => ({
+          ...prev,
+          profilePhoto: base64
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setCVData(prev => ({
+      ...prev,
+      profilePhoto: ''
+    }));
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setCVData(prev => ({
@@ -140,6 +164,31 @@ export default function CVGenerator() {
             <div className="max-h-96 overflow-y-auto">
               {currentTab === 'personal' && (
                 <div className="space-y-4">
+                  <div className="border-2 border-dashed border-blue-300 rounded-xl p-4 text-center">
+                    {cvData.profilePhoto ? (
+                      <div className="space-y-3">
+                        <img src={cvData.profilePhoto} alt="Profile" className="w-24 h-24 rounded-full mx-auto object-cover" />
+                        <button
+                          onClick={removePhoto}
+                          className="w-full px-3 py-2 bg-red-100 text-red-600 rounded-lg font-semibold hover:bg-red-200"
+                        >
+                          Supprimer la photo
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <div className="text-3xl mb-2">📷</div>
+                        <p className="text-sm text-gray-600 mb-2">Cliquez pour ajouter une photo</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
+
                   <input
                     type="text"
                     placeholder="Nom complet"
