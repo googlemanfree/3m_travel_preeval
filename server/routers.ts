@@ -23,6 +23,7 @@ import { paymentRouter } from "./routers/payment";
 import { documentsRouter } from "./routers/documents";
 import { userDashboardRouter } from "./routers/userDashboard";
 import { cvAIRouter } from "./routers/cvAI";
+import { adminDossierRouter } from "./routers/adminDossier";
 
 const COOKIE_NAME = "manus_session";
 
@@ -55,6 +56,7 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   adminAuth: adminAuthRouter,
+  adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
