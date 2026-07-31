@@ -997,3 +997,11 @@
 - [x] Ajouter le bouton d'actualisation manuel
 - [x] Formater les dates et montants en français
 - [x] Afficher les états vides avec messages informatifs
+
+
+## Module 6 - Système de Notifications Automatiques (Complété)
+- [x] Service WhatsApp avec Twilio (8 templates)
+- [x] Routeur tRPC notificationRouter (9 procédures)
+- [x] Notifications doubles (Email + WhatsApp)
+- [x] Intégration dans le routeur principal
+- [x] Build production réussi

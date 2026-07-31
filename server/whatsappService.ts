@@ -165,3 +165,193 @@ Merci !
 
   return sendWhatsAppMessage(params.phoneNumber, message);
 }
+
+
+/**
+ * Envoyer la notification de visa approuvé par WhatsApp
+ */
+export async function sendVisaApprovedWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  destinationCountry: string;
+  visaType: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+🎉 *Félicitations ${params.candidateName}* 🎉
+
+Votre visa ${params.visaType} pour ${params.destinationCountry} a été approuvé ! ✅
+
+Consultez votre espace candidat pour les détails et les prochaines étapes.
+
+Merci de votre confiance !
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer un rappel de paiement par WhatsApp
+ */
+export async function sendPaymentReminderWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  amount: string;
+  currency: string;
+  paymentLink?: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+⏰ *Rappel - Paiement en Attente*
+
+Bonjour ${params.candidateName},
+
+Votre paiement de ${params.amount} ${params.currency} est en attente.
+
+Finalisez votre dossier en procédant au paiement dès maintenant.
+
+${params.paymentLink ? `Lien de paiement : ${params.paymentLink}` : 'Consultez votre email pour le lien de paiement'}
+
+Cordialement,
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer une notification de documents reçus par WhatsApp
+ */
+export async function sendDocumentsReceivedWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  documentCount: number;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+✅ *Documents Reçus*
+
+Bonjour ${params.candidateName},
+
+Nous avons reçu et vérifié ${params.documentCount} document(s).
+
+Prochaine étape : Soumission aux agences partenaires.
+
+Nous vous tiendrons informé de l'avancement.
+
+Cordialement,
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer une notification de soumission aux agences par WhatsApp
+ */
+export async function sendSubmittedToAgenciesWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  destinationCountry: string;
+  agencyName: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+📤 *Dossier Soumis aux Agences Partenaires*
+
+Bonjour ${params.candidateName},
+
+Votre dossier pour ${params.destinationCountry} a été soumis à ${params.agencyName}.
+
+Nous vous tiendrons informé de la progression du recrutement.
+
+Cordialement,
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer une notification de contrat obtenu par WhatsApp
+ */
+export async function sendContractObtainedWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  employerName: string;
+  position: string;
+  destinationCountry: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+🎊 *Contrat Obtenu* 🎊
+
+Bonjour ${params.candidateName},
+
+Excellente nouvelle ! Vous avez obtenu un contrat de travail ! 🎉
+
+📋 *Employeur :* ${params.employerName}
+💼 *Poste :* ${params.position}
+🌍 *Destination :* ${params.destinationCountry}
+
+Consultez votre espace candidat pour les détails et les prochaines étapes.
+
+Cordialement,
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer une notification de dossier rejeté par WhatsApp
+ */
+export async function sendApplicationRejectedWhatsApp(params: {
+  phoneNumber: string;
+  candidateName: string;
+  reason: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const message = `
+❌ *Mise à Jour de Votre Dossier*
+
+Bonjour ${params.candidateName},
+
+Malheureusement, votre dossier n'a pas pu être approuvé.
+
+*Raison :* ${params.reason}
+
+Nous vous invitons à nous contacter pour discuter des options disponibles.
+
+Cordialement,
+3M Travel & Services
+`.trim();
+
+  return sendWhatsAppMessage(params.phoneNumber, message);
+}
+
+/**
+ * Envoyer une notification double (Email + WhatsApp)
+ */
+export async function sendDualNotification(
+  email: string,
+  phoneNumber: string,
+  subject: string,
+  htmlContent: string,
+  whatsappMessage: string
+): Promise<{ emailSent: boolean; whatsappSent: boolean; errors: string[] }> {
+  const errors: string[] = [];
+
+  try {
+    const { sendEmail } = await import('./emailService');
+    await sendEmail(email, subject, htmlContent);
+  } catch (error) {
+    errors.push(`Email: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+  }
+
+  const whatsappResult = await sendWhatsAppMessage(phoneNumber, whatsappMessage);
+  if (!whatsappResult.success) {
+    errors.push(`WhatsApp: ${whatsappResult.error || 'Erreur inconnue'}`);
+  }
+
+  return {
+    emailSent: errors.length === 0 || !errors.some(e => e.startsWith('Email:')),
+    whatsappSent: whatsappResult.success,
+    errors,
+  };
+}
