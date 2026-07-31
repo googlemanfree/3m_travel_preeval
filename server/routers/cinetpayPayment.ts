@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { protectedProcedure, router } from '../_core/trpc';
 import { getDb } from '../db';
 import { applications, candidates } from '../../drizzle/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 
 export const cinetpayPaymentRouter = router({
@@ -139,6 +139,96 @@ export const cinetpayPaymentRouter = router({
         return {
           success: false,
           error: 'Erreur lors de la vérification du paiement',
+        };
+      }
+    }),
+
+  // Récupérer l'historique des paiements pour le candidat connecté
+  getPaymentHistory: protectedProcedure
+    .input(
+      z.object({
+        dossierNumber: z.string().optional(),
+        limit: z.number().default(10),
+        offset: z.number().default(0),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+
+        // Récupérer les transactions du candidat
+        const query = (db as any).query.transactions;
+        
+        // Construire les conditions de filtrage
+        const conditions = [eq((db as any).schema.transactions.candidateId, ctx.user?.id)];
+        
+        if (input.dossierNumber) {
+          conditions.push(eq((db as any).schema.transactions.dossierNumber, input.dossierNumber));
+        }
+
+        const transactions = await query.findMany({
+          where: conditions.length > 1 ? and(...conditions) : conditions[0],
+          orderBy: desc((db as any).schema.transactions.createdAt),
+          limit: input.limit,
+          offset: input.offset,
+        });
+
+        return {
+          success: true,
+          transactions: transactions || [],
+          count: transactions?.length || 0,
+        };
+      } catch (error) {
+        console.error('Erreur récupération historique paiements:', error);
+        return {
+          success: false,
+          error: 'Erreur lors de la récupération de l\'historique',
+          transactions: [],
+        };
+      }
+    }),
+
+  // Récupérer les statistiques de paiement pour le candidat
+  getPaymentStats: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+
+        const query = (db as any).query.transactions;
+        
+        const transactions = await query.findMany({
+          where: eq((db as any).schema.transactions.candidateId, ctx.user?.id),
+        });
+
+        // Calculer les statistiques
+        const stats = {
+          totalTransactions: transactions?.length || 0,
+          successfulPayments: transactions?.filter((t: any) => t.status === 'success').length || 0,
+          totalAmountPaid: transactions
+            ?.filter((t: any) => t.status === 'success')
+            .reduce((sum: number, t: any) => sum + (t.amount || 0), 0) || 0,
+          pendingPayments: transactions?.filter((t: any) => t.status === 'pending').length || 0,
+          failedPayments: transactions?.filter((t: any) => t.status === 'failed').length || 0,
+        };
+
+        return {
+          success: true,
+          stats,
+        };
+      } catch (error) {
+        console.error('Erreur récupération stats paiements:', error);
+        return {
+          success: false,
+          error: 'Erreur lors de la récupération des statistiques',
+          stats: {
+            totalTransactions: 0,
+            successfulPayments: 0,
+            totalAmountPaid: 0,
+            pendingPayments: 0,
+            failedPayments: 0,
+          },
         };
       }
     }),

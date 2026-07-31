@@ -1315,3 +1315,50 @@ export const evaluationComments = mysqlTable("evaluation_comments", {
 
 export type EvaluationComment = typeof evaluationComments.$inferSelect;
 export type InsertEvaluationComment = typeof evaluationComments.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HISTORIQUE DES TRANSACTIONS DE PAIEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Historique des transactions de paiement CinetPay
+ * Permet aux candidats de consulter leurs paiements passés
+ */
+export const transactions = mysqlTable("transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au dossier/candidat
+  applicationId: int("applicationId").notNull(),
+  candidateId: int("candidateId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 50 }).notNull(),
+  
+  // Identifiant CinetPay
+  transactionId: varchar("transactionId", { length: 100 }).notNull().unique(),
+  
+  // Détails du paiement
+  amount: int("amount").notNull(),  // Montant en XAF
+  currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+  description: text("description"),  // Description du paiement
+  
+  // Statut du paiement
+  status: mysqlEnum("status", ["pending", "processing", "success", "failed", "cancelled"]).default("pending").notNull(),
+  
+  // Détails CinetPay
+  cinetpayTransactionId: varchar("cinetpayTransactionId", { length: 100 }),  // ID retourné par CinetPay
+  cinetpayReference: varchar("cinetpayReference", { length: 100 }),  // Référence CinetPay
+  paymentMethod: varchar("paymentMethod", { length: 50 }),  // Méthode de paiement utilisée
+  
+  // Métadonnées
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  
+  // Timestamps
+  initiatedAt: timestamp("initiatedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;

@@ -984,3 +984,16 @@
 - [ ] Dashboard ambassadeur avec statistiques de parrainage
 - [ ] Système de commissions pour ambassadeurs
 - [ ] Notifications ambassadeur (nouveaux parrainages, commissions)
+
+
+## Historique des Paiements — Module 5 (Complété)
+- [x] Créer la table `transactions` dans la base de données MySQL
+- [x] Ajouter les procédures tRPC `getPaymentHistory` et `getPaymentStats`
+- [x] Créer le composant PaymentHistory avec affichage des transactions
+- [x] Intégrer PaymentHistory dans l'espace candidat (MySpace.tsx)
+- [x] Afficher les statistiques de paiement (total, réussis, montant payé, en attente)
+- [x] Implémenter la pagination pour gérer plusieurs transactions
+- [x] Ajouter les animations Framer Motion pour les transitions
+- [x] Ajouter le bouton d'actualisation manuel
+- [x] Formater les dates et montants en français
+- [x] Afficher les états vides avec messages informatifs
