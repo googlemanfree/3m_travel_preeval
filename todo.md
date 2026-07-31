@@ -970,3 +970,17 @@
 - [ ] Ajouter bouton actualisation manuelle
 - [ ] Ajouter export PDF de l'historique
 - [ ] Tester et déployer
+
+
+## Module 4 : Guichet Paiement + E-Signature + CV International + Ambassadeur
+
+- [ ] Interface de paiement 65K XAF (CinetPay) - Formulaire de paiement
+- [ ] Intégration webhook CinetPay pour confirmation paiement
+- [ ] Module E-Signature - Composant de signature électronique
+- [ ] Stockage signatures électroniques en base de données
+- [ ] Générateur CV International - Page de création CV
+- [ ] Export CV en PDF avec logo 3M
+- [ ] Programme Ambassadeur - Page d'inscription ambassadeur
+- [ ] Dashboard ambassadeur avec statistiques de parrainage
+- [ ] Système de commissions pour ambassadeurs
+- [ ] Notifications ambassadeur (nouveaux parrainages, commissions)
