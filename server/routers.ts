@@ -22,6 +22,7 @@ import { evaluationCommentsRouter } from "./routers/evaluationComments";
 import { paymentRouter } from "./routers/payment";
 import { documentsRouter } from "./routers/documents";
 import { userDashboardRouter } from "./routers/userDashboard";
+import { cvAIRouter } from "./routers/cvAI";
 
 const COOKIE_NAME = "manus_session";
 
@@ -44,6 +45,7 @@ export const appRouter = router({
   evaluationAdmin: evaluationAdminRouter,
   evaluationComments: evaluationCommentsRouter,
   profileEvaluation: profileEvaluationRouter,
+  cvAI: cvAIRouter,
   flights: flightsRouter,
   candidate: candidateRouter,
   // Nouveau: Authentification OTP sécurisée (France-Visas compliant)

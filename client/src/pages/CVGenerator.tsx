@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import CVPreview from '@/components/CVPreview';
+import AIAssistant from '@/components/AIAssistant';
 
 type ColorTheme = 'blue' | 'green' | 'orange' | 'purple' | 'red' | 'teal';
 
