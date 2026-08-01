@@ -25,6 +25,12 @@ import {
   Filter,
   ChevronRight,
 } from 'lucide-react';
+import {
+  EvisasGridSkeleton,
+  EvisasFilterSkeleton,
+  EvisasStatsSkeleton,
+  EvisasPaginationSkeleton,
+} from '@/components/EvisaSkeleton';
 
 export function Evisas() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,7 +99,10 @@ export function Evisas() {
         </p>
       </div>
 
-      {/* Statistiques */}
+      {/* Statistiques avec skeleton */}
+      {loadingEvisas ? (
+        <EvisasStatsSkeleton />
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
@@ -135,8 +144,12 @@ export function Evisas() {
           </CardContent>
         </Card>
       </div>
+      )}
 
-      {/* Filtres et recherche */}
+      {/* Filtres et recherche avec skeleton */}
+      {loadingEvisas ? (
+        <EvisasFilterSkeleton />
+      ) : (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -205,12 +218,11 @@ export function Evisas() {
           </div>
         </CardContent>
       </Card>
+      )}
 
-      {/* Liste des e-visas */}
+      {/* Liste des e-visas avec skeleton */}
       {loadingEvisas ? (
-        <div className="text-center py-12">
-          <p className="text-gray-600">Chargement des e-visas...</p>
-        </div>
+        <EvisasGridSkeleton />
       ) : paginatedEvisas.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
