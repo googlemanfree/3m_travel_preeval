@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { FileUploadField } from '@/components/FileUploadField';
 import { ValidationStep } from '@/components/ValidationStep';
 import { FormProgressBar } from '@/components/FormProgressBar';
+import { SuccessConfirmation } from '@/components/SuccessConfirmation';
 import { trpc } from '@/lib/trpc';
 
 interface ExtractedData {
@@ -58,6 +59,7 @@ export default function EvisaRequestForm() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -99,12 +101,10 @@ export default function EvisaRequestForm() {
 
   // Mutation pour soumettre la demande
   const submitRequestMutation = trpc.evisa.submitRequest.useMutation({
-    onSuccess: () => {
+    onSuccess: (result: any) => {
+      setRequestId(result.requestId || 'N/A');
       setSubmitted(true);
       setError(null);
-      setTimeout(() => {
-        navigate('/evisas');
-      }, 3000);
     },
     onError: (err: any) => {
       setError(err.message || 'Une erreur est survenue lors de la soumission');
@@ -228,24 +228,19 @@ export default function EvisaRequestForm() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-        <div className="max-w-2xl mx-auto px-4 py-12">
-          <Card className="p-8 text-center">
-            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Demande Soumise avec Succès !</h2>
-            <p className="text-gray-600 mb-4">
-              Votre demande d'e-visa pour {formData.countryName} a été soumise avec succès.
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Vous allez être redirigé vers la page des e-visas dans 3 secondes...
-            </p>
-            <Button onClick={() => navigate('/evisas')} className="bg-blue-600 hover:bg-blue-700">
-              Retour aux e-visas
-            </Button>
-          </Card>
-        </div>
+      <>
+        <SuccessConfirmation
+          fullName={formData.fullName}
+          countryName={formData.countryName}
+          countryCode={formData.countryCode}
+          email={formData.email}
+          totalCost={ACCOMPANIMENT_FEE}
+          currency={CURRENCY}
+          requestId={requestId || undefined}
+          onReturnHome={() => navigate('/evisas')}
+        />
         <Footer />
-      </div>
+      </>
     );
   }
 

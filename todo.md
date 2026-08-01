@@ -1133,3 +1133,18 @@
 - [x] Ajouter une barre de progression (Etape 1: Téléchargement, Etape 2: Validation, Etape 3: Confirmation)
 - [x] Intégrer le composant ValidationStep dans EvisaRequestForm
 - [ ] Tester la validation avec différents scénarios
+
+
+## Animation de Succès et Message de Confirmation Personnalisé (v16)
+- [x] Créer un composant SuccessAnimation.tsx avec confettis et animations
+- [x] Ajouter des animations CSS pour les confettis qui tombent
+- [x] Créer un message de confirmation personnalisé avec les détails de la demande
+- [x] Afficher le numéro de demande généré
+- [x] Afficher la date et l'heure de soumission
+- [x] Afficher le pays et les frais de la demande
+- [x] Ajouter un bouton pour télécharger un reçu PDF
+- [x] Ajouter un bouton pour partager la demande par email
+- [x] Ajouter une timeline avec les prochaines étapes
+- [x] Afficher un message de remerciement personnalisé
+- [x] Ajouter des animations de transition fluides
+- [ ] Tester les animations sur différents navigateurs
