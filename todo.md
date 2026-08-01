@@ -1040,3 +1040,14 @@
 - [x] Boutons d'export dans AdminDashboardAdvanced
 - [x] Intégration complète dans le dashboard
 - [x] Build production réussi (498.8 KB)
+
+
+## Module E-Visa Complet (EN COURS)
+- [ ] Créer la table e-visas avec tous les pays du monde
+- [ ] Charger les données de tous les pays (200+ pays)
+- [ ] Créer les procédures tRPC pour gérer les e-visas
+- [ ] Créer la page E-Visas avec liste complète
+- [ ] Ajouter les filtres (région, prix, délai de traitement)
+- [ ] Créer le formulaire de création de dossier e-visa
+- [ ] Intégrer le paiement CinetPay pour les e-visas
+- [ ] Tester le système complet

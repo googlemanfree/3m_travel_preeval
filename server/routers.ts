@@ -28,6 +28,7 @@ import { cinetpayPaymentRouter } from "./routers/cinetpayPayment";
 import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
 import { exportRouter } from "./routers/exportRouter";
+import { evisaRouter } from "./routers/evisaRouter";
 
 const COOKIE_NAME = "manus_session";
 
@@ -72,6 +73,7 @@ export const appRouter = router({
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
   export: exportRouter,
+  evisa: evisaRouter,
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
 });
