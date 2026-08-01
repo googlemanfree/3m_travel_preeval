@@ -122,7 +122,7 @@ export const evisaRouter = router({
       z.object({
         dossierNumber: z.string(),
         countryCode: z.string(),
-        documents: z.record(z.string()).optional(),
+        documents: z.record(z.string(), z.string()).optional(),
       })
     )
     .mutation(async ({ input, ctx }: any) => {

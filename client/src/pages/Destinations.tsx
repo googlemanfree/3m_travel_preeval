@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { DESTINATIONS, VISA_TYPES } from "@shared/visaData";
+import { enhancedDestinationData, DestinationId, TestimonialData } from "@/data/enhancedDestinationData";
 import { useLocation } from "wouter";
 import Footer from "@/components/Footer";
+import TestimonialsSection from "@/components/TestimonialsSection";
 
 const CONTINENT_COLORS: Record<string, string> = {
   "Amérique du Nord": "bg-blue-100 text-blue-800",
@@ -54,6 +56,12 @@ export default function Destinations() {
             Découvrez nos destinations principales et explorez les opportunités de mobilité internationale
             disponibles dans chaque pays.
           </p>
+          <Button
+            onClick={() => navigate("/open-dossier")}
+            className="mt-8 bg-white text-blue-600 hover:bg-blue-100 text-lg px-8 py-3 rounded-full shadow-lg transition-all duration-300"
+          >
+            Commencez votre parcours vers l'étranger !
+          </Button>
         </div>
       </section>
 
@@ -171,8 +179,45 @@ export default function Destinations() {
                   onClick={() => navigate("/open-dossier")}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                  Commencer ma demande
+                  Débloquez votre avenir maintenant !
                 </Button>
+
+                {/* Avantages */}
+                {enhancedDestinationData[dest.id as DestinationId] && (
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-500 font-semibold uppercase mb-2">Avantages</p>
+                    <ul className="list-disc list-inside text-sm text-gray-700">
+                      {enhancedDestinationData[dest.id as DestinationId].advantages.map((advantage: string, index: number) => (
+                        <li key={index}>{advantage}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Coûts */}
+                {enhancedDestinationData[dest.id as DestinationId] && (
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-500 font-semibold uppercase mb-2">Coûts Estimés</p>
+                    <ul className="list-disc list-inside text-sm text-gray-700">
+                      {Object.entries(enhancedDestinationData[dest.id as DestinationId].costs).map(([key, value]) => (
+                        <li key={key}>{key.replace(/([A-Z])/g, ' $1').toLowerCase()}: {value}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Témoignages */}
+                {enhancedDestinationData[dest.id as DestinationId] && enhancedDestinationData[dest.id as DestinationId].testimonials.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-xs text-gray-500 font-semibold uppercase mb-2">Témoignages</p>
+                    {enhancedDestinationData[dest.id as DestinationId].testimonials.map((testimonial: TestimonialData, index: number) => (
+                      <div key={index} className="mb-2 p-2 bg-gray-50 rounded">
+                        <p className="text-sm italic">\" {testimonial.comment} \"</p>
+                        <p className="text-xs text-gray-600 text-right">- {testimonial.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
           ))}
@@ -216,6 +261,8 @@ export default function Destinations() {
           </div>
         </div>
       </section>
+
+      <TestimonialsSection />
 
       <Footer />
     </div>
