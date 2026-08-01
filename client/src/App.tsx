@@ -68,6 +68,7 @@ import AppointmentBooking from "./pages/AppointmentBooking";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import { CinetPayPayment } from "./pages/CinetPayPayment";
 import { Evisas as EvisasPage } from "./pages/Evisas";
+import { EvisaApplicationForm } from "./pages/EvisaApplicationForm";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -190,6 +191,11 @@ function Router() {
       <Route path={"/evisas"}>
         <AuthGuard message="Vous devez créer un compte pour accéder aux services e-visa.">
           <EvisasPage />
+        </AuthGuard>
+      </Route>
+      <Route path={"/evisas/:countryCode"}>
+        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
+          <EvisaApplicationForm />
         </AuthGuard>
       </Route>
 

@@ -291,6 +291,113 @@ export const evisaRouter = router({
     }),
 
   /**
+   * Initier le paiement d'une demande d'e-visa
+   */
+  initiateEvisaPayment: protectedProcedure
+    .input(
+      z.object({
+        applicationId: z.number(),
+        amount: z.number(),
+        description: z.string(),
+      })
+    )
+    .mutation(async ({ input, ctx }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        // Vérifier que la demande appartient au candidat
+        const [application] = await connection.execute(`
+          SELECT * FROM evisaApplications WHERE id = ? AND candidateId = ?
+        `, [input.applicationId, ctx.user.id]);
+
+        if (!application || (application as any[]).length === 0) {
+          await connection.end();
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Demande d\'e-visa non trouvée',
+          });
+        }
+
+        // Générer une référence de transaction unique
+        const transactionRef = `EVISA-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        // Mettre à jour le statut du paiement
+        await connection.execute(`
+          UPDATE evisaApplications 
+          SET paymentStatus = 'pending', transactionId = ?
+          WHERE id = ?
+        `, [transactionRef, input.applicationId]);
+
+        await connection.end();
+
+        return {
+          success: true,
+          transactionRef,
+          amount: input.amount,
+          description: input.description,
+        };
+      } catch (error) {
+        console.error('Erreur lors de l\'initiation du paiement:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de l\'initiation du paiement',
+        });
+      }
+    }),
+
+  /**
+   * Confirmer le paiement d'une demande d'e-visa
+   */
+  confirmEvisaPayment: protectedProcedure
+    .input(
+      z.object({
+        applicationId: z.number(),
+        transactionId: z.string(),
+        status: z.enum(['paid', 'failed']),
+      })
+    )
+    .mutation(async ({ input, ctx }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        // Vérifier que la demande appartient au candidat
+        const [application] = await connection.execute(`
+          SELECT * FROM evisaApplications WHERE id = ? AND candidateId = ?
+        `, [input.applicationId, ctx.user.id]);
+
+        if (!application || (application as any[]).length === 0) {
+          await connection.end();
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Demande d\'e-visa non trouvée',
+          });
+        }
+
+        // Mettre à jour le statut du paiement
+        await connection.execute(`
+          UPDATE evisaApplications 
+          SET paymentStatus = ?, transactionId = ?, updatedAt = ?
+          WHERE id = ?
+        `, [input.status, input.transactionId, new Date(), input.applicationId]);
+
+        await connection.end();
+
+        return {
+          success: true,
+          message: input.status === 'paid' ? 'Paiement confirmé avec succès' : 'Paiement échoué',
+        };
+      } catch (error) {
+        console.error('Erreur lors de la confirmation du paiement:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la confirmation du paiement',
+        });
+      }
+    }),
+
+  /**
    * Récupérer les statistiques des e-visas
    */
   getEvisaStats: publicProcedure.query(async () => {

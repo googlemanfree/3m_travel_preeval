@@ -262,7 +262,11 @@ export function Evisas() {
                   )}
 
                   {/* Bouton d'action */}
-                  <Button className="w-full" variant="default">
+                  <Button
+                    className="w-full"
+                    variant="default"
+                    onClick={() => window.location.href = `/evisas/${evisa.countryCode}`}
+                  >
                     <span>Demander un e-visa</span>
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </Button>
