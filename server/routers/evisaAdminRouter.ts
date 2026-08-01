@@ -1,24 +1,29 @@
-import { protectedProcedure, publicProcedure, router } from "@server/_core/trpc";
-import { db } from "@server/db";
-import type { evisaRequests as EvisaRequestsType } from "@drizzle/schema";
-import { eq, desc, and, like } from "drizzle-orm";
-import { z } from "zod";
-import { TRPCError } from "@trpc/server";
+/**
+ * Routeur admin pour la gestion des demandes e-visa
+ * Synchronisation en temps réel, notifications et gestion des dossiers
+ */
+
+import { protectedProcedure, router } from '../_core/trpc';
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import mysql from 'mysql2/promise';
 
 // Générer un numéro de dossier unique
 function generateDossierNumber(): string {
   const now = new Date();
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
   const random = Math.floor(Math.random() * 100000)
     .toString()
-    .padStart(5, "0");
+    .padStart(5, '0');
   return `EVISA-${year}${month}${day}-${random}`;
 }
 
 export const evisaAdminRouter = router({
-  // Récupérer toutes les demandes e-visa (admin seulement)
+  /**
+   * Récupérer toutes les demandes e-visa (admin seulement)
+   */
   getAllRequests: protectedProcedure
     .input(
       z.object({
@@ -31,215 +36,336 @@ export const evisaAdminRouter = router({
     )
     .query(async ({ ctx, input }: any) => {
       // Vérifier que l'utilisateur est admin
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent accéder à cette ressource",
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent accéder à cette ressource',
         });
       }
 
-      const offset = (input.page - 1) * input.limit;
-      const conditions = [];
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
 
-      if (input.status) {
-        conditions.push(eq(evisaRequests.status, input.status as any));
-      }
+        let whereClause = '1=1';
+        const params: any[] = [];
 
-      if (input.countryCode) {
-        conditions.push(eq(evisaRequests.countryCode, input.countryCode));
-      }
+        if (input.status) {
+          whereClause += ' AND status = ?';
+          params.push(input.status);
+        }
 
-      if (input.search) {
-        conditions.push(
-          like(evisaRequests.fullName, `%${input.search}%`)
+        if (input.countryCode) {
+          whereClause += ' AND countryCode = ?';
+          params.push(input.countryCode);
+        }
+
+        if (input.search) {
+          whereClause += ' AND (fullName LIKE ? OR email LIKE ?)';
+          params.push(`%${input.search}%`, `%${input.search}%`);
+        }
+
+        const offset = (input.page - 1) * input.limit;
+
+        // Récupérer les demandes
+        const [requests] = await connection.execute(
+          `SELECT * FROM evisa_requests WHERE ${whereClause} ORDER BY createdAt DESC LIMIT ? OFFSET ?`,
+          [...params, input.limit, offset]
         );
+
+        // Récupérer le total
+        const [totalResult] = await connection.execute(
+          `SELECT COUNT(*) as count FROM evisa_requests WHERE ${whereClause}`,
+          params
+        );
+
+        await connection.end();
+
+        return {
+          requests: requests || [],
+          total: (totalResult as any[])[0]?.count || 0,
+          page: input.page,
+          limit: input.limit,
+        };
+      } catch (error) {
+        console.error('Erreur lors de la récupération des demandes:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la récupération des demandes',
+        });
       }
-
-      const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-      const requests = await db
-        .select()
-        .from(evisaRequests)
-        .where(whereClause)
-        .orderBy(desc(evisaRequests.createdAt))
-        .limit(input.limit)
-        .offset(offset);
-
-      const total = await db
-        .select({ count: evisaRequests.id })
-        .from(evisaRequests)
-        .where(whereClause);
-
-      return {
-        requests,
-        total: total[0]?.count || 0,
-        page: input.page,
-        limit: input.limit,
-      };
     }),
 
-  // Récupérer les détails d'une demande
+  /**
+   * Récupérer les détails d'une demande
+   */
   getRequestDetails: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }: any) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent accéder à cette ressource",
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent accéder à cette ressource',
         });
       }
 
-      const request = await db
-        .select()
-        .from(evisaRequests)
-        .where(eq(evisaRequests.id, input.id))
-        .limit(1);
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
 
-      if (!request.length) {
+        const [request] = await connection.execute(
+          'SELECT * FROM evisa_requests WHERE id = ?',
+          [input.id]
+        );
+
+        await connection.end();
+
+        if (!request || (request as any[]).length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Demande non trouvée',
+          });
+        }
+
+        return (request as any[])[0];
+      } catch (error) {
+        console.error('Erreur lors de la récupération de la demande:', error);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Demande non trouvée",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la récupération de la demande',
         });
       }
-
-      return request[0];
     }),
 
-  // Mettre à jour le statut d'une demande
+  /**
+   * Mettre à jour le statut d'une demande
+   */
   updateRequestStatus: protectedProcedure
     .input(
       z.object({
         id: z.number(),
-        status: z.enum(["pending", "processing", "approved", "rejected"]),
+        status: z.enum(['pending', 'processing', 'approved', 'rejected']),
         notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }: any) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent effectuer cette action",
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent effectuer cette action',
         });
       }
 
-      // Récupérer la demande
-      const request = await db
-        .select()
-        .from(evisaRequests)
-        .where(eq(evisaRequests.id, input.id))
-        .limit(1);
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
 
-      if (!request.length) {
+        // Récupérer la demande existante
+        const [request] = await connection.execute(
+          'SELECT * FROM evisa_requests WHERE id = ?',
+          [input.id]
+        );
+
+        if (!request || (request as any[]).length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Demande non trouvée',
+          });
+        }
+
+        const existingRequest = (request as any[])[0];
+
+        // Mettre à jour le statut
+        await connection.execute(
+          `UPDATE evisa_requests 
+           SET status = ?, adminNotes = ?, lastStatusUpdateAt = NOW(), lastStatusUpdatedBy = ?, clientConfirmationSentAt = NOW()
+           WHERE id = ?`,
+          [input.status, input.notes || existingRequest.adminNotes, ctx.user?.email, input.id]
+        );
+
+        // TODO: Envoyer un email de confirmation au client
+        // const statusMessages: Record<string, string> = {
+        //   pending: 'Votre demande est en attente de traitement',
+        //   processing: 'Votre demande est en cours de traitement',
+        //   approved: 'Votre demande d\'e-visa a été approuvée!',
+        //   rejected: 'Votre demande d\'e-visa a été rejetée',
+        // };
+
+        await connection.end();
+
+        return { success: true, message: 'Statut mis à jour avec succès' };
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du statut:', error);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Demande non trouvée",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la mise à jour du statut',
         });
       }
-
-      const evisaRequest = request[0];
-
-      // Mettre à jour le statut
-      await db
-        .update(evisaRequests)
-        .set({
-          status: input.status,
-          adminNotes: input.notes || evisaRequest.adminNotes,
-          lastStatusUpdateAt: new Date(),
-          lastStatusUpdatedBy: ctx.user?.email,
-        })
-        .where(eq(evisaRequests.id, input.id));
-
-      // TODO: Envoyer un email de confirmation au client
-      // const statusMessages: Record<string, string> = {
-      //   pending: "Votre demande est en attente de traitement",
-      //   processing: "Votre demande est en cours de traitement",
-      //   approved: "Votre demande d'e-visa a été approuvée!",
-      //   rejected: "Votre demande d'e-visa a été rejetée",
-      // };
-      // await sendEmail({...})
-
-      return { success: true, message: "Statut mis à jour avec succès" };
     }),
 
-  // Assigner une demande à un admin
+  /**
+   * Assigner une demande à un admin
+   */
   assignRequest: protectedProcedure
     .input(z.object({ id: z.number(), adminEmail: z.string().email() }))
     .mutation(async ({ ctx, input }: any) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent effectuer cette action",
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent effectuer cette action',
         });
       }
 
-      await db
-        .update(evisaRequests)
-        .set({
-          adminAssignedTo: input.adminEmail,
-          lastStatusUpdateAt: new Date(),
-          lastStatusUpdatedBy: ctx.user?.email,
-        })
-        .where(eq(evisaRequests.id, input.id));
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
 
-      return { success: true, message: "Demande assignée avec succès" };
+        await connection.execute(
+          `UPDATE evisa_requests 
+           SET adminAssignedTo = ?, lastStatusUpdateAt = NOW(), lastStatusUpdatedBy = ?
+           WHERE id = ?`,
+          [input.adminEmail, ctx.user?.email, input.id]
+        );
+
+        await connection.end();
+
+        return { success: true, message: 'Demande assignée avec succès' };
+      } catch (error) {
+        console.error('Erreur lors de l\'assignation:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de l\'assignation',
+        });
+      }
     }),
 
-  // Ajouter une note admin
+  /**
+   * Ajouter une note admin
+   */
   addAdminNote: protectedProcedure
     .input(z.object({ id: z.number(), note: z.string() }))
     .mutation(async ({ ctx, input }: any) => {
-      if (ctx.user?.role !== "admin") {
+      if (ctx.user?.role !== 'admin') {
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Seuls les administrateurs peuvent effectuer cette action",
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent effectuer cette action',
         });
       }
 
-      const request = await db
-        .select()
-        .from(evisaRequests)
-        .where(eq(evisaRequests.id, input.id))
-        .limit(1);
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
 
-      if (!request.length) {
+        const [request] = await connection.execute(
+          'SELECT adminNotes FROM evisa_requests WHERE id = ?',
+          [input.id]
+        );
+
+        if (!request || (request as any[]).length === 0) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Demande non trouvée',
+          });
+        }
+
+        const existingNotes = (request as any[])[0]?.adminNotes || '';
+        const timestamp = new Date().toLocaleString('fr-FR');
+        const newNotes = `${existingNotes}\n[${timestamp}] ${ctx.user?.name}: ${input.note}`;
+
+        await connection.execute(
+          'UPDATE evisa_requests SET adminNotes = ? WHERE id = ?',
+          [newNotes, input.id]
+        );
+
+        await connection.end();
+
+        return { success: true, message: 'Note ajoutée avec succès' };
+      } catch (error) {
+        console.error('Erreur lors de l\'ajout de la note:', error);
         throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Demande non trouvée",
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de l\'ajout de la note',
         });
       }
-
-      const existingNotes = request[0].adminNotes || "";
-      const timestamp = new Date().toLocaleString("fr-FR");
-      const newNotes = `${existingNotes}\n[${timestamp}] ${ctx.user?.name}: ${input.note}`;
-
-      await db
-        .update(evisaRequests)
-        .set({ adminNotes: newNotes })
-        .where(eq(evisaRequests.id, input.id));
-
-      return { success: true, message: "Note ajoutée avec succès" };
     }),
 
-  // Obtenir les statistiques des demandes
+  /**
+   * Obtenir les statistiques des demandes
+   */
   getStatistics: protectedProcedure.query(async ({ ctx }: any) => {
-    if (ctx.user?.role !== "admin") {
+    if (ctx.user?.role !== 'admin') {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Seuls les administrateurs peuvent accéder à cette ressource",
+        code: 'FORBIDDEN',
+        message: 'Seuls les administrateurs peuvent accéder à cette ressource',
       });
     }
 
-    const allRequests = await db.select().from(evisaRequests);
+    try {
+      const dbUrl = process.env.DATABASE_URL || '';
+      const connection = await mysql.createConnection(dbUrl);
 
-    const statistics = {
-      total: allRequests.length,
-      pending: allRequests.filter((r: any) => r.status === "pending").length,
-      processing: allRequests.filter((r: any) => r.status === "processing").length,
-      approved: allRequests.filter((r: any) => r.status === "approved").length,
-      rejected: allRequests.filter((r: any) => r.status === "rejected").length,
-      totalRevenue: allRequests.reduce((sum: number, r: any) => sum + (r.totalCost || 0), 0),
-    };
+      const [stats] = await connection.execute(`
+        SELECT 
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+          SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing,
+          SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+          SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+          SUM(totalCost) as totalRevenue
+        FROM evisa_requests
+      `);
 
-    return statistics;
+      await connection.end();
+
+      return (stats as any[])[0] || {
+        total: 0,
+        pending: 0,
+        processing: 0,
+        approved: 0,
+        rejected: 0,
+        totalRevenue: 0,
+      };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des statistiques:', error);
+      throw new TRPCError({
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'Erreur lors de la récupération des statistiques',
+      });
+    }
   }),
+
+  /**
+   * Générer un numéro de dossier pour une demande
+   */
+  generateDossierNumber: protectedProcedure
+    .input(z.object({ requestId: z.number() }))
+    .mutation(async ({ ctx, input }: any) => {
+      if (ctx.user?.role !== 'admin') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent effectuer cette action',
+        });
+      }
+
+      try {
+        const dossierNumber = generateDossierNumber();
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        await connection.execute(
+          'UPDATE evisa_requests SET dossierNumber = ?, adminNotificationSentAt = NOW() WHERE id = ?',
+          [dossierNumber, input.requestId]
+        );
+
+        await connection.end();
+
+        return { success: true, dossierNumber };
+      } catch (error) {
+        console.error('Erreur lors de la génération du numéro de dossier:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la génération du numéro de dossier',
+        });
+      }
+    }),
 });
