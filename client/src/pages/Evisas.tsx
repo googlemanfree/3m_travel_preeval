@@ -31,6 +31,7 @@ import {
   EvisaAdvancedFilters,
   FilterState,
 } from '@/components/EvisaAdvancedFilters';
+import { FavoriteButton } from '@/components/FavoriteButton';
 
 export function Evisas() {
   const [filters, setFilters] = useState<FilterState>({
@@ -261,14 +262,26 @@ export function Evisas() {
                     </div>
                   </div>
 
-                  {/* Bouton d'action */}
-                  <Button
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => window.location.href = `/evisas/${evisa.countryCode}`}
-                  >
-                    <span>Demander un e-visa</span>
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  {/* Boutons d'action */}
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => window.location.href = `/evisas/${evisa.countryCode}`}
+                    >
+                      <span>Demander un e-visa</span>
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-sm text-gray-600">Ajouter aux favoris</span>
+                      <FavoriteButton
+                        countryCode={evisa.countryCode}
+                        countryName={evisa.countryName}
+                        price={evisa.price}
+                        processingTime={evisa.processingTime}
+                        size="md"
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
