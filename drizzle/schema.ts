@@ -1287,6 +1287,9 @@ export const evisaRequests = mysqlTable("evisa_requests", {
   // Statut de la demande
   status: mysqlEnum("status", ["pending", "submitted", "processing", "approved", "rejected", "cancelled"]).default("pending").notNull(),
   
+  // Numéro de dossier unique
+  dossierNumber: varchar("dossierNumber", { length: 50 }).unique(),  // Format: EVISA-YYYYMMDD-XXXXX
+  
   // Documents et notes
   documents: text("documents"),  // JSON array des documents uploadés
   passportFile: text("passportFile"),  // URL du fichier passeport stocké en S3
@@ -1295,6 +1298,13 @@ export const evisaRequests = mysqlTable("evisa_requests", {
   passportUploadedAt: timestamp("passportUploadedAt"),  // Date du téléchargement
   notes: text("notes"),  // Notes du candidat
   adminNotes: text("adminNotes"),  // Notes de l'administrateur
+  
+  // Synchronisation admin
+  adminAssignedTo: varchar("adminAssignedTo", { length: 255 }),  // Email de l'admin assigné
+  lastStatusUpdateAt: timestamp("lastStatusUpdateAt"),  // Dernière mise à jour du statut
+  lastStatusUpdatedBy: varchar("lastStatusUpdatedBy", { length: 255 }),  // Email de l'admin qui a mis à jour
+  adminNotificationSentAt: timestamp("adminNotificationSentAt"),  // Quand la notification admin a été envoyée
+  clientConfirmationSentAt: timestamp("clientConfirmationSentAt"),  // Quand la confirmation client a été envoyée
   
   // Métadonnées
   submittedAt: timestamp("submittedAt"),

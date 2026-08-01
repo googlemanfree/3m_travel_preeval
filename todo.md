@@ -1148,3 +1148,22 @@
 - [x] Afficher un message de remerciement personnalisé
 - [x] Ajouter des animations de transition fluides
 - [ ] Tester les animations sur différents navigateurs
+
+
+## Synchronisation Admin pour E-Visas (v17)
+- [ ] Créer un système de numéro de dossier unique pour chaque demande e-visa
+- [ ] Ajouter un champ status à la table evisa_requests (pending, under_review, approved, rejected)
+- [ ] Créer une page admin pour visualiser toutes les demandes e-visa
+- [ ] Ajouter des filtres et tri pour les demandes (statut, date, pays, client)
+- [ ] Créer une page détail de demande pour l'admin avec tous les documents
+- [ ] Ajouter des boutons d'action pour l'admin (approuver, rejeter, demander infos)
+- [ ] Implémenter les notifications email automatiques pour l'admin
+- [ ] Implémenter les confirmations email pour le client à chaque étape
+- [ ] Créer un système de commentaires/notes pour l'admin
+- [ ] Ajouter un historique des modifications pour chaque demande
+- [ ] Créer une synchronisation en temps réel avec WebSockets ou polling
+- [ ] Ajouter un système de rappels automatiques par email
+- [ ] Créer un tableau de bord admin avec statistiques
+- [ ] Implémenter un système de notifications en temps réel pour l'admin
+- [ ] Ajouter un système de téléchargement des documents pour l'admin
+- [ ] Tester la synchronisation complète entre client et admin
