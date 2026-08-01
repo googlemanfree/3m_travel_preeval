@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Footer from '@/components/Footer';
+import { FileUploadField } from '@/components/FileUploadField';
 import { trpc } from '@/lib/trpc';
 
 interface EvisaRequestFormProps {
@@ -27,11 +28,12 @@ export default function EvisaRequestForm() {
     notes: '',
   });
 
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Constantes
   const ACCOMPANIMENT_FEE = 25000;
   const CURRENCY = 'XOF';
 
@@ -53,14 +55,7 @@ export default function EvisaRequestForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
@@ -86,6 +81,43 @@ export default function EvisaRequestForm() {
       return;
     }
 
+    // Télécharger le fichier passeport si présent
+    let passportFileUrl = '';
+    let passportFileName = '';
+    let passportFileSize = 0;
+
+    if (passportFile) {
+      try {
+        // Obtenir une URL de téléchargement présignée
+        const uploadUrlResponse = await trpc.upload.getUploadUrl.useMutation().mutateAsync({
+          fileName: passportFile.name,
+          fileType: passportFile.type,
+          fileSize: passportFile.size,
+        });
+
+        // Télécharger le fichier directement vers S3
+        const uploadResponse = await fetch(uploadUrlResponse.uploadUrl, {
+          method: 'PUT',
+          body: passportFile,
+          headers: {
+            'Content-Type': passportFile.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Erreur lors du téléchargement du fichier');
+        }
+
+        passportFileUrl = uploadUrlResponse.getUrl;
+        passportFileName = passportFile.name;
+        passportFileSize = passportFile.size;
+      } catch (uploadError) {
+        setError('Erreur lors du téléchargement du fichier passeport');
+        setIsLoading(false);
+        return;
+      }
+    }
+
     // Soumettre la demande
     submitRequestMutation.mutate({
       fullName: formData.fullName,
@@ -101,85 +133,88 @@ export default function EvisaRequestForm() {
       totalCost: ACCOMPANIMENT_FEE,
       currency: CURRENCY,
       notes: formData.notes,
+      passportFile: passportFileUrl,
+      passportFileName: passportFileName,
+      passportFileSize: passportFileSize,
     });
   };
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Demande Soumise !</h2>
-          <p className="text-gray-600 mb-6">
-            Votre demande de e-visa a été reçue avec succès. Vous recevrez un email de confirmation dans quelques instants.
-          </p>
-          <p className="text-sm text-gray-500 mb-6">
-            Redirection vers la page des e-visas dans 3 secondes...
-          </p>
-          <Button
-            onClick={() => navigate('/evisas')}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Retour aux e-visas
-          </Button>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <Card className="p-8 text-center">
+            <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Demande Soumise avec Succès !</h2>
+            <p className="text-gray-600 mb-4">
+              Votre demande d'e-visa pour {formData.countryName} a été soumise avec succès.
+            </p>
+            <p className="text-sm text-gray-500 mb-6">
+              Vous allez être redirigé vers la page des e-visas dans 3 secondes...
+            </p>
+            <Button onClick={() => navigate('/evisas')} className="bg-blue-600 hover:bg-blue-700">
+              Retour aux e-visas
+            </Button>
+          </Card>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
-      {/* En-tête */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
-        <div className="container mx-auto px-4">
-          <button
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        {/* En-tête */}
+        <div className="mb-8">
+          <Button
+            variant="ghost"
             onClick={() => navigate('/evisas')}
-            className="flex items-center gap-2 text-blue-100 hover:text-white mb-4 transition-colors"
+            className="mb-4 text-blue-600 hover:text-blue-700"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Retour aux e-visas
-          </button>
-          <h1 className="text-4xl font-bold mb-2">Demande de E-Visa</h1>
-          <p className="text-lg text-blue-100">
-            {formData.countryName ? `Pour ${formData.countryName}` : 'Remplissez le formulaire ci-dessous'}
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Demande d'E-Visa - {formData.countryName}
+          </h1>
+          <p className="text-gray-600">
+            Veuillez remplir le formulaire ci-dessous pour soumettre votre demande d'e-visa
           </p>
         </div>
-      </section>
 
-      {/* Formulaire */}
-      <section className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
-          <Card className="p-8">
+        {/* Formulaire */}
+        <Card className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Messages d'erreur */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-red-700">{error}</p>
+                <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Informations personnelles */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
-                <div className="space-y-4">
-                  {/* Nom complet */}
-                  <div>
-                    <Label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nom Complet *
-                    </Label>
-                    <Input
-                      id="fullName"
-                      name="fullName"
-                      type="text"
-                      placeholder="Jean Dupont"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
-                    />
-                  </div>
+            {/* Informations Personnelles */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom Complet *
+                  </Label>
+                  <Input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    placeholder="Votre nom complet"
+                    value={formData.fullName}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full"
+                  />
+                </div>
 
-                  {/* Email */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Email *
@@ -188,15 +223,14 @@ export default function EvisaRequestForm() {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="jean@example.com"
+                      placeholder="votre.email@example.com"
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      className="w-full"
                     />
                   </div>
 
-                  {/* Téléphone */}
                   <div>
                     <Label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                       Téléphone *
@@ -209,11 +243,12 @@ export default function EvisaRequestForm() {
                       value={formData.phone}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      className="w-full"
                     />
                   </div>
+                </div>
 
-                  {/* Nationalité */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-2">
                       Nationalité
@@ -222,14 +257,13 @@ export default function EvisaRequestForm() {
                       id="nationality"
                       name="nationality"
                       type="text"
-                      placeholder="Sénégalaise"
+                      placeholder="Votre nationalité"
                       value={formData.nationality}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      className="w-full"
                     />
                   </div>
 
-                  {/* Date de naissance */}
                   <div>
                     <Label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
                       Date de Naissance
@@ -240,103 +274,122 @@ export default function EvisaRequestForm() {
                       type="date"
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+                      className="w-full"
                     />
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Informations e-visa */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations E-Visa</h3>
-                <div className="space-y-4">
-                  {/* Pays */}
+            {/* Informations E-Visa */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations E-Visa</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-2">
-                      Pays Destination *
+                      Code Pays
+                    </Label>
+                    <Input
+                      id="countryCode"
+                      name="countryCode"
+                      type="text"
+                      value={formData.countryCode}
+                      disabled
+                      className="w-full bg-gray-100"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="countryName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Pays de Destination
                     </Label>
                     <Input
                       id="countryName"
+                      name="countryName"
                       type="text"
-                      placeholder="Sélectionnez un pays"
                       value={formData.countryName}
                       disabled
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 min-h-[44px]"
+                      className="w-full bg-gray-100"
                     />
-                  </div>
-
-                  {/* Tarification */}
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="font-semibold text-gray-900 mb-3">Tarification</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Frais de visa :</span>
-                        <span className="font-medium text-gray-900">0 {CURRENCY}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Frais d'accompagnement :</span>
-                        <span className="font-medium text-gray-900">{ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}</span>
-                      </div>
-                      <div className="border-t border-blue-200 pt-2 flex justify-between">
-                        <span className="font-semibold text-gray-900">Total :</span>
-                        <span className="font-bold text-lg text-blue-600">{ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Notes supplémentaires */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes Supplémentaires</h3>
-                <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                  Informations Additionnelles
-                </Label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  placeholder="Ajoutez des informations supplémentaires si nécessaire..."
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            {/* Tarification */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tarification</h3>
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Frais d'accompagnement</span>
+                    <span className="font-semibold text-gray-900">
+                      {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
+                    </span>
+                  </div>
+                  <div className="border-t border-blue-200 pt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-900">Montant Total</span>
+                      <span className="text-xl font-bold text-blue-600">
+                        {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
 
-              {/* Boutons d'action */}
-              <div className="flex gap-4 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate('/evisas')}
-                  className="flex-1 min-h-[44px]"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
-                >
-                  {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}
-                </Button>
-              </div>
-            </form>
-          </Card>
+            {/* Téléchargement du passeport */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents Requis</h3>
+              <FileUploadField
+                onFileSelect={setPassportFile}
+                label="Copie de votre passeport"
+                description="Formats acceptés: PDF, JPG, PNG (Max 5 MB). Assurez-vous que tous les détails sont lisibles."
+                acceptedFormats={['application/pdf', 'image/jpeg', 'image/png']}
+                maxFileSize={5 * 1024 * 1024}
+              />
+            </div>
 
-          {/* Information supplémentaire */}
-          <Card className="mt-8 p-6 bg-blue-50 border-blue-200">
-            <h4 className="font-semibold text-gray-900 mb-2">À propos de votre demande</h4>
-            <ul className="text-sm text-gray-700 space-y-2">
-              <li>✓ Votre demande sera traitée dans les 24 heures</li>
-              <li>✓ Vous recevrez un email de confirmation</li>
-              <li>✓ Notre équipe vous contactera pour les prochaines étapes</li>
-              <li>✓ Le tarif affiché est définitif et non modifiable</li>
-            </ul>
-          </Card>
-        </div>
-      </section>
+            {/* Notes supplémentaires */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes Supplémentaires</h3>
+              <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                Informations Additionnelles
+              </Label>
+              <textarea
+                id="notes"
+                name="notes"
+                placeholder="Ajoutez des informations supplémentaires si nécessaire..."
+                value={formData.notes}
+                onChange={handleInputChange}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
+            {/* Boutons d'action */}
+            <div className="flex gap-4 pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/evisas')}
+                className="flex-1"
+              >
+                Annuler
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
       <Footer />
     </div>
   );

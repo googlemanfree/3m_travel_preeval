@@ -423,6 +423,9 @@ export const evisaRouter = router({
         totalCost: z.number().default(25000),
         currency: z.string().default('XOF'),
         notes: z.string().optional(),
+        passportFile: z.string().optional(),
+        passportFileName: z.string().optional(),
+        passportFileSize: z.number().optional(),
       })
     )
     .mutation(async ({ input }: any) => {
@@ -445,10 +448,14 @@ export const evisaRouter = router({
             totalCost,
             currency,
             notes,
+            passportFile,
+            passportFileName,
+            passportFileSize,
+            passportUploadedAt,
             status,
             createdAt,
             updatedAt
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted', NOW(), NOW())
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted', NOW(), NOW())
         `;
 
         const params = [
@@ -465,6 +472,10 @@ export const evisaRouter = router({
           input.totalCost,
           input.currency,
           input.notes || null,
+          input.passportFile || null,
+          input.passportFileName || null,
+          input.passportFileSize || null,
+          input.passportFile ? new Date() : null,
         ];
 
         const [result] = await connection.execute(query, params);

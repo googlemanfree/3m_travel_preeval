@@ -1093,3 +1093,16 @@
 - [x] Créer une table pour stocker les demandes e-visa
 - [x] Afficher un message de succès après la soumission
 - [ ] Tester le flux complet de demande e-visa
+
+
+## Téléchargement de Passeport dans le Formulaire E-Visa (v13)
+- [x] Ajouter un champ de téléchargement de fichier pour le passeport
+- [x] Valider le type de fichier (PDF, JPG, PNG uniquement)
+- [x] Valider la taille du fichier (max 5 MB)
+- [x] Afficher un aperçu du fichier sélectionné
+- [x] Implémenter le téléchargement vers le stockage S3
+- [x] Ajouter un indicateur de progression du téléchargement
+- [x] Stocker l'URL du fichier dans la base de données
+- [x] Ajouter des instructions claires pour le téléchargement
+- [ ] Afficher les fichiers téléchargés avec la possibilité de les supprimer
+- [ ] Tester le téléchargement et le stockage des fichiers

@@ -1289,6 +1289,10 @@ export const evisaRequests = mysqlTable("evisa_requests", {
   
   // Documents et notes
   documents: text("documents"),  // JSON array des documents uploadés
+  passportFile: text("passportFile"),  // URL du fichier passeport stocké en S3
+  passportFileName: varchar("passportFileName", { length: 255 }),  // Nom original du fichier passeport
+  passportFileSize: int("passportFileSize"),  // Taille du fichier en bytes
+  passportUploadedAt: timestamp("passportUploadedAt"),  // Date du téléchargement
   notes: text("notes"),  // Notes du candidat
   adminNotes: text("adminNotes"),  // Notes de l'administrateur
   
