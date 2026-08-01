@@ -1079,3 +1079,17 @@
 - [x] Créer une procédure tRPC pour récupérer les e-visas avec les frais d'accompagnement
 - [ ] Tester l'affichage de tous les pays avec leurs informations complètes
 - [ ] Vérifier que les frais d'accompagnement sont correctement affichés et appliqués au paiement
+
+
+## Formulaire de Demande E-Visa avec Tarif Pré-affiché (v12)
+- [x] Créer un formulaire de demande e-visa dédié (EvisaRequestForm.tsx)
+- [x] Ajouter les champs du formulaire : nom complet, email, téléphone, nationalité, type de visa
+- [x] Afficher le tarif de 25 000 XOF pré-rempli et non modifiable
+- [x] Ajouter un bouton "Demander ce e-Visa" sur chaque carte e-visa
+- [x] Intégrer le bouton pour rediriger vers le formulaire avec le code pays en paramètre
+- [x] Créer une procédure tRPC pour soumettre la demande e-visa
+- [x] Ajouter la validation du formulaire côté client et serveur
+- [ ] Envoyer un email de confirmation au candidat après la soumission
+- [x] Créer une table pour stocker les demandes e-visa
+- [x] Afficher un message de succès après la soumission
+- [ ] Tester le flux complet de demande e-visa

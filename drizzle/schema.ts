@@ -1259,6 +1259,49 @@ export const evisas = mysqlTable("evisas", {
 export type Evisa = typeof evisas.$inferSelect;
 export type InsertEvisa = typeof evisas.$inferInsert;
 
+/**
+ * Table des demandes e-visa soumises par les utilisateurs
+ * Enregistre les demandes de e-visa pour chaque pays
+ */
+export const evisaRequests = mysqlTable("evisa_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Informations du candidat
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  nationality: varchar("nationality", { length: 100 }),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  
+  // Informations e-visa
+  countryCode: varchar("countryCode", { length: 3 }).notNull(),
+  countryName: varchar("countryName", { length: 100 }).notNull(),
+  evisaType: varchar("evisaType", { length: 100 }),
+  
+  // Tarification
+  visaFee: int("visaFee").notNull().default(0),
+  accompanimentFee: int("accompanimentFee").notNull().default(25000),
+  totalCost: int("totalCost").notNull().default(25000),
+  currency: varchar("currency", { length: 10 }).default("XOF").notNull(),
+  
+  // Statut de la demande
+  status: mysqlEnum("status", ["pending", "submitted", "processing", "approved", "rejected", "cancelled"]).default("pending").notNull(),
+  
+  // Documents et notes
+  documents: text("documents"),  // JSON array des documents uploadés
+  notes: text("notes"),  // Notes du candidat
+  adminNotes: text("adminNotes"),  // Notes de l'administrateur
+  
+  // Métadonnées
+  submittedAt: timestamp("submittedAt"),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EvisaRequest = typeof evisaRequests.$inferSelect;
+export type InsertEvisaRequest = typeof evisaRequests.$inferInsert;
+
 // ─── Callback Requests ────────────────────────────────────────────────────────────────────────────────
 export const callbackRequests = mysqlTable("callback_requests", {
   id: int("id").autoincrement().primaryKey(),

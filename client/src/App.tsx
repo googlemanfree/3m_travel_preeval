@@ -70,6 +70,7 @@ import { CinetPayPayment } from "./pages/CinetPayPayment";
 import { Evisas as EvisasPage } from "./pages/Evisas";
 import { EvisaApplicationForm } from "./pages/EvisaApplicationForm";
 import { MyFavorites } from "./pages/MyFavorites";
+import EvisaRequestForm from "./pages/EvisaRequestForm";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -198,6 +199,9 @@ function Router() {
         <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
           <EvisaApplicationForm />
         </AuthGuard>
+      </Route>
+      <Route path={"/evisas/request"}>
+        <EvisaRequestForm />
       </Route>
       <Route path={"/mes-favoris"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à vos favoris.">
