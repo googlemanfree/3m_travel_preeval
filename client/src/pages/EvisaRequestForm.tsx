@@ -4,20 +4,44 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, CheckCircle, ArrowLeft, Loader, Sparkles } from 'lucide-react';
 import Footer from '@/components/Footer';
 import { FileUploadField } from '@/components/FileUploadField';
+import { ValidationStep } from '@/components/ValidationStep';
+import { FormProgressBar } from '@/components/FormProgressBar';
 import { trpc } from '@/lib/trpc';
 
-interface EvisaRequestFormProps {
-  countryCode?: string;
-  countryName?: string;
+interface ExtractedData {
+  fullName: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  dateOfBirth?: string | null;
+  nationality?: string | null;
+  passportNumber?: string | null;
+  issuingCountry?: string | null;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  gender?: string | null;
+  placeOfBirth?: string | null;
 }
+
+interface FormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  nationality: string;
+  dateOfBirth: string;
+  countryCode: string;
+  countryName: string;
+  notes: string;
+}
+
+type FormStep = 'upload' | 'validation' | 'confirmation';
 
 export default function EvisaRequestForm() {
   const [, navigate] = useLocation();
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState<FormStep>('upload');
+  const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
     phone: '',
@@ -30,8 +54,8 @@ export default function EvisaRequestForm() {
 
   const [passportFile, setPassportFile] = useState<File | null>(null);
   const [passportFileUrl, setPassportFileUrl] = useState<string | null>(null);
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisSuccess, setAnalysisSuccess] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,30 +64,32 @@ export default function EvisaRequestForm() {
   const ACCOMPANIMENT_FEE = 25000;
   const CURRENCY = 'XOF';
 
+  const formSteps = [
+    {
+      id: 'upload',
+      label: 'Téléchargement',
+      description: 'Téléchargez votre passeport pour l\'analyse IA',
+    },
+    {
+      id: 'validation',
+      label: 'Validation',
+      description: 'Vérifiez et corrigez les informations extraites',
+    },
+    {
+      id: 'confirmation',
+      label: 'Confirmation',
+      description: 'Complétez le formulaire et soumettez votre demande',
+    },
+  ];
+
+  const currentStepIndex = formSteps.findIndex(s => s.id === currentStep);
+
   // Mutation pour analyser le passeport
   const analyzePassportMutation = trpc.passportAnalysis.analyzePassport.useMutation({
     onSuccess: (result) => {
-      setAnalysisSuccess(true);
       setIsAnalyzing(false);
-      // Pré-remplir les champs avec les données extraites
-      if (result.data.fullName) {
-        setFormData(prev => ({
-          ...prev,
-          fullName: result.data.fullName,
-        }));
-      }
-      if (result.data.dateOfBirth) {
-        setFormData(prev => ({
-          ...prev,
-          dateOfBirth: result.data.dateOfBirth,
-        }));
-      }
-      if (result.data.nationality) {
-        setFormData(prev => ({
-          ...prev,
-          nationality: result.data.nationality,
-        }));
-      }
+      setExtractedData(result.data);
+      setCurrentStep('validation');
     },
     onError: (err: any) => {
       setError(err.message || 'Erreur lors de l\'analyse du passeport');
@@ -76,7 +102,6 @@ export default function EvisaRequestForm() {
     onSuccess: () => {
       setSubmitted(true);
       setError(null);
-      // Réinitialiser le formulaire
       setTimeout(() => {
         navigate('/evisas');
       }, 3000);
@@ -97,15 +122,14 @@ export default function EvisaRequestForm() {
 
   const handleFileSelect = async (file: File | null) => {
     setPassportFile(file);
-    setAnalysisSuccess(false);
     setError(null);
+    setExtractedData(null);
 
     if (!file) {
       setPassportFileUrl(null);
       return;
     }
 
-    // Télécharger le fichier immédiatement
     try {
       const uploadUrlResponse = await trpc.upload.getUploadUrl.useMutation().mutateAsync({
         fileName: file.name,
@@ -140,6 +164,24 @@ export default function EvisaRequestForm() {
     }
   };
 
+  const handleValidationConfirm = (validatedData: ExtractedData) => {
+    // Pré-remplir le formulaire avec les données validées
+    setFormData(prev => ({
+      ...prev,
+      fullName: validatedData.fullName,
+      dateOfBirth: validatedData.dateOfBirth || '',
+      nationality: validatedData.nationality || '',
+    }));
+    setCurrentStep('confirmation');
+  };
+
+  const handleEditPassport = () => {
+    setCurrentStep('upload');
+    setExtractedData(null);
+    setPassportFile(null);
+    setPassportFileUrl(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -160,12 +202,10 @@ export default function EvisaRequestForm() {
       return;
     }
 
-    // Utiliser l'URL du fichier téléchargé si disponible
     const finalPassportFileUrl = passportFileUrl || '';
     const passportFileName = passportFile?.name || '';
     const passportFileSize = passportFile?.size || 0;
 
-    // Soumettre la demande
     submitRequestMutation.mutate({
       fullName: formData.fullName,
       email: formData.email,
@@ -226,237 +266,244 @@ export default function EvisaRequestForm() {
             Demande d'E-Visa - {formData.countryName}
           </h1>
           <p className="text-gray-600">
-            Veuillez remplir le formulaire ci-dessous pour soumettre votre demande d'e-visa
+            Suivez les étapes ci-dessous pour soumettre votre demande d'e-visa
           </p>
         </div>
 
-        {/* Formulaire */}
+        {/* Barre de progression */}
+        <FormProgressBar steps={formSteps} currentStep={currentStepIndex} />
+
+        {/* Messages d'erreur */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Contenu selon l'étape */}
         <Card className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Messages d'erreur */}
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
-
-            {/* Message de succès d'analyse */}
-            {analysisSuccess && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-green-700">
-                  Les informations de votre passeport ont été extraites et pré-remplies avec succès !
+          {currentStep === 'upload' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  Téléchargement du Passeport (Analyse IA)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Téléchargez votre passeport et l'IA extraira automatiquement vos informations pour pré-remplir le formulaire.
                 </p>
+                <FileUploadField
+                  onFileSelect={handleFileSelect}
+                  label="Copie de votre passeport"
+                  description="Formats acceptés: PDF, JPG, PNG (Max 5 MB). Assurez-vous que tous les détails sont lisibles."
+                  acceptedFormats={['application/pdf', 'image/jpeg', 'image/png']}
+                  maxFileSize={5 * 1024 * 1024}
+                />
+                {isAnalyzing && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                    <Loader className="w-5 h-5 text-blue-600 animate-spin" />
+                    <p className="text-sm text-blue-700">Analyse de votre passeport en cours...</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Informations Personnelles */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom Complet *
-                  </Label>
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    placeholder="Votre nom complet"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full"
-                  />
-                </div>
+          {currentStep === 'validation' && extractedData && (
+            <ValidationStep
+              extractedData={extractedData}
+              onConfirm={handleValidationConfirm}
+              onEdit={handleEditPassport}
+              isLoading={isLoading}
+            />
+          )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {currentStep === 'confirmation' && (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Informations Personnelles */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations Personnelles</h3>
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email *
+                    <Label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nom Complet *
                     </Label>
                     <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="votre.email@example.com"
-                      value={formData.email}
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      placeholder="Votre nom complet"
+                      value={formData.fullName}
                       onChange={handleInputChange}
                       required
                       className="w-full"
                     />
                   </div>
 
-                  <div>
-                    <Label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                      Téléphone *
-                    </Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+221 77 123 45 67"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full"
-                    />
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        Email *
+                      </Label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="votre.email@example.com"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nationalité
-                    </Label>
-                    <Input
-                      id="nationality"
-                      name="nationality"
-                      type="text"
-                      placeholder="Votre nationalité"
-                      value={formData.nationality}
-                      onChange={handleInputChange}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
-                      Date de Naissance
-                    </Label>
-                    <Input
-                      id="dateOfBirth"
-                      name="dateOfBirth"
-                      type="date"
-                      value={formData.dateOfBirth}
-                      onChange={handleInputChange}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Informations E-Visa */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations E-Visa</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-2">
-                      Code Pays
-                    </Label>
-                    <Input
-                      id="countryCode"
-                      name="countryCode"
-                      type="text"
-                      value={formData.countryCode}
-                      disabled
-                      className="w-full bg-gray-100"
-                    />
+                    <div>
+                      <Label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                        Téléphone *
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="+221 77 123 45 67"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full"
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="countryName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Pays de Destination
-                    </Label>
-                    <Input
-                      id="countryName"
-                      name="countryName"
-                      type="text"
-                      value={formData.countryName}
-                      disabled
-                      className="w-full bg-gray-100"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-2">
+                        Nationalité
+                      </Label>
+                      <Input
+                        id="nationality"
+                        name="nationality"
+                        type="text"
+                        placeholder="Votre nationalité"
+                        value={formData.nationality}
+                        onChange={handleInputChange}
+                        className="w-full"
+                      />
+                    </div>
 
-            {/* Tarification */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Tarification</h3>
-              <Card className="p-4 bg-blue-50 border-blue-200">
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-700">Frais d'accompagnement</span>
-                    <span className="font-semibold text-gray-900">
-                      {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
-                    </span>
-                  </div>
-                  <div className="border-t border-blue-200 pt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-900">Montant Total</span>
-                      <span className="text-xl font-bold text-blue-600">
-                        {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
-                      </span>
+                    <div>
+                      <Label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
+                        Date de Naissance
+                      </Label>
+                      <Input
+                        id="dateOfBirth"
+                        name="dateOfBirth"
+                        type="date"
+                        value={formData.dateOfBirth}
+                        onChange={handleInputChange}
+                        className="w-full"
+                      />
                     </div>
                   </div>
                 </div>
-              </Card>
-            </div>
+              </div>
 
-            {/* Téléchargement du passeport */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-blue-600" />
-                Documents Requis (Analyse IA)
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Téléchargez votre passeport et l'IA extraira automatiquement vos informations pour pré-remplir le formulaire.
-              </p>
-              <FileUploadField
-                onFileSelect={handleFileSelect}
-                label="Copie de votre passeport"
-                description="Formats acceptés: PDF, JPG, PNG (Max 5 MB). Assurez-vous que tous les détails sont lisibles."
-                acceptedFormats={['application/pdf', 'image/jpeg', 'image/png']}
-                maxFileSize={5 * 1024 * 1024}
-              />
-              {isAnalyzing && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
-                  <Loader className="w-5 h-5 text-blue-600 animate-spin" />
-                  <p className="text-sm text-blue-700">Analyse de votre passeport en cours...</p>
+              {/* Informations E-Visa */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations E-Visa</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-2">
+                        Code Pays
+                      </Label>
+                      <Input
+                        id="countryCode"
+                        name="countryCode"
+                        type="text"
+                        value={formData.countryCode}
+                        disabled
+                        className="w-full bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="countryName" className="block text-sm font-medium text-gray-700 mb-2">
+                        Pays de Destination
+                      </Label>
+                      <Input
+                        id="countryName"
+                        name="countryName"
+                        type="text"
+                        value={formData.countryName}
+                        disabled
+                        className="w-full bg-gray-100"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
 
-            {/* Notes supplémentaires */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes Supplémentaires</h3>
-              <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
-                Informations Additionnelles
-              </Label>
-              <textarea
-                id="notes"
-                name="notes"
-                placeholder="Ajoutez des informations supplémentaires si nécessaire..."
-                value={formData.notes}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              {/* Tarification */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Tarification</h3>
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-700">Frais d'accompagnement</span>
+                      <span className="font-semibold text-gray-900">
+                        {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
+                      </span>
+                    </div>
+                    <div className="border-t border-blue-200 pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-gray-900">Montant Total</span>
+                        <span className="text-xl font-bold text-blue-600">
+                          {ACCOMPANIMENT_FEE.toLocaleString('fr-FR')} {CURRENCY}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              </div>
 
-            {/* Boutons d'action */}
-            <div className="flex gap-4 pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/evisas')}
-                className="flex-1"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={isLoading || isAnalyzing}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-              >
-                {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}
-              </Button>
-            </div>
-          </form>
+              {/* Notes supplémentaires */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes Supplémentaires</h3>
+                <Label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-2">
+                  Informations Additionnelles
+                </Label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  placeholder="Ajoutez des informations supplémentaires si nécessaire..."
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Boutons d'action */}
+              <div className="flex gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCurrentStep('validation')}
+                  className="flex-1"
+                >
+                  Retour
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}
+                </Button>
+              </div>
+            </form>
+          )}
         </Card>
       </div>
       <Footer />

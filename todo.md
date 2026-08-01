@@ -1120,3 +1120,16 @@
 - [x] Afficher un message de confirmation après l'extraction réussie
 - [x] Permettre à l'utilisateur de modifier les données extraites
 - [ ] Tester l'extraction avec différents types de passeports
+
+
+## Étape de Validation des Informations Extraites (v15)
+- [x] Créer un composant ValidationStep.tsx pour afficher les informations extraites
+- [x] Ajouter des champs éditables pour chaque information extraite
+- [x] Afficher un résumé visuel des données avant validation
+- [x] Ajouter des boutons "Corriger" et "Confirmer" pour chaque champ
+- [x] Implémenter une logique de validation côté client
+- [x] Afficher des messages d'erreur pour les données invalides
+- [x] Permettre de revenir à l'étape de téléchargement si nécessaire
+- [x] Ajouter une barre de progression (Etape 1: Téléchargement, Etape 2: Validation, Etape 3: Confirmation)
+- [x] Intégrer le composant ValidationStep dans EvisaRequestForm
+- [ ] Tester la validation avec différents scénarios
