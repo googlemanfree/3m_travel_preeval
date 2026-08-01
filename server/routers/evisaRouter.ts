@@ -7,6 +7,8 @@ import { protectedProcedure, publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import mysql from 'mysql2/promise';
+import { getDb } from '../db';
+import { sql } from 'drizzle-orm';
 
 export const evisaRouter = router({
   /**
@@ -125,16 +127,29 @@ export const evisaRouter = router({
     )
     .mutation(async ({ input, ctx }: any) => {
       try {
-        const dbUrl = process.env.DATABASE_URL || '';
-        const connection = await mysql.createConnection(dbUrl);
+        const candidateId = ctx.user?.id;
+        if (!candidateId) {
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Vous devez être connecté',
+          });
+        }
+
+        const db = await getDb();
+        if (!db) {
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Base de données non disponible',
+          });
+        }
 
         // Vérifier que l'e-visa existe
-        const [evisa] = await connection.execute(`
-          SELECT * FROM evisas WHERE countryCode = ? AND isActive = true
-        `, [input.countryCode]);
+        const evisaResult = await db.execute(sql.raw(`
+          SELECT * FROM evisas WHERE countryCode = '${input.countryCode}' AND isActive = true
+        `));
 
-        if (!evisa || (evisa as any[]).length === 0) {
-          await connection.end();
+        const evisas = (evisaResult as any).rows || [];
+        if (!evisas || evisas.length === 0) {
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'E-visa non trouvé',
@@ -142,12 +157,12 @@ export const evisaRouter = router({
         }
 
         // Vérifier que le dossier existe
-        const [application] = await connection.execute(`
-          SELECT * FROM applications WHERE dossierNumber = ? AND candidateId = ?
-        `, [input.dossierNumber, ctx.user.id]);
+        const appResult = await db.execute(sql.raw(`
+          SELECT * FROM applications WHERE dossierNumber = '${input.dossierNumber}' AND candidateId = '${candidateId}'
+        `));
 
-        if (!application || (application as any[]).length === 0) {
-          await connection.end();
+        const applications = (appResult as any).rows || [];
+        if (!applications || applications.length === 0) {
           throw new TRPCError({
             code: 'NOT_FOUND',
             message: 'Dossier non trouvé',
@@ -155,7 +170,7 @@ export const evisaRouter = router({
         }
 
         // Créer la demande d'e-visa
-        const [result] = await connection.execute(`
+        await db.execute(sql.raw(`
           INSERT INTO evisaApplications (
             candidateId, 
             dossierNumber, 
@@ -163,21 +178,13 @@ export const evisaRouter = router({
             status, 
             paymentAmount, 
             documents
-          ) VALUES (?, ?, ?, 'pending', ?, ?)
-        `, [
-          ctx.user.id,
-          input.dossierNumber,
-          input.countryCode,
-          (evisa as any[])[0].price,
-          JSON.stringify(input.documents || {}),
-        ]);
-
-        await connection.end();
+          ) VALUES ('${candidateId}', '${input.dossierNumber}', '${input.countryCode}', 'pending', ${evisas[0].price}, '${JSON.stringify(input.documents || {})}')
+        `));
 
         return {
           success: true,
           message: 'Demande d\'e-visa créée avec succès',
-          applicationId: (result as any).insertId,
+          evisaCountryCode: input.countryCode,
         };
       } catch (error: any) {
         console.error('Erreur lors de la création de la demande d\'e-visa:', error);
