@@ -1051,3 +1051,18 @@
 - [ ] Créer le formulaire de création de dossier e-visa
 - [ ] Intégrer le paiement CinetPay pour les e-visas
 - [ ] Tester le système complet
+- [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
+- [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
+
+
+## Fonctionnalité de Filtrage et Tri — Page Destinations (v10)
+- [x] Ajouter des filtres avancés : continent, type de visa, coût de la vie, climat
+- [x] Implémenter un système de tri : par nom, coût, popularité, type de visa
+- [x] Créer un composant FilterPanel réutilisable avec checkboxes et sliders
+- [x] Ajouter un composant SortDropdown pour sélectionner l'ordre d'affichage
+- [x] Implémenter la logique de filtrage et tri côté client (useMemo)
+- [x] Ajouter des badges visuels pour afficher les filtres actifs
+- [x] Créer un bouton "Réinitialiser les filtres" pour revenir à l'état initial
+- [x] Ajouter des animations de transition lors de l'application des filtres
+- [x] Intégrer les filtres dans la barre de recherche existante
+- [x] Tester le système complet de filtrage et tri
