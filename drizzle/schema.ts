@@ -1198,6 +1198,67 @@ export const dossierProgress = mysqlTable("dossier_progress", {
 export type DossierProgress = typeof dossierProgress.$inferSelect;
 export type InsertDossierProgress = typeof dossierProgress.$inferInsert;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// E-VISAS — TOUS LES PAYS DU MONDE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Table des e-visas disponibles pour tous les pays du monde
+ * Contient les informations complètes de chaque pays et les frais d'accompagnement
+ */
+export const evisas = mysqlTable("evisas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identifiant du pays
+  countryCode: varchar("countryCode", { length: 3 }).notNull().unique(),  // Code ISO 3166-1 alpha-3
+  countryName: varchar("countryName", { length: 100 }).notNull(),
+  countryFlag: varchar("countryFlag", { length: 10 }),  // Emoji du drapeau
+  
+  // Localisation
+  continent: varchar("continent", { length: 50 }).notNull(),
+  region: varchar("region", { length: 100 }),
+  
+  // Description et informations
+  description: text("description"),  // Description générale du pays et de l'e-visa
+  evisaType: varchar("evisaType", { length: 100 }).notNull(),  // Type d'e-visa (tourisme, affaires, etc.)
+  
+  // Coûts
+  visaFee: int("visaFee").notNull().default(0),  // Frais de visa en XOF
+  accompanimentFee: int("accompanimentFee").notNull().default(25000),  // Frais d'accompagnement (25 000 XOF)
+  totalCost: int("totalCost").notNull().default(25000),  // Coût total
+  currency: varchar("currency", { length: 10 }).default("XOF").notNull(),
+  
+  // Délais et validité
+  processingTime: varchar("processingTime", { length: 100 }).notNull(),  // Délai de traitement (ex: "3-5 jours")
+  validity: varchar("validity", { length: 100 }).notNull(),  // Validité du visa (ex: "90 jours")
+  stayDuration: varchar("stayDuration", { length: 100 }),  // Durée de séjour autorisée
+  
+  // Exigences et documents
+  requirements: text("requirements"),  // JSON array des exigences
+  documents: text("documents"),  // JSON array des documents requis
+  
+  // Conditions d'éligibilité
+  eligibility: text("eligibility"),  // JSON array des conditions d'éligibilité
+  restrictions: text("restrictions"),  // JSON array des restrictions
+  
+  // Avantages et informations supplémentaires
+  advantages: text("advantages"),  // JSON array des avantages
+  additionalInfo: text("additionalInfo"),  // Informations supplémentaires
+  
+  // Statut
+  isActive: boolean("isActive").default(true).notNull(),
+  isPopular: boolean("isPopular").default(false).notNull(),  // Marquer les e-visas populaires
+  
+  // Métadonnées
+  lastUpdatedBy: varchar("lastUpdatedBy", { length: 255 }),  // Qui a mis à jour les informations
+  aiGenerated: boolean("aiGenerated").default(false).notNull(),  // Indique si les infos ont été générées par IA
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Evisa = typeof evisas.$inferSelect;
+export type InsertEvisa = typeof evisas.$inferInsert;
+
 // ─── Callback Requests ────────────────────────────────────────────────────────────────────────────────
 export const callbackRequests = mysqlTable("callback_requests", {
   id: int("id").autoincrement().primaryKey(),

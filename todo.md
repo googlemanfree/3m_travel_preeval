@@ -1066,3 +1066,16 @@
 - [x] Ajouter des animations de transition lors de l'application des filtres
 - [x] Intégrer les filtres dans la barre de recherche existante
 - [x] Tester le système complet de filtrage et tri
+
+
+## Amélioration Page E-Visa — Données Complètes et Frais Standardisés (v11)
+- [x] Vérifier que tous les pays du monde sont présents dans la base de données e-Visa
+- [x] Utiliser l'IA (OpenAI) pour générer les informations complètes de chaque pays (description, exigences, délai, validité)
+- [x] Créer une procédure tRPC pour charger les informations e-Visa de tous les pays via IA
+- [x] Mettre à jour la base de données avec les informations générées par l'IA
+- [x] Configurer les frais d'accompagnement à 25 000 XOF pour tous les pays e-Visa
+- [x] Ajouter un champ "frais d'accompagnement" dans la table e-visas
+- [x] Afficher les frais d'accompagnement sur chaque carte e-Visa
+- [x] Créer une procédure tRPC pour récupérer les e-visas avec les frais d'accompagnement
+- [ ] Tester l'affichage de tous les pays avec leurs informations complètes
+- [ ] Vérifier que les frais d'accompagnement sont correctement affichés et appliqués au paiement
