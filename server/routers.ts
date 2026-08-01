@@ -29,6 +29,7 @@ import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
 import { exportRouter } from "./routers/exportRouter";
 import { evisaRouter } from "./routers/evisaRouter";
+import { reassuranceRouter } from "./routers/reassuranceRouter";
 
 const COOKIE_NAME = "manus_session";
 
@@ -74,6 +75,7 @@ export const appRouter = router({
   adminDashboardStats: adminDashboardStatsRouter,
   export: exportRouter,
   evisa: evisaRouter,
+  reassurance: reassuranceRouter,
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
 });
