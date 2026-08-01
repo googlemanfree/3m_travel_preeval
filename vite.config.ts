@@ -167,6 +167,19 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    minify: "terser",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ["recharts"],
+          "ui-components": ["@radix-ui/react-dialog", "@radix-ui/react-select"],
+          vendor: ["react", "react-dom"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+    assetsInlineLimit: 4096,
+    reportCompressedSize: true,
   },
   server: {
     host: true,
