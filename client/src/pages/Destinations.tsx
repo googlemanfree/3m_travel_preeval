@@ -3,6 +3,7 @@ import { Search, MapPin, Users, Briefcase, BookOpen, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { DESTINATIONS, VISA_TYPES } from "@shared/visaData";
 import { enhancedDestinationData, DestinationId, TestimonialData } from "@/data/enhancedDestinationData";
 import { useLocation } from "wouter";
@@ -56,9 +57,9 @@ export default function Destinations() {
             Découvrez nos destinations principales et explorez les opportunités de mobilité internationale
             disponibles dans chaque pays.
           </p>
-          <Button
-            onClick={() => navigate("/open-dossier")}
-            className="mt-8 bg-white text-blue-600 hover:bg-blue-100 text-lg px-8 py-3 rounded-full shadow-lg transition-all duration-300"
+            <Button
+              onClick={() => navigate("/open-dossier")}
+              className="mt-8 bg-white text-blue-600 hover:bg-blue-100 text-lg px-8 py-3 rounded-full shadow-lg transition-all duration-300 min-h-[44px]"
           >
             Commencez votre parcours vers l'étranger !
           </Button>
@@ -70,13 +71,15 @@ export default function Destinations() {
         <div className="space-y-6">
           {/* Recherche */}
           <div className="relative">
+            <Label htmlFor="destination-search" className="sr-only">Rechercher une destination</Label>
             <Search className="absolute left-4 top-3 text-gray-400" size={20} />
             <Input
+              id="destination-search"
               type="text"
               placeholder="Rechercher une destination..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 py-3 text-base"
+              className="pl-12 py-3 text-base min-h-[44px]"
             />
           </div>
 
@@ -85,7 +88,7 @@ export default function Destinations() {
             <Button
               variant={selectedContinent === null ? "default" : "outline"}
               onClick={() => setSelectedContinent(null)}
-              className="rounded-full"
+              className="rounded-full min-h-[44px]"
             >
               Tous les continents
             </Button>
@@ -94,7 +97,7 @@ export default function Destinations() {
                 key={continent}
                 variant={selectedContinent === continent ? "default" : "outline"}
                 onClick={() => setSelectedContinent(continent)}
-                className="rounded-full"
+                className="rounded-full min-h-[44px]"
               >
                 {continent}
               </Button>
@@ -120,7 +123,7 @@ export default function Destinations() {
               {/* En-tête avec drapeau et continent */}
               <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 text-white">
                 <div className="flex items-start justify-between mb-3">
-                  <span className="text-5xl">{dest.flag}</span>
+                  <span className="text-5xl" role="img" aria-label={`Drapeau de ${dest.name}`}>{dest.flag}</span>
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${CONTINENT_COLORS[dest.continent] || "bg-gray-100 text-gray-800"}`}>
                     {dest.continent}
                   </span>
@@ -136,7 +139,7 @@ export default function Destinations() {
                 {/* Infos clés */}
                 <div className="space-y-2 py-4 border-y">
                   <div className="flex items-center gap-2 text-sm">
-                    <MapPin size={16} className="text-blue-600" />
+                    <MapPin size={16} className="text-blue-600" aria-hidden="true" />
                     <span className="text-gray-700">{dest.language}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
@@ -177,7 +180,7 @@ export default function Destinations() {
               <div className="p-6 pt-0">
                 <Button
                   onClick={() => navigate("/open-dossier")}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 min-h-[44px]"
                 >
                   Débloquez votre avenir maintenant !
                 </Button>
@@ -233,7 +236,7 @@ export default function Destinations() {
                 setSearchQuery("");
                 setSelectedContinent(null);
               }}
-              className="mt-4"
+              className="mt-4 min-h-[44px]"
             >
               Réinitialiser les filtres
             </Button>

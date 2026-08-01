@@ -5,7 +5,7 @@ const services = [
   {
     id: 'visa',
     title: 'Visa & Immigration',
-    subtitle: 'Évaluation gratuite',
+    subtitle: 'Votre éligibilité en 24h, gratuitement !',
     icon: '🛂',
     badgeColor: 'bg-blue-100 text-blue-600',
     link: '/evaluation',
@@ -14,7 +14,7 @@ const services = [
   {
     id: 'vols',
     title: "Billets d'avion",
-    subtitle: 'Meilleurs tarifs',
+    subtitle: 'Trouvez les meilleurs vols au meilleur prix',
     icon: '✈️',
     badgeColor: 'bg-indigo-100 text-indigo-600',
     link: '/vols',
@@ -23,7 +23,7 @@ const services = [
   {
     id: 'hotels',
     title: 'Hôtels & Tourisme',
-    subtitle: 'Réservation facile',
+    subtitle: 'Hébergements confortables et réservations simplifiées',
     icon: '🏨',
     badgeColor: 'bg-rose-100 text-rose-600',
     link: 'https://wa.me/237620996045?text=Bonjour%203M%20Travel,%20je%20souhaite%20une%20réservation%20d%27hôtel%20/%20séjour.',
@@ -32,7 +32,7 @@ const services = [
   {
     id: 'assurance',
     title: 'Assurance voyage',
-    subtitle: 'Protection complète',
+    subtitle: 'Voyagez l\'esprit tranquille avec une couverture optimale',
     icon: '🛡️',
     badgeColor: 'bg-sky-100 text-sky-600',
     link: 'https://wa.me/237620996045?text=Bonjour%203M%20Travel,%20je%20souhaite%20souscrire%20une%20assurance%20voyage.',
@@ -41,7 +41,7 @@ const services = [
   {
     id: 'traduction',
     title: 'Traduction Certifiée',
-    subtitle: 'Documents officiels',
+    subtitle: 'Traductions certifiées pour tous vos documents officiels',
     icon: '📄',
     badgeColor: 'bg-purple-100 text-purple-600',
     link: "https://wa.me/237620996045?text=Bonjour%203M%20Travel,%20j%27ai%20des%20documents%20officiels%20à%20traduire.",
@@ -50,7 +50,7 @@ const services = [
   {
     id: 'procedures',
     title: 'Procédures & Guides',
-    subtitle: 'Toutes les infos',
+    subtitle: 'Guides complets et démarches détaillées',
     icon: '📋',
     badgeColor: 'bg-amber-100 text-amber-600',
     link: '/procedures',
@@ -66,10 +66,10 @@ export default function ServicesSection() {
         {/* Titre section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-black text-[#0a2540] tracking-tight">
-            Nos Domaines d'Expertise
+            Nos Services Clés pour Votre Mobilité Internationale
           </h2>
           <p className="text-gray-500 mt-2 text-sm font-medium">
-            Un accompagnement complet pour l'ensemble de vos projets à l'international
+            De l'évaluation de votre éligibilité aux billets d'avion, nous couvrons tous les aspects de votre projet.
           </p>
         </div>
 
@@ -123,7 +123,7 @@ function ServiceCardContent({ item }: { item: typeof services[number] }) {
 
       {/* Flèche accès */}
       <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-blue-600">
-        <span>En savoir plus</span>
+        <span>Découvrir le service</span>
         <span className="transform group-hover:translate-x-1 transition-transform">→</span>
       </div>
     </>

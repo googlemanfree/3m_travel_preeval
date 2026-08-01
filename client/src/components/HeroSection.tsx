@@ -42,7 +42,7 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity }}>
             <Star className="w-4 h-4 text-yellow-300" />
           </motion.div>
-          ⭐ Évaluation d'Éligibilité Gratuite en 24h
+          ⭐ Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
         </motion.div>
 
         {/* Logo */}
@@ -79,8 +79,7 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           custom={3}
           className="text-xl md:text-2xl text-slate-300 mb-6"
         >
-          Votre Pré-Évaluation{" "}
-          <span className="text-blue-400 font-bold">Visa & Immigration</span>
+          Votre Avenir Commence Ici : <span className="text-blue-400 font-bold">Visa & Immigration Simplifiés</span>
         </motion.h2>
 
         {/* Description */}
@@ -91,9 +90,7 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           custom={4}
           className="text-slate-300 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed"
         >
-          Remplissez notre formulaire gratuit. Nos experts analysent votre profil
-          et vous proposent les meilleures options pour réaliser votre projet
-          d'études ou de mobilité internationale.
+          Découvrez les meilleures opportunités de mobilité internationale. Remplissez notre formulaire gratuit et laissez nos experts vous gu guider vers votre projet d'études, de travail ou d'immigration, avec un accompagnement personnalisé et des solutions adaptées à votre profil unique.
         </motion.p>
 
         {/* CTAs */}
@@ -108,7 +105,7 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
             onClick={onEvalClick}
             className="bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-bold px-8 py-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
-            ⭐ Évaluer mon éligibilité
+            🚀 Lancez votre Évaluation Gratuite !
           </Button>
           <a
             href={`https://wa.me/${whatsappNumber}`}
@@ -119,7 +116,7 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
               variant="outline"
               className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-lg"
             >
-              💬 Contact WhatsApp
+              📞 Discutez avec un Expert (WhatsApp)
             </Button>
           </a>
         </motion.div>
@@ -137,14 +134,14 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
               variant="outline"
               className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
             >
-              🔐 Se Connecter
+              🔑 Accès Client
             </Button>
           </a>
           <a href="/register">
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
             >
-              ✍️ Créer un Compte
+              ✨ Créez votre Compte Gratuit
             </Button>
           </a>
         </motion.div>
@@ -158,16 +155,16 @@ export default function HeroSection({ onEvalClick, logoUrl, whatsappNumber }: He
           className="flex flex-col sm:flex-row gap-8 justify-center border-t border-white/10 pt-8"
         >
           <div>
-            <p className="text-2xl md:text-3xl font-bold">+1 500</p>
-            <p className="text-sm text-slate-400">Dossiers Évalués</p>
+            <p className="text-2xl md:text-3xl font-bold">+1500</p>
+            <p className="text-sm text-slate-400">Dossiers Traités avec Succès</p>
           </div>
           <div>
             <p className="text-2xl md:text-3xl font-bold">98%</p>
-            <p className="text-sm text-slate-400">Satisfaction</p>
+            <p className="text-sm text-slate-400">Clients Satisfaits</p>
           </div>
           <div>
             <p className="text-2xl md:text-3xl font-bold">24h</p>
-            <p className="text-sm text-slate-400">Délai de Réponse</p>
+            <p className="text-sm text-slate-400">Réponse Garantie</p>
           </div>
         </motion.div>
       </div>
