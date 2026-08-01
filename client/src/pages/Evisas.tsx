@@ -1,13 +1,12 @@
 /**
  * Page E-Visas
- * Affiche la liste complète des e-visas disponibles avec filtres et recherche
+ * Affiche la liste complète des e-visas disponibles avec filtres et recherche avancée
  */
 
 import { useState, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -21,34 +20,36 @@ import {
   Clock,
   DollarSign,
   FileText,
-  Search,
   Filter,
   ChevronRight,
 } from 'lucide-react';
 import {
   EvisasGridSkeleton,
-  EvisasFilterSkeleton,
   EvisasStatsSkeleton,
-  EvisasPaginationSkeleton,
 } from '@/components/EvisaSkeleton';
+import {
+  EvisaAdvancedFilters,
+  FilterState,
+} from '@/components/EvisaAdvancedFilters';
 
 export function Evisas() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [filters, setFilters] = useState<FilterState>({
+    searchTerm: '',
+    continents: [],
+    priceRange: [0, 500000],
+    processingTimeRange: [1, 90],
+  });
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'time'>('name');
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 12;
 
   // Récupérer les e-visas
   const { data: evisasData, isLoading: loadingEvisas } = trpc.evisa.getAllEvisas.useQuery({
-    region: selectedRegion || undefined,
-    search: searchTerm || undefined,
+    region: filters.continents.length > 0 ? filters.continents[0] : undefined,
+    search: filters.searchTerm || undefined,
     limit: 200,
     offset: 0,
   });
-
-  // Récupérer les régions
-  const { data: regionsData } = trpc.evisa.getRegions.useQuery();
 
   // Récupérer les statistiques
   const { data: statsData } = trpc.evisa.getEvisaStats.useQuery();
@@ -56,6 +57,28 @@ export function Evisas() {
   // Traiter et trier les données
   const processedEvisas = useMemo(() => {
     let items = (evisasData?.data as any[]) || [];
+
+    // Appliquer les filtres
+    items = items.filter((item: any) => {
+      // Filtre par continent
+      if (filters.continents.length > 0 && !filters.continents.includes(item.continent)) {
+        return false;
+      }
+
+      // Filtre par prix
+      const price = item.price || 0;
+      if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
+        return false;
+      }
+
+      // Filtre par délai de traitement
+      const processingDays = parseInt(item.processingTime?.split('-')[0] || '0');
+      if (processingDays < filters.processingTimeRange[0] || processingDays > filters.processingTimeRange[1]) {
+        return false;
+      }
+
+      return true;
+    });
 
     // Trier
     switch (sortBy) {
@@ -77,7 +100,7 @@ export function Evisas() {
     }
 
     return items;
-  }, [evisasData, sortBy]);
+  }, [evisasData, sortBy, filters]);
 
   // Pagination
   const totalPages = Math.ceil(processedEvisas.length / itemsPerPage);
@@ -86,7 +109,6 @@ export function Evisas() {
     (currentPage + 1) * itemsPerPage
   );
 
-  const regions = (regionsData?.data as any[]) || [];
   const stats = statsData?.data?.evisas || {};
 
   return (
@@ -138,86 +160,49 @@ export function Evisas() {
           <CardContent className="pt-6">
             <div className="text-center">
               <FileText className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-              <p className="text-3xl font-bold">{stats.totalRegions || 0}</p>
-              <p className="text-sm text-gray-600">Régions</p>
+              <p className="text-3xl font-bold">5</p>
+              <p className="text-sm text-gray-600">Continents</p>
             </div>
           </CardContent>
         </Card>
       </div>
       )}
 
-      {/* Filtres et recherche avec skeleton */}
-      {loadingEvisas ? (
-        <EvisasFilterSkeleton />
-      ) : (
+      {/* Filtres avancés */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="w-5 h-5" />
-            Filtres et Recherche
+            Recherche et Filtres Avancés
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Recherche */}
-            <div className="relative">
-              <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Rechercher un pays..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(0);
-                }}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Région */}
-            <Select value={selectedRegion} onValueChange={(value) => {
-              setSelectedRegion(value);
-              setCurrentPage(0);
-            }}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une région" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Toutes les régions</SelectItem>
-                {(regions as any[]).map((region: any) => (
-                  <SelectItem key={region.region} value={region.region}>
-                    {region.region}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Tri */}
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Trier par" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Nom du pays</SelectItem>
-                <SelectItem value="price">Prix (croissant)</SelectItem>
-                <SelectItem value="time">Délai de traitement</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Résultats */}
-          <div className="text-sm text-gray-600">
-            {processedEvisas.length > 0 ? (
-              <>
-                Affichage {currentPage * itemsPerPage + 1} à{' '}
-                {Math.min((currentPage + 1) * itemsPerPage, processedEvisas.length)} sur{' '}
-                {processedEvisas.length} résultats
-              </>
-            ) : (
-              'Aucun e-visa trouvé'
-            )}
-          </div>
+        <CardContent>
+          <EvisaAdvancedFilters
+            onFilterChange={setFilters}
+            totalResults={processedEvisas.length}
+          />
         </CardContent>
       </Card>
+
+      {/* Tri supplémentaire */}
+      {processedEvisas.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-gray-600">
+            Affichage {currentPage * itemsPerPage + 1} à{' '}
+            {Math.min((currentPage + 1) * itemsPerPage, processedEvisas.length)} sur{' '}
+            {processedEvisas.length} résultats
+          </p>
+          <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Trier par" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Nom du pays</SelectItem>
+              <SelectItem value="price">Prix (croissant)</SelectItem>
+              <SelectItem value="time">Délai de traitement</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {/* Liste des e-visas avec skeleton */}
@@ -232,7 +217,7 @@ export function Evisas() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg">{evisa.countryName}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">{evisa.region}</p>
+                      <p className="text-sm text-gray-600 mt-1">{evisa.continent}</p>
                     </div>
                     <Badge variant="outline">{evisa.countryCode}</Badge>
                   </div>
@@ -247,36 +232,38 @@ export function Evisas() {
                       <DollarSign className="w-4 h-4 text-green-600" />
                       <span className="font-semibold">{evisa.price?.toLocaleString('fr-FR')} XOF</span>
                     </div>
+
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="w-4 h-4 text-orange-600" />
                       <span>{evisa.processingTime}</span>
                     </div>
+
                     <div className="flex items-center gap-2 text-sm">
                       <FileText className="w-4 h-4 text-blue-600" />
-                      <span>Validité: {evisa.validityDays} jours</span>
+                      <span>Validité: {evisa.validity}</span>
                     </div>
                   </div>
 
                   {/* Exigences */}
-                  {evisa.requirements && (
-                    <div className="bg-gray-50 p-3 rounded text-sm">
-                      <p className="font-semibold mb-1">Exigences:</p>
-                      <p className="text-gray-700">{evisa.requirements}</p>
+                  <div className="pt-2 border-t">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Exigences:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(evisa.requirements || '').split(',').slice(0, 3).map((req: string, i: number) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {req.trim()}
+                        </Badge>
+                      ))}
+                      {(evisa.requirements || '').split(',').length > 3 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{(evisa.requirements || '').split(',').length - 3}
+                        </Badge>
+                      )}
                     </div>
-                  )}
-
-                  {/* Documents */}
-                  {evisa.documents && (
-                    <div className="bg-blue-50 p-3 rounded text-sm">
-                      <p className="font-semibold mb-1">Documents:</p>
-                      <p className="text-gray-700">{evisa.documents}</p>
-                    </div>
-                  )}
+                  </div>
 
                   {/* Bouton d'action */}
                   <Button
-                    className="w-full"
-                    variant="default"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     onClick={() => window.location.href = `/evisas/${evisa.countryCode}`}
                   >
                     <span>Demander un e-visa</span>
