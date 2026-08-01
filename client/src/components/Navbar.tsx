@@ -10,6 +10,7 @@ const menuItems = [
   { href: '/procedures', label: 'Procédures', icon: '📖' },
   { href: '/ressources', label: 'Ressources', icon: '🌐' },
   { href: '/mon-espace', label: 'Suivi de dossier', icon: '📂' },
+  { href: '/evisas', label: 'E-Visa', icon: '📱', highlight: true },
 ];
 
 export default function Navbar() {
@@ -66,15 +67,26 @@ export default function Navbar() {
 
           {/* 2. NAVIGATION DESKTOP ÉLÉGANTE */}
           <nav className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80">
-            {menuItems.map((item) => (
-              <a 
-                key={item.href}
-                href={item.href} 
-                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm"
-              >
-                <span>{item.icon}</span> {item.label}
-              </a>
-            ))}
+            {menuItems.map((item: any) => {
+              const isHighlight = item.highlight;
+              return isHighlight ? (
+                <a 
+                  key={item.href}
+                  href={item.href} 
+                  className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                >
+                  <span>{item.icon}</span> {item.label}
+                </a>
+              ) : (
+                <a 
+                  key={item.href}
+                  href={item.href} 
+                  className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm"
+                >
+                  <span>{item.icon}</span> {item.label}
+                </a>
+              );
+            })}
           </nav>
 
           {/* 3. ZONE D'ACTION / PROFIL CANDIDAT */}
