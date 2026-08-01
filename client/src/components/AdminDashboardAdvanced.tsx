@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { skipToken } from "@tanstack/react-query";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,12 +33,24 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
+  Download,
+  FileJson,
 } from "lucide-react";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export function AdminDashboardAdvanced() {
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  // Procédures d'export
+  const exportCSV = trpc.export.exportStatisticsCSV.useQuery(undefined, { enabled: false });
+  const exportPDF = trpc.export.exportStatisticsPDF.useQuery(undefined, { enabled: false });
+  const [currentFileName, setCurrentFileName] = useState<string | null>(null);
+  const downloadExportMutation = trpc.export.downloadExport.useQuery(
+    currentFileName ? { fileName: currentFileName } : skipToken,
+    { enabled: !!currentFileName }
+  );
 
   // Récupérer les données
   const { data: globalStats, refetch: refetchGlobalStats, isLoading: loadingGlobalStats } = trpc.adminDashboardStats.getGlobalStats.useQuery();
@@ -64,6 +77,62 @@ export function AdminDashboardAdvanced() {
     setRefreshing(false);
   };
 
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      const result = await exportCSV.refetch();
+      if (result.data?.success && result.data.fileName) {
+        // Télécharger le fichier
+        setCurrentFileName(result.data.fileName);
+        // Attendre que le fichier soit téléchargé
+        setTimeout(() => {
+          if (downloadExportMutation.data?.success && downloadExportMutation.data.content) {
+            const element = document.createElement("a");
+            element.setAttribute("href", `data:text/csv;charset=utf-8,${encodeURIComponent(downloadExportMutation.data.content)}`);
+            element.setAttribute("download", result.data.fileName);
+            element.style.display = "none";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            setCurrentFileName(null);
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'export CSV:", error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const result = await exportPDF.refetch();
+      if (result.data?.success && result.data.fileName) {
+        // Télécharger le fichier
+        setCurrentFileName(result.data.fileName);
+        // Attendre que le fichier soit téléchargé
+        setTimeout(() => {
+          if (downloadExportMutation.data?.success && downloadExportMutation.data.content) {
+            const element = document.createElement("a");
+            element.setAttribute("href", `data:application/pdf;base64,${btoa(downloadExportMutation.data.content)}`);
+            element.setAttribute("download", result.data.fileName);
+            element.style.display = "none";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            setCurrentFileName(null);
+          }
+        }, 500);
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'export PDF:", error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const isLoading = loadingGlobalStats || loadingKPIs;
 
   if (isLoading) {
@@ -79,18 +148,38 @@ export function AdminDashboardAdvanced() {
 
   return (
     <div className="space-y-6">
-      {/* En-tête avec bouton d'actualisation */}
+      {/* En-tête avec boutons d'actualisation et d'export */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Tableau de Bord Admin</h1>
-        <Button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={handleExportCSV}
+            disabled={exporting}
+            variant="outline"
+            size="sm"
+          >
+            <FileJson className="w-4 h-4 mr-2" />
+            Export CSV
+          </Button>
+          <Button
+            onClick={handleExportPDF}
+            disabled={exporting}
+            variant="outline"
+            size="sm"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export PDF
+          </Button>
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       {/* KPIs Principaux */}

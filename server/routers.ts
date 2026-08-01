@@ -27,6 +27,7 @@ import { adminDossierRouter } from "./routers/adminDossier";
 import { cinetpayPaymentRouter } from "./routers/cinetpayPayment";
 import { notificationRouter } from "./routers/notificationRouter";
 import { adminDashboardStatsRouter } from "./routers/adminDashboardStats";
+import { exportRouter } from "./routers/exportRouter";
 
 const COOKIE_NAME = "manus_session";
 
@@ -70,6 +71,7 @@ export const appRouter = router({
   cinetpayPayment: cinetpayPaymentRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
+  export: exportRouter,
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
 });

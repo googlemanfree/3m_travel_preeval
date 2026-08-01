@@ -1030,3 +1030,13 @@
 - [ ] Tester le responsive design
 - [ ] Corriger les erreurs de console
 - [ ] Vérifier les pages d'erreur
+
+
+## Fonctionnalité d'Export des Statistiques (Complétée)
+- [x] Routeur exportRouter avec procédures tRPC
+- [x] Export en CSV (données complètes)
+- [x] Export en PDF (rapport formaté)
+- [x] Procédure downloadExport pour récupérer les fichiers
+- [x] Boutons d'export dans AdminDashboardAdvanced
+- [x] Intégration complète dans le dashboard
+- [x] Build production réussi (498.8 KB)
