@@ -1106,3 +1106,17 @@
 - [x] Ajouter des instructions claires pour le téléchargement
 - [ ] Afficher les fichiers téléchargés avec la possibilité de les supprimer
 - [ ] Tester le téléchargement et le stockage des fichiers
+
+
+## Extraction IA des Informations du Passeport (v14)
+- [x] Créer une procédure tRPC pour analyser le passeport avec l'IA
+- [x] Utiliser l'API OpenAI Vision pour extraire les informations du document
+- [x] Extraire le nom complet, la date de naissance, la nationalité du passeport
+- [x] Valider les données extraites avant de les retourner
+- [x] Ajouter un bouton "Analyser le passeport" au formulaire
+- [x] Pré-remplir automatiquement les champs avec les données extraites
+- [x] Afficher un indicateur de progression pendant l'analyse
+- [x] Gérer les erreurs d'extraction (document illisible, format invalide)
+- [x] Afficher un message de confirmation après l'extraction réussie
+- [x] Permettre à l'utilisateur de modifier les données extraites
+- [ ] Tester l'extraction avec différents types de passeports

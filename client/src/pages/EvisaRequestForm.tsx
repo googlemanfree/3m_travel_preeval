@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle, ArrowLeft, Loader, Sparkles } from 'lucide-react';
 import Footer from '@/components/Footer';
 import { FileUploadField } from '@/components/FileUploadField';
 import { trpc } from '@/lib/trpc';
@@ -29,6 +29,9 @@ export default function EvisaRequestForm() {
   });
 
   const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [passportFileUrl, setPassportFileUrl] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisSuccess, setAnalysisSuccess] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +39,37 @@ export default function EvisaRequestForm() {
 
   const ACCOMPANIMENT_FEE = 25000;
   const CURRENCY = 'XOF';
+
+  // Mutation pour analyser le passeport
+  const analyzePassportMutation = trpc.passportAnalysis.analyzePassport.useMutation({
+    onSuccess: (result) => {
+      setAnalysisSuccess(true);
+      setIsAnalyzing(false);
+      // Pré-remplir les champs avec les données extraites
+      if (result.data.fullName) {
+        setFormData(prev => ({
+          ...prev,
+          fullName: result.data.fullName,
+        }));
+      }
+      if (result.data.dateOfBirth) {
+        setFormData(prev => ({
+          ...prev,
+          dateOfBirth: result.data.dateOfBirth,
+        }));
+      }
+      if (result.data.nationality) {
+        setFormData(prev => ({
+          ...prev,
+          nationality: result.data.nationality,
+        }));
+      }
+    },
+    onError: (err: any) => {
+      setError(err.message || 'Erreur lors de l\'analyse du passeport');
+      setIsAnalyzing(false);
+    },
+  });
 
   // Mutation pour soumettre la demande
   const submitRequestMutation = trpc.evisa.submitRequest.useMutation({
@@ -61,6 +95,51 @@ export default function EvisaRequestForm() {
     }));
   };
 
+  const handleFileSelect = async (file: File | null) => {
+    setPassportFile(file);
+    setAnalysisSuccess(false);
+    setError(null);
+
+    if (!file) {
+      setPassportFileUrl(null);
+      return;
+    }
+
+    // Télécharger le fichier immédiatement
+    try {
+      const uploadUrlResponse = await trpc.upload.getUploadUrl.useMutation().mutateAsync({
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+      });
+
+      const uploadResponse = await fetch(uploadUrlResponse.uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Erreur lors du téléchargement du fichier');
+      }
+
+      const fileUrl = uploadUrlResponse.getUrl;
+      setPassportFileUrl(fileUrl);
+
+      // Analyser automatiquement le passeport avec l'IA
+      setIsAnalyzing(true);
+      analyzePassportMutation.mutate({
+        passportUrl: fileUrl,
+        fileType: file.type,
+      });
+    } catch (uploadError: any) {
+      setError('Erreur lors du téléchargement du fichier passeport');
+      setPassportFile(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -81,42 +160,10 @@ export default function EvisaRequestForm() {
       return;
     }
 
-    // Télécharger le fichier passeport si présent
-    let passportFileUrl = '';
-    let passportFileName = '';
-    let passportFileSize = 0;
-
-    if (passportFile) {
-      try {
-        // Obtenir une URL de téléchargement présignée
-        const uploadUrlResponse = await trpc.upload.getUploadUrl.useMutation().mutateAsync({
-          fileName: passportFile.name,
-          fileType: passportFile.type,
-          fileSize: passportFile.size,
-        });
-
-        // Télécharger le fichier directement vers S3
-        const uploadResponse = await fetch(uploadUrlResponse.uploadUrl, {
-          method: 'PUT',
-          body: passportFile,
-          headers: {
-            'Content-Type': passportFile.type,
-          },
-        });
-
-        if (!uploadResponse.ok) {
-          throw new Error('Erreur lors du téléchargement du fichier');
-        }
-
-        passportFileUrl = uploadUrlResponse.getUrl;
-        passportFileName = passportFile.name;
-        passportFileSize = passportFile.size;
-      } catch (uploadError) {
-        setError('Erreur lors du téléchargement du fichier passeport');
-        setIsLoading(false);
-        return;
-      }
-    }
+    // Utiliser l'URL du fichier téléchargé si disponible
+    const finalPassportFileUrl = passportFileUrl || '';
+    const passportFileName = passportFile?.name || '';
+    const passportFileSize = passportFile?.size || 0;
 
     // Soumettre la demande
     submitRequestMutation.mutate({
@@ -133,7 +180,7 @@ export default function EvisaRequestForm() {
       totalCost: ACCOMPANIMENT_FEE,
       currency: CURRENCY,
       notes: formData.notes,
-      passportFile: passportFileUrl,
+      passportFile: finalPassportFileUrl,
       passportFileName: passportFileName,
       passportFileSize: passportFileSize,
     });
@@ -191,6 +238,16 @@ export default function EvisaRequestForm() {
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* Message de succès d'analyse */}
+            {analysisSuccess && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-green-700">
+                  Les informations de votre passeport ont été extraites et pré-remplies avec succès !
+                </p>
               </div>
             )}
 
@@ -342,14 +399,26 @@ export default function EvisaRequestForm() {
 
             {/* Téléchargement du passeport */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents Requis</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-600" />
+                Documents Requis (Analyse IA)
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Téléchargez votre passeport et l'IA extraira automatiquement vos informations pour pré-remplir le formulaire.
+              </p>
               <FileUploadField
-                onFileSelect={setPassportFile}
+                onFileSelect={handleFileSelect}
                 label="Copie de votre passeport"
                 description="Formats acceptés: PDF, JPG, PNG (Max 5 MB). Assurez-vous que tous les détails sont lisibles."
                 acceptedFormats={['application/pdf', 'image/jpeg', 'image/png']}
                 maxFileSize={5 * 1024 * 1024}
               />
+              {isAnalyzing && (
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                  <Loader className="w-5 h-5 text-blue-600 animate-spin" />
+                  <p className="text-sm text-blue-700">Analyse de votre passeport en cours...</p>
+                </div>
+              )}
             </div>
 
             {/* Notes supplémentaires */}
@@ -381,7 +450,7 @@ export default function EvisaRequestForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || isAnalyzing}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white"
               >
                 {isLoading ? 'Soumission en cours...' : 'Soumettre la Demande'}

@@ -34,6 +34,7 @@ import { documentClassificationRouter } from "./routers/documentClassificationRo
 import { evisaFavoritesRouter } from "./routers/evisaFavoritesRouter";
 import { evisaReviewsRouter } from "./routers/evisaReviewsRouter";
 import { uploadRouter } from "./routers/uploadRouter";
+import { passportAnalysisRouter } from "./routers/passportAnalysisRouter";
 
 const COOKIE_NAME = "manus_session";
 
@@ -86,6 +87,7 @@ export const appRouter = router({
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
   upload: uploadRouter,
+  passportAnalysis: passportAnalysisRouter,
 });
 
 export type AppRouter = typeof appRouter;
