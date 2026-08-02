@@ -38,6 +38,7 @@ import { passportAnalysisRouter } from "./routers/passportAnalysisRouter";
 import { evisaAdminRouter } from "./routers/evisaAdminRouter";
 import { signupRouter } from "./routers/signup";
 import { simpleAuthRouter } from "./routers/simpleAuth";
+import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 
 const COOKIE_NAME = "manus_session";
 
@@ -91,6 +92,7 @@ export const appRouter = router({
   documentClassification: documentClassificationRouter,
   documents: documentsRouter,
   userDashboard: userDashboardRouter,
+  oauthUserDashboard: oauthUserDashboardRouter,
   upload: uploadRouter,
   passportAnalysis: passportAnalysisRouter,
   evisaAdmin: evisaAdminRouter,

@@ -55,9 +55,12 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
 // On crée une procédure custom qui lit le header Authorization candidat
 const candidateProcedure = publicProcedure.use(async ({ ctx, next }) => {
+  if (ctx.user) {
+    return next({ ctx: { ...ctx, candidate: null, isManuUser: true } });
+  }
   const authHeader = (ctx.req as any)?.headers?.authorization as string | undefined;
   const candidate = await getCandidateFromHeader(authHeader);
-  return next({ ctx: { ...ctx, candidate } });
+  return next({ ctx: { ...ctx, candidate, isManuUser: false } });
 });
 
 // ─── DOSSIER STATUS LABELS ────────────────────────────────────────────────────
@@ -188,6 +191,27 @@ export const candidateRouter = router({
 
   // ── Profil candidat (lecture) ──────────────────────────────────────────────
   getProfile: candidateProcedure.query(async ({ ctx }) => {
+    if ((ctx as any).isManuUser && ctx.user) {
+      return {
+        id: ctx.user.id,
+        fullName: ctx.user.name || '',
+        email: ctx.user.email || '',
+        phone: null,
+        nationality: null,
+        dateOfBirth: null,
+        destination: 'autre',
+        visaType: null,
+        dossierStatus: 'nouveau',
+        dossierNote: null,
+        formulaChosen: null,
+        scoreResult: null,
+        educationLevel: null,
+        employmentStatus: null,
+        languageLevel: null,
+        createdAt: ctx.user.createdAt,
+        lastLoginAt: ctx.user.lastSignedIn,
+      };
+    }
     const c = ctx.candidate;
     return {
       id: c.id,
@@ -239,6 +263,7 @@ export const candidateRouter = router({
 
   // ── Liste des documents uploadés ──────────────────────────────────────────
   listDocuments: candidateProcedure.query(async ({ ctx }) => {
+    if ((ctx as any).isManuUser) return [];
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 

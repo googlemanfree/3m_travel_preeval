@@ -144,46 +144,46 @@ export default function Dashboard() {
   const utils = trpc.useUtils();
 
   // Queries — le token est automatiquement injecté via main.tsx headers()
-  const profileQuery = trpc.candidate.getProfile.useQuery(undefined, {
+  const profileQuery = trpc.oauthUserDashboard.getProfile.useQuery(undefined, {
     enabled: isAuthenticated,
     retry: false,
   });
 
-  const documentsQuery = trpc.candidate.listDocuments.useQuery(undefined, {
+  const documentsQuery = trpc.oauthUserDashboard.listDocuments.useQuery(undefined, {
     enabled: isAuthenticated && activeTab === "documents",
     retry: false,
   });
 
-  const messagesQuery = trpc.candidate.getMessages.useQuery(undefined, {
+  const messagesQuery = trpc.oauthUserDashboard.getMessages.useQuery(undefined, {
     enabled: isAuthenticated && activeTab === "messages",
     refetchInterval: false, // Desactiver le refetch automatique
     retry: false,
   });
 
-  const pendingActionsQuery = trpc.candidate.getPendingActions.useQuery(undefined, {
+  const pendingActionsQuery = trpc.oauthUserDashboard.getPendingActions.useQuery(undefined, {
     enabled: isAuthenticated && activeTab === "overview",
     retry: false,
   });
 
-  const sendMessageMutation = trpc.candidate.sendMessage.useMutation({
+  const sendMessageMutation = trpc.oauthUserDashboard.sendMessage.useMutation({
     onSuccess: () => {
       setMessageText("");
-      utils.candidate.getMessages.invalidate();
+      utils.oauthUserDashboard.getMessages.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
 
-  const deleteDocMutation = trpc.candidate.deleteDocument.useMutation({
+  const deleteDocMutation = trpc.oauthUserDashboard.deleteDocument.useMutation({
     onSuccess: () => {
-      utils.candidate.listDocuments.invalidate();
+      utils.oauthUserDashboard.listDocuments.invalidate();
       toast.success("Document supprimé.");
     },
   });
 
-  const saveDocMutation = trpc.candidate.saveDocument.useMutation({
+  const saveDocMutation = trpc.oauthUserDashboard.saveDocument.useMutation({
     onSuccess: () => {
-      utils.candidate.listDocuments.invalidate();
-      utils.candidate.getProfile.invalidate();
+      utils.oauthUserDashboard.listDocuments.invalidate();
+      utils.oauthUserDashboard.getProfile.invalidate();
     },
     onError: (err) => toast.error(err.message),
   });
@@ -827,7 +827,7 @@ function ProfileEditor({ profile, onSaved }: { profile: any; onSaved: () => void
     }
   }, [profile]);
 
-  const updateMutation = trpc.candidate.updateProfile.useMutation({
+  const updateMutation = trpc.oauthUserDashboard.updateProfile.useMutation({
     onSuccess: () => {
       toast.success("Profil mis à jour !");
       onSaved();
