@@ -49,8 +49,9 @@ import Hotels from "./pages/Hotels";
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
 import CandidatesManager from "./pages/CandidatesManager";
 import SignUp from "./pages/SignUp";
-import { NewSignUp } from "./pages/NewSignUp";
-import { VerifyEmailNew } from "./pages/VerifyEmailNew";
+import SimpleSignUp from "./pages/SimpleSignUp";
+import ConfirmEmail from "./pages/ConfirmEmail";
+import ResetPasswordSimple from "./pages/ResetPasswordSimple";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
@@ -89,8 +90,9 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/register"} component={Register} />
       <Route path={"/signup"} component={SignUp} />
-      <Route path={"/new-signup"} component={NewSignUp} />
-      <Route path={"/verify-email-new"} component={VerifyEmailNew} />
+      <Route path={"/simple-signup"} component={SimpleSignUp} />
+      <Route path={"/confirm-email"} component={ConfirmEmail} />
+      <Route path={"/forgot-password-simple"} component={ResetPasswordSimple} />
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"} component={Evaluation} />

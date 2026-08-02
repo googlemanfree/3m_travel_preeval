@@ -1,24 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle, CheckCircle, Eye, EyeOff } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * NOUVEAU FORMULAIRE D'INSCRIPTION INDÉPENDANT
+ * PAGE D'INSCRIPTION SIMPLE ET ROBUSTE
  * ═══════════════════════════════════════════════════════════════════════════════
- * 
- * Page complètement séparée pour les inscriptions utilisateurs.
- * Formulaire simplifié : nom, email, mot de passe, confirmation.
  */
 
-export function NewSignUp() {
-  const [, navigate] = useNavigate();
+export default function SimpleSignUp() {
+  const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -29,13 +24,11 @@ export function NewSignUp() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
-
-  const registerMutation = trpc.newSignup.register.useMutation();
-  const isLoading = registerMutation.isPending;
+  const [isLoading, setIsLoading] = useState(false);
 
   // Calculer la force du mot de passe
   const getPasswordStrength = (password: string) => {
-    if (!password) return { score: 0, label: "", color: "" };
+    if (!password) return { score: 0, label: "", color: "bg-gray-300" };
 
     let score = 0;
     if (password.length >= 8) score++;
@@ -45,23 +38,23 @@ export function NewSignUp() {
     if (/[^a-zA-Z\d]/.test(password)) score++;
 
     const levels = [
-      { score: 0, label: "", color: "" },
-      { score: 1, label: "Très faible", color: "text-red-500" },
-      { score: 2, label: "Faible", color: "text-orange-500" },
-      { score: 3, label: "Moyen", color: "text-yellow-500" },
-      { score: 4, label: "Fort", color: "text-lime-500" },
-      { score: 5, label: "Très fort", color: "text-green-500" },
+      { score: 0, label: "", color: "bg-gray-300", textColor: "" },
+      { score: 1, label: "Très faible", color: "bg-red-500", textColor: "text-red-500" },
+      { score: 2, label: "Faible", color: "bg-orange-500", textColor: "text-orange-500" },
+      { score: 3, label: "Moyen", color: "bg-yellow-500", textColor: "text-yellow-500" },
+      { score: 4, label: "Fort", color: "bg-lime-500", textColor: "text-lime-500" },
+      { score: 5, label: "Très fort", color: "bg-green-500", textColor: "text-green-500" },
     ];
 
     return levels[score];
   };
 
   const passwordStrength = getPasswordStrength(formData.password);
+  const passwordWidth = (passwordStrength.score / 5) * 100;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Effacer l'erreur pour ce champ
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -105,13 +98,31 @@ export function NewSignUp() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      await registerMutation.mutateAsync({
-        fullName: formData.fullName.trim(),
-        email: formData.email.toLowerCase().trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
+      // Appeler l'API d'inscription
+      const response = await fetch("/api/trpc/simpleAuth.register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName.trim(),
+          email: formData.email.toLowerCase().trim(),
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = data.error?.message || "Erreur lors de l'inscription";
+        setErrors({ submit: errorMessage });
+        setIsLoading(false);
+        return;
+      }
 
       setSuccessMessage(
         "✅ Compte créé avec succès! Vérifiez votre email pour confirmer votre inscription."
@@ -123,14 +134,15 @@ export function NewSignUp() {
         confirmPassword: "",
       });
 
-      // Rediriger vers la page de connexion après 2 secondes
+      // Rediriger vers la page de connexion après 3 secondes
       setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+        setLocation("/login");
+      }, 3000);
     } catch (error: any) {
-      const errorMessage =
-        error?.message || "Une erreur est survenue lors de l'inscription";
+      const errorMessage = error?.message || "Une erreur est survenue lors de l'inscription";
       setErrors({ submit: errorMessage });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -144,7 +156,7 @@ export function NewSignUp() {
               Créer un compte
             </h1>
             <p className="text-gray-600">
-              Rejoignez 3M Travel & Services pour commencer votre voyage
+              Rejoignez 3M Travel & Services
             </p>
           </div>
 
@@ -220,7 +232,7 @@ export function NewSignUp() {
                   value={formData.password}
                   onChange={handleInputChange}
                   disabled={isLoading}
-                  className={errors.password ? "border-red-500" : "pr-10"}
+                  className={errors.password ? "border-red-500 pr-10" : "pr-10"}
                 />
                 <button
                   type="button"
@@ -239,29 +251,23 @@ export function NewSignUp() {
                 <p className="text-red-500 text-sm mt-1">{errors.password}</p>
               )}
 
-              {/* Indicateur de force */}
+              {/* Indicateur de force du mot de passe */}
               {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2">
+                <div className="mt-3">
+                  <div className="flex items-center gap-3">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className={`h-full transition-all ${
-                          passwordStrength.color === "text-red-500"
-                            ? "bg-red-500 w-1/5"
-                            : passwordStrength.color === "text-orange-500"
-                              ? "bg-orange-500 w-2/5"
-                              : passwordStrength.color === "text-yellow-500"
-                                ? "bg-yellow-500 w-3/5"
-                                : passwordStrength.color === "text-lime-500"
-                                  ? "bg-lime-500 w-4/5"
-                                  : "bg-green-500 w-full"
-                        }`}
+                        className={`h-full transition-all ${passwordStrength.color}`}
+                        style={{ width: `${passwordWidth}%` }}
                       />
                     </div>
-                    <span className={`text-xs font-medium ${passwordStrength.color}`}>
+                    <span className={`text-xs font-medium whitespace-nowrap ${passwordStrength.textColor}`}>
                       {passwordStrength.label}
                     </span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Utilisez des majuscules, minuscules, chiffres et caractères spéciaux
+                  </p>
                 </div>
               )}
             </div>
@@ -283,7 +289,7 @@ export function NewSignUp() {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                   disabled={isLoading}
-                  className={errors.confirmPassword ? "border-red-500" : "pr-10"}
+                  className={errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
                 />
                 <button
                   type="button"
@@ -311,14 +317,7 @@ export function NewSignUp() {
               disabled={isLoading}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-all"
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <Spinner className="w-4 h-4" />
-                  Création en cours...
-                </div>
-              ) : (
-                "Créer mon compte"
-              )}
+              {isLoading ? "Création en cours..." : "Créer mon compte"}
             </Button>
           </form>
 
@@ -326,12 +325,12 @@ export function NewSignUp() {
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm">
               Vous avez déjà un compte?{" "}
-              <a
-                href="/login"
+              <button
+                onClick={() => setLocation("/login")}
                 className="text-blue-600 hover:text-blue-700 font-semibold"
               >
                 Se connecter
-              </a>
+              </button>
             </p>
           </div>
         </div>

@@ -1,34 +1,25 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearch } from "wouter";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import { AlertCircle, CheckCircle, Mail } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { AlertCircle, CheckCircle, Mail, Loader } from "lucide-react";
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * PAGE DE VÉRIFICATION D'EMAIL INDÉPENDANTE
+ * PAGE DE CONFIRMATION D'EMAIL
  * ═══════════════════════════════════════════════════════════════════════════════
- * 
- * Page pour vérifier l'email après l'inscription.
- * Utilise le token passé en paramètre d'URL.
  */
 
-export function VerifyEmailNew() {
-  const [, navigate] = useNavigate();
-  const search = useSearch();
+export default function ConfirmEmail() {
+  const [location, setLocation] = useLocation();
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
-  const [email, setEmail] = useState("");
   const [resendEmail, setResendEmail] = useState("");
   const [showResendForm, setShowResendForm] = useState(false);
-
-  const verifyMutation = trpc.newSignup.verifyEmail.useMutation();
-  const resendMutation = trpc.newSignup.resendVerificationEmail.useMutation();
+  const [isResending, setIsResending] = useState(false);
 
   // Extraire le token de l'URL
-  const token = new URLSearchParams(search).get("token");
+  const token = new URLSearchParams(location.split("?")[1] || "").get("token");
 
   useEffect(() => {
     if (!token) {
@@ -40,25 +31,37 @@ export function VerifyEmailNew() {
     // Vérifier l'email automatiquement
     const verifyEmail = async () => {
       try {
-        const result = await verifyMutation.mutateAsync({ token });
+        const response = await fetch("/api/trpc/simpleAuth.verifyEmail", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setStatus("error");
+          setMessage(data.error?.message || "Erreur lors de la vérification");
+          return;
+        }
+
         setStatus("success");
-        setMessage(result.message);
-        setEmail(result.email);
+        setMessage(data.result?.message || "Email vérifié avec succès!");
 
         // Rediriger vers la connexion après 3 secondes
         setTimeout(() => {
-          navigate("/login");
+          setLocation("/login");
         }, 3000);
       } catch (error: any) {
         setStatus("error");
-        setMessage(
-          error?.message || "Erreur lors de la vérification de l'email"
-        );
+        setMessage(error?.message || "Erreur lors de la vérification de l'email");
       }
     };
 
     verifyEmail();
-  }, [token, verifyMutation, navigate]);
+  }, [token, setLocation]);
 
   const handleResendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,8 +70,25 @@ export function VerifyEmailNew() {
       return;
     }
 
+    setIsResending(true);
+
     try {
-      await resendMutation.mutateAsync({ email: resendEmail });
+      const response = await fetch("/api/trpc/simpleAuth.resendVerificationEmail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: resendEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error?.message || "Erreur lors du renvoi de l'email");
+        setIsResending(false);
+        return;
+      }
+
       setMessage(
         "✅ Un nouvel email de vérification a été envoyé. Vérifiez votre boîte de réception."
       );
@@ -76,6 +96,8 @@ export function VerifyEmailNew() {
       setShowResendForm(false);
     } catch (error: any) {
       setMessage(error?.message || "Erreur lors du renvoi de l'email");
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -89,14 +111,14 @@ export function VerifyEmailNew() {
               Vérification d'email
             </h1>
             <p className="text-gray-600">
-              Confirmez votre adresse email pour accéder à votre compte
+              Confirmez votre adresse email
             </p>
           </div>
 
           {/* Contenu selon le statut */}
           {status === "loading" && (
             <div className="flex flex-col items-center justify-center py-12 gap-4">
-              <Spinner className="w-8 h-8 text-blue-600" />
+              <Loader className="w-8 h-8 text-blue-600 animate-spin" />
               <p className="text-gray-600 text-center">
                 Vérification de votre email en cours...
               </p>
@@ -125,13 +147,12 @@ export function VerifyEmailNew() {
                 <ul className="text-sm text-blue-800 space-y-1">
                   <li>✓ Email vérifié avec succès</li>
                   <li>→ Connectez-vous avec vos identifiants</li>
-                  <li>→ Complétez votre profil</li>
-                  <li>→ Commencez votre demande de visa</li>
+                  <li>→ Accédez à votre espace personnel</li>
                 </ul>
               </div>
 
               <Button
-                onClick={() => navigate("/login")}
+                onClick={() => setLocation("/login")}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg"
               >
                 Aller à la connexion
@@ -182,17 +203,10 @@ export function VerifyEmailNew() {
                   <div className="flex gap-2">
                     <Button
                       type="submit"
-                      disabled={resendMutation.isPending}
+                      disabled={isResending}
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg"
                     >
-                      {resendMutation.isPending ? (
-                        <div className="flex items-center gap-2">
-                          <Spinner className="w-4 h-4" />
-                          Envoi...
-                        </div>
-                      ) : (
-                        "Renvoyer"
-                      )}
+                      {isResending ? "Envoi..." : "Renvoyer"}
                     </Button>
                     <Button
                       type="button"
@@ -207,7 +221,7 @@ export function VerifyEmailNew() {
               )}
 
               <Button
-                onClick={() => navigate("/new-signup")}
+                onClick={() => setLocation("/simple-signup")}
                 variant="outline"
                 className="w-full"
               >
@@ -220,12 +234,12 @@ export function VerifyEmailNew() {
           <div className="mt-6 text-center">
             <p className="text-gray-600 text-sm">
               Vous avez déjà un compte?{" "}
-              <a
-                href="/login"
+              <button
+                onClick={() => setLocation("/login")}
                 className="text-blue-600 hover:text-blue-700 font-semibold"
               >
                 Se connecter
-              </a>
+              </button>
             </p>
           </div>
         </div>
