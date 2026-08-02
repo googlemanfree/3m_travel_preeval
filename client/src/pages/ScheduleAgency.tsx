@@ -1,216 +1,382 @@
-import React, { useState, useRef } from 'react';
-import { Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+import { useState } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Calendar, Clock, Phone, Mail, CheckCircle2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export interface QuickUploadModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  documentType: string;
-  onUpload: (file: File, documentType: string) => Promise<void>;
-  isLoading?: boolean;
+interface AppointmentFormData {
+  agency: "douala" | "yaounde";
+  date: string;
+  time: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  visaType: string;
 }
 
-export function QuickUploadModal({
-  isOpen,
-  onClose,
-  documentType,
-  onUpload,
-  isLoading = false,
-}: QuickUploadModalProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export default function ScheduleAgency() {
+  const [location, setLocation] = useLocation();
+  const [formData, setFormData] = useState<AppointmentFormData>({
+    agency: "douala",
+    date: "",
+    time: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    country: "Canada",
+    visaType: "Étudiant",
+  });
+  const [loading, setLoading] = useState(false);
+  const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
+  const [confirmationData, setConfirmationData] = useState<any>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Vérifier la taille (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setErrorMessage('Le fichier ne doit pas dépasser 10 MB');
-        setUploadStatus('error');
-        return;
-      }
-
-      // Vérifier le type de fichier
-      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      if (!allowedTypes.includes(file.type)) {
-        setErrorMessage('Format de fichier non autorisé. Utilisez PDF, JPG, PNG ou DOC');
-        setUploadStatus('error');
-        return;
-      }
-
-      setSelectedFile(file);
-      setUploadStatus('idle');
-      setErrorMessage('');
-    }
+  const agencies = {
+    douala: {
+      name: "Agence Douala",
+      address: "[Adresse à confirmer]",
+      phone: "+237 6XX XXX XXX",
+      hours: "Lun-Ven 09:00-17:00",
+      email: "douala@3mtravelagency.click",
+    },
+    yaounde: {
+      name: "Agence Yaoundé",
+      address: "[Adresse à confirmer]",
+      phone: "+237 6XX XXX XXX",
+      hours: "Lun-Ven 09:00-17:00",
+      email: "yaounde@3mtravelagency.click",
+    },
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return;
+  const countries = ["Canada", "USA", "France", "Royaume-Uni", "Australie"];
+  const visaTypes = ["Étudiant", "Travail", "Tourisme", "Résidence"];
 
-    setUploadStatus('uploading');
-    setUploadProgress(0);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      alert("Veuillez remplir tous les champs");
+      return;
+    }
+
+    if (!formData.date || !formData.time) {
+      alert("Veuillez sélectionner une date et une heure");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      // Simuler la progression du téléversement
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => Math.min(prev + 10, 90));
-      }, 200);
+      // Simulation de l'envoi
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      await onUpload(selectedFile, documentType);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      setUploadStatus('success');
-
-      // Fermer le modal après 2 secondes
-      setTimeout(() => {
-        handleClose();
-      }, 2000);
+      const appointmentRef = `RDV-${Date.now()}`;
+      setConfirmationData({
+        ...formData,
+        reference: appointmentRef,
+        agency: agencies[formData.agency],
+      });
+      setAppointmentConfirmed(true);
     } catch (error) {
-      setUploadStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Erreur lors du téléversement');
+      alert("Erreur lors de la prise de rendez-vous. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setSelectedFile(null);
-    setUploadProgress(0);
-    setUploadStatus('idle');
-    setErrorMessage('');
-    onClose();
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const event = {
-        target: { files: e.dataTransfer.files },
-      } as React.ChangeEvent<HTMLInputElement>;
-      handleFileSelect(event);
-    }
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Téléverser {documentType}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          {uploadStatus === 'success' ? (
-            <div className="text-center py-8">
-              <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <p className="text-green-600 font-semibold">Document téléversé avec succès !</p>
-              <p className="text-sm text-gray-600 mt-2">Votre document a été enregistré.</p>
-            </div>
-          ) : uploadStatus === 'uploading' ? (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600">Téléversement en cours...</p>
-              <Progress value={uploadProgress} className="h-2" />
-              <p className="text-xs text-gray-500 text-center">{uploadProgress}%</p>
-            </div>
-          ) : (
-            <>
-              {/* Zone de dépôt */}
-              <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-blue-50 hover:bg-blue-100 transition cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                aria-label="Choisir ou déposer un document"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                <Upload className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-700">
-                  Cliquez pour sélectionner ou glissez-déposez
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  PDF, JPG, PNG ou DOC (max 10 MB)
-                </p>
+  if (appointmentConfirmed && confirmationData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+                <div>
+                  <CardTitle>Rendez-vous Confirmé!</CardTitle>
+                  <CardDescription>Votre rendez-vous a été enregistré avec succès</CardDescription>
+                </div>
               </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Détails du rendez-vous */}
+              <div className="bg-white p-6 rounded-lg space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-gray-600">Référence</p>
+                    <p className="font-bold text-lg">{confirmationData.reference}</p>
+                  </div>
+                  <Badge>Confirmé</Badge>
+                </div>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                onChange={handleFileSelect}
-                className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-              />
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex gap-3">
+                    <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-600">Agence</p>
+                      <p className="font-semibold">{confirmationData.agency.name}</p>
+                      <p className="text-sm text-gray-700">{confirmationData.agency.address}</p>
+                    </div>
+                  </div>
 
-              {/* Fichier sélectionné */}
-              {selectedFile && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {selectedFile.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                  <div className="flex gap-3">
+                    <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-600">Date et Heure</p>
+                      <p className="font-semibold">
+                        {new Date(confirmationData.date).toLocaleDateString('fr-FR')} à {confirmationData.time}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setSelectedFile(null)}
-                      type="button"
-                      aria-label={`Retirer le fichier ${selectedFile.name}`}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Phone className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-600">Contact Agence</p>
+                      <p className="font-semibold">{confirmationData.agency.phone}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Mail className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm text-gray-600">Email</p>
+                      <p className="font-semibold">{confirmationData.agency.email}</p>
+                    </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Message d'erreur */}
-              {uploadStatus === 'error' && errorMessage && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-600">{errorMessage}</p>
-                </div>
-              )}
+              {/* Documents à apporter */}
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-semibold mb-2">Documents à apporter en original:</p>
+                  <ul className="text-sm space-y-1 ml-4">
+                    <li>✓ Passeport valide</li>
+                    <li>✓ Pièce d'identité</li>
+                    <li>✓ Tous les documents mentionnés dans la checklist</li>
+                    <li>✓ Preuve de paiement (si applicable)</li>
+                  </ul>
+                </AlertDescription>
+              </Alert>
+
+              {/* Confirmation email */}
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertDescription>
+                  <p className="text-sm">
+                    ✓ Un email de confirmation a été envoyé à <strong>{confirmationData.email}</strong>
+                  </p>
+                  <p className="text-sm mt-2">
+                    ✓ Un message WhatsApp a été envoyé au <strong>{confirmationData.phone}</strong>
+                  </p>
+                </AlertDescription>
+              </Alert>
 
               {/* Boutons d'action */}
-              <div className="flex gap-2 pt-2">
+              <div className="space-y-2">
                 <Button
-                  variant="outline"
-                  onClick={handleClose}
-                  className="flex-1"
+                  onClick={() => setLocation("/")}
+                  className="w-full bg-green-600 hover:bg-green-700"
                 >
-                  Annuler
+                  Retour à l'accueil
                 </Button>
                 <Button
-                  onClick={handleUpload}
-                  disabled={!selectedFile || isLoading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setLocation("/mon-espace")}
+                  variant="outline"
+                  className="w-full"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Téléverser
+                  Accéder à mon espace
                 </Button>
               </div>
-            </>
-          )}
+            </CardContent>
+          </Card>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+      <div className="max-w-2xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900">Prendre Rendez-vous en Agence</h1>
+          <p className="text-lg text-gray-600">Rencontrez nos experts en personne</p>
+        </div>
+
+        {/* Sélection Agence */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Choisissez une Agence</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {Object.entries(agencies).map(([key, agency]) => (
+                <button
+                  key={key}
+                  onClick={() => setFormData(prev => ({ ...prev, agency: key as any }))}
+                  className={`p-4 rounded-lg border-2 transition-all text-left ${
+                    formData.agency === key
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <p className="font-semibold text-lg mb-2">{agency.name}</p>
+                  <p className="text-sm text-gray-700 mb-1">{agency.address}</p>
+                  <p className="text-sm text-gray-600">{agency.hours}</p>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Formulaire */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Vos Informations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Nom et Prénom */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Prénom</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    placeholder="Jean"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Nom</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    placeholder="Dupont"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Email et Téléphone */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="jean@example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Téléphone</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="+237 6XX XXX XXX"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Pays et Type Visa */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Pays Destination</label>
+                  <select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {countries.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Type de Visa</label>
+                  <select
+                    name="visaType"
+                    value={formData.visaType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {visaTypes.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Date et Heure */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Heure</label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Bouton Submit */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 text-lg"
+              >
+                {loading ? "Traitement..." : "Confirmer mon Rendez-vous"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Info */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Vous recevrez une confirmation par email et WhatsApp avec tous les détails de votre rendez-vous.
+          </AlertDescription>
+        </Alert>
+      </div>
+    </div>
   );
 }

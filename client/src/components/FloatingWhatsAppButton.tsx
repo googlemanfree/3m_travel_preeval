@@ -1,283 +1,67 @@
-import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Plane, BookOpen, User, Menu, X, Star, FolderOpen, Shield, Globe, Map, FileText, ChevronDown, Search, Download } from "lucide-react";
+import { MessageCircle } from "lucide-react";
+import { motion } from "framer-motion";
 import { useState } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
 
-const LOGO_URL = "/manus-storage/logo_3m_d0e23210.jpeg";
+/**
+ * Bouton WhatsApp flottant en bas à droite de l'écran
+ * Permet une prise de contact rapide avec l'agence
+ */
+export function FloatingWhatsAppButton() {
+  const [isHovered, setIsHovered] = useState(false);
 
-interface NavbarProps {
-  /** Highlight the CTA eval button — pass an onClick to open the eval modal */
-  onEvalClick?: () => void;
-  /** Active page for underline indicator */
-  activePage?: "home" | "flights" | "procedures" | "dashboard";
-}
-
-export default function Navbar({ onEvalClick, activePage }: NavbarProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [location] = useLocation();
-  const { user, isAuthenticated } = useAuth();
-
-  const isAdmin = isAuthenticated && user?.role === "admin";
-
-  const [resourcesOpen, setResourcesOpen] = useState(false);
-
-  const active = activePage ?? (
-    location === "/" ? "home" :
-    location.startsWith("/flights") ? "flights" :
-    location.startsWith("/procedures") ? "procedures" :
-    location.startsWith("/dashboard") ? "dashboard" :
-    location.startsWith("/visa-types") ? "visa-types" :
-    location.startsWith("/destinations") ? "destinations" :
-    location.startsWith("/guide") ? "guide" : undefined
-  );
-
-  const linkClass = (page: string) =>
-    `text-sm font-semibold transition-colors ${
-      active === page
-        ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
-        : "text-gray-600 hover:text-blue-700"
-    }`;
+  // Numéro WhatsApp de l'agence
+  const whatsappNumber = "237698104832";
+  const whatsappMessage = "Bonjour, je souhaiterais obtenir une évaluation pour mon projet de visa.";
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-blue-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+    <motion.div
+      className="fixed bottom-6 right-6 z-40"
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0.5, duration: 0.4, type: "spring", stiffness: 200 }}
+    >
+      {/* Pulse d'arrière-plan */}
+      <motion.div
+        className="absolute inset-0 rounded-full bg-green-500/20 border border-green-400/30"
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
 
-        {/* ── Logo ── */}
-        <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
-          <img
-            src={LOGO_URL}
-            alt="3M Travel & Services"
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-200 flex-shrink-0"
-            onError={e => {
-              const t = e.target as HTMLImageElement;
-              t.style.display = "none";
-              const fallback = t.nextElementSibling as HTMLElement | null;
-              if (fallback) fallback.style.display = "flex";
-            }}
-          />
-          {/* Fallback si logo indisponible */}
-          <div
-            className="w-10 h-10 rounded-full bg-blue-700 items-center justify-center text-white font-black text-sm flex-shrink-0"
-            style={{ display: "none" }}
-          >
-            3M
-          </div>
-          <div className="min-w-0">
-            <div className="font-black text-blue-800 text-sm leading-tight truncate">3M Travel & Services</div>
-            <div className="text-xs text-blue-500 font-medium truncate">Votre mobilité, notre expertise</div>
-          </div>
-        </Link>
+      {/* Bouton principal */}
+      <motion.a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative flex items-center justify-center w-14 h-14 bg-gradient-to-br from-green-400 to-green-600 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <MessageCircle className="w-7 h-7 text-white" />
 
-        {/* ── Nav desktop ── */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/" className={linkClass("home")}>Accueil</Link>
-          <Link href="/flights" className={linkClass("flights")}>
-            <span className="flex items-center gap-1"><Plane className="w-3.5 h-3.5" />Vols</span>
-          </Link>
-          <Link href="/procedures" className={linkClass("procedures")}>
-            <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" />Procédures</span>
-          </Link>
-
-          {/* Menu déroulant Ressources */}
-          <div className="relative" onMouseEnter={() => setResourcesOpen(true)} onMouseLeave={() => setResourcesOpen(false)}>
-            <button className={`text-sm font-semibold transition-colors flex items-center gap-1 ${
-              ["visa-types", "destinations", "guide", "tarifs", "avis", "blog"].includes(active ?? "")
-                ? "text-blue-700 border-b-2 border-blue-700 pb-0.5"
-                : "text-gray-600 hover:text-blue-700"
-            }`}>
-              <Globe className="w-3.5 h-3.5" />
-              Ressources
-              <ChevronDown className={`w-3 h-3 transition-transform ${resourcesOpen ? "rotate-180" : ""}`} />
-            </button>
-            {resourcesOpen && (
-              <div className="absolute top-full left-0 mt-1 bg-white border border-blue-100 rounded-lg shadow-lg py-2 min-w-48 z-50">
-                <Link href="/visa-types" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  Types de Visa
-                </Link>
-                <Link href="/destinations" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <Map className="w-4 h-4 text-blue-600" />
-                  Destinations
-                </Link>
-                <Link href="/guide" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
-                  Guide Complet
-                </Link>
-                <Link href="/tarifs" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <FileText className="w-4 h-4 text-blue-600" />
-                  Tarifs & Garanties
-                </Link>
-                <Link href="/avis" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <Star className="w-4 h-4 text-blue-600" />
-                  Avis Clients
-                </Link>
-                <Link href="/blog" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                  <BookOpen className="w-4 h-4 text-blue-600" />
-                  Blog
-                </Link>
-                <div className="border-t border-gray-100 my-1" />
-                <Link href="/ressources" className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 transition-colors">
-                  <Download className="w-4 h-4 text-blue-600" />
-                  Télécharger les guides PDF
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Link href="/mon-dossier" className={linkClass("mon-dossier")}>
-            <span className="flex items-center gap-1"><Search className="w-3.5 h-3.5" />Suivre mon dossier</span>
-          </Link>
-
-          {/* Admin link - only show if authenticated and admin */}
-          {isAdmin && (
-            <Link href="/admin" className="text-sm font-semibold text-purple-700 hover:text-purple-900 flex items-center gap-1 transition-colors">
-              <Shield className="w-3.5 h-3.5" />
-              Admin
-            </Link>
-          )}
-        </nav>
-
-        {/* ── Actions desktop ── */}
-        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-          {onEvalClick && (
-            <Button
-              onClick={onEvalClick}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm px-4 shadow-md"
-            >
-              <Star className="w-4 h-4 mr-1.5" />
-              Évaluation gratuite
-            </Button>
-          )}
-          {/* Admin login button - only show if NOT admin */}
-          {!isAdmin && (
-            <Link href="/admin/login">
-              <Button
-                variant="outline"
-                className="border-purple-700 text-purple-700 hover:bg-purple-50 font-bold text-sm px-4"
-              >
-                <Shield className="w-4 h-4 mr-1.5" />
-                Admin
-              </Button>
-            </Link>
-          )}
-          {/* Show Mon Espace if authenticated, otherwise show Login/Signup */}
-          {isAuthenticated ? (
-            <Link href="/mon-espace">
-              <Button
-                variant="outline"
-                className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
-              >
-                <User className="w-4 h-4 mr-1.5" />
-                Mon Espace
-              </Button>
-            </Link>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button
-                  variant="outline"
-                  className="border-blue-700 text-blue-700 hover:bg-blue-50 font-bold text-sm px-4"
-                >
-                  <User className="w-4 h-4 mr-1.5" />
-                  Connexion
-                </Button>
-              </Link>
-              <Link href="/register">
-                <Button
-                  className="bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm px-4 shadow-md"
-                >
-                  Inscription
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
-
-        {/* ── Mobile burger ── */}
-        <button
-          className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Fermer le menu" : "Ouvrir le menu"}
-          aria-expanded={mobileOpen}
+        {/* Tooltip au survol */}
+        <motion.div
+          className="absolute right-16 bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg whitespace-nowrap pointer-events-none"
+          initial={{ opacity: 0, x: 10 }}
+          animate={isHovered ? { opacity: 1, x: 0 } : { opacity: 0, x: 10 }}
+          transition={{ duration: 0.2 }}
         >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
+          Contactez-nous sur WhatsApp
+          <div className="absolute left-full top-1/2 -translate-y-1/2 w-2 h-2 bg-gray-900 transform rotate-45" />
+        </motion.div>
+      </motion.a>
 
-      {/* ── Mobile menu ── */}
-      {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-blue-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
-          <Link href="/" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            Accueil
-          </Link>
-          <Link href="/flights" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <Plane className="w-4 h-4 text-blue-600" /> Vols
-          </Link>
-          <Link href="/procedures" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <BookOpen className="w-4 h-4 text-blue-600" /> Procédures
-          </Link>
-          <Link href="/visa-types" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <FileText className="w-4 h-4 text-blue-600" /> Types de Visa
-          </Link>
-          <Link href="/destinations" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <Map className="w-4 h-4 text-blue-600" /> Destinations
-          </Link>
-          <Link href="/guide" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <Globe className="w-4 h-4 text-blue-600" /> Guide Complet
-          </Link>
-          <Link href="/ressources" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-            <Download className="w-4 h-4 text-blue-600" /> Télécharger les guides PDF
-          </Link>
-          <Link href="/mon-dossier" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-blue-700 py-2 border-b border-gray-100">
-            <Search className="w-4 h-4 text-blue-600" /> Suivre mon dossier
-          </Link>
-
-          {isAuthenticated ? (
-            <Link href="/mon-espace" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-              <User className="w-4 h-4" /> Mon Espace
-            </Link>
-          ) : (
-            <>
-              <Link href="/login" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-                <User className="w-4 h-4" /> Connexion
-              </Link>
-              <Link href="/register" onClick={() => setMobileOpen(false)}
-                className="flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800 py-2 border-b border-gray-100">
-                Inscription
-              </Link>
-            </>
-          )}
-          <Link href="/admin/login" onClick={() => setMobileOpen(false)}
-            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
-            <Shield className="w-4 h-4" /> Connexion Admin
-          </Link>
-          {isAdmin && (
-            <Link href="/admin" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900 py-2 border-b border-gray-100">
-              <Shield className="w-4 h-4" /> Administration
-            </Link>
-          )}
-          {onEvalClick && (
-            <Button
-              onClick={() => { setMobileOpen(false); onEvalClick(); }}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold mt-1"
-            >
-              <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
-            </Button>
-          )}
-        </div>
-      )}
-    </header>
+      {/* Label optionnel (visible sur mobile) */}
+      <motion.div
+        className="absolute bottom-16 right-0 bg-green-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg whitespace-nowrap md:hidden"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.3 }}
+      >
+        💬 Chat rapide
+      </motion.div>
+    </motion.div>
   );
 }

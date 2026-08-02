@@ -1,773 +1,901 @@
-/**
- * ScoringForm — Étapes 2 & 3 du tunnel de conversion
- * Formulaire multi-étapes avec :
- *  - Étape 1 : Informations personnelles
- *  - Étape 2 : Profil professionnel + calcul de score en temps réel
- *  - Étape 3 : Upload de documents (passeport, CV, diplôme)
- *  - Étape 4 : Résultat du scoring + paiement CinetPay 65 000 FCFA
- */
-
-import { useState, useCallback, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  User, FileText, MessageCircle, Upload, LogOut, CheckCircle,
+  Clock, AlertCircle, XCircle, ChevronRight, Send, Paperclip,
+  Home, Globe, Award, Trash2, Eye,
+  FolderOpen, Star
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  User, Briefcase, Upload, CreditCard, CheckCircle, ArrowRight, ArrowLeft,
-  FileText, AlertTriangle, Shield, Loader2, X, Eye, Star, TrendingUp
-} from "lucide-react";
+import { PendingActionsCards } from "@/components/PendingActionsCards";
+import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import { trpc } from "@/lib/trpc";
-import { useLocation } from "wouter";
-import {
-  calculateScore, ACADEMIC_LEVELS, LANGUAGE_LEVELS, JOB_SECTORS,
-  type ScoringInput, type ScoringResult
-} from "@/lib/scoring";
-import type { ProcedureInfo } from "./ProcedureDetailModal";
-import AILoadingAnimation from "./AILoadingAnimation";
+import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
+import { toast } from "sonner";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface UploadedFile {
-  url: string;
-  key: string;
-  name: string;
-  type: "passeport" | "cv" | "diplome";
-}
+const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 
-interface FormData {
-  // Étape 1 — Informations personnelles
-  fullName: string;
-  email: string;
-  whatsappNumber: string;
-  age: string;
-  nationality: string;
-  // Étape 2 — Profil professionnel
-  academicLevel: string;
-  experienceYears: string;
-  languageLevel: string;
-  jobSector: string;
-  // Étape 3 — Documents
-  passportFile: UploadedFile | null;
-  cvFile: UploadedFile | null;
-  diplomaFile: UploadedFile | null;
-}
-
-const STEPS = [
-  { id: 1, label: "Informations", icon: User },
-  { id: 2, label: "Profil",       icon: Briefcase },
-  { id: 3, label: "Documents",    icon: Upload },
-  { id: 4, label: "Résultat",     icon: Star },
-];
-
-const DESTINATION_MAP: Record<string, "canada" | "luxembourg" | "pologne" | "europe" | "golfe" | "oceanie" | "caucase" | "autre"> = {
-  "Canada": "canada",
-  "Luxembourg": "luxembourg",
-  "Pologne": "pologne",
-  "Europe Schengen": "europe",
-  "Golfe & Moyen-Orient": "golfe",
-  "Océanie": "oceanie",
-  "Caucase": "caucase",
+// ─── Statuts du dossier ───────────────────────────────────────────────────────
+const STEP_TOOLTIPS: Record<string, { description: string; actions: string }> = {
+  nouveau: { description: "Votre dossier a été créé avec succès", actions: "Attendez notre première évaluation" },
+  evaluation: { description: "Notre équipe analyse votre profil", actions: "Consultez votre rapport d'évaluation" },
+  documents: { description: "Documents supplémentaires requis", actions: "Téléversez les documents demandés" },
+  traitement: { description: "Votre dossier est en cours de traitement", actions: "Notre équipe prépare votre dossier" },
+  soumis: { description: "Votre dossier a été soumis", actions: "Attendez la décision des autorités" },
+  approuve: { description: "Votre visa a été approuvé ✓", actions: "Félicitations ! Consultez les détails" },
 };
 
-// ─── Composant de progression circulaire ─────────────────────────────────────
-function CircularScore({ score, badge }: { score: number; badge: string }) {
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (score / 100) * circumference;
-  const strokeColor = badge === "eligible" ? "#16a34a" : badge === "admissible" ? "#ca8a04" : "#dc2626";
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType; step: number }> = {
+  nouveau:     { label: "Nouveau dossier",       color: "text-gray-600",   bg: "bg-gray-100",   icon: Star,         step: 0 },
+  evaluation:  { label: "Évaluation en cours",   color: "text-blue-600",   bg: "bg-blue-100",   icon: Clock,        step: 1 },
+  documents:   { label: "Documents requis",      color: "text-amber-600",  bg: "bg-amber-100",  icon: AlertCircle,  step: 2 },
+  traitement:  { label: "Traitement du dossier", color: "text-indigo-600", bg: "bg-indigo-100", icon: FileText,     step: 3 },
+  soumis:      { label: "Dossier soumis",        color: "text-purple-600", bg: "bg-purple-100", icon: CheckCircle,  step: 4 },
+  approuve:    { label: "Visa approuvé ✓",       color: "text-green-600",  bg: "bg-green-100",  icon: CheckCircle,  step: 5 },
+  refuse:      { label: "Dossier refusé",        color: "text-red-600",    bg: "bg-red-100",    icon: XCircle,      step: -1 },
+};
+
+const DOSSIER_STEPS = [
+  { 
+    key: "nouveau", 
+    label: "Dossier créé",
+    description: "Votre dossier a été créé avec succès",
+    actions: "Attendez notre première évaluation"
+  },
+  { 
+    key: "evaluation", 
+    label: "Evaluation",
+    description: "Notre équipe analyse votre profil",
+    actions: "Consultez votre rapport d'évaluation dans vos messages"
+  },
+  { 
+    key: "documents", 
+    label: "Documents",
+    description: "Documents supplémentaires requis",
+    actions: "Téléversez les documents demandés dans l'onglet Documents"
+  },
+  { 
+    key: "traitement", 
+    label: "Traitement",
+    description: "Votre dossier est en cours de traitement",
+    actions: "Notre équipe prépare votre dossier pour la soumission"
+  },
+  { 
+    key: "soumis", 
+    label: "Soumis",
+    description: "Votre dossier a été soumis aux autorités",
+    actions: "Attendez la décision des autorités d'immigration"
+  },
+  { 
+    key: "approuve", 
+    label: "Approuvé",
+    description: "Votre visa a été approuvé ✓",
+    actions: "Félicitations ! Consultez les détails dans vos messages"
+  },
+];
+
+const FILE_TYPES: { value: string; label: string }[] = [
+  { value: "cv",                    label: "CV / Curriculum Vitae" },
+  { value: "passeport",             label: "Passeport" },
+  { value: "diplome",               label: "Diplôme" },
+  { value: "releve_notes",          label: "Relevé de notes" },
+  { value: "photo",                 label: "Photo d'identité" },
+  { value: "justificatif_domicile", label: "Justificatif de domicile" },
+  { value: "extrait_naissance",     label: "Extrait de naissance" },
+  { value: "casier_judiciaire",     label: "Casier judiciaire" },
+  { value: "autre",                 label: "Autre document" },
+];
+
+type Tab = "overview" | "documents" | "messages" | "profile";
+
+export default function Dashboard() {
+  const [, navigate] = useLocation();
+  const { candidate, logout, isAuthenticated } = useCandidateAuth();
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [messageText, setMessageText] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadType, setUploadType] = useState("cv");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showWelcomeNotification, setShowWelcomeNotification] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Afficher la notification de bienvenue une seule fois après l'inscription
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
+    if (!hasSeenWelcome && candidate?.id) {
+      setShowWelcomeNotification(true);
+      sessionStorage.setItem("hasSeenWelcome", "true");
+      // Masquer automatiquement après 8 secondes
+      const timer = setTimeout(() => setShowWelcomeNotification(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [candidate?.id]);
+
+  // Fonction pour actualiser manuellement
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (activeTab === "overview") {
+        await profileQuery.refetch();
+      } else if (activeTab === "documents") {
+        await documentsQuery.refetch();
+      } else if (activeTab === "messages") {
+        await messagesQuery.refetch();
+      }
+      toast.success("Donnees actualisees");
+    } catch (err) {
+      toast.error("Erreur lors de l'actualisation");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Rediriger si non connecté
+  useEffect(() => {
+    if (!isAuthenticated) navigate("/login");
+  }, [isAuthenticated, navigate]);
+
+  const utils = trpc.useUtils();
+
+  // Queries — le token est automatiquement injecté via main.tsx headers()
+  const profileQuery = trpc.oauthUserDashboard.getProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const documentsQuery = trpc.oauthUserDashboard.listDocuments.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "documents",
+    retry: false,
+  });
+
+  const messagesQuery = trpc.oauthUserDashboard.getMessages.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "messages",
+    refetchInterval: false, // Desactiver le refetch automatique
+    retry: false,
+  });
+
+  const pendingActionsQuery = trpc.oauthUserDashboard.getPendingActions.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "overview",
+    retry: false,
+  });
+
+  const sendMessageMutation = trpc.oauthUserDashboard.sendMessage.useMutation({
+    onSuccess: () => {
+      setMessageText("");
+      utils.oauthUserDashboard.getMessages.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteDocMutation = trpc.oauthUserDashboard.deleteDocument.useMutation({
+    onSuccess: () => {
+      utils.oauthUserDashboard.listDocuments.invalidate();
+      toast.success("Document supprimé.");
+    },
+  });
+
+  const saveDocMutation = trpc.oauthUserDashboard.saveDocument.useMutation({
+    onSuccess: () => {
+      utils.oauthUserDashboard.listDocuments.invalidate();
+      utils.oauthUserDashboard.getProfile.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  // Scroll vers le bas dans les messages
+  useEffect(() => {
+    if (activeTab === "messages") {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [messagesQuery.data, activeTab]);
+
+  async function handleUpload() {
+    if (!uploadFile) { toast.error("Sélectionnez un fichier."); return; }
+    if (uploadFile.size > 10 * 1024 * 1024) { toast.error("Fichier trop volumineux (max 10 Mo)."); return; }
+
+    setIsUploading(true);
+    try {
+      const token = getCandidateToken();
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("fileType", uploadType);
+
+      const res = await fetch("/api/candidate/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Erreur upload" }));
+        throw new Error(err.error || "Erreur lors de l'upload");
+      }
+
+      const { fileUrl, fileKey, fileName, fileSizeBytes, mimeType } = await res.json();
+
+      await saveDocMutation.mutateAsync({
+        fileType: uploadType as any,
+        fileName: fileName || uploadFile.name,
+        fileUrl,
+        fileKey,
+        fileSizeBytes: fileSizeBytes || uploadFile.size,
+        mimeType: mimeType || uploadFile.type,
+      });
+
+      toast.success("Document uploadé avec succès !");
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'upload");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    toast.success("Déconnexion réussie.");
+    navigate("/");
+  }
+
+  const profile = profileQuery.data;
+  const statusConfig = STATUS_CONFIG.nouveau; // dossierStatus removed
+  const StatusIcon = statusConfig.icon;
+  const currentStep = statusConfig.step;
+
+  if (!isAuthenticated) return null;
 
   return (
-    <div className="relative w-36 h-36 mx-auto">
-      <svg className="w-36 h-36 -rotate-90" viewBox="0 0 128 128">
-        <circle cx="64" cy="64" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="10" />
-        <circle
-          cx="64" cy="64" r={radius} fill="none"
-          stroke={strokeColor} strokeWidth="10"
-          strokeDasharray={`${progress} ${circumference}`}
-          strokeLinecap="round"
-          style={{ transition: "stroke-dasharray 1s ease-in-out" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-black text-gray-900">{score}</span>
-        <span className="text-xs text-gray-500 font-medium">/100</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="3M Travel" className="w-9 h-9 rounded-lg object-cover" />
+            <div>
+              <div className="font-black text-[#1E3A8A] text-sm leading-tight">3M Travel & Services</div>
+              <div className="text-xs text-gray-400">Espace Candidat</div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block text-sm text-gray-600 font-medium">
+              {candidate?.fullName ?? profile?.fullName}
+            </span>
+            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.color}`}>
+              <StatusIcon className="w-3.5 h-3.5" />
+              {statusConfig.label}
+            </div>
+            <button
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
+              title="Actualiser les donnees"
+            >
+              <svg className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <Home className="w-5 h-5" />
+            </Link>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se deconnecter">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {[
+                { id: "overview" as Tab,   icon: Globe,         label: "Mon dossier" },
+                { id: "documents" as Tab,  icon: FolderOpen,    label: "Mes documents" },
+                { id: "messages" as Tab,   icon: MessageCircle, label: "Messagerie" },
+                { id: "profile" as Tab,    icon: User,          label: "Mon profil" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-colors ${
+                    activeTab === item.id
+                      ? "bg-[#1E3A8A] text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  {item.label}
+                  {activeTab === item.id && <ChevronRight className="w-4 h-4 ml-auto" />}
+                </button>
+              ))}
+            </nav>
+
+            {/* Carte contact conseiller */}
+            <div className="mt-4 bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] rounded-2xl p-4 text-white">
+              <div className="text-xs font-bold uppercase tracking-wide text-blue-200 mb-2">Votre conseiller</div>
+              <div className="font-bold text-sm">Équipe 3M Travel</div>
+              <div className="text-blue-200 text-xs mt-1">Disponible 8h–18h (GMT+1)</div>
+              <a
+                href="https://wa.me/237698104832?text=Bonjour%2C%20je%20suis%20candidat%203M%20Travel%20et%20j%27ai%20une%20question%20sur%20mon%20dossier."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp direct
+              </a>
+            </div>
+          </aside>
+
+          {/* ── Contenu principal ────────────────────────────────────────────── */}
+          <main className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {/* ── Onglet : Mon dossier ─────────────────────────────────────── */}
+              {activeTab === "overview" && (
+                <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  {/* Message d'accueil personnalisé */}
+                  {(() => {
+                    const hour = new Date().getHours();
+                    const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+                    const name = candidate?.fullName ?? profile?.fullName ?? "";
+                    const firstName = name.split(" ")[0];
+                    return (
+                      <>
+                        {/* Notification de bienvenue personnalisée */}
+                        <AnimatePresence>
+                          {showWelcomeNotification && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                              className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-5 shadow-lg"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-4 flex-1">
+                                  <motion.div
+                                    animate={{ scale: [1, 1.1, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"
+                                  >
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                  </motion.div>
+                                  <div className="flex-1 pt-0.5">
+                                    <h3 className="text-lg font-black text-green-900">Bienvenue {firstName} ! 🎉</h3>
+                                    <p className="text-green-700 text-sm mt-1">
+                                      Votre compte a été créé avec succès. Vous êtes maintenant connecté à votre espace candidat 3M Travel & Services.
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Email vérifié</div>
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Profil actif</div>
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Prêt à commencer</div>
+                                    </div>
+                                    <p className="text-green-600 text-xs mt-3 font-medium">
+                                      💡 Conseil : Commencez par compléter votre profil et télécharger vos documents pour accélérer le traitement de votre dossier.
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setShowWelcomeNotification(false)}
+                                  className="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+                                >
+                                  <XCircle className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-2xl p-5 mb-6 text-white">
+                          <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                              <h1 className="text-xl font-black">{greeting}, {firstName} ! 👋</h1>
+                              <p className="text-blue-200 text-sm mt-0.5">
+                                Bienvenue dans votre espace candidat 3M Travel & Services
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Link href="/flights" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                                <Globe className="w-3.5 h-3.5" /> Vols
+                              </Link>
+                              <Link href="/procedures" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                                <FileText className="w-3.5 h-3.5" /> Procédures
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+
+                  <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
+
+                  {/* Barre de progression du profil */}
+                  {profileQuery.data && (
+                    <ProfileCompletionBar 
+                      profile={profileQuery.data}
+                      onEditClick={() => setActiveTab("profile")}
+                    />
+                  )}
+
+                  {/* Actions en attente */}
+                  {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions en attente</h3>
+                      <PendingActionsCards 
+                        actions={pendingActionsQuery.data} 
+                        isLoading={pendingActionsQuery.isLoading}
+                      />
+                    </div>
+                  )}
+
+                  {profileQuery.isLoading ? (
+                    <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement de votre dossier...</div>
+                  ) : profileQuery.error ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-50 rounded-2xl p-6 border-l-4 border-red-500"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-red-900 mb-1">Erreur de chargement</h3>
+                          <p className="text-red-700 text-sm mb-3">Impossible de charger votre dossier. Veuillez actualiser la page ou vous reconnecter.</p>
+                          <div className="flex gap-2">
+                            <button onClick={handleRefresh} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded font-medium transition">
+                              Actualiser
+                            </button>
+                            <button onClick={handleLogout} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium transition">
+                              Se reconnecter
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <>
+                      {/* Barre de progression des étapes */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-900">Progression de votre dossier</h3>
+                          <span className="text-xs font-medium text-gray-500">Etape {statusConfig.step + 1}/6</span>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                          {DOSSIER_STEPS.map((step, idx) => {
+                            const isActive = false; // dossierStatus removed
+                            const isCompleted = false; // dossierStatus removed
+                            const tooltip = STEP_TOOLTIPS[step.key];
+                            return (
+                              <div key={step.key} className="flex-1 group relative">
+                                <motion.div
+                                  className={`flex-1 h-2 rounded-full transition-all cursor-help ${
+                                    isCompleted ? "bg-green-500" : isActive ? "bg-blue-500" : "bg-gray-200"
+                                  }`}
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ delay: idx * 0.1 }}
+                                />
+                                {/* Infobulle */}
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10 }}
+                                  whileHover={{ opacity: 1, y: 0 }}
+                                  className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50"
+                                >
+                                  <div className="bg-gray-900 text-white text-xs rounded-lg p-3 w-48 shadow-lg">
+                                    <div className="font-semibold mb-1">{step.label}</div>
+                                    <div className="text-gray-200 mb-2">{tooltip.description}</div>
+                                    <div className="text-blue-300 text-xs italic">📍 {tooltip.actions}</div>
+                                    {/* Flèche de l'infobulle */}
+                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                  </div>
+                                </motion.div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          {DOSSIER_STEPS.map((step) => (
+                            <span key={step.key} className="text-center flex-1">{step.label}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Statut actuel */}
+                      <div className={`rounded-2xl p-5 mb-6 ${statusConfig.bg}`}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-10 h-10 rounded-xl ${statusConfig.bg} flex items-center justify-center border-2 border-current`}>
+                            <StatusIcon className={`w-5 h-5 ${statusConfig.color}`} />
+                          </div>
+                          <div>
+                            <div className={`font-black text-lg ${statusConfig.color}`}>{statusConfig.label}</div>
+                            <div className="text-sm text-gray-600">
+                              Votre dossier est en cours de traitement par notre équipe.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline des étapes */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <h2 className="font-bold text-gray-800 mb-5">Progression de votre dossier</h2>
+                        <div className="relative">
+                          <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200 z-0" />
+                          <div
+                            className="absolute top-5 left-5 h-0.5 bg-[#1E3A8A] z-0 transition-all duration-1000"
+                            style={{ width: `${Math.max(0, (currentStep / (DOSSIER_STEPS.length - 1)) * 100)}%` }}
+                          />
+                          <div className="relative z-10 flex justify-between">
+                            {DOSSIER_STEPS.map((step, i) => {
+                              const done = i < currentStep;
+                              const active = i === currentStep;
+                              return (
+                                <div key={step.key} className="flex flex-col items-center gap-2">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                    done ? "bg-[#1E3A8A] border-[#1E3A8A]" :
+                                    active ? "bg-white border-[#1E3A8A] shadow-lg shadow-blue-200" :
+                                    "bg-white border-gray-200"
+                                  }`}>
+                                    {done ? (
+                                      <CheckCircle className="w-5 h-5 text-white" />
+                                    ) : (
+                                      <span className={`text-xs font-bold ${active ? "text-[#1E3A8A]" : "text-gray-400"}`}>{i + 1}</span>
+                                    )}
+                                  </div>
+                                  <span className={`text-xs font-medium text-center max-w-[60px] leading-tight ${active ? "text-[#1E3A8A] font-bold" : done ? "text-gray-600" : "text-gray-400"}`}>
+                                    {step.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Infos du dossier */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {[
+                          { id: "member_since", label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
+                          { id: "dossier_status", label: "Statut du dossier", value: profile?.status ? STATUS_CONFIG[profile.status]?.label || profile.status : "Nouveau", icon: FileText },
+                        ].map((item) => (
+                          <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <item.icon className="w-5 h-5 text-[#1E3A8A]" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-400">{item.label}</div>
+                              <div className="font-bold text-gray-800 text-sm">{item.value}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CTA si nouveau */}
+                      {false && (
+                        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <div className="font-bold text-amber-800">Action requise</div>
+                              <div className="text-sm text-amber-700 mt-1">
+                                Pour accélérer le traitement de votre dossier, uploadez vos documents (CV, passeport, diplômes) dans l'onglet <strong>Mes documents</strong>.
+                              </div>
+                              <button
+                                onClick={() => setActiveTab("documents")}
+                                className="mt-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors flex items-center gap-2"
+                              >
+                                <Upload className="w-4 h-4" /> Uploader mes documents
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Documents ───────────────────────────────────────── */}
+              {activeTab === "documents" && (
+                <motion.div key="documents" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mes Documents</h1>
+
+                  {/* Zone d'upload */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <Upload className="w-5 h-5 text-[#1E3A8A]" /> Ajouter un document
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-semibold text-gray-700">Type de document</Label>
+                        <Select value={uploadType} onValueChange={setUploadType}>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FILE_TYPES.map(t => (
+                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-semibold text-gray-700">Fichier (PDF, JPG, PNG — max 10 Mo)</Label>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
+                          className="mt-1 block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#1E3A8A] file:text-white file:font-semibold file:cursor-pointer hover:file:bg-[#2563EB] transition-colors"
+                        />
+                      </div>
+                    </div>
+                    {uploadFile && (
+                      <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                        <Paperclip className="w-4 h-4 text-[#1E3A8A]" />
+                        <span className="font-medium">{uploadFile.name}</span>
+                        <span className="text-gray-400">({(uploadFile.size / 1024 / 1024).toFixed(2)} Mo)</span>
+                      </div>
+                    )}
+                    <Button
+                      onClick={handleUpload}
+                      disabled={!uploadFile || isUploading}
+                      className="mt-4 bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+                    >
+                      {isUploading ? (
+                        <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Upload en cours...</span>
+                      ) : (
+                        <span className="flex items-center gap-2"><Upload className="w-4 h-4" />Envoyer le document</span>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Liste des documents */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100">
+                      <h2 className="font-bold text-gray-800">Documents envoyés</h2>
+                    </div>
+                    {documentsQuery.isLoading ? (
+                      <div className="p-8 text-center text-gray-400">Chargement...</div>
+                    ) : !documentsQuery.data?.length ? (
+                      <div className="p-8 text-center">
+                        <FolderOpen className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                        <p className="text-gray-400 text-sm">Aucun document envoyé pour l'instant.</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {documentsQuery.data.map((doc) => {
+                          const typeLabel = FILE_TYPES.find(t => t.value === doc.fileType)?.label ?? doc.fileType;
+                          const statusColors: Record<string, string> = {
+                            uploaded: "bg-blue-100 text-blue-700",
+                            verified: "bg-green-100 text-green-700",
+                            rejected: "bg-red-100 text-red-700",
+                          };
+                          return (
+                            <div key={doc.id} className="px-6 py-4 flex items-center gap-4">
+                              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-[#1E3A8A]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-gray-800 text-sm truncate">{doc.fileName}</div>
+                                <div className="text-xs text-gray-400">{typeLabel} · {new Date(doc.uploadedAt).toLocaleDateString("fr-FR")}</div>
+                              </div>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColors[doc.status] ?? "bg-gray-100 text-gray-600"}`}>
+                                {doc.status === "uploaded" ? "Envoyé" : doc.status === "verified" ? "Vérifié" : "Refusé"}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-[#1E3A8A] transition-colors" title="Voir">
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <button
+                                  onClick={() => deleteDocMutation.mutate({ fileId: doc.id })}
+                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Messagerie ──────────────────────────────────────── */}
+              {activeTab === "messages" && (
+                <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-4">Messagerie</h1>
+                  <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {messagesQuery.isLoading ? (
+                        <div className="text-center text-gray-400 py-8">Chargement...</div>
+                      ) : !messagesQuery.data?.length ? (
+                        <div className="text-center py-12">
+                          <MessageCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                          <p className="text-gray-400 text-sm">Aucun message pour l'instant.</p>
+                        </div>
+                      ) : (
+                        messagesQuery.data.map((msg) => {
+                          const isCandidate = msg.senderRole === "candidate";
+                          return (
+                            <div key={msg.id} className={`flex ${isCandidate ? "justify-end" : "justify-start"}`}>
+                              <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                                isCandidate
+                                  ? "bg-[#1E3A8A] text-white rounded-br-sm"
+                                  : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                              }`}>
+                                {!isCandidate && (
+                                  <div className="text-xs font-bold text-[#1E3A8A] mb-1">Conseiller 3M Travel</div>
+                                )}
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                <div className={`text-xs mt-1.5 ${isCandidate ? "text-blue-200" : "text-gray-400"}`}>
+                                  {new Date(msg.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Zone de saisie */}
+                    <div className="border-t border-gray-100 p-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Écrivez votre message..."
+                          value={messageText}
+                          onChange={e => setMessageText(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter" && !e.shiftKey && messageText.trim()) {
+                              e.preventDefault();
+                              sendMessageMutation.mutate({ content: messageText.trim() });
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() => {
+                            if (messageText.trim()) sendMessageMutation.mutate({ content: messageText.trim() });
+                          }}
+                          disabled={!messageText.trim() || sendMessageMutation.isPending}
+                          className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-4 rounded-xl"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">Appuyez sur Entrée pour envoyer · Notre équipe répond sous 24h</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Profil ──────────────────────────────────────────── */}
+              {activeTab === "profile" && (
+                <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mon Profil</h1>
+                  <ProfileEditor profile={profileQuery.data} onSaved={() => utils.candidate.getProfile.invalidate()} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Composant Upload de fichier ──────────────────────────────────────────────
-function FileUploadZone({
-  label, accept, required, uploaded, onUpload, onRemove, uploading
-}: {
-  label: string;
-  accept: string;
-  required?: boolean;
-  uploaded: UploadedFile | null;
-  onUpload: (file: File) => void;
-  onRemove: () => void;
-  uploading: boolean;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) onUpload(file);
-  }, [onUpload]);
-
-  return (
-    <div className="space-y-1">
-      <Label className="text-sm font-medium text-gray-700">
-        {label} {required && <span className="text-red-500">*</span>}
-      </Label>
-      {uploaded ? (
-        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-          <span className="text-sm text-green-700 flex-1 truncate">{uploaded.name}</span>
-          <button onClick={onRemove} type="button" aria-label={`Supprimer le fichier ${uploaded.name}`} className="text-gray-400 hover:text-red-500 transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      ) : (
-        <div
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          onClick={() => inputRef.current?.click()}
-          role="button"
-          tabIndex={0}
-          aria-label="Choisir ou déposer un fichier"
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          className="border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-4 text-center cursor-pointer transition-colors group"
-        >
-          {uploading ? (
-            <div className="flex items-center justify-center gap-2 text-blue-600">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Téléversement en cours...</span>
-            </div>
-          ) : (
-            <>
-              <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-500 mx-auto mb-1 transition-colors" />
-              <p className="text-xs text-gray-500">Cliquez ou glissez-déposez votre fichier</p>
-              <p className="text-xs text-gray-400 mt-0.5">PDF, JPG, PNG — Max 5 Mo</p>
-            </>
-          )}
-          <input
-            ref={inputRef}
-            type="file"
-            accept={accept}
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) onUpload(file);
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Composant Principal ──────────────────────────────────────────────────────
-interface ScoringFormProps {
-  procedure: ProcedureInfo | null;
-  open: boolean;
-  onClose: () => void;
-}
-
-export default function ScoringForm({ procedure, open, onClose }: ScoringFormProps) {
-  const [, navigate] = useLocation();
-  const [step, setStep] = useState(1);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploadingType, setUploadingType] = useState<string | null>(null);
-  const [scoringResult, setScoringResult] = useState<ScoringResult | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [isAnalyzingCV, setIsAnalyzingCV] = useState(false);
-
-  const [form, setForm] = useState<FormData>({
-    fullName: "", email: "", whatsappNumber: "", age: "", nationality: "",
-    academicLevel: "", experienceYears: "", languageLevel: "", jobSector: "",
-    passportFile: null, cvFile: null, diplomaFile: null,
+// ─── Sous-composant : éditeur de profil ──────────────────────────────────────
+function ProfileEditor({ profile, onSaved }: { profile: any; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    nationality: "",
+    dateOfBirth: "",
+    educationLevel: "",
+    employmentStatus: "",
+    languageLevel: "",
+    destination: "autre",
+    visaType: "",
   });
 
-  const createApplication = trpc.application.createApplication.useMutation();
-  const evaluateCVWithAI = trpc.application.evaluateCVWithAI.useMutation();
-
-  const set = (field: keyof FormData, value: string) =>
-    setForm(prev => ({ ...prev, [field]: value }));
-
-  // Calcul du score en temps réel dès que les 5 critères sont remplis
-  const computeScore = useCallback(() => {
-    if (!form.academicLevel || !form.experienceYears || !form.languageLevel || !form.jobSector || !form.age) {
-      return null;
-    }
-    const input: ScoringInput = {
-      academicLevel: form.academicLevel,
-      experienceYears: parseInt(form.experienceYears) || 0,
-      languageLevel: form.languageLevel,
-      jobSector: form.jobSector,
-      age: parseInt(form.age) || 0,
-    };
-    return calculateScore(input);
-  }, [form.academicLevel, form.experienceYears, form.languageLevel, form.jobSector, form.age]);
-
-  // Upload d'un fichier vers S3 via l'API candidate/upload
-  const uploadFile = async (file: File, type: "passeport" | "cv" | "diplome") => {
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors(prev => ({ ...prev, [type]: "Le fichier dépasse 5 Mo" }));
-      return;
-    }
-    setUploadingType(type);
-    setErrors(prev => ({ ...prev, [type]: "" }));
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("fileType", type);
-
-      const res = await fetch("/api/candidate/upload-public", {
-        method: "POST",
-        body: formData,
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        fullName: profile.fullName ?? "",
+        phone: profile.phone ?? "",
+        nationality: profile.nationality ?? "",
+        dateOfBirth: profile.dateOfBirth ?? "",
+        educationLevel: profile.educationLevel ?? "",
+        employmentStatus: profile.employmentStatus ?? "",
+        languageLevel: profile.languageLevel ?? "",
+        destination: profile.destination ?? "autre",
+        visaType: profile.visaType ?? "",
       });
-
-      if (!res.ok) throw new Error("Échec du téléversement");
-      const data = await res.json() as { fileUrl: string; fileKey: string; fileName: string };
-
-      const uploaded: UploadedFile = {
-        url: data.fileUrl,
-        key: data.fileKey,
-        name: data.fileName || file.name,
-        type,
-      };
-
-      setForm(prev => ({
-        ...prev,
-        passportFile: type === "passeport" ? uploaded : prev.passportFile,
-        cvFile: type === "cv" ? uploaded : prev.cvFile,
-        diplomaFile: type === "diplome" ? uploaded : prev.diplomaFile,
-      }));
-
-      // Si c'est un CV, déclencher l'analyse IA
-      if (type === "cv") {
-        analyzeCV(file);
-      }
-    } catch (err) {
-      setErrors(prev => ({ ...prev, [type]: "Erreur lors du téléversement. Réessayez." }));
-    } finally {
-      setUploadingType(null);
     }
-  };
+  }, [profile]);
 
-  const removeFile = (type: "passeport" | "cv" | "diplome") => {
-    setForm(prev => ({
-      ...prev,
-      passportFile: type === "passeport" ? null : prev.passportFile,
-      cvFile: type === "cv" ? null : prev.cvFile,
-      diplomaFile: type === "diplome" ? null : prev.diplomaFile,
-    }));
-  };
+  const updateMutation = trpc.oauthUserDashboard.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("Profil mis à jour !");
+      onSaved();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-  // Analyser le CV avec l'IA
-  const analyzeCV = async (file: File) => {
-    if (!procedure) return;
-    setIsAnalyzingCV(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = (e.target?.result as string)?.split(',')[1];
-        if (!base64) {
-          setIsAnalyzingCV(false);
-          return;
-        }
-        
-        try {
-          await evaluateCVWithAI.mutateAsync({
-            cvBase64: base64,
-            candidateName: form.fullName,
-            destination: procedure.destination,
-            email: form.email,
-          });
-        } finally {
-          setIsAnalyzingCV(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      console.error('[AI Analysis] Error:', err);
-      setIsAnalyzingCV(false);
-    }
-  };
-
-  // Validation par étape
-  const validateStep = (s: number): boolean => {
-    const errs: Record<string, string> = {};
-    if (s === 1) {
-      if (!form.fullName.trim()) errs.fullName = "Nom requis";
-      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = "Email invalide";
-      if (!form.whatsappNumber.trim() || form.whatsappNumber.length < 8) errs.whatsappNumber = "Numéro requis (min. 8 chiffres)";
-      if (!form.age || parseInt(form.age) < 18 || parseInt(form.age) > 65) errs.age = "Âge entre 18 et 65 ans requis";
-    }
-    if (s === 2) {
-      if (!form.academicLevel) errs.academicLevel = "Niveau d'études requis";
-      if (!form.experienceYears) errs.experienceYears = "Années d'expérience requises";
-      if (!form.languageLevel) errs.languageLevel = "Niveau de langue requis";
-      if (!form.jobSector) errs.jobSector = "Secteur d'activité requis";
-    }
-    if (s === 3) {
-      if (!form.passportFile) errs.passeport = "Le passeport est obligatoire";
-      if (!form.cvFile) errs.cv = "Le CV est obligatoire";
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const goNext = () => {
-    if (!validateStep(step)) return;
-    if (step === 2) {
-      const result = computeScore();
-      setScoringResult(result);
-    }
-    setStep(s => s + 1);
-  };
-
-  const goPrev = () => setStep(s => s - 1);
-
-  // Soumission finale
-  const handleSubmit = async () => {
-    if (!procedure) return;
-    setSubmitting(true);
-
-    const score = scoringResult ?? computeScore();
-    const destKey = DESTINATION_MAP[procedure.destination] ?? "autre";
-
-    try {
-      const result = await createApplication.mutateAsync({
-        fullName: form.fullName,
-        email: form.email,
-        whatsappNumber: form.whatsappNumber,
-        age: parseInt(form.age) || undefined,
-        nationality: form.nationality || undefined,
-        academicLevel: form.academicLevel || undefined,
-        experienceYears: parseInt(form.experienceYears) || undefined,
-        languageSkills: form.languageLevel || undefined,
-        jobSector: form.jobSector || undefined,
-        destination: destKey,
-        formulaChosen: "integral",
-        passportUrl: form.passportFile?.url,
-        cvUrl: form.cvFile?.url,
-        diplomaUrl: form.diplomaFile?.url,
-        scoringTotal: score?.total,
-        scoringDetails: score ? JSON.stringify(score.details) : undefined,
-        scoringBadge: score?.badge,
-        procedureId: procedure.id,
-        procedureTitle: procedure.title,
-      });
-
-      // Rediriger vers la vérification email
-      navigate(`/verify-application-email?dossier=${result.dossierNumber}`);
-    } catch (err) {
-      setErrors({ submit: "Une erreur est survenue. Veuillez réessayer." });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (!procedure) return null;
-
-  const liveScore = step >= 2 ? computeScore() : null;
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    updateMutation.mutate(form as any);
+  }
 
   return (
-    <>
-      <AILoadingAnimation isVisible={isAnalyzingCV} />
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-lg max-h-[92vh] overflow-y-auto p-0 gap-0">
-        {/* En-tête */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white p-5 rounded-t-xl">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">{procedure.flag}</span>
-            <span className="text-xs text-blue-200">{procedure.destination}</span>
-          </div>
-          <h2 className="font-black text-base leading-tight">{procedure.title}</h2>
-
-          {/* Barre de progression linéaire */}
-          <div className="mt-4 h-1.5 bg-blue-800/50 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-blue-400 to-blue-300 rounded-full"
-              initial={{ width: "0%" }}
-              animate={{ width: `${(step / STEPS.length) * 100}%` }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
+    <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="grid sm:grid-cols-2 gap-5">
+        {[
+          { id: "fullName", label: "Nom complet", type: "text", placeholder: "Jean Dupont" },
+          { id: "phone", label: "Téléphone", type: "tel", placeholder: "+237 6XX XXX XXX" },
+          { id: "nationality", label: "Nationalité", type: "text", placeholder: "Camerounaise" },
+          { id: "dateOfBirth", label: "Date de naissance", type: "date", placeholder: "" },
+          { id: "educationLevel", label: "Niveau d'études", type: "text", placeholder: "Master, Licence..." },
+          { id: "employmentStatus", label: "Situation professionnelle", type: "text", placeholder: "Salarié, Étudiant..." },
+          { id: "languageLevel", label: "Niveau de langue", type: "text", placeholder: "IELTS 7.0, DELF B2..." },
+          { id: "visaType", label: "Type de visa souhaité", type: "text", placeholder: "Résidence permanente..." },
+        ].map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-semibold text-gray-700">{field.label}</Label>
+            <Input
+              id={field.id}
+              type={field.type}
+              placeholder={field.placeholder}
+              value={(form as any)[field.id]}
+              onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
+              className="mt-1"
             />
           </div>
+        ))}
+      </div>
 
-          {/* Stepper */}
-          <div className="flex items-center gap-1 mt-4">
-            {STEPS.map((s, i) => {
-              const Icon = s.icon;
-              const active = step === s.id;
-              const done = step > s.id;
-              return (
-                <motion.div
-                  key={s.id}
-                  className="flex items-center flex-1"
-                  initial={false}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.div
-                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-all ${
-                      active ? "bg-white text-blue-800" :
-                      done ? "bg-blue-500 text-white" :
-                      "bg-blue-800/50 text-blue-300"
-                    }`}
-                    animate={active ? { scale: 1.05 } : { scale: 1 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {done ? <CheckCircle className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
-                    <span className="hidden sm:block">{s.label}</span>
-                  </motion.div>
-                  {i < STEPS.length - 1 && (
-                    <motion.div
-                      className={`flex-1 h-0.5 mx-1 ${done ? "bg-blue-400" : "bg-blue-800/50"}`}
-                      animate={done ? { backgroundColor: "rgb(96, 165, 250)" } : {}}
-                      transition={{ duration: 0.3 }}
-                    />
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+      <div className="mt-5">
+        <Label className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
+        <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
+          <SelectTrigger className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[
+              { value: "canada",     label: "🇨🇦 Canada" },
+              { value: "luxembourg", label: "🇱🇺 Luxembourg" },
+              { value: "pologne",    label: "🇵🇱 Pologne" },
+              { value: "europe",     label: "🇪🇺 Europe Schengen" },
+              { value: "golfe",      label: "🇦🇪 Golfe & Moyen-Orient" },
+              { value: "autre",      label: "Autre" },
+            ].map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div className="p-5 space-y-4 relative min-h-96">
-          {/* Contenu animé des étapes */}
-          <AnimatePresence mode="wait">
-            {/* ── ÉTAPE 1 : Informations personnelles ── */}
-            {step === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
-            >
-              <h3 className="font-bold text-gray-800">Vos informations personnelles</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="form-fullName">Nom complet <span className="text-red-500">*</span></Label>
-                  <Input id="form-fullName" value={form.fullName} onChange={e => set("fullName", e.target.value)}
-                    placeholder="Ex : Jean-Pierre Mbarga" className="mt-1" />
-                  {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="form-email">Adresse e-mail <span className="text-red-500">*</span></Label>
-                  <Input id="form-email" type="email" value={form.email} onChange={e => set("email", e.target.value)}
-                    placeholder="votre@email.com" className="mt-1" />
-                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="form-whatsappNumber">Numéro WhatsApp <span className="text-red-500">*</span></Label>
-                  <Input id="form-whatsappNumber" value={form.whatsappNumber} onChange={e => set("whatsappNumber", e.target.value)}
-                    placeholder="+237 6XX XXX XXX" className="mt-1" />
-                  {errors.whatsappNumber && <p className="text-xs text-red-500 mt-1">{errors.whatsappNumber}</p>}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="form-age">Âge <span className="text-red-500">*</span></Label>
-                    <Input id="form-age" type="number" min={18} max={65} value={form.age}
-                      onChange={e => set("age", e.target.value)} placeholder="Ex : 28" className="mt-1" />
-                    {errors.age && <p className="text-xs text-red-500 mt-1">{errors.age}</p>}
-                  </div>
-                  <div>
-                    <Label htmlFor="form-nationality">Nationalité</Label>
-                    <Input id="form-nationality" value={form.nationality} onChange={e => set("nationality", e.target.value)}
-                      placeholder="Camerounaise" className="mt-1" />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-            )}
-
-              {/* ── ÉTAPE 2 : Profil professionnel + Scoring ── */}
-            {step === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
-            >
-              <h3 className="font-bold text-gray-800">Votre profil professionnel</h3>
-
-              {/* Score en temps réel */}
-              {liveScore && (
-                <div className={`p-3 rounded-xl border-2 ${
-                  liveScore.badge === "eligible" ? "border-green-200 bg-green-50" :
-                  liveScore.badge === "admissible" ? "border-yellow-200 bg-yellow-50" :
-                  "border-red-200 bg-red-50"
-                }`}>
-                  <div className="flex items-center gap-3">
-                    <CircularScore score={liveScore.total} badge={liveScore.badge} />
-                    <div>
-                      <p className={`font-bold text-sm ${liveScore.color}`}>{liveScore.label}</p>
-                      <p className="text-xs text-gray-600 mt-1 leading-relaxed">{liveScore.description}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="form-academicLevel">Niveau d'études <span className="text-red-500">*</span></Label>
-                  <Select value={form.academicLevel} onValueChange={v => set("academicLevel", v)}>
-                    <SelectTrigger id="form-academicLevel" className="mt-1">
-                      <SelectValue placeholder="Sélectionnez votre diplôme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ACADEMIC_LEVELS.map(l => (
-                        <SelectItem key={l.value} value={l.value}>
-                          {l.label} <span className="text-gray-400 text-xs">({l.points} pts)</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.academicLevel && <p className="text-xs text-red-500 mt-1">{errors.academicLevel}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="form-experienceYears">Années d'expérience professionnelle <span className="text-red-500">*</span></Label>
-                  <Select value={form.experienceYears} onValueChange={v => set("experienceYears", v)}>
-                    <SelectTrigger id="form-experienceYears" className="mt-1">
-                      <SelectValue placeholder="Sélectionnez votre expérience" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="0">Moins d'un an (0 pt)</SelectItem>
-                      <SelectItem value="1">1 à 2 ans (10 pts)</SelectItem>
-                      <SelectItem value="3">3 à 4 ans (15 pts)</SelectItem>
-                      <SelectItem value="5">5 à 7 ans (20 pts)</SelectItem>
-                      <SelectItem value="9">Plus de 8 ans (25 pts)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.experienceYears && <p className="text-xs text-red-500 mt-1">{errors.experienceYears}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="form-languageLevel">Compétences linguistiques <span className="text-red-500">*</span></Label>
-                  <Select value={form.languageLevel} onValueChange={v => set("languageLevel", v)}>
-                    <SelectTrigger id="form-languageLevel" className="mt-1">
-                      <SelectValue placeholder="Sélectionnez votre niveau" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGE_LEVELS.map(l => (
-                        <SelectItem key={l.value} value={l.value}>
-                          {l.label} <span className="text-gray-400 text-xs">({l.points} pts)</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.languageLevel && <p className="text-xs text-red-500 mt-1">{errors.languageLevel}</p>}
-                </div>
-
-                <div>
-                  <Label htmlFor="form-jobSector">Secteur d'activité <span className="text-red-500">*</span></Label>
-                  <Select value={form.jobSector} onValueChange={v => set("jobSector", v)}>
-                    <SelectTrigger id="form-jobSector" className="mt-1">
-                      <SelectValue placeholder="Sélectionnez votre secteur" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="" disabled>── Secteurs prioritaires (20 pts) ──</SelectItem>
-                      {JOB_SECTORS.filter(s => s.category === "prioritaire").map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                      <SelectItem value="" disabled>── Secteurs secondaires (12 pts) ──</SelectItem>
-                      {JOB_SECTORS.filter(s => s.category === "secondaire").map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                      <SelectItem value="" disabled>── Autres (5 pts) ──</SelectItem>
-                      {JOB_SECTORS.filter(s => s.category === "autre").map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.jobSector && <p className="text-xs text-red-500 mt-1">{errors.jobSector}</p>}
-                </div>
-              </div>
-            </motion.div>
-            )}
-
-              {/* ── ÉTAPE 3 : Upload de documents ── */}
-            {step === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
-            >
-              <h3 className="font-bold text-gray-800">Téléversement de vos documents</h3>
-              <p className="text-sm text-gray-500">
-                Vos documents sont stockés de manière sécurisée et ne seront consultés que par nos conseillers.
-              </p>
-
-              <div className="space-y-4">
-                <FileUploadZone
-                  label="📁 Passeport en cours de validité"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  required
-                  uploaded={form.passportFile}
-                  onUpload={(file) => uploadFile(file, "passeport")}
-                  onRemove={() => removeFile("passeport")}
-                  uploading={uploadingType === "passeport"}
-                />
-                {errors.passeport && <p className="text-xs text-red-500">{errors.passeport}</p>}
-
-                <FileUploadZone
-                  label="📁 Curriculum Vitae (CV) mis à jour"
-                  accept=".pdf,.doc,.docx"
-                  required
-                  uploaded={form.cvFile}
-                  onUpload={(file) => uploadFile(file, "cv")}
-                  onRemove={() => removeFile("cv")}
-                  uploading={uploadingType === "cv"}
-                />
-                {errors.cv && <p className="text-xs text-red-500">{errors.cv}</p>}
-
-                <FileUploadZone
-                  label="📁 Diplôme le plus élevé (optionnel)"
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  uploaded={form.diplomaFile}
-                  onUpload={(file) => uploadFile(file, "diplome")}
-                  onRemove={() => removeFile("diplome")}
-                  uploading={uploadingType === "diplome"}
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-                <div className="flex items-start gap-2">
-                  <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-blue-700">
-                    Vos documents sont chiffrés et stockés sur des serveurs sécurisés. Ils ne seront partagés avec aucun tiers sans votre consentement explicite.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-            )}
-
-              {/* ── ÉTAPE 4 : Résultat du scoring + Paiement ── */}
-            {step === 4 && scoringResult && (
-            <motion.div
-              key="step-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-4"
-            >
-              <h3 className="font-bold text-gray-800 text-center">Votre rapport d'éligibilité</h3>
-
-              {/* Score circulaire */}
-              <CircularScore score={scoringResult.total} badge={scoringResult.badge} />
-
-              {/* Badge de résultat */}
-              <div className={`text-center p-3 rounded-xl border-2 ${
-                scoringResult.badge === "eligible" ? "border-green-200 bg-green-50" :
-                scoringResult.badge === "admissible" ? "border-yellow-200 bg-yellow-50" :
-                "border-red-200 bg-red-50"
-              }`}>
-                <p className={`font-black text-lg ${scoringResult.color}`}>{scoringResult.label}</p>
-                <p className="text-sm text-gray-600 mt-1">{scoringResult.description}</p>
-              </div>
-
-              {/* Détail des critères */}
-              <div className="space-y-2">
-                <h4 className="font-bold text-gray-700 text-sm">Détail par critère</h4>
-                {[
-                  { label: "Formation & Diplômes", score: scoringResult.details.education, max: 25 },
-                  { label: "Expérience professionnelle", score: scoringResult.details.experience, max: 25 },
-                  { label: "Compétences linguistiques", score: scoringResult.details.language, max: 20 },
-                  { label: "Secteur d'activité", score: scoringResult.details.sector, max: 20 },
-                  { label: "Âge & Adaptabilité", score: scoringResult.details.age, max: 10 },
-                ].map(({ label, score, max }) => (
-                  <div key={label} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600 flex-1">{label}</span>
-                    <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 rounded-full transition-all duration-700"
-                        style={{ width: `${(score / max) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-gray-700 w-12 text-right">{score}/{max}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Rappel verrouillage rapport */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-bold text-amber-800">Rapport officiel verrouillé</p>
-                    <p className="text-xs text-amber-700 mt-1">
-                      Pour recevoir votre attestation de scoring PDF officielle, accéder à votre espace candidat et fixer votre rendez-vous d'ouverture de dossier, réglez les frais d'ouverture de <strong>65 000 FCFA</strong>.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {errors.submit && (
-                <p className="text-sm text-red-600 text-center">{errors.submit}</p>
-              )}
-
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-4 text-base rounded-xl shadow-lg"
-              >
-                {submitting ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Traitement en cours...</>
-                ) : (
-                  <><CreditCard className="w-4 h-4 mr-2" />Soumettre & Payer 65 000 FCFA</>
-                )}
-              </Button>
-              <p className="text-center text-xs text-gray-500 flex items-center justify-center gap-1">
-                <Shield className="w-3 h-3" />
-                MTN MoMo · Orange Money · Visa/Mastercard · Paiement sécurisé
-              </p>
-            </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex gap-3 pt-2">
-            {step > 1 && (
-              <Button variant="outline" onClick={goPrev} className="flex-1">
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Retour
-              </Button>
-            )}
-            {step < 4 && (
-              <Button
-                onClick={goNext}
-                disabled={uploadingType !== null}
-                className="flex-1 bg-blue-700 hover:bg-blue-800 text-white"
-              >
-                {step === 3 ? "Voir mon score" : "Continuer"}
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            )}
-          </div>
-        </div>
-        </DialogContent>
-      </Dialog>
-    </>
+      <div className="mt-6 flex items-center gap-3">
+        <Button
+          type="submit"
+          disabled={updateMutation.isPending}
+          className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+        >
+          {updateMutation.isPending ? "Sauvegarde..." : "Sauvegarder les modifications"}
+        </Button>
+        <span className="text-xs text-gray-400">Email : {profile?.email}</span>
+      </div>
+    </form>
   );
 }

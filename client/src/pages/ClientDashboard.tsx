@@ -1,402 +1,484 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Clock, Phone, Mail, CheckCircle2, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  FileUp,
+  FileCheck,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Download,
+  Trash2,
+  Eye,
+  Upload,
+  BarChart3,
+  MessageSquare,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
-interface AppointmentFormData {
-  agency: "douala" | "yaounde";
-  date: string;
-  time: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  country: string;
-  visaType: string;
+interface DossierStatus {
+  id: string;
+  numero: string;
+  destination: string;
+  projectType: string;
+  status: "draft" | "submitted" | "in_review" | "documents_needed" | "approved" | "rejected";
+  createdAt: Date;
+  updatedAt: Date;
+  progress: number;
+  totalDocuments: number;
+  uploadedDocuments: number;
+  missingDocuments: string[];
 }
 
-export default function ScheduleAgency() {
-  const [location, setLocation] = useLocation();
-  const [formData, setFormData] = useState<AppointmentFormData>({
-    agency: "douala",
-    date: "",
-    time: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    country: "Canada",
-    visaType: "Étudiant",
-  });
-  const [loading, setLoading] = useState(false);
-  const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
-  const [confirmationData, setConfirmationData] = useState<any>(null);
-  const [submitError, setSubmitError] = useState("");
+interface DocumentItem {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  uploadedAt: Date;
+  status: "pending" | "verified" | "rejected";
+  notes?: string;
+}
 
-  const createAppointment = trpc.appointment.create.useMutation();
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
+  draft: { label: "Brouillon", color: "bg-gray-100 text-gray-800", icon: Clock },
+  submitted: { label: "Soumis", color: "bg-blue-100 text-blue-800", icon: FileUp },
+  in_review: { label: "En Révision", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  documents_needed: { label: "Documents Manquants", color: "bg-orange-100 text-orange-800", icon: AlertCircle },
+  approved: { label: "Approuvé", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
+  rejected: { label: "Rejeté", color: "bg-red-100 text-red-800", icon: AlertCircle },
+};
 
-  const agencies = {
-    douala: {
-      name: "Agence Douala",
-      address: "[Adresse à confirmer]",
-      phone: "+237 6XX XXX XXX",
-      hours: "Lun-Ven 09:00-17:00",
-      email: "douala@3mtravelagency.click",
-    },
-    yaounde: {
-      name: "Agence Yaoundé",
-      address: "[Adresse à confirmer]",
-      phone: "+237 6XX XXX XXX",
-      hours: "Lun-Ven 09:00-17:00",
-      email: "yaounde@3mtravelagency.click",
-    },
+const PROGRESS_STEPS = [
+  { step: 1, label: "Évaluation", icon: "📋" },
+  { step: 2, label: "Bilan", icon: "📊" },
+  { step: 3, label: "Traduction", icon: "🌐" },
+  { step: 4, label: "Soumission", icon: "📤" },
+  { step: 5, label: "Visa", icon: "✅" },
+];
+
+export default function ClientDashboard() {
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [dossier, setDossier] = useState<DossierStatus | null>(null);
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
+
+  // Récupérer les données du dossier
+  const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
+    undefined,
+    { enabled: isAuthenticated && !authLoading }
+  );
+
+  // Récupérer les documents
+  const { data: documentsData } = trpc.candidate.getMyDocuments.useQuery(
+    undefined,
+    { enabled: isAuthenticated && !authLoading }
+  );
+
+  // Mutation pour uploader les documents (placeholder)
+  // const uploadMutation = trpc.candidate.uploadDocuments.useMutation({
+  //   onSuccess: () => {
+  //     toast.success("Documents téléversés avec succès!");
+  //     setUploadedFiles([]);
+  //   },
+  //   onError: (error: any) => {
+  //     toast.error("Erreur lors du téléversement: " + error.message);
+  //   },
+  // });
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      setLocation("/login");
+    }
+  }, [authLoading, isAuthenticated, setLocation]);
+
+  useEffect(() => {
+    if (dossierData && dossierData.data) {
+      const app = dossierData.data.application;
+      setDossier({
+        id: app.id.toString(),
+        numero: app.dossierNumber || `DOSS-${app.id}`,
+        destination: app.destination || "Non spécifiée",
+        projectType: "Non spécifié",
+        status: "draft",
+        createdAt: new Date(app.createdAt),
+        updatedAt: new Date(app.updatedAt),
+        progress: Math.floor((dossierData.data.documents.length / 8) * 100),
+        totalDocuments: 8,
+        uploadedDocuments: dossierData.data.documents.length,
+        missingDocuments: [],
+      });
+    }
+  }, [dossierData]);
+
+  useEffect(() => {
+    if (documentsData && documentsData.documents) {
+      setDocuments(
+        documentsData.documents.map((doc: any) => ({
+          id: doc.id.toString(),
+          name: doc.fileName,
+          type: doc.fileType,
+          size: 0,
+          uploadedAt: new Date(doc.uploadedAt),
+          status: doc.status || "pending",
+          notes: "",
+        }))
+      );
+    }
+  }, [documentsData]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadedFiles([...uploadedFiles, ...files]);
   };
 
-  const countries = ["Canada", "USA", "France", "Royaume-Uni", "Australie"];
-  const visaTypes = ["Étudiant", "Travail", "Tourisme", "Résidence"];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleRemoveFile = (index: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError("");
-
-    // Validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
-      setSubmitError("Veuillez remplir tous les champs");
+  const handleUpload = async () => {
+    if (uploadedFiles.length === 0) {
+      toast.error("Veuillez sélectionner au moins un fichier");
       return;
     }
 
-    if (!formData.date || !formData.time) {
-      setSubmitError("Veuillez sélectionner une date et une heure");
-      return;
-    }
-
-    setLoading(true);
-
+    setUploading(true);
     try {
-      const result = await createAppointment.mutateAsync({
-        agency: formData.agency,
-        date: formData.date,
-        time: formData.time,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        country: formData.country,
-        visaType: formData.visaType,
-      });
-
-      setConfirmationData({
-        ...formData,
-        reference: result.reference,
-        agency: result.agency,
-      });
-      setAppointmentConfirmed(true);
-    } catch (error: any) {
-      setSubmitError(error?.message || "Erreur lors de la prise de rendez-vous. Veuillez réessayer.");
+      // Simuler l'upload pour le moment
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast.success("Documents téléversés avec succès!");
+      setUploadedFiles([]);
+    } catch (error) {
+      toast.error("Erreur lors du téléversement");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  if (appointmentConfirmed && confirmationData) {
+  if (authLoading || dossierLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <Card className="border-green-200 bg-green-50">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-                <div>
-                  <CardTitle>Demande de rendez-vous envoyée !</CardTitle>
-                  <CardDescription>Votre demande a été enregistrée avec succès</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Détails du rendez-vous */}
-              <div className="bg-white p-6 rounded-lg space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-gray-600">Référence</p>
-                    <p className="font-bold text-lg">{confirmationData.reference}</p>
-                  </div>
-                  <Badge className="bg-amber-100 text-amber-800">En attente de confirmation</Badge>
-                </div>
-
-                <div className="border-t pt-4 space-y-3">
-                  <div className="flex gap-3">
-                    <MapPin className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-gray-600">Agence</p>
-                      <p className="font-semibold">{confirmationData.agency.name}</p>
-                      <p className="text-sm text-gray-700">{confirmationData.agency.address}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Calendar className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-gray-600">Date et Heure</p>
-                      <p className="font-semibold">
-                        {new Date(confirmationData.date).toLocaleDateString('fr-FR')} à {confirmationData.time}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Phone className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-gray-600">Contact Agence</p>
-                      <p className="font-semibold">{confirmationData.agency.phone}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Mail className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-semibold">{confirmationData.agency.email}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Documents à apporter */}
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <p className="font-semibold mb-2">Documents à apporter en original:</p>
-                  <ul className="text-sm space-y-1 ml-4">
-                    <li>✓ Passeport valide</li>
-                    <li>✓ Pièce d'identité</li>
-                    <li>✓ Tous les documents mentionnés dans la checklist</li>
-                    <li>✓ Preuve de paiement (si applicable)</li>
-                  </ul>
-                </AlertDescription>
-              </Alert>
-
-              {/* Confirmation email */}
-              <Alert className="border-blue-200 bg-blue-50">
-                <AlertDescription>
-                  <p className="text-sm">
-                    ✓ Un email de confirmation a été envoyé à <strong>{confirmationData.email}</strong>
-                  </p>
-                  <p className="text-sm mt-2">
-                    Notre équipe vous contactera au <strong>{confirmationData.phone}</strong> pour confirmer définitivement le créneau.
-                  </p>
-                </AlertDescription>
-              </Alert>
-
-              {/* Boutons d'action */}
-              <div className="space-y-2">
-                <Button
-                  onClick={() => setLocation("/")}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  Retour à l'accueil
-                </Button>
-                <Button
-                  onClick={() => setLocation("/mon-espace")}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Accéder à mon espace
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto" />
+          <p className="text-gray-600">Chargement de votre espace...</p>
         </div>
       </div>
     );
   }
 
+  if (!dossier) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle>Aucun Dossier Trouvé</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600">
+              Vous n'avez pas encore créé de dossier. Commencez par remplir l'évaluation d'éligibilité.
+            </p>
+            <Button onClick={() => setLocation("/")} className="w-full">
+              Retour à l'Accueil
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const StatusIcon = STATUS_LABELS[dossier.status]?.icon || Clock;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
-      <div className="max-w-2xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900">Prendre Rendez-vous en Agence</h1>
-          <p className="text-lg text-gray-600">Rencontrez nos experts en personne</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900">Mon Espace Client</h1>
+              <p className="text-gray-600 mt-2">Dossier: <span className="font-semibold">{dossier.numero}</span></p>
+            </div>
+            <Button variant="outline" onClick={() => setLocation("/")}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </Button>
+          </div>
         </div>
 
-        {/* Sélection Agence */}
-        <Card>
+        {/* Statut Principal */}
+        <Card className="border-2 border-blue-200">
           <CardHeader>
-            <CardTitle>Choisissez une Agence</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <CardTitle className="flex items-center gap-2">
+                  <StatusIcon className="w-6 h-6" />
+                  {STATUS_LABELS[dossier.status]?.label}
+                </CardTitle>
+                <CardDescription>
+                  Destination: {dossier.destination} | Type: {dossier.projectType}
+                </CardDescription>
+              </div>
+              <Badge className={STATUS_LABELS[dossier.status]?.color}>
+                {STATUS_LABELS[dossier.status]?.label}
+              </Badge>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              {Object.entries(agencies).map(([key, agency]) => (
-                <button
-                  key={key}
-                  onClick={() => setFormData(prev => ({ ...prev, agency: key as any }))}
-                  className={`p-4 rounded-lg border-2 transition-all text-left ${
-                    formData.agency === key
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
+          <CardContent className="space-y-6">
+            {/* Barre de Progression */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">Progression du Dossier</span>
+                <span className="text-sm text-gray-600">{dossier.progress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${dossier.progress}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Étapes */}
+            <div className="grid grid-cols-5 gap-2">
+              {PROGRESS_STEPS.map((step, idx) => (
+                <div
+                  key={step.step}
+                  className={`p-3 rounded-lg text-center transition-all ${
+                    step.step <= Math.ceil(dossier.progress / 20)
+                      ? "bg-blue-100 border-2 border-blue-600"
+                      : "bg-gray-100 border-2 border-gray-300"
                   }`}
                 >
-                  <p className="font-semibold text-lg mb-2">{agency.name}</p>
-                  <p className="text-sm text-gray-700 mb-1">{agency.address}</p>
-                  <p className="text-sm text-gray-600">{agency.hours}</p>
-                </button>
+                  <div className="text-2xl mb-1">{step.icon}</div>
+                  <p className="text-xs font-semibold">{step.label}</p>
+                </div>
               ))}
             </div>
+
+            {/* Documents Manquants */}
+            {dossier.missingDocuments.length > 0 && (
+              <div className="bg-orange-50 border-l-4 border-orange-500 p-4 rounded">
+                <p className="font-semibold text-orange-900 mb-2">Documents Manquants:</p>
+                <ul className="space-y-1">
+                  {dossier.missingDocuments.map((doc, idx) => (
+                    <li key={idx} className="text-sm text-orange-800">
+                      • {doc}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Formulaire */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Vos Informations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nom et Prénom */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Prénom</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    placeholder="Jean"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Nom</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    placeholder="Dupont"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="overview">Aperçu</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="settings">Paramètres</TabsTrigger>
+          </TabsList>
 
-              {/* Email et Téléphone */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="jean@example.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+          {/* Aperçu */}
+          <TabsContent value="overview" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informations du Dossier</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Numéro de Dossier</p>
+                    <p className="font-semibold text-lg">{dossier.numero}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Destination</p>
+                    <p className="font-semibold text-lg">{dossier.destination}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Type de Projet</p>
+                    <p className="font-semibold text-lg">{dossier.projectType}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Statut</p>
+                    <Badge className={STATUS_LABELS[dossier.status]?.color}>
+                      {STATUS_LABELS[dossier.status]?.label}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Documents Téléversés</p>
+                    <p className="font-semibold text-lg">
+                      {dossier.uploadedDocuments} / {dossier.totalDocuments}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Créé le</p>
+                    <p className="font-semibold text-lg">{dossier.createdAt.toLocaleDateString('fr-FR')}</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Téléphone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="+237 6XX XXX XXX"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              {/* Pays et Type Visa */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Pays Destination</label>
-                  <select
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {countries.map(c => (
-                      <option key={c} value={c}>{c}</option>
+          {/* Documents */}
+          <TabsContent value="documents" className="space-y-4">
+            {/* Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="w-5 h-5" />
+                  Téléverser des Documents
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center hover:bg-blue-50 transition-colors cursor-pointer">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-input"
+                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  />
+                  <label htmlFor="file-input" className="cursor-pointer block">
+                    <FileUp className="w-12 h-12 text-blue-600 mx-auto mb-2" />
+                    <p className="font-semibold text-gray-900">Cliquez pour téléverser</p>
+                    <p className="text-sm text-gray-600">ou glissez-déposez vos fichiers</p>
+                    <p className="text-xs text-gray-500 mt-2">PDF, JPG, PNG, DOC (max 10 Mo par fichier)</p>
+                  </label>
+                </div>
+
+                {/* Fichiers Sélectionnés */}
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="font-semibold">Fichiers à Téléverser:</p>
+                    {uploadedFiles.map((file, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <FileCheck className="w-5 h-5 text-blue-600" />
+                          <div>
+                            <p className="font-semibold text-sm">{file.name}</p>
+                            <p className="text-xs text-gray-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveFile(idx)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Type de Visa</label>
-                  <select
-                    name="visaType"
-                    value={formData.visaType}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {visaTypes.map(t => (
-                      <option key={t} value={t}>{t}</option>
+                    <Button
+                      onClick={handleUpload}
+                      disabled={uploading}
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      {uploading ? "Téléversement..." : "Confirmer le Téléversement"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Documents Téléversés */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileCheck className="w-5 h-5" />
+                  Documents Téléversés
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {documents.length === 0 ? (
+                  <p className="text-gray-600 text-center py-8">Aucun document téléversé pour le moment</p>
+                ) : (
+                  <div className="space-y-3">
+                    {documents.map((doc) => (
+                      <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                        <div className="flex items-center gap-3 flex-1">
+                          <FileCheck className="w-5 h-5 text-blue-600" />
+                          <div className="flex-1">
+                            <p className="font-semibold">{doc.name}</p>
+                            <p className="text-xs text-gray-600">
+                              Téléversé le {doc.uploadedAt.toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                          <Badge
+                            className={
+                              doc.status === "verified"
+                                ? "bg-green-100 text-green-800"
+                                : doc.status === "rejected"
+                                ? "bg-red-100 text-red-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }
+                          >
+                            {doc.status === "verified" ? "Vérifié" : doc.status === "rejected" ? "Rejeté" : "En attente"}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </select>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Messages */}
+          <TabsContent value="messages">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Messagerie
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 text-center py-8">Aucun message pour le moment</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Paramètres */}
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Settings className="w-5 h-5" />
+                  Paramètres du Compte
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">Email</p>
+                  <p className="font-semibold">{user?.email}</p>
                 </div>
-              </div>
-
-              {/* Date et Heure */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Heure</label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Erreur */}
-              {submitError && (
-                <Alert className="border-red-200 bg-red-50">
-                  <AlertCircle className="h-4 w-4 text-red-600" />
-                  <AlertDescription className="text-red-700">{submitError}</AlertDescription>
-                </Alert>
-              )}
-
-              {/* Bouton Submit */}
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 text-lg"
-              >
-                {loading ? "Traitement..." : "Confirmer mon Rendez-vous"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Info */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Vous recevrez une confirmation par email et WhatsApp avec tous les détails de votre rendez-vous.
-          </AlertDescription>
-        </Alert>
+                <Button variant="outline" className="w-full">
+                  Modifier le Mot de Passe
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

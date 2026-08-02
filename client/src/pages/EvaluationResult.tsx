@@ -1,347 +1,370 @@
-import { useRoute } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
-import {
-  ArrowLeft,
-  Mail,
-  Phone,
-  Calendar,
-  FileText,
-  Download,
-  Eye,
-  Trash2,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  User,
-  Briefcase,
-} from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, FileText, MapPin, AlertCircle } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
-export default function AdminUserDetails() {
-  const [, params] = useRoute("/admin/users/:userId");
-  const userId = params?.userId ? parseInt(params.userId) : null;
-  const [selectedDoc, setSelectedDoc] = useState<any>(null);
-
-  const { data: userDetails, isLoading } = trpc.admin.getUserDetailsWithDocuments.useQuery(
-    { sessionToken: localStorage.getItem("adminSessionToken") || "", userId: userId || 0 },
-    { enabled: !!userId }
-  );
-
-  if (!userId) {
-    return (
-      <div className="p-6 text-center">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-        <p className="text-red-600">ID utilisateur invalide</p>
-      </div>
-    );
+// Checklist documents par pays et type de visa
+const DOCUMENTS_BY_COUNTRY_VISA: Record<string, Record<string, string[]>> = {
+  "Canada": {
+    "Étudiant": [
+      "Passeport valide",
+      "Lettre d'acceptation de l'établissement",
+      "Preuve de ressources financières",
+      "Relevé de notes",
+      "Certificat de langue (IELTS/TOEFL)",
+      "Lettre de motivation"
+    ],
+    "Travail": [
+      "Passeport valide",
+      "Offre d'emploi",
+      "Diplômes et certificats",
+      "Preuve d'expérience professionnelle",
+      "Lettre de motivation",
+      "Preuve de ressources financières"
+    ],
+    "Résidence": [
+      "Passeport valide",
+      "Preuve d'expérience professionnelle",
+      "Diplômes",
+      "Lettre de motivation",
+      "Preuve de ressources financières",
+      "Certificat de police"
+    ]
+  },
+  "USA": {
+    "Étudiant": [
+      "Passeport valide",
+      "Formulaire I-20",
+      "Preuve de ressources financières",
+      "Relevé de notes",
+      "Certificat de langue (TOEFL)",
+      "Lettre de motivation"
+    ],
+    "Travail": [
+      "Passeport valide",
+      "Offre d'emploi",
+      "Diplômes",
+      "Preuve d'expérience",
+      "Lettre de motivation",
+      "Preuve de ressources financières"
+    ],
+    "Tourisme": [
+      "Passeport valide",
+      "Preuve de ressources financières",
+      "Itinéraire de voyage",
+      "Réservations hôtel",
+      "Lettre d'invitation (si applicable)"
+    ]
+  },
+  "France": {
+    "Étudiant": [
+      "Passeport valide",
+      "Lettre d'acceptation",
+      "Preuve de ressources financières",
+      "Relevé de notes",
+      "Certificat de langue (TCF/DELF)",
+      "Lettre de motivation"
+    ],
+    "Travail": [
+      "Passeport valide",
+      "Offre d'emploi",
+      "Diplômes",
+      "Preuve d'expérience",
+      "Lettre de motivation",
+      "Preuve de ressources financières"
+    ],
+    "Tourisme": [
+      "Passeport valide",
+      "Preuve de ressources financières",
+      "Réservations hôtel",
+      "Itinéraire de voyage",
+      "Assurance voyage"
+    ]
+  },
+  "Royaume-Uni": {
+    "Étudiant": [
+      "Passeport valide",
+      "Lettre d'acceptation (CAS)",
+      "Preuve de ressources financières",
+      "Relevé de notes",
+      "Certificat de langue (IELTS)",
+      "Lettre de motivation"
+    ],
+    "Travail": [
+      "Passeport valide",
+      "Visa sponsorship",
+      "Diplômes",
+      "Preuve d'expérience",
+      "Lettre de motivation",
+      "Preuve de ressources financières"
+    ]
+  },
+  "Australie": {
+    "Étudiant": [
+      "Passeport valide",
+      "Lettre d'acceptation (CoE)",
+      "Preuve de ressources financières",
+      "Relevé de notes",
+      "Certificat de langue (IELTS)",
+      "Lettre de motivation"
+    ],
+    "Travail": [
+      "Passeport valide",
+      "Offre d'emploi",
+      "Diplômes",
+      "Preuve d'expérience",
+      "Lettre de motivation",
+      "Preuve de ressources financières"
+    ]
   }
+};
 
-  if (isLoading) {
-    return (
-      <div className="p-12 text-center">
-        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="mt-4 text-gray-600">Chargement des détails utilisateur...</p>
-      </div>
-    );
-  }
+interface EvaluationResultProps {
+  country?: string;
+  visaType?: string;
+  score?: number;
+  verdict?: string;
+}
 
-  if (!userDetails?.user) {
-    return (
-      <div className="p-6 text-center">
-        <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-        <p className="text-orange-600">Utilisateur non trouvé</p>
-      </div>
-    );
-  }
+export default function EvaluationResult() {
+  const { user } = useAuth();
+  const [location, setLocation] = useLocation();
+  const [country, setCountry] = useState("Canada");
+  const [visaType, setVisaType] = useState("Étudiant");
+  const [checkedDocuments, setCheckedDocuments] = useState<Record<string, boolean>>({});
+  const [showOnlineOption, setShowOnlineOption] = useState(false);
+  const [showAgencyOption, setShowAgencyOption] = useState(false);
 
-  const user = userDetails.user;
-  const applications = userDetails.applications || [];
+  // Récupérer les documents requis
+  const requiredDocuments = DOCUMENTS_BY_COUNTRY_VISA[country]?.[visaType] || [];
 
-  // Obtenir la couleur du badge de statut
-  const getStatusColor = (status: string) => {
-    const statusColors: Record<string, string> = {
-      nouveau: "bg-blue-100 text-blue-800",
-      en_evaluation: "bg-yellow-100 text-yellow-800",
-      bilan_envoye: "bg-purple-100 text-purple-800",
-      en_attente_paiement: "bg-orange-100 text-orange-800",
-      paye: "bg-green-100 text-green-800",
-      en_attente_documents: "bg-cyan-100 text-cyan-800",
-      documents_recus: "bg-teal-100 text-teal-800",
-      soumis_agences: "bg-indigo-100 text-indigo-800",
-      en_cours_recrutement: "bg-pink-100 text-pink-800",
-      contrat_obtenu: "bg-lime-100 text-lime-800",
-      visa_approuve: "bg-emerald-100 text-emerald-800",
-      refuse: "bg-red-100 text-red-800",
-    };
-    return statusColors[status] || "bg-gray-100 text-gray-800";
+  // Calculer le pourcentage de documents complétés
+  const completedCount = Object.values(checkedDocuments).filter(Boolean).length;
+  const completionPercentage = Math.round((completedCount / requiredDocuments.length) * 100);
+
+  const handleDocumentCheck = (doc: string) => {
+    setCheckedDocuments(prev => ({
+      ...prev,
+      [doc]: !prev[doc]
+    }));
+  };
+
+  const handleDepositOnline = () => {
+    if (!user) {
+      setLocation("/login");
+      return;
+    }
+    setLocation("/submit-documents");
+  };
+
+  const handleScheduleAgency = () => {
+    setLocation("/schedule-agency");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* En-tête */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <Button
-            onClick={() => window.history.back()}
-            variant="outline"
-            className="mb-6 flex items-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour
-          </Button>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl font-bold text-gray-900">Résultat de Votre Évaluation</h1>
+          <p className="text-lg text-gray-600">Voici la liste des documents requis pour votre dossier</p>
+        </div>
 
-          <Card className="bg-white p-8 rounded-lg shadow-sm border-0">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-blue-100 rounded-full p-4">
-                  <User className="w-8 h-8 text-blue-600" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{user.name || "Utilisateur"}</h1>
-                  <p className="text-gray-600 mt-1">ID: {user.id}</p>
-                </div>
+        {/* Selection Pays et Type Visa */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sélectionnez votre destination et type de visa</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Pays</label>
+                <select
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.keys(DOCUMENTS_BY_COUNTRY_VISA).map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
               </div>
-              <Badge className="bg-blue-100 text-blue-800 text-lg px-4 py-2">
-                {applications.length} dossier{applications.length > 1 ? "s" : ""}
+              <div>
+                <label className="block text-sm font-medium mb-2">Type de Visa</label>
+                <select
+                  value={visaType}
+                  onChange={(e) => setVisaType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {Object.keys(DOCUMENTS_BY_COUNTRY_VISA[country] || {}).map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Checklist Documents */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Checklist des Documents Requis</CardTitle>
+                <CardDescription>
+                  {country} - Visa {visaType}
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-lg">
+                {completionPercentage}%
               </Badge>
             </div>
-
-            {/* Informations de contact */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium text-gray-900">{user.email || "N/A"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-600">Inscription</p>
-                  <p className="font-medium text-gray-900">
-                    {new Date(user.createdAt).toLocaleDateString("fr-FR")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <Briefcase className="w-5 h-5 text-gray-400" />
-                <div>
-                  <p className="text-sm text-gray-600">Rôle</p>
-                  <p className="font-medium text-gray-900">{user.role || "Utilisateur"}</p>
-                </div>
-              </div>
+            {/* Barre de progression */}
+            <div className="mt-4 w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${completionPercentage}%` }}
+              />
             </div>
-          </Card>
-        </motion.div>
-
-        {/* Dossiers et documents */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <Briefcase className="w-6 h-6" />
-            Dossiers et Documents
-          </h2>
-
-          {applications.length === 0 ? (
-            <Card className="bg-white p-12 rounded-lg shadow-sm border-0 text-center">
-              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-600">Aucun dossier trouvé</p>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {applications.map((app, idx) => (
-                <motion.div
-                  key={app.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {requiredDocuments.map((doc, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors cursor-pointer"
+                  onClick={() => handleDocumentCheck(doc)}
                 >
-                  <Card className="bg-white rounded-lg shadow-sm border-0 overflow-hidden">
-                    {/* En-tête du dossier */}
-                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-b border-blue-200">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">
-                            Dossier: {app.dossierNumber}
-                          </h3>
-                          <p className="text-gray-600 mt-1">
-                            Destination: <span className="font-medium">{app.destination}</span>
-                          </p>
-                        </div>
-                        <Badge className={getStatusColor((app as any).dossierStatus || "nouveau")}>
-                          {(app as any).dossierStatus || "nouveau"}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Informations du dossier */}
-                    <div className="p-6 border-b border-gray-200">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Nom Complet</p>
-                          <p className="font-medium text-gray-900">{app.fullName}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Email</p>
-                          <p className="font-medium text-gray-900">{app.email}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Téléphone</p>
-                          <p className="font-medium text-gray-900">{app.whatsappNumber}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Nationalité</p>
-                          <p className="font-medium text-gray-900">{app.nationality || "N/A"}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Documents */}
-                    <div className="p-6">
-                      <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Documents Soumis ({app.documents?.length || 0})
-                      </h4>
-
-                      {!app.documents || app.documents.length === 0 ? (
-                        <p className="text-gray-600 text-center py-4">Aucun document soumis</p>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {app.documents.map((doc: any) => (
-                            <motion.div
-                              key={doc.id}
-                              whileHover={{ scale: 1.02 }}
-                              className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:border-blue-400 transition-colors"
-                            >
-                              <div className="flex items-start justify-between mb-3">
-                                <div className="flex-1">
-                                  <p className="font-medium text-gray-900 truncate">
-                                    {doc.documentType || "Document"}
-                                  </p>
-                                  <p className="text-sm text-gray-600">
-                                    {new Date(doc.uploadedAt).toLocaleDateString("fr-FR")}
-                                  </p>
-                                </div>
-                                {doc.verificationStatus === "verified" && (
-                                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                )}
-                              </div>
-
-                              {doc.verificationStatus && (
-                                <Badge
-                                  className={
-                                    doc.verificationStatus === "verified"
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-yellow-100 text-yellow-800"
-                                  }
-                                >
-                                  {doc.verificationStatus === "verified" ? "Vérifié" : "En attente"}
-                                </Badge>
-                              )}
-
-                              {doc.readabilityScore && (
-                                <div className="mt-3">
-                                  <p className="text-xs text-gray-600 mb-1">Lisibilité</p>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-600 h-2 rounded-full"
-                                      style={{ width: `${doc.readabilityScore}%` }}
-                                    ></div>
-                                  </div>
-                                  <p className="text-xs text-gray-600 mt-1">
-                                    {doc.readabilityScore}%
-                                  </p>
-                                </div>
-                              )}
-
-                              {doc.fileUrl && (
-                                <div className="mt-4 flex gap-2">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="flex-1 flex items-center justify-center gap-1"
-                                    onClick={() => setSelectedDoc(doc)}
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    Voir
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="flex-1 flex items-center justify-center gap-1"
-                                  >
-                                    <Download className="w-4 h-4" />
-                                    Télécharger
-                                  </Button>
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </motion.div>
+                  <input
+                    type="checkbox"
+                    checked={checkedDocuments[doc] || false}
+                    onChange={() => handleDocumentCheck(doc)}
+                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className={`flex-1 ${checkedDocuments[doc] ? "line-through text-gray-500" : "text-gray-700"}`}>
+                    {doc}
+                  </span>
+                  {checkedDocuments[doc] && (
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  )}
+                </div>
               ))}
             </div>
-          )}
-        </motion.div>
+          </CardContent>
+        </Card>
 
-        {/* Modal de prévisualisation */}
-        {selectedDoc && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={() => setSelectedDoc(null)}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-auto"
-            >
-              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900">{selectedDoc.documentType}</h3>
-                <button
-                  onClick={() => setSelectedDoc(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+        {/* Actions - Deux Options */}
+        <Card className="border-2 border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Comment souhaitez-vous procéder?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-700">
+              Vous pouvez déposer vos documents entièrement en ligne ou prendre rendez-vous dans l'une de nos agences physiques.
+            </p>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Option 1: En Ligne */}
+              <Card className="border-2 border-green-200 hover:border-green-400 transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-lg">📱 Déposer en Ligne</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Téléchargez vos documents directement depuis chez vous. Rapide, sécurisé et sans déplacement.
+                  </p>
+                  <ul className="text-sm space-y-2 text-gray-700">
+                    <li>✓ Aucun déplacement requis</li>
+                    <li>✓ Accès 24h/24</li>
+                    <li>✓ Suivi en temps réel</li>
+                    <li>✓ Support par email</li>
+                  </ul>
+                  <Button
+                    onClick={handleDepositOnline}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    Déposer mes documents en ligne →
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Option 2: En Agence */}
+              <Card className="border-2 border-orange-200 hover:border-orange-400 transition-colors">
+                <CardHeader>
+                  <CardTitle className="text-lg">🏢 Rendez-vous en Agence</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-gray-600">
+                    Rencontrez nos experts en personne dans l'une de nos agences.
+                  </p>
+                  <ul className="text-sm space-y-2 text-gray-700">
+                    <li>✓ Conseil personnalisé</li>
+                    <li>✓ Vérification immédiate</li>
+                    <li>✓ Support direct</li>
+                    <li>✓ Agences à Douala & Yaoundé</li>
+                  </ul>
+                  <Button
+                    onClick={handleScheduleAgency}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                  >
+                    Prendre rendez-vous →
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Info Agences */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Nos Agences
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-2 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h3 className="font-semibold text-lg mb-2">Douala</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Adresse: [À confirmer]
+              </p>
+              <p className="text-sm text-gray-700">
+                Horaires: Lun-Ven 09:00-17:00
+              </p>
+            </div>
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <h3 className="font-semibold text-lg mb-2">Yaoundé</h3>
+              <p className="text-sm text-gray-700 mb-2">
+                Adresse: [À confirmer]
+              </p>
+              <p className="text-sm text-gray-700">
+                Horaires: Lun-Ven 09:00-17:00
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Info Supplémentaire */}
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-yellow-900 mb-1">Besoin d'aide?</p>
+                <p className="text-sm text-yellow-800">
+                  Contactez-nous via WhatsApp pour toute question sur les documents requis ou pour prendre rendez-vous immédiatement.
+                </p>
               </div>
-              <div className="p-6">
-                {selectedDoc.fileUrl ? (
-                  <div className="text-center">
-                    <p className="text-gray-600 mb-4">Fichier: {selectedDoc.fileName}</p>
-                    <a
-                      href={selectedDoc.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      Ouvrir le fichier
-                    </a>
-                  </div>
-                ) : (
-                  <p className="text-gray-600">Aucun fichier disponible</p>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

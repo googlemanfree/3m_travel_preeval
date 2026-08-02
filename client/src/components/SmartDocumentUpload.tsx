@@ -1,822 +1,483 @@
-import React, { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
-import { useLocation } from "wouter";
-import PremiumEvaluationFormSteps47 from "./PremiumEvaluationFormSteps47";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/lib/trpc";
+import {
+  Upload,
+  File,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Lock,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
+  Zap,
+  FolderOpen,
+  Tag,
+} from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type ProjectType = "student" | "visitor" | "worker" | "permanent_residence" | "family_reunification" | "other";
-
-interface FormData {
-  // Étape 1: Choix principal
-  destination: string;
-  projectType: ProjectType;
-  currentCountry: string;
-  communicationLanguage: "fr" | "en";
-
-  // Étape 2: Identité, Passeport, Famille
-  fullName: string;
-  gender: string;
-  dateOfBirth: string;
-  nationality: string;
-  whatsappPhone: string;
-  email: string;
-  passportNumber: string;
-  passportExpiryDate: string;
-  passportCopyAvailable: string;
-  maritalStatus: string;
-  numberOfChildren: number;
-  familyInDestination: string;
-
-  // Étape 3: Études, Emploi, Finances
-  educationLevel: string;
-  fieldOfStudy: string;
-  currentProfession: string;
-  yearsOfExperience: number;
-  monthlyIncome: string;
-  bankBalance: string;
-  sponsor: string;
-
-  // Étape 4: Voyage & Admissibilité
-  countriesVisited: string;
-  visaRefusals: string;
-  criminalRecord: string;
-
-  // Étape 5: Sections conditionnelles
-  desiredEducationLevel: string;
-  admissionLetterAvailable: boolean;
-  targetInstitution: string;
-  intendedStartDate: string;
-  studyBudget: number;
-  academicProject: string;
-  visitType: "tourism" | "family" | "business" | "event" | "other" | "";
-  plannedStayDuration: string;
-  estimatedTravelDate: string;
-  tiesInHomeCountry: string;
-  desiredPosition: string;
-  targetCity: string;
-  languageLevel: string;
-  jobOfferAvailable: boolean;
-  previousExperiences: string;
-  targetCategory: string;
-  age: number;
-  experienceYears: number;
-  provincialNomination: boolean;
-  policeCertificatesAvailable: boolean;
-  availableFunds: number;
-
-  // Étape 6: Documents
-  uploadedFiles: any[];
-
-  // Autres
-  [key: string]: any;
+export interface ClassifiedDocument {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  file: File;
+  progress: number;
+  status: "pending" | "uploading" | "classifying" | "success" | "error";
+  error?: string;
+  classification?: {
+    documentType: string;
+    confidence: number;
+    description: string;
+    suggestedFolder: string;
+    extractedInfo?: {
+      documentNumber?: string;
+      issueDate?: string;
+      expiryDate?: string;
+      issuingCountry?: string;
+      holderName?: string;
+    };
+    warnings?: string[];
+  };
 }
 
-const DESTINATIONS = [
-  "Canada",
-  "France",
-  "Allemagne",
-  "Belgique",
-  "États-Unis",
-  "Royaume-Uni",
-  "Italie",
-  "Espagne",
-  "Suisse",
-  "Pays-Bas",
-  "Dubaï / EAU",
-  "Australie",
-  "Autre",
-];
+interface SmartDocumentUploadProps {
+  dossierNumber: string;
+  onUploadComplete?: (documents: ClassifiedDocument[]) => void;
+  maxFiles?: number;
+  maxFileSize?: number;
+}
 
-const PROJECT_TYPES = [
-  { value: "student", label: "Permis d'Études / Visa Étudiant" },
-  { value: "visitor", label: "Visiteur / Tourisme / Affaires" },
-  { value: "worker", label: "Permis de Travail / Emploi" },
-  { value: "permanent_residence", label: "Résidence Permanente / Express Entry" },
-  { value: "family_reunification", label: "Regroupement Familial / Parrainage" },
-  { value: "other", label: "Autre projet" },
-];
+const ALLOWED_FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILES = 10;
 
-const EDUCATION_LEVELS = [
-  "Baccalauréat / Secondaire",
-  "BTS / DUT (Bac+2)",
-  "Licence / Bachelor (Bac+3)",
-  "Master (Bac+5)",
-  "Doctorat",
-];
+export function SmartDocumentUpload({
+  dossierNumber,
+  onUploadComplete,
+  maxFiles = MAX_FILES,
+  maxFileSize = MAX_FILE_SIZE,
+}: SmartDocumentUploadProps) {
+  const [documents, setDocuments] = useState<ClassifiedDocument[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-const MARITAL_STATUS = [
-  "Célibataire",
-  "Marié(e)",
-  "Divorcé(e)",
-  "Veuf/Veuve",
-  "Union civile",
-];
+  const classifyDocMutation = trpc.documentSubmission.classifyDocument.useMutation();
 
-export default function PremiumEvaluationForm() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const [formData, setFormData] = useState<FormData>({
-    destination: "",
-    projectType: "student",
-    currentCountry: "",
-    communicationLanguage: "fr",
-    fullName: "",
-    gender: "",
-    dateOfBirth: "",
-    nationality: "",
-    whatsappPhone: "",
-    email: "",
-    passportNumber: "",
-    passportExpiryDate: "",
-    passportCopyAvailable: "",
-    maritalStatus: "",
-    numberOfChildren: 0,
-    familyInDestination: "",
-    educationLevel: "",
-    fieldOfStudy: "",
-    currentProfession: "",
-    yearsOfExperience: 0,
-    monthlyIncome: "",
-    bankBalance: "",
-    sponsor: "",
-    countriesVisited: "",
-    visaRefusals: "",
-    criminalRecord: "",
-    desiredEducationLevel: "",
-    admissionLetterAvailable: false,
-    targetInstitution: "",
-    intendedStartDate: "",
-    studyBudget: 0,
-    academicProject: "",
-    visitType: "" as any,
-    plannedStayDuration: "",
-    estimatedTravelDate: "",
-    tiesInHomeCountry: "",
-    desiredPosition: "",
-    targetCity: "",
-    languageLevel: "",
-    jobOfferAvailable: false,
-    previousExperiences: "",
-    targetCategory: "",
-    age: 0,
-    experienceYears: 0,
-    provincialNomination: false,
-    policeCertificatesAvailable: false,
-    availableFunds: 0,
-    uploadedFiles: [],
-  });
-
-  const submitMutation = trpc.profileEvaluation.submit.useMutation();
-
-  const handleInputChange = (field: string, value: any) => {
-    // Gestion spéciale pour la navigation vers une étape spécifique
-    if (field === '_goToStep') {
-      setCurrentStep(value);
-      return;
-    }
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <ImageIcon className="w-5 h-5" />;
+    if (type === "application/pdf") return <FileText className="w-5 h-5" />;
+    return <File className="w-5 h-5" />;
   };
 
-  const validateStep = (step: number): boolean => {
-    if (step === 1) {
-      return !!(formData.destination && formData.projectType && formData.currentCountry);
-    }
-    if (step === 2) {
-      return !!(
-        formData.fullName &&
-        formData.gender &&
-        formData.dateOfBirth &&
-        formData.nationality &&
-        formData.whatsappPhone &&
-        formData.email &&
-        formData.passportNumber &&
-        formData.passportExpiryDate &&
-        formData.maritalStatus
-      );
-    }
-    if (step === 3) {
-      return !!(
-        formData.educationLevel &&
-        formData.fieldOfStudy &&
-        formData.currentProfession &&
-        formData.yearsOfExperience >= 0 &&
-        formData.monthlyIncome &&
-        formData.bankBalance &&
-        formData.sponsor
-      );
-    }
-    return true;
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < 7) {
-        setCurrentStep(currentStep + 1);
+  const validateFile = (file: File): string | null => {
+    if (!ALLOWED_FORMATS.includes(file.type)) {
+      return `Format non accepté: ${file.type}. Acceptés: PDF, JPEG, PNG`;
+    }
+    if (file.size > maxFileSize) {
+      return `Fichier trop volumineux: ${formatFileSize(file.size)}. Max: ${formatFileSize(maxFileSize)}`;
+    }
+    return null;
+  };
+
+  const addDocuments = (files: FileList | null) => {
+    if (!files) return;
+
+    const newDocuments: ClassifiedDocument[] = [];
+
+    Array.from(files).forEach((file) => {
+      const error = validateFile(file);
+
+      if (documents.length + newDocuments.length >= maxFiles) {
+        toast.error(`Maximum ${maxFiles} fichiers autorisés`);
+        return;
       }
-    } else {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+
+      newDocuments.push({
+        id: `${file.name}-${Date.now()}`,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file,
+        progress: 0,
+        status: error ? "error" : "pending",
+        error: error || undefined,
+      });
+    });
+
+    setDocuments((prev) => [...prev, ...newDocuments]);
+
+    if (newDocuments.some((d) => d.status === "error")) {
+      toast.error("Certains fichiers n'ont pas pu être ajoutés");
     }
   };
 
-  const handlePrev = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+  const removeDocument = (id: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const classifyDocument = async (file: File, docId: string) => {
+    try {
+      const reader = new FileReader();
+      return new Promise((resolve: (value: any) => void) => {
+        reader.onload = async (e) => {
+          const base64 = e.target?.result as string;
+          try {
+            const result = await classifyDocMutation.mutateAsync({
+              imageUrl: base64,
+            });
+            resolve(result.classification);
+          } catch (error) {
+            console.error("Error classifying document:", error);
+            resolve(null);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (error) {
+      console.error("Error reading file:", error);
+      return null;
     }
   };
 
-  const [, setLocation] = useLocation();
+  const uploadDocuments = async () => {
+    const validDocuments = documents.filter((d) => d.status !== "error");
 
-  const handleSubmit = async () => {
-    if (!validateStep(currentStep)) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+    if (validDocuments.length === 0) {
+      toast.error("Aucun document valide à télécharger");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsUploading(true);
+
     try {
-      const result = await submitMutation.mutateAsync({
-        destination: formData.destination,
-        projectType: formData.projectType,
-        currentCountry: formData.currentCountry,
-        communicationLanguage: formData.communicationLanguage,
-        fullName: formData.fullName,
-        gender: (formData.gender === "Masculin" ? "homme" : formData.gender === "Féminin" ? "femme" : "autre") as any,
-        dateOfBirth: formData.dateOfBirth,
-        nationality: formData.nationality,
-        whatsappPhone: formData.whatsappPhone,
-        email: formData.email,
-        passportNumber: formData.passportNumber,
-        passportExpiryDate: formData.passportExpiryDate,
-        passportCopyAvailable: formData.passportCopyAvailable === "Oui",
-        maritalStatus: (formData.maritalStatus === "Célibataire" ? "single" : formData.maritalStatus === "Marié(e)" ? "married" : formData.maritalStatus === "Divorcé(e)" ? "divorced" : formData.maritalStatus === "Veuf/Veuve" ? "widowed" : "civil_union") as any,
-        numberOfChildren: formData.numberOfChildren,
-        familyInDestination: formData.familyInDestination === "Oui",
-        educationLevel: formData.educationLevel,
-        fieldOfStudy: formData.fieldOfStudy,
-        currentProfession: formData.currentProfession,
-              yearsOfExperience: formData.yearsOfExperience,
-              monthlyIncome: parseInt(formData.monthlyIncome) || 0,
-              bankBalance: parseInt(formData.bankBalance) || 0,
-              hasSponsor: formData.sponsor !== "Auto-prise en charge",
-              sponsorName: formData.sponsor,
-              countriesVisited: formData.countriesVisited,
-              visaRefusals: formData.visaRefusals === "Oui",
-              criminalRecord: formData.criminalRecord === "Oui",
-              desiredEducationLevel: formData.desiredEducationLevel,
-              admissionLetterAvailable: formData.admissionLetterAvailable,
-              targetInstitution: formData.targetInstitution,
-              intendedStartDate: formData.intendedStartDate,
-              studyBudget: formData.studyBudget,
-              academicProject: formData.academicProject,
-              visitType: (formData.visitType || "other") as any,
-              plannedStayDuration: formData.plannedStayDuration,
-              estimatedTravelDate: formData.estimatedTravelDate,
-              tiesInHomeCountry: formData.tiesInHomeCountry,
-              desiredPosition: formData.desiredPosition,
-              targetCity: formData.targetCity,
-              languageLevel: formData.languageLevel,
-              jobOfferAvailable: formData.jobOfferAvailable,
-              targetCategory: formData.targetCategory,
-              age: formData.age,
-              experienceYears: formData.experienceYears,
-              provincialNomination: formData.provincialNomination,
-              policeCertificatesAvailable: formData.policeCertificatesAvailable,
-              availableFunds: formData.availableFunds,
-      });
-      setIsSuccess(true);
-      toast.success("Formulaire soumis avec succès !");
-      // Rediriger vers la page de résultat après 2 secondes
+      for (const doc of validDocuments) {
+        // Marquer comme en classification
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === doc.id ? { ...d, status: "classifying", progress: 10 } : d
+          )
+        );
+
+        // Classifier le document avec IA
+        const classification = await classifyDocument(doc.file, doc.id);
+
+        // Simuler la progression du téléchargement
+        for (let i = 20; i <= 100; i += 20) {
+          await new Promise((resolve) => setTimeout(resolve, 150));
+          setDocuments((prev) =>
+            prev.map((d) =>
+              d.id === doc.id ? { ...d, progress: i } : d
+            )
+          );
+        }
+
+        // Marquer comme succès avec classification
+        setDocuments((prev) =>
+          prev.map((d) =>
+            d.id === doc.id
+              ? {
+                  ...d,
+                  status: "success",
+                  progress: 100,
+                  classification,
+                }
+              : d
+          )
+        );
+
+        // Afficher les résultats
+        if (classification) {
+          toast.success(
+            `✓ ${doc.name} - ${classification.description} (${classification.confidence}%)`
+          );
+        }
+      }
+
+      toast.success(`${validDocuments.length} document(s) classifié(s) avec succès`);
+
+      if (onUploadComplete) {
+        onUploadComplete(validDocuments);
+      }
+
+      // Réinitialiser après 2 secondes
       setTimeout(() => {
-        setLocation(`/evaluation-result?destination=${formData.destination}&projectType=${formData.projectType}`);
+        setDocuments([]);
       }, 2000);
     } catch (error) {
-      toast.error("Erreur lors de la soumission du formulaire");
-      console.error(error);
+      toast.error("Erreur lors de la classification");
+      setDocuments((prev) =>
+        prev.map((d) =>
+          d.status === "classifying"
+            ? { ...d, status: "error", error: "Erreur de classification" }
+            : d
+        )
+      );
     } finally {
-      setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
-  const progressPercentage = (currentStep / 7) * 100;
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-  if (isSuccess) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-20"
-      >
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">Formulaire soumis !</h2>
-        <p className="text-gray-600 max-w-md mx-auto mb-8">
-          Votre évaluation de profil a été reçue. Notre équipe analysera votre dossier et vous contactera sous 24 heures.
-        </p>
-        <Button
-          onClick={() => {
-            setIsSuccess(false);
-            setCurrentStep(1);
-            setFormData({
-              destination: "",
-              projectType: "student",
-              currentCountry: "",
-              communicationLanguage: "fr",
-              fullName: "",
-              gender: "",
-              dateOfBirth: "",
-              nationality: "",
-              whatsappPhone: "",
-              email: "",
-              passportNumber: "",
-              passportExpiryDate: "",
-              passportCopyAvailable: "",
-              maritalStatus: "",
-              numberOfChildren: 0,
-              familyInDestination: "",
-              educationLevel: "",
-              fieldOfStudy: "",
-              currentProfession: "",
-              yearsOfExperience: 0,
-              monthlyIncome: "",
-              bankBalance: "",
-              sponsor: "",
-              countriesVisited: "",
-              visaRefusals: "",
-              criminalRecord: "",
-              desiredEducationLevel: "",
-              admissionLetterAvailable: false,
-              targetInstitution: "",
-              intendedStartDate: "",
-              studyBudget: 0,
-              academicProject: "",
-              visitType: "" as any,
-              plannedStayDuration: "",
-              estimatedTravelDate: "",
-              tiesInHomeCountry: "",
-              desiredPosition: "",
-              targetCity: "",
-              languageLevel: "",
-              jobOfferAvailable: false,
-              previousExperiences: "",
-              targetCategory: "",
-              age: 0,
-              experienceYears: 0,
-              provincialNomination: false,
-              policeCertificatesAvailable: false,
-              availableFunds: 0,
-              uploadedFiles: [],
-            });
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          Nouvelle évaluation
-        </Button>
-      </motion.div>
-    );
-  }
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    addDocuments(e.dataTransfer.files);
+  };
+
+  const pendingCount = documents.filter((d) => d.status === "pending").length;
+  const classifiedCount = documents.filter((d) => d.status === "success").length;
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-blue-100 shadow-xl overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-10 text-white text-center">
-        <h1 className="text-4xl font-bold mb-2">Évaluation de Profil</h1>
-        <p className="text-blue-100 text-lg">
-          Choisissez votre destination et votre projet pour une analyse personnalisée
-        </p>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="bg-white px-8 py-6 border-b border-gray-200">
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+    <div className="space-y-4">
+      {/* Zone de dépôt */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`relative border-2 border-dashed rounded-lg p-8 transition-all ${
+          isDragging
+            ? "border-blue-500 bg-blue-50"
+            : "border-gray-300 bg-gray-50 hover:border-gray-400"
+        }`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center justify-center">
           <motion.div
-            className="h-full bg-blue-600"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercentage}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
-        <div className="text-sm text-gray-600 text-center">
-          Étape {currentStep} sur 7
-        </div>
-      </div>
-
-      {/* Form Body */}
-      <div className="p-8">
-        <AnimatePresence mode="wait">
-          {/* ÉTAPE 1: Choix Principal */}
-          {currentStep === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Orientation & Projet</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label htmlFor="formData-destination" className="text-sm font-semibold mb-2 block">
-                    Pays de destination visé <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.destination} onValueChange={(v) => handleInputChange("destination", v)}>
-                    <SelectTrigger id="formData-destination">
-                      <SelectValue placeholder="Sélectionnez un pays" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DESTINATIONS.map((dest) => (
-                        <SelectItem key={dest} value={dest}>
-                          {dest}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-projectType" className="text-sm font-semibold mb-2 block">
-                    Type de projet <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.projectType} onValueChange={(v) => handleInputChange("projectType", v as ProjectType)}>
-                    <SelectTrigger id="formData-projectType">
-                      <SelectValue placeholder="Sélectionnez le type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROJECT_TYPES.map((pt) => (
-                        <SelectItem key={pt.value} value={pt.value}>
-                          {pt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="formData-currentCountry" className="text-sm font-semibold mb-2 block">
-                    Ville et Pays de résidence actuelle <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-currentCountry"
-                    placeholder="Ex: Douala, Cameroun"
-                    value={formData.currentCountry}
-                    onChange={(e) => handleInputChange("currentCountry", e.target.value)}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="formData-communicationLanguage" className="text-sm font-semibold mb-2 block">
-                    Langue de communication <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.communicationLanguage} onValueChange={(v) => handleInputChange("communicationLanguage", v)}>
-                    <SelectTrigger id="formData-communicationLanguage">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="en">Anglais</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 2: Identité, Passeport, Famille */}
-          {currentStep === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">2. Identité, Passeport & Famille</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label htmlFor="formData-fullName" className="text-sm font-semibold mb-2 block">
-                    Nom complet <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-fullName"
-                    placeholder="Comme sur le passeport"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-gender" className="text-sm font-semibold mb-2 block">
-                    Sexe <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.gender} onValueChange={(v) => handleInputChange("gender", v)}>
-                    <SelectTrigger id="formData-gender">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Masculin">Masculin</SelectItem>
-                      <SelectItem value="Féminin">Féminin</SelectItem>
-                      <SelectItem value="Autre">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-dateOfBirth" className="text-sm font-semibold mb-2 block">
-                    Date de naissance <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-nationality" className="text-sm font-semibold mb-2 block">
-                    Nationalité <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-nationality"
-                    placeholder="Ex: Camerounaise"
-                    value={formData.nationality}
-                    onChange={(e) => handleInputChange("nationality", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-whatsappPhone" className="text-sm font-semibold mb-2 block">
-                    Téléphone WhatsApp <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-whatsappPhone"
-                    placeholder="+237 6XXXXXXXX"
-                    value={formData.whatsappPhone}
-                    onChange={(e) => handleInputChange("whatsappPhone", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-email" className="text-sm font-semibold mb-2 block">
-                    Email <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-passportNumber" className="text-sm font-semibold mb-2 block">
-                    Numéro de passeport <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-passportNumber"
-                    placeholder="Ex: AB123456"
-                    value={formData.passportNumber}
-                    onChange={(e) => handleInputChange("passportNumber", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-passportExpiryDate" className="text-sm font-semibold mb-2 block">
-                    Date d'expiration passeport <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-passportExpiryDate"
-                    type="date"
-                    value={formData.passportExpiryDate}
-                    onChange={(e) => handleInputChange("passportExpiryDate", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-passportCopyAvailable" className="text-sm font-semibold mb-2 block">
-                    Copie passeport disponible ? <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.passportCopyAvailable} onValueChange={(v) => handleInputChange("passportCopyAvailable", v)}>
-                    <SelectTrigger id="formData-passportCopyAvailable">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Oui">Oui</SelectItem>
-                      <SelectItem value="En cours">En cours</SelectItem>
-                      <SelectItem value="Non">Non</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-maritalStatus" className="text-sm font-semibold mb-2 block">
-                    État civil <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.maritalStatus} onValueChange={(v) => handleInputChange("maritalStatus", v)}>
-                    <SelectTrigger id="formData-maritalStatus">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MARITAL_STATUS.map((ms) => (
-                        <SelectItem key={ms} value={ms}>
-                          {ms}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-numberOfChildren" className="text-sm font-semibold mb-2 block">
-                    Nombre d'enfants / Personnes à charge
-                  </Label>
-                  <Input id="formData-numberOfChildren"
-                    type="number"
-                    min="0"
-                    value={formData.numberOfChildren}
-                    onChange={(e) => handleInputChange("numberOfChildren", parseInt(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-familyInDestination" className="text-sm font-semibold mb-2 block">
-                    Famille dans le pays cible ?
-                  </Label>
-                  <Select value={formData.familyInDestination} onValueChange={(v) => handleInputChange("familyInDestination", v)}>
-                    <SelectTrigger id="formData-familyInDestination">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Non">Non</SelectItem>
-                      <SelectItem value="Oui">Oui - Citoyen / Résident</SelectItem>
-                      <SelectItem value="Oui - Étudiant">Oui - Étudiant / Travailleur</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 3: Études, Emploi, Finances */}
-          {currentStep === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Études, Emploi & Finances</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label htmlFor="formData-educationLevel" className="text-sm font-semibold mb-2 block">
-                    Niveau d'études <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.educationLevel} onValueChange={(v) => handleInputChange("educationLevel", v)}>
-                    <SelectTrigger id="formData-educationLevel">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EDUCATION_LEVELS.map((el) => (
-                        <SelectItem key={el} value={el}>
-                          {el}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-fieldOfStudy" className="text-sm font-semibold mb-2 block">
-                    Domaine d'études <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-fieldOfStudy"
-                    placeholder="Ex: Informatique, Droit"
-                    value={formData.fieldOfStudy}
-                    onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-currentProfession" className="text-sm font-semibold mb-2 block">
-                    Profession actuelle <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-currentProfession"
-                    placeholder="Ex: Ingénieur, Enseignant"
-                    value={formData.currentProfession}
-                    onChange={(e) => handleInputChange("currentProfession", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-yearsOfExperience" className="text-sm font-semibold mb-2 block">
-                    Années d'expérience <span className="text-red-500">*</span>
-                  </Label>
-                  <Input id="formData-yearsOfExperience"
-                    type="number"
-                    min="0"
-                    value={formData.yearsOfExperience}
-                    onChange={(e) => handleInputChange("yearsOfExperience", parseInt(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-monthlyIncome" className="text-sm font-semibold mb-2 block">
-                    Revenu mensuel estimé <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.monthlyIncome} onValueChange={(v) => handleInputChange("monthlyIncome", v)}>
-                    <SelectTrigger id="formData-monthlyIncome">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Moins de 300 000 FCFA">Moins de 300 000 FCFA (&lt; 500 €)</SelectItem>
-                      <SelectItem value="300 000 à 750 000 FCFA">300 000 à 750 000 FCFA (500 € - 1 150 €)</SelectItem>
-                      <SelectItem value="Plus de 750 000 FCFA">Plus de 750 000 FCFA (&gt; 1 150 €)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="formData-bankBalance" className="text-sm font-semibold mb-2 block">
-                    Épargne bancaire <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.bankBalance} onValueChange={(v) => handleInputChange("bankBalance", v)}>
-                    <SelectTrigger id="formData-bankBalance">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Moins de 3 Millions FCFA">Moins de 3 M FCFA (&lt; 4 500 €)</SelectItem>
-                      <SelectItem value="3M à 7M FCFA">3 M à 7 M FCFA (4 500 € - 10 000 €)</SelectItem>
-                      <SelectItem value="7M à 15M FCFA">7 M à 15 M FCFA (10 000 € - 23 000 €)</SelectItem>
-                      <SelectItem value="Plus de 15 Millions FCFA">Plus de 15 M FCFA (&gt; 23 000 €)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label htmlFor="formData-sponsor" className="text-sm font-semibold mb-2 block">
-                    Garant / Sponsor financier <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.sponsor} onValueChange={(v) => handleInputChange("sponsor", v)}>
-                    <SelectTrigger id="formData-sponsor">
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Auto-prise en charge">Auto-prise en charge</SelectItem>
-                      <SelectItem value="Parents">Parents / Famille directe</SelectItem>
-                      <SelectItem value="Tuteur Étranger">Tuteur à l'étranger</SelectItem>
-                      <SelectItem value="Bourse">Bourse d'études accordée</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 4-7: Sections conditionnelles et documents */}
-          {currentStep > 3 && currentStep <= 7 && (
-            <PremiumEvaluationFormSteps47
-              formData={formData}
-              onFormDataChange={handleInputChange}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              currentStep={currentStep}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={handlePrev}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2"
+            animate={{ y: isDragging ? -5 : 0 }}
+            transition={{ type: "spring", stiffness: 300 }}
+            className="mb-4"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Précédent
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <Upload className="w-8 h-8 text-blue-600" />
+            </div>
+          </motion.div>
+
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Téléchargez vos documents
+          </h3>
+          <p className="text-sm text-gray-600 text-center mb-2">
+            Glissez-déposez vos fichiers ici ou cliquez pour parcourir
+          </p>
+          <p className="text-xs text-blue-600 font-medium mb-4 flex items-center gap-1">
+            <Zap className="w-3 h-3" />
+            Classification IA automatique
+          </p>
+
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            variant="outline"
+            className="mb-4"
+            disabled={isUploading}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Parcourir les fichiers
           </Button>
 
-          {currentStep < 7 ? (
-            <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
-              Suivant
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {isSubmitting ? "Envoi en cours..." : "Soumettre"}
-            </Button>
-          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png,.webp"
+            onChange={(e) => addDocuments(e.target.files)}
+            className="hidden"
+            disabled={isUploading}
+          />
+
+          <p className="text-xs text-gray-500 text-center">
+            Formats acceptés: PDF, JPEG, PNG, WebP • Max {formatFileSize(maxFileSize)} par fichier
+          </p>
         </div>
+      </motion.div>
+
+      {/* Liste des documents */}
+      <AnimatePresence>
+        {documents.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="space-y-2"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-gray-900">
+                Documents ({documents.length}/{maxFiles})
+              </h4>
+              {classifiedCount > 0 && (
+                <span className="text-sm text-green-600 font-medium">
+                  ✓ {classifiedCount} classifié(s)
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {documents.map((doc) => (
+                <motion.div
+                  key={doc.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className={`p-3 rounded-lg border transition-all ${
+                    doc.status === "error"
+                      ? "bg-red-50 border-red-200"
+                      : doc.status === "success"
+                        ? "bg-green-50 border-green-200"
+                        : doc.status === "classifying"
+                          ? "bg-blue-50 border-blue-200"
+                          : "bg-white border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="mt-1 flex-shrink-0">
+                        {doc.status === "error" ? (
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        ) : doc.status === "success" ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        ) : doc.status === "classifying" ? (
+                          <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                        ) : (
+                          <div className="text-gray-600">{getFileIcon(doc.type)}</div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {doc.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {formatFileSize(doc.size)}
+                        </p>
+
+                        {doc.status === "error" && doc.error && (
+                          <p className="text-xs text-red-600 mt-1">{doc.error}</p>
+                        )}
+
+                        {doc.status === "classifying" && (
+                          <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                            <motion.div
+                              className="bg-blue-600 h-1.5 rounded-full"
+                              animate={{ width: `${doc.progress}%` }}
+                              transition={{ duration: 0.3 }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Résultats de classification */}
+                        {doc.classification && (
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Tag className="w-3 h-3 text-blue-600" />
+                              <span className="text-xs font-semibold text-gray-700">
+                                {doc.classification.description}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <FolderOpen className="w-3 h-3 text-green-600" />
+                              <span className="text-xs text-gray-600">
+                                📁 {doc.classification.suggestedFolder}
+                              </span>
+                            </div>
+                            {doc.classification.confidence && (
+                              <p className="text-xs text-gray-500">
+                                Confiance: {doc.classification.confidence}%
+                              </p>
+                            )}
+                            {doc.classification.extractedInfo?.holderName && (
+                              <p className="text-xs text-gray-600">
+                                Titulaire: {doc.classification.extractedInfo.holderName}
+                              </p>
+                            )}
+                            {doc.classification.warnings &&
+                              doc.classification.warnings.length > 0 && (
+                                <p className="text-xs text-orange-600">
+                                  ⚠ {doc.classification.warnings[0]}
+                                </p>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {doc.status !== "uploading" && doc.status !== "classifying" && (
+                      <button
+                        onClick={() => removeDocument(doc.id)}
+                        className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
+                        disabled={isUploading}
+                      >
+                        <X className="w-4 h-4 text-gray-600" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Boutons d'action */}
+      {documents.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-3 pt-4 border-t"
+        >
+          <Button
+            variant="outline"
+            onClick={() => setDocuments([])}
+            disabled={isUploading}
+            className="flex-1"
+          >
+            Effacer tout
+          </Button>
+          <Button
+            onClick={uploadDocuments}
+            disabled={isUploading || pendingCount === 0}
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Classification en cours...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-2" />
+                Classifier ({pendingCount})
+              </>
+            )}
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Message de sécurité */}
+      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-700">
+          Classification IA sécurisée: Vos documents sont analysés automatiquement pour identifier leur type et les classer dans le bon dossier. Les données sont chiffrées et sécurisées.
+        </p>
       </div>
-    </Card>
+    </div>
   );
 }

@@ -1,395 +1,154 @@
-import { useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import {
-  Upload,
-  File,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Lock,
-  FileText,
-  Image as ImageIcon,
-  Loader2,
-  Zap,
-  TrendingUp,
-} from "lucide-react";
-import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useState } from "react";
+import { useLocation } from "wouter";
 
-export interface UploadedDocument {
+interface Service {
   id: string;
   name: string;
-  size: number;
-  type: string;
-  file: File;
-  progress: number;
-  status: "pending" | "uploading" | "success" | "error" | "analyzing";
-  error?: string;
-  readabilityAnalysis?: {
-    isReadable: boolean;
-    readabilityScore: number;
-    issues: string[];
-    suggestions: string[];
-    confidence: number;
-  };
+  icon: string;
+  color: string;
+  path: string;
+  description: string;
 }
 
-interface SecureDocumentUploadProps {
-  dossierNumber: string;
-  onUploadComplete?: (documents: UploadedDocument[]) => void;
-  maxFiles?: number;
-  maxFileSize?: number; // in MB
-  acceptedFormats?: string[];
-}
+const services: Service[] = [
+  {
+    id: "visa",
+    name: "Visa & Immigration",
+    icon: "🛂",
+    color: "bg-blue-600",
+    path: "/",
+    description: "Évaluation gratuite",
+  },
+  {
+    id: "flights",
+    name: "Billets d'avion",
+    icon: "✈️",
+    color: "bg-cyan-500",
+    path: "/flights",
+    description: "Meilleurs tarifs",
+  },
+  {
+    id: "hotels",
+    name: "Hôtels & Tourisme",
+    icon: "🏨",
+    color: "bg-amber-500",
+    path: "/hotels",
+    description: "Réservation facile",
+  },
+  {
+    id: "insurance",
+    name: "Assurance voyage",
+    icon: "🛡️",
+    color: "bg-green-600",
+    path: "#",
+    description: "Protection complète",
+  },
+  {
+    id: "translation",
+    name: "Traduction Certifiée",
+    icon: "📄",
+    color: "bg-purple-600",
+    path: "#",
+    description: "Documents officiels",
+  },
+  {
+    id: "procedures",
+    name: "Procédures & Guides",
+    icon: "📋",
+    color: "bg-indigo-600",
+    path: "/procedures",
+    description: "Toutes les infos",
+  },
+];
 
-const ALLOWED_FORMATS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_FILES = 10;
+export default function FloatingServices() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [, navigate] = useLocation();
 
-export function SecureDocumentUpload({
-  dossierNumber,
-  onUploadComplete,
-  maxFiles = MAX_FILES,
-  maxFileSize = MAX_FILE_SIZE,
-  acceptedFormats = ALLOWED_FORMATS,
-}: SecureDocumentUploadProps) {
-  const [documents, setDocuments] = useState<UploadedDocument[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <ImageIcon className="w-5 h-5" />;
-    if (type === "application/pdf") return <FileText className="w-5 h-5" />;
-    return <File className="w-5 h-5" />;
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-  };
-
-  const validateFile = (file: File): string | null => {
-    if (!acceptedFormats.includes(file.type)) {
-      return `Format non accepté: ${file.type}. Acceptés: PDF, JPEG, PNG`;
-    }
-    if (file.size > maxFileSize) {
-      return `Fichier trop volumineux: ${formatFileSize(file.size)}. Max: ${formatFileSize(maxFileSize)}`;
-    }
-    return null;
-  };
-
-  const addDocuments = (files: FileList | null) => {
-    if (!files) return;
-
-    const newDocuments: UploadedDocument[] = [];
-
-    Array.from(files).forEach((file) => {
-      const error = validateFile(file);
-
-      if (documents.length + newDocuments.length >= maxFiles) {
-        toast.error(`Maximum ${maxFiles} fichiers autorisés`);
-        return;
-      }
-
-      newDocuments.push({
-        id: `${file.name}-${Date.now()}`,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        file,
-        progress: 0,
-        status: error ? "error" : "pending",
-        error: error || undefined,
-      });
-    });
-
-    setDocuments((prev) => [...prev, ...newDocuments]);
-
-    if (newDocuments.some((d) => d.status === "error")) {
-      toast.error("Certains fichiers n'ont pas pu être ajoutés");
+  const handleServiceClick = (path: string) => {
+    if (path !== "#") {
+      navigate(path);
+      setIsOpen(false);
     }
   };
-
-  const removeDocument = (id: string) => {
-    setDocuments((prev) => prev.filter((d) => d.id !== id));
-  };
-
-  const uploadDocuments = async () => {
-    const validDocuments = documents.filter((d) => d.status !== "error");
-
-    if (validDocuments.length === 0) {
-      toast.error("Aucun document valide à télécharger");
-      return;
-    }
-
-    setIsUploading(true);
-
-    try {
-      // Simuler le téléchargement avec progression
-      for (const doc of validDocuments) {
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "uploading", progress: 0 } : d
-          )
-        );
-
-        // Simuler la progression du téléchargement
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          setDocuments((prev) =>
-            prev.map((d) =>
-              d.id === doc.id ? { ...d, progress: i } : d
-            )
-          );
-        }
-
-        // Marquer comme succès
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "success", progress: 100 } : d
-          )
-        );
-      }
-
-      toast.success(`${validDocuments.length} document(s) téléchargé(s) avec succès`);
-
-      if (onUploadComplete) {
-        onUploadComplete(validDocuments);
-      }
-
-      // Réinitialiser après 2 secondes
-      setTimeout(() => {
-        setDocuments([]);
-      }, 2000);
-    } catch (error) {
-      toast.error("Erreur lors du téléchargement");
-      setDocuments((prev) =>
-        prev.map((d) =>
-          d.status === "uploading"
-            ? { ...d, status: "error", error: "Erreur de téléchargement" }
-            : d
-        )
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    addDocuments(e.dataTransfer.files);
-  };
-
-  const pendingCount = documents.filter((d) => d.status === "pending").length;
-  const uploadedCount = documents.filter((d) => d.status === "success").length;
 
   return (
-    <div className="space-y-4">
-      {/* Zone de dépôt */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`relative border-2 border-dashed rounded-lg p-8 transition-all ${
-          isDragging
-            ? "border-blue-500 bg-blue-50"
-            : "border-gray-300 bg-gray-50 hover:border-gray-400"
+    <div className="fixed bottom-6 right-6 z-40">
+      {/* Main button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-2xl transition-all duration-300 transform hover:scale-110 ${
+          isOpen
+            ? "bg-gradient-to-br from-blue-600 to-blue-800 rotate-45"
+            : "bg-gradient-to-br from-blue-600 to-blue-800"
         }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        title="Services"
       >
-        <div className="flex flex-col items-center justify-center">
-          <motion.div
-            animate={{ y: isDragging ? -5 : 0 }}
-            transition={{ type: "spring", stiffness: 300 }}
-            className="mb-4"
-          >
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-              <Upload className="w-8 h-8 text-blue-600" />
-            </div>
-          </motion.div>
+        <span className={`transition-transform duration-300 ${isOpen ? "rotate-45" : ""}`}>
+          ⚙️
+        </span>
+      </button>
 
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Téléchargez vos documents
-          </h3>
-          <p className="text-sm text-gray-600 text-center mb-4">
-            Glissez-déposez vos fichiers ici ou cliquez pour parcourir
-          </p>
+      {/* Floating menu items */}
+      {isOpen && (
+        <div className="absolute bottom-20 right-0 w-80">
+          {/* Grid of services */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {services.map((service, index) => (
+              <button
+                key={service.id}
+                onClick={() => handleServiceClick(service.path)}
+                className={`p-4 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 bg-white border-l-4 ${service.color} animate-fade-in`}
+                style={{
+                  animationDelay: `${index * 50}ms`,
+                  animation: "fadeInUp 0.3s ease-out forwards",
+                  opacity: 0,
+                }}
+              >
+                <div className="text-3xl mb-2">{service.icon}</div>
+                <div className="text-left">
+                  <h3 className="font-bold text-sm text-slate-900">{service.name}</h3>
+                  <p className="text-xs text-slate-600">{service.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
 
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            variant="outline"
-            className="mb-4"
-            disabled={isUploading}
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Parcourir les fichiers
-          </Button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept=".pdf,.jpg,.jpeg,.png,.webp"
-            onChange={(e) => addDocuments(e.target.files)}
-            className="hidden"
-            disabled={isUploading}
-          />
-
-          <p className="text-xs text-gray-500 text-center">
-            Formats acceptés: PDF, JPEG, PNG, WebP • Max {formatFileSize(maxFileSize)} par fichier • Max {maxFiles} fichiers
-          </p>
+          {/* Quick contact */}
+          <div className="bg-white rounded-lg shadow-md p-4 border-t-4 border-blue-600">
+            <p className="text-xs text-slate-600 mb-3">Besoin d'aide ?</p>
+            <a
+              href="https://wa.me/237698104832"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              💬 WhatsApp
+            </a>
+          </div>
         </div>
-      </motion.div>
-
-      {/* Liste des documents */}
-      <AnimatePresence>
-        {documents.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-2"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-semibold text-gray-900">
-                Documents ({documents.length}/{maxFiles})
-              </h4>
-              {uploadedCount > 0 && (
-                <span className="text-sm text-green-600 font-medium">
-                  ✓ {uploadedCount} téléchargé(s)
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {documents.map((doc) => (
-                <motion.div
-                  key={doc.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  className={`p-3 rounded-lg border transition-all ${
-                    doc.status === "error"
-                      ? "bg-red-50 border-red-200"
-                      : doc.status === "success"
-                        ? "bg-green-50 border-green-200"
-                        : "bg-white border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <div className="mt-1 flex-shrink-0">
-                        {doc.status === "error" ? (
-                          <AlertCircle className="w-5 h-5 text-red-600" />
-                        ) : doc.status === "success" ? (
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <div className="text-gray-600">{getFileIcon(doc.type)}</div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {doc.name}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(doc.size)}
-                        </p>
-
-                        {doc.status === "error" && doc.error && (
-                          <p className="text-xs text-red-600 mt-1">{doc.error}</p>
-                        )}
-
-                        {doc.status === "uploading" && (
-                          <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
-                            <motion.div
-                              className="bg-blue-600 h-1.5 rounded-full"
-                              animate={{ width: `${doc.progress}%` }}
-                              transition={{ duration: 0.3 }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {doc.status !== "uploading" && (
-                      <button
-                        onClick={() => removeDocument(doc.id)}
-                        type="button"
-                        aria-label={`Supprimer le document ${doc.name ?? ""}`.trim()}
-                        className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
-                        disabled={isUploading}
-                      >
-                        <X className="w-4 h-4 text-gray-600" />
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Boutons d'action */}
-      {documents.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex gap-3 pt-4 border-t"
-        >
-          <Button
-            variant="outline"
-            onClick={() => setDocuments([])}
-            disabled={isUploading}
-            className="flex-1"
-          >
-            Effacer tout
-          </Button>
-          <Button
-            onClick={uploadDocuments}
-            disabled={isUploading || pendingCount === 0}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
-          >
-            {isUploading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Téléchargement...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4 mr-2" />
-                Télécharger ({pendingCount})
-              </>
-            )}
-          </Button>
-        </motion.div>
       )}
 
-      {/* Message de sécurité */}
-      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-        <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-700">
-          Tous vos documents sont chiffrés et stockés de manière sécurisée. Seuls les membres autorisés de 3M Travel peuvent y accéder.
-        </p>
-      </div>
+      {/* Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
