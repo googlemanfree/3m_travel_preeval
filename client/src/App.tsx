@@ -71,7 +71,7 @@ import EvaluationSpace from "./pages/EvaluationSpace";
 import AppointmentBooking from "./pages/AppointmentBooking";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import { CinetPayPayment } from "./pages/CinetPayPayment";
-import { Evisas as EvisasPage } from "./pages/Evisas";
+import EvisasPage from "./pages/Evisas";
 import { EvisaApplicationForm } from "./pages/EvisaApplicationForm";
 import { MyFavorites } from "./pages/MyFavorites";
 import EvisaRequestForm from "./pages/EvisaRequestForm";
@@ -128,11 +128,7 @@ function Router() {
           <AssuranceInscription />
         </AuthGuard>
       </Route>
-      <Route path={"/evisa"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder aux services e-visa.">
-          <Evisa />
-        </AuthGuard>
-      </Route>
+      <Route path={"/evisa"} component={Evisa} />
       <Route path={"/evisa-demande"}>
         <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
           <EvisaDemande />
@@ -206,11 +202,7 @@ function Router() {
       <Route path={"/tarifs"} component={Tarifs} />
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
-      <Route path={"/evisas"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder aux services e-visa.">
-          <EvisasPage />
-        </AuthGuard>
-      </Route>
+      <Route path={"/evisas"} component={EvisasPage} />
       <Route path={"/evisas/:countryCode"}>
         <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
           <EvisaApplicationForm />

@@ -396,3 +396,218 @@ export const profileEvaluations = mysqlTable("profile_evaluations", {
 
 export type ProfileEvaluation = typeof profileEvaluations.$inferSelect;
 export type InsertProfileEvaluation = typeof profileEvaluations.$inferInsert;
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TABLES RESTAURÉES — nécessaires pour le panneau admin (connexion OTP,
+// gestion des bilans, documents client, dossiers agence)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const aiReportHistory = mysqlTable("ai_report_history", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au candidat/dossier
+  applicationId: int("applicationId"),  // Référence à la table applications
+  candidateId: int("candidateId"),      // Référence à la table candidates
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  
+  // Détails du rapport
+  destination: varchar("destination", { length: 100 }).notNull(),
+  reportId: varchar("reportId", { length: 100 }).notNull().unique(),  // Identifiant unique du rapport (ex: 3M-AI-TIMESTAMP)
+  reportContent: text("reportContent"),  // Contenu du rapport (peut être long)
+  
+  // Statut d'envoi
+  sendStatus: mysqlEnum("sendStatus", ["pending", "sent", "failed", "bounced"]).default("pending").notNull(),
+  sendAttempts: int("sendAttempts").default(0).notNull(),
+  lastSendError: text("lastSendError"),  // Message d'erreur si l'envoi a échoué
+  
+  // Timestamps
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  sentAt: timestamp("sentAt"),  // Quand le rapport a été effectivement envoyé
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const adminAccounts = mysqlTable("admin_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  // Identifiants
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  adminType: mysqlEnum("adminType", ["evaluation", "accompagnement", "procedures"]).notNull(),
+  // OTP
+  otpCode: varchar("otpCode", { length: 6 }),  // Code OTP actuel
+  otpExpiresAt: timestamp("otpExpiresAt"),  // Expiration du code OTP
+  otpAttempts: int("otpAttempts").default(0).notNull(),  // Nombre de tentatives échouées
+  // Session
+  sessionToken: varchar("sessionToken", { length: 256 }),  // Token de session actuel
+  sessionExpiresAt: timestamp("sessionExpiresAt"),  // Expiration de la session
+  lastLoginAt: timestamp("lastLoginAt"),  // Dernière connexion
+  lastActivityAt: timestamp("lastActivityAt"),  // Dernière activité (pour détecter l'inactivité)
+  // Métadonnées
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  status: mysqlEnum("status", ["active", "inactive", "suspended"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const clientDocuments = mysqlTable("client_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  documentType: mysqlEnum("documentType", [
+    "passport",
+    "national_id",
+    "driver_license",
+    "cv",
+    "diploma",
+    "certificate",
+    "cover_letter",
+    "employment_contract",
+    "birth_certificate",
+    "marriage_certificate",
+    "bank_statement",
+    "employment_letter",
+    "language_test",
+    "medical_exam",
+    "police_clearance",
+    "proof_of_residence",
+    "visa",
+    "travel_document",
+    "insurance_document",
+    "medical_document",
+    "educational_transcript",
+    "other"
+  ]).notNull(),
+  documentName: varchar("documentName", { length: 255 }).notNull(),
+  documentUrl: text("documentUrl"),  // URL du fichier stocké
+  fileSize: int("fileSize"),  // Taille en bytes
+  uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  // Traçabilité de la source
+  source: mysqlEnum("source", ["online", "scanned_agency", "manual_admin"]).default("online").notNull(),  // Où le document provient
+  uploadedByAdmin: varchar("uploadedByAdmin", { length: 320 }),  // Email de l'admin si scanned_agency ou manual_admin
+  // Gestion admin
+  receivedByAdmin: boolean("receivedByAdmin").default(false).notNull(),
+  adminNotes: text("adminNotes"),
+  receiptGeneratedAt: timestamp("receiptGeneratedAt"),  // Quand la décharge a été générée
+  receiptUrl: text("receiptUrl"),  // URL de la décharge PDF
+  receiptNumber: varchar("receiptNumber", { length: 50 }),  // Numéro de décharge unique
+  // Classification par IA
+  aiClassification: json("aiClassification"),  // Résultats de classification IA: {documentType, confidence, description, suggestedFolder, extractedInfo, warnings}
+  aiClassificationConfidence: int("aiClassificationConfidence"),  // Score de confiance 0-100
+  aiClassifiedAt: timestamp("aiClassifiedAt"),  // Quand la classification IA a été effectuée
+  suggestedFolder: varchar("suggestedFolder", { length: 255 }),  // Dossier suggéré par l'IA
+  extractedData: json("extractedData"),  // Données extraites: {documentNumber, issueDate, expiryDate, issuingCountry, holderName}
+  status: mysqlEnum("status", ["pending", "received", "verified", "rejected"]).default("pending").notNull(),
+  // Validation par l'admin
+  verificationStatus: mysqlEnum("verificationStatus", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  verificationComment: text("verificationComment"),  // Commentaire de l'admin
+  verifiedByAdmin: varchar("verifiedByAdmin", { length: 320 }),  // Email de l'admin qui a validé
+  verifiedAt: timestamp("verifiedAt"),  // Quand le document a été validé/rejeté
+  readabilityScore: int("readabilityScore"),  // Score de lisibilité 0-100
+  readabilityIssues: json("readabilityIssues"),  // Problèmes de lisibilité détectés
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ClientDocument = typeof clientDocuments.$inferSelect;
+export type InsertClientDocument = typeof clientDocuments.$inferInsert;
+
+export const agencyDossiers = mysqlTable("agency_dossiers", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identité du candidat
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  nationality: varchar("nationality", { length: 100 }),
+  
+  // Destination et visa
+  destination: varchar("destination", { length: 100 }).notNull(),  // Canada, France, Allemagne, etc.
+  visaType: varchar("visaType", { length: 100 }).notNull(),  // etude, travail, tourisme, residence, etc.
+  
+  // Statut du dossier
+  status: mysqlEnum("status", [
+    "nouveau",
+    "en_cours",
+    "documents_requis",
+    "soumis",
+    "approuve",
+    "refuse"
+  ]).default("nouveau").notNull(),
+  
+  // Gestion administrative
+  createdByAdmin: varchar("createdByAdmin", { length: 320 }).notNull(),  // Email de l'admin qui a créé le dossier
+  assignedToAdmin: varchar("assignedToAdmin", { length: 320 }),  // Email de l'admin assigné
+  adminNotes: text("adminNotes"),  // Notes internes pour les admins
+  
+  // Informations supplémentaires
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  employmentStatus: varchar("employmentStatus", { length: 100 }),
+  monthlyIncome: int("monthlyIncome"),
+  bankBalance: int("bankBalance"),
+  
+  // Documents
+  cvFileUrl: text("cvFileUrl"),
+  cvFileName: varchar("cvFileName", { length: 255 }),
+  additionalDocuments: text("additionalDocuments"),  // JSON array of {name, url, uploadedAt}
+  
+  // Historique des modifications
+  lastStatusChangeAt: timestamp("lastStatusChangeAt"),
+  lastStatusChangeBy: varchar("lastStatusChangeBy", { length: 320 }),
+  
+  // Notifications
+  welcomeEmailSent: boolean("welcomeEmailSent").default(false).notNull(),
+  statusUpdateEmailSent: boolean("statusUpdateEmailSent").default(false).notNull(),
+  
+  // Métadonnées
+  source: mysqlEnum("source", ["manual_admin", "online_form"]).default("manual_admin").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const bilans = mysqlTable("bilans", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au dossier
+  applicationId: int("applicationId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull(),
+  
+  // Candidat
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  
+  // Bilan généré par IA
+  score: int("score").notNull(),  // 0-100
+  verdict: mysqlEnum("verdict", [
+    "tres_favorable",
+    "favorable_sous_reserve",
+    "risque_non_admissible"
+  ]).notNull(),
+  strengths: text("strengths").notNull(),  // JSON array
+  weaknesses: text("weaknesses").notNull(),  // JSON array
+  recommendations: text("recommendations").notNull(),  // JSON array
+  
+  // Statut de validation
+  status: mysqlEnum("status", [
+    "draft",  // Généré par IA, en attente de validation
+    "validated",  // Validé par l'admin
+    "sent",  // Email envoyé au candidat
+    "rejected"  // Rejeté par l'admin
+  ]).default("draft").notNull(),
+  
+  // Validation admin
+  validatedBy: varchar("validatedBy", { length: 255 }),  // Nom de l'admin
+  validatedAt: timestamp("validatedAt"),
+  adminNotes: text("adminNotes"),  // Notes de l'admin avant validation
+  
+  // Envoi email
+  sentAt: timestamp("sentAt"),
+  emailTemplate: varchar("emailTemplate", { length: 50 }).default("bilan_standard"),  // bilan_standard, bilan_favorable, etc.
+  
+  // Timestamps
+  generatedAt: timestamp("generatedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
