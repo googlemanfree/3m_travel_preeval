@@ -1,0 +1,19 @@
+ALTER TABLE `admin_accounts` MODIFY COLUMN `lastLoginAt` timestamp;--> statement-breakpoint
+ALTER TABLE `applications` MODIFY COLUMN `emailOtp` varchar(10);--> statement-breakpoint
+ALTER TABLE `applications` MODIFY COLUMN `emailOtpExpiresAt` timestamp;--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `phone` varchar(50);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `nationality` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `dateOfBirth` varchar(20);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `visaType` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `dossierNote` text;--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `formulaChosen` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `scoreResult` varchar(50);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `scoreDetails` text;--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `educationLevel` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `employmentStatus` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `languageLevel` varchar(100);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `emailOtp` varchar(10);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `emailOtpExpiresAt` timestamp;--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `passwordResetToken` varchar(128);--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `passwordResetExpiresAt` timestamp;--> statement-breakpoint
+ALTER TABLE `candidates` MODIFY COLUMN `lastLoginAt` timestamp;

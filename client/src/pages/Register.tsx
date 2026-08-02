@@ -49,20 +49,20 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
     password: "",
-    phone: "",
-    destination: "canada" as string,
-    nationality: "",
+    confirmPassword: "",
   });
 
   // Valider le formulaire en temps réel
   useEffect(() => {
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
     const passwordValid = form.password.length >= 8 && /[A-Z]/.test(form.password) && /[0-9]/.test(form.password);
-    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid;
+    const passwordMatch = form.password === form.confirmPassword;
+    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch;
     setIsFormValid(isValid as boolean);
   }, [form]);
 
@@ -105,9 +105,6 @@ export default function Register() {
       fullName: form.fullName,
       email: form.email,
       password: form.password,
-      phone: form.phone || undefined,
-      destination: form.destination as any,
-      nationality: form.nationality || undefined,
     });
   }
 
@@ -210,38 +207,7 @@ export default function Register() {
               </AnimatePresence>
             </div>
 
-            {/* Téléphone */}
-            <div>
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone</Label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  placeholder="+237 6XX XXX XXX"
-                  value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="pl-10"
-                />
-              </div>
-            </div>
 
-            {/* Destination */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
-              <div className="relative mt-1">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
-                <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
-                  <SelectTrigger className="pl-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DESTINATIONS.map(d => (
-                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             {/* Mot de passe */}
             <div>
@@ -294,20 +260,45 @@ export default function Register() {
               })()}
             </div>
 
-            {/* Indicateur de validation du formulaire */}
-            <AnimatePresence>
-              {form.fullName && form.email && form.password && !isFormValid && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm"
+            {/* Confirmation du mot de passe */}
+            <div>
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">Confirmer le mot de passe *</Label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.confirmPassword}
+                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  className="pl-10 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  Veuillez remplir tous les critères requis
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {/* Indicateur de correspondance */}
+              <AnimatePresence>
+                {form.confirmPassword && form.password !== form.confirmPassword && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-2 p-2 mt-1 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs"
+                  >
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    Les mots de passe ne correspondent pas
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+
 
             {/* Bouton */}
             <motion.div
