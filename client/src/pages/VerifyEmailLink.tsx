@@ -29,7 +29,7 @@ export default function VerifyEmailLink() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (status === "success" && countdown === 0) {
-      navigate("/login");
+      navigate(decodeURIComponent(redirect));
     }
   }, [status, countdown, redirect, navigate]);
 
@@ -38,7 +38,17 @@ export default function VerifyEmailLink() {
       setStatus("success");
       setMessage("Email vérifié avec succès !");
       setCandidateData(data);
-      toast.success("Email verifie ! Veuillez vous connecter avec vos identifiants.");
+      if (data.token) {
+        login(data.token, {
+          id: 0,
+          fullName: "Candidat",
+          email: "",
+          destination: "autre",
+          dossierStatus: "nouveau",
+          emailVerified: true,
+        });
+      }
+      toast.success("Bienvenue dans votre espace 3M Travel !");
     },
     onError: (err) => {
       setStatus("error");

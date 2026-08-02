@@ -65,14 +65,14 @@ export const candidates = mysqlTable("candidates", {
   // Identité
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
-  phone: varchar("phone", { length: 50 }),
-  nationality: varchar("nationality", { length: 100 }),
-  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  phone: varchar("phone", { length: 50 }).default(null),
+  nationality: varchar("nationality", { length: 100 }).default(null),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }).default(null),
   // Auth
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   // Dossier d'immigration
   destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
-  visaType: varchar("visaType", { length: 100 }),
+  visaType: varchar("visaType", { length: 100 }).default(null),
   dossierStatus: mysqlEnum("dossierStatus", [
     "nouveau",
     "evaluation",
@@ -82,15 +82,15 @@ export const candidates = mysqlTable("candidates", {
     "approuve",
     "refuse",
   ]).default("nouveau").notNull(),
-  dossierNote: text("dossierNote"),         // Note interne du conseiller
-  formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
+  dossierNote: text("dossierNote").default(null),         // Note interne du conseiller
+  formulaChosen: varchar("formulaChosen", { length: 100 }).default(null), // integral / echelonne / garanti
   // Scoring
-  scoreResult: varchar("scoreResult", { length: 50 }),
-  scoreDetails: text("scoreDetails"),       // JSON des détails du scoring
+  scoreResult: varchar("scoreResult", { length: 50 }).default(null),
+  scoreDetails: text("scoreDetails").default(null),       // JSON des détails du scoring
   // Profil
-  educationLevel: varchar("educationLevel", { length: 100 }),
-  employmentStatus: varchar("employmentStatus", { length: 100 }),
-  languageLevel: varchar("languageLevel", { length: 100 }),
+  educationLevel: varchar("educationLevel", { length: 100 }).default(null),
+  employmentStatus: varchar("employmentStatus", { length: 100 }).default(null),
+  languageLevel: varchar("languageLevel", { length: 100 }).default(null),
   // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
