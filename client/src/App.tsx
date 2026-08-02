@@ -45,8 +45,7 @@ import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
-import FloatingServices from "./components/FloatingServices";
-import { FloatingWhatsAppButton } from "./components/FloatingWhatsAppButton";
+import { FloatingActionMenu } from "./components/FloatingActionMenu";
 import CandidatesManager from "./pages/CandidatesManager";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
@@ -54,7 +53,7 @@ import { SubmitDocuments } from "./pages/SubmitDocuments";
 import ClientDashboard from "./pages/ClientDashboard";
 import { HowItWorks } from "./pages/HowItWorks";
 import MySpace from "./pages/MySpace";
-import { ScrollToTop } from "./components/ScrollToTop";
+
 import AdminGuard from "./components/AdminGuard";
 import AdminUsersManagement from "./pages/AdminUsersManagement";
 import AdminUserDetails from "./pages/AdminUserDetails";
@@ -74,6 +73,8 @@ import EvisaRequestForm from "./pages/EvisaRequestForm";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
+import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
+import AdminEvisaDetail from "./pages/AdminEvisaDetail";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -280,6 +281,16 @@ function Router() {
           <AdminEmailTemplates />
         </AdminGuard>
       </Route>
+      <Route path="/admin/evisa">
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEvisaDashboard />
+        </AdminGuard>
+      </Route>
+      <Route path="/admin/evisa/:id">
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEvisaDetail />
+        </AdminGuard>
+      </Route>
 
       <Route path="/client-dashboard">
         <AuthGuard>
@@ -333,10 +344,8 @@ function App() {
               <Navbar />
               {/* Contenu des pages */}
               <Router />
-              {/* Widgets flottants */}
-              <FloatingServices />
-              <FloatingWhatsAppButton />
-              <ScrollToTop />
+              {/* Menu d'actions flottantes unifié */}
+              <FloatingActionMenu />
             </>
           )}
         </TooltipProvider>

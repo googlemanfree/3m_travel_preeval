@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
-import { CheckCircle, AlertCircle, Loader, ArrowRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, AlertCircle, Loader, ArrowRight, Mail, Shield, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -14,12 +14,14 @@ export default function VerifyEmailLink() {
   const { login } = useCandidateAuth();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const token = params.get("token") ?? "";
-  const redirect = params.get("redirect") ?? "/login"; // Redirection par défaut vers /login
+  const redirect = params.get("redirect") ?? "/dashboard";
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [candidateData, setCandidateData] = useState<any>(null);
-  const [countdown, setCountdown] = useState(3); // Compte à rebours de 3 secondes
+  const [countdown, setCountdown] = useState(5);
+  const [email, setEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
   // Compte à rebours avant redirection
   useEffect(() => {
@@ -47,7 +49,6 @@ export default function VerifyEmailLink() {
         });
       }
       toast.success("Bienvenue dans votre espace 3M Travel !");
-      // Le compte à rebours démarre automatiquement via l'effet useEffect
     },
     onError: (err) => {
       setStatus("error");
@@ -55,6 +56,35 @@ export default function VerifyEmailLink() {
       toast.error(err.message);
     },
   });
+
+  const resendVerificationEmail = async () => {
+    if (!email.trim()) {
+      toast.error("Veuillez entrer votre adresse email");
+      return;
+    }
+    setIsResending(true);
+    try {
+      // Appeler la mutation pour renvoyer l'email
+      await new Promise((resolve) => {
+        const mutation = trpc.candidate.resendVerificationEmail.useMutation({
+          onSuccess: () => {
+            toast.success("Email de vérification renvoyé avec succès !");
+            setIsResending(false);
+            resolve(null);
+          },
+          onError: (err) => {
+            toast.error(err.message || "Erreur lors de l'envoi de l'email");
+            setIsResending(false);
+            resolve(null);
+          },
+        });
+        mutation.mutate({ email: email.toLowerCase().trim() });
+      });
+    } catch (error) {
+      console.error("Erreur lors du renvoi:", error);
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     if (token) {
@@ -67,163 +97,314 @@ export default function VerifyEmailLink() {
   }, [token]);
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="px-8 pt-8 pb-6 text-center border-b border-gray-100">
-            <img src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 object-contain" />
-
-            {status === "loading" && (
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Loader className="w-8 h-8 text-blue-600 animate-spin" />
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">Vérification en cours...</h1>
-                <p className="text-gray-500 mt-2 text-sm">Veuillez patienter pendant que nous confirmons votre email.</p>
-              </motion.div>
-            )}
-
-            {status === "success" && (
-              <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <AnimatePresence mode="wait">
+        {status === "loading" && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-md"
+          >
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+              <div className="px-8 pt-12 pb-8 text-center">
                 <motion.div
-                  animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
-                  className="inline-block"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6"
                 >
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
+                  <Loader className="w-10 h-10 text-indigo-600 animate-spin" />
                 </motion.div>
-                <motion.h1 
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="text-2xl font-bold text-gray-900"
+                <h1 className="text-3xl font-black text-gray-900 mb-2">Vérification en cours...</h1>
+                <p className="text-gray-600 text-lg">Nous confirmons votre adresse email</p>
+                
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="mt-8 flex justify-center gap-2"
                 >
-                  Compte Activé ! 🎉
-                </motion.h1>
-                <motion.p 
-                  initial={{ y: 10, opacity: 0 }}
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 0.6, delay: i * 0.1, repeat: Infinity }}
+                      className="w-2 h-2 bg-indigo-600 rounded-full"
+                    />
+                  ))}
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {status === "success" && (
+          <motion.div
+            key="success"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.4 }}
+            className="w-full max-w-2xl"
+          >
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+              {/* Success Header */}
+              <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 px-8 pt-12 pb-8 text-center relative overflow-hidden">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20"
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                  className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16"
+                />
+                
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                  className="relative z-10"
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 0.8, repeat: Infinity, repeatDelay: 2 }}
+                    className="inline-block"
+                  >
+                    <CheckCircle className="w-24 h-24 text-white mx-auto mb-4" />
+                  </motion.div>
+                </motion.div>
+
+                <motion.h1
+                  initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="text-gray-500 mt-2 text-sm"
+                  className="text-4xl font-black text-white mb-2 relative z-10"
                 >
-                  Votre email a été confirmé avec succès
+                  Félicitations ! 🎉
+                </motion.h1>
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-green-50 text-lg relative z-10"
+                >
+                  Votre compte est maintenant activé
                 </motion.p>
-              </motion.div>
-            )}
+              </div>
 
-            {status === "error" && (
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
-                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-3" />
-                <h1 className="text-2xl font-bold text-gray-900">Lien invalide</h1>
-                <p className="text-gray-500 mt-2 text-sm">{message}</p>
-              </motion.div>
-            )}
-          </div>
-
-          {/* Body */}
-          {status === "error" && (
-            <div className="px-8 py-6 text-center">
-              <p className="text-gray-600 mb-6">
-                Le lien de vérification est invalide ou a expiré. Veuillez créer un nouveau compte.
-              </p>
-              <Button
-                onClick={() => navigate("/register")}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg"
-              >
-                Créer un nouveau compte
-              </Button>
-            </div>
-          )}
-
-          {status === "success" && (
-            <div className="px-8 py-8">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6"
-              >
-                <h3 className="text-green-900 font-semibold mb-2">✓ Email Confirmé</h3>
-                <p className="text-green-700 text-sm">
-                  Votre compte 3M Travel & Services est maintenant activé. Vous allez être redirigé vers la page de connexion pour accéder à votre espace.
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="space-y-3"
-              >
-                {/* Compte à rebours visuel */}
+              {/* Success Body */}
+              <div className="px-8 py-10">
+                {/* Confirmation Message */}
                 <motion.div
-                  className="flex justify-center items-center gap-4 mb-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 mb-8"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <Mail className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-green-900 mb-1">Email Confirmé</h3>
+                      <p className="text-green-700">
+                        Votre adresse email a été vérifiée avec succès. Vous pouvez maintenant accéder à votre espace candidat.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Features */}
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8"
                 >
-                  <div className="text-center">
-                    <p className="text-gray-600 text-sm mb-2">Redirection automatique dans</p>
+                  {[
+                    { icon: Shield, label: "Compte Sécurisé", desc: "Authentification vérifiée" },
+                    { icon: Zap, label: "Prêt à Commencer", desc: "Accès immédiat" },
+                    { icon: Mail, label: "Email Confirmé", desc: "Notifications actives" },
+                  ].map((feature, i) => (
                     <motion.div
-                      key={countdown}
-                      initial={{ scale: 1.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.5, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="text-5xl font-black text-green-600"
+                      key={i}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 + i * 0.1 }}
+                      className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 text-center border border-blue-100"
                     >
-                      {countdown}s
+                      <feature.icon className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+                      <p className="font-semibold text-gray-900 text-sm">{feature.label}</p>
+                      <p className="text-gray-600 text-xs mt-1">{feature.desc}</p>
                     </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Countdown */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="text-center mb-8"
+                >
+                  <p className="text-gray-600 mb-3">Redirection automatique dans</p>
+                  <motion.div
+                    key={countdown}
+                    initial={{ scale: 1.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600"
+                  >
+                    {countdown}s
+                  </motion.div>
+                </motion.div>
+
+                {/* CTA Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  <Button
+                    onClick={() => navigate(decodeURIComponent(redirect))}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all duration-200 hover:shadow-xl flex items-center justify-center gap-3 text-lg"
+                  >
+                    Accéder à Mon Tableau de Bord
+                    <ArrowRight className="w-6 h-6" />
+                  </Button>
+                </motion.div>
+
+                {/* Next Steps */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="mt-8 pt-8 border-t border-gray-200"
+                >
+                  <p className="text-gray-600 font-semibold mb-4 text-center">Prochaines étapes :</p>
+                  <div className="space-y-3">
+                    {[
+                      { num: "1", title: "Complétez votre profil", desc: "Ajoutez vos informations personnelles" },
+                      { num: "2", title: "Téléchargez vos documents", desc: "Passeport, diplômes, etc." },
+                      { num: "3", title: "Suivez votre dossier", desc: "Recevez des mises à jour en temps réel" },
+                    ].map((step, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 1.1 + i * 0.1 }}
+                        className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {step.num}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">{step.title}</p>
+                          <p className="text-gray-600 text-sm">{step.desc}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {status === "error" && (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-md"
+          >
+            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
+              <div className="bg-gradient-to-r from-red-500 to-rose-500 px-8 pt-12 pb-8 text-center">
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200 }}
+                >
+                  <AlertCircle className="w-24 h-24 text-white mx-auto mb-4" />
+                </motion.div>
+                <h1 className="text-3xl font-black text-white mb-2">Lien Invalide</h1>
+                <p className="text-red-50 text-lg">{message}</p>
+              </div>
+
+              <div className="px-8 py-8">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-red-50 border-2 border-red-200 rounded-xl p-6 mb-6"
+                >
+                  <p className="text-red-900 font-semibold mb-2">Que s'est-il passé ?</p>
+                  <ul className="text-red-700 text-sm space-y-2">
+                    <li>• Le lien a expiré (valide 24 heures)</li>
+                    <li>• Le lien a déjà été utilisé</li>
+                    <li>• Le lien est incorrect ou corrompu</li>
+                  </ul>
+                </motion.div>
+
+                {/* Resend Email Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6"
+                >
+                  <p className="text-blue-900 font-semibold mb-4">Renvoyer l'email de vérification</p>
+                  <div className="space-y-3">
+                    <input
+                      type="email"
+                      placeholder="Votre adresse email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900"
+                    />
+                    <Button
+                      onClick={resendVerificationEmail}
+                      disabled={isResending || !email.trim()}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2 rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isResending ? "Envoi en cours..." : "Renvoyer l'email"}
+                    </Button>
                   </div>
                 </motion.div>
 
-                <p className="text-gray-600 text-center mb-4 text-sm">
-                  Vous allez être redirigé vers la page de connexion...
-                </p>
-                <Button
-                  onClick={() => navigate(decodeURIComponent(redirect))}
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
+                {/* Action Buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="space-y-3"
                 >
-                  Aller à la Connexion
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
-                className="mt-6 pt-6 border-t border-gray-100 text-center"
-              >
-                <p className="text-gray-500 text-xs mb-3">Après connexion, vous pourrez :</p>
-                <div className="flex justify-around text-center">
-                  <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">1</div>
-                    <p className="text-gray-600 text-xs">Compléter Profil</p>
-                  </div>
-                  <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">2</div>
-                    <p className="text-gray-600 text-xs">Uploader Docs</p>
-                  </div>
-                  <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">3</div>
-                    <p className="text-gray-600 text-xs">Suivi Dossier</p>
-                  </div>
-                </div>
-              </motion.div>
+                  <Button
+                    onClick={() => navigate("/register")}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all duration-200 hover:shadow-lg"
+                  >
+                    Créer un Nouveau Compte
+                  </Button>
+                  <Button
+                    onClick={() => navigate("/login")}
+                    variant="outline"
+                    className="w-full border-2 border-gray-300 text-gray-900 font-bold py-3 rounded-xl hover:bg-gray-50"
+                  >
+                    Retourner à la Connexion
+                  </Button>
+                </motion.div>
+              </div>
             </div>
-          )}
-        </div>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

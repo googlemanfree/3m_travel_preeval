@@ -35,6 +35,7 @@ import { evisaFavoritesRouter } from "./routers/evisaFavoritesRouter";
 import { evisaReviewsRouter } from "./routers/evisaReviewsRouter";
 import { uploadRouter } from "./routers/uploadRouter";
 import { passportAnalysisRouter } from "./routers/passportAnalysisRouter";
+import { evisaAdminRouter } from "./routers/evisaAdminRouter";
 
 const COOKIE_NAME = "manus_session";
 
@@ -88,6 +89,7 @@ export const appRouter = router({
   userDashboard: userDashboardRouter,
   upload: uploadRouter,
   passportAnalysis: passportAnalysisRouter,
+  evisaAdmin: evisaAdminRouter,
 });
 
 export type AppRouter = typeof appRouter;

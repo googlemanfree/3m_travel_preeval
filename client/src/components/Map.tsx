@@ -105,17 +105,46 @@ function loadMapScript(): Promise<void> {
     return _mapScriptPromise;
   }
   _mapScriptPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
-    script.async = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => resolve();
-    script.onerror = () => {
-      console.error("Failed to load Google Maps script from:", script.src);
-      _mapScriptPromise = null; // allow retry on next mount
-      reject(new Error("Google Maps script failed to load"));
+    const attemptDirectLoad = () => {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+      script.async = true;
+      script.crossOrigin = "anonymous";
+      
+      script.onload = () => {
+        console.log("Google Maps script loaded successfully");
+        resolve();
+      };
+      
+      script.onerror = () => {
+        console.warn("Direct Google Maps load failed, trying proxy...");
+        attemptProxyLoad();
+      };
+      
+      document.head.appendChild(script);
     };
-    document.head.appendChild(script);
+    
+    const attemptProxyLoad = () => {
+      const proxyScript = document.createElement("script");
+      proxyScript.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+      proxyScript.async = true;
+      proxyScript.crossOrigin = "anonymous";
+      
+      proxyScript.onload = () => {
+        console.log("Google Maps script loaded via proxy");
+        resolve();
+      };
+      
+      proxyScript.onerror = () => {
+        console.error("Failed to load Google Maps script (both direct and proxy)");
+        _mapScriptPromise = null; // allow retry on next mount
+        reject(new Error("Google Maps script failed to load"));
+      };
+      
+      document.head.appendChild(proxyScript);
+    };
+    
+    attemptDirectLoad();
   });
   return _mapScriptPromise;
 }

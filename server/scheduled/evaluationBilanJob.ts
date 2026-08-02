@@ -3,7 +3,7 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
-import { sendEvaluationReportEmail } from "../emailService";
+import { sendEvisaStatusUpdateEmail } from "../emailService";
 
 export async function handleEvaluationBilanJob(req: Request, res: Response): Promise<void> {
   try {
@@ -39,7 +39,7 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     for (const app of apps) {
       try {
         const reportHtml = generateEvaluationReportHTML(app);
-        await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
+        await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
 
         await db
           .update(applications)

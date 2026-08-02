@@ -1148,3 +1148,23 @@
 - [x] Afficher un message de remerciement personnalisé
 - [x] Ajouter des animations de transition fluides
 - [ ] Tester les animations sur différents navigateurs
+
+
+## Synchronisation Admin pour E-Visas avec Notifications Email (v17)
+- [x] Créer un système de numéro de dossier unique pour chaque demande e-visa
+- [x] Ajouter un champ status à la table evisa_requests (pending, processing, approved, rejected)
+- [x] Créer une page admin pour visualiser toutes les demandes e-visa (AdminEvisaDashboard.tsx)
+- [x] Ajouter des filtres et tri pour les demandes (statut, date, pays, client)
+- [x] Créer une page détail de demande pour l'admin avec tous les documents (AdminEvisaDetail.tsx)
+- [x] Ajouter des boutons d'action pour l'admin (approuver, rejeter, demander infos)
+- [x] Créer un système de commentaires/notes pour l'admin
+- [x] Ajouter un historique des modifications pour chaque demande
+- [x] Créer un tableau de bord admin avec statistiques
+- [x] Implémenter l'assignation des demandes aux admins
+- [ ] Implémenter les notifications email automatiques pour l'admin
+- [ ] Implémenter les confirmations email pour le client à chaque étape
+- [ ] Créer une synchronisation en temps réel avec WebSockets ou polling
+- [ ] Ajouter un système de rappels automatiques par email
+- [ ] Implémenter un système de notifications en temps réel pour l'admin
+- [ ] Ajouter un système de téléchargement des documents pour l'admin
+- [ ] Tester la synchronisation complète entre client et admin

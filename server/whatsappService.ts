@@ -338,8 +338,8 @@ export async function sendDualNotification(
   const errors: string[] = [];
 
   try {
-    const { sendEmail } = await import('./emailService');
-    await sendEmail(email, subject, htmlContent);
+    const { sendEmail: sendGenericEmail } = await import('./_core/email');
+    await sendGenericEmail({ to: email, subject, html: htmlContent });
   } catch (error) {
     errors.push(`Email: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
   }

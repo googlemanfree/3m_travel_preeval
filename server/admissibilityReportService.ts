@@ -6,7 +6,7 @@
 import { getDb } from "./db";
 import { evaluations, evaluationEmails } from "../drizzle/schema";
 import { eq, and, lt, isNull } from "drizzle-orm";
-import { sendEmail } from "./emailService";
+import { sendEmail as sendGenericEmail, SendEmailOptions } from "./_core/email";
 
 /**
  * Génère le rapport HTML d'admissibilité personnalisé
@@ -174,11 +174,11 @@ export async function sendAdmissibilityReport(evaluationId: number): Promise<{ s
 
     // Envoyer l'email
     try {
-      await sendEmail(
-        evaluation.email,
-        `Votre Bilan d'Admissibilité - 3M Travel & Services`,
-        reportContent
-      );
+      await sendGenericEmail({
+        to: evaluation.email,
+        subject: `Votre Bilan d'Admissibilité - 3M Travel & Services`,
+        html: reportContent
+      });
 
       // Mettre à jour le statut à "sent"
       await db

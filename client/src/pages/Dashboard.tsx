@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PendingActionsCards } from "@/components/PendingActionsCards";
+import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -100,8 +101,21 @@ export default function Dashboard() {
   const [uploadType, setUploadType] = useState("cv");
   const [isUploading, setIsUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showWelcomeNotification, setShowWelcomeNotification] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Afficher la notification de bienvenue une seule fois après l'inscription
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
+    if (!hasSeenWelcome && candidate?.id) {
+      setShowWelcomeNotification(true);
+      sessionStorage.setItem("hasSeenWelcome", "true");
+      // Masquer automatiquement après 8 secondes
+      const timer = setTimeout(() => setShowWelcomeNotification(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [candidate?.id]);
 
   // Fonction pour actualiser manuellement
   const handleRefresh = async () => {
@@ -334,28 +348,83 @@ export default function Dashboard() {
                     const name = candidate?.fullName ?? profile?.fullName ?? "";
                     const firstName = name.split(" ")[0];
                     return (
-                      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-2xl p-5 mb-6 text-white">
-                        <div className="flex items-center justify-between flex-wrap gap-3">
-                          <div>
-                            <h1 className="text-xl font-black">{greeting}, {firstName} ! 👋</h1>
-                            <p className="text-blue-200 text-sm mt-0.5">
-                              Bienvenue dans votre espace candidat 3M Travel & Services
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Link href="/flights" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
-                              <Globe className="w-3.5 h-3.5" /> Vols
-                            </Link>
-                            <Link href="/procedures" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
-                              <FileText className="w-3.5 h-3.5" /> Procédures
-                            </Link>
+                      <>
+                        {/* Notification de bienvenue personnalisée */}
+                        <AnimatePresence>
+                          {showWelcomeNotification && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                              transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                              className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-5 shadow-lg"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-4 flex-1">
+                                  <motion.div
+                                    animate={{ scale: [1, 1.1, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-full flex items-center justify-center"
+                                  >
+                                    <CheckCircle className="w-6 h-6 text-green-600" />
+                                  </motion.div>
+                                  <div className="flex-1 pt-0.5">
+                                    <h3 className="text-lg font-black text-green-900">Bienvenue {firstName} ! 🎉</h3>
+                                    <p className="text-green-700 text-sm mt-1">
+                                      Votre compte a été créé avec succès. Vous êtes maintenant connecté à votre espace candidat 3M Travel & Services.
+                                    </p>
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Email vérifié</div>
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Profil actif</div>
+                                      <div className="text-xs bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold">✓ Prêt à commencer</div>
+                                    </div>
+                                    <p className="text-green-600 text-xs mt-3 font-medium">
+                                      💡 Conseil : Commencez par compléter votre profil et télécharger vos documents pour accélérer le traitement de votre dossier.
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setShowWelcomeNotification(false)}
+                                  className="flex-shrink-0 text-green-400 hover:text-green-600 transition-colors"
+                                >
+                                  <XCircle className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-2xl p-5 mb-6 text-white">
+                          <div className="flex items-center justify-between flex-wrap gap-3">
+                            <div>
+                              <h1 className="text-xl font-black">{greeting}, {firstName} ! 👋</h1>
+                              <p className="text-blue-200 text-sm mt-0.5">
+                                Bienvenue dans votre espace candidat 3M Travel & Services
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Link href="/flights" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                                <Globe className="w-3.5 h-3.5" /> Vols
+                              </Link>
+                              <Link href="/procedures" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                                <FileText className="w-3.5 h-3.5" /> Procédures
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </>
                     );
                   })()}
 
                   <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
+
+                  {/* Barre de progression du profil */}
+                  {profileQuery.data && (
+                    <ProfileCompletionBar 
+                      profile={profileQuery.data}
+                      onEditClick={() => setActiveTab("profile")}
+                    />
+                  )}
 
                   {/* Actions en attente */}
                   {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
