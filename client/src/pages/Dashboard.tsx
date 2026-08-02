@@ -563,10 +563,10 @@ export default function Dashboard() {
                       {/* Infos du dossier */}
                       <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                          { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
-                          { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
+                          { id: "member_since", label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
+                          { id: "dossier_status", label: "Statut du dossier", value: profile?.status ? STATUS_CONFIG[profile.status]?.label || profile.status : "Nouveau", icon: FileText },
                         ].map((item) => (
-                          <div key={item.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                          <div key={item.id} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
                             <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
                               <item.icon className="w-5 h-5 text-[#1E3A8A]" />
                             </div>
