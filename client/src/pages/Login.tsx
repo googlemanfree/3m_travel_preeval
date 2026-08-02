@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useGoogleLogin } from '@react-oauth/google';
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { toast } from "sonner";
 
 const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
@@ -21,6 +22,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showResendModal, setShowResendModal] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
+  const passwordStrength = usePasswordStrength(password);
 
   // Message d'avertissement si redirigé depuis une page protégée
   const params = new URLSearchParams(location.split("?")[1] ?? "");
@@ -156,6 +158,39 @@ export default function Login() {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              
+              {/* Indicateur de force du mot de passe */}
+              {password && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-3 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-gray-600">Force du mot de passe</span>
+                    <span className="text-xs font-bold">{passwordStrength.message}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <motion.div
+                      className={`h-full ${passwordStrength.color} transition-all`}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${passwordStrength.percentage}%` }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+                  {passwordStrength.recommendations.length > 0 && (
+                    <div className="text-xs text-gray-600 space-y-1">
+                      {passwordStrength.recommendations.map((rec, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <span className="text-amber-500 mt-0.5">•</span>
+                          <span>{rec}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
             </div>
 
             <Button

@@ -45,6 +45,8 @@ export const simpleAuthRouter = router({
     )
     .mutation(async ({ input }) => {
       const { fullName, email, password, confirmPassword } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Vérifier que les mots de passe correspondent
       if (password !== confirmPassword) {
@@ -59,7 +61,7 @@ export const simpleAuthRouter = router({
         sql`SELECT id FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
-      if (existingUser.rows && existingUser.rows.length > 0) {
+      if ((existingUser as any).rows && (existingUser as any).rows.length > 0) {
         throw new TRPCError({
           code: "CONFLICT",
           message: "Cet email est déjà utilisé",
@@ -126,20 +128,22 @@ export const simpleAuthRouter = router({
     .input(z.object({ token: z.string() }))
     .mutation(async ({ input }) => {
       const { token } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Chercher l'utilisateur avec ce token
       const result = await db.execute(
         sql`SELECT id, email, emailVerified, verificationTokenExpiry FROM simple_users WHERE verificationToken = ${token}`
       );
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!(result as any).rows || (result as any).rows.length === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Token de vérification invalide",
         });
       }
 
-      const user = result.rows[0] as any;
+      const user = (result as any).rows[0];
 
       // Vérifier que le token n'a pas expiré
       if (user.verificationTokenExpiry && new Date(user.verificationTokenExpiry) < new Date()) {
@@ -170,20 +174,22 @@ export const simpleAuthRouter = router({
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
       const { email } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Chercher l'utilisateur
       const result = await db.execute(
         sql`SELECT id, emailVerified FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!(result as any).rows || (result as any).rows.length === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Cet email n'existe pas",
         });
       }
 
-      const user = result.rows[0] as any;
+      const user = (result as any).rows[0];
 
       // Vérifier que l'email n'est pas déjà vérifié
       if (user.emailVerified) {
@@ -229,20 +235,22 @@ export const simpleAuthRouter = router({
     )
     .mutation(async ({ input }) => {
       const { email, password } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Chercher l'utilisateur
       const result = await db.execute(
         sql`SELECT id, fullName, email, passwordHash, emailVerified FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!(result as any).rows || (result as any).rows.length === 0) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "Email ou mot de passe incorrect",
         });
       }
 
-      const user = result.rows[0] as any;
+      const user = (result as any).rows[0];
 
       // Vérifier le mot de passe
       const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
@@ -284,13 +292,15 @@ export const simpleAuthRouter = router({
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ input }) => {
       const { email } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Chercher l'utilisateur
       const result = await db.execute(
         sql`SELECT id FROM simple_users WHERE email = ${email.toLowerCase()}`
       );
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!(result as any).rows || (result as any).rows.length === 0) {
         // Ne pas révéler si l'email existe ou non (sécurité)
         return {
           success: true,
@@ -298,7 +308,7 @@ export const simpleAuthRouter = router({
         };
       }
 
-      const user = result.rows[0] as any;
+      const user = (result as any).rows[0];
 
       // Générer un token de réinitialisation
       const resetToken = generateToken();
@@ -337,6 +347,8 @@ export const simpleAuthRouter = router({
     )
     .mutation(async ({ input }) => {
       const { token, password, confirmPassword } = input;
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
 
       // Vérifier que les mots de passe correspondent
       if (password !== confirmPassword) {
@@ -351,14 +363,14 @@ export const simpleAuthRouter = router({
         sql`SELECT id, resetTokenExpiry FROM simple_users WHERE resetToken = ${token}`
       );
 
-      if (!result.rows || result.rows.length === 0) {
+      if (!(result as any).rows || (result as any).rows.length === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Token de réinitialisation invalide",
         });
       }
 
-      const user = result.rows[0] as any;
+      const user = (result as any).rows[0];
 
       // Vérifier que le token n'a pas expiré
       if (user.resetTokenExpiry && new Date(user.resetTokenExpiry) < new Date()) {
