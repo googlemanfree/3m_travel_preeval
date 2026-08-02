@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, UserPlus, Globe, Phone, Mail, User, Lock, ArrowRight, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, UserPlus, Globe, Phone, Mail, User, Lock, ArrowRight, CheckCircle, Loader, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +47,8 @@ export default function Register() {
   const from = params.get("from") ?? "";
   const { login } = useCandidateAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -56,13 +58,25 @@ export default function Register() {
     nationality: "",
   });
 
+  // Valider le formulaire en temps réel
+  useEffect(() => {
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
+    const passwordValid = form.password.length >= 8 && /[A-Z]/.test(form.password) && /[0-9]/.test(form.password);
+    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid;
+    setIsFormValid(isValid as boolean);
+  }, [form]);
+
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
+      // Afficher l'animation de succès
+      setShowSuccessAnimation(true);
       // Sauvegarder l'email pour le renvoi de vérification
       localStorage.setItem("registrationEmail", form.email);
-      // Rediriger vers la page d'attente de vérification
-      toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
-      navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
+      // Attendre 2 secondes avant de rediriger
+      setTimeout(() => {
+        toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
+        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
+      }, 2000);
     },
     onError: (err) => {
       toast.error(err.message);
@@ -180,6 +194,20 @@ export default function Register() {
                   required
                 />
               </div>
+              {/* Indicateur de validation email */}
+              <AnimatePresence>
+                {form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-2 p-2 mt-1 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs"
+                  >
+                    <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                    Email invalide
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Téléphone */}
@@ -266,19 +294,75 @@ export default function Register() {
               })()}
             </div>
 
-            {/* Bouton */}
-            <Button
-              type="submit"
-              disabled={registerMutation.isPending}
-              className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] mt-2"
-            >
-              {registerMutation.isPending ? (
-                <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Création en cours...</span>
-              ) : (
-                <span className="flex items-center gap-2"><UserPlus className="w-4 h-4" /> Créer mon compte <ArrowRight className="w-4 h-4" /></span>
+            {/* Indicateur de validation du formulaire */}
+            <AnimatePresence>
+              {form.fullName && form.email && form.password && !isFormValid && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm"
+                >
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  Veuillez remplir tous les critères requis
+                </motion.div>
               )}
-            </Button>
+            </AnimatePresence>
+
+            {/* Bouton */}
+            <motion.div
+              initial={{ opacity: 1 }}
+              animate={{ opacity: showSuccessAnimation ? 0 : 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Button
+                type="submit"
+                disabled={registerMutation.isPending || !isFormValid || showSuccessAnimation}
+                className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {registerMutation.isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader className="w-4 h-4" />
+                    </motion.span>
+                    Création en cours...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center gap-2">
+                    <UserPlus className="w-4 h-4" /> Créer mon compte <ArrowRight className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
+            </motion.div>
           </form>
+
+          {/* Animation de succès */}
+          <AnimatePresence>
+            {showSuccessAnimation && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 flex items-center justify-center pointer-events-none z-50"
+              >
+                <motion.div
+                  className="bg-white rounded-full p-8 shadow-2xl"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 0.6, repeat: Infinity }}
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <CheckCircle className="w-16 h-16 text-green-500" />
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
