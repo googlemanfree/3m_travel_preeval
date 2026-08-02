@@ -20,6 +20,8 @@ export default function VerifyEmailLink() {
   const [message, setMessage] = useState("");
   const [candidateData, setCandidateData] = useState<any>(null);
   const [countdown, setCountdown] = useState(5);
+  const [email, setEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
   // Compte à rebours avant redirection
   useEffect(() => {
@@ -54,6 +56,35 @@ export default function VerifyEmailLink() {
       toast.error(err.message);
     },
   });
+
+  const resendVerificationEmail = async () => {
+    if (!email.trim()) {
+      toast.error("Veuillez entrer votre adresse email");
+      return;
+    }
+    setIsResending(true);
+    try {
+      // Appeler la mutation pour renvoyer l'email
+      await new Promise((resolve) => {
+        const mutation = trpc.candidate.resendVerificationEmail.useMutation({
+          onSuccess: () => {
+            toast.success("Email de vérification renvoyé avec succès !");
+            setIsResending(false);
+            resolve(null);
+          },
+          onError: (err) => {
+            toast.error(err.message || "Erreur lors de l'envoi de l'email");
+            setIsResending(false);
+            resolve(null);
+          },
+        });
+        mutation.mutate({ email: email.toLowerCase().trim() });
+      });
+    } catch (error) {
+      console.error("Erreur lors du renvoi:", error);
+      setIsResending(false);
+    }
+  };
 
   useEffect(() => {
     if (token) {
@@ -322,10 +353,37 @@ export default function VerifyEmailLink() {
                   </ul>
                 </motion.div>
 
+                {/* Resend Email Section */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
+                  className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6"
+                >
+                  <p className="text-blue-900 font-semibold mb-4">Renvoyer l'email de vérification</p>
+                  <div className="space-y-3">
+                    <input
+                      type="email"
+                      placeholder="Votre adresse email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full px-4 py-2 border-2 border-blue-300 rounded-lg focus:outline-none focus:border-blue-600 bg-white text-gray-900"
+                    />
+                    <Button
+                      onClick={resendVerificationEmail}
+                      disabled={isResending || !email.trim()}
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2 rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isResending ? "Envoi en cours..." : "Renvoyer l'email"}
+                    </Button>
+                  </div>
+                </motion.div>
+
+                {/* Action Buttons */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
                   className="space-y-3"
                 >
                   <Button
