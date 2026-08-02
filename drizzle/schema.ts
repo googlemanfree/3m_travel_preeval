@@ -61,7 +61,7 @@ export type InsertEvaluation = typeof evaluations.$inferInsert;
  * Indépendant du système OAuth Manus pour permettre l'accès sans compte Manus.
  */
 export const candidates = mysqlTable("candidates", {
-  id: int("id").autoincrement().primaryKey(),
+  id: int("id").primaryKey().autoincrement(),
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
