@@ -70,12 +70,12 @@ const destinations: Destination[] = [
   { emoji: '🇳🇿', country: 'Nouvelle-Zélande', continent: 'europe', status: 'consulaire', detail: "Visa consulaire classique" },
 ];
 
-const statusConfig: Record<Status, { label: string; color: string; ring: string }> = {
+const statusConfig: Record<Status, { label: string; color: string; ring: string; tooltip?: string }> = {
   evisa: { label: '💻 eVisa disponible', color: 'bg-blue-100 text-blue-800', ring: 'border-blue-200' },
   arrivee: { label: "🛬 Visa à l'arrivée", color: 'bg-amber-100 text-amber-800', ring: 'border-amber-200' },
   consulaire: { label: '📋 Visa consulaire requis', color: 'bg-gray-200 text-gray-700', ring: 'border-gray-300' },
   sans_visa: { label: '✅ Sans visa', color: 'bg-green-100 text-green-800', ring: 'border-green-200' },
-  conditionnel: { label: '⚠️ eVisa sous condition', color: 'bg-purple-100 text-purple-800', ring: 'border-purple-200' },
+  conditionnel: { label: '⚠️ eVisa sous condition', color: 'bg-purple-100 text-purple-800', ring: 'border-purple-200', tooltip: 'eVisa disponible uniquement si vous détenez déjà un visa valide (Schengen, USA, UK, Canada, Irlande ou équivalent)' },
 };
 
 const continentLabels: Record<Continent, string> = {
@@ -324,9 +324,17 @@ export default function Evisa() {
                     <Card className={`p-6 hover:shadow-lg transition-all duration-300 h-full flex flex-col border ${statusConfig[d.status].ring}`}>
                       <div className="flex items-start justify-between mb-3">
                         <div className="text-4xl">{d.emoji}</div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${statusConfig[d.status].color}`}>
-                          {statusConfig[d.status].label}
-                        </span>
+                        <div className="relative group">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap cursor-help ${statusConfig[d.status].color}`}>
+                            {statusConfig[d.status].label}
+                          </span>
+                          {statusConfig[d.status].tooltip && (
+                            <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-lg z-10">
+                              {statusConfig[d.status].tooltip}
+                              <div className="absolute top-full right-2 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <h3 className="text-lg font-bold text-gray-900 mb-2">{d.country}</h3>
                       <p className="text-gray-600 text-sm mb-4 flex-1">{d.detail}</p>
