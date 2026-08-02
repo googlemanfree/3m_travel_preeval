@@ -180,6 +180,11 @@ function Router() {
           <MySpace />
         </AuthGuard>
       </Route>
+      <Route path={"/my-space"}>
+        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
+          <MySpace />
+        </AuthGuard>
+      </Route>
 
       {/* Depot des documents */}
       <Route path={"/submit-documents"}>
