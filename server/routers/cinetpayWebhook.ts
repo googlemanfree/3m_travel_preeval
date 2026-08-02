@@ -9,7 +9,7 @@ import type { Express, Request, Response } from "express";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { sendPaymentConfirmationEmail } from "../emailService";
+import { sendPaymentSuccessEmail } from "../emailService";
 
 interface CinetPayWebhookBody {
   cpm_trans_id?: string;
@@ -146,12 +146,12 @@ export function registerCinetPayWebhook(app: Express): void {
       // Envoyer l'email de confirmation si paiement réussi
       if (paymentStatus === "SUCCESS") {
         try {
-          await sendPaymentConfirmationEmail(
+          await sendPaymentSuccessEmail(
             application.email,
             application.fullName,
             application.dossierNumber,
             application.paymentAmount ?? 65000,
-            application.paymentCurrency ?? "XAF"
+            transactionId
           );
         } catch (emailErr) {
           console.warn("[CinetPay Webhook] Email send failed:", emailErr);

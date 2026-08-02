@@ -9,7 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { agencyDossiers, agencyDossierHistory } from "../../drizzle/schema";
 import { eq, and, like, desc } from "drizzle-orm";
-import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { sendEmail } from "../emailService";
 
 export const agencyDossierRouter = router({
   /**
@@ -87,11 +87,11 @@ export const agencyDossierRouter = router({
             <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
           </div>`;
 
-          await sendGenericEmail({
-            to: input.email,
-            subject: "📋 Votre dossier a été créé - 3M Travel & Services",
-            html: htmlContent
-          });
+          await sendEmail(
+            input.email,
+            "📋 Votre dossier a été créé - 3M Travel & Services",
+            htmlContent
+          );
         } catch (emailErr) {
           console.error("[Agency Dossier] Welcome email failed:", emailErr);
         }
@@ -282,11 +282,11 @@ export const agencyDossierRouter = router({
             <p>Cordialement,<br/>L'équipe 3M Travel & Services</p>
           </div>`;
 
-          await sendGenericEmail({
-            to: dossier[0].email,
-            subject: "📋 Mise à jour de votre dossier - 3M Travel & Services",
-            html: htmlContent
-          });
+          await sendEmail(
+            dossier[0].email,
+            "📋 Mise à jour de votre dossier - 3M Travel & Services",
+            htmlContent
+          );
         } catch (emailErr) {
           console.error("[Agency Dossier] Status update email failed:", emailErr);
         }

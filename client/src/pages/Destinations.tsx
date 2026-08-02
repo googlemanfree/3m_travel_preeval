@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, MapPin, Users, Briefcase, BookOpen, Home, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, Users, Briefcase, BookOpen, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { enhancedDestinationData, DestinationId, TestimonialData } from "@/data/
 import { useLocation } from "wouter";
 import Footer from "@/components/Footer";
 import TestimonialsSection from "@/components/TestimonialsSection";
-import { FilterPanel, SortDropdown, ActiveFilters } from "@/components/FilterPanel";
 
 const CONTINENT_COLORS: Record<string, string> = {
   "Amérique du Nord": "bg-blue-100 text-blue-800",
@@ -33,98 +32,19 @@ export default function Destinations() {
   const [, navigate] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContinent, setSelectedContinent] = useState<string | null>(null);
-  const [selectedVisaTypes, setSelectedVisaTypes] = useState<Set<string>>(new Set());
-  const [selectedClimates, setSelectedClimates] = useState<Set<string>>(new Set());
-  const [sortBy, setSortBy] = useState("name");
-  const [showFilters, setShowFilters] = useState(false);
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
 
   const destinationArray = Object.values(DESTINATIONS);
   const continents = Array.from(new Set(destinationArray.map((d) => d.continent)));
-  const climates = Array.from(new Set(destinationArray.map((d) => d.climate)));
-  const allVisaTypes = Array.from(
-    new Set(destinationArray.flatMap((d) => d.visaTypes))
-  );
 
   const filteredDestinations = useMemo(() => {
-    let filtered = destinationArray.filter((dest) => {
+    return destinationArray.filter((dest) => {
       const matchesSearch =
         dest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         dest.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesContinent = !selectedContinent || dest.continent === selectedContinent;
-      const matchesVisa =
-        selectedVisaTypes.size === 0 ||
-        dest.visaTypes.some((visa) => selectedVisaTypes.has(visa));
-      const matchesClimate =
-        selectedClimates.size === 0 || selectedClimates.has(dest.climate);
-      return matchesSearch && matchesContinent && matchesVisa && matchesClimate;
+      return matchesSearch && matchesContinent;
     });
-
-    // Appliquer le tri
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "name-desc":
-          return b.name.localeCompare(a.name);
-        case "cost-asc": {
-          const costA = extractCostValue(a.costOfLiving);
-          const costB = extractCostValue(b.costOfLiving);
-          return costA - costB;
-        }
-        case "cost-desc": {
-          const costA = extractCostValue(a.costOfLiving);
-          const costB = extractCostValue(b.costOfLiving);
-          return costB - costA;
-        }
-        default:
-          return 0;
-      }
-    });
-
-    return filtered;
-  }, [searchQuery, selectedContinent, selectedVisaTypes, selectedClimates, sortBy]);
-
-  const extractCostValue = (costString: string): number => {
-    const match = costString.match(/\d+/);
-    return match ? parseInt(match[0], 10) : 0;
-  };
-
-  const activeFilters = [
-    ...(selectedContinent ? [{ label: selectedContinent, id: `continent-${selectedContinent}` }] : []),
-    ...Array.from(selectedVisaTypes).map((visa) => ({
-      label: VISA_TYPES[visa as keyof typeof VISA_TYPES]?.name || visa,
-      id: `visa-${visa}`,
-    })),
-    ...Array.from(selectedClimates).map((climate) => ({
-      label: climate,
-      id: `climate-${climate}`,
-    })),
-  ];
-
-  const handleRemoveFilter = (filterId: string) => {
-    if (filterId.startsWith("continent-")) {
-      setSelectedContinent(null);
-    } else if (filterId.startsWith("visa-")) {
-      const visa = filterId.replace("visa-", "");
-      const newVisas = new Set(selectedVisaTypes);
-      newVisas.delete(visa);
-      setSelectedVisaTypes(newVisas);
-    } else if (filterId.startsWith("climate-")) {
-      const climate = filterId.replace("climate-", "");
-      const newClimates = new Set(selectedClimates);
-      newClimates.delete(climate);
-      setSelectedClimates(newClimates);
-    }
-  };
-
-  const handleClearAllFilters = () => {
-    setSearchQuery("");
-    setSelectedContinent(null);
-    setSelectedVisaTypes(new Set());
-    setSelectedClimates(new Set());
-    setSortBy("name");
-  };
+  }, [searchQuery, selectedContinent]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -163,98 +83,26 @@ export default function Destinations() {
             />
           </div>
 
-          {/* Bouton pour afficher/masquer les filtres avancés */}
-          <div className="flex items-center justify-between">
+          {/* Filtres par continent */}
+          <div className="flex flex-wrap gap-2">
             <Button
-              onClick={() => setShowFilters(!showFilters)}
-              variant="outline"
-              className="gap-2 min-h-[44px]"
+              variant={selectedContinent === null ? "default" : "outline"}
+              onClick={() => setSelectedContinent(null)}
+              className="rounded-full min-h-[44px]"
             >
-              <SlidersHorizontal size={18} />
-              Filtres avancés
+              Tous les continents
             </Button>
-            <SortDropdown sortBy={sortBy} onSortChange={setSortBy} />
+            {continents.map((continent) => (
+              <Button
+                key={continent}
+                variant={selectedContinent === continent ? "default" : "outline"}
+                onClick={() => setSelectedContinent(continent)}
+                className="rounded-full min-h-[44px]"
+              >
+                {continent}
+              </Button>
+            ))}
           </div>
-
-          {/* Filtres avancés */}
-          {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FilterPanel
-                title="Continents"
-                options={continents.map((continent) => ({
-                  id: continent,
-                  label: continent,
-                  count: destinationArray.filter((d) => d.continent === continent).length,
-                }))}
-                selectedOptions={selectedContinent ? new Set([selectedContinent]) : new Set()}
-                onToggle={(continentId) => {
-                  setSelectedContinent(
-                    selectedContinent === continentId ? null : continentId
-                  );
-                }}
-                isOpen={openFilter === "continents"}
-                onToggleOpen={() =>
-                  setOpenFilter(openFilter === "continents" ? null : "continents")
-                }
-              />
-              <FilterPanel
-                title="Types de visa"
-                options={allVisaTypes.map((visa) => ({
-                  id: visa,
-                  label: VISA_TYPES[visa as keyof typeof VISA_TYPES]?.name || visa,
-                  count: destinationArray.filter((d) =>
-                    d.visaTypes.includes(visa)
-                  ).length,
-                }))}
-                selectedOptions={selectedVisaTypes}
-                onToggle={(visaId) => {
-                  const newVisas = new Set(selectedVisaTypes);
-                  if (newVisas.has(visaId)) {
-                    newVisas.delete(visaId);
-                  } else {
-                    newVisas.add(visaId);
-                  }
-                  setSelectedVisaTypes(newVisas);
-                }}
-                isOpen={openFilter === "visas"}
-                onToggleOpen={() =>
-                  setOpenFilter(openFilter === "visas" ? null : "visas")
-                }
-              />
-              <FilterPanel
-                title="Climat"
-                options={climates.map((climate) => ({
-                  id: climate,
-                  label: climate,
-                  count: destinationArray.filter((d) => d.climate === climate)
-                    .length,
-                }))}
-                selectedOptions={selectedClimates}
-                onToggle={(climateId) => {
-                  const newClimates = new Set(selectedClimates);
-                  if (newClimates.has(climateId)) {
-                    newClimates.delete(climateId);
-                  } else {
-                    newClimates.add(climateId);
-                  }
-                  setSelectedClimates(newClimates);
-                }}
-                isOpen={openFilter === "climates"}
-                onToggleOpen={() =>
-                  setOpenFilter(openFilter === "climates" ? null : "climates")
-                }
-              />
-            </div>
-          )}
-
-          {/* Filtres actifs */}
-          {activeFilters.length > 0 && (
-            <ActiveFilters
-              filters={activeFilters}
-              onRemove={handleRemoveFilter}
-              onClearAll={handleClearAllFilters}
-            />
-          )}
 
           {/* Nombre de résultats */}
           <p className="text-sm text-gray-600">
@@ -384,7 +232,10 @@ export default function Destinations() {
             <p className="text-gray-600 text-lg">Aucune destination ne correspond à votre recherche.</p>
             <Button
               variant="outline"
-              onClick={handleClearAllFilters}
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedContinent(null);
+              }}
               className="mt-4 min-h-[44px]"
             >
               Réinitialiser les filtres

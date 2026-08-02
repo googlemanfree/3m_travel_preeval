@@ -102,37 +102,18 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      // Preparer les valeurs avec TOUTES les colonnes requises et valeurs par defaut
-      const candidateData = {
-        fullName: input.fullName ? input.fullName.trim() : 'Candidat',
-        email: input.email.toLowerCase().trim(),
+      await db.insert(candidates).values({
+        fullName: input.fullName,
+        email: input.email,
         passwordHash,
-        phone: input.phone && input.phone.trim() !== '' ? input.phone.trim() : null,
-        nationality: input.nationality && input.nationality.trim() !== '' ? input.nationality.trim() : 'Camerounaise',
-        destination: input.destination && input.destination.trim() !== '' ? input.destination : 'canada',
-        visaType: 'travail' as const,
-        dossierStatus: 'nouveau' as const,
-        dateOfBirth: null,
-        dossierNote: null,
-        formulaChosen: 'STANDARD' as const,
-        scoreResult: null,
-        scoreDetails: null,
-        educationLevel: 'Non renseigné',
-        employmentStatus: 'Non renseigné',
-        languageLevel: 'Non renseigné',
+        phone: input.phone ?? null,
+        destination: input.destination ?? "autre",
+        nationality: input.nationality ?? null,
+        dossierStatus: "nouveau",
         emailVerified: false,
         verificationToken,
-        verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        emailOtp: null,
-        emailOtpExpiresAt: null,
-        passwordResetToken: null,
-        passwordResetExpiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      // Inserer avec TOUTES les colonnes remplies
-      await db.insert(candidates).values(candidateData);
+        verificationExpiresAt: null, // Pas d'expiration
+      });
 
       // Recuperer le candidateId insere
       const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
@@ -640,6 +621,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
+        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Protocole d'Accord Signé</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -648,8 +630,7 @@ export const candidateRouter = router({
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        const { sendEmail: sendGenericEmail } = await import("../_core/email");
-        await sendGenericEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
+        await sendEmail(app[0].email, `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, confirmationHTML);
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
@@ -714,6 +695,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
+        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Documents Reçus</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -722,8 +704,7 @@ export const candidateRouter = router({
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        const { sendEmail: sendGenericEmail } = await import("../_core/email");
-        await sendGenericEmail({ to: app[0].email, subject: `📄 Documents Reçus - Dossier ${input.dossierNumber}`, html: confirmationHTML });
+        await sendEmail(app[0].email, `📄 Documents Reçus - Dossier ${input.dossierNumber}`, confirmationHTML);
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }

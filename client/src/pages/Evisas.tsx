@@ -265,18 +265,10 @@ export function Evisas() {
                   {/* Boutons d'action */}
                   <div className="space-y-2">
                     <Button
-                      className="w-full bg-green-600 hover:bg-green-700 text-white"
-                      onClick={() => window.location.href = `/evisas/request?countryCode=${evisa.countryCode}&countryName=${encodeURIComponent(evisa.countryName)}`}
-                    >
-                      <span>Demander ce e-Visa</span>
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => window.location.href = `/evisas/${evisa.countryCode}`}
                     >
-                      <span>Plus d'informations</span>
+                      <span>Demander un e-visa</span>
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                     <div className="flex items-center justify-center gap-2">

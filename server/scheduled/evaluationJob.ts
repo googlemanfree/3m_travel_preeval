@@ -9,7 +9,7 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
-import { sendEvisaStatusUpdateEmail } from "../emailService";
+import { sendEvaluationReportEmail } from "../emailService";
 
 export async function handleEvaluationJob(req: Request, res: Response): Promise<void> {
   try {
@@ -39,7 +39,7 @@ export async function handleEvaluationJob(req: Request, res: Response): Promise<
         const reportHtml = generateEvaluationReportHTML(app);
 
         // Envoyer par email
-        await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
+        await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
 
         // Marquer comme "en_evaluation" apres envoi
         await db

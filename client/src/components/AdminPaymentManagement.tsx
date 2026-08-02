@@ -3,8 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail, Loader2, AlertCircle } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -24,12 +23,6 @@ interface Payment {
 export function AdminPaymentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
-  
-  // États pour la modale de confirmation
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -91,55 +84,15 @@ export function AdminPaymentManagement() {
   };
 
   const handleSendReceipt = (payment: Payment) => {
-    setIsProcessing(true);
-    // Simuler l'envoi du reçu
-    setTimeout(() => {
-      toast.success(`Reçu de paiement envoyé à ${payment.email}`);
-      setIsProcessing(false);
-    }, 1500);
+    toast.success(`Reçu de paiement envoyé à ${payment.email}`);
   };
 
-  const handleConfirmPayment = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setActionType('confirm');
-    setConfirmDialogOpen(true);
+  const handleConfirmPayment = (paymentId: number) => {
+    toast.success("Paiement confirmé");
   };
 
-  const handleCancelPayment = (payment: Payment) => {
-    setSelectedPayment(payment);
-    setActionType('cancel');
-    setConfirmDialogOpen(true);
-  };
-
-  const handleConfirmAction = async () => {
-    if (!selectedPayment || !actionType) return;
-    
-    setIsProcessing(true);
-    try {
-      // Simuler l'appel API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      if (actionType === 'confirm') {
-        toast.success("✓ Paiement confirmé avec succès", {
-          description: `Dossier ${selectedPayment.dossierNumber} - ${selectedPayment.fullName}`,
-          duration: 5000,
-        });
-      } else if (actionType === 'cancel') {
-        toast.error("✗ Paiement annulé", {
-          description: `Dossier ${selectedPayment.dossierNumber} - ${selectedPayment.fullName}`,
-          duration: 5000,
-        });
-      }
-      
-      setConfirmDialogOpen(false);
-      setSelectedPayment(null);
-      setActionType(null);
-      refetch();
-    } catch (error) {
-      toast.error("Une erreur s'est produite lors du traitement du paiement");
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleCancelPayment = (paymentId: number) => {
+    toast.success("Paiement annulé");
   };
 
   const handleExportPayments = () => {
@@ -281,7 +234,7 @@ export function AdminPaymentManagement() {
                 </thead>
                 <tbody>
                   {filteredPayments.map((payment) => (
-                    <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}</td>
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
@@ -307,22 +260,20 @@ export function AdminPaymentManagement() {
                           {payment.paymentStatus === "PENDING" && (
                             <>
                               <Button
-                                onClick={() => handleConfirmPayment(payment)}
+                                onClick={() => handleConfirmPayment(payment.id)}
                                 variant="ghost"
                                 size="sm"
                                 title="Confirmer le paiement"
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50 transition-colors"
-                                disabled={isProcessing}
+                                className="text-green-600 hover:text-green-700"
                               >
                                 <CheckCircle2 className="w-4 h-4" />
                               </Button>
                               <Button
-                                onClick={() => handleCancelPayment(payment)}
+                                onClick={() => handleCancelPayment(payment.id)}
                                 variant="ghost"
                                 size="sm"
                                 title="Annuler le paiement"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
-                                disabled={isProcessing}
+                                className="text-red-600 hover:text-red-700"
                               >
                                 <XCircle className="w-4 h-4" />
                               </Button>
@@ -334,8 +285,6 @@ export function AdminPaymentManagement() {
                               variant="ghost"
                               size="sm"
                               title="Envoyer le reçu"
-                              className="hover:bg-blue-50 transition-colors"
-                              disabled={isProcessing}
                             >
                               <Mail className="w-4 h-4" />
                             </Button>
@@ -350,83 +299,6 @@ export function AdminPaymentManagement() {
           )}
         </CardContent>
       </Card>
-
-      {/* Modale de confirmation */}
-      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {actionType === 'confirm' ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  Confirmer le Paiement
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                  Annuler le Paiement
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedPayment && (
-                <div className="space-y-3 mt-4">
-                  <div className="bg-gray-50 p-3 rounded-lg space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Dossier:</span>
-                      <span className="font-semibold text-gray-900">{selectedPayment.dossierNumber}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Candidat:</span>
-                      <span className="font-semibold text-gray-900">{selectedPayment.fullName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Montant:</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedPayment.amount.toLocaleString("fr-FR")} {selectedPayment.currency}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {actionType === 'confirm' ? (
-                    <p className="text-sm text-gray-700">
-                      Êtes-vous sûr de vouloir <strong>confirmer ce paiement</strong> ? Le candidat recevra une notification de confirmation.
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-700">
-                      Êtes-vous sûr de vouloir <strong>annuler ce paiement</strong> ? Cette action ne peut pas être annulée.
-                    </p>
-                  )}
-                </div>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDialogOpen(false)}
-              disabled={isProcessing}
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleConfirmAction}
-              disabled={isProcessing}
-              className={actionType === 'confirm' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Traitement...
-                </>
-              ) : (
-                actionType === 'confirm' ? 'Confirmer le Paiement' : 'Annuler le Paiement'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
