@@ -170,8 +170,6 @@ export const candidateRouter = router({
           id: candidate.id,
           fullName: candidate.fullName,
           email: candidate.email,
-          destination: candidate.destination,
-          dossierStatus: candidate.dossierStatus,
         },
       };
     }),
@@ -183,19 +181,9 @@ export const candidateRouter = router({
       id: c.id,
       fullName: c.fullName,
       email: c.email,
-      phone: c.phone,
-      nationality: c.nationality,
-      dateOfBirth: c.dateOfBirth,
-      destination: c.destination,
-      visaType: c.visaType,
-      dossierStatus: c.dossierStatus,
-      dossierNote: c.dossierNote,
-      formulaChosen: c.formulaChosen,
-      scoreResult: c.scoreResult,
-      educationLevel: c.educationLevel,
-      employmentStatus: c.employmentStatus,
-      languageLevel: c.languageLevel,
+      emailVerified: c.emailVerified,
       createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
       lastLoginAt: c.lastLoginAt,
     };
   }),
@@ -205,25 +193,15 @@ export const candidateRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2).optional(),
-        phone: z.string().optional(),
-        nationality: z.string().optional(),
-        dateOfBirth: z.string().optional(),
-        destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        visaType: z.string().optional(),
-        educationLevel: z.string().optional(),
-        employmentStatus: z.string().optional(),
-        languageLevel: z.string().optional(),
-        formulaChosen: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const updateData: Record<string, unknown> = {};
-      Object.entries(input).forEach(([k, v]) => { if (v !== undefined) updateData[k] = v; });
-
-      await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
+      if (input.fullName) {
+        await db.update(candidates).set({ fullName: input.fullName }).where(eq(candidates.id, ctx.candidate.id));
+      }
       return { success: true };
     }),
 
@@ -425,7 +403,7 @@ export const candidateRouter = router({
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch (err) { console.error("Email error:", err); }
       const token = signCandidateToken(candidate.id);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -451,7 +429,7 @@ export const candidateRouter = router({
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch {}
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch (err) { console.error("Email error:", err); }
       const token = signCandidateToken(input.candidateId);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),

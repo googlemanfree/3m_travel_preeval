@@ -183,8 +183,6 @@ export const candidateAuthOTPRouter = router({
           id: candidate.id,
           fullName: candidate.fullName,
           email: candidate.email,
-          destination: candidate.destination,
-          dossierStatus: candidate.dossierStatus,
         },
       };
     }),

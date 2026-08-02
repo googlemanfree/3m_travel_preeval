@@ -2,7 +2,7 @@ import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { getDb } from '../db';
 import { applications, candidates } from '../../drizzle/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from "drizzle-orm";
 import { sendDossierConfirmationEmail } from '../emailService';
 import crypto from 'crypto';
 
@@ -58,18 +58,10 @@ export const adminDossierRouter = router({
           // Générer un mot de passe temporaire
           const tempPassword = crypto.randomBytes(16).toString('hex');
           
-          await db
-            .insert(candidates)
-            .values({
-              fullName: input.fullName,
-              email: input.email,
-              phone: input.phone,
-              nationality: input.nationality,
-              passwordHash: tempPassword, // Mot de passe temporaire
-              emailVerified: true, // Pré-vérifié car créé par admin
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
+          const now = new Date();
+          await db.execute(
+            sql`INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (${input.fullName}, ${input.email.toLowerCase().trim()}, ${tempPassword}, true, '', NULL, NULL, NULL, ${now}, ${now}, ${now})`
+          );
           
           // Récupérer le candidat créé
           candidate = await (db as any).query.candidates.findFirst({
