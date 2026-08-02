@@ -9,7 +9,7 @@
 
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { candidates } from "../../drizzle/schema";
@@ -104,19 +104,11 @@ export const candidateAuthOTPRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
-      // Créer le compte
-      const result = await db.insert(candidates).values({
-        fullName: input.fullName,
-        email: input.email,
-        passwordHash,
-        phone: input.phone ?? null,
-        destination: input.destination ?? "autre",
-        nationality: input.nationality ?? null,
-        dossierStatus: "nouveau",
-        emailVerified: true, // Marqué comme vérifié après OTP
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      // Créer le compte avec les colonnes minimales
+      const now = new Date();
+      await db.execute(
+        sql`INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (${input.fullName}, ${input.email.toLowerCase().trim()}, ${passwordHash}, true, '', NULL, NULL, NULL, ${now}, ${now}, ${now})`
+      );
 
       // Récupérer le candidateId
       const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
@@ -135,8 +127,6 @@ export const candidateAuthOTPRouter = router({
           id: candidateId,
           fullName: input.fullName,
           email: input.email,
-          destination: input.destination ?? "autre",
-          dossierStatus: "nouveau",
         },
       };
     }),

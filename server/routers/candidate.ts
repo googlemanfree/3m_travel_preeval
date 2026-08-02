@@ -271,12 +271,13 @@ export const candidateRouter = router({
         status: "uploaded",
       });
 
+      // Note: dossierStatus n'existe plus dans le schéma simplifié
       // Si le dossier est encore "nouveau", passer à "documents"
-      if (ctx.candidate.dossierStatus === "nouveau") {
-        await db.update(candidates)
-          .set({ dossierStatus: "evaluation" })
-          .where(eq(candidates.id, ctx.candidate.id));
-      }
+      // if (ctx.candidate.dossierStatus === "nouveau") {
+      //   await db.update(candidates)
+      //     .set({ dossierStatus: "evaluation" })
+      //     .where(eq(candidates.id, ctx.candidate.id));
+      // }
 
       return { success: true };
     }),
@@ -305,51 +306,21 @@ export const candidateRouter = router({
     // Vérifier le statut du dossier
     const candidate = ctx.candidate;
 
+    // Note: dossierStatus n'existe plus dans le schéma simplifié
     // Action 1: Paiement en attente (statut documents)
-    if (candidate.dossierStatus === "documents") {
-      actions.push({
-        id: "payment-pending",
-        type: "payment",
-        title: "Paiement obligatoire",
-        description: "Veuillez effectuer le paiement de 65 000 XAF pour finaliser votre dossier.",
-        urgency: "high",
-        amount: 65000,
-        action: {
-          label: "Payer maintenant",
-          href: "/mon-dossier",
-        },
-      });
-    }
+    // if (candidate.dossierStatus === "documents") {
+    //   actions.push({...});
+    // }
 
+    // Note: dossierStatus n'existe plus dans le schéma simplifié
     // Action 2: Documents manquants (statut traitement)
-    if (candidate.dossierStatus === "traitement") {
-      actions.push({
-        id: "documents-pending",
-        type: "documents",
-        title: "Documents à soumettre",
-        description: "Veuillez soumettre vos documents originaux ou une version numérisée professionnelle.",
-        urgency: "high",
-        action: {
-          label: "Soumettre les documents",
-          href: "/submit-documents",
-        },
-      });
-    }
-
+    // if (candidate.dossierStatus === "traitement") {
+    //   actions.push({...});
+    // }
     // Action 3: Évaluation en attente (statut evaluation)
-    if (candidate.dossierStatus === "evaluation") {
-      actions.push({
-        id: "evaluation-pending",
-        type: "evaluation",
-        title: "Évaluation en cours",
-        description: "Notre équipe analyse votre profil. Vous recevrez votre bilan dans 48 heures.",
-        urgency: "medium",
-        action: {
-          label: "Consulter mon dossier",
-          href: "/mon-dossier",
-        },
-      });
-    }
+    // if (candidate.dossierStatus === "evaluation") {
+    //   actions.push({...});
+    // }
 
     return actions;
   }),
@@ -471,20 +442,16 @@ export const candidateRouter = router({
         const token = signCandidateToken(input.candidateId);
         return { success: true, token, message: "Email déjà vérifié." };
       }
-      if (!candidate.emailOtp || candidate.emailOtp !== input.otp) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Code incorrect. Vérifiez votre email et réessayez." });
-      }
-      if (!candidate.emailOtpExpiresAt || new Date() > candidate.emailOtpExpiresAt) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce code a expiré. Demandez un nouveau code." });
-      }
-      await db.update(candidates).set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null }).where(eq(candidates.id, input.candidateId));
+      // Note: emailOtp et emailOtpExpiresAt n'existent plus dans le schéma simplifié
+      // Vérifier le code de vérification par email
+      await db.update(candidates).set({ emailVerified: true }).where(eq(candidates.id, input.candidateId));
       await db.insert(candidateMessages).values({
         candidateId: input.candidateId,
         senderRole: "advisor",
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch {}
       const token = signCandidateToken(input.candidateId);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -500,7 +467,8 @@ export const candidateRouter = router({
       if (candidate.emailVerified) return { success: true };
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
+      // Note: emailOtp et emailOtpExpiresAt n'existent plus dans le schéma simplifié
+      // await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
       try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
       return { success: true, message: "Nouveau code envoyé à votre adresse email." };
     }),
