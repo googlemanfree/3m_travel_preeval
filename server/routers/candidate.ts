@@ -129,6 +129,7 @@ export const candidateRouter = router({
         passwordResetExpiresAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
+        lastLoginAt: null,
       };
 
       // Inserer avec TOUTES les colonnes remplies
