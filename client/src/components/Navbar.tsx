@@ -10,6 +10,7 @@ const menuItems = [
   { href: '/procedures', label: 'Procédures', icon: '📖' },
   { href: '/ressources', label: 'Ressources', icon: '🌐' },
   { href: '/mon-espace', label: 'Suivi de dossier', icon: '📂' },
+  { href: '/evisas', label: 'e-Visa', icon: '🛂' },
 ];
 
 export default function Navbar() {
@@ -81,8 +82,15 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center space-x-3">
             {candidate ? (
               /* --- MENU CANDIDAT CONNECTÉ --- */
-              <div className="relative">
-                <button
+              <>
+                <a
+                  href="/evisas"
+                  className="px-4 py-2.5 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 shadow-md shadow-emerald-500/20"
+                >
+                  🛂 e-Visa
+                </a>
+                <div className="relative">
+                  <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50/50 hover:from-blue-50 hover:to-indigo-50 border border-blue-100/80 p-1.5 pr-4 rounded-2xl transition-all duration-200 shadow-sm hover:shadow"
                 >
@@ -137,9 +145,16 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+              </>
             ) : (
               /* --- BOUTONS D'ACTION INVITÉ --- */
               <>
+                <a
+                  href="/evisas"
+                  className="px-4 py-2.5 text-sm font-bold bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg hover:shadow-emerald-500/30 transition-all duration-200 shadow-md shadow-emerald-500/20"
+                >
+                  🛂 e-Visa
+                </a>
                 <EvaluationButton variant="primary" size="md" />
                 <a 
                   href="/login" 

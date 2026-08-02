@@ -111,7 +111,7 @@ function loadMapScript(): Promise<void> {
     script.crossOrigin = "anonymous";
     script.onload = () => resolve();
     script.onerror = () => {
-      console.error("Failed to load Google Maps script");
+      console.error("Failed to load Google Maps script from:", script.src);
       _mapScriptPromise = null; // allow retry on next mount
       reject(new Error("Google Maps script failed to load"));
     };
