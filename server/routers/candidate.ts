@@ -102,18 +102,35 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      await db.insert(candidates).values({
-        fullName: input.fullName,
-        email: input.email,
+      // Preparer les valeurs avec les champs optionnels a null
+      const candidateData = {
+        fullName: input.fullName.trim(),
+        email: input.email.toLowerCase().trim(),
         passwordHash,
-        phone: input.phone ?? null,
-        destination: input.destination ?? "autre",
-        nationality: input.nationality ?? null,
+        phone: input.phone?.trim() || null,
+        nationality: input.nationality?.trim() || null,
+        dateOfBirth: null,
+        destination: input.destination || "autre",
+        visaType: null,
         dossierStatus: "nouveau",
+        dossierNote: null,
+        formulaChosen: null,
+        scoreResult: null,
+        scoreDetails: null,
+        educationLevel: null,
+        employmentStatus: null,
+        languageLevel: null,
         emailVerified: false,
         verificationToken,
-        verificationExpiresAt: null, // Pas d'expiration
-      });
+        verificationExpiresAt: null,
+        emailOtp: null,
+        emailOtpExpiresAt: null,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      };
+
+      // Inserer uniquement les champs definis
+      await db.insert(candidates).values(candidateData);
 
       // Recuperer le candidateId insere
       const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
