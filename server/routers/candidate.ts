@@ -102,34 +102,28 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      // Preparer les valeurs avec les champs optionnels a null
-      const candidateData = {
-        fullName: input.fullName.trim(),
+      // Preparer les valeurs avec nettoyage strict
+      const candidateData: any = {
+        fullName: input.fullName ? input.fullName.trim() : 'Candidat',
         email: input.email.toLowerCase().trim(),
         passwordHash,
-        phone: input.phone?.trim() || null,
-        nationality: input.nationality?.trim() || null,
-        dateOfBirth: null,
-        destination: input.destination || "autre",
-        visaType: null,
-        dossierStatus: "nouveau",
-        dossierNote: null,
-        formulaChosen: null,
-        scoreResult: null,
-        scoreDetails: null,
-        educationLevel: null,
-        employmentStatus: null,
-        languageLevel: null,
+        phone: input.phone && input.phone.trim() !== '' ? input.phone.trim() : null,
+        nationality: input.nationality && input.nationality.trim() !== '' ? input.nationality.trim() : 'Camerounaise',
+        destination: input.destination && input.destination.trim() !== '' ? input.destination : 'canada',
+        dossierStatus: 'nouveau',
         emailVerified: false,
         verificationToken,
-        verificationExpiresAt: null,
-        emailOtp: null,
-        emailOtpExpiresAt: null,
-        passwordResetToken: null,
-        passwordResetExpiresAt: null,
+        verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       };
 
-      // Inserer uniquement les champs definis
+      // Nettoyage strict : supprime toutes les clés dont la valeur est null ou undefined
+      Object.keys(candidateData).forEach(key => {
+        if (candidateData[key] === null || candidateData[key] === undefined || candidateData[key] === '') {
+          delete candidateData[key];
+        }
+      });
+
+      // Inserer uniquement les champs definis (sans null ni undefined)
       await db.insert(candidates).values(candidateData);
 
       // Recuperer le candidateId insere
