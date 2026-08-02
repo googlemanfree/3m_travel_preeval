@@ -48,6 +48,7 @@ import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
 import CandidatesManager from "./pages/CandidatesManager";
+import SignUp from "./pages/SignUp";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import { SubmitDocuments } from "./pages/SubmitDocuments";
@@ -85,6 +86,7 @@ function Router() {
       {/* Pages publiques (SANS authentification) */}
       <Route path={"/"} component={Home} />
       <Route path={"/register"} component={Register} />
+      <Route path={"/signup"} component={SignUp} />
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"} component={Evaluation} />
