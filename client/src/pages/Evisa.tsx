@@ -8,7 +8,7 @@ import Navbar from '@/components/Navbar';
 import { Link } from 'wouter';
 
 type Continent = 'tous' | 'afrique' | 'asie' | 'ameriques' | 'europe';
-type Status = 'evisa' | 'arrivee' | 'consulaire' | 'sans_visa';
+type Status = 'evisa' | 'arrivee' | 'consulaire' | 'sans_visa' | 'conditionnel';
 
 interface Destination {
   emoji: string;
@@ -31,6 +31,7 @@ const destinations: Destination[] = [
   { emoji: '🇺🇿', country: 'Ouzbékistan', continent: 'asie', status: 'evisa', detail: "30 jours · délai 2-3 jours ouvrables" },
   { emoji: '🇨🇮', country: "Côte d'Ivoire", continent: 'afrique', status: 'evisa', detail: '90 jours · délai 48-72h' },
   { emoji: '🇿🇲', country: 'Zambie', continent: 'afrique', status: 'evisa', detail: "e-Visa touristique · délai 3 jours ouvrables" },
+  { emoji: '🇿🇼', country: 'Zimbabwe', continent: 'afrique', status: 'evisa', detail: "e-Visa touristique (KAZA Univisa possible avec la Zambie) · délai 3 jours ouvrables" },
   { emoji: '🇲🇩', country: 'Moldavie', continent: 'europe', status: 'evisa', detail: '90 jours · délai 3-5 jours ouvrables' },
   { emoji: '🇸🇷', country: 'Suriname', continent: 'ameriques', status: 'evisa', detail: "e-Tourist Card · délai 2-3 jours ouvrables" },
 
@@ -50,8 +51,8 @@ const destinations: Destination[] = [
 
   // ── Visa consulaire classique (accompagnement dossier complet) ──────
   { emoji: '🇪🇬', country: 'Égypte', continent: 'afrique', status: 'consulaire', detail: "Visa à demander auprès du consulat, pas d'eVisa pour ce passeport" },
-  { emoji: '🇲🇦', country: 'Maroc', continent: 'afrique', status: 'consulaire', detail: "Visa consulaire classique" },
-  { emoji: '🇹🇷', country: 'Turquie', continent: 'asie', status: 'consulaire', detail: "Visa consulaire classique, pas d'e-Visa pour ce passeport" },
+  { emoji: '🇲🇦', country: 'Maroc', continent: 'afrique', status: 'conditionnel', detail: "eVisa possible seulement si vous détenez déjà un visa/titre de séjour Schengen, USA, UK, Canada ou équivalent. Sinon, visa consulaire classique." },
+  { emoji: '🇹🇷', country: 'Turquie', continent: 'asie', status: 'conditionnel', detail: "eVisa possible seulement si vous détenez déjà un visa Schengen / USA / UK / Irlande valide. Sinon, visa consulaire classique." },
   { emoji: '🇸🇦', country: 'Arabie Saoudite', continent: 'asie', status: 'consulaire', detail: "Visa consulaire classique (hors Oumrah/Hajj organisés)" },
   { emoji: '🇮🇩', country: 'Indonésie / Bali', continent: 'asie', status: 'consulaire', detail: "Visa consulaire classique" },
   { emoji: '🇴🇲', country: 'Oman', continent: 'asie', status: 'consulaire', detail: "Visa consulaire classique" },
@@ -74,6 +75,7 @@ const statusConfig: Record<Status, { label: string; color: string; ring: string 
   arrivee: { label: "🛬 Visa à l'arrivée", color: 'bg-amber-100 text-amber-800', ring: 'border-amber-200' },
   consulaire: { label: '📋 Visa consulaire requis', color: 'bg-gray-200 text-gray-700', ring: 'border-gray-300' },
   sans_visa: { label: '✅ Sans visa', color: 'bg-green-100 text-green-800', ring: 'border-green-200' },
+  conditionnel: { label: '⚠️ eVisa sous condition', color: 'bg-purple-100 text-purple-800', ring: 'border-purple-200' },
 };
 
 const continentLabels: Record<Continent, string> = {
@@ -177,6 +179,16 @@ export default function Evisa() {
         <a href={`${whatsappBase}${msg}`} target="_blank" rel="noopener noreferrer">
           <button className="w-full py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 font-semibold transition-colors text-sm">
             Accompagnement visa classique
+          </button>
+        </a>
+      );
+    }
+    if (d.status === 'conditionnel') {
+      const msg = encodeURIComponent(`Bonjour, je souhaite vérifier mon éligibilité à l'eVisa pour ${d.country}.`);
+      return (
+        <a href={`${whatsappBase}${msg}`} target="_blank" rel="noopener noreferrer">
+          <button className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-semibold transition-colors text-sm">
+            Vérifier mon éligibilité
           </button>
         </a>
       );

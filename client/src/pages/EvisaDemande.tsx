@@ -27,6 +27,7 @@ export default function EvisaDemande() {
     'Ouzbékistan',
     "Côte d'Ivoire",
     'Zambie',
+    'Zimbabwe',
     'Moldavie',
     'Suriname',
   ];
