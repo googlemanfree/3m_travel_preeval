@@ -22,6 +22,8 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [showResendModal, setShowResendModal] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const passwordStrength = usePasswordStrength(password);
 
   // Message d'avertissement si redirigé depuis une page protégée
@@ -231,9 +233,13 @@ export default function Login() {
                 Renvoyer l'email
               </button>
               <span className="text-gray-300">•</span>
-              <Link href="/forgot-password" className="text-[#2563EB] hover:underline font-medium">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(true)}
+                className="text-[#2563EB] hover:underline font-medium transition-colors"
+              >
                 Mot de passe oublié ?
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -366,6 +372,95 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowResendModal(false)}
+                  className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
+                >
+                  Annuler
+                </button>
+              </form>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Modale pour réinitialiser le mot de passe */}
+      {showForgotPasswordModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowForgotPasswordModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Mot de passe oublié</h2>
+                <p className="text-blue-200 text-sm mt-1">Nous vous enverrons un lien de réinitialisation</p>
+              </div>
+              <button
+                onClick={() => setShowForgotPasswordModal(false)}
+                className="text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!forgotPasswordEmail) {
+                    toast.error("Veuillez entrer votre adresse email");
+                    return;
+                  }
+                  // Rediriger vers la page de réinitialisation
+                  window.location.href = `/forgot-password?email=${encodeURIComponent(forgotPasswordEmail)}`;
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <Label htmlFor="forgot-email" className="text-sm font-semibold text-gray-700">
+                    Adresse email
+                  </Label>
+                  <div className="relative mt-2">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      value={forgotPasswordEmail}
+                      onChange={e => setForgotPasswordEmail(e.target.value)}
+                      className="pl-10"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Entrez l'adresse email associée à votre compte. Nous vous enverrons un lien de réinitialisation valable 1 heure.
+                  </p>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
+                >
+                  <span className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Envoyer le lien
+                  </span>
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPasswordModal(false)}
                   className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
                 >
                   Annuler

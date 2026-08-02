@@ -14,15 +14,13 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
-  const resetMutation = trpc.candidate.requestPasswordReset.useMutation({
+  const resetMutation = trpc.simpleAuth.forgotPassword.useMutation({
     onSuccess: (data) => {
-      console.log("[ForgotPassword] Succès:", data);
-      setSent(true);
+        setSent(true);
       toast.success("Email de réinitialisation envoyé ! Vérifiez votre boîte de réception et vos spams.");
     },
     onError: (err) => {
-      console.error("[ForgotPassword] Erreur:", err);
-      toast.error(err.message || "Erreur lors de l'envoi du lien");
+        toast.error(err.message || "Erreur lors de l'envoi du lien");
     },
   });
 
@@ -32,7 +30,6 @@ export default function ForgotPassword() {
       toast.error("Veuillez entrer votre adresse email."); 
       return; 
     }
-    console.log("[ForgotPassword] Envoi de la demande pour:", email);
     resetMutation.mutate({ email });
   }
 
@@ -59,12 +56,12 @@ export default function ForgotPassword() {
               </motion.div>
             ) : (
               <>
-                <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Mail className="w-7 h-7 text-orange-500" />
+                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Mail className="w-7 h-7 text-blue-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900">Mot de passe oublié ?</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Réinitialiser votre mot de passe</h1>
                 <p className="text-gray-500 mt-2 text-sm">
-                  Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                  Entrez votre adresse email et nous vous enverrons un lien sécurisé pour créer un nouveau mot de passe.
                 </p>
               </>
             )}
