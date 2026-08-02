@@ -104,8 +104,8 @@ export const candidateRouter = router({
 
       // Utiliser une requete SQL brute pour eviter les erreurs avec default
       const cleanEmail = input.email.toLowerCase().trim();
-      const now = new Date();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const now = new Date().toISOString();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
       
       // Utiliser une requete SQL brute sans la colonne id pour eviter le probleme de default
       await db.execute(
