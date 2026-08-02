@@ -102,28 +102,36 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      // Preparer les valeurs avec nettoyage strict
-      const candidateData: any = {
+      // Preparer les valeurs avec TOUTES les colonnes requises et valeurs par defaut
+      const candidateData = {
         fullName: input.fullName ? input.fullName.trim() : 'Candidat',
         email: input.email.toLowerCase().trim(),
         passwordHash,
         phone: input.phone && input.phone.trim() !== '' ? input.phone.trim() : null,
         nationality: input.nationality && input.nationality.trim() !== '' ? input.nationality.trim() : 'Camerounaise',
         destination: input.destination && input.destination.trim() !== '' ? input.destination : 'canada',
-        dossierStatus: 'nouveau',
+        visaType: 'travail' as const,
+        dossierStatus: 'nouveau' as const,
+        dateOfBirth: null,
+        dossierNote: null,
+        formulaChosen: 'STANDARD' as const,
+        scoreResult: null,
+        scoreDetails: null,
+        educationLevel: 'Non renseigné',
+        employmentStatus: 'Non renseigné',
+        languageLevel: 'Non renseigné',
         emailVerified: false,
         verificationToken,
         verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        emailOtp: null,
+        emailOtpExpiresAt: null,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      // Nettoyage strict : supprime toutes les clés dont la valeur est null ou undefined
-      Object.keys(candidateData).forEach(key => {
-        if (candidateData[key] === null || candidateData[key] === undefined || candidateData[key] === '') {
-          delete candidateData[key];
-        }
-      });
-
-      // Inserer uniquement les champs definis (sans null ni undefined)
+      // Inserer avec TOUTES les colonnes remplies
       await db.insert(candidates).values(candidateData);
 
       // Recuperer le candidateId insere
