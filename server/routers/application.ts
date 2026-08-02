@@ -9,7 +9,7 @@ import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, or, like, ilike } from "drizzle-orm";
-import { sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendVerificationOtp, sendEvaluationReportEmail } from "../emailService";
+import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 
@@ -227,22 +227,22 @@ export const applicationRouter = router({
         .catch(err => console.error("[Email] OTP send error:", err));
 
       // Envoyer l'email de confirmation au candidat
-      Promise.resolve().then(() => sendDossierConfirmationEmail(
+      Promise.resolve().then(() => sendClientDossierConfirmationEmail(
         input.email,
         input.fullName,
         dossierNumber,
-        input.destination.toUpperCase(),
-        177000 // Montant en FCFA
+        input.destination,
+        65000, // Montant en FCFA
+        "XAF"
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
 
       // Envoyer l'alerte admin
-      Promise.resolve().then(() => sendAdminNewDossierAlert(
-        input.fullName,
+      Promise.resolve().then(() => sendAdminNewDossierAlertEmail(
         dossierNumber,
-        input.email,
-        input.whatsappNumber,
+        input.fullName,
         input.destination,
-        "PENDING"
+        65000,
+        "XAF"
       )).catch(err => console.error("[Email] Admin alert error:", err));
 
       // Récupérer l'ID de l'application insérée
@@ -549,7 +549,7 @@ export const applicationRouter = router({
       
       // Envoyer par email
       try {
-        await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
+        await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
         return { success: true, message: "Rapport d'évaluation envoyé avec succès" };
       } catch (err) {
         console.error("[Evaluation Report] Send error:", err);
@@ -582,7 +582,7 @@ export const applicationRouter = router({
       for (const app of apps) {
         try {
           const reportHtml = generateEvaluationReportHTML(app);
-          await sendEvaluationReportEmail(app.email, app.fullName, app.dossierNumber, reportHtml);
+          await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
           
           // Marquer comme "en_cours" après envoi
           await db.update(applications)
@@ -650,10 +650,12 @@ export const applicationRouter = router({
         
         let emailSendSuccess = false;
         try {
-          await sendEvaluationReportEmail(
+          await sendEvisaStatusUpdateEmail(
             input.email,
             input.candidateName,
             reportId,
+            "autre",
+            "processing",
             `<pre style="font-family: monospace; white-space: pre-wrap;">${report}</pre>`
           );
           emailSendSuccess = true;
@@ -991,10 +993,12 @@ export const applicationRouter = router({
 
         let emailSendSuccess = false;
         try {
-          await sendEvaluationReportEmail(
+          await sendEvisaStatusUpdateEmail(
             report.candidateEmail,
             report.candidateName,
             report.reportId,
+            "autre",
+            "processing",
             `<pre style="font-family: monospace; white-space: pre-wrap;">${report.reportContent}</pre>`
           );
           emailSendSuccess = true;

@@ -62,14 +62,45 @@ export type InsertEvaluation = typeof evaluations.$inferInsert;
  */
 export const candidates = mysqlTable("candidates", {
   id: int("id").autoincrement().primaryKey(),
+  // Identité
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
+  phone: varchar("phone", { length: 50 }),
+  nationality: varchar("nationality", { length: 100 }),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  // Auth
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  // Dossier d'immigration
+  destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
+  visaType: varchar("visaType", { length: 100 }),
+  dossierStatus: mysqlEnum("dossierStatus", [
+    "nouveau",
+    "evaluation",
+    "documents",
+    "traitement",
+    "soumis",
+    "approuve",
+    "refuse",
+  ]).default("nouveau").notNull(),
+  dossierNote: text("dossierNote"),         // Note interne du conseiller
+  formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
+  // Scoring
+  scoreResult: varchar("scoreResult", { length: 50 }),
+  scoreDetails: text("scoreDetails"),       // JSON des détails du scoring
+  // Profil
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  employmentStatus: varchar("employmentStatus", { length: 100 }),
+  languageLevel: varchar("languageLevel", { length: 100 }),
+  // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
   verificationExpiresAt: timestamp("verificationExpiresAt"),
+  emailOtp: varchar("emailOtp", { length: 10 }),
+  emailOtpExpiresAt: timestamp("emailOtpExpiresAt"),
+  // Réinitialisation de mot de passe
   passwordResetToken: varchar("passwordResetToken", { length: 128 }),
   passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
+  // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt"),

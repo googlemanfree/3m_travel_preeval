@@ -9,7 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
-import { sendEmail } from "../emailService";
+import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 
 // Générer un code OTP aléatoire à 6 chiffres
 function generateOTP(): string {
@@ -111,11 +111,11 @@ export const adminAuthRouter = router({
             <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
           </div>`;
 
-          await sendEmail(
-            input.email,
-            "🔐 Votre code OTP - 3M Travel Admin",
-            htmlContent
-          );
+          await sendGenericEmail({
+            to: input.email,
+            subject: "🔐 Votre code OTP - 3M Travel Admin",
+            html: htmlContent
+          });
         } catch (emailErr) {
           console.error("[Admin Auth] Email send failed:", emailErr);
           // Continue même si l'email échoue (pour le développement)

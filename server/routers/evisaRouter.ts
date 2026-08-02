@@ -405,6 +405,97 @@ export const evisaRouter = router({
     }),
 
   /**
+   * Soumettre une demande d'e-visa
+   */
+  submitRequest: publicProcedure
+    .input(
+      z.object({
+        fullName: z.string().min(1, 'Le nom complet est requis'),
+        email: z.string().email('Email invalide'),
+        phone: z.string().min(1, 'Le téléphone est requis'),
+        nationality: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        countryCode: z.string().min(1, 'Le code pays est requis'),
+        countryName: z.string().min(1, 'Le nom du pays est requis'),
+        evisaType: z.string().optional(),
+        visaFee: z.number().default(0),
+        accompanimentFee: z.number().default(25000),
+        totalCost: z.number().default(25000),
+        currency: z.string().default('XOF'),
+        notes: z.string().optional(),
+        passportFile: z.string().optional(),
+        passportFileName: z.string().optional(),
+        passportFileSize: z.number().optional(),
+      })
+    )
+    .mutation(async ({ input }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        const query = `
+          INSERT INTO evisa_requests (
+            fullName,
+            email,
+            phone,
+            nationality,
+            dateOfBirth,
+            countryCode,
+            countryName,
+            evisaType,
+            visaFee,
+            accompanimentFee,
+            totalCost,
+            currency,
+            notes,
+            passportFile,
+            passportFileName,
+            passportFileSize,
+            passportUploadedAt,
+            status,
+            createdAt,
+            updatedAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'submitted', NOW(), NOW())
+        `;
+
+        const params = [
+          input.fullName,
+          input.email,
+          input.phone,
+          input.nationality || null,
+          input.dateOfBirth || null,
+          input.countryCode,
+          input.countryName,
+          input.evisaType || 'Tourism',
+          input.visaFee,
+          input.accompanimentFee,
+          input.totalCost,
+          input.currency,
+          input.notes || null,
+          input.passportFile || null,
+          input.passportFileName || null,
+          input.passportFileSize || null,
+          input.passportFile ? new Date() : null,
+        ];
+
+        const [result] = await connection.execute(query, params);
+        await connection.end();
+
+        return {
+          success: true,
+          message: 'Demande d\'e-visa soumise avec succès',
+          requestId: (result as any).insertId,
+        };
+      } catch (error: any) {
+        console.error('Erreur lors de la soumission de la demande d\'e-visa:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Erreur lors de la soumission de la demande',
+        });
+      }
+    }),
+
+  /**
    * Récupérer les statistiques des e-visas
    */
   getEvisaStats: publicProcedure.query(async () => {
