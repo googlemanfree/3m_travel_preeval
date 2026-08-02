@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PendingActionsCards } from "@/components/PendingActionsCards";
+import { ProfileCompletionBar } from "@/components/ProfileCompletionBar";
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
@@ -416,6 +417,14 @@ export default function Dashboard() {
                   })()}
 
                   <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
+
+                  {/* Barre de progression du profil */}
+                  {profileQuery.data && (
+                    <ProfileCompletionBar 
+                      profile={profileQuery.data}
+                      onEditClick={() => setActiveTab("profile")}
+                    />
+                  )}
 
                   {/* Actions en attente */}
                   {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
