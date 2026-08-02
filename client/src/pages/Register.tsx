@@ -71,16 +71,23 @@ export default function Register() {
     onSuccess: (data) => {
       // Afficher l'animation de succès
       setShowSuccessAnimation(true);
-      // Sauvegarder l'email pour le renvoi de vérification
+      // Sauvegarder l'email et l'ID du candidat
       localStorage.setItem("registrationEmail", form.email);
+      localStorage.setItem("candidateId", String(data.candidateId));
       // Attendre 2 secondes avant de rediriger
       setTimeout(() => {
         toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
-        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
+        // Rediriger vers la page de complétion de profil
+        navigate(`/complete-profile?email=${encodeURIComponent(form.email)}`);
       }, 2000);
     },
     onError: (err) => {
-      toast.error(err.message);
+      // Améliorer la gestion des erreurs
+      if (err.message.includes("existe déjà")) {
+        toast.error("Un compte existe déjà avec cet email. Veuillez vous connecter ou utiliser un autre email.");
+      } else {
+        toast.error(err.message || "Erreur lors de la création du compte.");
+      }
     },
   });
 
@@ -100,6 +107,10 @@ export default function Register() {
     }
     if (!/[0-9]/.test(form.password)) {
       toast.error("Le mot de passe doit contenir au moins un chiffre.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
     registerMutation.mutate({

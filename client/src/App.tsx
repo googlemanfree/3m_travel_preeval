@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
 import VerifyEmailLink from "@/pages/VerifyEmailLink";
 import VerifyEmailSent from "@/pages/VerifyEmailSent";
+import CompleteProfile from "@/pages/CompleteProfile";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import OpenDossier from "./pages/OpenDossier";
@@ -92,6 +93,7 @@ function Router() {
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
+      <Route path={"/complete-profile"} component={CompleteProfile} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
