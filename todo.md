@@ -446,7 +446,7 @@
 
 - [x] Formulaire multi-projets simplifié (Travail, Études, Tourisme) intégré sur la page d'accueil
 - [x] Procédure tRPC submitEvaluation pour les évaluations multi-projets
-- [ ] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
+- [x] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
 - [x] Tests vitest pour le formulaire multi-projets et la procédure
 
 ## Fonctionnalités Complémentaires (v14)
@@ -490,50 +490,50 @@
 - [x] Ajouter le rôle "translator" dans la table users
 
 ### Phase 2 : Procédures tRPC
-- [ ] Créer la procédure `createTranslationRequest` (sans paiement)
-- [ ] Créer la procédure `getTranslationPricing` pour tarification dynamique
-- [ ] Créer la procédure `getTranslationRequests` pour lister les demandes
-- [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
-- [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
-- [ ] Créer la procédure `downloadTranslatedDocument` (client)
-- [ ] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
+- [x] Créer la procédure `createTranslationRequest` (sans paiement)
+- [x] Créer la procédure `getTranslationPricing` pour tarification dynamique
+- [x] Créer la procédure `getTranslationRequests` pour lister les demandes
+- [x] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
+- [x] Créer la procédure `uploadTranslatedDocument` (traducteur)
+- [x] Créer la procédure `downloadTranslatedDocument` (client)
+- [x] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
 
 ### Phase 3 : Dashboard Traducteur
-- [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
-- [ ] Ajouter la section "En Cours" et "Completées"
-- [ ] Ajouter le formulaire d'upload du document traduit
-- [ ] Ajouter les filtres par langue, type de document, date
+- [x] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
+- [x] Ajouter la section "En Cours" et "Completées"
+- [x] Ajouter le formulaire d'upload du document traduit
+- [x] Ajouter les filtres par langue, type de document, date
 
 ### Phase 4 : Tunnel de Commande Client
-- [ ] Créer la page `/translation/order` avec sélection du type de document
-- [ ] Ajouter le sélecteur de langues source/cible
-- [ ] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
-- [ ] Afficher le tarif calculé en temps réel
-- [ ] Ajouter le bouton "Procéder au Paiement"
+- [x] Créer la page `/translation/order` avec sélection du type de document
+- [x] Ajouter le sélecteur de langues source/cible
+- [x] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
+- [x] Afficher le tarif calculé en temps réel
+- [x] Ajouter le bouton "Procéder au Paiement"
 
 ### Phase 5 : Paiement Obligatoire
-- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
-- [ ] Créer le callback de validation du paiement
-- [ ] Déclencher la notification admin uniquement après paiement validé
-- [ ] Générer la facture PDF après paiement
-- [ ] Envoyer confirmation par email/WhatsApp
+- [x] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
+- [x] Créer le callback de validation du paiement
+- [x] Déclencher la notification admin uniquement après paiement validé
+- [x] Générer la facture PDF après paiement
+- [x] Envoyer confirmation par email/WhatsApp
 
 ### Phase 6 : Téléchargement Sécurisé
-- [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
-- [ ] Ajouter la section "Mes Traductions" dans l'Espace Client
-- [ ] Afficher le statut de chaque traduction
-- [ ] Permettre le téléchargement après complétion
-- [ ] Ajouter les logs de téléchargement
+- [x] Créer les URLs de téléchargement sécurisées (token temporaire)
+- [x] Ajouter la section "Mes Traductions" dans l'Espace Client
+- [x] Afficher le statut de chaque traduction
+- [x] Permettre le téléchargement après complétion
+- [x] Ajouter les logs de téléchargement
 
 ### Phase 7 : Tests et Validation
-- [ ] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
-- [ ] Tester les cas d'erreur (paiement échoué, fichier invalide, etc.)
-- [ ] Vérifier la sécurité des téléchargements
-- [ ] Vérifier les notifications email/WhatsApp
+- [x] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
+- [x] Tester les cas d'erreur (paiement échoué, fichier invalide, etc.)
+- [x] Vérifier la sécurité des téléchargements
+- [x] Vérifier les notifications email/WhatsApp
 
 ### Phase 8 : Checkpoint Final
-- [ ] Créer le checkpoint avec le module de traduction complet
-- [ ] Documenter les étapes d'utilisation
+- [x] Créer le checkpoint avec le module de traduction complet
+- [x] Documenter les étapes d'utilisation
 
 
 ## Améliorations UX — Animations et Footer (v25)
@@ -560,32 +560,32 @@
 ## Modules de Réassurance et Suivi Dynamique (v14)
 
 ### 1. Barre de Progression de Dossier
-- [ ] Créer la table `dossier_progress` pour tracker les étapes
-- [ ] Implémenter la procédure tRPC `getDossierProgress`
-- [ ] Créer le composant ProgressBar avec 5 étapes
-- [ ] Ajouter les timestamps et les statuts
-- [ ] Afficher la barre dans l'Espace Client
+- [x] Créer la table `dossier_progress` pour tracker les étapes
+- [x] Implémenter la procédure tRPC `getDossierProgress`
+- [x] Créer le composant ProgressBar avec 5 étapes
+- [x] Ajouter les timestamps et les statuts
+- [x] Afficher la barre dans l'Espace Client
 
 ### 2. Système de Callback 15 min
-- [ ] Créer la table `callback_requests` pour les demandes
-- [ ] Implémenter la procédure tRPC `requestCallback`
-- [ ] Créer le bouton "Demander un rappel" dans l'Espace Client
-- [ ] Envoyer notification admin + SMS/WhatsApp
-- [ ] Ajouter le formulaire de rappel avec horaires disponibles
+- [x] Créer la table `callback_requests` pour les demandes
+- [x] Implémenter la procédure tRPC `requestCallback`
+- [x] Créer le bouton "Demander un rappel" dans l'Espace Client
+- [x] Envoyer notification admin + SMS/WhatsApp
+- [x] Ajouter le formulaire de rappel avec horaires disponibles
 
 ### 3. Galerie de Visas Accordés
-- [ ] Créer la table `approved_visas` pour les visas accordés
-- [ ] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
-- [ ] Créer le dashboard admin pour gérer les visas
-- [ ] Créer la galerie publique sur le site (anonymisée)
-- [ ] Ajouter les filtres par pays et date
+- [x] Créer la table `approved_visas` pour les visas accordés
+- [x] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
+- [x] Créer le dashboard admin pour gérer les visas
+- [x] Créer la galerie publique sur le site (anonymisée)
+- [x] Ajouter les filtres par pays et date
 
 ### 4. Calculateur de Budget
-- [ ] Créer la table `country_costs` avec les frais par pays
-- [ ] Implémenter la procédure tRPC `calculateBudget`
-- [ ] Créer le formulaire du calculateur (pays, type visa, etc.)
-- [ ] Afficher le détail des frais (droits, garanties, visa)
-- [ ] Ajouter les graphiques de répartition des coûts
+- [x] Créer la table `country_costs` avec les frais par pays
+- [x] Implémenter la procédure tRPC `calculateBudget`
+- [x] Créer le formulaire du calculateur (pays, type visa, etc.)
+- [x] Afficher le détail des frais (droits, garanties, visa)
+- [x] Ajouter les graphiques de répartition des coûts
 
 
 ## Management des Dossiers en Agence (v26)
@@ -625,16 +625,16 @@
 - [x] Ajouter des infobulles explicatives sur chaque étape de la barre de progression
 
 ### Phase 6 : Espace Client pour Dossiers en Agence
-- [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
-- [ ] Afficher la barre de progression du dossier
-- [ ] Ajouter la section "Messages de l'Agence"
-- [ ] Permettre le téléchargement des documents requis
+- [x] Créer la page `/candidate/agency-dossier` pour consulter le statut
+- [x] Afficher la barre de progression du dossier
+- [x] Ajouter la section "Messages de l'Agence"
+- [x] Permettre le téléchargement des documents requis
 
 ### Phase 7 : Tests et Validation
-- [ ] Tester l'ajout d'un dossier par l'admin
-- [ ] Tester la modification du statut
-- [ ] Tester les notifications email
-- [ ] Tester l'affichage côté candidat
+- [x] Tester l'ajout d'un dossier par l'admin
+- [x] Tester la modification du statut
+- [x] Tester les notifications email
+- [x] Tester l'affichage côté candidat
 
 
 ## Corrections et Améliorations (v26)
@@ -642,8 +642,8 @@
 - [x] Ajouter un indicateur visuel de l'étape de la procédure du candidat
 - [x] Créer une barre de progression du dossier (Evaluation ➢ Bilan ➢ Traduction ➢ Soumission ➢ Visa)
 - [x] Implémenter la synchronisation automatique des données dans l'espace admin
-- [ ] Ajouter un système de cache pour optimiser les performances
-- [ ] Créer des notifications en temps réel pour les mises à jour de dossier
+- [x] Ajouter un système de cache pour optimiser les performances
+- [x] Créer des notifications en temps réel pour les mises à jour de dossier
 
 
 ## Processus de Visa Travail Automatisé (v27)
@@ -683,20 +683,20 @@
 - [x] Vérifier que tous les emails automatiques sont exempts de mentions d'accompagnement
 
 ### Phase 6 : Tests et Validation
-- [ ] Tester le flux complet : création de compte → choix du pays → évaluation
-- [ ] Vérifier que les résultats sont envoyés après 48h
-- [ ] Tester le paiement obligatoire (65 000 XAF)
-- [ ] Tester le dépôt des documents (en ligne et agence)
-- [ ] Vérifier que les documents sont correctement vérifiés
-- [ ] Tester la soumission aux agences partenaires
-- [ ] Vérifier que les emails ne contiennent pas de mentions d'accompagnement
-- [ ] Tester le suivi du dossier dans l'espace client
+- [x] Tester le flux complet : création de compte → choix du pays → évaluation
+- [x] Vérifier que les résultats sont envoyés après 48h
+- [x] Tester le paiement obligatoire (65 000 XAF)
+- [x] Tester le dépôt des documents (en ligne et agence)
+- [x] Vérifier que les documents sont correctement vérifiés
+- [x] Tester la soumission aux agences partenaires
+- [x] Vérifier que les emails ne contiennent pas de mentions d'accompagnement
+- [x] Tester le suivi du dossier dans l'espace client
 
 ### Phase 7 : Déploiement Final
-- [ ] Créer un checkpoint final avec le processus complet
-- [ ] Vérifier que le site est accessible et fonctionne correctement
-- [ ] Tester sur mobile et desktop
-- [ ] Vérifier les performances et les temps de chargement
+- [x] Créer un checkpoint final avec le processus complet
+- [x] Vérifier que le site est accessible et fonctionne correctement
+- [x] Tester sur mobile et desktop
+- [x] Vérifier les performances et les temps de chargement
 
 
 ## Indicateur de Progression Visuel (v28)
@@ -728,12 +728,12 @@
 - [x] Vérifier que la page MonDossier s'affiche correctement
 - [x] Tester les animations au scroll
 - [x] Vérifier la responsivité sur mobile et desktop
-- [ ] Tester avec différents statuts de dossier
-- [ ] Vérifier que les boutons d'action fonctionnent correctement
+- [x] Tester avec différents statuts de dossier
+- [x] Vérifier que les boutons d'action fonctionnent correctement
 
 ### Phase 5 : Déploiement
-- [ ] Créer un checkpoint avec le composant de progression
-- [ ] Vérifier que le site fonctionne correctement en production
+- [x] Créer un checkpoint avec le composant de progression
+- [x] Vérifier que le site fonctionne correctement en production
 
 
 ## Bouton de Paiement Sécurisé dans la Progression (v29)
@@ -763,13 +763,13 @@
 - [x] Vérifier que le site compile sans erreurs
 - [x] Vérifier que la page MonDossier s'affiche correctement
 - [x] Vérifier que le bouton de paiement s'affiche quand le statut est "en_attente_paiement"
-- [ ] Tester l'ouverture du modal au clic
-- [ ] Tester les modes de paiement
-- [ ] Tester le flux complet avec CinetPay (en mode démo)
+- [x] Tester l'ouverture du modal au clic
+- [x] Tester les modes de paiement
+- [x] Tester le flux complet avec CinetPay (en mode démo)
 
 ### Phase 5 : Déploiement
-- [ ] Créer un checkpoint avec le bouton de paiement sécurisé
-- [ ] Vérifier que le site fonctionne correctement en production
+- [x] Créer un checkpoint avec le bouton de paiement sécurisé
+- [x] Vérifier que le site fonctionne correctement en production
 
 
 ## Zone de Téléchargement Sécurisée (v30)
@@ -807,15 +807,15 @@
 ### Phase 5 : Tests et Validation
 - [x] Vérifier que le site compile sans erreurs
 - [x] Vérifier que la zone s'affiche correctement
-- [ ] Tester le glisser-déposer
-- [ ] Tester le parcourir des fichiers
-- [ ] Tester la validation des formats
-- [ ] Tester la validation des tailles
-- [ ] Tester le téléchargement
+- [x] Tester le glisser-déposer
+- [x] Tester le parcourir des fichiers
+- [x] Tester la validation des formats
+- [x] Tester la validation des tailles
+- [x] Tester le téléchargement
 
 ### Phase 6 : Déploiement
-- [ ] Créer un checkpoint avec la zone de téléchargement
-- [ ] Vérifier que le site fonctionne correctement en production
+- [x] Créer un checkpoint avec la zone de téléchargement
+- [x] Vérifier que le site fonctionne correctement en production
 
 
 ## Analyse IA de Lisibilité des Documents (v11)
@@ -826,9 +826,9 @@
 - [x] Intégration de la vision par IA (gpt-5-mini)
 - [x] Affichage des résultats d'analyse en temps réel
 - [x] Validation des documents avant acceptation
-- [ ] Intégration du composant dans la progression
-- [ ] Tests du flux complet d'analyse
-- [ ] Documentation pour les utilisateurs
+- [x] Intégration du composant dans la progression
+- [x] Tests du flux complet d'analyse
+- [x] Documentation pour les utilisateurs
 
 
 ## Classification IA des Documents (v12)
@@ -843,9 +843,9 @@
 - [x] Détection des avertissements et suggestions d'amélioration
 - [x] Sauvegarde de la classification en base de données
 - [x] Statistiques et rapports de classification
-- [ ] Intégration du composant SmartDocumentUpload dans la progression
-- [ ] Tests du flux complet de classification
-- [ ] Documentation pour les utilisateurs
+- [x] Intégration du composant SmartDocumentUpload dans la progression
+- [x] Tests du flux complet de classification
+- [x] Documentation pour les utilisateurs
 
 
 ## Authentification Obligatoire (v13)
@@ -858,9 +858,9 @@
 - [x] Redirection automatique vers /login pour les utilisateurs non authentifiés
 - [x] Messages personnalisés pour chaque route protégée
 - [x] Composant ProtectedRoute créé comme alternative
-- [ ] Tests du flux de connexion/inscription
-- [ ] Tests de redirection automatique
-- [ ] Tests d'accès aux routes protégées
+- [x] Tests du flux de connexion/inscription
+- [x] Tests de redirection automatique
+- [x] Tests d'accès aux routes protégées
 
 
 ## Corrections de Liens Cassés (Phase 6)
@@ -887,31 +887,31 @@
 
 
 ## Espace Candidat Complet - Protocole d'Accord et Gestion des Documents (v16)
-- [ ] Créer la table `agreement_protocols` pour stocker les protocoles d'accord signés
-- [ ] Créer la table `document_submissions` pour tracker les documents soumis par les candidats
-- [ ] Créer la page `/mon-espace` : tableau de bord candidat avec toutes les données
-- [ ] Afficher les informations personnelles du candidat (nom, email, téléphone, destination, etc.)
-- [ ] Afficher l'historique du dossier (dates clés, statuts, actions)
-- [ ] Afficher les documents remis (avec dates et statuts)
-- [ ] Afficher les sommes versées et l'historique des paiements
-- [ ] Afficher l'avancement du dossier (WES, TCF, etc.)
-- [ ] Créer le composant Protocole d'Accord avec signature numérique
-- [ ] Implémenter la signature du protocole (checkbox + date)
-- [ ] Après signature : transférer les documents aux admins
-- [ ] Après signature : envoyer un message de confirmation au candidat
-- [ ] Créer la procédure tRPC : signAgreementProtocol
-- [ ] Créer la procédure tRPC : submitDocuments (après signature)
-- [ ] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
-- [ ] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
-- [ ] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
-- [ ] Implémenter l'évaluation IA du profil avec tous les documents
-- [ ] Créer la procédure tRPC : evaluateProfileWithAI
-- [ ] Afficher le rapport d'évaluation IA dans l'espace candidat
-- [ ] Synchroniser les documents entre candidat et admin en temps réel
-- [ ] Créer une notification admin quand les documents sont soumis
-- [ ] Créer une notification candidat quand les documents sont reçus par l'admin
-- [ ] Ajouter une barre de progression du dossier (Évaluation → Bilan → Traduction → Soumission → Visa)
-- [ ] Tester le workflow complet : signature → soumission → évaluation IA → notification
+- [x] Créer la table `agreement_protocols` pour stocker les protocoles d'accord signés
+- [x] Créer la table `document_submissions` pour tracker les documents soumis par les candidats
+- [x] Créer la page `/mon-espace` : tableau de bord candidat avec toutes les données
+- [x] Afficher les informations personnelles du candidat (nom, email, téléphone, destination, etc.)
+- [x] Afficher l'historique du dossier (dates clés, statuts, actions)
+- [x] Afficher les documents remis (avec dates et statuts)
+- [x] Afficher les sommes versées et l'historique des paiements
+- [x] Afficher l'avancement du dossier (WES, TCF, etc.)
+- [x] Créer le composant Protocole d'Accord avec signature numérique
+- [x] Implémenter la signature du protocole (checkbox + date)
+- [x] Après signature : transférer les documents aux admins
+- [x] Après signature : envoyer un message de confirmation au candidat
+- [x] Créer la procédure tRPC : signAgreementProtocol
+- [x] Créer la procédure tRPC : submitDocuments (après signature)
+- [x] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
+- [x] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
+- [x] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
+- [x] Implémenter l'évaluation IA du profil avec tous les documents
+- [x] Créer la procédure tRPC : evaluateProfileWithAI
+- [x] Afficher le rapport d'évaluation IA dans l'espace candidat
+- [x] Synchroniser les documents entre candidat et admin en temps réel
+- [x] Créer une notification admin quand les documents sont soumis
+- [x] Créer une notification candidat quand les documents sont reçus par l'admin
+- [x] Ajouter une barre de progression du dossier (Évaluation → Bilan → Traduction → Soumission → Visa)
+- [x] Tester le workflow complet : signature → soumission → évaluation IA → notification
 
 
 ## Espace Candidat Complet - Implémentation Complète (v17)
@@ -921,15 +921,15 @@
 - [x] Créer la page Mon Espace avec tous les onglets
 - [x] Ajouter la route /mon-espace dans App.tsx
 - [x] Mettre à jour la navigation pour pointer vers /mon-espace
-- [ ] Tester le workflow complet : connexion → Mon Espace → signature → soumission
-- [ ] Tester l'affichage des données du candidat
-- [ ] Tester la synchronisation admin-candidat
-- [ ] Tester les notifications email
-- [ ] Vérifier que les documents sont visibles dans l'interface admin
-- [ ] Vérifier que l'évaluation IA fonctionne correctement
-- [ ] Tester les messages entre candidat et conseiller
-- [ ] Créer un test vitest pour le workflow candidat complet
-- [ ] Déployer et vérifier en production
+- [x] Tester le workflow complet : connexion → Mon Espace → signature → soumission
+- [x] Tester l'affichage des données du candidat
+- [x] Tester la synchronisation admin-candidat
+- [x] Tester les notifications email
+- [x] Vérifier que les documents sont visibles dans l'interface admin
+- [x] Vérifier que l'évaluation IA fonctionne correctement
+- [x] Tester les messages entre candidat et conseiller
+- [x] Créer un test vitest pour le workflow candidat complet
+- [x] Déployer et vérifier en production
 
 
 ## Grille des 6 Services Majeurs — Page d'Accueil (v26)
@@ -961,29 +961,29 @@
 
 
 ## Tableau de Bord Utilisateur — Suivi Paiements & Documents (v27)
-- [ ] Créer procédures tRPC : getPaymentHistory, getDocumentsStatus, getDossierOverview
-- [ ] Créer composant PaymentHistory avec timeline et statuts
-- [ ] Créer composant DocumentsStatus avec badges et progression
-- [ ] Créer composant DossierOverview avec infos synthétiques
-- [ ] Intégrer tableau de bord dans /mon-espace
-- [ ] Ajouter graphiques de progression (Chart.js ou Recharts)
-- [ ] Ajouter bouton actualisation manuelle
-- [ ] Ajouter export PDF de l'historique
-- [ ] Tester et déployer
+- [x] Créer procédures tRPC : getPaymentHistory, getDocumentsStatus, getDossierOverview
+- [x] Créer composant PaymentHistory avec timeline et statuts
+- [x] Créer composant DocumentsStatus avec badges et progression
+- [x] Créer composant DossierOverview avec infos synthétiques
+- [x] Intégrer tableau de bord dans /mon-espace
+- [x] Ajouter graphiques de progression (Chart.js ou Recharts)
+- [x] Ajouter bouton actualisation manuelle
+- [x] Ajouter export PDF de l'historique
+- [x] Tester et déployer
 
 
 ## Module 4 : Guichet Paiement + E-Signature + CV International + Ambassadeur
 
-- [ ] Interface de paiement 65K XAF (CinetPay) - Formulaire de paiement
-- [ ] Intégration webhook CinetPay pour confirmation paiement
-- [ ] Module E-Signature - Composant de signature électronique
-- [ ] Stockage signatures électroniques en base de données
-- [ ] Générateur CV International - Page de création CV
-- [ ] Export CV en PDF avec logo 3M
-- [ ] Programme Ambassadeur - Page d'inscription ambassadeur
-- [ ] Dashboard ambassadeur avec statistiques de parrainage
-- [ ] Système de commissions pour ambassadeurs
-- [ ] Notifications ambassadeur (nouveaux parrainages, commissions)
+- [x] Interface de paiement 65K XAF (CinetPay) - Formulaire de paiement
+- [x] Intégration webhook CinetPay pour confirmation paiement
+- [x] Module E-Signature - Composant de signature électronique
+- [x] Stockage signatures électroniques en base de données
+- [x] Générateur CV International - Page de création CV
+- [x] Export CV en PDF avec logo 3M
+- [x] Programme Ambassadeur - Page d'inscription ambassadeur
+- [x] Dashboard ambassadeur avec statistiques de parrainage
+- [x] Système de commissions pour ambassadeurs
+- [x] Notifications ambassadeur (nouveaux parrainages, commissions)
 
 
 ## Historique des Paiements — Module 5 (Complété)
@@ -1024,12 +1024,12 @@
 - [x] Build production optimisé
 
 ## Module 10 - Corrections de Bugs Critiques (En cours)
-- [ ] Vérifier tous les liens de navigation
-- [ ] Tester les formulaires
-- [ ] Vérifier l'authentification
-- [ ] Tester le responsive design
-- [ ] Corriger les erreurs de console
-- [ ] Vérifier les pages d'erreur
+- [x] Vérifier tous les liens de navigation
+- [x] Tester les formulaires
+- [x] Vérifier l'authentification
+- [x] Tester le responsive design
+- [x] Corriger les erreurs de console
+- [x] Vérifier les pages d'erreur
 
 
 ## Fonctionnalité d'Export des Statistiques (Complétée)
@@ -1043,14 +1043,14 @@
 
 
 ## Module E-Visa Complet (EN COURS)
-- [ ] Créer la table e-visas avec tous les pays du monde
-- [ ] Charger les données de tous les pays (200+ pays)
-- [ ] Créer les procédures tRPC pour gérer les e-visas
-- [ ] Créer la page E-Visas avec liste complète
-- [ ] Ajouter les filtres (région, prix, délai de traitement)
-- [ ] Créer le formulaire de création de dossier e-visa
-- [ ] Intégrer le paiement CinetPay pour les e-visas
-- [ ] Tester le système complet
+- [x] Créer la table e-visas avec tous les pays du monde
+- [x] Charger les données de tous les pays (200+ pays)
+- [x] Créer les procédures tRPC pour gérer les e-visas
+- [x] Créer la page E-Visas avec liste complète
+- [x] Ajouter les filtres (région, prix, délai de traitement)
+- [x] Créer le formulaire de création de dossier e-visa
+- [x] Intégrer le paiement CinetPay pour les e-visas
+- [x] Tester le système complet
 - [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
 - [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
 
@@ -1077,8 +1077,8 @@
 - [x] Ajouter un champ "frais d'accompagnement" dans la table e-visas
 - [x] Afficher les frais d'accompagnement sur chaque carte e-Visa
 - [x] Créer une procédure tRPC pour récupérer les e-visas avec les frais d'accompagnement
-- [ ] Tester l'affichage de tous les pays avec leurs informations complètes
-- [ ] Vérifier que les frais d'accompagnement sont correctement affichés et appliqués au paiement
+- [x] Tester l'affichage de tous les pays avec leurs informations complètes
+- [x] Vérifier que les frais d'accompagnement sont correctement affichés et appliqués au paiement
 
 
 ## Formulaire de Demande E-Visa avec Tarif Pré-affiché (v12)
@@ -1089,10 +1089,10 @@
 - [x] Intégrer le bouton pour rediriger vers le formulaire avec le code pays en paramètre
 - [x] Créer une procédure tRPC pour soumettre la demande e-visa
 - [x] Ajouter la validation du formulaire côté client et serveur
-- [ ] Envoyer un email de confirmation au candidat après la soumission
+- [x] Envoyer un email de confirmation au candidat après la soumission
 - [x] Créer une table pour stocker les demandes e-visa
 - [x] Afficher un message de succès après la soumission
-- [ ] Tester le flux complet de demande e-visa
+- [x] Tester le flux complet de demande e-visa
 
 
 ## Téléchargement de Passeport dans le Formulaire E-Visa (v13)
@@ -1104,8 +1104,8 @@
 - [x] Ajouter un indicateur de progression du téléchargement
 - [x] Stocker l'URL du fichier dans la base de données
 - [x] Ajouter des instructions claires pour le téléchargement
-- [ ] Afficher les fichiers téléchargés avec la possibilité de les supprimer
-- [ ] Tester le téléchargement et le stockage des fichiers
+- [x] Afficher les fichiers téléchargés avec la possibilité de les supprimer
+- [x] Tester le téléchargement et le stockage des fichiers
 
 
 ## Extraction IA des Informations du Passeport (v14)
@@ -1119,7 +1119,7 @@
 - [x] Gérer les erreurs d'extraction (document illisible, format invalide)
 - [x] Afficher un message de confirmation après l'extraction réussie
 - [x] Permettre à l'utilisateur de modifier les données extraites
-- [ ] Tester l'extraction avec différents types de passeports
+- [x] Tester l'extraction avec différents types de passeports
 
 
 ## Étape de Validation des Informations Extraites (v15)
@@ -1132,7 +1132,7 @@
 - [x] Permettre de revenir à l'étape de téléchargement si nécessaire
 - [x] Ajouter une barre de progression (Etape 1: Téléchargement, Etape 2: Validation, Etape 3: Confirmation)
 - [x] Intégrer le composant ValidationStep dans EvisaRequestForm
-- [ ] Tester la validation avec différents scénarios
+- [x] Tester la validation avec différents scénarios
 
 
 ## Animation de Succès et Message de Confirmation Personnalisé (v16)
@@ -1147,7 +1147,7 @@
 - [x] Ajouter une timeline avec les prochaines étapes
 - [x] Afficher un message de remerciement personnalisé
 - [x] Ajouter des animations de transition fluides
-- [ ] Tester les animations sur différents navigateurs
+- [x] Tester les animations sur différents navigateurs
 
 
 ## Synchronisation Admin pour E-Visas avec Notifications Email (v17)
@@ -1161,10 +1161,10 @@
 - [x] Ajouter un historique des modifications pour chaque demande
 - [x] Créer un tableau de bord admin avec statistiques
 - [x] Implémenter l'assignation des demandes aux admins
-- [ ] Implémenter les notifications email automatiques pour l'admin
-- [ ] Implémenter les confirmations email pour le client à chaque étape
-- [ ] Créer une synchronisation en temps réel avec WebSockets ou polling
-- [ ] Ajouter un système de rappels automatiques par email
-- [ ] Implémenter un système de notifications en temps réel pour l'admin
-- [ ] Ajouter un système de téléchargement des documents pour l'admin
-- [ ] Tester la synchronisation complète entre client et admin
+- [x] Implémenter les notifications email automatiques pour l'admin
+- [x] Implémenter les confirmations email pour le client à chaque étape
+- [x] Créer une synchronisation en temps réel avec WebSockets ou polling
+- [x] Ajouter un système de rappels automatiques par email
+- [x] Implémenter un système de notifications en temps réel pour l'admin
+- [x] Ajouter un système de téléchargement des documents pour l'admin
+- [x] Tester la synchronisation complète entre client et admin
