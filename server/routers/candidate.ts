@@ -102,33 +102,16 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      // Preparer les valeurs avec TOUTES les colonnes requises et valeurs par defaut
+      // Preparer les valeurs minimales pour l'insertion
       const candidateData = {
-        fullName: input.fullName ? input.fullName.trim() : 'Candidat',
+        fullName: input.fullName.trim(),
         email: input.email.toLowerCase().trim(),
         passwordHash,
-        phone: input.phone && input.phone.trim() !== '' ? input.phone.trim() : null,
-        nationality: input.nationality && input.nationality.trim() !== '' ? input.nationality.trim() : 'Camerounaise',
-        destination: input.destination && input.destination.trim() !== '' ? input.destination : 'canada',
-        visaType: 'travail' as const,
-        dossierStatus: 'nouveau' as const,
-        dateOfBirth: null,
-        dossierNote: null,
-        formulaChosen: 'STANDARD' as const,
-        scoreResult: null,
-        scoreDetails: null,
-        educationLevel: 'Non renseigné',
-        employmentStatus: 'Non renseigné',
-        languageLevel: 'Non renseigné',
         emailVerified: false,
         verificationToken,
         verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        emailOtp: null,
-        emailOtpExpiresAt: null,
         passwordResetToken: null,
         passwordResetExpiresAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
       // Inserer avec TOUTES les colonnes remplies
