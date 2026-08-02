@@ -449,35 +449,3 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
 }
 
 
-
-
-
-// sendAdminNewDossierAlert to match existing calls (alias for sendAdminNewDossierAlertEmail)
-export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: string, email: string, whatsappNumber: string, destination: string, status: string): Promise<void> {
-  const subject = `🚨 Nouvelle alerte dossier - #${dossierNumber}`;
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); padding: 40px; text-align: center; color: white;">
-        <h1 style="margin: 0;">🚨 Nouvelle Alerte Dossier</h1>
-      </div>
-      <div style="padding: 40px; background: #f9fafb;">
-        <p>Un nouveau dossier a été créé :</p>
-        <ul>
-          <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
-          <li><strong>Candidat :</strong> ${fullName}</li>
-          <li><strong>Email :</strong> ${email}</li>
-          <li><strong>WhatsApp :</strong> ${whatsappNumber}</li>
-          <li><strong>Destination :</strong> ${destination}</li>
-          <li><strong>Statut Initial :</strong> ${status}</li>
-        </ul>
-        <p style="text-align: center; margin-top: 30px;">
-          <a href="${SITE_URL}/admin/dossier/${dossierNumber}" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-            Voir le dossier dans l'Admin
-          </a>
-        </p>
-      </div>
-    </div>
-  `;
-  return sendGenericEmail({ to: ADMIN_EMAIL, subject, html });
-}
-

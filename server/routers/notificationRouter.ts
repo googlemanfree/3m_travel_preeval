@@ -6,7 +6,7 @@
 import { publicProcedure, protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import type { TRPCError } from '@trpc/server';
-import { sendEmail } from '../emailService';
+import { sendEmail as sendGenericEmail, SendEmailOptions } from '../_core/email';
 import {
   sendWhatsAppMessage,
   sendAdmissibilityReportWhatsApp,

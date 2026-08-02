@@ -621,7 +621,6 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
-        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Protocole d'Accord Signé</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -630,7 +629,8 @@ export const candidateRouter = router({
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        await sendEmail(app[0].email, `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, confirmationHTML);
+        const { sendEmail: sendGenericEmail } = await import("../_core/email");
+        await sendGenericEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
@@ -695,7 +695,6 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
-        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Documents Reçus</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -704,7 +703,8 @@ export const candidateRouter = router({
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        await sendEmail(app[0].email, `📄 Documents Reçus - Dossier ${input.dossierNumber}`, confirmationHTML);
+        const { sendEmail: sendGenericEmail } = await import("../_core/email");
+        await sendGenericEmail({ to: app[0].email, subject: `📄 Documents Reçus - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
