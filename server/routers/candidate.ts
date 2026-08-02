@@ -107,25 +107,23 @@ export const candidateRouter = router({
       const now = new Date();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
       
-      const result = await db.execute(
-        'INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [
-          input.fullName.trim(),
-          cleanEmail,
-          passwordHash,
-          false,
-          verificationToken,
-          expiresAt,
-          null,
-          null,
-          now,
-          now,
-          now
-        ]
-      );
+      // Utiliser l'insertion ORM simplifiee avec les colonnes minimales
+      await db.insert(candidates).values({
+        fullName: input.fullName.trim(),
+        email: cleanEmail,
+        passwordHash,
+        emailVerified: false,
+        verificationToken,
+        verificationExpiresAt: expiresAt,
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+        createdAt: now,
+        updatedAt: now,
+        lastLoginAt: now
+      });
 
       // Recuperer le candidateId insere
-      const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, cleanEmail)).limit(1);
       if (!inserted.length) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
       }
