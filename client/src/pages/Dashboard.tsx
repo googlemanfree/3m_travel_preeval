@@ -245,7 +245,7 @@ export default function Dashboard() {
   }
 
   const profile = profileQuery.data;
-  const statusConfig = STATUS_CONFIG[profile?.dossierStatus ?? "nouveau"] ?? STATUS_CONFIG.nouveau;
+  const statusConfig = STATUS_CONFIG.nouveau; // dossierStatus removed
   const StatusIcon = statusConfig.icon;
   const currentStep = statusConfig.step;
 
@@ -471,8 +471,8 @@ export default function Dashboard() {
                         </div>
                         <div className="flex gap-2 mb-4">
                           {DOSSIER_STEPS.map((step, idx) => {
-                            const isActive = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step === idx;
-                            const isCompleted = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step > idx;
+                            const isActive = false; // dossierStatus removed
+                            const isCompleted = false; // dossierStatus removed
                             const tooltip = STEP_TOOLTIPS[step.key];
                             return (
                               <div key={step.key} className="flex-1 group relative">
@@ -518,7 +518,7 @@ export default function Dashboard() {
                           <div>
                             <div className={`font-black text-lg ${statusConfig.color}`}>{statusConfig.label}</div>
                             <div className="text-sm text-gray-600">
-                              {profile?.dossierNote ?? "Votre dossier est en cours de traitement par notre équipe."}
+                              Votre dossier est en cours de traitement par notre équipe.
                             </div>
                           </div>
                         </div>
@@ -563,9 +563,7 @@ export default function Dashboard() {
                       {/* Infos du dossier */}
                       <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                          { label: "Destination", value: profile?.destination?.toUpperCase() ?? "—", icon: Globe },
-                          { label: "Type de visa", value: profile?.visaType ?? "À définir", icon: FileText },
-                          { label: "Formule choisie", value: profile?.formulaChosen ?? "Non sélectionnée", icon: Award },
+                          { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
                           { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
                         ].map((item) => (
                           <div key={item.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
@@ -580,8 +578,8 @@ export default function Dashboard() {
                         ))}
                       </div>
 
-                      {/* CTA si dossier nouveau */}
-                      {(profile?.dossierStatus === "nouveau" || profile?.dossierStatus === "documents") && (
+                      {/* CTA si nouveau */}
+                      {false && (
                         <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
                           <div className="flex items-start gap-3">
                             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />

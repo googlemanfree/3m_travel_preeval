@@ -316,7 +316,7 @@ export const adminDashboardStatsRouter = router({
               ...app,
               candidateName: candidate?.fullName || "N/A",
               candidateEmail: candidate?.email || "N/A",
-              candidatePhone: candidate?.phone || "N/A",
+              candidatePhone: "N/A", // phone removed from schema
             };
           })
         );

@@ -36,16 +36,12 @@ export default function Login() {
         id: candidateData.id,
         fullName: candidateData.fullName,
         email: candidateData.email,
-        destination: candidateData.destination,
-        dossierStatus: candidateData.dossierStatus,
         emailVerified: candidateData.emailVerified ?? true,
       }));
       login(data.token, {
         id: candidateData.id,
         fullName: candidateData.fullName,
         email: candidateData.email,
-        destination: candidateData.destination,
-        dossierStatus: candidateData.dossierStatus,
         emailVerified: candidateData.emailVerified ?? true,
       });
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
