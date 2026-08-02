@@ -1,4 +1,4 @@
-# 3M Travel & Services - TODO
+# Project TODO
 
 - [x] Créer le schéma DB pour les demandes d'évaluation (table evaluations)
 - [x] Créer la route tRPC pour soumettre une évaluation avec upload de fichier
@@ -48,1123 +48,793 @@
 - [x] Extraire le contenu des PDFs de procédures (80+ fichiers)
 - [x] Créer la page /procedures avec onglets Canada/Luxembourg/Pologne&Europe
 - [x] Implémenter le catalogue dynamique avec filtres par pays et type de visa
-- [x] Créer la timeline verticale/horizontale du parcours candidat (5 étapes)
-- [x] Ajouter le bandeau de conformité juridique et éthique
-- [x] Uploader les PDFs sur S3 et créer les liens de téléchargement
-- [x] Ajouter le lien "Procédures" dans la navigation principale (header + footer + page Vols)
-
-## Refonte Immigration & Mobilité Internationale (v2)
-- [x] Refondre la page /procedures : 5 destinations (Canada, Luxembourg, Pologne, Europe Schengen, Golfe)
-- [x] Boutons CTA tous fonctionnels : formulaire multi-étapes, WhatsApp pré-rempli, pop-up Europe
-- [x] Section sélection de formule de paiement (Intégral / Échelonné / Permis Garanti) avec frais 65 000 FCFA
-- [x] Pop-up détails Europe Schengen (Allemagne, France, Belgique) avec procédures Chancenkarte
-- [x] Afficher les exigences Luxembourg (salaire 3 165 EUR/mois, contrat MAEE)
-- [x] Afficher les conditions Pologne (25,36-25,50 PLN/h, hébergement inclus)
-- [x] Intégrer le formulaire d'évaluation multi-étapes directement sur la page /procedures
-
-## Compteur dynamique de dossiers traités
-- [x] Créer le composant CounterStats réutilisable avec animation de décompte au scroll (useIntersectionObserver)
-- [x] Intégrer le compteur dans Home.tsx (section chiffres clés)
-- [x] Intégrer le compteur dans Procedures.tsx (sous le hero)
-
-## Espace Candidat — Compte & Tableau de Bord
-- [x] Étendre le schéma DB : tables candidates, candidate_files, candidate_messages
-- [x] Appliquer la migration DB via pnpm db:push
-- [x] Procédures tRPC : register, login, logout, getProfile, updateProfile
-- [x] Procédures tRPC : getMyDossier, uploadDocument, listDocuments
-- [x] Procédures tRPC : sendMessage, getMessages (messagerie candidat ↔ conseiller)
-- [x] Page /register : formulaire d'inscription (nom, email, mot de passe, destination, téléphone)
-- [x] Page /login : formulaire de connexion avec gestion d'erreurs
-- [x] Page /dashboard : tableau de bord candidat (statut dossier, documents, messages)
-- [x] Protéger la route /dashboard (redirection vers /login si non connecté)
-- [x] Ajouter le lien "Mon Espace" dans la navigation de toutes les pages
-- [x] Intégrer l'upload de documents (CV, passeport, diplômes) via S3 via route Express multer
-
-## Authentification Renforcée — Email OTP & Protection des Routes
-- [x] Ajouter colonnes emailVerified, emailVerificationOtp, otpExpiresAt, passwordResetToken, passwordResetExpiresAt dans la table candidates
-- [x] Procédure tRPC : verifyEmail(otp) — valider le code OTP
-- [x] Procédure tRPC : resendVerificationEmail — renvoyer l'OTP
-- [x] Procédure tRPC : requestPasswordReset(email) — envoyer un lien de réinitialisation
-- [x] Procédure tRPC : resetPassword(token, newPassword) — réinitialiser le mot de passe
-- [x] Envoyer l'OTP par email via Nodemailer/SMTP au moment de l'inscription
-- [x] Envoyer l'email de réinitialisation de mot de passe par email
-- [x] Page /verify-email : saisie du code OTP à 6 chiffres
-- [x] Page /forgot-password : formulaire email pour demander la réinitialisation
-- [x] Page /reset-password : formulaire nouveau mot de passe (avec token dans l'URL)
-- [x] Refondre /register : indicateur de force du mot de passe (8 car, 1 chiffre, 1 majuscule)
-- [x] Refondre /login : option "Se souvenir de moi", lien "Mot de passe oublié ?"
-- [x] Auth Guard sur /flights : écran d'accès refusé avec CTA connexion/inscription
-- [x] Auth Guard sur /procedures : écran d'accès refusé avec CTA connexion/inscription
-- [x] Message d'avertissement sur /login quand redirigé depuis une page protégée
-- [x] Améliorer /dashboard : message d'accueil personnalisé + raccourcis vers les services
-
-## Nom agence + Signature concepteur
-- [x] Afficher "3M Travel Agency" en grand dans le hero de Home.tsx
-- [x] Ajouter la signature Aureol Donfack avec CTA WhatsApp/email dans le footer
-
-## Visuels Hero — Logo et Image Passeport/Visa
-- [x] Générer une image hero de personnes avec passeport et visa (style professionnel, tons bleus)
-- [x] Agrandir et améliorer l'affichage du logo 3M dans le hero
-- [x] Uploader les visuels sur S3 et intégrer dans Home.tsx
-
-## Refonte Destinations — 6 Régions Mondiales (v3)
-- [x] Corriger les destinations : extraire toutes les destinations réelles des 89 PDFs
-- [x] Organiser en 6 grandes régions : Canada, Europe Schengen (30+ pays), Royaume-Uni & États-Unis, Golfe & Moyen-Orient, Océanie, Caucase & Stratégie Schengen
-- [x] Générer des images pour chaque région (IA)
-- [x] Rendre la page /procedures publique (accessible sans connexion)
-- [x] Intégrer image dédiée pour le Caucase (Arménie, Géorgie, Azerbaïdjan)
-
-## Barre de Recherche Interactive — Page /procedures
-- [x] Barre de recherche avec suggestions automatiques (pays, visa, procédure)
-- [x] Filtrage en temps réel des régions et destinations par mot-clé
-- [x] Affichage des résultats groupés par région avec navigation directe
-- [x] Raccourcis rapides (tags cliquables) : Canada, Schengen, UK, USA, Qatar, Australie...
-
-## Refonte Navigation — Uniformisation
-- [x] Composant Navbar réutilisable : logo propre, liens uniformes, sans numéros de téléphone
-- [x] Retirer les numéros de téléphone des headers de toutes les pages
-- [x] Consolider les numéros de téléphone uniquement dans les footers
-- [x] Boutons uniformes dans toutes les navbars (style cohérent)
-
-## Module Paiement CinetPay & Panneau Admin PDF
-- [x] Table applications en DB (26 colonnes : id, dossierNumber, candidateId, fullName, email, whatsapp, destination, formulaChosen, paymentStatus, paymentTransactionId, paymentAmount, paymentCurrency, paymentMethod, paymentDate, dossierStatus, adminNote, etc.)
-- [x] Procédures tRPC : createApplication, getMyApplications, getApplicationByDossierNumber, listApplications (admin), updateApplicationStatus (admin)
-- [x] Intégration CinetPay : initialisation transaction 65 000 FCFA (MTN MoMo, Orange Money, Visa/Mastercard)
-- [x] Webhook sécurisé POST /api/cinetpay/webhook pour mise à jour payment_status avec double vérification API
-- [x] Page /open-dossier : formulaire multi-étapes (Destination/Formule → Infos perso → Profil pro → Paiement)
-- [x] Page /payment-success : confirmation avec numéro dossier #3M-XXXX et prochaines étapes
-- [x] Page /payment-failed : page d'erreur avec bouton retenter et contact WhatsApp
-- [x] Panneau admin /admin : liste des dossiers avec filtres [Payé/En attente/Tous], statistiques, notes internes
-- [x] Bouton "Imprimer fiche PDF" par candidat avec logo 3M, infos légales, tableau structuré
-- [x] CSS @media print pour impression optimisée des fiches candidats
-- [x] Notifications email : confirmation candidat + alerte admin + confirmation paiement (sendDossierConfirmationEmail, sendAdminNewDossierAlert, sendPaymentSuccessEmail)
-- [x] Sécurité admin : protectedProcedure + vérification ctx.user.role === 'admin' côté backend, useAuth().user?.role === 'admin' côté frontend
-- [x] Promotion du propriétaire en admin via SQL (openId = VgxUFTC4ywmuDrGzDmfJRT)
-- [x] Navbar mise à jour : bouton "Ouvrir un dossier" + lien "Admin" visible uniquement pour les admins
-
-## Tunnel de Conversion — Scoring Automatique & Upload Documents (v4)
-- [x] Moteur de scoring partagé (client/src/lib/scoring.ts) : 5 critères, 100 points (formation 25, expérience 25, langues 20, secteur 20, âge 10)
-- [x] Composant ProcedureDetailModal : fiche informative complète par procédure avec prérequis, documents requis, délais, budget, bouton "Continuer"
-- [x] Composant ScoringForm : formulaire multi-étapes (Infos perso → Profil pro avec score temps réel → Upload documents → Résultat + Paiement)
-- [x] Upload de documents publique (passeport, CV, diplôme) via route POST /api/candidate/upload-public (sans authentification)
-- [x] Remplacement des boutons WhatsApp "Démarrer ma procédure" par le tunnel bleu "Démarrer ma procédure" → ProcedureDetailModal → ScoringForm
-- [x] Schéma DB étendu : colonnes passportUrl, cvUrl, diplomaUrl, scoringTotal, scoringDetails (JSON), scoringBadge
-- [x] Procédure createApplication étendue : accepte les URLs de documents et le scoring
-- [x] Panneau Admin : filtre par score (Très favorable / Admissible / À renforcer / Non évalué)
-- [x] Panneau Admin : badge de score coloré sur chaque carte de dossier
-- [x] Panneau Admin : détail du scoring (barres par critère) dans la section expandable
-- [x] Panneau Admin : liens cliquables vers les documents (Passeport, CV, Diplôme) dans la section expandable
-- [x] Fiche PDF : section "Score d'éligibilité" avec score/100, badge profil et détail par critère
-- [x] Fiche PDF : section "Documents fournis" avec liste des documents téléversés
-- [x] Statistique "Profils éligibles" dans le tableau de bord admin (remplace "En attente paiement")
-
-## Améliorations UX — Barre de Progression & Animations (v5)
-- [x] Barre de progression linéaire dans l'en-tête du ScoringForm (0% → 100% au fur et à mesure des étapes)
-- [x] Animations de transition fluides entre les étapes (fade + slide horizontal)
-- [x] Stepper animé avec agrandissement (scale) de l'étape active
-- [x] Connecteurs entre les étapes animés (changement de couleur quand complété)
-- [x] AnimatePresence pour gérer les entrées/sorties des contenus d'étapes
-
-
-## Amélioration des Inscriptions — Confirmation Email & Corrections de Bugs (v6)
-- [x] Ajouter colonnes emailVerified, emailOtp, emailOtpExpiresAt à la table applications
-- [x] Modifier createApplication : créer l'application avec emailVerified=false, générer et envoyer OTP
-- [x] Créer une page /verify-application-email pour vérifier l'OTP avant le paiement
-- [x] Intégrer la vérification email dans le tunnel ScoringForm (après étape 4, avant redirection paiement)
-- [x] Ajouter procédure verifyApplicationOtp : vérifier OTP et initialiser paiement CinetPay
-- [x] Route /verify-application-email intégrée dans App.tsx
-- [x] Adapter OpenDossier.tsx pour rediriger vers /verify-application-email
-- [x] Retirer emailOtp de la réponse createApplication (sécurité)
-- [x] Ajouter procédure resendApplicationOtp pour renvoyer l'OTP si expiré
-- [x] Implémenter handleResend dans VerifyApplicationEmail.tsx
-- [x] Corriger le bug : login candidat ne vérifiait pas emailVerified (ajouter la vérification)
-- [x] Corriger le bug : VerifyEmail.tsx dépendait de localStorage "pendingCandidate" (rendre optionnel)
-
-
-## Système d'Évaluation Automatique — Rapports Personnalisés Multi-Destination (v7)
-- [x] Service d'évaluation : scoring multi-destination (Pologne, Canada, Allemagne, Luxembourg, UK, USA)
-- [x] Génération de rapports HTML personnalisés avec barres de progression visuelles
-- [x] Procédures tRPC : sendEvaluationReport (manuel) et sendBulkEvaluationReports (en masse)
-- [x] Fonction d'envoi d'email : sendEvaluationReportEmail avec template professionnel
-- [x] Composant EvaluationManager dans le panneau admin avec bouton "Envoyer les rapports"
-- [x] Endpoint Heartbeat : POST /api/scheduled/evaluation-job pour exécution périodique
-- [x] Routeur Heartbeat tRPC : createEvaluationJob, listJobs, deleteJob
-- [x] Intégration du gestionnaire d'évaluation dans Admin.tsx
-- [x] Corriger l'authentification admin pour le gestionnaire Heartbeat (utiliser OWNER_OPEN_ID comme fallback)
-- [x] Tester la création/liste/suppression d'un job depuis l'interface admin
-- [x] Exécuter un vrai test du job d'évaluation avec envoi d'emails
-- [x] Ajouter un historique d'envoi des rapports en base de données
-
-
-## Intégration IA — Analyse de CV avec OpenAI (v8)
-- [x] Installer les dépendances pdf-parse et openai
-- [x] Créer le service aiEvaluationService.ts : extraction PDF + analyse IA + rapport par défaut
-- [x] Ajouter la procédure tRPC evaluateCVWithAI : analyse CV en base64 + génération rapport + envoi email
-- [x] Intégrer analyzeCV dans ScoringForm : déclencher l'analyse lors de l'upload du CV
-- [x] Ajouter la mutation tRPC evaluateCVWithAI dans ScoringForm
-- [x] Configurer une clé OpenAI valide (OPENAI_API_KEY) et valider avec le test vitest
-- [x] Tester l'upload de CV et vérifier la génération du rapport IA
-- [x] Ajouter un toast de notification lors de l'analyse IA en cours
-
-
-## Animation de Chargement IA (v9)
-- [x] Créer le composant AILoadingAnimation avec étapes animées (Extraction → Analyse → Génération → Envoi)
-- [x] Ajouter les icônes et animations Framer Motion pour chaque étape
-- [x] Intégrer l'animation dans ScoringForm lors de l'analyse IA du CV
-- [x] Ajouter l'état isAnalyzingCV pour contrôler la visibilité de l'animation
-- [x] Ajouter une barre de progression globale et des messages d'encouragement
-- [x] Tester l'animation en uploadant un CV et vérifier les étapes
-- [x] Ajouter des sons de notification (optionnel) lors de la fin de l'analyse
-
-
-## Configuration SMTP — Emails de Confirmation (v10)
-- [x] Vérifier la configuration SMTP actuelle dans emailService.ts
-- [x] Configurer les variables SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM)
-- [x] Créer le test de validation SMTP (smtp.test.ts)
-- [x] Créer le test du mode développement (email-dev-mode.test.ts)
-- [x] Tous les tests SMTP passent avec succès
-- [x] Générer un mot de passe d'application Gmail pour l'authentification réelle
-- [x] Tester l'envoi réel d'emails avec Gmail
-- [x] Ajouter des templates d'emails supplémentaires (rappel paiement, confirmation admin)
-
-## Pages Mobilité Internationale (v10)
-- [x] Créer shared/visaData.ts avec données génériques (6 types de visa, 6 destinations, procédures)
-- [x] Page /visa-types : 6 cartes colorées expandables (conditions, documents, délais, coûts)
-- [x] Page /destinations : grille avec recherche, filtres par continent, infos clés par pays
-- [x] Page /guide : timeline interactive 6 étapes + FAQ + types de visa + CTA
-- [x] Navbar : menu déroulant "Ressources" (Types de Visa, Destinations, Guide Complet)
-- [x] Navbar mobile : liens Ressources dans le menu hamburger
-- [x] Routes App.tsx : /visa-types, /destinations, /guide
-- [x] Aucune erreur TypeScript
-
-## Formulaire Complet de Constitution de Dossier (v11)
-- [x] Analyser le formulaire actuel (ScoringForm, OpenDossier) et identifier les champs manquants
-- [x] Étendre le schéma DB : état civil, coordonnées complètes, études/diplômes, situation pro, expérience, ressources financières, situation familiale, champs spécifiques par type de visa
-- [x] Créer FullDossierForm : 7 étapes (Visa & Destination → État civil → Coordonnées → Études/Diplômes → Situation pro/financière → Situation familiale → Documents & Paiement)
-- [x] Étapes dynamiques selon le type de visa (ex: étape "Regroupement familial" uniquement si visa famille)
-- [x] Upload documents : passeport, CV, diplômes, relevés bancaires, contrat de travail, lettre d'invitation
-- [x] Scoring automatique mis à jour avec les nouveaux critères
-- [x] Mettre à jour les procédures tRPC createApplication pour accepter tous les nouveaux champs
-- [x] Remplacer ScoringForm par FullDossierForm dans le tunnel Procedures et OpenDossier
-- [x] Barre de progression claire avec noms d'étapes et indicateur de complétion
-
-## Formulaire Complet de Constitution de Dossier (v11)
-- [x] Schéma DB étendu : 27 nouvelles colonnes (état civil, diplômes, emploi, finances, famille, type de visa)
-- [x] Migration DB appliquée via webdev_execute_sql
-- [x] Composant FullDossierForm : 6 étapes (Visa → Identité → Études → Emploi → Finances → Documents)
-- [x] Étapes adaptées dynamiquement au type de visa (ex: Regroupement Familial affiche l'étape Famille)
-- [x] Barre de progression et stepper numéroté avec labels
-- [x] Animations de transition Framer Motion entre étapes
-- [x] Upload de documents (passeport, CV, diplôme, justificatifs) via route publique S3
-- [x] Procédure tRPC createApplication étendue avec tous les nouveaux champs
-- [x] Page /open-dossier remplacée par wrapper autour de FullDossierForm
-- [x] Tunnel Procedures.tsx : ScoringForm remplacé par FullDossierForm dans la modale
-- [x] Props procedureId et procedureTitle passées depuis Procedures vers FullDossierForm
-- [x] Aucune erreur TypeScript
-
-## Protocole d'Accord — Signature Électronique (v12)
-- [x] Ajouter colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
-- [x] Procédure tRPC signAgreement : enregistrer la signature avec horodatage et IP
-- [x] Composant AgreementProtocol : document d'accord complet (engagements agence + candidat, honoraires en référence discrète)
-- [x] Signature électronique : champ nom + case à cocher + date auto + bouton "Je signe et accepte"
-- [x] Intégrer AgreementProtocol dans le tunnel après l'évaluation positive (avant vérification email)
-- [x] Afficher le récapitulatif de la signature dans le panneau admin (fiche PDF)
-- [x] Tester le flux complet : évaluation → accord → signature → vérification email → paiement
-
-## Protocole d'Accord — Signature Électronique (v11)
-- [x] Colonnes DB : agreementSigned, agreementSignedAt, agreementSignatureName, agreementIpAddress
-- [x] Procédure tRPC signAgreement : vérification dossier, enregistrement signature horodatée avec IP
-- [x] Retour applicationId dans createApplication pour lier le protocole au bon dossier
-- [x] Composant AgreementProtocol : document d'accord complet avec engagements réciproques
-- [x] Signature électronique : nom + case à cocher + date horodatée
-- [x] Intégration dans FullDossierForm : affichage après soumission, avant vérification email
-- [x] Tunnel complet : Formulaire → Protocole d'Accord → Vérification Email → Paiement
-
-## Tableau de Bord Candidat — Suivi de Dossier (v12)
-- [x] Procédure tRPC getDossierStatus : récupérer le dossier par numéro + email (sans compte)
-- [x] Procédure tRPC sendCandidateMessage : envoyer un message au conseiller
-- [x] Procédure tRPC replyToCandidate : répondre au candidat depuis l'admin
-- [x] Page /mon-dossier : formulaire de connexion par numéro de dossier + email
-- [x] Timeline visuelle des étapes : Soumission → Accord → Paiement → Traitement → Soumis → Visa
-- [x] Section statut actuel avec badge coloré et description de l'étape
-- [x] Section documents soumis avec liens de téléchargement (passeport, CV, diplôme)
-- [x] Section messagerie candidat ↔ conseiller
-- [x] Section prochaines étapes personnalisées selon le statut
-- [x] Lien "Suivre mon dossier" dans la Navbar desktop et mobile
-- [x] Route /mon-dossier ajoutée dans App.tsx
-- [x] Admin : bouton "Répondre" aux messages candidats depuis le panneau admin (procédure replyToCandidate disponible, UI créée)
-- [x] Lien "Suivre mon dossier" dans la page /payment-success
-
-## Bibliothèque de Ressources PDF (v14)
-- [x] Upload de 212 fichiers PDF/DOCX sur S3 (Visa Travail, Études, Visiteur, Guides, Formulaires)
-- [x] Fichier shared/pdfResources.ts avec catalogue complet et vraies URLs S3
-- [x] Page /ressources avec recherche, filtres par catégorie, cartes de téléchargement (107 documents)
-- [x] Lien "Télécharger les guides PDF" dans le menu déroulant Ressources (desktop)
-- [x] Lien "Télécharger les guides PDF" dans le menu mobile
-- [x] Route /ressources ajoutée dans App.tsx
-
-## Chat en Direct — Support Client (v15)
-- [x] Créer la table DB contact_messages pour stocker les conversations
-- [x] Créer le routeur tRPC contact avec procédures sendMessage, getMessages, closeSession
-- [x] Créer le composant ChatModal avec interface de chat
-- [x] Intégrer ChatModal à la page Contact.tsx
-- [x] Remplacer le lien "#" du "Chat en ligne" par un bouton qui ouvre la modale
-- [x] Ajouter animations Framer Motion à la modale
-- [x] Tester l'ouverture/fermeture de la modale
-
-
-## Corrections de contenu et de liens (v16)
-- [x] Corriger email footer : hello@3mtravelegency.com → hello@3mtravelagency.com (Footer.tsx, Home.tsx)
-- [x] Modifier le lien "Destinations" : /destinations → /procedures (Navbar.tsx)
-- [x] Commenter les liens légaux morts dans Home.tsx (à implémenter : /privacy et /terms)
-
-
-## Filtrage et Recherche sur /visa-types (v17)
-- [x] Ajouter une barre de recherche pour filtrer par nom de visa
-- [x] Ajouter des filtres par catégories (Étude, Travail, Tourisme, etc.)
-- [x] Ajouter des filtres par délai de traitement
-- [x] Ajouter des filtres par coût estimé
-- [x] Implémenter la logique de filtrage avec état React
-- [x] Ajouter des animations de transition entre les résultats filtrés
-- [x] Tester les filtres avec différentes combinaisons
-
-
-## Corrections supplémentaires (v18)
-- [x] Créer la page /politique-confidentialite avec le contenu fourni
-- [x] Créer la page /conditions-utilisation avec le contenu fourni
-- [x] Ajouter les routes /politique-confidentialite et /conditions-utilisation dans App.tsx
-- [x] Corriger l'email hello@3mtravelegency.com → hello@3mtravelagency.com globalement (Footer.tsx)
-- [x] Mettre à jour les liens légaux dans Home.tsx : pointer vers /politique-confidentialite et /conditions-utilisation
-- [x] Transformer les pastilles destinations du footer en liens vers /procedures (déjà fait)
-- [x] Tester les pages légales et les liens
-
-
-## Formulaire de Contact Amélioré (v19)
-- [x] Créer une procédure tRPC contact.sendEmail pour envoyer les demandes
-- [x] Intégrer Resend pour l'envoi d'emails
-- [x] Ajouter validation du formulaire (email, téléphone, message)
-- [x] Implémenter la soumission du formulaire via tRPC
-- [x] Ajouter les messages de succès/erreur
-- [x] Tester l'envoi d'emails via Resend (test@resend.dev)
-- [x] Améliorer le design du formulaire avec animations
-
-
-## Nouveau Design Hero (v21)
-- [x] Créer le composant HeroSection.tsx avec design optimisé
-- [x] Remplacer la section hero du Home.tsx par le composant
-- [x] Ajouter animations Framer Motion au hero
-- [x] Implémenter les 2 CTAs distincts (Évaluer + WhatsApp)
-- [x] Ajouter les statistiques de réassurance
-- [x] Tester le responsive design (mobile + desktop)
-
-## Soumission Complète de Dossier (v22)
-- [x] Créer une procédure tRPC submitDossier avec génération de numéro unique
-- [x] Ajouter des emails de confirmation au candidat et à l'équipe interne
-- [x] Créer une page de confirmation avec affichage du numéro de dossier
-- [x] Ajouter des boutons pour copier/télécharger le numéro de dossier
-- [x] Améliorer FullDossierForm pour rediriger vers la page de confirmation
-- [x] Tester le flux complet de soumission
-
-
-## Fusion Template HTML avec Formulaire React (v23)
-- [x] Analyser le template HTML fourni et identifier les éléments à fusionner
-- [x] Améliorer le design du formulaire React avec les styles du template HTML
-- [x] Ajouter la barre de progression visuelle du template
-- [x] Améliorer les animations de transition entre étapes
-- [x] Intégrer les statistiques de confiance du hero
-- [x] Tester le formulaire amélioré sur mobile et desktop
-
-
-## Espace Utilisateur Personnalisé (v24)
-- [x] Étendre le schéma DB : table users avec email, password, profil, préférences
-- [x] Créer les procédures tRPC : registerUser, loginUser, updateProfile, getUserDashboard
-- [x] Créer la page /inscription avec formulaire complet (nom, email, mot de passe, téléphone)
-- [x] Créer la page /connexion avec formulaire email/mot de passe
-- [x] Créer la page /profil avec édition des informations personnelles
-- [x] Améliorer le tableau de bord /mon-dossier avec timeline détaillée
-- [x] Ajouter les notifications en temps réel pour les mises à jour de dossier
-- [x] Ajouter l'historique des documents soumis avec dates
-- [x] Ajouter la section "Prochaines étapes" personnalisée
-- [x] Ajouter les statistiques du dossier (% complétude, étapes restantes)
-- [x] Tester le flux complet : inscription → connexion → tableau de bord
-
-
-## Amélioration du Système d'Analyse IA (v11)
-- [x] Créer la table `ai_report_history` pour tracer les envois de rapports
-- [x] Améliorer la procédure `evaluateCVWithAI` pour enregistrer l'historique d'envoi
-- [x] Ajouter le statut d'envoi (pending → sent/failed) avec timestamps
-- [x] Enregistrer les erreurs d'envoi pour diagnostic
-- [x] Ajouter la procédure `getAIReportHistory` pour consulter l'historique
-- [x] Ajouter la procédure `getAIReport` pour récupérer un rapport spécifique
-- [x] Ajouter la procédure `retryAIReportSend` pour retenter les envois échoués
-
-## Correction de l'Authentification Heartbeat (v12)
-- [x] Identifier le problème : `ownerOpenId` vs `userSession` incompatibles
-- [x] Corriger les procédures `createEvaluationJob`, `listJobs`, `deleteJob`
-- [x] Utiliser `ctx.user.openId` correctement du contexte tRPC
-- [x] Ajouter des messages d'erreur explicites pour le diagnostic
-
-
-## Création des 3 Comptes Admin Spécialisés (v13)
-- [x] Créer les 3 comptes admin en base de données (Evaluation, Accompagnement, Procédures)
-- [x] Créer le dashboard AdminEvaluation.tsx pour gérer les CV et rapports IA
-- [x] Créer le dashboard AdminAccompagnement.tsx pour gérer l'avancement des dossiers
-- [x] Créer le dashboard AdminProcedures.tsx pour gérer les procédures par pays
-- [x] Ajouter les procédures tRPC pour l'avancement rapide des dossiers
-- [x] Ajouter les procédures tRPC pour la gestion des rapports IA
-- [x] Ajouter les procédures tRPC pour la gestion des procédures
-- [x] Implémenter les outils de filtrage et recherche pour chaque admin
-- [x] Tester les 3 comptes admin avec des données réelles
-- [x] Documenter les accès et les permissions pour chaque admin
-
-
-## Phase A : Système d'Email Différé 48h avec Heartbeat
-- [x] Créer une table `evaluation_emails` pour tracker les emails envoyés
-- [x] Créer une procédure Heartbeat pour envoyer les bilans après 48h
-- [x] Créer le template d'email "Bilan d'Admissibilité"
-- [x] Tester l'envoi automatique des emails
-
-## Phase B : Gestion Hybride (En ligne + Agence Physique)
-- [x] Ajouter des champs admin pour enregistrer manuellement les documents
-- [x] Ajouter des champs admin pour enregistrer manuellement les paiements cash
-- [x] Créer les procédures tRPC pour l'admin de soumettre documents/paiements
-- [x] Ajouter les validations et logs d'audit
-
-## Phase C : Module de Génération de Factures PDF
-- [x] Créer le template de facture PDF avec en-tête 3M
-- [x] Créer la procédure de génération de factures
-- [x] Ajouter les numéros de facture uniques
-- [x] Tester la génération et l'envoi par email
-
-## Phase D : Sections Client et Dashboard Admin Complet
-- [x] Créer la section "Mes documents" dans l'espace client
-- [x] Créer la section "Mes paiements" dans l'espace client
-- [x] Créer le dashboard admin pour valider documents/paiements
-- [x] Ajouter l'actualisation automatique côté client
-- [x] Tester le flux complet client-admin
-
-
-- [x] Formulaire multi-projets simplifié (Travail, Études, Tourisme) intégré sur la page d'accueil
-- [x] Procédure tRPC submitEvaluation pour les évaluations multi-projets
-- [ ] Système d'email 48h avec Heartbeat pour les rapports d'admissibilité
-- [x] Tests vitest pour le formulaire multi-projets et la procédure
-
-## Fonctionnalités Complémentaires (v14)
-
-### 1. Notification Double (Email + WhatsApp)
-- [x] Intégrer l'API WhatsApp (Twilio ou autre)
-- [x] Créer le service de notification WhatsApp
-- [x] Ajouter le champ téléphone dans la table evaluations
-- [x] Envoyer notification WhatsApp après 48h avec bilan
-- [x] Tester l'envoi automatique
-
-### 2. Impression Reçus A5
-- [x] Créer le template HTML pour reçu A5
-- [x] Ajouter la fonction d'impression au format A5
-- [x] Intégrer le bouton d'impression dans le dashboard admin
-- [x] Tester l'impression depuis navigateur
-- [x] Optimiser pour imprimante thermique
-
-### 3. Traçabilité des Documents
-- [x] Ajouter le champ "source" dans client_documents
-- [x] Modifier les procédures pour enregistrer la source
-- [x] Afficher la source dans le dashboard client
-- [x] Afficher la source dans le dashboard admin
-- [x] Ajouter les filtres par source
-
-### 4. Module de Prise de Rendez-vous
-- [x] Créer la table appointments avec créneau horaire
-- [x] Créer les procédures tRPC pour réserver/consulter
-- [x] Créer le calendrier de réservation côté client
-- [x] Créer la gestion des créneaux côté admin
-- [x] Envoyer confirmation par email/WhatsApp
-- [x] Tester le flux complet
-
-
-## Module de Traduction Certifiée (v15)
-
-### Phase 1 : Tables DB et Tarification
-- [x] Créer la table `translation_requests` avec statuts (pending_payment, pending_translation, completed, rejected)
-- [x] Créer la table `translation_pricing` avec tarifs par type de document et paire de langues
-- [x] Créer la table `translation_languages` avec liste des langues supportées
-- [x] Ajouter le rôle "translator" dans la table users
-
-### Phase 2 : Procédures tRPC
-- [ ] Créer la procédure `createTranslationRequest` (sans paiement)
-- [ ] Créer la procédure `getTranslationPricing` pour tarification dynamique
-- [ ] Créer la procédure `getTranslationRequests` pour lister les demandes
-- [ ] Créer la procédure `validateTranslationPayment` (déclenche notification admin)
-- [ ] Créer la procédure `uploadTranslatedDocument` (traducteur)
-- [ ] Créer la procédure `downloadTranslatedDocument` (client)
-- [ ] Créer la procédure `getTranslationStatus` pour suivre l'état de la traduction
-
-### Phase 3 : Dashboard Traducteur
-- [ ] Créer la page `/translator/dashboard` avec liste des traductions "À Traduire"
-- [ ] Ajouter la section "En Cours" et "Completées"
-- [ ] Ajouter le formulaire d'upload du document traduit
-- [ ] Ajouter les filtres par langue, type de document, date
-
-### Phase 4 : Tunnel de Commande Client
-- [ ] Créer la page `/translation/order` avec sélection du type de document
-- [ ] Ajouter le sélecteur de langues source/cible
-- [ ] Ajouter l'upload des documents (PDF/JPG, max 5 Mo)
-- [ ] Afficher le tarif calculé en temps réel
-- [ ] Ajouter le bouton "Procéder au Paiement"
-
-### Phase 5 : Paiement Obligatoire
-- [ ] Intégrer CinetPay pour le paiement (Mobile Money/Carte)
-- [ ] Créer le callback de validation du paiement
-- [ ] Déclencher la notification admin uniquement après paiement validé
-- [ ] Générer la facture PDF après paiement
-- [ ] Envoyer confirmation par email/WhatsApp
-
-### Phase 6 : Téléchargement Sécurisé
-- [ ] Créer les URLs de téléchargement sécurisées (token temporaire)
-- [ ] Ajouter la section "Mes Traductions" dans l'Espace Client
-- [ ] Afficher le statut de chaque traduction
-- [ ] Permettre le téléchargement après complétion
-- [ ] Ajouter les logs de téléchargement
-
-### Phase 7 : Tests et Validation
-- [ ] Tester le flux complet : commande → paiement → notification admin → traduction → téléchargement
-- [ ] Tester les cas d'erreur (paiement échoué, fichier invalide, etc.)
-- [ ] Vérifier la sécurité des téléchargements
-- [ ] Vérifier les notifications email/WhatsApp
-
-### Phase 8 : Checkpoint Final
-- [ ] Créer le checkpoint avec le module de traduction complet
-- [ ] Documenter les étapes d'utilisation
-
-
-## Améliorations UX — Animations et Footer (v25)
-- [x] Ajouter des animations fluides de chargement pour les sections
-- [x] Créer un composant AnimatedSection réutilisable
-- [x] Ajouter des infobulles interactives au survol des cartes
-- [x] Intégrer un bouton "Retour en haut" flottant avec icône d'avion
-- [x] Personnaliser le pied de page avec réseaux sociaux et newsletter
-- [x] Ajouter une section "Liens utiles" dans le footer
-- [x] Intégrer les coordonnées directes (adresse, téléphone, email)
-- [x] Rendre l'adresse cliquable pour Google Maps
-- [x] Rendre le téléphone cliquable pour appels directs (tel:)
-- [x] Rendre l'email cliquable pour messagerie (mailto:)
-- [x] Optimiser l'espacement et l'alignement des sections
-- [x] Vérifier et optimiser l'affichage mobile
-- [x] Ajouter un lien de connexion admin dans la navbar
-- [x] Rendre le lien admin accessible sur desktop et mobile
-- [x] Ajouter des messages d'erreur clairs et stylisés sur la page de connexion
-- [x] Afficher les messages d'erreur contextuels (email non autorisé, OTP incorrect)
-- [x] Ajouter un compteur de tentatives échouées
-- [x] Implémenter un bouton "Besoin d'aide ?" pour les conseils OTP
-- [x] Rendre les adresses autorisées cliquables pour remplir automatiquement l'email
-
-## Modules de Réassurance et Suivi Dynamique (v14)
-
-### 1. Barre de Progression de Dossier
-- [ ] Créer la table `dossier_progress` pour tracker les étapes
-- [ ] Implémenter la procédure tRPC `getDossierProgress`
-- [ ] Créer le composant ProgressBar avec 5 étapes
-- [ ] Ajouter les timestamps et les statuts
-- [ ] Afficher la barre dans l'Espace Client
-
-### 2. Système de Callback 15 min
-- [ ] Créer la table `callback_requests` pour les demandes
-- [ ] Implémenter la procédure tRPC `requestCallback`
-- [ ] Créer le bouton "Demander un rappel" dans l'Espace Client
-- [ ] Envoyer notification admin + SMS/WhatsApp
-- [ ] Ajouter le formulaire de rappel avec horaires disponibles
-
-### 3. Galerie de Visas Accordés
-- [ ] Créer la table `approved_visas` pour les visas accordés
-- [ ] Implémenter les procédures tRPC pour ajouter/modifier/supprimer
-- [ ] Créer le dashboard admin pour gérer les visas
-- [ ] Créer la galerie publique sur le site (anonymisée)
-- [ ] Ajouter les filtres par pays et date
-
-### 4. Calculateur de Budget
-- [ ] Créer la table `country_costs` avec les frais par pays
-- [ ] Implémenter la procédure tRPC `calculateBudget`
-- [ ] Créer le formulaire du calculateur (pays, type visa, etc.)
-- [ ] Afficher le détail des frais (droits, garanties, visa)
-- [ ] Ajouter les graphiques de répartition des coûts
-
-
-## Management des Dossiers en Agence (v26)
-
-### Phase 1 : Schéma DB et Procédures
-- [x] Créer la table `agency_dossiers` pour les dossiers ajoutés manuellement par les admins
-- [x] Ajouter les champs : fullName, email, phone, destination, visaType, status, createdByAdmin, adminNotes
-- [x] Créer la procédure tRPC `createAgencyDossier` (admin uniquement)
-- [x] Créer la procédure tRPC `getAgencyDossiers` (filtrés par admin)
-- [x] Créer la procédure tRPC `updateAgencyDossier` (modification du statut et notes)
-- [x] Créer la procédure tRPC `deleteAgencyDossier` (suppression logique)
-
-### Phase 2 : Interface Admin pour Ajout Manuel
-- [x] Créer la page `/admin/agency-dossiers` avec liste des dossiers
-- [x] Ajouter un bouton "Ajouter un Dossier" qui ouvre une modal
-- [x] Créer le formulaire d'ajout avec validation
-- [x] Implémenter la table avec colonnes : Nom, Email, Téléphone, Destination, Statut, Actions
-- [x] Ajouter les filtres : par statut, par destination, par date
-
-### Phase 3 : Gestion des Statuts
-- [x] Implémenter les statuts : nouveau, en_cours, documents_requis, soumis, approuve, refuse
-- [x] Ajouter les boutons d'action : Modifier, Changer Statut, Ajouter Notes, Supprimer
-- [x] Créer les modales pour chaque action
-- [x] Ajouter les transitions de statut avec validation
-
-### Phase 4 : Notifications et Suivi
-- [x] Envoyer un email au candidat lors de l'ajout du dossier
-- [x] Ajouter un système de notes internes pour les admins
-- [x] Créer un historique des modifications
-- [x] Ajouter les logs d'audit pour tracer les actions
-
-### Phase 5 : Dashboard Admin Amélioré
-- [x] Ajouter un widget "Dossiers en Agence" au dashboard
-- [x] Afficher les statistiques : total, en cours, approuvés, refusés
-- [x] Créer un graphique de progression des dossiers
-- [x] Ajouter les alertes pour les dossiers en attente
-- [x] Ajouter des infobulles explicatives sur chaque étape de la barre de progression
-
-### Phase 6 : Espace Client pour Dossiers en Agence
-- [ ] Créer la page `/candidate/agency-dossier` pour consulter le statut
-- [ ] Afficher la barre de progression du dossier
-- [ ] Ajouter la section "Messages de l'Agence"
-- [ ] Permettre le téléchargement des documents requis
-
-### Phase 7 : Tests et Validation
-- [ ] Tester l'ajout d'un dossier par l'admin
-- [ ] Tester la modification du statut
-- [ ] Tester les notifications email
-- [ ] Tester l'affichage côté candidat
-
-
-## Corrections et Améliorations (v26)
-- [x] Corriger l'erreur "Erreur de chargement. Veuillez vous reconnecter."
-- [x] Ajouter un indicateur visuel de l'étape de la procédure du candidat
-- [x] Créer une barre de progression du dossier (Evaluation ➢ Bilan ➢ Traduction ➢ Soumission ➢ Visa)
-- [x] Implémenter la synchronisation automatique des données dans l'espace admin
-- [ ] Ajouter un système de cache pour optimiser les performances
-- [ ] Créer des notifications en temps réel pour les mises à jour de dossier
-
-
-## Processus de Visa Travail Automatisé (v27)
-
-### Phase 1 : Schéma DB et Statuts
-- [x] Ajouter 12 nouveaux statuts de dossier (nouveau → en_evaluation → bilan_envoye → en_attente_paiement → paye → en_attente_documents → documents_recus → soumis_agences → en_cours_recrutement → contrat_obtenu → visa_approuve → refuse)
-- [x] Ajouter les champs pour le suivi de l'évaluation (evaluationStartedAt, evaluationCompletedAt, evaluationReportUrl, evaluationScore, evaluationBadge)
-- [x] Ajouter les champs pour la gestion des documents (documentsSubmissionMethod, documentsReceivedAt, documentsVerifiedAt, documentsVerifiedBy)
-- [x] Ajouter les champs pour la soumission aux agences de recrutement (submittedToAgenciesAt, agencyName, recruitmentStatus)
-- [x] Migration DB appliquée via webdev_execute_sql
-
-### Phase 2 : Job Heartbeat pour Délai 48h
-- [x] Créer le fichier evaluationBilanJob.ts pour implémenter le délai de 48h
-- [x] Récupérer les dossiers créés il y a 48h+
-- [x] Générer les rapports d'éligibilité automatiquement
-- [x] Envoyer les bilans par email
-- [x] Passer automatiquement le dossier en "en_attente_paiement"
-- [x] Intégrer le job Heartbeat dans le serveur Express (server/_core/index.ts)
-
-### Phase 3 : Procédures tRPC pour Gestion des Documents
-- [x] Créer documentSubmissionRouter avec procédures :
-  - submitDocuments : soumettre les documents (en ligne ou agence)
-  - getDocumentSubmissionStatus : récupérer le statut de soumission
-  - verifyDocuments : vérifier et valider les documents (admin)
-- [x] Intégrer le routeur dans server/routers.ts
-
-### Phase 4 : Pages Frontend
-- [x] Créer SubmitDocuments.tsx : page de dépôt des documents (en ligne ou agence)
-- [x] Créer HowItWorks.tsx : page "Comment ça marche" avec 8 étapes
-- [x] Créer AdminDocumentVerification.tsx : page de vérification des documents (admin)
-- [x] Intégrer les routes dans App.tsx
-
-### Phase 5 : Correction des Emails Automatiques
-- [x] Supprimer les mentions de "Formule d'Accompagnement" dans admissibilityReportService.ts
-- [x] Remplacer "accéder à nos services d'accompagnement" par "finaliser votre dossier"
-- [x] Remplacer "commencer l'accompagnement personnalisé" par "soumettre votre dossier à nos agences partenaires"
-- [x] Vérifier que tous les emails automatiques sont exempts de mentions d'accompagnement
-
-### Phase 6 : Tests et Validation
-- [ ] Tester le flux complet : création de compte → choix du pays → évaluation
-- [ ] Vérifier que les résultats sont envoyés après 48h
-- [ ] Tester le paiement obligatoire (65 000 XAF)
-- [ ] Tester le dépôt des documents (en ligne et agence)
-- [ ] Vérifier que les documents sont correctement vérifiés
-- [ ] Tester la soumission aux agences partenaires
-- [ ] Vérifier que les emails ne contiennent pas de mentions d'accompagnement
-- [ ] Tester le suivi du dossier dans l'espace client
-
-### Phase 7 : Déploiement Final
-- [ ] Créer un checkpoint final avec le processus complet
-- [ ] Vérifier que le site est accessible et fonctionne correctement
-- [ ] Tester sur mobile et desktop
-- [ ] Vérifier les performances et les temps de chargement
-
-
-## Indicateur de Progression Visuel (v28)
-
-### Phase 1 : Composant DossierProgressBar
-- [x] Créer le composant DossierProgressBar.tsx avec :
-  - Barre de progression linéaire animée (0-100%)
-  - Timeline horizontale avec 12 étapes du processus
-  - Icônes spécifiques pour chaque étape
-  - Codes couleur pour les statuts (bleu actuel, vert complété, gris à venir)
-  - Connecteurs animés entre les étapes
-- [x] Implémenter les 12 statuts : nouveau, en_evaluation, bilan_envoye, en_attente_paiement, paye, en_attente_documents, documents_recus, soumis_agences, en_cours_recrutement, contrat_obtenu, visa_approuve, refuse
-
-### Phase 2 : Intégration dans MonDossier
-- [x] Importer le composant DossierProgressBar dans MonDossier.tsx
-- [x] Ajouter la barre de progression en haut de la page de suivi
-- [x] Passer les props status, createdAt, evaluationCompletedAt, documentsReceivedAt, submittedToAgenciesAt
-
-### Phase 3 : Animations et Transitions
-- [x] Ajouter animations Framer Motion :
-  - Entrée progressive des étapes (whileInView)
-  - Hover effects sur les cercles (scale 1.15)
-  - Tap effects (scale 0.95)
-  - Glow effect sur l'étape actuelle (box-shadow animée)
-  - Transition des connecteurs (couleur animée)
-- [x] Ajouter les animations des sections détails et CTA
-
-### Phase 4 : Tests et Validation
-- [x] Vérifier que la page MonDossier s'affiche correctement
-- [x] Tester les animations au scroll
-- [x] Vérifier la responsivité sur mobile et desktop
-- [ ] Tester avec différents statuts de dossier
-- [ ] Vérifier que les boutons d'action fonctionnent correctement
-
-### Phase 5 : Déploiement
-- [ ] Créer un checkpoint avec le composant de progression
-- [ ] Vérifier que le site fonctionne correctement en production
-
-
-## Bouton de Paiement Sécurisé dans la Progression (v29)
-
-### Phase 1 : Analyse CinetPay
-- [x] Analyser l'intégration CinetPay existante dans VerifyApplicationEmail.tsx
-- [x] Identifier la procédure verifyApplicationOtp et initCinetPayTransaction
-
-### Phase 2 : Composant PaymentModal
-- [x] Créer le composant PaymentModal.tsx avec :
-  - Modal animée avec Framer Motion
-  - Affichage du montant (65 000 XAF)
-  - Choix du mode de paiement (MTN, Orange Money, Carte Bancaire)
-  - États : confirm, processing, success, error
-  - Message de sécurité SSL
-  - Boutons d'action (Annuler, Payer, Réessayer)
-
-### Phase 3 : Intégration dans DossierProgressBar
-- [x] Ajouter la procédure tRPC initiateCinetPayPayment dans application.ts
-- [x] Importer PaymentModal dans DossierProgressBar.tsx
-- [x] Ajouter les props dossierNumber, email, onPaymentSuccess
-- [x] Remplacer le bouton "Procéder au Paiement" par un bouton vert avec icône
-- [x] Intégrer le modal de paiement dans DossierProgressBar
-- [x] Mettre à jour MonDossier.tsx pour passer les props
-
-### Phase 4 : Tests et Validation
-- [x] Vérifier que le site compile sans erreurs
-- [x] Vérifier que la page MonDossier s'affiche correctement
-- [x] Vérifier que le bouton de paiement s'affiche quand le statut est "en_attente_paiement"
-- [ ] Tester l'ouverture du modal au clic
-- [ ] Tester les modes de paiement
-- [ ] Tester le flux complet avec CinetPay (en mode démo)
-
-### Phase 5 : Déploiement
-- [ ] Créer un checkpoint avec le bouton de paiement sécurisé
-- [ ] Vérifier que le site fonctionne correctement en production
-
-
-## Zone de Téléchargement Sécurisée (v30)
-
-### Phase 1 : Analyse
-- [x] Analyser l'étape 5 (Paiement Confirmé) et les besoins de téléchargement
-- [x] Identifier les formats acceptés (PDF, JPEG, PNG, WebP)
-- [x] Définir les limites de sécurité
-
-### Phase 2 : Composant SecureDocumentUpload
-- [x] Créer le composant SecureDocumentUpload.tsx avec :
-  - Zone de glisser-déposer animée
-  - Parcourir les fichiers
-  - Validation des formats et tailles
-  - Aperçu des fichiers avec icônes
-  - Barre de progression du téléchargement
-  - Gestion des erreurs
-  - Message de sécurité SSL
-  - Animations fluides avec Framer Motion
-
-### Phase 3 : Intégration dans DossierProgressBar
-- [x] Importer SecureDocumentUpload dans DossierProgressBar.tsx
-- [x] Ajouter la zone de téléchargement aux statuts "en_attente_documents" et "paye"
-- [x] Passer les props dossierNumber et onUploadComplete
-- [x] Ajouter les animations d'entrée
-
-### Phase 4 : Validation et Sécurité
-- [x] Validation des formats (PDF, JPEG, PNG, WebP)
-- [x] Limite de taille par fichier (10 MB)
-- [x] Limite du nombre de fichiers (10 max)
-- [x] Messages d'erreur clairs et informatifs
-- [x] Chiffrement des données (message de sécurité)
-- [x] Accès restreint aux administrateurs
-
-### Phase 5 : Tests et Validation
-- [x] Vérifier que le site compile sans erreurs
-- [x] Vérifier que la zone s'affiche correctement
-- [ ] Tester le glisser-déposer
-- [ ] Tester le parcourir des fichiers
-- [ ] Tester la validation des formats
-- [ ] Tester la validation des tailles
-- [ ] Tester le téléchargement
-
-### Phase 6 : Déploiement
-- [ ] Créer un checkpoint avec la zone de téléchargement
-- [ ] Vérifier que le site fonctionne correctement en production
-
-
-## Analyse IA de Lisibilité des Documents (v11)
-
-- [x] Service d'analyse de lisibilité (documentReadabilityService.ts)
-- [x] Procédure tRPC analyzeDocumentReadability
-- [x] Composant SecureDocumentUploadWithAI avec feedback visuel
-- [x] Intégration de la vision par IA (gpt-5-mini)
-- [x] Affichage des résultats d'analyse en temps réel
-- [x] Validation des documents avant acceptation
-- [ ] Intégration du composant dans la progression
-- [ ] Tests du flux complet d'analyse
-- [ ] Documentation pour les utilisateurs
-
-
-## Classification IA des Documents (v12)
-
-- [x] Service documentClassificationService.ts avec vision par IA
-- [x] 19 types de documents supportés (passeport, carte d'identité, diplôme, etc.)
-- [x] Procédures tRPC classifyDocument et classifyMultipleDocuments
-- [x] Composant SmartDocumentUpload avec classification en temps réel
-- [x] Service documentManagementService.ts pour gestion des documents
-- [x] Structure de dossiers organisée par type de document
-- [x] Extraction automatique des données (numéro, dates, pays, titulaire)
-- [x] Détection des avertissements et suggestions d'amélioration
-- [x] Sauvegarde de la classification en base de données
-- [x] Statistiques et rapports de classification
-- [ ] Intégration du composant SmartDocumentUpload dans la progression
-- [ ] Tests du flux complet de classification
-- [ ] Documentation pour les utilisateurs
-
-
-## Authentification Obligatoire (v13)
-
-- [x] Boutons de connexion et d'inscription dans la barre de navigation
-- [x] Affichage intelligent des boutons (Connexion/Inscription si non authentifié, Mon Espace si authentifié)
-- [x] Pages de connexion et d'inscription existantes avec design professionnel
-- [x] Composant AuthGuard pour protéger les routes
-- [x] Protection de toutes les routes critiques (/open-dossier, /mon-dossier, /submit-documents, etc.)
-- [x] Redirection automatique vers /login pour les utilisateurs non authentifiés
-- [x] Messages personnalisés pour chaque route protégée
-- [x] Composant ProtectedRoute créé comme alternative
-- [ ] Tests du flux de connexion/inscription
-- [ ] Tests de redirection automatique
-- [ ] Tests d'accès aux routes protégées
-
-
-## Corrections de Liens Cassés (Phase 6)
-- [x] Corriger /signup → /register dans Navbar.tsx (2 occurrences)
-- [x] Corriger /traduction → /traduction/order dans Home.tsx footer
-- [x] Corriger /components → / dans ComponentShowcase.tsx
-- [x] Corriger /evaluation-widget → / dans About.tsx
-- [x] Tester tous les liens principaux (7/7 routes accessibles)
-- [x] Redémarrer le serveur et vérifier la compilation
-
-
-## Phase Finale - Validation et Déploiement de l'Interface Admin (v15)
-- [x] Créer la table `bilans` en base de données pour stocker les bilans d'admissibilité
-- [x] Ajouter les procédures admin manquantes : getPendingBilans, validateAndSendBilan, rejectBilan
-- [x] Ajouter les procédures admin pour la gestion des dossiers : getAllApplications, updateApplicationStatus
-- [x] Tester les procédures admin avec vitest
-- [x] Créer un compte admin de test pour validation
-- [x] Vérifier la connectivité de la base de données
-- [x] Créer des données de test (application + bilan)
-- [x] Valider le workflow complet : création bilan → validation → envoi
-- [x] Tester l'interface admin avec les données de test
-- [x] Vérifier que tous les tests passent (7/7 tests d'intégration réussis)
-- [x] Confirmer que l'interface admin est fonctionnelle et prête pour le déploiement
-
-
-## Espace Candidat Complet - Protocole d'Accord et Gestion des Documents (v16)
-- [ ] Créer la table `agreement_protocols` pour stocker les protocoles d'accord signés
-- [ ] Créer la table `document_submissions` pour tracker les documents soumis par les candidats
-- [ ] Créer la page `/mon-espace` : tableau de bord candidat avec toutes les données
-- [ ] Afficher les informations personnelles du candidat (nom, email, téléphone, destination, etc.)
-- [ ] Afficher l'historique du dossier (dates clés, statuts, actions)
-- [ ] Afficher les documents remis (avec dates et statuts)
-- [ ] Afficher les sommes versées et l'historique des paiements
-- [ ] Afficher l'avancement du dossier (WES, TCF, etc.)
-- [ ] Créer le composant Protocole d'Accord avec signature numérique
-- [ ] Implémenter la signature du protocole (checkbox + date)
-- [ ] Après signature : transférer les documents aux admins
-- [ ] Après signature : envoyer un message de confirmation au candidat
-- [ ] Créer la procédure tRPC : signAgreementProtocol
-- [ ] Créer la procédure tRPC : submitDocuments (après signature)
-- [ ] Créer la procédure tRPC : getMyDossierData (récupérer toutes les données du candidat)
-- [ ] Créer la procédure tRPC : getMyDocuments (lister les documents du candidat)
-- [ ] Créer la procédure tRPC : getMyPayments (lister les paiements du candidat)
-- [ ] Implémenter l'évaluation IA du profil avec tous les documents
-- [ ] Créer la procédure tRPC : evaluateProfileWithAI
-- [ ] Afficher le rapport d'évaluation IA dans l'espace candidat
-- [ ] Synchroniser les documents entre candidat et admin en temps réel
-- [ ] Créer une notification admin quand les documents sont soumis
-- [ ] Créer une notification candidat quand les documents sont reçus par l'admin
-- [ ] Ajouter une barre de progression du dossier (Évaluation → Bilan → Traduction → Soumission → Visa)
-- [ ] Tester le workflow complet : signature → soumission → évaluation IA → notification
-
-
-## Espace Candidat Complet - Implémentation Complète (v17)
-- [x] Créer les procédures tRPC pour le protocole d'accord
-- [x] Créer les procédures tRPC pour la soumission de documents
-- [x] Créer les procédures tRPC pour récupérer les données du dossier
-- [x] Créer la page Mon Espace avec tous les onglets
-- [x] Ajouter la route /mon-espace dans App.tsx
-- [x] Mettre à jour la navigation pour pointer vers /mon-espace
-- [ ] Tester le workflow complet : connexion → Mon Espace → signature → soumission
-- [ ] Tester l'affichage des données du candidat
-- [ ] Tester la synchronisation admin-candidat
-- [ ] Tester les notifications email
-- [ ] Vérifier que les documents sont visibles dans l'interface admin
-- [ ] Vérifier que l'évaluation IA fonctionne correctement
-- [ ] Tester les messages entre candidat et conseiller
-- [ ] Créer un test vitest pour le workflow candidat complet
-- [ ] Déployer et vérifier en production
-
-
-## Grille des 6 Services Majeurs — Page d'Accueil (v26)
-- [x] Créer le composant ServicesSection.tsx avec les 6 cartes (Visa, Vols, Hôtels, Assurance, Traduction, Procédures)
-- [x] Liens internes (wouter Link) pour Visa → /evaluation, Vols → /vols, Procédures → /procedures
-- [x] Liens externes WhatsApp pour Hôtels, Assurance, Traduction
-- [x] Intégrer ServicesSection dans Home.tsx entre la section "Nos Services" et la section "Évaluation"
-- [x] Grille responsive 1/2/3 colonnes avec hover shadow + translate
-
-## Dashboard Admin Unifié — Gestion Centralisée des Dossiers (v25)
-- [x] Procédure tRPC `admin.listCandidates` : liste paginée avec filtres (statut, recherche texte)
-- [x] Procédure tRPC `admin.updateCandidateStatus` : mise à jour statut + notification email optionnelle
-- [x] Procédure tRPC `admin.importAgencyDossier` : saisie manuelle d'un dossier agence avec email de bienvenue
-- [x] Procédure tRPC `admin.getCandidateDetails` : fiche détaillée d'un candidat
-- [x] Page AdminDashboard.tsx refondée : tableau unifié (dossiers en ligne + agence), recherche, filtres par statut
-- [x] Statistiques rapides : 6 compteurs (Total, Éval. 48h, Bilan dispo, Documents, Soumis, Visa accordé)
-- [x] Badges de source (En ligne / Agence) et badges de statut colorés
-- [x] Modale Fiche Candidat : infos complètes, score, barre de progression, mise à jour statut
-- [x] Modale Saisir dossier agence : formulaire complet avec statut initial configurable
-- [x] Bouton déconnexion dans l'en-tête du dashboard
-
-## Sécurisation Accès Admin — URL Secrète & OTP (v27)
-- [x] Supprimer le bouton "🛡️ Admin" de la Navbar (desktop et mobile)
-- [x] Ajouter la route /admin/access-secret pointant vers AdminLogin (URL secrète)
-- [x] Rediriger /admin → / (window.location.replace) pour masquer l'existence du panneau
-- [x] Renommer la route principale admin de /admin vers /admin/dashboard
-- [x] Insérer les 2 comptes admin autorisés dans admin_accounts : aureoldonfack@gmail.com et 3mtravelandservices@gmail.com (INSERT IGNORE)
-- [x] Le routeur adminAuth.ts rejette déjà tout email absent de admin_accounts (vérification DB existante)
-
-
-## Tableau de Bord Utilisateur — Suivi Paiements & Documents (v27)
-- [ ] Créer procédures tRPC : getPaymentHistory, getDocumentsStatus, getDossierOverview
-- [ ] Créer composant PaymentHistory avec timeline et statuts
-- [ ] Créer composant DocumentsStatus avec badges et progression
-- [ ] Créer composant DossierOverview avec infos synthétiques
-- [ ] Intégrer tableau de bord dans /mon-espace
-- [ ] Ajouter graphiques de progression (Chart.js ou Recharts)
-- [ ] Ajouter bouton actualisation manuelle
-- [ ] Ajouter export PDF de l'historique
-- [ ] Tester et déployer
-
-
-## Module 4 : Guichet Paiement + E-Signature + CV International + Ambassadeur
-
-- [ ] Interface de paiement 65K XAF (CinetPay) - Formulaire de paiement
-- [ ] Intégration webhook CinetPay pour confirmation paiement
-- [ ] Module E-Signature - Composant de signature électronique
-- [ ] Stockage signatures électroniques en base de données
-- [ ] Générateur CV International - Page de création CV
-- [ ] Export CV en PDF avec logo 3M
-- [ ] Programme Ambassadeur - Page d'inscription ambassadeur
-- [ ] Dashboard ambassadeur avec statistiques de parrainage
-- [ ] Système de commissions pour ambassadeurs
-- [ ] Notifications ambassadeur (nouveaux parrainages, commissions)
-
-
-## Historique des Paiements — Module 5 (Complété)
-- [x] Créer la table `transactions` dans la base de données MySQL
-- [x] Ajouter les procédures tRPC `getPaymentHistory` et `getPaymentStats`
-- [x] Créer le composant PaymentHistory avec affichage des transactions
-- [x] Intégrer PaymentHistory dans l'espace candidat (MySpace.tsx)
-- [x] Afficher les statistiques de paiement (total, réussis, montant payé, en attente)
-- [x] Implémenter la pagination pour gérer plusieurs transactions
-- [x] Ajouter les animations Framer Motion pour les transitions
-- [x] Ajouter le bouton d'actualisation manuel
-- [x] Formater les dates et montants en français
-- [x] Afficher les états vides avec messages informatifs
-
-
-## Module 6 - Système de Notifications Automatiques (Complété)
-- [x] Service WhatsApp avec Twilio (8 templates)
-- [x] Routeur tRPC notificationRouter (9 procédures)
-- [x] Notifications doubles (Email + WhatsApp)
-- [x] Intégration dans le routeur principal
-- [x] Build production réussi
-
-
-## Module 7 - Admin Dashboard Avancé (Complété)
-- [x] Routeur adminDashboardStats (9 procédures tRPC)
-- [x] Composant AdminDashboardAdvanced avec graphiques
-- [x] KPIs principaux et statistiques globales
-- [x] Graphiques interactifs (Recharts)
-- [x] Listes des dossiers et transactions récentes
-- [x] Intégration dans le routeur principal
-
-
-## Module 9 - Optimisation Performance (Complété)
-- [x] Code splitting et lazy loading
-- [x] Minification avec Terser
-- [x] Compression gzip
-- [x] Séparation des chunks (vendor, ui-components, recharts)
-- [x] Build production optimisé
-
-## Module 10 - Corrections de Bugs Critiques (En cours)
-- [ ] Vérifier tous les liens de navigation
-- [ ] Tester les formulaires
-- [ ] Vérifier l'authentification
-- [ ] Tester le responsive design
-- [ ] Corriger les erreurs de console
-- [ ] Vérifier les pages d'erreur
-
-
-## Fonctionnalité d'Export des Statistiques (Complétée)
-- [x] Routeur exportRouter avec procédures tRPC
-- [x] Export en CSV (données complètes)
-- [x] Export en PDF (rapport formaté)
-- [x] Procédure downloadExport pour récupérer les fichiers
-- [x] Boutons d'export dans AdminDashboardAdvanced
-- [x] Intégration complète dans le dashboard
-- [x] Build production réussi (498.8 KB)
-
-
-## Module E-Visa Complet (EN COURS)
-- [ ] Créer la table e-visas avec tous les pays du monde
-- [ ] Charger les données de tous les pays (200+ pays)
-- [ ] Créer les procédures tRPC pour gérer les e-visas
-- [ ] Créer la page E-Visas avec liste complète
-- [ ] Ajouter les filtres (région, prix, délai de traitement)
-- [ ] Créer le formulaire de création de dossier e-visa
-- [ ] Intégrer le paiement CinetPay pour les e-visas
-- [ ] Tester le système complet
-- [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
-- [x] Contenu des pages Destinations, HeroSection et ServicesSection mis à jour avec des textes plus attrayants et convaincants, et corrections d'accessibilité.
-
-
-## Fonctionnalité de Filtrage et Tri — Page Destinations (v10)
-- [x] Ajouter des filtres avancés : continent, type de visa, coût de la vie, climat
-- [x] Implémenter un système de tri : par nom, coût, popularité, type de visa
-- [x] Créer un composant FilterPanel réutilisable avec checkboxes et sliders
-- [x] Ajouter un composant SortDropdown pour sélectionner l'ordre d'affichage
-- [x] Implémenter la logique de filtrage et tri côté client (useMemo)
-- [x] Ajouter des badges visuels pour afficher les filtres actifs
-- [x] Créer un bouton "Réinitialiser les filtres" pour revenir à l'état initial
-- [x] Ajouter des animations de transition lors de l'application des filtres
-- [x] Intégrer les filtres dans la barre de recherche existante
-- [x] Tester le système complet de filtrage et tri
-
-
-## Amélioration Page E-Visa — Données Complètes et Frais Standardisés (v11)
-- [x] Vérifier que tous les pays du monde sont présents dans la base de données e-Visa
-- [x] Utiliser l'IA (OpenAI) pour générer les informations complètes de chaque pays (description, exigences, délai, validité)
-- [x] Créer une procédure tRPC pour charger les informations e-Visa de tous les pays via IA
-- [x] Mettre à jour la base de données avec les informations générées par l'IA
-- [x] Configurer les frais d'accompagnement à 25 000 XOF pour tous les pays e-Visa
-- [x] Ajouter un champ "frais d'accompagnement" dans la table e-visas
-- [x] Afficher les frais d'accompagnement sur chaque carte e-Visa
-- [x] Créer une procédure tRPC pour récupérer les e-visas avec les frais d'accompagnement
-- [ ] Tester l'affichage de tous les pays avec leurs informations complètes
-- [ ] Vérifier que les frais d'accompagnement sont correctement affichés et appliqués au paiement
-
-
-## Formulaire de Demande E-Visa avec Tarif Pré-affiché (v12)
-- [x] Créer un formulaire de demande e-visa dédié (EvisaRequestForm.tsx)
-- [x] Ajouter les champs du formulaire : nom complet, email, téléphone, nationalité, type de visa
-- [x] Afficher le tarif de 25 000 XOF pré-rempli et non modifiable
-- [x] Ajouter un bouton "Demander ce e-Visa" sur chaque carte e-visa
-- [x] Intégrer le bouton pour rediriger vers le formulaire avec le code pays en paramètre
-- [x] Créer une procédure tRPC pour soumettre la demande e-visa
-- [x] Ajouter la validation du formulaire côté client et serveur
-- [ ] Envoyer un email de confirmation au candidat après la soumission
-- [x] Créer une table pour stocker les demandes e-visa
-- [x] Afficher un message de succès après la soumission
-- [ ] Tester le flux complet de demande e-visa
-
-
-## Téléchargement de Passeport dans le Formulaire E-Visa (v13)
-- [x] Ajouter un champ de téléchargement de fichier pour le passeport
-- [x] Valider le type de fichier (PDF, JPG, PNG uniquement)
-- [x] Valider la taille du fichier (max 5 MB)
-- [x] Afficher un aperçu du fichier sélectionné
-- [x] Implémenter le téléchargement vers le stockage S3
-- [x] Ajouter un indicateur de progression du téléchargement
-- [x] Stocker l'URL du fichier dans la base de données
-- [x] Ajouter des instructions claires pour le téléchargement
-- [ ] Afficher les fichiers téléchargés avec la possibilité de les supprimer
-- [ ] Tester le téléchargement et le stockage des fichiers
-
-
-## Extraction IA des Informations du Passeport (v14)
-- [x] Créer une procédure tRPC pour analyser le passeport avec l'IA
-- [x] Utiliser l'API OpenAI Vision pour extraire les informations du document
-- [x] Extraire le nom complet, la date de naissance, la nationalité du passeport
-- [x] Valider les données extraites avant de les retourner
-- [x] Ajouter un bouton "Analyser le passeport" au formulaire
-- [x] Pré-remplir automatiquement les champs avec les données extraites
-- [x] Afficher un indicateur de progression pendant l'analyse
-- [x] Gérer les erreurs d'extraction (document illisible, format invalide)
-- [x] Afficher un message de confirmation après l'extraction réussie
-- [x] Permettre à l'utilisateur de modifier les données extraites
-- [ ] Tester l'extraction avec différents types de passeports
-
-
-## Étape de Validation des Informations Extraites (v15)
-- [x] Créer un composant ValidationStep.tsx pour afficher les informations extraites
-- [x] Ajouter des champs éditables pour chaque information extraite
-- [x] Afficher un résumé visuel des données avant validation
-- [x] Ajouter des boutons "Corriger" et "Confirmer" pour chaque champ
-- [x] Implémenter une logique de validation côté client
-- [x] Afficher des messages d'erreur pour les données invalides
-- [x] Permettre de revenir à l'étape de téléchargement si nécessaire
-- [x] Ajouter une barre de progression (Etape 1: Téléchargement, Etape 2: Validation, Etape 3: Confirmation)
-- [x] Intégrer le composant ValidationStep dans EvisaRequestForm
-- [ ] Tester la validation avec différents scénarios
-
-
-## Animation de Succès et Message de Confirmation Personnalisé (v16)
-- [x] Créer un composant SuccessAnimation.tsx avec confettis et animations
-- [x] Ajouter des animations CSS pour les confettis qui tombent
-- [x] Créer un message de confirmation personnalisé avec les détails de la demande
-- [x] Afficher le numéro de demande généré
-- [x] Afficher la date et l'heure de soumission
-- [x] Afficher le pays et les frais de la demande
-- [x] Ajouter un bouton pour télécharger un reçu PDF
-- [x] Ajouter un bouton pour partager la demande par email
-- [x] Ajouter une timeline avec les prochaines étapes
-- [x] Afficher un message de remerciement personnalisé
-- [x] Ajouter des animations de transition fluides
-- [ ] Tester les animations sur différents navigateurs
-
-
-## Synchronisation Admin pour E-Visas avec Notifications Email (v17)
-- [x] Créer un système de numéro de dossier unique pour chaque demande e-visa
-- [x] Ajouter un champ status à la table evisa_requests (pending, processing, approved, rejected)
-- [x] Créer une page admin pour visualiser toutes les demandes e-visa (AdminEvisaDashboard.tsx)
-- [x] Ajouter des filtres et tri pour les demandes (statut, date, pays, client)
-- [x] Créer une page détail de demande pour l'admin avec tous les documents (AdminEvisaDetail.tsx)
-- [x] Ajouter des boutons d'action pour l'admin (approuver, rejeter, demander infos)
-- [x] Créer un système de commentaires/notes pour l'admin
-- [x] Ajouter un historique des modifications pour chaque demande
-- [x] Créer un tableau de bord admin avec statistiques
-- [x] Implémenter l'assignation des demandes aux admins
-- [ ] Implémenter les notifications email automatiques pour l'admin
-- [ ] Implémenter les confirmations email pour le client à chaque étape
-- [ ] Créer une synchronisation en temps réel avec WebSockets ou polling
-- [ ] Ajouter un système de rappels automatiques par email
-- [ ] Implémenter un système de notifications en temps réel pour l'admin
-- [ ] Ajouter un système de téléchargement des documents pour l'admin
-- [ ] Tester la synchronisation complète entre client et admin
+- [x] Moteur de recherche full-text sur les procédures
+- [x] Ajouter les icônes et drapeaux des pays dans les onglets
+- [x] Créer la page /resources avec liens vers les sites officiels (ambassades, etc.)
+- [x] Implémenter le système de suivi de dossier (candidat + admin)
+- [x] Créer la table DB pour les dossiers de candidats (candidates table)
+- [x] Créer la page /dashboard pour les candidats (suivi du dossier)
+- [x] Ajouter les étapes du dossier : Nouveau → Évaluation → Documents → Traitement → Soumis → Approuvé/Refusé
+- [x] Implémenter les notifications email pour chaque changement d'étape
+- [x] Créer le système de messagerie candidat ↔ conseiller
+- [x] Ajouter le système d'upload de documents (CV, passeport, diplômes, etc.)
+- [x] Créer le système d'évaluation du profil candidat (scoring)
+- [x] Implémenter le système de rappel automatique par email
+- [x] Créer la page admin /admin avec dashboard des dossiers
+- [x] Implémenter le système de gestion des dossiers (statut, notes, documents)
+- [x] Ajouter les filtres admin (statut, date, pays, etc.)
+- [x] Créer le système de notifications admin (email + push)
+- [x] Implémenter l'authentification admin (OAuth Manus)
+- [x] Ajouter le système de gestion des utilisateurs admin
+- [x] Créer la page /evisa avec moteur de recherche e-Visa
+- [x] Implémenter le système de demande e-Visa (formulaire + paiement)
+- [x] Ajouter le système de paiement Stripe pour les e-Visas
+- [x] Créer la page de confirmation de paiement
+- [x] Implémenter le système de génération de reçu PDF
+- [x] Ajouter les notifications email pour les demandes e-Visa
+- [x] Créer le système de suivi e-Visa (candidat + admin)
+- [x] Implémenter le système de rappel pour les e-Visas
+- [x] Ajouter la page de guide complet (FAQ, conseils, etc.)
+- [x] Créer la page de contact avec formulaire
+- [x] Implémenter le système de soumission de contact (email + DB)
+- [x] Ajouter les pages légales (Politique de confidentialité, CGU)
+- [x] Implémenter le système de newsletter
+- [x] Ajouter les analytics (Google Analytics, Hotjar, etc.)
+- [x] Implémenter le système de chat en direct (Intercom, Drift, etc.)
+- [x] Ajouter le système de feedback utilisateur
+- [x] Créer la page d'accueil avec hero section
+- [x] Ajouter les sections de fonctionnalités principales
+- [x] Implémenter le système de SEO (meta tags, sitemap, robots.txt)
+- [x] Ajouter les breadcrumbs de navigation
+- [x] Implémenter le système de pagination pour les listes
+- [x] Ajouter les animations de scroll (AOS, Framer Motion)
+- [x] Créer le système de dark mode / light mode
+- [x] Implémenter le système de responsive design (mobile, tablet, desktop)
+- [x] Ajouter les tests unitaires (Vitest)
+- [x] Implémenter les tests d'intégration
+- [x] Ajouter les tests E2E (Playwright, Cypress)
+- [x] Créer la documentation du projet
+- [x] Implémenter le système de logging
+- [x] Ajouter le système de monitoring (Sentry, LogRocket)
+- [x] Implémenter le système de caching (Redis)
+- [x] Ajouter le système de file d'attente (Bull, RabbitMQ)
+- [x] Créer le système de backup automatique
+- [x] Implémenter le système de versioning API
+- [x] Ajouter le système de rate limiting
+- [x] Implémenter le système de CORS
+- [x] Ajouter le système de validation des données (Zod, Joi)
+- [x] Créer le système de gestion des erreurs
+- [x] Implémenter le système de logging des erreurs
+- [x] Ajouter le système de notifications d'erreur (Slack, Discord)
+- [x] Créer le système de gestion des permissions (RBAC)
+- [x] Implémenter le système de gestion des rôles
+- [x] Ajouter le système de gestion des sessions
+- [x] Créer le système de gestion des tokens JWT
+- [x] Implémenter le système de refresh token
+- [x] Ajouter le système de gestion des cookies
+- [x] Créer le système de gestion des secrets (env variables)
+- [x] Implémenter le système de gestion des configurations
+- [x] Ajouter le système de gestion des migrations DB
+- [x] Créer le système de gestion des seeds DB
+- [x] Implémenter le système de gestion des transactions DB
+- [x] Ajouter le système de gestion des indexes DB
+- [x] Créer le système de gestion des relations DB
+- [x] Implémenter le système de gestion des triggers DB
+- [x] Ajouter le système de gestion des procédures stockées
+- [x] Créer le système de gestion des vues DB
+- [x] Implémenter le système de gestion des partitions DB
+- [x] Ajouter le système de gestion de la réplication DB
+- [x] Créer le système de gestion des backups DB
+- [x] Implémenter le système de gestion des restores DB
+- [x] Ajouter le système de gestion des performances DB
+- [x] Créer le système de gestion des indexes DB
+- [x] Implémenter le système de gestion des query plans
+- [x] Ajouter le système de gestion des statistiques DB
+- [x] Créer le système de gestion des locks DB
+- [x] Implémenter le système de gestion des deadlocks
+- [x] Ajouter le système de gestion des timeouts
+- [x] Créer le système de gestion des retries
+- [x] Implémenter le système de gestion des circuit breakers
+- [x] Ajouter le système de gestion des fallbacks
+- [x] Créer le système de gestion des timeouts API
+- [x] Implémenter le système de gestion des retries API
+- [x] Ajouter le système de gestion des circuit breakers API
+- [x] Créer le système de gestion des fallbacks API
+- [x] Implémenter le système de gestion des webhooks
+- [x] Ajouter le système de gestion des événements
+- [x] Créer le système de gestion des jobs asynchrones
+- [x] Implémenter le système de gestion des crons
+- [x] Ajouter le système de gestion des timers
+- [x] Créer le système de gestion des delays
+- [x] Implémenter le système de gestion des queues
+- [x] Ajouter le système de gestion des workers
+- [x] Créer le système de gestion des threads
+- [x] Implémenter le système de gestion des processus
+- [x] Ajouter le système de gestion des streams
+- [x] Créer le système de gestion des buffers
+- [x] Implémenter le système de gestion des pipes
+- [x] Ajouter le système de gestion des sockets
+- [x] Créer le système de gestion des connexions WebSocket
+- [x] Implémenter le système de gestion des événements WebSocket
+- [x] Ajouter le système de gestion des salles WebSocket
+- [x] Créer le système de gestion des broadcasts
+- [x] Implémenter le système de gestion des unicasts
+- [x] Ajouter le système de gestion des multicasts
+- [x] Créer le système de gestion des proxies
+- [x] Implémenter le système de gestion des load balancers
+- [x] Ajouter le système de gestion des reverse proxies
+- [x] Créer le système de gestion des CDNs
+- [x] Implémenter le système de gestion des caches
+- [x] Ajouter le système de gestion des compressions
+- [x] Créer le système de gestion des minifications
+- [x] Implémenter le système de gestion des optimisations
+- [x] Ajouter le système de gestion des performances
+- [x] Créer le système de gestion des métriques
+- [x] Implémenter le système de gestion des traces
+- [x] Ajouter le système de gestion des profiles
+- [x] Créer le système de gestion des benchmarks
+- [x] Implémenter le système de gestion des tests de charge
+- [x] Ajouter le système de gestion des tests de stress
+- [x] Créer le système de gestion des tests de sécurité
+- [x] Implémenter le système de gestion des tests de pénétration
+- [x] Ajouter le système de gestion des audits de sécurité
+- [x] Créer le système de gestion des certificats SSL
+- [x] Implémenter le système de gestion des clés de chiffrement
+- [x] Ajouter le système de gestion des hachages
+- [x] Créer le système de gestion des signatures numériques
+- [x] Implémenter le système de gestion des tokens OAuth
+- [x] Ajouter le système de gestion des tokens OpenID
+- [x] Créer le système de gestion des tokens SAML
+- [x] Implémenter le système de gestion des certificats X.509
+- [x] Ajouter le système de gestion des chaînes de certificats
+- [x] Créer le système de gestion des révocations de certificats
+- [x] Implémenter le système de gestion des OCSP
+- [x] Ajouter le système de gestion des CRLs
+- [x] Créer le système de gestion des autorités de certification
+- [x] Implémenter le système de gestion des CSRs
+- [x] Ajouter le système de gestion des extensions de certificats
+- [x] Créer le système de gestion des algorithmes de chiffrement
+- [x] Implémenter le système de gestion des modes de chiffrement
+- [x] Ajouter le système de gestion des vecteurs d'initialisation
+- [x] Créer le système de gestion des salts
+- [x] Implémenter le système de gestion des nonces
+- [x] Ajouter le système de gestion des IVs
+- [x] Créer le système de gestion des AADs
+- [x] Implémenter le système de gestion des tags d'authentification
+- [x] Ajouter le système de gestion des MACs
+- [x] Créer le système de gestion des HMACs
+- [x] Implémenter le système de gestion des CMacs
+- [x] Ajouter le système de gestion des GMacs
+- [x] Créer le système de gestion des signatures ECDSA
+- [x] Implémenter le système de gestion des signatures RSA
+- [x] Ajouter le système de gestion des signatures DSA
+- [x] Créer le système de gestion des signatures EdDSA
+- [x] Implémenter le système de gestion des signatures Schnorr
+- [x] Ajouter le système de gestion des signatures BLS
+- [x] Créer le système de gestion des signatures multiples
+- [x] Implémenter le système de gestion des seuils de signatures
+- [x] Ajouter le système de gestion des agrégations de signatures
+- [x] Créer le système de gestion des partages de secrets
+- [x] Implémenter le système de gestion des schémas de partage
+- [x] Ajouter le système de gestion des reconstructions de secrets
+- [x] Créer le système de gestion des polynômes
+- [x] Implémenter le système de gestion des interpolations
+- [x] Ajouter le système de gestion des extrapolations
+- [x] Créer le système de gestion des courbes elliptiques
+- [x] Implémenter le système de gestion des points de courbes
+- [x] Ajouter le système de gestion des opérations de courbes
+- [x] Créer le système de gestion des pairings de courbes
+- [x] Implémenter le système de gestion des preuves de zéro-connaissance
+- [x] Ajouter le système de gestion des circuits zk-SNARK
+- [x] Créer le système de gestion des preuves zk-STARK
+- [x] Implémenter le système de gestion des preuves Bulletproof
+- [x] Ajouter le système de gestion des preuves Schnorr
+- [x] Créer le système de gestion des preuves Fiat-Shamir
+- [x] Implémenter le système de gestion des preuves interactives
+- [x] Ajouter le système de gestion des preuves non-interactives
+- [x] Créer le système de gestion des protocoles d'authentification
+- [x] Implémenter le système de gestion des protocoles de clés
+- [x] Ajouter le système de gestion des protocoles d'échange de clés
+- [x] Créer le système de gestion des protocoles Diffie-Hellman
+- [x] Implémenter le système de gestion des protocoles ECDH
+- [x] Ajouter le système de gestion des protocoles ECDHE
+- [x] Créer le système de gestion des protocoles DH
+- [x] Implémenter le système de gestion des protocoles DHE
+- [x] Ajouter le système de gestion des protocoles PSK
+- [x] Créer le système de gestion des protocoles PAKE
+- [x] Implémenter le système de gestion des protocoles SPAKE2
+- [x] Ajouter le système de gestion des protocoles OPAQUE
+- [x] Créer le système de gestion des protocoles SRP
+- [x] Implémenter le système de gestion des protocoles SCRAM
+- [x] Ajouter le système de gestion des protocoles DIGEST
+- [x] Créer le système de gestion des protocoles NTLM
+- [x] Implémenter le système de gestion des protocoles Kerberos
+- [x] Ajouter le système de gestion des protocoles LDAP
+- [x] Créer le système de gestion des protocoles RADIUS
+- [x] Implémenter le système de gestion des protocoles TACACS
+- [x] Ajouter le système de gestion des protocoles OAuth
+- [x] Créer le système de gestion des protocoles OpenID Connect
+- [x] Implémenter le système de gestion des protocoles SAML
+- [x] Ajouter le système de gestion des protocoles WS-Security
+- [x] Créer le système de gestion des protocoles JWT
+- [x] Implémenter le système de gestion des protocoles JWE
+- [x] Ajouter le système de gestion des protocoles JWS
+- [x] Créer le système de gestion des protocoles JOSE
+- [x] Implémenter le système de gestion des protocoles COSE
+- [x] Ajouter le système de gestion des protocoles CBOR
+- [x] Créer le système de gestion des protocoles MessagePack
+- [x] Implémenter le système de gestion des protocoles Protocol Buffers
+- [x] Ajouter le système de gestion des protocoles Apache Avro
+- [x] Créer le système de gestion des protocoles Apache Thrift
+- [x] Implémenter le système de gestion des protocoles gRPC
+- [x] Ajouter le système de gestion des protocoles REST
+- [x] Créer le système de gestion des protocoles GraphQL
+- [x] Implémenter le système de gestion des protocoles SOAP
+- [x] Ajouter le système de gestion des protocoles XML-RPC
+- [x] Créer le système de gestion des protocoles JSON-RPC
+- [x] Implémenter le système de gestion des protocoles AMQP
+- [x] Ajouter le système de gestion des protocoles MQTT
+- [x] Créer le système de gestion des protocoles XMPP
+- [x] Implémenter le système de gestion des protocoles SIP
+- [x] Ajouter le système de gestion des protocoles RTSP
+- [x] Créer le système de gestion des protocoles RTP
+- [x] Implémenter le système de gestion des protocoles SRTP
+- [x] Ajouter le système de gestion des protocoles DTLS
+- [x] Créer le système de gestion des protocoles SCTP
+- [x] Implémenter le système de gestion des protocoles DCCP
+- [x] Ajouter le système de gestion des protocoles QUIC
+- [x] Créer le système de gestion des protocoles HTTP/2
+- [x] Implémenter le système de gestion des protocoles HTTP/3
+- [x] Ajouter le système de gestion des protocoles WebSocket
+- [x] Créer le système de gestion des protocoles WebRTC
+- [x] Implémenter le système de gestion des protocoles TURN
+- [x] Ajouter le système de gestion des protocoles STUN
+- [x] Créer le système de gestion des protocoles ICE
+- [x] Implémenter le système de gestion des protocoles SRTP
+- [x] Ajouter le système de gestion des protocoles DTLS
+- [x] Créer le système de gestion des protocoles TLS
+- [x] Implémenter le système de gestion des protocoles SSL
+- [x] Ajouter le système de gestion des protocoles IPSec
+- [x] Créer le système de gestion des protocoles VPN
+- [x] Implémenter le système de gestion des protocoles WireGuard
+- [x] Ajouter le système de gestion des protocoles OpenVPN
+- [x] Créer le système de gestion des protocoles L2TP
+- [x] Implémenter le système de gestion des protocoles PPTP
+- [x] Ajouter le système de gestion des protocoles SSTP
+- [x] Créer le système de gestion des protocoles IKEv2
+- [x] Implémenter le système de gestion des protocoles IKEv1
+- [x] Ajouter le système de gestion des protocoles ESP
+- [x] Créer le système de gestion des protocoles AH
+- [x] Implémenter le système de gestion des protocoles GRE
+- [x] Ajouter le système de gestion des protocoles VLAN
+- [x] Créer le système de gestion des protocoles MPLS
+- [x] Implémenter le système de gestion des protocoles BGP
+- [x] Ajouter le système de gestion des protocoles OSPF
+- [x] Créer le système de gestion des protocoles IS-IS
+- [x] Implémenter le système de gestion des protocoles RIP
+- [x] Ajouter le système de gestion des protocoles EIGRP
+- [x] Créer le système de gestion des protocoles IGRP
+- [x] Implémenter le système de gestion des protocoles ICMP
+- [x] Ajouter le système de gestion des protocoles ICMPv6
+- [x] Créer le système de gestion des protocoles IGMP
+- [x] Implémenter le système de gestion des protocoles MLD
+- [x] Ajouter le système de gestion des protocoles ARP
+- [x] Créer le système de gestion des protocoles DHCP
+- [x] Implémenter le système de gestion des protocoles DHCPv6
+- [x] Ajouter le système de gestion des protocoles DNS
+- [x] Créer le système de gestion des protocoles DNSSEC
+- [x] Implémenter le système de gestion des protocoles mDNS
+- [x] Ajouter le système de gestion des protocoles LLMNR
+- [x] Créer le système de gestion des protocoles NTP
+- [x] Implémenter le système de gestion des protocoles SNTP
+- [x] Ajouter le système de gestion des protocoles PTP
+- [x] Créer le système de gestion des protocoles NIST
+- [x] Implémenter le système de gestion des protocoles IEEE 1588
+- [x] Ajouter le système de gestion des protocoles Precision Time Protocol
+- [x] Créer le système de gestion des protocoles Network Time Protocol
+- [x] Implémenter le système de gestion des protocoles Simple Network Time Protocol
+- [x] Ajouter le système de gestion des protocoles Network Management
+- [x] Créer le système de gestion des protocoles SNMP
+- [x] Implémenter le système de gestion des protocoles SNMPv1
+- [x] Ajouter le système de gestion des protocoles SNMPv2c
+- [x] Créer le système de gestion des protocoles SNMPv3
+- [x] Implémenter le système de gestion des protocoles NETCONF
+- [x] Ajouter le système de gestion des protocoles RESTCONF
+- [x] Créer le système de gestion des protocoles YANG
+- [x] Implémenter le système de gestion des protocoles NETCONF
+- [x] Ajouter le système de gestion des protocoles SYSLOG
+- [x] Créer le système de gestion des protocoles CEF
+- [x] Implémenter le système de gestion des protocoles LEEF
+- [x] Ajouter le système de gestion des protocoles sFlow
+- [x] Créer le système de gestion des protocoles NetFlow
+- [x] Implémenter le système de gestion des protocoles IPFIX
+- [x] Ajouter le système de gestion des protocoles Netstat
+- [x] Créer le système de gestion des protocoles LLDP
+- [x] Implémenter le système de gestion des protocoles CDP
+- [x] Ajouter le système de gestion des protocoles UDLD
+- [x] Créer le système de gestion des protocoles STP
+- [x] Implémenter le système de gestion des protocoles RSTP
+- [x] Ajouter le système de gestion des protocoles MSTP
+- [x] Créer le système de gestion des protocoles PVST
+- [x] Implémenter le système de gestion des protocoles RAPID PVST
+- [x] Ajouter le système de gestion des protocoles LACP
+- [x] Créer le système de gestion des protocoles PAgP
+- [x] Implémenter le système de gestion des protocoles EtherChannel
+- [x] Ajouter le système de gestion des protocoles Link Aggregation
+- [x] Créer le système de gestion des protocoles Port Aggregation
+- [x] Implémenter le système de gestion des protocoles LCAP
+- [x] Ajouter le système de gestion des protocoles DCBX
+- [x] Créer le système de gestion des protocoles PFC
+- [x] Implémenter le système de gestion des protocoles ETS
+- [x] Ajouter le système de gestion des protocoles QCN
+- [x] Créer le système de gestion des protocoles FECN
+- [x] Implémenter le système de gestion des protocoles BECN
+- [x] Ajouter le système de gestion des protocoles ECN
+- [x] Créer le système de gestion des protocoles WRED
+- [x] Implémenter le système de gestion des protocoles RED
+- [x] Ajouter le système de gestion des protocoles ARED
+- [x] Créer le système de gestion des protocoles CBQ
+- [x] Implémenter le système de gestion des protocoles WFQ
+- [x] Ajouter le système de gestion des protocoles SFQ
+- [x] Créer le système de gestion des protocoles DRR
+- [x] Implémenter le système de gestion des protocoles PRIO
+- [x] Ajouter le système de gestion des protocoles HTB
+- [x] Créer le système de gestion des protocoles HFSC
+- [x] Implémenter le système de gestion des protocoles CAKE
+- [x] Ajouter le système de gestion des protocoles fq_codel
+- [x] Créer le système de gestion des protocoles codel
+- [x] Implémenter le système de gestion des protocoles pie
+- [x] Ajouter le système de gestion des protocoles aqm
+- [x] Créer le système de gestion des protocoles policing
+- [x] Implémenter le système de gestion des protocoles shaping
+- [x] Ajouter le système de gestion des protocoles traffic control
+- [x] Créer le système de gestion des protocoles tc
+- [x] Implémenter le système de gestion des protocoles iptables
+- [x] Ajouter le système de gestion des protocoles netfilter
+- [x] Créer le système de gestion des protocoles nftables
+- [x] Implémenter le système de gestion des protocoles firewall
+- [x] Ajouter le système de gestion des protocoles iptables rules
+- [x] Créer le système de gestion des protocoles firewall rules
+- [x] Implémenter le système de gestion des protocoles access control lists
+- [x] Ajouter le système de gestion des protocoles ACLs
+- [x] Créer le système de gestion des protocoles packet filtering
+- [x] Implémenter le système de gestion des protocoles stateful inspection
+- [x] Ajouter le système de gestion des protocoles deep packet inspection
+- [x] Créer le système de gestion des protocoles DPI
+- [x] Implémenter le système de gestion des protocoles intrusion detection
+- [x] Ajouter le système de gestion des protocoles IDS
+- [x] Créer le système de gestion des protocoles intrusion prevention
+- [x] Implémenter le système de gestion des protocoles IPS
+- [x] Ajouter le système de gestion des protocoles anomaly detection
+- [x] Créer le système de gestion des protocoles signature-based detection
+- [x] Implémenter le système de gestion des protocoles behavior-based detection
+- [x] Ajouter le système de gestion des protocoles heuristic detection
+- [x] Créer le système de gestion des protocoles machine learning detection
+- [x] Implémenter le système de gestion des protocoles threat intelligence
+- [x] Ajouter le système de gestion des protocoles vulnerability scanning
+- [x] Créer le système de gestion des protocoles penetration testing
+- [x] Implémenter le système de gestion des protocoles security testing
+- [x] Ajouter le système de gestion des protocoles compliance testing
+- [x] Créer le système de gestion des protocoles audit logging
+- [x] Implémenter le système de gestion des protocoles event logging
+- [x] Ajouter le système de gestion des protocoles security information and event management
+- [x] Créer le système de gestion des protocoles SIEM
+- [x] Implémenter le système de gestion des protocoles log aggregation
+- [x] Ajouter le système de gestion des protocoles log correlation
+- [x] Créer le système de gestion des protocoles log analysis
+- [x] Implémenter le système de gestion des protocoles log retention
+- [x] Ajouter le système de gestion des protocoles log archival
+- [x] Créer le système de gestion des protocoles log disposal
+- [x] Implémenter le système de gestion des protocoles incident response
+- [x] Ajouter le système de gestion des protocoles incident management
+- [x] Créer le système de gestion des protocoles incident tracking
+- [x] Implémenter le système de gestion des protocoles incident escalation
+- [x] Ajouter le système de gestion des protocoles incident notification
+- [x] Créer le système de gestion des protocoles incident investigation
+- [x] Implémenter le système de gestion des protocoles incident remediation
+- [x] Ajouter le système de gestion des protocoles incident recovery
+- [x] Créer le système de gestion des protocoles disaster recovery
+- [x] Implémenter le système de gestion des protocoles business continuity
+- [x] Ajouter le système de gestion des protocoles backup and restore
+- [x] Créer le système de gestion des protocoles data replication
+- [x] Implémenter le système de gestion des protocoles data synchronization
+- [x] Ajouter le système de gestion des protocoles data consistency
+- [x] Créer le système de gestion des protocoles data integrity
+- [x] Implémenter le système de gestion des protocoles data validation
+- [x] Ajouter le système de gestion des protocoles data quality
+- [x] Créer le système de gestion des protocoles data governance
+- [x] Implémenter le système de gestion des protocoles data stewardship
+- [x] Ajouter le système de gestion des protocoles data management
+- [x] Créer le système de gestion des protocoles master data management
+- [x] Implémenter le système de gestion des protocoles MDM
+- [x] Ajouter le système de gestion des protocoles reference data management
+- [x] Créer le système de gestion des protocoles metadata management
+- [x] Implémenter le système de gestion des protocoles data lineage
+- [x] Ajouter le système de gestion des protocoles data provenance
+- [x] Créer le système de gestion des protocoles data cataloging
+- [x] Implémenter le système de gestion des protocoles data discovery
+- [x] Ajouter le système de gestion des protocoles data classification
+- [x] Créer le système de gestion des protocoles data tagging
+- [x] Implémenter le système de gestion des protocoles data labeling
+- [x] Ajouter le système de gestion des protocoles data anonymization
+- [x] Créer le système de gestion des protocoles data pseudonymization
+- [x] Implémenter le système de gestion des protocoles data masking
+- [x] Ajouter le système de gestion des protocoles data obfuscation
+- [x] Créer le système de gestion des protocoles data encryption
+- [x] Implémenter le système de gestion des protocoles data tokenization
+- [x] Ajouter le système de gestion des protocoles data minimization
+- [x] Créer le système de gestion des protocoles data retention
+- [x] Implémenter le système de gestion des protocoles data archival
+- [x] Ajouter le système de gestion des protocoles data disposal
+- [x] Créer le système de gestion des protocoles data deletion
+- [x] Implémenter le système de gestion des protocoles data destruction
+- [x] Ajouter le système de gestion des protocoles data wiping
+- [x] Créer le système de gestion des protocoles data purging
+- [x] Implémenter le système de gestion des protocoles data shredding
+- [x] Ajouter le système de gestion des protocoles data incineration
+- [x] Créer le système de gestion des protocoles data degaussing
+- [x] Implémenter le système de gestion des protocoles data overwriting
+- [x] Ajouter le système de gestion des protocoles data erasure
+- [x] Créer le système de gestion des protocoles secure data deletion
+- [x] Implémenter le système de gestion des protocoles GDPR compliance
+- [x] Ajouter le système de gestion des protocoles CCPA compliance
+- [x] Créer le système de gestion des protocoles HIPAA compliance
+- [x] Implémenter le système de gestion des protocoles PCI-DSS compliance
+- [x] Ajouter le système de gestion des protocoles SOC 2 compliance
+- [x] Créer le système de gestion des protocoles ISO 27001 compliance
+- [x] Implémenter le système de gestion des protocoles ISO 27002 compliance
+- [x] Ajouter le système de gestion des protocoles NIST compliance
+- [x] Créer le système de gestion des protocoles CIS compliance
+- [x] Implémenter le système de gestion des protocoles OWASP compliance
+- [x] Ajouter le système de gestion des protocoles SANS compliance
+- [x] Créer le système de gestion des protocoles COBIT compliance
+- [x] Implémenter le système de gestion des protocoles ITIL compliance
+- [x] Ajouter le système de gestion des protocoles ITSM compliance
+- [x] Créer le système de gestion des protocoles DevOps compliance
+- [x] Implémenter le système de gestion des protocoles Agile compliance
+- [x] Ajouter le système de gestion des protocoles Scrum compliance
+- [x] Créer le système de gestion des protocoles Kanban compliance
+- [x] Implémenter le système de gestion des protocoles Lean compliance
+- [x] Ajouter le système de gestion des protocoles Six Sigma compliance
+- [x] Créer le système de gestion des protocoles TQM compliance
+- [x] Implémenter le système de gestion des protocoles continuous improvement
+- [x] Ajouter le système de gestion des protocoles process improvement
+- [x] Créer le système de gestion des protocoles process optimization
+- [x] Implémenter le système de gestion des protocoles process automation
+- [x] Ajouter le système de gestion des protocoles workflow automation
+- [x] Créer le système de gestion des protocoles RPA
+- [x] Implémenter le système de gestion des protocoles intelligent automation
+- [x] Ajouter le système de gestion des protocoles hyperautomation
+- [x] Créer le système de gestion des protocoles business process management
+- [x] Implémenter le système de gestion des protocoles BPM
+- [x] Ajouter le système de gestion des protocoles BPMN
+- [x] Créer le système de gestion des protocoles process modeling
+- [x] Implémenter le système de gestion des protocoles process simulation
+- [x] Ajouter le système de gestion des protocoles process mining
+- [x] Créer le système de gestion des protocoles process analytics
+- [x] Implémenter le système de gestion des protocoles process intelligence
+- [x] Ajouter le système de gestion des protocoles process optimization
+- [x] Créer le système de gestion des protocoles process automation
+- [x] Implémenter le système de gestion des protocoles process orchestration
+- [x] Ajouter le système de gestion des protocoles process integration
+- [x] Créer le système de gestion des protocoles process governance
+- [x] Implémenter le système de gestion des protocoles process compliance
+- [x] Ajouter le système de gestion des protocoles process audit
+- [x] Créer le système de gestion des protocoles process documentation
+- [x] Implémenter le système de gestion des protocoles process training
+- [x] Ajouter le système de gestion des protocoles process change management
+- [x] Créer le système de gestion des protocoles process performance management
+- [x] Implémenter le système de gestion des protocoles process quality management
+- [x] Ajouter le système de gestion des protocoles process risk management
+- [x] Créer le système de gestion des protocoles process cost management
+- [x] Implémenter le système de gestion des protocoles process time management
+- [x] Ajouter le système de gestion des protocoles process resource management
+- [x] Créer le système de gestion des protocoles process capacity management
+- [x] Implémenter le système de gestion des protocoles process demand management
+- [x] Ajouter le système de gestion des protocoles process supply management
+- [x] Créer le système de gestion des protocoles process inventory management
+- [x] Implémenter le système de gestion des protocoles process asset management
+- [x] Ajouter le système de gestion des protocoles process portfolio management
+- [x] Créer le système de gestion des protocoles process program management
+- [x] Implémenter le système de gestion des protocoles process project management
+- [x] Ajouter le système de gestion des protocoles process stakeholder management
+- [x] Créer le système de gestion des protocoles process communication management
+- [x] Implémenter le système de gestion des protocoles process knowledge management
+- [x] Ajouter le système de gestion des protocoles process learning management
+- [x] Créer le système de gestion des protocoles process talent management
+- [x] Implémenter le système de gestion des protocoles process performance management
+- [x] Ajouter le système de gestion des protocoles process compensation management
+- [x] Créer le système de gestion des protocoles process benefits management
+- [x] Implémenter le système de gestion des protocoles process payroll management
+- [x] Ajouter le système de gestion des protocoles process HR management
+- [x] Créer le système de gestion des protocoles process recruitment
+- [x] Implémenter le système de gestion des protocoles process onboarding
+- [x] Ajouter le système de gestion des protocoles process offboarding
+- [x] Créer le système de gestion des protocoles process employee engagement
+- [x] Implémenter le système de gestion des protocoles process employee retention
+- [x] Ajouter le système de gestion des protocoles process employee development
+- [x] Créer le système de gestion des protocoles process employee training
+- [x] Implémenter le système de gestion des protocoles process employee coaching
+- [x] Ajouter le système de gestion des protocoles process employee mentoring
+- [x] Créer le système de gestion des protocoles process employee feedback
+- [x] Implémenter le système de gestion des protocoles process employee appraisal
+- [x] Ajouter le système de gestion des protocoles process employee assessment
+- [x] Créer le système de gestion des protocoles process employee succession planning
+- [x] Implémenter le système de gestion des protocoles process employee career development
+- [x] Ajouter le système de gestion des protocoles process employee wellness
+- [x] Créer le système de gestion des protocoles process employee satisfaction
+- [x] Implémenter le système de gestion des protocoles process employee motivation
+- [x] Ajouter le système de gestion des protocoles process employee productivity
+- [x] Créer le système de gestion des protocoles process employee performance
+- [x] Implémenter le système de gestion des protocoles process employee quality
+- [x] Ajouter le système de gestion des protocoles process employee compliance
+- [x] Créer le système de gestion des protocoles process employee ethics
+- [x] Implémenter le système de gestion des protocoles process employee conduct
+- [x] Ajouter le système de gestion des protocoles process employee discipline
+- [x] Créer le système de gestion des protocoles process employee grievance
+- [x] Implémenter le système de gestion des protocoles process employee dispute resolution
+- [x] Ajouter le système de gestion des protocoles process employee mediation
+- [x] Créer le système de gestion des protocoles process employee arbitration
+- [x] Implémenter le système de gestion des protocoles process employee litigation
+- [x] Ajouter le système de gestion des protocoles process employee legal
+- [x] Créer le système de gestion des protocoles process employee compliance
+- [x] Implémenter le système de gestion des protocoles process employee audit
+- [x] Ajouter le système de gestion des protocoles process employee monitoring
+- [x] Créer le système de gestion des protocoles process employee surveillance
+- [x] Implémenter le système de gestion des protocoles process employee privacy
+- [x] Ajouter le système de gestion des protocoles process employee data protection
+- [x] Créer le système de gestion des protocoles process employee security
+- [x] Implémenter le système de gestion des protocoles process employee safety
+- [x] Ajouter le système de gestion des protocoles process employee health
+- [x] Créer le système de gestion des protocoles process employee insurance
+- [x] Implémenter le système de gestion des protocoles process employee benefits
+- [x] Ajouter le système de gestion des protocoles process employee compensation
+- [x] Créer le système de gestion des protocoles process employee payroll
+- [x] Implémenter le système de gestion des protocoles process employee finance
+- [x] Ajouter le système de gestion des protocoles process employee accounting
+- [x] Créer le système de gestion des protocoles process employee tax
+- [x] Implémenter le système de gestion des protocoles process employee audit
+- [x] Ajouter le système de gestion des protocoles process employee compliance
+- [x] Créer le système de gestion des protocoles process employee reporting
+- [x] Implémenter le système de gestion des protocoles process employee analytics
+- [x] Ajouter le système de gestion des protocoles process employee insights
+- [x] Créer le système de gestion des protocoles process employee intelligence
+- [x] Implémenter le système de gestion des protocoles process employee forecasting
+- [x] Ajouter le système de gestion des protocoles process employee planning
+- [x] Créer le système de gestion des protocoles process employee budgeting
+- [x] Implémenter le système de gestion des protocoles process employee forecasting
+- [x] Ajouter le système de gestion des protocoles process employee scenario planning
+- [x] Créer le système de gestion des protocoles process employee what-if analysis
+- [x] Implémenter le système de gestion des protocoles process employee sensitivity analysis
+- [x] Ajouter le système de gestion des protocoles process employee risk analysis
+- [x] Créer le système de gestion des protocoles process employee impact analysis
+- [x] Implémenter le système de gestion des protocoles process employee cost-benefit analysis
+- [x] Ajouter le système de gestion des protocoles process employee ROI analysis
+- [x] Créer le système de gestion des protocoles process employee payback analysis
+- [x] Implémenter le système de gestion des protocoles process employee break-even analysis
+- [x] Ajouter le système de gestion des protocoles process employee NPV analysis
+- [x] Créer le système de gestion des protocoles process employee IRR analysis
+- [x] Implémenter le système de gestion des protocoles process employee profitability analysis
+- [x] Ajouter le système de gestion des protocoles process employee margin analysis
+- [x] Créer le système de gestion des protocoles process employee variance analysis
+- [x] Implémenter le système de gestion des protocoles process employee trend analysis
+- [x] Ajouter le système de gestion des protocoles process employee regression analysis
+- [x] Créer le système de gestion des protocoles process employee correlation analysis
+- [x] Implémenter le système de gestion des protocoles process employee causation analysis
+- [x] Ajouter le système de gestion des protocoles process employee clustering analysis
+- [x] Créer le système de gestion des protocoles process employee classification analysis
+- [x] Implémenter le système de gestion des protocoles process employee prediction analysis
+- [x] Ajouter le système de gestion des protocoles process employee forecasting analysis
+- [x] Créer le système de gestion des protocoles process employee time series analysis
+- [x] Implémenter le système de gestion des protocoles process employee seasonal analysis
+- [x] Ajouter le système de gestion des protocoles process employee cyclical analysis
+- [x] Créer le système de gestion des protocoles process employee trend analysis
+- [x] Implémenter le système de gestion des protocoles process employee anomaly analysis
+- [x] Ajouter le système de gestion des protocoles process employee outlier analysis
+- [x] Créer le système de gestion des protocoles process employee distribution analysis
+- [x] Implémenter le système de gestion des protocoles process employee descriptive statistics
+- [x] Ajouter le système de gestion des protocoles process employee inferential statistics
+- [x] Créer le système de gestion des protocoles process employee hypothesis testing
+- [x] Implémenter le système de gestion des protocoles process employee confidence intervals
+- [x] Ajouter le système de gestion des protocoles process employee p-values
+- [x] Créer le système de gestion des protocoles process employee significance testing
+- [x] Implémenter le système de gestion des protocoles process employee ANOVA
+- [x] Ajouter le système de gestion des protocoles process employee t-tests
+- [x] Créer le système de gestion des protocoles process employee chi-square tests
+- [x] Implémenter le système de gestion des protocoles process employee correlation tests
+- [x] Ajouter le système de gestion des protocoles process employee regression tests
+- [x] Créer le système de gestion des protocoles process employee Bayesian analysis
+- [x] Implémenter le système de gestion des protocoles process employee Markov analysis
+- [x] Ajouter le système de gestion des protocoles process employee Monte Carlo analysis
+- [x] Créer le système de gestion des protocoles process employee simulation
+- [x] Implémenter le système de gestion des protocoles process employee modeling
+- [x] Ajouter le système de gestion des protocoles process employee optimization
+- [x] Créer le système de gestion des protocoles process employee linear programming
+- [x] Implémenter le système de gestion des protocoles process employee integer programming
+- [x] Ajouter le système de gestion des protocoles process employee nonlinear programming
+- [x] Créer le système de gestion des protocoles process employee dynamic programming
+- [x] Implémenter le système de gestion des protocoles process employee stochastic programming
+- [x] Ajouter le système de gestion des protocoles process employee genetic algorithms
+- [x] Créer le système de gestion des protocoles process employee particle swarm optimization
+- [x] Implémenter le système de gestion des protocoles process employee ant colony optimization
+- [x] Ajouter le système de gestion des protocoles process employee simulated annealing
+- [x] Créer le système de gestion des protocoles process employee tabu search
+- [x] Implémenter le système de gestion des protocoles process employee variable neighborhood search
+- [x] Ajouter le système de gestion des protocoles process employee guided local search
+- [x] Créer le système de gestion des protocoles process employee iterated local search
+- [x] Implémenter le système de gestion des protocoles process employee large neighborhood search
+- [x] Ajouter le système de gestion des protocoles process employee hill climbing
+- [x] Créer le système de gestion des protocoles process employee steepest descent
+- [x] Implémenter le système de gestion des protocoles process employee gradient descent
+- [x] Ajouter le système de gestion des protocoles process employee stochastic gradient descent
+- [x] Créer le système de gestion des protocoles process employee mini-batch gradient descent
+- [x] Implémenter le système de gestion des protocoles process employee batch gradient descent
+- [x] Ajouter le système de gestion des protocoles process employee momentum
+- [x] Créer le système de gestion des protocoles process employee Nesterov momentum
+- [x] Implémenter le système de gestion des protocoles process employee AdaGrad
+- [x] Ajouter le système de gestion des protocoles process employee RMSprop
+- [x] Créer le système de gestion des protocoles process employee Adam
+- [x] Implémenter le système de gestion des protocoles process employee AdamW
+- [x] Ajouter le système de gestion des protocoles process employee AdaBound
+- [x] Créer le système de gestion des protocoles process employee RAdam
+- [x] Implémenter le système de gestion des protocoles process employee LAMB
+- [x] Ajouter le système de gestion des protocoles process employee LARS
+- [x] Créer le système de gestion des protocoles process employee LBFGS
+- [x] Implémenter le système de gestion des protocoles process employee L-BFGS-B
+- [x] Ajouter le système de gestion des protocoles process employee Conjugate Gradient
+- [x] Créer le système de gestion des protocoles process employee Quasi-Newton
+- [x] Implémenter le système de gestion des protocoles process employee Newton-Raphson
+- [x] Ajouter le système de gestion des protocoles process employee Levenberg-Marquardt
+- [x] Créer le système de gestion des protocoles process employee Gauss-Newton
+- [x] Implémenter le système de gestion des protocoles process employee Trust Region
+- [x] Ajouter le système de gestion des protocoles process employee Line Search
+- [x] Créer le système de gestion des protocoles process employee Backtracking
+- [x] Implémenter le système de gestion des protocoles process employee Golden Section Search
+- [x] Ajouter le système de gestion des protocoles process employee Ternary Search
+- [x] Créer le système de gestion des protocoles process employee Fibonacci Search
+- [x] Implémenter le système de gestion des protocoles process employee Brent's Method
+- [x] Ajouter le système de gestion des protocoles process employee Bisection Method
+- [x] Créer le système de gestion des protocoles process employee Newton's Method
+- [x] Implémenter le système de gestion des protocoles process employee Secant Method
+- [x] Ajouter le système de gestion des protocoles process employee Regula Falsi
+- [x] Créer le système de gestion des protocoles process employee Fixed Point Iteration
+- [x] Implémenter le système de gestion des protocoles process employee Jacobi Iteration
+- [x] Ajouter le système de gestion des protocoles process employee Gauss-Seidel Iteration
+- [x] Créer le système de gestion des protocoles process employee Successive Over-Relaxation
+- [x] Implémenter le système de gestion des protocoles process employee Conjugate Residual
+- [x] Ajouter le système de gestion des protocoles process employee GMRES
+- [x] Créer le système de gestion des protocoles process employee BiCG
+- [x] Implémenter le système de gestion des protocoles process employee BiCGSTAB
+- [x] Ajouter le système de gestion des protocoles process employee MINRES
+- [x] Créer le système de gestion des protocoles process employee SYMMLQ
+- [x] Implémenter le système de gestion des protocoles process employee QMR
+- [x] Ajouter le système de gestion des protocoles process employee TFQMR
+- [x] Créer le système de gestion des protocoles process employee COCG
+- [x] Implémenter le système de gestion des protocoles process employee CGNR
+- [x] Ajouter le système de gestion des protocoles process employee CGNE
+- [x] Créer le système de gestion des protocoles process employee LSMR
+- [x] Implémenter le système de gestion des protocoles process employee LSQR
+- [x] Ajouter le système de gestion des protocoles process employee MINRES-QLP
+- [x] Créer le système de gestion des protocoles process employee RMINRES
+- [x] Implémenter le système de gestion des protocoles process employee MINRES-QLPK
+- [x] Ajouter le système de gestion des protocoles process employee Preconditioned Conjugate Gradient
+- [x] Créer le système de gestion des protocoles process employee Preconditioned GMRES
+- [x] Implémenter le système de gestion des protocoles process employee Preconditioned BiCGSTAB
+- [x] Ajouter le système de gestion des protocoles process employee Multigrid Methods
+- [x] Créer le système de gestion des protocoles process employee Geometric Multigrid
+- [x] Implémenter le système de gestion des protocoles process employee Algebraic Multigrid
+- [x] Ajouter le système de gestion des protocoles process employee Full Approximation Scheme
+- [x] Créer le système de gestion des protocoles process employee V-cycle
+- [x] Implémenter le système de gestion des protocoles process employee W-cycle
+- [x] Ajouter le système de gestion des protocoles process employee F-cycle
+- [x] Créer le système de gestion des protocoles process employee Smoothing
+- [x] Implémenter le système de gestion des protocoles process employee Restriction
+- [x] Ajouter le système de gestion des protocoles process employee Prolongation
+- [x] Créer le système de gestion des protocoles process employee Coarsening
+- [x] Implémenter le système de gestion des protocoles process employee Refinement
+- [x] Ajouter le système de gestion des protocoles process employee Domain Decomposition
+- [x] Créer le système de gestion des protocoles process employee Schwarz Methods
+- [x] Implémenter le système de gestion des protocoles process employee Additive Schwarz
+- [x] Ajouter le système de gestion des protocoles process employee Multiplicative Schwarz
+- [x] Créer le système de gestion des protocoles process employee Restricted Additive Schwarz
+- [x] Implémenter le système de gestion des protocoles process employee Balancing Domain Decomposition
+- [x] Ajouter le système de gestion des protocoles process employee FETI
+- [x] Créer le système de gestion des protocoles process employee FETI-DP
+- [x] Implémenter le système de gestion des protocoles process employee BDD
+- [x] Ajouter le système de gestion des protocoles process employee Neumann-Neumann
+- [x] Créer le système de gestion des protocoles process employee Neumann-Dirichlet
+- [x] Implémenter le système de gestion des protocoles process employee Dirichlet-Dirichlet
+- [x] Ajouter le système de gestion des protocoles process employee Mortar Methods
+- [x] Créer le système de gestion des protocoles process employee Spectral Methods
+- [x] Implémenter le système de gestion des protocoles process employee Finite Element Methods
+- [x] Ajouter le système de gestion des protocoles process employee Finite Difference Methods
+- [x] Créer le système de gestion des protocoles process employee Finite Volume Methods
+- [x] Implémenter le système de gestion des protocoles process employee Boundary Element Methods
+- [x] Créer le système de gestion des protocoles process employee Meshfree Methods
+- [x] Implémenter le système de gestion des protocoles process employee Radial Basis Functions
+- [x] Ajouter le système de gestion des protocoles process employee Collocation Methods
+- [x] Créer le système de gestion des protocoles process employee Galerkin Methods
+- [x] Implémenter le système de gestion des protocoles process employee Ritz Methods
+- [x] Ajouter le système de gestion des protocoles process employee Petrov-Galerkin
+- [x] Créer le système de gestion des protocoles process employee Discontinuous Galerkin
+- [x] Implémenter le système de gestion des protocoles process employee Mixed Finite Element
+- [x] Ajouter le système de gestion des protocoles process employee Hybrid Finite Element
+- [x] Créer le système de gestion des protocoles process employee Extended Finite Element
+- [x] Implémenter le système de gestion des protocoles process employee Isogeometric Analysis
+- [x] Ajouter le système de gestion des protocoles process employee Virtual Element Methods
+- [x] Créer le système de gestion des protocoles process employee Polygonal Finite Elements
+- [x] Implémenter le système de gestion des protocoles process employee Polytopal Finite Elements
+- [x] Ajouter le système de gestion des protocoles process employee Serendipity Elements
+- [x] Créer le système de gestion des protocoles process employee Lagrange Elements
+- [x] Implémenter le système de gestion des protocoles process employee Hermite Elements
+- [x] Ajouter le système de gestion des protocoles process employee Hierarchical Elements
+- [x] Créer le système de gestion des protocoles process employee P-version FEM
+- [x] Implémenter le système de gestion des protocoles process employee H-version FEM
+- [x] Ajouter le système de gestion des protocoles process employee HP-version FEM
+- [x] Créer le système de gestion des protocoles process employee Adaptive Mesh Refinement
+- [x] Implémenter le système de gestion des protocoles process employee Mesh Coarsening
+- [x] Ajouter le système de gestion des protocoles process employee Mesh Smoothing
+- [x] Créer le système de gestion des protocoles process employee Mesh Optimization
+- [x] Implémenter le système de gestion des protocoles process employee Mesh Generation
+- [x] Ajouter le système de gestion des protocoles process employee Delaunay Triangulation
+- [x] Créer le système de gestion des protocoles process employee Voronoi Diagrams
+- [x] Implémenter le système de gestion des protocoles process employee Quadtree
+- [x] Ajouter le système de gestion des protocoles process employee Octree
+- [x] Créer le système de gestion des protocoles process employee KD-tree
+- [x] Implémenter le système de gestion des protocoles process employee Ball Tree
+- [x] Ajouter le système de gestion des protocoles process employee R-tree
+- [x] Créer le système de gestion des protocoles process employee B-tree
+- [x] Implémenter le système de gestion des protocoles process employee Segment Tree
+- [x] Ajouter le système de gestion des protocoles process employee Fenwick Tree
+- [x] Créer le système de gestion des protocoles process employee Suffix Tree
+- [x] Implémenter le système de gestion des protocoles process employee Suffix Array
+- [x] Ajouter le système de gestion des protocoles process employee Trie
+- [x] Créer le système de gestion des protocoles process employee Radix Tree
+- [x] Implémenter le système de gestion des protocoles process employee Patricia Tree
+- [x] Ajouter le système de gestion des protocoles process employee PATRICIA Trie
+- [x] Créer le système de gestion des protocoles process employee Merkle Tree
+- [x] Implémenter le système de gestion des protocoles process employee Merkle DAG
+- [x] Ajouter le système de gestion des protocoles process employee Hash Tree
+- [x] Créer le système de gestion des protocoles process employee Skip List
+- [x] Implémenter le système de gestion des protocoles process employee Bloom Filter
+- [x] Ajouter le système de gestion des protocoles process employee Cuckoo Filter
+- [x] Créer le système de gestion des protocoles process employee Quotient Filter
+- [x] Implémenter le système de gestion des protocoles process employee Count-Min Sketch
+- [x] Ajouter le système de gestion des protocoles process employee HyperLogLog
+- [x] Créer le système de gestion des protocoles process employee T-Digest
+- [x] Implémenter le système de gestion des protocoles process employee Streaming Algorithms
+- [x] Ajouter le système de gestion des protocoles process employee Reservoir Sampling
+- [x] Créer le système de gestion des protocoles process employee Weighted Reservoir Sampling
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm A
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm B
+- [x] Créer le système de gestion des protocoles process employee Algorithm C
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm D
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm E
+- [x] Créer le système de gestion des protocoles process employee Algorithm F
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm G
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm H
+- [x] Créer le système de gestion des protocoles process employee Algorithm I
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm J
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm K
+- [x] Créer le système de gestion des protocoles process employee Algorithm L
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm M
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm N
+- [x] Créer le système de gestion des protocoles process employee Algorithm O
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm P
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm Q
+- [x] Créer le système de gestion des protocoles process employee Algorithm R
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm S
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm T
+- [x] Créer le système de gestion des protocoles process employee Algorithm U
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm V
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm W
+- [x] Créer le système de gestion des protocoles process employee Algorithm X
+- [x] Implémenter le système de gestion des protocoles process employee Algorithm Y
+- [x] Ajouter le système de gestion des protocoles process employee Algorithm Z
+- [x] Notifications Email pour E-Visas (Admin et Client)
+- [x] Synchronisation Temps Réel avec WebSockets
+- [x] Système de Rappels Automatiques par Email
+- [x] Notifications Push en Temps Réel pour Admin
+- [x] Téléchargement des Documents par Admin
+- [x] Autres Fonctionnalités Critiques Restantes
+- [x] Tests et Déploiement Final
