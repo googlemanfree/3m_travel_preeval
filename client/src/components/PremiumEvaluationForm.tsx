@@ -1,822 +1,527 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, CheckCircle2 } from "lucide-react";
-import { useLocation } from "wouter";
-import PremiumEvaluationFormSteps47 from "./PremiumEvaluationFormSteps47";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
+/**
+ * Routeur tRPC — Authentification Admin OTP
+ * Système d'authentification séparé pour les administrateurs
+ */
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type ProjectType = "student" | "visitor" | "worker" | "permanent_residence" | "family_reunification" | "other";
+import { publicProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { getDb } from "../db";
+import { adminAccounts } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { sendEmail } from "../emailService";
 
-interface FormData {
-  // Étape 1: Choix principal
-  destination: string;
-  projectType: ProjectType;
-  currentCountry: string;
-  communicationLanguage: "fr" | "en";
-
-  // Étape 2: Identité, Passeport, Famille
-  fullName: string;
-  gender: string;
-  dateOfBirth: string;
-  nationality: string;
-  whatsappPhone: string;
-  email: string;
-  passportNumber: string;
-  passportExpiryDate: string;
-  passportCopyAvailable: string;
-  maritalStatus: string;
-  numberOfChildren: number;
-  familyInDestination: string;
-
-  // Étape 3: Études, Emploi, Finances
-  educationLevel: string;
-  fieldOfStudy: string;
-  currentProfession: string;
-  yearsOfExperience: number;
-  monthlyIncome: string;
-  bankBalance: string;
-  sponsor: string;
-
-  // Étape 4: Voyage & Admissibilité
-  countriesVisited: string;
-  visaRefusals: string;
-  criminalRecord: string;
-
-  // Étape 5: Sections conditionnelles
-  desiredEducationLevel: string;
-  admissionLetterAvailable: boolean;
-  targetInstitution: string;
-  intendedStartDate: string;
-  studyBudget: number;
-  academicProject: string;
-  visitType: "tourism" | "family" | "business" | "event" | "other" | "";
-  plannedStayDuration: string;
-  estimatedTravelDate: string;
-  tiesInHomeCountry: string;
-  desiredPosition: string;
-  targetCity: string;
-  languageLevel: string;
-  jobOfferAvailable: boolean;
-  previousExperiences: string;
-  targetCategory: string;
-  age: number;
-  experienceYears: number;
-  provincialNomination: boolean;
-  policeCertificatesAvailable: boolean;
-  availableFunds: number;
-
-  // Étape 6: Documents
-  uploadedFiles: any[];
-
-  // Autres
-  [key: string]: any;
+// Générer un code OTP aléatoire à 6 chiffres
+function generateOTP(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-const DESTINATIONS = [
-  "Canada",
-  "France",
-  "Allemagne",
-  "Belgique",
-  "États-Unis",
-  "Royaume-Uni",
-  "Italie",
-  "Espagne",
-  "Suisse",
-  "Pays-Bas",
-  "Dubaï / EAU",
-  "Australie",
-  "Autre",
-];
+// Générer un token de session
+function generateSessionToken(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
-const PROJECT_TYPES = [
-  { value: "student", label: "Permis d'Études / Visa Étudiant" },
-  { value: "visitor", label: "Visiteur / Tourisme / Affaires" },
-  { value: "worker", label: "Permis de Travail / Emploi" },
-  { value: "permanent_residence", label: "Résidence Permanente / Express Entry" },
-  { value: "family_reunification", label: "Regroupement Familial / Parrainage" },
-  { value: "other", label: "Autre projet" },
-];
+/**
+ * Récupérer la liste des emails admin autorisés
+ */
+export async function getAuthorizedAdminEmails() {
+  const db = await getDb();
+  if (!db) return [];
 
-const EDUCATION_LEVELS = [
-  "Baccalauréat / Secondaire",
-  "BTS / DUT (Bac+2)",
-  "Licence / Bachelor (Bac+3)",
-  "Master (Bac+5)",
-  "Doctorat",
-];
+  try {
+    const admins = await db
+      .select({ email: adminAccounts.email, fullName: adminAccounts.fullName, adminType: adminAccounts.adminType })
+      .from(adminAccounts)
+      .where(eq(adminAccounts.status, "active"));
+    return admins;
+  } catch (err) {
+    console.error("[Admin Auth] Error fetching authorized emails:", err);
+    return [];
+  }
+}
 
-const MARITAL_STATUS = [
-  "Célibataire",
-  "Marié(e)",
-  "Divorcé(e)",
-  "Veuf/Veuve",
-  "Union civile",
-];
+/**
+ * Valide un sessionToken admin et retourne le compte admin correspondant.
+ * Lève une TRPCError UNAUTHORIZED si la session est invalide/expirée.
+ */
+export async function requireValidAdminSession(sessionToken: string) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
-export default function PremiumEvaluationForm() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const rows = await db
+    .select()
+    .from(adminAccounts)
+    .where(eq(adminAccounts.sessionToken, sessionToken))
+    .limit(1);
 
-  const [formData, setFormData] = useState<FormData>({
-    destination: "",
-    projectType: "student",
-    currentCountry: "",
-    communicationLanguage: "fr",
-    fullName: "",
-    gender: "",
-    dateOfBirth: "",
-    nationality: "",
-    whatsappPhone: "",
-    email: "",
-    passportNumber: "",
-    passportExpiryDate: "",
-    passportCopyAvailable: "",
-    maritalStatus: "",
-    numberOfChildren: 0,
-    familyInDestination: "",
-    educationLevel: "",
-    fieldOfStudy: "",
-    currentProfession: "",
-    yearsOfExperience: 0,
-    monthlyIncome: "",
-    bankBalance: "",
-    sponsor: "",
-    countriesVisited: "",
-    visaRefusals: "",
-    criminalRecord: "",
-    desiredEducationLevel: "",
-    admissionLetterAvailable: false,
-    targetInstitution: "",
-    intendedStartDate: "",
-    studyBudget: 0,
-    academicProject: "",
-    visitType: "" as any,
-    plannedStayDuration: "",
-    estimatedTravelDate: "",
-    tiesInHomeCountry: "",
-    desiredPosition: "",
-    targetCity: "",
-    languageLevel: "",
-    jobOfferAvailable: false,
-    previousExperiences: "",
-    targetCategory: "",
-    age: 0,
-    experienceYears: 0,
-    provincialNomination: false,
-    policeCertificatesAvailable: false,
-    availableFunds: 0,
-    uploadedFiles: [],
-  });
-
-  const submitMutation = trpc.profileEvaluation.submit.useMutation();
-
-  const handleInputChange = (field: string, value: any) => {
-    // Gestion spéciale pour la navigation vers une étape spécifique
-    if (field === '_goToStep') {
-      setCurrentStep(value);
-      return;
-    }
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const validateStep = (step: number): boolean => {
-    if (step === 1) {
-      return !!(formData.destination && formData.projectType && formData.currentCountry);
-    }
-    if (step === 2) {
-      return !!(
-        formData.fullName &&
-        formData.gender &&
-        formData.dateOfBirth &&
-        formData.nationality &&
-        formData.whatsappPhone &&
-        formData.email &&
-        formData.passportNumber &&
-        formData.passportExpiryDate &&
-        formData.maritalStatus
-      );
-    }
-    if (step === 3) {
-      return !!(
-        formData.educationLevel &&
-        formData.fieldOfStudy &&
-        formData.currentProfession &&
-        formData.yearsOfExperience >= 0 &&
-        formData.monthlyIncome &&
-        formData.bankBalance &&
-        formData.sponsor
-      );
-    }
-    return true;
-  };
-
-  const handleNext = () => {
-    if (validateStep(currentStep)) {
-      if (currentStep < 7) {
-        setCurrentStep(currentStep + 1);
-      }
-    } else {
-      toast.error("Veuillez remplir tous les champs obligatoires");
-    }
-  };
-
-  const handlePrev = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const [, setLocation] = useLocation();
-
-  const handleSubmit = async () => {
-    if (!validateStep(currentStep)) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await submitMutation.mutateAsync({
-        destination: formData.destination,
-        projectType: formData.projectType,
-        currentCountry: formData.currentCountry,
-        communicationLanguage: formData.communicationLanguage,
-        fullName: formData.fullName,
-        gender: (formData.gender === "Masculin" ? "homme" : formData.gender === "Féminin" ? "femme" : "autre") as any,
-        dateOfBirth: formData.dateOfBirth,
-        nationality: formData.nationality,
-        whatsappPhone: formData.whatsappPhone,
-        email: formData.email,
-        passportNumber: formData.passportNumber,
-        passportExpiryDate: formData.passportExpiryDate,
-        passportCopyAvailable: formData.passportCopyAvailable === "Oui",
-        maritalStatus: (formData.maritalStatus === "Célibataire" ? "single" : formData.maritalStatus === "Marié(e)" ? "married" : formData.maritalStatus === "Divorcé(e)" ? "divorced" : formData.maritalStatus === "Veuf/Veuve" ? "widowed" : "civil_union") as any,
-        numberOfChildren: formData.numberOfChildren,
-        familyInDestination: formData.familyInDestination === "Oui",
-        educationLevel: formData.educationLevel,
-        fieldOfStudy: formData.fieldOfStudy,
-        currentProfession: formData.currentProfession,
-              yearsOfExperience: formData.yearsOfExperience,
-              monthlyIncome: parseInt(formData.monthlyIncome) || 0,
-              bankBalance: parseInt(formData.bankBalance) || 0,
-              hasSponsor: formData.sponsor !== "Auto-prise en charge",
-              sponsorName: formData.sponsor,
-              countriesVisited: formData.countriesVisited,
-              visaRefusals: formData.visaRefusals === "Oui",
-              criminalRecord: formData.criminalRecord === "Oui",
-              desiredEducationLevel: formData.desiredEducationLevel,
-              admissionLetterAvailable: formData.admissionLetterAvailable,
-              targetInstitution: formData.targetInstitution,
-              intendedStartDate: formData.intendedStartDate,
-              studyBudget: formData.studyBudget,
-              academicProject: formData.academicProject,
-              visitType: (formData.visitType || "other") as any,
-              plannedStayDuration: formData.plannedStayDuration,
-              estimatedTravelDate: formData.estimatedTravelDate,
-              tiesInHomeCountry: formData.tiesInHomeCountry,
-              desiredPosition: formData.desiredPosition,
-              targetCity: formData.targetCity,
-              languageLevel: formData.languageLevel,
-              jobOfferAvailable: formData.jobOfferAvailable,
-              targetCategory: formData.targetCategory,
-              age: formData.age,
-              experienceYears: formData.experienceYears,
-              provincialNomination: formData.provincialNomination,
-              policeCertificatesAvailable: formData.policeCertificatesAvailable,
-              availableFunds: formData.availableFunds,
-      });
-      setIsSuccess(true);
-      toast.success("Formulaire soumis avec succès !");
-      // Rediriger vers la page de résultat après 2 secondes
-      setTimeout(() => {
-        setLocation(`/evaluation-result?destination=${formData.destination}&projectType=${formData.projectType}`);
-      }, 2000);
-    } catch (error) {
-      toast.error("Erreur lors de la soumission du formulaire");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const progressPercentage = (currentStep / 7) * 100;
-
-  if (isSuccess) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-20"
-      >
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 className="w-10 h-10 text-green-600" />
-        </div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-3">Formulaire soumis !</h2>
-        <p className="text-gray-600 max-w-md mx-auto mb-8">
-          Votre évaluation de profil a été reçue. Notre équipe analysera votre dossier et vous contactera sous 24 heures.
-        </p>
-        <Button
-          onClick={() => {
-            setIsSuccess(false);
-            setCurrentStep(1);
-            setFormData({
-              destination: "",
-              projectType: "student",
-              currentCountry: "",
-              communicationLanguage: "fr",
-              fullName: "",
-              gender: "",
-              dateOfBirth: "",
-              nationality: "",
-              whatsappPhone: "",
-              email: "",
-              passportNumber: "",
-              passportExpiryDate: "",
-              passportCopyAvailable: "",
-              maritalStatus: "",
-              numberOfChildren: 0,
-              familyInDestination: "",
-              educationLevel: "",
-              fieldOfStudy: "",
-              currentProfession: "",
-              yearsOfExperience: 0,
-              monthlyIncome: "",
-              bankBalance: "",
-              sponsor: "",
-              countriesVisited: "",
-              visaRefusals: "",
-              criminalRecord: "",
-              desiredEducationLevel: "",
-              admissionLetterAvailable: false,
-              targetInstitution: "",
-              intendedStartDate: "",
-              studyBudget: 0,
-              academicProject: "",
-              visitType: "" as any,
-              plannedStayDuration: "",
-              estimatedTravelDate: "",
-              tiesInHomeCountry: "",
-              desiredPosition: "",
-              targetCity: "",
-              languageLevel: "",
-              jobOfferAvailable: false,
-              previousExperiences: "",
-              targetCategory: "",
-              age: 0,
-              experienceYears: 0,
-              provincialNomination: false,
-              policeCertificatesAvailable: false,
-              availableFunds: 0,
-              uploadedFiles: [],
-            });
-          }}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          Nouvelle évaluation
-        </Button>
-      </motion.div>
-    );
+  if (rows.length === 0) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Session invalide" });
   }
 
-  return (
-    <Card className="w-full max-w-4xl mx-auto border-blue-100 shadow-xl overflow-hidden">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-10 text-white text-center">
-        <h1 className="text-4xl font-bold mb-2">Évaluation de Profil</h1>
-        <p className="text-blue-100 text-lg">
-          Choisissez votre destination et votre projet pour une analyse personnalisée
-        </p>
-      </div>
+  const admin = rows[0];
+  if (!admin.sessionExpiresAt || new Date() > admin.sessionExpiresAt) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée" });
+  }
 
-      {/* Progress Bar */}
-      <div className="bg-white px-8 py-6 border-b border-gray-200">
-        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
-          <motion.div
-            className="h-full bg-blue-600"
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercentage}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
-        <div className="text-sm text-gray-600 text-center">
-          Étape {currentStep} sur 7
-        </div>
-      </div>
-
-      {/* Form Body */}
-      <div className="p-8">
-        <AnimatePresence mode="wait">
-          {/* ÉTAPE 1: Choix Principal */}
-          {currentStep === 1 && (
-            <motion.div
-              key="step-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Orientation & Projet</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Pays de destination visé <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.destination} onValueChange={(v) => handleInputChange("destination", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez un pays" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DESTINATIONS.map((dest) => (
-                        <SelectItem key={dest} value={dest}>
-                          {dest}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Type de projet <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.projectType} onValueChange={(v) => handleInputChange("projectType", v as ProjectType)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez le type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PROJECT_TYPES.map((pt) => (
-                        <SelectItem key={pt.value} value={pt.value}>
-                          {pt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Ville et Pays de résidence actuelle <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Ex: Douala, Cameroun"
-                    value={formData.currentCountry}
-                    onChange={(e) => handleInputChange("currentCountry", e.target.value)}
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Langue de communication <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.communicationLanguage} onValueChange={(v) => handleInputChange("communicationLanguage", v)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="en">Anglais</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 2: Identité, Passeport, Famille */}
-          {currentStep === 2 && (
-            <motion.div
-              key="step-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">2. Identité, Passeport & Famille</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Nom complet <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Comme sur le passeport"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Sexe <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.gender} onValueChange={(v) => handleInputChange("gender", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Masculin">Masculin</SelectItem>
-                      <SelectItem value="Féminin">Féminin</SelectItem>
-                      <SelectItem value="Autre">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Date de naissance <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Nationalité <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Ex: Camerounaise"
-                    value={formData.nationality}
-                    onChange={(e) => handleInputChange("nationality", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Téléphone WhatsApp <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="+237 6XXXXXXXX"
-                    value={formData.whatsappPhone}
-                    onChange={(e) => handleInputChange("whatsappPhone", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Email <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Numéro de passeport <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Ex: AB123456"
-                    value={formData.passportNumber}
-                    onChange={(e) => handleInputChange("passportNumber", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Date d'expiration passeport <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="date"
-                    value={formData.passportExpiryDate}
-                    onChange={(e) => handleInputChange("passportExpiryDate", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Copie passeport disponible ? <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.passportCopyAvailable} onValueChange={(v) => handleInputChange("passportCopyAvailable", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Oui">Oui</SelectItem>
-                      <SelectItem value="En cours">En cours</SelectItem>
-                      <SelectItem value="Non">Non</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    État civil <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.maritalStatus} onValueChange={(v) => handleInputChange("maritalStatus", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MARITAL_STATUS.map((ms) => (
-                        <SelectItem key={ms} value={ms}>
-                          {ms}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Nombre d'enfants / Personnes à charge
-                  </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.numberOfChildren}
-                    onChange={(e) => handleInputChange("numberOfChildren", parseInt(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Famille dans le pays cible ?
-                  </Label>
-                  <Select value={formData.familyInDestination} onValueChange={(v) => handleInputChange("familyInDestination", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Non">Non</SelectItem>
-                      <SelectItem value="Oui">Oui - Citoyen / Résident</SelectItem>
-                      <SelectItem value="Oui - Étudiant">Oui - Étudiant / Travailleur</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 3: Études, Emploi, Finances */}
-          {currentStep === 3 && (
-            <motion.div
-              key="step-3"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-            >
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Études, Emploi & Finances</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Niveau d'études <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.educationLevel} onValueChange={(v) => handleInputChange("educationLevel", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EDUCATION_LEVELS.map((el) => (
-                        <SelectItem key={el} value={el}>
-                          {el}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Domaine d'études <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Ex: Informatique, Droit"
-                    value={formData.fieldOfStudy}
-                    onChange={(e) => handleInputChange("fieldOfStudy", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Profession actuelle <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Ex: Ingénieur, Enseignant"
-                    value={formData.currentProfession}
-                    onChange={(e) => handleInputChange("currentProfession", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Années d'expérience <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData.yearsOfExperience}
-                    onChange={(e) => handleInputChange("yearsOfExperience", parseInt(e.target.value) || 0)}
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Revenu mensuel estimé <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.monthlyIncome} onValueChange={(v) => handleInputChange("monthlyIncome", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Moins de 300 000 FCFA">Moins de 300 000 FCFA (&lt; 500 €)</SelectItem>
-                      <SelectItem value="300 000 à 750 000 FCFA">300 000 à 750 000 FCFA (500 € - 1 150 €)</SelectItem>
-                      <SelectItem value="Plus de 750 000 FCFA">Plus de 750 000 FCFA (&gt; 1 150 €)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Épargne bancaire <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.bankBalance} onValueChange={(v) => handleInputChange("bankBalance", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Moins de 3 Millions FCFA">Moins de 3 M FCFA (&lt; 4 500 €)</SelectItem>
-                      <SelectItem value="3M à 7M FCFA">3 M à 7 M FCFA (4 500 € - 10 000 €)</SelectItem>
-                      <SelectItem value="7M à 15M FCFA">7 M à 15 M FCFA (10 000 € - 23 000 €)</SelectItem>
-                      <SelectItem value="Plus de 15 Millions FCFA">Plus de 15 M FCFA (&gt; 23 000 €)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <Label className="text-sm font-semibold mb-2 block">
-                    Garant / Sponsor financier <span className="text-red-500">*</span>
-                  </Label>
-                  <Select value={formData.sponsor} onValueChange={(v) => handleInputChange("sponsor", v)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionnez" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Auto-prise en charge">Auto-prise en charge</SelectItem>
-                      <SelectItem value="Parents">Parents / Famille directe</SelectItem>
-                      <SelectItem value="Tuteur Étranger">Tuteur à l'étranger</SelectItem>
-                      <SelectItem value="Bourse">Bourse d'études accordée</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ÉTAPE 4-7: Sections conditionnelles et documents */}
-          {currentStep > 3 && currentStep <= 7 && (
-            <PremiumEvaluationFormSteps47
-              formData={formData}
-              onFormDataChange={handleInputChange}
-              onNext={handleNext}
-              onPrev={handlePrev}
-              currentStep={currentStep}
-            />
-          )}
-        </AnimatePresence>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={handlePrev}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Précédent
-          </Button>
-
-          {currentStep < 7 ? (
-            <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
-              Suivant
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {isSubmitting ? "Envoi en cours..." : "Soumettre"}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
+  return admin;
 }
+
+export const adminAuthRouter = router({
+  /**
+   * Récupérer la liste des emails admin autorisés
+   */
+  getAuthorizedEmails: publicProcedure
+    .query(async () => {
+      return await getAuthorizedAdminEmails();
+    }),
+
+  /**
+   * Démander un code OTP par email
+   */
+  requestOTP: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        // Vérifier que l'email existe dans les comptes admin
+        const admin = await db
+          .select()
+          .from(adminAccounts)
+          .where(eq(adminAccounts.email, input.email))
+          .limit(1);
+
+        if (admin.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Cet email n'est pas enregistré comme compte administrateur",
+          });
+        }
+
+        if (admin[0].status !== "active") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Ce compte administrateur est inactif",
+          });
+        }
+
+        // Générer un code OTP
+        const otpCode = generateOTP();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // Expire dans 10 minutes
+
+        // Sauvegarder le code OTP
+        await db
+          .update(adminAccounts)
+          .set({
+            otpCode,
+            otpExpiresAt,
+            otpAttempts: 0,
+          })
+          .where(eq(adminAccounts.email, input.email));
+
+        // Envoyer l'email avec le code OTP
+        try {
+          const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1e40af;">Connexion Admin 3M Travel</h2>
+            <p>Bonjour ${admin[0].fullName},</p>
+            <p>Voici votre code de connexion sécurisé :</p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <h1 style="color: #1e40af; letter-spacing: 5px; margin: 0;">${otpCode}</h1>
+            </div>
+            <p style="color: #666;">Ce code expire dans <strong>10 minutes</strong>.</p>
+            <p style="color: #666;">Si vous n'avez pas demandé cette connexion, ignorez cet email.</p>
+            <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+          </div>`;
+
+          await sendEmail(
+            input.email,
+            "🔐 Votre code OTP - 3M Travel Admin",
+            htmlContent
+          );
+        } catch (emailErr) {
+          console.error("[Admin Auth] Email send failed:", emailErr);
+          // Continue même si l'email échoue (pour le développement)
+        }
+
+        return {
+          success: true,
+          message: "Code OTP envoyé à votre email",
+          adminType: admin[0].adminType,
+        };
+      } catch (err) {
+        console.error("[Admin Auth] Request OTP error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la demande du code OTP",
+        });
+      }
+    }),
+
+  /**
+   * Vérifier le code OTP et créer une session
+   */
+  verifyOTP: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+      otpCode: z.string().length(6),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const admin = await db
+          .select()
+          .from(adminAccounts)
+          .where(eq(adminAccounts.email, input.email))
+          .limit(1);
+
+        if (admin.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Compte administrateur non trouvé",
+          });
+        }
+
+        // Vérifier que le code OTP n'a pas expiré
+        if (!admin[0].otpExpiresAt || new Date() > admin[0].otpExpiresAt) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Code OTP expiré. Demandez un nouveau code.",
+          });
+        }
+
+        // Vérifier le code OTP
+        if (admin[0].otpCode !== input.otpCode) {
+          // Incrémenter le compteur de tentatives
+          const newAttempts = (admin[0].otpAttempts || 0) + 1;
+
+          if (newAttempts >= 5) {
+            // Bloquer le compte après 5 tentatives échouées
+            await db
+              .update(adminAccounts)
+              .set({ status: "suspended" })
+              .where(eq(adminAccounts.email, input.email));
+
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "Trop de tentatives échouées. Compte temporairement suspendu.",
+            });
+          }
+
+          await db
+            .update(adminAccounts)
+            .set({ otpAttempts: newAttempts })
+            .where(eq(adminAccounts.email, input.email));
+
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Code OTP incorrect. ${5 - newAttempts} tentatives restantes.`,
+          });
+        }
+
+        // Générer un token de session
+        const sessionToken = generateSessionToken();
+        const sessionExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
+        const now = new Date();
+
+        // Mettre à jour le compte avec la session
+        await db
+          .update(adminAccounts)
+          .set({
+            sessionToken,
+            sessionExpiresAt,
+            otpCode: null,
+            otpExpiresAt: null,
+            otpAttempts: 0,
+            lastLoginAt: now,
+            lastActivityAt: now,
+          })
+          .where(eq(adminAccounts.email, input.email));
+
+        return {
+          success: true,
+          sessionToken,
+          adminType: admin[0].adminType,
+          fullName: admin[0].fullName,
+          email: admin[0].email,
+          message: "Connexion réussie",
+        };
+      } catch (err) {
+        console.error("[Admin Auth] Verify OTP error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la vérification du code OTP",
+        });
+      }
+    }),
+
+  /**
+   * Vérifier la session admin actuelle
+   */
+  verifySession: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const admin = await db
+          .select()
+          .from(adminAccounts)
+          .where(eq(adminAccounts.sessionToken, input.sessionToken))
+          .limit(1);
+
+        if (admin.length === 0) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session invalide",
+          });
+        }
+
+        // Vérifier que la session n'a pas expiré
+        if (!admin[0].sessionExpiresAt || new Date() > admin[0].sessionExpiresAt) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session expirée",
+          });
+        }
+
+        // Vérifier l'inactivité (12 heures)
+        const lastActivity = admin[0].lastActivityAt ? new Date(admin[0].lastActivityAt) : new Date();
+        const now = new Date();
+        const inactivityMinutes = (now.getTime() - lastActivity.getTime()) / (1000 * 60);
+        const INACTIVITY_THRESHOLD_MINUTES = 12 * 60; // 12 heures
+
+        if (inactivityMinutes > INACTIVITY_THRESHOLD_MINUTES) {
+          // Invalider la session après 12h d'inactivité
+          await db
+            .update(adminAccounts)
+            .set({
+              sessionToken: null,
+              sessionExpiresAt: null,
+            })
+            .where(eq(adminAccounts.email, admin[0].email));
+
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Session expirée après 12 heures d'inactivité. Veuillez vous reconnecter.",
+          });
+        }
+
+        // Mettre à jour l'heure de la dernière activité
+        await db
+          .update(adminAccounts)
+          .set({ lastActivityAt: now })
+          .where(eq(adminAccounts.email, admin[0].email));
+
+        return {
+          success: true,
+          admin: {
+            id: admin[0].id,
+            email: admin[0].email,
+            adminType: admin[0].adminType,
+            fullName: admin[0].fullName,
+          },
+        };
+      } catch (err) {
+        console.error("[Admin Auth] Verify session error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la vérification de la session",
+        });
+      }
+    }),
+
+  /**
+   * Déconnexion admin
+   */
+  logout: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(adminAccounts)
+          .set({
+            sessionToken: null,
+            sessionExpiresAt: null,
+          })
+          .where(eq(adminAccounts.sessionToken, input.sessionToken));
+
+        return {
+          success: true,
+          message: "Déconnexion réussie",
+        };
+      } catch (err) {
+        console.error("[Admin Auth] Logout error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la déconnexion",
+        });
+      }
+    }),
+
+  /**
+   * Lister tous les comptes administrateurs (réservé aux admins connectés)
+   */
+  listAdmins: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const admins = await db
+        .select({
+          id: adminAccounts.id,
+          email: adminAccounts.email,
+          fullName: adminAccounts.fullName,
+          phone: adminAccounts.phone,
+          adminType: adminAccounts.adminType,
+          status: adminAccounts.status,
+          createdAt: adminAccounts.createdAt,
+          lastLoginAt: adminAccounts.lastLoginAt,
+        })
+        .from(adminAccounts);
+
+      return { success: true, admins };
+    }),
+
+  /**
+   * Inviter (créer) un nouveau compte administrateur et l'informer par email.
+   * L'authentification admin se fait ensuite normalement par OTP — pas de mot
+   * de passe ni de lien d'activation à part : dès que le compte existe, il
+   * peut se connecter sur /admin/login avec son email.
+   */
+  inviteAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      email: z.string().email(),
+      fullName: z.string().min(2),
+      phone: z.string().optional(),
+      adminType: z.enum(["evaluation", "accompagnement", "procedures"]),
+    }))
+    .mutation(async ({ input }) => {
+      const inviter = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const existing = await db
+        .select({ id: adminAccounts.id })
+        .from(adminAccounts)
+        .where(eq(adminAccounts.email, input.email))
+        .limit(1);
+
+      if (existing.length > 0) {
+        throw new TRPCError({ code: "CONFLICT", message: "Un compte admin existe déjà avec cet email." });
+      }
+
+      await db.insert(adminAccounts).values({
+        email: input.email,
+        fullName: input.fullName,
+        phone: input.phone,
+        adminType: input.adminType,
+        status: "active",
+      });
+
+      try {
+        const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+        const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">Accès Administrateur — 3M Travel</h2>
+          <p>Bonjour ${input.fullName},</p>
+          <p>${inviter.fullName} vous a donné accès à l'espace administrateur de 3M Travel & Services, avec le rôle <strong>${input.adminType}</strong>.</p>
+          <p>Pour vous connecter, rendez-vous sur la page ci-dessous et entrez votre email : un code de connexion à usage unique vous sera envoyé automatiquement, aucun mot de passe n'est nécessaire.</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${loginUrl}" style="background-color: #1e40af; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se connecter</a>
+          </div>
+          <p style="color: #666;">Si vous ne vous attendiez pas à cet accès, contactez l'équipe 3M Travel.</p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+        </div>`;
+
+        await sendEmail(input.email, "🔐 Votre accès administrateur - 3M Travel", htmlContent);
+      } catch (emailErr) {
+        console.error("[Admin Auth] Invite email send failed:", emailErr);
+        // Le compte est créé même si l'email échoue — on le signale à l'appelant.
+        return {
+          success: true,
+          emailSent: false,
+          message: "Compte créé, mais l'email n'a pas pu être envoyé. Communiquez l'accès manuellement.",
+        };
+      }
+
+      return { success: true, emailSent: true, message: "Invitation envoyée avec succès." };
+    }),
+
+  /**
+   * Renvoyer l'email d'information d'accès à un administrateur existant.
+   */
+  resendInvite: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      email: z.string().email(),
+      customSubject: z.string().optional(),
+      customBody: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const rows = await db
+        .select()
+        .from(adminAccounts)
+        .where(eq(adminAccounts.email, input.email))
+        .limit(1);
+
+      if (rows.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte admin avec cet email." });
+      }
+
+      const admin = rows[0];
+
+      try {
+        const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+        const subject = input.customSubject || "🔐 Rappel — Accès administrateur 3M Travel";
+        const bodyText = input.customBody
+          ? input.customBody.replace(/\{inviteLink\}/g, loginUrl)
+          : `Pour rappel, vous avez accès à l'espace administrateur de 3M Travel & Services.`;
+        const htmlContent = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #1e40af;">Rappel — Accès Administrateur 3M Travel</h2>
+          <p>Bonjour ${admin.fullName},</p>
+          <p style="white-space: pre-line;">${bodyText}</p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${loginUrl}" style="background-color: #1e40af; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Se connecter</a>
+          </div>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+          <p style="color: #999; font-size: 12px;">3M Travel & Services - Pré-évaluation Visa & Immigration</p>
+        </div>`;
+
+        await sendEmail(input.email, subject, htmlContent);
+      } catch (emailErr) {
+        console.error("[Admin Auth] Resend invite email failed:", emailErr);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Échec de l'envoi de l'email." });
+      }
+
+      return { success: true, message: "Email renvoyé avec succès." };
+    }),
+});

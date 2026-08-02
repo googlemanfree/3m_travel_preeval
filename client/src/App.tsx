@@ -40,9 +40,9 @@ import Contact from "./pages/Contact";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import DossierConfirmation from "./pages/DossierConfirmation";
 import ConditionsUtilisation from "./pages/ConditionsUtilisation";
-import AdminEvaluation from "./pages/AdminEvaluation";
-import AdminAccompagnement from "./pages/AdminAccompagnement";
-import AdminProcedures from "./pages/AdminProcedures";
+// import AdminEvaluation from "./pages/AdminEvaluation";
+// import AdminAccompagnement from "./pages/AdminAccompagnement";
+// import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
@@ -236,7 +236,7 @@ function Router() {
       <Route path={"/admin"}>
         {() => { window.location.replace('/'); return null; }}
       </Route>
-      <Route path={"/admin/evaluation"}>
+      {/* <Route path={"/admin/evaluation"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluation />
         </AdminGuard>
@@ -245,12 +245,12 @@ function Router() {
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminAccompagnement />
         </AdminGuard>
-      </Route>
-      <Route path={"/admin/procedures"}>
+      </Route> */}
+      {/* <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
         </AdminGuard>
-      </Route>
+      </Route> */}
       <Route path={"/admin/evaluations"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluations />
