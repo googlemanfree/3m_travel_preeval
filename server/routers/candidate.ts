@@ -102,20 +102,27 @@ export const candidateRouter = router({
       // Générer un token de vérification JWT (24h)
       const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
 
-      // Preparer les valeurs minimales pour l'insertion
-      const candidateData = {
-        fullName: input.fullName.trim(),
-        email: input.email.toLowerCase().trim(),
-        passwordHash,
-        emailVerified: false,
-        verificationToken,
-        verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        passwordResetToken: null,
-        passwordResetExpiresAt: null,
-      };
-
-      // Inserer avec TOUTES les colonnes remplies
-      await db.insert(candidates).values(candidateData);
+      // Utiliser une requete SQL brute pour eviter les erreurs avec default
+      const cleanEmail = input.email.toLowerCase().trim();
+      const now = new Date();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      
+      const result = await db.execute(
+        'INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          input.fullName.trim(),
+          cleanEmail,
+          passwordHash,
+          false,
+          verificationToken,
+          expiresAt,
+          null,
+          null,
+          now,
+          now,
+          now
+        ]
+      );
 
       // Recuperer le candidateId insere
       const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
