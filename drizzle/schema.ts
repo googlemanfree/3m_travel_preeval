@@ -62,45 +62,14 @@ export type InsertEvaluation = typeof evaluations.$inferInsert;
  */
 export const candidates = mysqlTable("candidates", {
   id: int("id").autoincrement().primaryKey(),
-  // Identité
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull().unique(),
-  phone: varchar("phone", { length: 50 }),
-  nationality: varchar("nationality", { length: 100 }),
-  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
-  // Auth
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
-  // Dossier d'immigration
-  destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
-  visaType: varchar("visaType", { length: 100 }),
-  dossierStatus: mysqlEnum("dossierStatus", [
-    "nouveau",
-    "evaluation",
-    "documents",
-    "traitement",
-    "soumis",
-    "approuve",
-    "refuse",
-  ]).default("nouveau").notNull(),
-  dossierNote: text("dossierNote"),         // Note interne du conseiller
-  formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
-  // Scoring
-  scoreResult: varchar("scoreResult", { length: 50 }),
-  scoreDetails: text("scoreDetails"),       // JSON des détails du scoring
-  // Profil
-  educationLevel: varchar("educationLevel", { length: 100 }),
-  employmentStatus: varchar("employmentStatus", { length: 100 }),
-  languageLevel: varchar("languageLevel", { length: 100 }),
-  // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
   verificationExpiresAt: timestamp("verificationExpiresAt"),
-  emailOtp: varchar("emailOtp", { length: 10 }),
-  emailOtpExpiresAt: timestamp("emailOtpExpiresAt"),
-  // Réinitialisation de mot de passe
   passwordResetToken: varchar("passwordResetToken", { length: 128 }),
   passwordResetExpiresAt: timestamp("passwordResetExpiresAt"),
-  // Timestamps
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastLoginAt: timestamp("lastLoginAt"),
@@ -1197,6 +1166,124 @@ export const dossierProgress = mysqlTable("dossier_progress", {
 });
 export type DossierProgress = typeof dossierProgress.$inferSelect;
 export type InsertDossierProgress = typeof dossierProgress.$inferInsert;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E-VISAS — TOUS LES PAYS DU MONDE
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Table des e-visas disponibles pour tous les pays du monde
+ * Contient les informations complètes de chaque pays et les frais d'accompagnement
+ */
+export const evisas = mysqlTable("evisas", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Identifiant du pays
+  countryCode: varchar("countryCode", { length: 3 }).notNull().unique(),  // Code ISO 3166-1 alpha-3
+  countryName: varchar("countryName", { length: 100 }).notNull(),
+  countryFlag: varchar("countryFlag", { length: 10 }),  // Emoji du drapeau
+  
+  // Localisation
+  continent: varchar("continent", { length: 50 }).notNull(),
+  region: varchar("region", { length: 100 }),
+  
+  // Description et informations
+  description: text("description"),  // Description générale du pays et de l'e-visa
+  evisaType: varchar("evisaType", { length: 100 }).notNull(),  // Type d'e-visa (tourisme, affaires, etc.)
+  
+  // Coûts
+  visaFee: int("visaFee").notNull().default(0),  // Frais de visa en XOF
+  accompanimentFee: int("accompanimentFee").notNull().default(25000),  // Frais d'accompagnement (25 000 XOF)
+  totalCost: int("totalCost").notNull().default(25000),  // Coût total
+  currency: varchar("currency", { length: 10 }).default("XOF").notNull(),
+  
+  // Délais et validité
+  processingTime: varchar("processingTime", { length: 100 }).notNull(),  // Délai de traitement (ex: "3-5 jours")
+  validity: varchar("validity", { length: 100 }).notNull(),  // Validité du visa (ex: "90 jours")
+  stayDuration: varchar("stayDuration", { length: 100 }),  // Durée de séjour autorisée
+  
+  // Exigences et documents
+  requirements: text("requirements"),  // JSON array des exigences
+  documents: text("documents"),  // JSON array des documents requis
+  
+  // Conditions d'éligibilité
+  eligibility: text("eligibility"),  // JSON array des conditions d'éligibilité
+  restrictions: text("restrictions"),  // JSON array des restrictions
+  
+  // Avantages et informations supplémentaires
+  advantages: text("advantages"),  // JSON array des avantages
+  additionalInfo: text("additionalInfo"),  // Informations supplémentaires
+  
+  // Statut
+  isActive: boolean("isActive").default(true).notNull(),
+  isPopular: boolean("isPopular").default(false).notNull(),  // Marquer les e-visas populaires
+  
+  // Métadonnées
+  lastUpdatedBy: varchar("lastUpdatedBy", { length: 255 }),  // Qui a mis à jour les informations
+  aiGenerated: boolean("aiGenerated").default(false).notNull(),  // Indique si les infos ont été générées par IA
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Evisa = typeof evisas.$inferSelect;
+export type InsertEvisa = typeof evisas.$inferInsert;
+
+/**
+ * Table des demandes e-visa soumises par les utilisateurs
+ * Enregistre les demandes de e-visa pour chaque pays
+ */
+export const evisaRequests = mysqlTable("evisa_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Informations du candidat
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  nationality: varchar("nationality", { length: 100 }),
+  dateOfBirth: varchar("dateOfBirth", { length: 20 }),
+  
+  // Informations e-visa
+  countryCode: varchar("countryCode", { length: 3 }).notNull(),
+  countryName: varchar("countryName", { length: 100 }).notNull(),
+  evisaType: varchar("evisaType", { length: 100 }),
+  
+  // Tarification
+  visaFee: int("visaFee").notNull().default(0),
+  accompanimentFee: int("accompanimentFee").notNull().default(25000),
+  totalCost: int("totalCost").notNull().default(25000),
+  currency: varchar("currency", { length: 10 }).default("XOF").notNull(),
+  
+  // Statut de la demande
+  status: mysqlEnum("status", ["pending", "submitted", "processing", "approved", "rejected", "cancelled"]).default("pending").notNull(),
+  
+  // Numéro de dossier unique
+  dossierNumber: varchar("dossierNumber", { length: 50 }).unique(),  // Format: EVISA-YYYYMMDD-XXXXX
+  
+  // Documents et notes
+  documents: text("documents"),  // JSON array des documents uploadés
+  passportFile: text("passportFile"),  // URL du fichier passeport stocké en S3
+  passportFileName: varchar("passportFileName", { length: 255 }),  // Nom original du fichier passeport
+  passportFileSize: int("passportFileSize"),  // Taille du fichier en bytes
+  passportUploadedAt: timestamp("passportUploadedAt"),  // Date du téléchargement
+  notes: text("notes"),  // Notes du candidat
+  adminNotes: text("adminNotes"),  // Notes de l'administrateur
+  
+  // Synchronisation admin
+  adminAssignedTo: varchar("adminAssignedTo", { length: 255 }),  // Email de l'admin assigné
+  lastStatusUpdateAt: timestamp("lastStatusUpdateAt"),  // Dernière mise à jour du statut
+  lastStatusUpdatedBy: varchar("lastStatusUpdatedBy", { length: 255 }),  // Email de l'admin qui a mis à jour
+  adminNotificationSentAt: timestamp("adminNotificationSentAt"),  // Quand la notification admin a été envoyée
+  clientConfirmationSentAt: timestamp("clientConfirmationSentAt"),  // Quand la confirmation client a été envoyée
+  
+  // Métadonnées
+  submittedAt: timestamp("submittedAt"),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EvisaRequest = typeof evisaRequests.$inferSelect;
+export type InsertEvisaRequest = typeof evisaRequests.$inferInsert;
 
 // ─── Callback Requests ────────────────────────────────────────────────────────────────────────────────
 export const callbackRequests = mysqlTable("callback_requests", {

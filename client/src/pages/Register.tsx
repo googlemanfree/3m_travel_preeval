@@ -51,9 +51,7 @@ export default function Register() {
     fullName: "",
     email: "",
     password: "",
-    phone: "",
-    destination: "canada" as string,
-    nationality: "",
+    confirmPassword: "",
   });
 
   const registerMutation = trpc.candidate.register.useMutation({
@@ -87,13 +85,14 @@ export default function Register() {
       toast.error("Le mot de passe doit contenir au moins un chiffre.");
       return;
     }
+    if (form.password !== form.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas.");
+      return;
+    }
     registerMutation.mutate({
       fullName: form.fullName,
       email: form.email,
       password: form.password,
-      phone: form.phone || undefined,
-      destination: form.destination as any,
-      nationality: form.nationality || undefined,
     });
   }
 
@@ -182,38 +181,7 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Téléphone */}
-            <div>
-              <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone</Label>
-              <div className="relative mt-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="phone"
-                  placeholder="+237 6XX XXX XXX"
-                  value={form.phone}
-                  onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                  className="pl-10"
-                />
-              </div>
-            </div>
 
-            {/* Destination */}
-            <div>
-              <Label className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
-              <div className="relative mt-1">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
-                <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
-                  <SelectTrigger className="pl-10">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DESTINATIONS.map(d => (
-                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             {/* Mot de passe */}
             <div>
@@ -264,6 +232,23 @@ export default function Register() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* Confirmation du mot de passe */}
+            <div>
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">Confirmer le mot de passe *</Label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={form.confirmPassword}
+                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  className="pl-10 pr-10"
+                  required
+                />
+              </div>
             </div>
 
             {/* Bouton */}

@@ -82,9 +82,6 @@ export const candidateRouter = router({
         fullName: z.string().min(2, "Nom requis"),
         email: z.string().email("Email invalide"),
         password: z.string().min(8, "Mot de passe : 8 caractères minimum"),
-        phone: z.string().optional(),
-        destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
-        nationality: z.string().optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -106,13 +103,11 @@ export const candidateRouter = router({
         fullName: input.fullName,
         email: input.email,
         passwordHash,
-        phone: input.phone ?? null,
-        destination: input.destination ?? "autre",
-        nationality: input.nationality ?? null,
-        dossierStatus: "nouveau",
         emailVerified: false,
         verificationToken,
-        verificationExpiresAt: null, // Pas d'expiration
+        verificationExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
       });
 
       // Recuperer le candidateId insere
