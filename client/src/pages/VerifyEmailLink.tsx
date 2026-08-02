@@ -14,7 +14,7 @@ export default function VerifyEmailLink() {
   const { login } = useCandidateAuth();
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const token = params.get("token") ?? "";
-  const redirect = params.get("redirect") ?? "/login"; // Redirection par défaut vers /login
+  const redirect = params.get("redirect") ?? "/dashboard"; // Redirection par défaut vers le dashboard
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -154,7 +154,7 @@ export default function VerifyEmailLink() {
               >
                 <h3 className="text-green-900 font-semibold mb-2">✓ Email Confirmé</h3>
                 <p className="text-green-700 text-sm">
-                  Votre compte 3M Travel & Services est maintenant activé. Vous allez être redirigé vers la page de connexion pour accéder à votre espace.
+                  Votre compte 3M Travel & Services est maintenant activé. Vous allez être redirigé vers votre tableau de bord pour commencer.
                 </p>
               </motion.div>
 
@@ -187,13 +187,13 @@ export default function VerifyEmailLink() {
                 </motion.div>
 
                 <p className="text-gray-600 text-center mb-4 text-sm">
-                  Vous allez être redirigé vers la page de connexion...
+                  Vous allez être redirigé vers votre tableau de bord...
                 </p>
                 <Button
                   onClick={() => navigate(decodeURIComponent(redirect))}
                   className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition-all duration-200 hover:shadow-lg flex items-center justify-center gap-2"
                 >
-                  Aller à la Connexion
+                  Accéder à Mon Tableau de Bord
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </motion.div>
@@ -204,18 +204,18 @@ export default function VerifyEmailLink() {
                 transition={{ delay: 0.8 }}
                 className="mt-6 pt-6 border-t border-gray-100 text-center"
               >
-                <p className="text-gray-500 text-xs mb-3">Après connexion, vous pourrez :</p>
+                <p className="text-gray-500 text-xs mb-3">Dans votre tableau de bord, vous pourrez :</p>
                 <div className="flex justify-around text-center">
                   <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">1</div>
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1 text-green-600 font-bold text-sm">1</div>
                     <p className="text-gray-600 text-xs">Compléter Profil</p>
                   </div>
                   <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">2</div>
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1 text-green-600 font-bold text-sm">2</div>
                     <p className="text-gray-600 text-xs">Uploader Docs</p>
                   </div>
                   <div>
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1 text-blue-600 font-bold text-sm">3</div>
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-1 text-green-600 font-bold text-sm">3</div>
                     <p className="text-gray-600 text-xs">Suivi Dossier</p>
                   </div>
                 </div>
