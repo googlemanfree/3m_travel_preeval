@@ -2,37 +2,35 @@ import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
-import { recordRequest } from "./monitoring";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
-});
+  errorFormatter(opts) {
+    const { shape, error } = opts;
 
-// Middleware de monitoring des performances
-const monitoringMiddleware = t.middleware(async (opts) => {
-  const startTime = Date.now();
-  const procedurePath = opts.path;
+    // Toujours journaliser l'erreur complète côté serveur pour le débogage.
+    if (error.code === "INTERNAL_SERVER_ERROR") {
+      console.error("[tRPC] Internal error:", error.cause ?? error);
+    }
 
-  try {
-    const result = await opts.next();
-    const duration = Date.now() - startTime;
-    recordRequest(procedurePath, duration, "success");
-    return result;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    // Déterminer si c'est un timeout
-    const isTimeout = duration > 30000 || errorMessage.includes("timeout");
-    const status = isTimeout ? "timeout" : "error";
-    
-    recordRequest(procedurePath, duration, status, errorMessage);
-    throw error;
-  }
+    // Ne jamais renvoyer le message brut d'une erreur interne (qui peut
+    // contenir une requête SQL, ses paramètres, ou une trace technique) au
+    // client. Les autres codes (BAD_REQUEST, CONFLICT, NOT_FOUND,
+    // UNAUTHORIZED, FORBIDDEN...) proviennent de messages que nous rédigeons
+    // nous-mêmes volontairement pour l'utilisateur, donc ils passent tels quels.
+    if (error.code === "INTERNAL_SERVER_ERROR") {
+      return {
+        ...shape,
+        message: "Une erreur interne est survenue. Veuillez réessayer.",
+      };
+    }
+
+    return shape;
+  },
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure.use(monitoringMiddleware);
+export const publicProcedure = t.procedure;
 
 const requireUser = t.middleware(async opts => {
   const { ctx, next } = opts;
@@ -49,7 +47,7 @@ const requireUser = t.middleware(async opts => {
   });
 });
 
-export const protectedProcedure = t.procedure.use(monitoringMiddleware).use(requireUser);
+export const protectedProcedure = t.procedure.use(requireUser);
 
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {

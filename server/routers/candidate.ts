@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import {
@@ -17,8 +17,6 @@ import {
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
-import { generateOTP, getOTPExpirationTime, validateOTP } from "../otpService";
-import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, getRemainingAttempts } from "../loginAttemptsService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
@@ -99,25 +97,42 @@ export const candidateRouter = router({
 
       const passwordHash = await bcrypt.hash(input.password, 12);
 
-      // Générer un token de vérification JWT (24h)
-      const verificationToken = jwt.sign({ email: input.email }, JWT_SECRET, { expiresIn: '24h' });
+      // Générer un token de vérification unique
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
-      // Utiliser une requete SQL brute pour eviter les erreurs avec default
-      const cleanEmail = input.email.toLowerCase().trim();
-      const now = new Date().toISOString();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      
-      // Utiliser une requete SQL brute sans la colonne id pour eviter le probleme de default
-      await db.execute(
-        sql`INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (${input.fullName.trim()}, ${cleanEmail}, ${passwordHash}, false, ${verificationToken}, ${expiresAt}, NULL, NULL, ${now}, ${now}, ${now})`
-      );
+      let candidateId: number;
+      try {
+        await db.insert(candidates).values({
+          fullName: input.fullName,
+          email: input.email,
+          passwordHash,
+          phone: input.phone ?? null,
+          destination: input.destination ?? "autre",
+          nationality: input.nationality ?? null,
+          dossierStatus: "nouveau",
+          emailVerified: false,
+          verificationToken,
+          verificationExpiresAt,
+        });
 
-      // Recuperer le candidateId insere
-      const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, cleanEmail)).limit(1);
-      if (!inserted.length) {
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
+        // Recuperer le candidateId insere
+        const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+        if (!inserted.length) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
+        }
+        candidateId = inserted[0].id;
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        // Ne jamais renvoyer l'erreur brute de la base de données au client
+        // (elle peut contenir la requête SQL et ses paramètres, y compris le
+        // hash du mot de passe). On la journalise côté serveur uniquement.
+        console.error("[Register] Database insert error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la création du compte. Veuillez réessayer.",
+        });
       }
-      const candidateId = inserted[0].id;
 
       // Envoyer l'email de confirmation avec lien
       try {
@@ -125,9 +140,6 @@ export const candidateRouter = router({
       } catch (err) {
         console.error("[Register] Email verification link send error:", err);
       }
-
-      // Stocker le token JWT en base de données
-      await db.update(candidates).set({ verificationToken }).where(eq(candidates.email, input.email));
 
       return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de confirmation a été envoyé à votre adresse email." };
     }),
@@ -155,10 +167,8 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
-      // Vérifier que l'email est confirmé
-      if (!candidate.emailVerified) {
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Veuillez d'abord confirmer votre adresse e-mail en cliquant sur le lien reçu par mail." });
-      }
+      // Note: La vérification d'email n'est plus requise pour la connexion
+      // Les candidats peuvent se connecter immédiatement après l'inscription
 
       // Mettre à jour lastLoginAt
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
@@ -170,6 +180,8 @@ export const candidateRouter = router({
           id: candidate.id,
           fullName: candidate.fullName,
           email: candidate.email,
+          destination: candidate.destination,
+          dossierStatus: candidate.dossierStatus,
         },
       };
     }),
@@ -181,9 +193,19 @@ export const candidateRouter = router({
       id: c.id,
       fullName: c.fullName,
       email: c.email,
-      emailVerified: c.emailVerified,
+      phone: c.phone,
+      nationality: c.nationality,
+      dateOfBirth: c.dateOfBirth,
+      destination: c.destination,
+      visaType: c.visaType,
+      dossierStatus: c.dossierStatus,
+      dossierNote: c.dossierNote,
+      formulaChosen: c.formulaChosen,
+      scoreResult: c.scoreResult,
+      educationLevel: c.educationLevel,
+      employmentStatus: c.employmentStatus,
+      languageLevel: c.languageLevel,
       createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
       lastLoginAt: c.lastLoginAt,
     };
   }),
@@ -193,15 +215,25 @@ export const candidateRouter = router({
     .input(
       z.object({
         fullName: z.string().min(2).optional(),
+        phone: z.string().optional(),
+        nationality: z.string().optional(),
+        dateOfBirth: z.string().optional(),
+        destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
+        visaType: z.string().optional(),
+        educationLevel: z.string().optional(),
+        employmentStatus: z.string().optional(),
+        languageLevel: z.string().optional(),
+        formulaChosen: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      if (input.fullName) {
-        await db.update(candidates).set({ fullName: input.fullName }).where(eq(candidates.id, ctx.candidate.id));
-      }
+      const updateData: Record<string, unknown> = {};
+      Object.entries(input).forEach(([k, v]) => { if (v !== undefined) updateData[k] = v; });
+
+      await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
       return { success: true };
     }),
 
@@ -249,13 +281,12 @@ export const candidateRouter = router({
         status: "uploaded",
       });
 
-      // Note: dossierStatus n'existe plus dans le schéma simplifié
       // Si le dossier est encore "nouveau", passer à "documents"
-      // if (ctx.candidate.dossierStatus === "nouveau") {
-      //   await db.update(candidates)
-      //     .set({ dossierStatus: "evaluation" })
-      //     .where(eq(candidates.id, ctx.candidate.id));
-      // }
+      if (ctx.candidate.dossierStatus === "nouveau") {
+        await db.update(candidates)
+          .set({ dossierStatus: "evaluation" })
+          .where(eq(candidates.id, ctx.candidate.id));
+      }
 
       return { success: true };
     }),
@@ -284,21 +315,51 @@ export const candidateRouter = router({
     // Vérifier le statut du dossier
     const candidate = ctx.candidate;
 
-    // Note: dossierStatus n'existe plus dans le schéma simplifié
     // Action 1: Paiement en attente (statut documents)
-    // if (candidate.dossierStatus === "documents") {
-    //   actions.push({...});
-    // }
+    if (candidate.dossierStatus === "documents") {
+      actions.push({
+        id: "payment-pending",
+        type: "payment",
+        title: "Paiement obligatoire",
+        description: "Veuillez effectuer le paiement de 65 000 XAF pour finaliser votre dossier.",
+        urgency: "high",
+        amount: 65000,
+        action: {
+          label: "Payer maintenant",
+          href: "/mon-dossier",
+        },
+      });
+    }
 
-    // Note: dossierStatus n'existe plus dans le schéma simplifié
     // Action 2: Documents manquants (statut traitement)
-    // if (candidate.dossierStatus === "traitement") {
-    //   actions.push({...});
-    // }
+    if (candidate.dossierStatus === "traitement") {
+      actions.push({
+        id: "documents-pending",
+        type: "documents",
+        title: "Documents à soumettre",
+        description: "Veuillez soumettre vos documents originaux ou une version numérisée professionnelle.",
+        urgency: "high",
+        action: {
+          label: "Soumettre les documents",
+          href: "/submit-documents",
+        },
+      });
+    }
+
     // Action 3: Évaluation en attente (statut evaluation)
-    // if (candidate.dossierStatus === "evaluation") {
-    //   actions.push({...});
-    // }
+    if (candidate.dossierStatus === "evaluation") {
+      actions.push({
+        id: "evaluation-pending",
+        type: "evaluation",
+        title: "Évaluation en cours",
+        description: "Notre équipe analyse votre profil. Vous recevrez votre bilan dans 48 heures.",
+        urgency: "medium",
+        action: {
+          label: "Consulter mon dossier",
+          href: "/mon-dossier",
+        },
+      });
+    }
 
     return actions;
   }),
@@ -371,31 +432,21 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      
-      // Vérifier le JWT
-      let email: string;
-      try {
-        const decoded = jwt.verify(input.token, JWT_SECRET) as unknown as { email: string };
-        email = decoded.email?.toLowerCase().trim();
-        if (!email) throw new Error("Email manquant du token");
-      } catch (err) {
-        console.error("[verifyEmailLink] JWT verification failed:", err);
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Lien de vérification invalide ou expiré." });
-      }
-      
-      console.log(`[verifyEmailLink] Verifying email: ${email}`);
-      const rows = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+      console.log(`[verifyEmailLink] Searching for token: ${input.token.substring(0, 8)}...`);
+      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
       console.log(`[verifyEmailLink] Found ${rows.length} matching candidate(s)`);
       if (!rows.length) {
-        console.log(`[verifyEmailLink] No candidate found with email: ${email}`);
-        throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur introuvable." });
+        console.log(`[verifyEmailLink] No candidate found with token. Checking database...`);
+        throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
       }
       const candidate = rows[0];
       if (candidate.emailVerified) {
         const token = signCandidateToken(candidate.id);
         return { success: true, token, message: "Email déjà vérifié." };
       }
-      // Pas de vérification d'expiration - le lien n'expire jamais jusqu'à utilisation
+      if (!candidate.verificationExpiresAt || new Date() > candidate.verificationExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez créer un nouveau compte." });
+      }
       await db.update(candidates).set({ emailVerified: true, verificationToken: null, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
       await db.insert(candidateMessages).values({
         candidateId: candidate.id,
@@ -403,7 +454,7 @@ export const candidateRouter = router({
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch (err) { console.error("Email error:", err); }
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
       const token = signCandidateToken(candidate.id);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -420,16 +471,20 @@ export const candidateRouter = router({
         const token = signCandidateToken(input.candidateId);
         return { success: true, token, message: "Email déjà vérifié." };
       }
-      // Note: emailOtp et emailOtpExpiresAt n'existent plus dans le schéma simplifié
-      // Vérifier le code de vérification par email
-      await db.update(candidates).set({ emailVerified: true }).where(eq(candidates.id, input.candidateId));
+      if (!candidate.emailOtp || candidate.emailOtp !== input.otp) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Code incorrect. Vérifiez votre email et réessayez." });
+      }
+      if (!candidate.emailOtpExpiresAt || new Date() > candidate.emailOtpExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce code a expiré. Demandez un nouveau code." });
+      }
+      await db.update(candidates).set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null }).where(eq(candidates.id, input.candidateId));
       await db.insert(candidateMessages).values({
         candidateId: input.candidateId,
         senderRole: "advisor",
         content: `Bienvenue ${candidate.fullName} ! 🎉 Votre compte 3M Travel & Services est activé. Notre équipe vous contactera sous 24h.`,
         isRead: false,
       });
-      try { await sendWelcomeEmail(candidate.email, candidate.fullName, "autre"); } catch (err) { console.error("Email error:", err); }
+      try { await sendWelcomeEmail(candidate.email, candidate.fullName, candidate.destination ?? "autre"); } catch {}
       const token = signCandidateToken(input.candidateId);
       return { success: true, token, message: "Email vérifié avec succès. Bienvenue !" };
     }),
@@ -445,8 +500,7 @@ export const candidateRouter = router({
       if (candidate.emailVerified) return { success: true };
       const otp = String(Math.floor(100000 + Math.random() * 900000));
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
-      // Note: emailOtp et emailOtpExpiresAt n'existent plus dans le schéma simplifié
-      // await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
+      await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
       try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}
       return { success: true, message: "Nouveau code envoyé à votre adresse email." };
     }),
@@ -460,8 +514,8 @@ export const candidateRouter = router({
       if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
       const candidate = rows[0];
       const resetToken = crypto.randomUUID().replace(/-/g, "");
-      // SANS expiration - le lien n'expire jamais jusqu'à utilisation
-      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
+      const resetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
+      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: resetExpiresAt }).where(eq(candidates.id, candidate.id));
       try { await sendPasswordResetEmail(candidate.email, candidate.fullName, resetToken); } catch {}
       return { success: true, message: "Si cet email existe, un lien a été envoyé." };
     }),
@@ -474,43 +528,12 @@ export const candidateRouter = router({
       const rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
       if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou expiré." });
       const candidate = rows[0];
-      // Pas de vérification d'expiration - le lien n'expire jamais jusqu'à utilisation
+      if (!candidate.passwordResetExpiresAt || new Date() > candidate.passwordResetExpiresAt) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce lien a expiré. Veuillez faire une nouvelle demande." });
+      }
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
       await db.update(candidates).set({ passwordHash, passwordResetToken: null, passwordResetExpiresAt: null }).where(eq(candidates.id, candidate.id));
       return { success: true, message: "Mot de passe réinitialisé avec succès." };
-    }),
-
-  // ── Renvoyer l'email de vérification ────────────────────────────────────────
-  resendVerificationEmail: publicProcedure
-    .input(z.object({ email: z.string().email("Email invalide") }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      
-      const email = input.email.toLowerCase().trim();
-      const rows = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
-      if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte trouvé avec cet email." });
-      
-      const candidate = rows[0];
-      if (candidate.emailVerified) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Votre email est déjà vérifié. Vous pouvez vous connecter." });
-      }
-      
-      // Générer un nouveau token JWT (24h)
-      const verificationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '24h' });
-      
-      // Mettre à jour le token en base de données
-      await db.update(candidates).set({ verificationToken }).where(eq(candidates.id, candidate.id));
-      
-      // Renvoyer l'email de vérification
-      try {
-        await sendVerificationLink(email, candidate.fullName, verificationToken);
-      } catch (err) {
-        console.error("[resendVerificationEmail] Error sending email:", err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi de l'email." });
-      }
-      
-      return { success: true, message: "Email de vérification renvoyé avec succès." };
     }),
 
   // ── Étapes du dossier (statique) ──────────────────────────────────────────
@@ -564,6 +587,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
+        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Protocole d'Accord Signé</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -572,8 +596,7 @@ export const candidateRouter = router({
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        const { sendEmail: sendGenericEmail } = await import("../_core/email");
-        await sendGenericEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
+        await sendEmail(app[0].email, `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, confirmationHTML);
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
@@ -638,6 +661,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
+        const { sendEmail } = await import("../emailService");
         const confirmationHTML = `
           <h2>Documents Reçus</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -646,8 +670,7 @@ export const candidateRouter = router({
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        const { sendEmail: sendGenericEmail } = await import("../_core/email");
-        await sendGenericEmail({ to: app[0].email, subject: `📄 Documents Reçus - Dossier ${input.dossierNumber}`, html: confirmationHTML });
+        await sendEmail(app[0].email, `📄 Documents Reçus - Dossier ${input.dossierNumber}`, confirmationHTML);
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
@@ -909,6 +932,4 @@ export const candidateRouter = router({
         });
       }
     }),
-
-
 });
