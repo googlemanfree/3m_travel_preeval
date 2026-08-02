@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { sendEmail as sendGenericEmail, SendEmailOptions } from "./_core/email";
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.click";
@@ -318,31 +320,28 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
     await resend.emails.send({
       from: "noreply@3mtravelagency.click",
       to,
-      subject: "🎉 Bienvenue dans votre Espace Candidat 3M Travel !",
+      subject: `Bienvenue chez 3M Travel & Services - Votre voyage vers ${destLabel} commence !`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 40px; text-align: center; color: white;">
-            <h1 style="margin: 0;">🎉 Bienvenue !</h1>
+            <h1 style="margin: 0;">Bienvenue, ${fullName} !</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
-            <p>Bonjour <strong>${fullName}</strong>,</p>
-            <p>🎉 Votre compte 3M Travel est maintenant <strong>activé</strong> ! Votre dossier d'immigration vers <strong>${destLabel}</strong> est ouvert.</p>
-            
-            <h3 style="color: #1E3A8A;">Voici ce que vous pouvez faire dès maintenant :</h3>
-            <ul style="color: #374151; line-height: 2;">
-              <li>📁 Uploader vos documents (CV, passeport, diplômes)</li>
-              <li>💬 Contacter directement votre conseiller</li>
-              <li>📊 Suivre l'avancement de votre dossier en temps réel</li>
-              <li>✈️ Rechercher des vols vers votre destination</li>
-            </ul>
+            <p>Nous sommes ravis de vous accueillir chez <strong>3M Travel & Services</strong>. Votre intérêt pour ${destLabel} est le premier pas vers une nouvelle aventure !</p>
+            <p>Notre équipe est prête à vous accompagner à chaque étape de votre projet. Vous pouvez dès maintenant accéder à votre tableau de bord pour suivre l'avancement de votre dossier et gérer vos informations.</p>
             
             <p style="text-align: center; margin-top: 30px;">
               <a href="${dashboardUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
-                🚀 Accéder à mon espace
+                🚀 Accéder à mon tableau de bord
               </a>
             </p>
             
-            <p>Notre équipe vous contactera sous 24h pour la suite de votre dossier.</p>
+            <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
+              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.click" style="color: #2563EB;">contact@3mtravelagency.click</a>
+            </p>
+          </div>
+          <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
+            <p>© 2024 3M Travel & Services. Tous droits réservés.</p>
           </div>
         </div>
       `,
@@ -415,3 +414,70 @@ export async function sendDossierConfirmationEmail(
     console.error("Failed to send dossier confirmation email:", error);
   }
 }
+
+
+
+
+
+// sendAdminNewDossierAlert to match existing calls (alias for sendAdminNewDossierAlertEmail)
+export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: string, email: string, whatsappNumber: string, destination: string, status: string): Promise<void> {
+  const subject = `🚨 Nouvelle alerte dossier - #${dossierNumber}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); padding: 40px; text-align: center; color: white;">
+        <h1 style="margin: 0;">🚨 Nouvelle Alerte Dossier</h1>
+      </div>
+      <div style="padding: 40px; background: #f9fafb;">
+        <p>Un nouveau dossier a été créé :</p>
+        <ul>
+          <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
+          <li><strong>Candidat :</strong> ${fullName}</li>
+          <li><strong>Email :</strong> ${email}</li>
+          <li><strong>WhatsApp :</strong> ${whatsappNumber}</li>
+          <li><strong>Destination :</strong> ${destination}</li>
+          <li><strong>Statut Initial :</strong> ${status}</li>
+        </ul>
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="${SITE_URL}/admin/dossier/${dossierNumber}" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Voir le dossier dans l'Admin
+          </a>
+        </p>
+      </div>
+    </div>
+  `;
+  return sendGenericEmail({ to: ADMIN_EMAIL, subject, html });
+}
+
+
+
+
+
+// sendAdminNewDossierAlert to match existing calls (alias for sendAdminNewDossierAlertEmail)
+export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: string, email: string, whatsappNumber: string, destination: string, status: string): Promise<void> {
+  const subject = `🚨 Nouvelle alerte dossier - #${dossierNumber}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); padding: 40px; text-align: center; color: white;">
+        <h1 style="margin: 0;">🚨 Nouvelle Alerte Dossier</h1>
+      </div>
+      <div style="padding: 40px; background: #f9fafb;">
+        <p>Un nouveau dossier a été créé :</p>
+        <ul>
+          <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>
+          <li><strong>Candidat :</strong> ${fullName}</li>
+          <li><strong>Email :</strong> ${email}</li>
+          <li><strong>WhatsApp :</strong> ${whatsappNumber}</li>
+          <li><strong>Destination :</strong> ${destination}</li>
+          <li><strong>Statut Initial :</strong> ${status}</li>
+        </ul>
+        <p style="text-align: center; margin-top: 30px;">
+          <a href="${SITE_URL}/admin/dossier/${dossierNumber}" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">
+            Voir le dossier dans l'Admin
+          </a>
+        </p>
+      </div>
+    </div>
+  `;
+  return sendGenericEmail({ to: ADMIN_EMAIL, subject, html });
+}
+
