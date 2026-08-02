@@ -91,8 +91,11 @@ export const signupRouter = router({
             emailVerified,
             verificationToken,
             verificationExpiresAt,
+            passwordResetToken,
+            passwordResetExpiresAt,
             createdAt,
-            updatedAt
+            updatedAt,
+            lastLoginAt
           ) VALUES (
             ${fullName},
             ${cleanEmail},
@@ -100,6 +103,9 @@ export const signupRouter = router({
             false,
             ${verificationToken},
             ${expiresAt},
+            NULL,
+            NULL,
+            ${now},
             ${now},
             ${now}
           )`
