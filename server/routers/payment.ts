@@ -7,7 +7,8 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { applications, clientDocuments } from "../../drizzle/schema";
+import { applications } from "../../drizzle/schema";
+// import { clientDocuments } from "../../drizzle/schema"; // Table supprimée
 import { eq, and } from "drizzle-orm";
 
 const PAYMENT_AMOUNT = 65000; // XAF

@@ -3,7 +3,8 @@
  */
 
 import { getDb } from "../db";
-import { applications, aiReportHistory } from "../../drizzle/schema";
+import { applications } from "../../drizzle/schema";
+// import {  from "../../drizzle/schema"; // Table supprimée
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";

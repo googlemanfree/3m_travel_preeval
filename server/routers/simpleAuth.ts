@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-import { db } from "../db";
+import { getDb } from "../db";
 import { sql } from "drizzle-orm";
 
 /**

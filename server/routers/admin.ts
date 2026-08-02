@@ -7,7 +7,8 @@ import { protectedProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, aiReportHistory, users, applications, clientDocuments, bilans, agencyDossiers, profileEvaluations } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations } from "../../drizzle/schema";
+// import {  from "../../drizzle/schema"; // Tables supprimées
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { eq, desc, like, or, and } from "drizzle-orm";
 

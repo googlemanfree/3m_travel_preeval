@@ -7,7 +7,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { adminAccounts } from "../../drizzle/schema";
+// import { adminAccounts } from "../../drizzle/schema"; // Table supprimée
 import { eq } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 

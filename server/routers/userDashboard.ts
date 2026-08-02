@@ -4,7 +4,8 @@
  */
 
 import { getDb } from "../db";
-import { applications, clientDocuments } from "../../drizzle/schema";
+import { applications } from "../../drizzle/schema";
+// import { clientDocuments } from "../../drizzle/schema"; // Table supprimée
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";

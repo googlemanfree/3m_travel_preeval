@@ -10,11 +10,8 @@ import { getDb } from "../db";
 import {
   applications,
   candidates,
-  transactions,
-  bilans,
-  clientDocuments,
-  agencyDossiers,
 } from "../../drizzle/schema";
+// import { transactions} from "../../drizzle/schema"; // Tables supprimées
 import { eq, desc, and, gte, lte, count, sql } from "drizzle-orm";
 
 export const adminDashboardStatsRouter = router({

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { contactMessages } from "../../drizzle/schema";
+// import { contactMessages } from "../../drizzle/schema"; // Table supprimée
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 
