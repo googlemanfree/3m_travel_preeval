@@ -10,7 +10,6 @@ const menuItems = [
   { href: '/procedures', label: 'Procédures', icon: '📖' },
   { href: '/ressources', label: 'Ressources', icon: '🌐' },
   { href: '/mon-espace', label: 'Suivi de dossier', icon: '📂' },
-  { href: '/evisas', label: 'E-Visa', icon: '📱', highlight: true },
 ];
 
 export default function Navbar() {
@@ -67,26 +66,15 @@ export default function Navbar() {
 
           {/* 2. NAVIGATION DESKTOP ÉLÉGANTE */}
           <nav className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80">
-            {menuItems.map((item: any) => {
-              const isHighlight = item.highlight;
-              return isHighlight ? (
-                <button 
-                  key={item.href}
-                  onClick={() => setLocation(item.href)}
-                  className="px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-                >
-                  <span>{item.icon}</span> {item.label}
-                </button>
-              ) : (
-                <button 
-                  key={item.href}
-                  onClick={() => setLocation(item.href)}
-                  className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm"
-                >
-                  <span>{item.icon}</span> {item.label}
-                </button>
-              );
-            })}
+            {menuItems.map((item) => (
+              <a 
+                key={item.href}
+                href={item.href} 
+                className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm"
+              >
+                <span>{item.icon}</span> {item.label}
+              </a>
+            ))}
           </nav>
 
           {/* 3. ZONE D'ACTION / PROFIL CANDIDAT */}
@@ -122,19 +110,21 @@ export default function Navbar() {
                       <p className="text-sm font-bold text-[#0a2540] truncate mt-0.5">{candidate.email}</p>
                     </div>
 
-                    <button
-                      onClick={() => { setLocation("/mon-espace"); setIsProfileOpen(false); }}
-                      className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
+                    <a
+                      href="/mon-espace"
+                      className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition"
+                      onClick={() => setIsProfileOpen(false)}
                     >
                       <span>📂</span> Tableau de bord / Dossier
-                    </button>
+                    </a>
                     
-                    <button
-                      onClick={() => { setLocation("/evaluation"); setIsProfileOpen(false); }}
-                      className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
+                    <a
+                      href="/evaluation"
+                      className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition"
+                      onClick={() => setIsProfileOpen(false)}
                     >
                       <span>⭐</span> Nouvelle Évaluation
-                    </button>
+                    </a>
 
                     <div className="my-1 border-t border-gray-100"></div>
 
@@ -151,12 +141,12 @@ export default function Navbar() {
               /* --- BOUTONS D'ACTION INVITÉ --- */
               <>
                 <EvaluationButton variant="primary" size="md" />
-                <button 
-                  onClick={() => setLocation("/login")}
+                <a 
+                  href="/login" 
                   className="bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95"
                 >
                   👤 Mon Espace
-                </button>
+                </a>
               </>
             )}
           </div>
@@ -216,17 +206,18 @@ export default function Navbar() {
             {/* Items de navigation */}
             <div className="space-y-1 mb-4">
               {menuItems.map((item, index) => (
-                <motion.button
+                <motion.a
                   key={item.href}
-                  onClick={() => { setLocation(item.href); setIsMenuOpen(false); }}
-                  className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors w-full text-left"
+                  href={item.href}
+                  className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
                   variants={itemVariants}
                   initial="hidden"
                   animate="visible"
                   custom={candidate ? index + 1 : index}
                 >
                   <span>{item.icon}</span> {item.label}
-                </motion.button>
+                </motion.a>
               ))}
             </div>
 
@@ -262,18 +253,20 @@ export default function Navbar() {
                 animate="visible"
                 custom={menuItems.length + 2}
               >
-                <button 
-                  onClick={() => { setLocation("/evaluation"); setIsMenuOpen(false); }}
+                <a 
+                  href="/evaluation" 
                   className="block w-full text-center bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all" 
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   ⭐ Évaluer mon profil
-                </button>
-                <button 
-                  onClick={() => { setLocation("/login"); setIsMenuOpen(false); }}
+                </a>
+                <a 
+                  href="/login" 
                   className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold border border-blue-100 transition-all" 
+                  onClick={() => setIsMenuOpen(false)}
                 >
                   👤 Mon Espace
-                </button>
+                </a>
               </motion.div>
             )}
           </motion.div>

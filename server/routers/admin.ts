@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { evaluations, aiReportHistory, users, applications, clientDocuments, bilans, agencyDossiers, profileEvaluations } from "../../drizzle/schema";
-import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { sendEmail } from "../emailService";
 import { eq, desc, like, or, and } from "drizzle-orm";
 
 export const adminRouter = router({
@@ -1135,11 +1135,11 @@ export const adminRouter = router({
               </div>
             `;
 
-            await sendGenericEmail({
-              to: candidateEmail,
-              subject: `📋 Mise à jour de votre dossier ${folderCode} - 3M Travel & Services`,
-              html: htmlContent
-            });
+            await sendEmail(
+              candidateEmail,
+              `📋 Mise à jour de votre dossier ${folderCode} - 3M Travel & Services`,
+              htmlContent
+            );
           } catch (emailErr) {
             console.error("[Admin Update Status] Email notification failed:", emailErr);
             // Ne pas bloquer la mise à jour si l'email échoue
@@ -1231,11 +1231,11 @@ export const adminRouter = router({
               </div>
             </div>
           `;
-          await sendGenericEmail({
-            to: input.email,
-            subject: `📋 Votre dossier ${folderCode} a été créé - 3M Travel & Services`,
-            html: htmlContent
-          });
+          await sendEmail(
+            input.email,
+            `📋 Votre dossier ${folderCode} a été créé - 3M Travel & Services`,
+            htmlContent
+          );
         } catch (emailErr) {
           console.error("[Import Agency Dossier] Email failed:", emailErr);
         }
