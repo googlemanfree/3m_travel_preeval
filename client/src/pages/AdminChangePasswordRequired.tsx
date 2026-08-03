@@ -187,7 +187,7 @@ export default function AdminChangePasswordRequired({
               <Alert className="bg-green-50 border-green-200">
                 <CheckCircle className="w-4 h-4 text-green-600" />
                 <AlertDescription className="text-green-700">
-                  Mot de passe changé avec succès. Redirection en cours...
+                  ✓ Mot de passe changé avec succès. Un email de confirmation a été envoyé à votre adresse email. Redirection en cours...
                 </AlertDescription>
               </Alert>
             )}

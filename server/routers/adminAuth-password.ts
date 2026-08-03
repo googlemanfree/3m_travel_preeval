@@ -13,6 +13,7 @@ import { getDb } from "../db";
 import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
+import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 
 // Générer un token de session
 function generateSessionToken(): string {
@@ -122,13 +123,36 @@ export const adminAuthRouter = router({
       }
 
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
+      const now = new Date();
+      
       await db.update(adminAccounts).set({ 
         passwordHash,
-        passwordChangedAt: new Date(),
+        passwordChangedAt: now,
         requiresPasswordChange: false  // Marquer que le changement de mot de passe est complété
       }).where(eq(adminAccounts.id, admin.id));
 
-      return { success: true, message: "Mot de passe mis à jour." };
+      // Envoyer un email de notification
+      try {
+        const emailTemplate = getPasswordChangedEmailTemplate({
+          adminName: admin.fullName || admin.email,
+          adminEmail: admin.email,
+          adminType: admin.adminType,
+          timestamp: now,
+        });
+
+        await sendEmail({
+          to: admin.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+        });
+
+        console.log(`[Admin Auth] Password change notification sent to ${admin.email}`);
+      } catch (emailError) {
+        console.error(`[Admin Auth] Failed to send password change notification to ${admin.email}:`, emailError);
+        // Ne pas échouer la mutation si l'email n'est pas envoyé
+      }
+
+      return { success: true, message: "Mot de passe mis à jour. Un email de confirmation a été envoyé." };
     }),
 
   /**
