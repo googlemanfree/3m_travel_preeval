@@ -98,6 +98,7 @@ export const adminAuthRouter = router({
         adminType: admin.adminType,
         fullName: admin.fullName,
         email: admin.email,
+        requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
       };
     }),
 
@@ -121,7 +122,11 @@ export const adminAuthRouter = router({
       }
 
       const passwordHash = await bcrypt.hash(input.newPassword, 12);
-      await db.update(adminAccounts).set({ passwordHash }).where(eq(adminAccounts.id, admin.id));
+      await db.update(adminAccounts).set({ 
+        passwordHash,
+        passwordChangedAt: new Date(),
+        requiresPasswordChange: false  // Marquer que le changement de mot de passe est complété
+      }).where(eq(adminAccounts.id, admin.id));
 
       return { success: true, message: "Mot de passe mis à jour." };
     }),
