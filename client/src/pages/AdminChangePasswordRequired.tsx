@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'wouter';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +18,7 @@ export default function AdminChangePasswordRequired({
   adminEmail,
   onPasswordChanged,
 }: AdminChangePasswordRequiredProps) {
-  const navigate = useNavigate();
+  const [, setLocation] = useLocation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -83,7 +83,7 @@ export default function AdminChangePasswordRequired({
         if (onPasswordChanged) {
           onPasswordChanged();
         } else {
-          navigate('/admin-dashboard');
+          setLocation('/admin-dashboard');
         }
       }, 2000);
     } catch (err) {
