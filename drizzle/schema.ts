@@ -642,3 +642,235 @@ export const bilans = mysqlTable("bilans", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const clientPayments = mysqlTable("client_payments", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2, mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  paymentMethod: mysqlEnum("paymentMethod", [
+    "cash",
+    "bank_transfer",
+    "card",
+    "mobile_money",
+    "check",
+    "other"
+  ]).notNull(),
+  paymentDescription: varchar("paymentDescription", { length: 255 }).notNull(),  // Ex: "Frais d'évaluation", "Frais de dossier"
+  paidAt: timestamp("paidAt").defaultNow().notNull(),
+  // Gestion admin
+  confirmedByAdmin: boolean("confirmedByAdmin").default(false).notNull(),
+  adminNotes: text("adminNotes"),
+  invoiceGeneratedAt: timestamp("invoiceGeneratedAt"),  // Quand la facture a été générée
+  invoiceUrl: text("invoiceUrl"),  // URL de la facture PDF
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }),  // Numéro de facture unique
+  status: mysqlEnum("status", ["pending", "confirmed", "verified", "cancelled"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ClientPayment = typeof clientPayments.$inferSelect;
+export type InsertClientPayment = typeof clientPayments.$inferInsert;
+
+export const agencyDossierHistory = mysqlTable("agency_dossier_history", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierId: int("dossierId").notNull(),
+  action: varchar("action", { length: 100 }).notNull(),  // created, status_changed, notes_added, document_added, etc.
+  changedBy: varchar("changedBy", { length: 320 }).notNull(),  // Email de l'admin
+  oldValue: text("oldValue"),  // Ancienne valeur (JSON)
+  newValue: text("newValue"),  // Nouvelle valeur (JSON)
+  details: text("details"),  // Détails supplémentaires
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/**
+ * Commentaires / questions des candidats sur leur bilan d'évaluation,
+ * avec réponses en fil de discussion par les admins.
+ */
+export const evaluationComments = mysqlTable("evaluation_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierNumber: varchar("dossierNumber", { length: 100 }).notNull(),
+  parentCommentId: int("parentCommentId"),
+  authorType: mysqlEnum("authorType", ["candidate", "admin"]).notNull(),
+  authorId: int("authorId"),
+  authorName: varchar("authorName", { length: 255 }).notNull(),
+  authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
+  content: text("content").notNull(),
+  isQuestion: boolean("isQuestion").default(true).notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  readAt: timestamp("readAt"),
+  isResolved: boolean("isResolved").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EvaluationComment = typeof evaluationComments.$inferSelect;
+export type InsertEvaluationComment = typeof evaluationComments.$inferInsert;
+
+/**
+ * Transactions de paiement (toutes méthodes confondues) utilisées pour les
+ * statistiques du tableau de bord admin.
+ */
+export const transactions = mysqlTable("transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierNumber: varchar("dossierNumber", { length: 100 }),
+  candidateEmail: varchar("candidateEmail", { length: 320 }),
+  candidateName: varchar("candidateName", { length: 255 }),
+  amount: decimal("amount", { precision: 10, scale: 2, mode: "number" }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("XAF").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),
+  status: mysqlEnum("status", ["pending", "processing", "success", "failed", "cancelled"]).default("pending").notNull(),
+  reference: varchar("reference", { length: 100 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
+
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  // Identité du visiteur (pas nécessairement un compte inscrit)
+  visitorName: varchar("visitorName", { length: 255 }).notNull(),
+  visitorEmail: varchar("visitorEmail", { length: 320 }).notNull(),
+  visitorPhone: varchar("visitorPhone", { length: 50 }),
+  // Conversation
+  sessionId: varchar("sessionId", { length: 128 }).notNull(),  // Identifie la session de chat
+  senderRole: mysqlEnum("senderRole", ["visitor", "support"]).notNull(),
+  content: text("content").notNull(),
+  isRead: boolean("isRead").default(false).notNull(),
+  // Métadonnées
+  subject: varchar("subject", { length: 255 }),  // Sujet initial du chat
+  status: mysqlEnum("status", ["active", "closed", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const translationLanguages = mysqlTable("translation_languages", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 10 }).notNull().unique(),  // fr, en, de, es, etc.
+  name: varchar("name", { length: 100 }).notNull(),  // Français, English, Deutsch, etc.
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const translationPricing = mysqlTable("translation_pricing", {
+  id: int("id").autoincrement().primaryKey(),
+  documentType: mysqlEnum("documentType", [
+    "birth_certificate",
+    "diploma",
+    "transcript",
+    "criminal_record",
+    "marriage_certificate",
+    "divorce_decree",
+    "employment_letter",
+    "bank_statement",
+    "passport",
+    "driver_license",
+    "medical_report",
+    "other"
+  ]).notNull(),
+  sourceLanguageCode: varchar("sourceLanguageCode", { length: 10 }).notNull(),
+  targetLanguageCode: varchar("targetLanguageCode", { length: 10 }).notNull(),
+  pricePerPage: decimal("pricePerPage", { precision: 10, scale: 2 }).notNull(),  // Prix par page
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  turnaroundDays: int("turnaroundDays").default(3).notNull(),  // Délai de traitement en jours
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const translationRequests = mysqlTable("translation_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId"),  // Lié à une évaluation (optionnel)
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  candidatePhone: varchar("candidatePhone", { length: 50 }),
+  
+  // Détails de la traduction
+  documentType: mysqlEnum("documentType", [
+    "birth_certificate",
+    "diploma",
+    "transcript",
+    "criminal_record",
+    "marriage_certificate",
+    "divorce_decree",
+    "employment_letter",
+    "bank_statement",
+    "passport",
+    "driver_license",
+    "medical_report",
+    "other"
+  ]).notNull(),
+  sourceLanguageCode: varchar("sourceLanguageCode", { length: 10 }).notNull(),
+  targetLanguageCode: varchar("targetLanguageCode", { length: 10 }).notNull(),
+  numberOfPages: int("numberOfPages").notNull(),
+  
+  // Fichier source
+  sourceDocumentUrl: text("sourceDocumentUrl").notNull(),
+  sourceDocumentName: varchar("sourceDocumentName", { length: 255 }).notNull(),
+  sourceDocumentSize: int("sourceDocumentSize"),
+  
+  // Tarification
+  pricePerPage: decimal("pricePerPage", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 10 }).default("EUR").notNull(),
+  
+  // Paiement
+  paymentStatus: mysqlEnum("paymentStatus", ["pending", "completed", "failed", "refunded"]).default("pending").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),  // mobile_money, card, cash
+  paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),
+  paymentDate: timestamp("paymentDate"),
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }),
+  invoiceUrl: text("invoiceUrl"),
+  
+  // Traduction
+  status: mysqlEnum("status", [
+    "pending_payment",      // En attente de paiement
+    "pending_translation",  // Paiement reçu, en attente de traduction
+    "in_progress",          // Traduction en cours
+    "completed",            // Traduction complétée
+    "rejected"              // Demande rejetée
+  ]).default("pending_payment").notNull(),
+  
+  assignedToTranslator: varchar("assignedToTranslator", { length: 320 }),  // Email du traducteur
+  translatorNotes: text("translatorNotes"),
+  
+  // Fichier traduit
+  translatedDocumentUrl: text("translatedDocumentUrl"),
+  translatedDocumentName: varchar("translatedDocumentName", { length: 255 }),
+  translatedDocumentSize: int("translatedDocumentSize"),
+  completionDate: timestamp("completionDate"),
+  
+  // Notifications
+  paymentNotificationSent: boolean("paymentNotificationSent").default(false).notNull(),
+  completionNotificationSent: boolean("completionNotificationSent").default(false).notNull(),
+  
+  // Métadonnées
+  adminNotes: text("adminNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const evaluationEmails = mysqlTable("evaluation_emails", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  candidateName: varchar("candidateName", { length: 255 }).notNull(),
+  destinationCountry: varchar("destinationCountry", { length: 100 }).notNull(),
+  visaType: varchar("visaType", { length: 100 }).notNull(),
+  // Email tracking
+  emailType: mysqlEnum("emailType", ["admissibility_report", "reminder", "follow_up"]).default("admissibility_report").notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),  // Quand l'email doit être envoyé (createdAt + 48h)
+  sentAt: timestamp("sentAt"),  // Quand l'email a été effectivement envoyé
+  status: mysqlEnum("status", ["pending", "sent", "failed", "bounced"]).default("pending").notNull(),
+  failureReason: text("failureReason"),  // Raison de l'échec si applicable
+  // Contenu
+  reportContent: text("reportContent"),  // Contenu du rapport HTML
+  secureLink: varchar("secureLink", { length: 500 }),  // Lien sécurisé vers l'espace client
+  // Métadonnées
+  sentVia: varchar("sentVia", { length: 50 }).default("email"),  // email, whatsapp, sms
+  openedAt: timestamp("openedAt"),  // Quand l'email a été ouvert (tracking pixel)
+  clickedAt: timestamp("clickedAt"),  // Quand le lien a été cliqué
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EvaluationEmail = typeof evaluationEmails.$inferSelect;
+export type InsertEvaluationEmail = typeof evaluationEmails.$inferInsert;
