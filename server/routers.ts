@@ -41,6 +41,7 @@ import { evisaAdminRouter } from "./routers/evisaAdminRouter";
 import { signupRouter } from "./routers/signup";
 import { simpleAuthRouter } from "./routers/simpleAuth";
 import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
+import { adminPasswordResetRouter } from "./routers/adminPasswordReset";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -107,6 +108,9 @@ export const appRouter = router({
   candidateV2: candidateRouterNew,
   applicationV2: applicationRouterNew,
   evaluationV2: evaluationRouterNew,
+  
+  // Réinitialisation de mot de passe
+  adminPasswordReset: adminPasswordResetRouter,
 });
 
 export type AppRouter = typeof appRouter;

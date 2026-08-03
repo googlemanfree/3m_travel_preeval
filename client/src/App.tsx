@@ -80,6 +80,8 @@ import React from "react";
 import Navbar from "./components/Navbar";
 import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
 import AdminEvisaDetail from "./pages/AdminEvisaDetail";
+import AdminForgotPassword from "./pages/AdminForgotPassword";
+import AdminResetPassword from "./pages/AdminResetPassword";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -224,6 +226,8 @@ function Router() {
       {/* Panneau admin — URL secrète d'accès */}
       <Route path={"/admin/access-secret"} component={AdminLogin} />
       <Route path={"/admin/login"} component={AdminLogin} />
+      <Route path={"/admin/forgot-password"} component={AdminForgotPassword} />
+      <Route path={"/admin/reset-password"} component={AdminResetPassword} />
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />

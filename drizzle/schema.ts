@@ -482,6 +482,9 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   // Changement de mot de passe obligatoire
   requiresPasswordChange: boolean("requiresPasswordChange").default(true).notNull(),  // Force le changement au 1er login
   passwordChangedAt: timestamp("passwordChangedAt"),  // Quand le mot de passe a été changé pour la dernière fois
+  // Réinitialisation de mot de passe
+  resetToken: varchar("resetToken", { length: 256 }),  // Token unique pour réinitialiser le mot de passe
+  resetTokenExpiresAt: timestamp("resetTokenExpiresAt"),  // Expiration du token de réinitialisation
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
