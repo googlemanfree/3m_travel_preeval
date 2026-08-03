@@ -54,34 +54,40 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 import ResetPasswordSimple from "./pages/ResetPasswordSimple";
 import AdminsList from "./pages/AdminsList";
 import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
-import SubmitDocuments from "./pages/SubmitDocuments";
+import { SubmitDocuments } from "./pages/SubmitDocuments";
 import ClientDashboard from "./pages/ClientDashboard";
-import HowItWorks from "./pages/HowItWorks";
+import { HowItWorks } from "./pages/HowItWorks";
 import MySpace from "./pages/MySpace";
 
 import AdminGuard from "./components/AdminGuard";
 import AdminUsersManagement from "./pages/AdminUsersManagement";
 import AdminUserDetails from "./pages/AdminUserDetails";
-import Tarifs from "./pages/Tarifs";
-import Avis from "./pages/Avis";
-import Blog from "./pages/Blog";
+import { Tarifs } from "./pages/Tarifs";
+import { Avis } from "./pages/Avis";
+import { Blog } from "./pages/Blog";
 import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
+import AdminAddDossier from "./pages/AdminAddDossier";
+import AdminDashboard from "./pages/AdminDashboard";
+import { AdminDocumentVerification } from "./pages/AdminDocumentVerification";
+import AmbassadorProgram from "./pages/AmbassadorProgram";
+import CVGenerator from "./pages/CVGenerator";
+import EvaluationResult from "./pages/EvaluationResult";
+import ScheduleAgency from "./pages/ScheduleAgency";
+import ComponentsShowcase from "./pages/ComponentShowcase";
 import AppointmentBooking from "./pages/AppointmentBooking";
 import AdminEmailTemplates from "./pages/AdminEmailTemplates";
-import CinetPayPayment from "./pages/CinetPayPayment";
-import EvisasPage from "./pages/Evisas";
-import EvisaApplicationForm from "./pages/EvisaApplicationForm";
-import MyFavorites from "./pages/MyFavorites";
+import { CinetPayPayment } from "./pages/CinetPayPayment";
+import { Evisas as EvisasPage } from "./pages/Evisas";
+import { EvisaApplicationForm } from "./pages/EvisaApplicationForm";
+import { MyFavorites } from "./pages/MyFavorites";
 import EvisaRequestForm from "./pages/EvisaRequestForm";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
 import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
 import AdminEvisaDetail from "./pages/AdminEvisaDetail";
-import AdminForgotPassword from "./pages/AdminForgotPassword";
-import AdminResetPassword from "./pages/AdminResetPassword";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -97,7 +103,11 @@ function Router() {
       <Route path={"/forgot-password-simple"} component={ResetPasswordSimple} />
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
-      <Route path={"/evaluation"} component={Evaluation} />
+      <Route path={"/evaluation"}>
+        <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
+          <Evaluation />
+        </AuthGuard>
+      </Route>
       <Route path={"/mon-espace"} component={EvaluationSpace} />
       <Route path={"/rdv"} component={AppointmentBooking} />
       <Route path={"/verify-email"} component={VerifyEmail} />
@@ -109,42 +119,18 @@ function Router() {
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
-      <Route path={"/flights"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
-          <Flights />
-        </AuthGuard>
-      </Route>
-      <Route path={"/vols"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la réservation de vols.">
-          <Vols />
-        </AuthGuard>
-      </Route>
+      <Route path={"/flights"} component={Flights} />
+      <Route path={"/vols"} component={Vols} />
       <Route path="/procedures" component={ProceduresResources} />
-      <Route path={"/assurance"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à nos offres d'assurance.">
-          <Assurance />
-        </AuthGuard>
-      </Route>
-      <Route path={"/assurance-inscription"}>
-        <AuthGuard message="Vous devez créer un compte pour vous inscrire à une assurance.">
-          <AssuranceInscription />
-        </AuthGuard>
-      </Route>
+      <Route path={"/assurance"} component={Assurance} />
+      <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"}>
-        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
-          <EvisaDemande />
-        </AuthGuard>
-      </Route>
+      <Route path={"/evisa-demande"} component={EvisaDemande} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
-      <Route path={"/traduction/order"}>
-        <AuthGuard message="Vous devez créer un compte pour commander une traduction.">
-          <TranslationOrder />
-        </AuthGuard>
-      </Route>
+      <Route path={"/traduction/order"} component={TranslationOrder} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/visa-types"} component={VisaTypes} />
       <Route path={"/destinations"} component={Destinations} />
@@ -191,6 +177,21 @@ function Router() {
         </AuthGuard>
       </Route>
 
+      {/* Prise de rendez-vous en agence */}
+      <Route path={"/schedule-agency"} component={ScheduleAgency} />
+
+      {/* Programme Ambassadeur */}
+      <Route path={"/ambassador-program"} component={AmbassadorProgram} />
+
+      {/* Générateur de CV */}
+      <Route path={"/cv-generator"} component={CVGenerator} />
+
+      {/* Résultat d'évaluation */}
+      <Route path={"/evaluation-result"} component={EvaluationResult} />
+
+      {/* Vitrine des composants (usage interne / référence design) */}
+      <Route path={"/component-showcase"} component={ComponentsShowcase} />
+
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />
 
@@ -205,11 +206,7 @@ function Router() {
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasPage} />
-      <Route path={"/evisas/:countryCode"}>
-        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
-          <EvisaApplicationForm />
-        </AuthGuard>
-      </Route>
+      <Route path={"/evisas/:countryCode"} component={EvisaApplicationForm} />
       <Route path={"/evisas/request"}>
         <EvisaRequestForm />
       </Route>
@@ -226,8 +223,6 @@ function Router() {
       {/* Panneau admin — URL secrète d'accès */}
       <Route path={"/admin/access-secret"} component={AdminLogin} />
       <Route path={"/admin/login"} component={AdminLogin} />
-      <Route path={"/admin/forgot-password"} component={AdminForgotPassword} />
-      <Route path={"/admin/reset-password"} component={AdminResetPassword} />
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />
@@ -235,7 +230,19 @@ function Router() {
       </Route>
       {/* Redirection /admin → / pour masquer l'existence du panneau */}
       <Route path={"/admin"}>
-        {() => { window.location.replace('/'); return null; }}
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDashboard />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/add-dossier"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAddDossier />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/document-verification"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDocumentVerification />
+        </AdminGuard>
       </Route>
       <Route path={"/admin/evaluation"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
