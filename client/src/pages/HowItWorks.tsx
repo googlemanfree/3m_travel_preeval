@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, Clock, FileText, DollarSign, Upload, Briefcase, Award } from "lucide-react";
 import { Link } from "wouter";
 
-export function HowItWorks() {
+export default function HowItWorks() {
   const steps = [
     {
       number: 1,

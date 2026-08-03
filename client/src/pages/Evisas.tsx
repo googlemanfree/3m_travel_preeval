@@ -33,7 +33,7 @@ import {
 } from '@/components/EvisaAdvancedFilters';
 import { FavoriteButton } from '@/components/FavoriteButton';
 
-export function Evisas() {
+export default function Evisas() {
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: '',
     continents: [],

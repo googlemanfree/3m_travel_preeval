@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Calendar, User, ArrowRight } from "lucide-react";
 
-export function Blog() {
+export default function Blog() {
   const articles = [
     {
       id: 1,

@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, MapPin, Smartphone, CheckCircle2, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
-export function SubmitDocuments() {
+export default function SubmitDocuments() {
   const [searchParams] = useSearchParams();
   const dossierNumber = searchParams.get("dossier") || "";
   const [submissionMethod, setSubmissionMethod] = useState<"en_ligne" | "agence_physique" | null>(null);

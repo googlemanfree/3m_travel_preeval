@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export function MyFavorites() {
+export default function MyFavorites() {
   const [selectedFavorites, setSelectedFavorites] = useState<number[]>([]);
 
   // Récupérer les favoris

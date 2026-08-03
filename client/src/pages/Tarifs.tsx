@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
 
-export function Tarifs() {
+export default function Tarifs() {
   const plans = [
     {
       name: "Évaluation Gratuite",

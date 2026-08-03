@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
-export function AdminDocumentVerification() {
+export default function AdminDocumentVerification() {
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [verificationNotes, setVerificationNotes] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);

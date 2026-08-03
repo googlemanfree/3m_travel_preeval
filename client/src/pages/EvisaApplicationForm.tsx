@@ -16,7 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, CheckCircle, FileUp, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function EvisaApplicationForm() {
+export default function EvisaApplicationForm() {
   const [, setLocation] = useLocation();
   const params = useParams();
   const countryCode = params?.countryCode || '';

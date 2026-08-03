@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
 
-export function Avis() {
+export default function Avis() {
   const testimonials = [
     {
       name: "Aminata Diallo",

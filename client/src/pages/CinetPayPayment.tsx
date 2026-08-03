@@ -14,7 +14,7 @@ interface PaymentData {
   description: string;
 }
 
-export function CinetPayPayment() {
+export default function CinetPayPayment() {
   const { dossierNumber } = useParams<{ dossierNumber: string }>();
   const [, setLocation] = useLocation();
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
