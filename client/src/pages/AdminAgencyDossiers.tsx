@@ -1,1087 +1,842 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
-import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  ArrowLeft,
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  Edit,
-  Trash2,
-  MessageSquare,
-  RefreshCw,
-  Users,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  StickyNote,
-  History,
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type DossierStatus =
-  | "nouveau"
-  | "en_cours"
-  | "documents_requis"
-  | "soumis"
-  | "approuve"
-  | "refuse";
-
-interface Dossier {
-  id: number;
-  fullName: string;
-  email: string;
-  phone: string;
-  dateOfBirth?: string | null;
-  nationality?: string | null;
-  destination: string;
-  visaType: string;
-  status: DossierStatus;
-  createdByAdmin: string;
-  assignedToAdmin?: string | null;
-  adminNotes?: string | null;
-  educationLevel?: string | null;
-  employmentStatus?: string | null;
-  monthlyIncome?: number | null;
-  bankBalance?: number | null;
-  lastStatusChangeAt?: Date | null;
-  lastStatusChangeBy?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+interface Step47Props {
+  formData: any;
+  onFormDataChange: (field: string, value: any) => void;
+  onNext: () => void;
+  onPrev: () => void;
+  currentStep: number;
 }
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+interface UploadedFile {
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: Date;
+  url?: string;
+}
 
-const STATUS_CONFIG: Record<DossierStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  nouveau:           { label: "Nouveau",            color: "bg-blue-500/20 text-blue-300 border-blue-500/30",    icon: <FileText className="w-3 h-3" /> },
-  en_cours:          { label: "En cours",            color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30", icon: <Clock className="w-3 h-3" /> },
-  documents_requis:  { label: "Docs requis",         color: "bg-orange-500/20 text-orange-300 border-orange-500/30", icon: <MessageSquare className="w-3 h-3" /> },
-  soumis:            { label: "Soumis",              color: "bg-purple-500/20 text-purple-300 border-purple-500/30", icon: <CheckCircle2 className="w-3 h-3" /> },
-  approuve:          { label: "Approuvé",            color: "bg-green-500/20 text-green-300 border-green-500/30",  icon: <CheckCircle2 className="w-3 h-3" /> },
-  refuse:            { label: "Refusé",              color: "bg-red-500/20 text-red-300 border-red-500/30",       icon: <XCircle className="w-3 h-3" /> },
-};
+export default function PremiumEvaluationFormSteps47({
+  formData,
+  onFormDataChange,
+  onNext,
+  onPrev,
+  currentStep,
+}: Step47Props) {
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
-const DESTINATIONS = [
-  "Canada", "France", "Allemagne", "Belgique", "Pays-Bas", "Espagne",
-  "Portugal", "Italie", "Suisse", "Royaume-Uni", "États-Unis", "Australie",
-  "Luxembourg", "Pologne", "Autre",
-];
-
-const VISA_TYPES = [
-  "Visa Étudiant", "Visa Travail", "Visa Tourisme", "Résidence Permanente",
-  "Regroupement Familial", "Visa Affaires", "Permis de Travail",
-  "Visa Long Séjour", "Autre",
-];
-
-const EDUCATION_LEVELS = [
-  "Baccalauréat", "BTS / DUT", "Licence", "Master", "Doctorat", "Autre",
-];
-
-const EMPLOYMENT_STATUSES = [
-  "Salarié", "Fonctionnaire", "Entrepreneur", "Étudiant", "Sans emploi", "Retraité", "Autre",
-];
-
-// ─── Composant principal ───────────────────────────────────────────────────────
-
-export default function AdminAgencyDossiers() {
-  const [, navigate] = useLocation();
-
-  // Filtres
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDestination, setFilterDestination] = useState<string>("all");
-
-  // Modales
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showNotesModal, setShowNotesModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedDossier, setSelectedDossier] = useState<Dossier | null>(null);
-
-  // Formulaire d'ajout
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-    nationality: "",
-    destination: "",
-    visaType: "",
-    educationLevel: "",
-    employmentStatus: "",
-    monthlyIncome: "",
-    bankBalance: "",
-    adminNotes: "",
-  });
-
-  // Formulaire de changement de statut
-  const [newStatus, setNewStatus] = useState<DossierStatus>("nouveau");
-  const [statusNote, setStatusNote] = useState("");
-
-  // Formulaire de notes
-  const [noteText, setNoteText] = useState("");
-
-  // Récupérer les dossiers
-  const { data, isLoading, refetch } = trpc.agencyDossier.getDossiers.useQuery({
-    limit: 100,
-    offset: 0,
-  });
-
-  const dossiers: Dossier[] = (data?.dossiers ?? []) as Dossier[];
-
-  // Filtrage côté client
-  const filtered = dossiers.filter((d) => {
-    const matchSearch =
-      !search ||
-      d.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      d.email.toLowerCase().includes(search.toLowerCase()) ||
-      d.phone.includes(search);
-    const matchStatus = filterStatus === "all" || d.status === filterStatus;
-    const matchDest =
-      filterDestination === "all" ||
-      d.destination.toLowerCase().includes(filterDestination.toLowerCase());
-    return matchSearch && matchStatus && matchDest;
-  });
-
-  // Statistiques
-  const stats = {
-    total: dossiers.length,
-    nouveau: dossiers.filter((d) => d.status === "nouveau").length,
-    en_cours: dossiers.filter((d) => d.status === "en_cours").length,
-    approuve: dossiers.filter((d) => d.status === "approuve").length,
-    refuse: dossiers.filter((d) => d.status === "refuse").length,
-  };
-
-  // ─── Mutations ─────────────────────────────────────────────────────────────
-
-  const createMutation = trpc.agencyDossier.createDossier.useMutation({
-    onSuccess: () => {
-      toast.success("Dossier créé avec succès ! Un email de bienvenue a été envoyé.");
-      setShowAddModal(false);
-      resetForm();
-      refetch();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Erreur lors de la création du dossier");
-    },
-  });
-
-  const updateStatusMutation = trpc.agencyDossier.updateStatus.useMutation({
-    onSuccess: () => {
-      toast.success("Statut mis à jour avec succès !");
-      setShowStatusModal(false);
-      setStatusNote("");
-      refetch();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Erreur lors de la mise à jour du statut");
-    },
-  });
-
-  const addNotesMutation = trpc.agencyDossier.addNotes.useMutation({
-    onSuccess: () => {
-      toast.success("Notes enregistrées !");
-      setShowNotesModal(false);
-      setNoteText("");
-      refetch();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Erreur lors de l'enregistrement des notes");
-    },
-  });
-
-  const deleteMutation = trpc.agencyDossier.deleteDossier.useMutation({
-    onSuccess: () => {
-      toast.success("Dossier supprimé.");
-      setShowDeleteModal(false);
-      setSelectedDossier(null);
-      refetch();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Erreur lors de la suppression");
-    },
-  });
-
-  // ─── Handlers ──────────────────────────────────────────────────────────────
-
-  const resetForm = () =>
-    setForm({
-      fullName: "", email: "", phone: "", dateOfBirth: "", nationality: "",
-      destination: "", visaType: "", educationLevel: "", employmentStatus: "",
-      monthlyIncome: "", bankBalance: "", adminNotes: "",
-    });
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.fullName || !form.email || !form.phone || !form.destination || !form.visaType) {
-      toast.error("Veuillez remplir tous les champs obligatoires.");
-      return;
-    }
-    createMutation.mutate({
-      fullName: form.fullName,
-      email: form.email,
-      phone: form.phone,
-      dateOfBirth: form.dateOfBirth || undefined,
-      nationality: form.nationality || undefined,
-      destination: form.destination,
-      visaType: form.visaType,
-      educationLevel: form.educationLevel || undefined,
-      employmentStatus: form.employmentStatus || undefined,
-      monthlyIncome: form.monthlyIncome ? parseInt(form.monthlyIncome) : undefined,
-      bankBalance: form.bankBalance ? parseInt(form.bankBalance) : undefined,
-      adminNotes: form.adminNotes || undefined,
-    });
-  };
-
-  const openStatusModal = (d: Dossier) => {
-    setSelectedDossier(d);
-    setNewStatus(d.status);
-    setStatusNote("");
-    setShowStatusModal(true);
-  };
-
-  const openNotesModal = (d: Dossier) => {
-    setSelectedDossier(d);
-    setNoteText(d.adminNotes || "");
-    setShowNotesModal(true);
-  };
-
-  const openDeleteModal = (d: Dossier) => {
-    setSelectedDossier(d);
-    setShowDeleteModal(true);
-  };
-
-  const openDetailModal = (d: Dossier) => {
-    setSelectedDossier(d);
-    setShowDetailModal(true);
-  };
-
-  const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return "—";
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "2-digit", month: "short", year: "numeric",
-    });
-  };
-
-  // ─── Rendu ─────────────────────────────────────────────────────────────────
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
-
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => navigate("/admin")}
-              className="text-white hover:bg-white/10 p-2"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Users className="w-6 h-6" />
-                Dossiers en Agence
-              </h1>
-              <p className="text-blue-100 text-sm mt-0.5">
-                Gestion des dossiers ajoutés manuellement
-              </p>
-            </div>
+  // ─── Étape 4: Historique de Voyage & Admissibilité ───────────────────────────
+  if (currentStep === 4) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">4. Historique de Voyage & Admissibilité</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="md:col-span-2">
+            <Label className="text-sm font-semibold mb-2 block">
+              Pays déjà visités (séparés par virgule)
+            </Label>
+            <Input
+              placeholder="Ex: France, Émirats, Sénégal, Belgique"
+              value={formData.countriesVisited || ""}
+              onChange={(e) => onFormDataChange("countriesVisited", e.target.value)}
+            />
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => refetch()}
-              className="text-white border-white hover:bg-white/10"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
-            <Button
-              onClick={() => setShowAddModal(true)}
-              className="bg-white text-blue-700 hover:bg-blue-50 font-semibold"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter un Dossier
-            </Button>
+
+          <div className="md:col-span-2">
+            <Label className="text-sm font-semibold mb-2 block">
+              Avez-vous déjà eu un refus de visa ? <span className="text-red-500">*</span>
+            </Label>
+            <Select value={formData.visaRefusals || ""} onValueChange={(v) => onFormDataChange("visaRefusals", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Non">Non, aucun</SelectItem>
+                <SelectItem value="Canada">Oui - Canada</SelectItem>
+                <SelectItem value="Schengen">Oui - Espace Schengen</SelectItem>
+                <SelectItem value="USA/UK">Oui - USA / UK</SelectItem>
+                <SelectItem value="Autre">Oui - Autre pays</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="md:col-span-2">
+            <Label className="text-sm font-semibold mb-2 block">
+              Avez-vous un casier judiciaire ou antécédent médical grave ? <span className="text-red-500">*</span>
+            </Label>
+            <Select value={formData.criminalRecord || ""} onValueChange={(v) => onFormDataChange("criminalRecord", v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionnez" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Non">Non, aucun problème</SelectItem>
+                <SelectItem value="Oui">Oui (Sera précisé lors de l'entretien)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="md:col-span-2">
+            <Label className="text-sm font-semibold mb-2 block">
+              Notes supplémentaires ou informations importantes
+            </Label>
+            <Textarea
+              placeholder="Décrivez tout élément important pour votre dossier..."
+              value={formData.submissionNotes || ""}
+              onChange={(e) => onFormDataChange("submissionNotes", e.target.value)}
+              className="min-h-32"
+            />
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
-
-        {/* ── Cartes statistiques ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {[
-            { label: "Total", value: stats.total, color: "text-white", icon: <Users className="w-8 h-8 text-blue-400 opacity-50" /> },
-            { label: "Nouveaux", value: stats.nouveau, color: "text-blue-300", icon: <FileText className="w-8 h-8 text-blue-400 opacity-50" /> },
-            { label: "En cours", value: stats.en_cours, color: "text-yellow-300", icon: <Clock className="w-8 h-8 text-yellow-400 opacity-50" /> },
-            { label: "Approuvés", value: stats.approuve, color: "text-green-300", icon: <CheckCircle2 className="w-8 h-8 text-green-400 opacity-50" /> },
-            { label: "Refusés", value: stats.refuse, color: "text-red-300", icon: <XCircle className="w-8 h-8 text-red-400 opacity-50" /> },
-          ].map((s) => (
-            <Card key={s.label} className="bg-slate-800 border-slate-700">
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-400 text-xs">{s.label}</p>
-                    <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
-                  </div>
-                  {s.icon}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
+          <Button variant="outline" onClick={onPrev} className="flex items-center gap-2">
+            ◀ Précédent
+          </Button>
+          <Button onClick={onNext} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+            Suivant ➔
+          </Button>
         </div>
+      </motion.div>
+    );
+  }
 
-        {/* ── Filtres ─────────────────────────────────────────────────────── */}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="Rechercher par nom, email, téléphone..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
-                />
-              </div>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white">
-                  <Filter className="w-4 h-4 mr-2 text-slate-400" />
-                  <SelectValue placeholder="Tous les statuts" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="all" className="text-white">Tous les statuts</SelectItem>
-                  {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                    <SelectItem key={key} value={key} className="text-white">{cfg.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={filterDestination} onValueChange={setFilterDestination}>
-                <SelectTrigger className="w-full md:w-48 bg-slate-700 border-slate-600 text-white">
-                  <MapPin className="w-4 h-4 mr-2 text-slate-400" />
-                  <SelectValue placeholder="Toutes destinations" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600">
-                  <SelectItem value="all" className="text-white">Toutes destinations</SelectItem>
-                  {DESTINATIONS.map((d) => (
-                    <SelectItem key={d} value={d} className="text-white">{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+  // ─── Étape 5: Sections Conditionnelles ────────────────────────────────────────
+  if (currentStep === 5) {
+    const projectType = formData.projectType;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">5. Informations Spécifiques au Projet</h2>
+
+        {/* Conditionnel: Étudiant */}
+        {projectType === "student" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-blue-900 mb-2">📚 Informations pour Étudiant</h3>
+              <p className="text-sm text-blue-800">Complétez les détails de votre projet d'études</p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* ── Table ───────────────────────────────────────────────────────── */}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-white text-lg flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-400" />
-              {filtered.length} dossier{filtered.length !== 1 ? "s" : ""}
-              {(search || filterStatus !== "all" || filterDestination !== "all") && (
-                <span className="text-slate-400 text-sm font-normal">
-                  (filtré{filtered.length !== 1 ? "s" : ""})
-                </span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 text-blue-400 animate-spin mr-3" />
-                <p className="text-slate-400">Chargement des dossiers...</p>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-16">
-                <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400 font-medium">Aucun dossier trouvé</p>
-                <p className="text-slate-500 text-sm mt-1">
-                  {dossiers.length === 0
-                    ? "Cliquez sur « Ajouter un Dossier » pour commencer."
-                    : "Modifiez vos filtres pour voir d'autres résultats."}
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-slate-700 hover:bg-transparent">
-                      <TableHead className="text-slate-400">Candidat</TableHead>
-                      <TableHead className="text-slate-400">Contact</TableHead>
-                      <TableHead className="text-slate-400">Destination</TableHead>
-                      <TableHead className="text-slate-400">Visa</TableHead>
-                      <TableHead className="text-slate-400">Statut</TableHead>
-                      <TableHead className="text-slate-400">Date</TableHead>
-                      <TableHead className="text-slate-400 text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <AnimatePresence>
-                      {filtered.map((d, i) => {
-                        const cfg = STATUS_CONFIG[d.status];
-                        return (
-                          <motion.tr
-                            key={d.id}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ delay: i * 0.03 }}
-                            className="border-slate-700 hover:bg-slate-700/50 transition-colors"
-                          >
-                            <TableCell>
-                              <div>
-                                <p className="text-white font-medium">{d.fullName}</p>
-                                {d.nationality && (
-                                  <p className="text-slate-400 text-xs">{d.nationality}</p>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="space-y-0.5">
-                                <p className="text-slate-300 text-sm flex items-center gap-1">
-                                  <Mail className="w-3 h-3 text-slate-500" />
-                                  {d.email}
-                                </p>
-                                <p className="text-slate-300 text-sm flex items-center gap-1">
-                                  <Phone className="w-3 h-3 text-slate-500" />
-                                  {d.phone}
-                                </p>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-slate-200">{d.destination}</span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-slate-300 text-sm">{d.visaType}</span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                className={`${cfg.color} border text-xs flex items-center gap-1 w-fit`}
-                              >
-                                {cfg.icon}
-                                {cfg.label}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-slate-400 text-sm">
-                                {formatDate(d.createdAt)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDetailModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
-                                  title="Voir le détail"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openStatusModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
-                                  title="Changer le statut"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openNotesModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
-                                  title="Ajouter des notes"
-                                >
-                                  <StickyNote className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => openDeleteModal(d)}
-                                  className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </motion.tr>
-                        );
-                      })}
-                    </AnimatePresence>
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL — Ajouter un Dossier
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Plus className="w-5 h-5 text-blue-400" />
-              Nouveau Dossier en Agence
-            </DialogTitle>
-          </DialogHeader>
-
-          <form onSubmit={handleCreate} className="space-y-6 mt-2">
-            {/* Identité */}
             <div>
-              <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4" /> Identité du Candidat
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">
-                    Nom complet <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    value={form.fullName}
-                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                    placeholder="Jean Dupont"
-                    required
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Nationalité</Label>
-                  <Input
-                    value={form.nationality}
-                    onChange={(e) => setForm({ ...form, nationality: e.target.value })}
-                    placeholder="Camerounaise"
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">
-                    Email <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="jean@example.com"
-                    required
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">
-                    Téléphone <span className="text-red-400">*</span>
-                  </Label>
-                  <Input
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="+237 6XX XXX XXX"
-                    required
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Date de naissance</Label>
-                  <Input
-                    type="date"
-                    value={form.dateOfBirth}
-                    onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
-                    className="bg-slate-700 border-slate-600 text-white"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Destination & Visa */}
-            <div>
-              <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Destination & Visa
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">
-                    Destination <span className="text-red-400">*</span>
-                  </Label>
-                  <Select
-                    value={form.destination}
-                    onValueChange={(v) => setForm({ ...form, destination: v })}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Choisir un pays" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {DESTINATIONS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-white hover:bg-slate-700">{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">
-                    Type de Visa <span className="text-red-400">*</span>
-                  </Label>
-                  <Select
-                    value={form.visaType}
-                    onValueChange={(v) => setForm({ ...form, visaType: v })}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Choisir le type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {VISA_TYPES.map((v) => (
-                        <SelectItem key={v} value={v} className="text-white hover:bg-slate-700">{v}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Profil */}
-            <div>
-              <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <FileText className="w-4 h-4" /> Profil (optionnel)
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Niveau d'études</Label>
-                  <Select
-                    value={form.educationLevel}
-                    onValueChange={(v) => setForm({ ...form, educationLevel: v })}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {EDUCATION_LEVELS.map((e) => (
-                        <SelectItem key={e} value={e} className="text-white hover:bg-slate-700">{e}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Situation professionnelle</Label>
-                  <Select
-                    value={form.employmentStatus}
-                    onValueChange={(v) => setForm({ ...form, employmentStatus: v })}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {EMPLOYMENT_STATUSES.map((s) => (
-                        <SelectItem key={s} value={s} className="text-white hover:bg-slate-700">{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Revenu mensuel (FCFA)</Label>
-                  <Input
-                    type="number"
-                    value={form.monthlyIncome}
-                    onChange={(e) => setForm({ ...form, monthlyIncome: e.target.value })}
-                    placeholder="150000"
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-slate-300">Solde bancaire (FCFA)</Label>
-                  <Input
-                    type="number"
-                    value={form.bankBalance}
-                    onChange={(e) => setForm({ ...form, bankBalance: e.target.value })}
-                    placeholder="500000"
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Notes internes */}
-            <div className="space-y-1.5">
-              <Label className="text-slate-300 flex items-center gap-2">
-                <StickyNote className="w-4 h-4 text-blue-400" />
-                Notes internes (visibles uniquement par les admins)
+              <Label className="text-sm font-semibold mb-2 block">
+                Niveau d'études visé <span className="text-red-500">*</span>
               </Label>
-              <Textarea
-                value={form.adminNotes}
-                onChange={(e) => setForm({ ...form, adminNotes: e.target.value })}
-                placeholder="Observations, remarques, points d'attention..."
-                rows={3}
-                className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
+              <Input
+                placeholder="Ex: Licence, Master, Doctorat"
+                value={formData.desiredEducationLevel || ""}
+                onChange={(e) => onFormDataChange("desiredEducationLevel", e.target.value)}
               />
             </div>
 
-            <DialogFooter className="gap-2">
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Lettre d'admission disponible ? <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.admissionLetterAvailable ? "Oui" : "Non"} onValueChange={(v) => onFormDataChange("admissionLetterAvailable", v === "Oui")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Non">Non, en cours de recherche</SelectItem>
+                  <SelectItem value="Oui">Oui, admission reçue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label className="text-sm font-semibold mb-2 block">
+                Institution / Université ciblée
+              </Label>
+              <Input
+                placeholder="Ex: Université de Montréal, Sorbonne"
+                value={formData.targetInstitution || ""}
+                onChange={(e) => onFormDataChange("targetInstitution", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Date de début d'études prévue
+              </Label>
+              <Input
+                type="date"
+                value={formData.intendedStartDate || ""}
+                onChange={(e) => onFormDataChange("intendedStartDate", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Budget d'études estimé (en FCFA)
+              </Label>
+              <Input
+                type="number"
+                placeholder="Ex: 5000000"
+                value={formData.studyBudget || ""}
+                onChange={(e) => onFormDataChange("studyBudget", parseInt(e.target.value) || 0)}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label className="text-sm font-semibold mb-2 block">
+                Projet académique / Domaine d'études
+              </Label>
+              <Textarea
+                placeholder="Décrivez votre projet d'études, vos objectifs..."
+                value={formData.academicProject || ""}
+                onChange={(e) => onFormDataChange("academicProject", e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Conditionnel: Visiteur */}
+        {projectType === "visitor" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="md:col-span-2 bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-green-900 mb-2">✈️ Informations pour Visiteur</h3>
+              <p className="text-sm text-green-800">Décrivez votre visite et vos liens avec le pays d'accueil</p>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Raison de la visite <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.visitType || ""} onValueChange={(v) => onFormDataChange("visitType", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="tourism">Tourisme / Loisirs</SelectItem>
+                  <SelectItem value="family">Visite familiale</SelectItem>
+                  <SelectItem value="business">Affaires / Conférence</SelectItem>
+                  <SelectItem value="event">Événement spécial</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Durée prévue du séjour <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                placeholder="Ex: 2 semaines, 1 mois"
+                value={formData.plannedStayDuration || ""}
+                onChange={(e) => onFormDataChange("plannedStayDuration", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Date de voyage estimée
+              </Label>
+              <Input
+                type="date"
+                value={formData.estimatedTravelDate || ""}
+                onChange={(e) => onFormDataChange("estimatedTravelDate", e.target.value)}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label className="text-sm font-semibold mb-2 block">
+                Liens familiaux ou professionnels dans le pays cible
+              </Label>
+              <Textarea
+                placeholder="Décrivez vos liens (famille, amis, collègues)..."
+                value={formData.tiesInHomeCountry || ""}
+                onChange={(e) => onFormDataChange("tiesInHomeCountry", e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Conditionnel: Travailleur */}
+        {projectType === "worker" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="md:col-span-2 bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-purple-900 mb-2">💼 Informations pour Travailleur</h3>
+              <p className="text-sm text-purple-800">Détails de votre projet professionnel</p>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Poste visé <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                placeholder="Ex: Ingénieur, Infirmier, Développeur"
+                value={formData.desiredPosition || ""}
+                onChange={(e) => onFormDataChange("desiredPosition", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Ville / Région ciblée
+              </Label>
+              <Input
+                placeholder="Ex: Toronto, Vancouver, Paris"
+                value={formData.targetCity || ""}
+                onChange={(e) => onFormDataChange("targetCity", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Niveau de langue requis
+              </Label>
+              <Select value={formData.languageLevel || ""} onValueChange={(v) => onFormDataChange("languageLevel", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Débutant">Débutant</SelectItem>
+                  <SelectItem value="Intermédiaire">Intermédiaire</SelectItem>
+                  <SelectItem value="Avancé">Avancé</SelectItem>
+                  <SelectItem value="Bilingue">Bilingue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Offre d'emploi disponible ? <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.jobOfferAvailable ? "Oui" : "Non"} onValueChange={(v) => onFormDataChange("jobOfferAvailable", v === "Oui")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Non">Non, en cours de recherche</SelectItem>
+                  <SelectItem value="Oui">Oui, offre reçue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label className="text-sm font-semibold mb-2 block">
+                Expérience professionnelle pertinente
+              </Label>
+              <Textarea
+                placeholder="Décrivez votre expérience dans le domaine visé..."
+                value={formData.previousExperiences || ""}
+                onChange={(e) => onFormDataChange("previousExperiences", e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Conditionnel: Résidence Permanente */}
+        {projectType === "permanent_residence" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="md:col-span-2 bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+              <h3 className="font-semibold text-orange-900 mb-2">🏠 Informations pour Résidence Permanente</h3>
+              <p className="text-sm text-orange-800">Détails de votre demande de résidence permanente</p>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Catégorie d'immigration <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.targetCategory || ""} onValueChange={(v) => onFormDataChange("targetCategory", v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionnez" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Express Entry">Express Entry</SelectItem>
+                  <SelectItem value="Provincial Nominee">Provincial Nominee Program</SelectItem>
+                  <SelectItem value="Skilled Worker">Skilled Worker</SelectItem>
+                  <SelectItem value="Entrepreneur">Entrepreneur</SelectItem>
+                  <SelectItem value="Family Sponsorship">Family Sponsorship</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Âge <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="number"
+                min="18"
+                max="100"
+                value={formData.age || ""}
+                onChange={(e) => onFormDataChange("age", parseInt(e.target.value) || 0)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Années d'expérience professionnelle <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.experienceYears || ""}
+                onChange={(e) => onFormDataChange("experienceYears", parseInt(e.target.value) || 0)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Avez-vous une nomination provinciale ?
+              </Label>
+              <Select value={formData.provincialNomination ? "Oui" : "Non"} onValueChange={(v) => onFormDataChange("provincialNomination", v === "Oui")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Non">Non</SelectItem>
+                  <SelectItem value="Oui">Oui</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-semibold mb-2 block">
+                Certificats de police disponibles ?
+              </Label>
+              <Select value={formData.policeCertificatesAvailable ? "Oui" : "Non"} onValueChange={(v) => onFormDataChange("policeCertificatesAvailable", v === "Oui")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Non">Non</SelectItem>
+                  <SelectItem value="Oui">Oui</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label className="text-sm font-semibold mb-2 block">
+                Fonds disponibles pour l'installation (en FCFA)
+              </Label>
+              <Input
+                type="number"
+                placeholder="Ex: 10000000"
+                value={formData.availableFunds || ""}
+                onChange={(e) => onFormDataChange("availableFunds", parseInt(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
+          <Button variant="outline" onClick={onPrev} className="flex items-center gap-2">
+            ◀ Précédent
+          </Button>
+          <Button onClick={onNext} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+            Suivant ➔
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ─── Étape 6: Téléchargement de Documents ──────────────────────────────────────
+  if (currentStep === 6) {
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files) return;
+
+      setIsUploading(true);
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+
+          // Validation de taille (max 10MB)
+          if (file.size > 10 * 1024 * 1024) {
+            toast.error(`${file.name} dépasse 10MB`);
+            continue;
+          }
+
+          // Validation de type
+          const allowedTypes = [
+            "application/pdf",
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          ];
+          if (!allowedTypes.includes(file.type)) {
+            toast.error(`${file.name} : format non autorisé`);
+            continue;
+          }
+
+          // Ajouter le fichier à la liste
+          const newFile: UploadedFile = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date(),
+          };
+
+          setUploadedFiles((prev) => [...prev, newFile]);
+          toast.success(`${file.name} ajouté`);
+        }
+      } catch (error) {
+        toast.error("Erreur lors de l'upload");
+      } finally {
+        setIsUploading(false);
+      }
+    };
+
+    const removeFile = (index: number) => {
+      setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">6. Documents Justificatifs</h2>
+
+        <div className="mb-8">
+          <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50 hover:bg-blue-100 transition">
+            <Upload className="w-12 h-12 text-blue-600 mx-auto mb-3" />
+            <p className="text-gray-700 font-semibold mb-2">Téléchargez vos documents</p>
+            <p className="text-gray-600 text-sm mb-4">
+              PDF, JPG, PNG, Word (Max 10MB par fichier)
+            </p>
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                disabled={isUploading}
+                className="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+              />
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => { setShowAddModal(false); resetForm(); }}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                disabled={createMutation.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
+                disabled={isUploading}
               >
-                {createMutation.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Création...</>
-                ) : (
-                  <><Plus className="w-4 h-4 mr-2" /> Créer le Dossier</>
-                )}
+                {isUploading ? "Upload en cours..." : "Sélectionner des fichiers"}
               </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </label>
+          </div>
+        </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL — Détail du dossier
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Eye className="w-5 h-5 text-blue-400" />
-              Détail du Dossier
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDossier && (
-            <div className="space-y-4 mt-2">
-              {/* Statut */}
-              <div className="flex items-center gap-2">
-                <Badge className={`${STATUS_CONFIG[selectedDossier.status].color} border flex items-center gap-1`}>
-                  {STATUS_CONFIG[selectedDossier.status].icon}
-                  {STATUS_CONFIG[selectedDossier.status].label}
-                </Badge>
-                <span className="text-slate-400 text-sm">
-                  Créé le {formatDate(selectedDossier.createdAt)}
-                </span>
-              </div>
-
-              {/* Identité */}
-              <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
-                <h4 className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">Identité</h4>
-                <InfoRow icon={<Users className="w-4 h-4" />} label="Nom" value={selectedDossier.fullName} />
-                <InfoRow icon={<Mail className="w-4 h-4" />} label="Email" value={selectedDossier.email} />
-                <InfoRow icon={<Phone className="w-4 h-4" />} label="Téléphone" value={selectedDossier.phone} />
-                {selectedDossier.nationality && <InfoRow icon={<MapPin className="w-4 h-4" />} label="Nationalité" value={selectedDossier.nationality} />}
-                {selectedDossier.dateOfBirth && <InfoRow icon={<Calendar className="w-4 h-4" />} label="Date de naissance" value={selectedDossier.dateOfBirth} />}
-              </div>
-
-              {/* Destination */}
-              <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
-                <h4 className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">Destination & Visa</h4>
-                <InfoRow icon={<MapPin className="w-4 h-4" />} label="Destination" value={selectedDossier.destination} />
-                <InfoRow icon={<FileText className="w-4 h-4" />} label="Type de visa" value={selectedDossier.visaType} />
-              </div>
-
-              {/* Profil */}
-              {(selectedDossier.educationLevel || selectedDossier.employmentStatus || selectedDossier.monthlyIncome || selectedDossier.bankBalance) && (
-                <div className="bg-slate-700/50 rounded-lg p-4 space-y-2">
-                  <h4 className="text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">Profil</h4>
-                  {selectedDossier.educationLevel && <InfoRow icon={<FileText className="w-4 h-4" />} label="Niveau d'études" value={selectedDossier.educationLevel} />}
-                  {selectedDossier.employmentStatus && <InfoRow icon={<Users className="w-4 h-4" />} label="Situation pro." value={selectedDossier.employmentStatus} />}
-                  {selectedDossier.monthlyIncome && <InfoRow icon={<FileText className="w-4 h-4" />} label="Revenu mensuel" value={`${selectedDossier.monthlyIncome.toLocaleString()} FCFA`} />}
-                  {selectedDossier.bankBalance && <InfoRow icon={<FileText className="w-4 h-4" />} label="Solde bancaire" value={`${selectedDossier.bankBalance.toLocaleString()} FCFA`} />}
-                </div>
-              )}
-
-              {/* Notes */}
-              {selectedDossier.adminNotes && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-                  <h4 className="text-yellow-400 text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1">
-                    <StickyNote className="w-3 h-3" /> Notes internes
-                  </h4>
-                  <p className="text-slate-300 text-sm whitespace-pre-wrap">{selectedDossier.adminNotes}</p>
-                </div>
-              )}
-
-              {/* Créé par */}
-              <p className="text-slate-500 text-xs">
-                Créé par : {selectedDossier.createdByAdmin}
-                {selectedDossier.lastStatusChangeBy && (
-                  <> · Dernier changement par : {selectedDossier.lastStatusChangeBy}</>
-                )}
-              </p>
-            </div>
-          )}
-          <DialogFooter className="gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowDetailModal(false)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Fermer
-            </Button>
-            {selectedDossier && (
-              <>
-                <Button
-                  onClick={() => { setShowDetailModal(false); openStatusModal(selectedDossier); }}
-                  className="bg-yellow-600 hover:bg-yellow-700 text-white"
+        {/* Liste des fichiers uploadés */}
+        {uploadedFiles.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              Documents uploadés ({uploadedFiles.length})
+            </h3>
+            <div className="space-y-2">
+              {uploadedFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
                 >
-                  <Edit className="w-4 h-4 mr-2" /> Changer Statut
-                </Button>
-                <Button
-                  onClick={() => { setShowDetailModal(false); openNotesModal(selectedDossier); }}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <StickyNote className="w-4 h-4 mr-2" /> Notes
-                </Button>
-              </>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL — Changer le statut
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <Edit className="w-5 h-5 text-yellow-400" />
-              Changer le Statut
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDossier && (
-            <div className="space-y-4 mt-2">
-              <p className="text-slate-300 text-sm">
-                Dossier de <strong className="text-white">{selectedDossier.fullName}</strong>
-              </p>
-              <div className="space-y-1.5">
-                <Label className="text-slate-300">Nouveau statut</Label>
-                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as DossierStatus)}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                      <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
-                        <span className="flex items-center gap-2">{cfg.icon} {cfg.label}</span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-slate-300">Message au candidat (optionnel)</Label>
-                <Textarea
-                  value={statusNote}
-                  onChange={(e) => setStatusNote(e.target.value)}
-                  placeholder="Précisions sur le changement de statut..."
-                  rows={3}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
-                />
-              </div>
-              <p className="text-slate-500 text-xs">
-                Un email de notification sera envoyé automatiquement au candidat.
-              </p>
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-900">{file.name}</p>
+                    <p className="text-sm text-gray-600">
+                      {(file.size / 1024).toFixed(2)} KB • {file.uploadedAt.toLocaleString("fr-FR")}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => removeFile(index)}
+                    type="button"
+                    aria-label={`Supprimer le fichier ${file.name}`}
+                    className="p-2 hover:bg-red-100 rounded-lg transition"
+                  >
+                    <X className="w-5 h-5 text-red-600" />
+                  </button>
+                </div>
+              ))}
             </div>
-          )}
-          <DialogFooter className="gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowStatusModal(false)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Annuler
-            </Button>
-            <Button
-              disabled={updateStatusMutation.isPending}
-              onClick={() => {
-                if (!selectedDossier) return;
-                updateStatusMutation.mutate({
-                  dossierId: selectedDossier.id,
-                  newStatus,
-                  notes: statusNote || undefined,
-                });
-              }}
-              className="bg-yellow-600 hover:bg-yellow-700 text-white"
-            >
-              {updateStatusMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mise à jour...</>
-              ) : (
-                <><CheckCircle2 className="w-4 h-4 mr-2" /> Confirmer</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        )}
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL — Notes internes
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={showNotesModal} onOpenChange={setShowNotesModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2">
-              <StickyNote className="w-5 h-5 text-green-400" />
-              Notes Internes
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDossier && (
-            <div className="space-y-4 mt-2">
-              <p className="text-slate-300 text-sm">
-                Dossier de <strong className="text-white">{selectedDossier.fullName}</strong>
-              </p>
-              <div className="space-y-1.5">
-                <Label className="text-slate-300">Notes (visibles uniquement par les admins)</Label>
-                <Textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder="Observations, remarques, points d'attention..."
-                  rows={5}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 resize-none"
-                />
+        {/* Checklist de documents recommandés */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-8">
+          <h3 className="font-semibold text-yellow-900 mb-4 flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            Documents recommandés
+          </h3>
+          <ul className="space-y-2 text-sm text-yellow-800">
+            <li>✓ Copie du passeport (pages d'identité)</li>
+            <li>✓ Relevés bancaires (3-6 derniers mois)</li>
+            <li>✓ Diplômes et certificats académiques</li>
+            <li>✓ CV / Lettre de motivation</li>
+            <li>✓ Lettre d'admission (si étudiant)</li>
+            <li>✓ Offre d'emploi (si travailleur)</li>
+            <li>✓ Certificat de police (si demandé)</li>
+          </ul>
+        </div>
+
+        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
+          <Button variant="outline" onClick={onPrev} className="flex items-center gap-2">
+            ◀ Précédent
+          </Button>
+          <Button onClick={onNext} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+            Suivant ➔
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ─── Étape 7: Finalisation & Confirmation ──────────────────────────────────────
+  if (currentStep === 7) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">7. Finalisation & Confirmation</h2>
+
+        <div className="space-y-4 mb-8">
+          <h3 className="font-semibold text-gray-900 text-lg">✓ Résumé de votre évaluation</h3>
+          
+          {/* Étape 1: Destination & Projet */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-blue-900 mb-2">1. Destination & Projet</p>
+                <div className="text-sm text-blue-800 space-y-1">
+                  <p><strong>Destination :</strong> {formData.destination}</p>
+                  <p><strong>Type de projet :</strong> {formData.projectType}</p>
+                  <p><strong>Pays actuel :</strong> {formData.currentCountry}</p>
+                  <p><strong>Langue :</strong> {formData.communicationLanguage === 'fr' ? 'Français' : 'Anglais'}</p>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 1)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
             </div>
-          )}
-          <DialogFooter className="gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowNotesModal(false)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Annuler
-            </Button>
-            <Button
-              disabled={addNotesMutation.isPending || !noteText.trim()}
-              onClick={() => {
-                if (!selectedDossier || !noteText.trim()) return;
-                addNotesMutation.mutate({ dossierId: selectedDossier.id, notes: noteText });
-              }}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              {addNotesMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>
-              ) : (
-                <><CheckCircle2 className="w-4 h-4 mr-2" /> Enregistrer</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          MODAL — Confirmation de suppression
-      ═══════════════════════════════════════════════════════════════════════ */}
-      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center gap-2 text-red-400">
-              <Trash2 className="w-5 h-5" />
-              Supprimer le Dossier
-            </DialogTitle>
-          </DialogHeader>
-          {selectedDossier && (
-            <div className="mt-2 space-y-3">
-              <p className="text-slate-300">
-                Êtes-vous sûr de vouloir supprimer le dossier de{" "}
-                <strong className="text-white">{selectedDossier.fullName}</strong> ?
-              </p>
-              <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/30 rounded-lg p-3">
-                Cette action est irréversible. Le dossier sera définitivement supprimé.
-              </p>
+          {/* Étape 2: Identité & Passeport */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-green-900 mb-2">2. Identité & Passeport</p>
+                <div className="text-sm text-green-800 space-y-1">
+                  <p><strong>Nom :</strong> {formData.fullName}</p>
+                  <p><strong>Genre :</strong> {formData.gender}</p>
+                  <p><strong>Nationalité :</strong> {formData.nationality}</p>
+                  <p><strong>Passeport :</strong> {formData.passportNumber}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 2)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
             </div>
-          )}
-          <DialogFooter className="gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteModal(false)}
-              className="border-slate-600 text-slate-300 hover:bg-slate-700"
-            >
-              Annuler
-            </Button>
-            <Button
-              disabled={deleteMutation.isPending}
-              onClick={() => {
-                if (!selectedDossier) return;
-                deleteMutation.mutate({ dossierId: selectedDossier.id });
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {deleteMutation.isPending ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Suppression...</>
-              ) : (
-                <><Trash2 className="w-4 h-4 mr-2" /> Supprimer</>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+          </div>
 
-// ─── Composant utilitaire ─────────────────────────────────────────────────────
+          {/* Étape 3: Études & Finances */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-purple-900 mb-2">3. Études & Finances</p>
+                <div className="text-sm text-purple-800 space-y-1">
+                  <p><strong>Niveau d'études :</strong> {formData.educationLevel}</p>
+                  <p><strong>Domaine :</strong> {formData.fieldOfStudy}</p>
+                  <p><strong>Profession :</strong> {formData.currentProfession}</p>
+                  <p><strong>Revenu mensuel :</strong> {formData.monthlyIncome} FCFA</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 3)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
 
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-2">
-      <span className="text-slate-500 mt-0.5 shrink-0">{icon}</span>
-      <span className="text-slate-400 text-sm w-32 shrink-0">{label}</span>
-      <span className="text-white text-sm">{value}</span>
-    </div>
-  );
+          {/* Étape 4: Voyage & Admissibilité */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-orange-900 mb-2">4. Voyage & Admissibilité</p>
+                <div className="text-sm text-orange-800 space-y-1">
+                  <p><strong>Pays visités :</strong> {formData.countriesVisited || 'Aucun'}</p>
+                  <p><strong>Refus de visa :</strong> {formData.visaRefusals}</p>
+                  <p><strong>Casier judiciaire :</strong> {formData.criminalRecord}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 4)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 5: Détails du Projet */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-indigo-900 mb-2">5. Détails du Projet</p>
+                <div className="text-sm text-indigo-800 space-y-1">
+                  {formData.projectType === 'student' && (
+                    <>
+                      <p><strong>Institution :</strong> {formData.targetInstitution || 'Non spécifiée'}</p>
+                      <p><strong>Admission :</strong> {formData.admissionLetterAvailable ? 'Reçue' : 'En cours'}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'visitor' && (
+                    <>
+                      <p><strong>Type de visite :</strong> {formData.visitType}</p>
+                      <p><strong>Durée :</strong> {formData.plannedStayDuration}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'worker' && (
+                    <>
+                      <p><strong>Poste :</strong> {formData.desiredPosition || 'Non spécifié'}</p>
+                      <p><strong>Offre d'emploi :</strong> {formData.jobOfferAvailable ? 'Reçue' : 'En cours'}</p>
+                    </>
+                  )}
+                  {formData.projectType === 'permanent_residence' && (
+                    <>
+                      <p><strong>Catégorie :</strong> {formData.targetCategory}</p>
+                      <p><strong>Expérience :</strong> {formData.experienceYears} ans</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 5)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Étape 6: Documents */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-yellow-900 mb-2">6. Documents</p>
+                <div className="text-sm text-yellow-800">
+                  <p><strong>Documents uploadés :</strong> {uploadedFiles.length} fichier(s)</p>
+                  {uploadedFiles.length > 0 && (
+                    <ul className="mt-2 space-y-1 ml-4">
+                      {uploadedFiles.slice(0, 3).map((file, idx) => (
+                        <li key={idx} className="text-xs">• {file.name}</li>
+                      ))}
+                      {uploadedFiles.length > 3 && <li className="text-xs italic">... et {uploadedFiles.length - 3} autre(s)</li>}
+                    </ul>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 6)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+
+          {/* Contact */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900 mb-2">📞 Informations de Contact</p>
+                <div className="text-sm text-gray-700 space-y-1">
+                  <p><strong>Email :</strong> {formData.email}</p>
+                  <p><strong>Téléphone WhatsApp :</strong> {formData.whatsappPhone}</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onFormDataChange('_goToStep', 2)}
+                className="ml-4 whitespace-nowrap"
+              >
+                ✏️ Modifier
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8">
+          <h3 className="font-semibold text-gray-900 mb-4">📋 Conditions d'utilisation</h3>
+          <div className="space-y-3 text-sm text-gray-700 max-h-48 overflow-y-auto">
+            <p>
+              ✓ Je confirme que les informations fournies sont exactes et complètes.
+            </p>
+            <p>
+              ✓ J'autorise 3M Travel & Services à analyser mon profil et à me contacter pour discuter de mon projet.
+            </p>
+            <p>
+              ✓ J'accepte que mes données soient traitées conformément à la politique de confidentialité.
+            </p>
+            <p>
+              ✓ Je comprends que cette évaluation est gratuite et sans engagement.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
+          <Button variant="outline" onClick={onPrev} className="flex items-center gap-2">
+            ◀ Précédent
+          </Button>
+          <Button
+            onClick={() => {
+              onFormDataChange("uploadedFiles", uploadedFiles);
+              onNext();
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+          >
+            ✓ Soumettre l'évaluation
+          </Button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  return null;
 }

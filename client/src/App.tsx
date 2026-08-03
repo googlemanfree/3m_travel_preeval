@@ -1,364 +1,235 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import AuthGuard from "./components/AuthGuard";
-import SessionLoader from "./components/SessionLoader";
-import Home from "./pages/Home";
-import Flights from "./pages/Flights";
-import Vols from "./pages/Vols";
-import ProceduresResources from "./pages/ProceduresResources";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import VerifyEmail from "@/pages/VerifyEmail";
-import VerifyEmailLink from "@/pages/VerifyEmailLink";
-import VerifyEmailSent from "@/pages/VerifyEmailSent";
-import CompleteProfile from "@/pages/CompleteProfile";
-import ForgotPassword from "@/pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import OpenDossier from "./pages/OpenDossier";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentFailed from "./pages/PaymentFailed";
-import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
-import Admin from "./pages/Admin";
-import VisaTypes from "./pages/VisaTypes";
-import Destinations from "./pages/Destinations";
-import Guide from "./pages/Guide";
-import MonDossier from "./pages/MonDossier";
-import Ressources from "./pages/Ressources";
-import Fiches from "./pages/Fiches";
-import Assurance from "./pages/Assurance";
-import TranslationOrder from "./pages/TranslationOrder";
-import AssuranceInscription from "./pages/AssuranceInscription";
-import Evisa from "./pages/Evisa";
-import EvisaDemande from "./pages/EvisaDemande";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
-import DossierConfirmation from "./pages/DossierConfirmation";
-import ConditionsUtilisation from "./pages/ConditionsUtilisation";
-import AdminEvaluation from "./pages/AdminEvaluation";
-import AdminAccompagnement from "./pages/AdminAccompagnement";
-import AdminProcedures from "./pages/AdminProcedures";
-import AdminLogin from "./pages/AdminLogin";
-import AdminEvaluations from "./pages/AdminEvaluations";
-import Hotels from "./pages/Hotels";
-import { FloatingActionMenu } from "./components/FloatingActionMenu";
-import CandidatesManager from "./pages/CandidatesManager";
-import SignUp from "./pages/SignUp";
-import SimpleSignUp from "./pages/SimpleSignUp";
-import ConfirmEmail from "./pages/ConfirmEmail";
-import ResetPasswordSimple from "./pages/ResetPasswordSimple";
-import AdminsList from "./pages/AdminsList";
-import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
-import { SubmitDocuments } from "./pages/SubmitDocuments";
-import ClientDashboard from "./pages/ClientDashboard";
-import { HowItWorks } from "./pages/HowItWorks";
-import MySpace from "./pages/MySpace";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { z } from "zod";
+import { eq, and, SQL } from "drizzle-orm";
+import * as drizzleSchema from "../../drizzle/schema";
+import { getDb } from "../db";
 
-import AdminGuard from "./components/AdminGuard";
-import AdminUsersManagement from "./pages/AdminUsersManagement";
-import AdminUserDetails from "./pages/AdminUserDetails";
-import { Tarifs } from "./pages/Tarifs";
-import { Avis } from "./pages/Avis";
-import { Blog } from "./pages/Blog";
-import SearchDemo from "./pages/SearchDemo";
-import Evaluation from "./pages/Evaluation";
-import EvaluationSpace from "./pages/EvaluationSpace";
-import AppointmentBooking from "./pages/AppointmentBooking";
-import AdminEmailTemplates from "./pages/AdminEmailTemplates";
-import { CinetPayPayment } from "./pages/CinetPayPayment";
-import EvisasPage from "./pages/Evisas";
-import { EvisaApplicationForm } from "./pages/EvisaApplicationForm";
-import { MyFavorites } from "./pages/MyFavorites";
-import EvisaRequestForm from "./pages/EvisaRequestForm";
-import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
-import React from "react";
-import Navbar from "./components/Navbar";
-import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
-import AdminEvisaDetail from "./pages/AdminEvisaDetail";
+export const translationRouter = router({
+  createTranslationRequest: publicProcedure
+    .input(z.object({
+      documentType: z.enum([
+        "birth_certificate",
+        "diploma",
+        "transcript",
+        "criminal_record",
+        "marriage_certificate",
+        "divorce_decree",
+        "employment_letter",
+        "bank_statement",
+        "passport",
+        "driver_license",
+        "medical_report",
+        "other"
+      ]),
+      sourceLanguage: z.string(),
+      targetLanguage: z.string(),
+      fileUrl: z.string().url(),
+      fileName: z.string(),
+      fileSize: z.number(),
+      numberOfPages: z.number(),
+      pricePerPage: z.number(),
+      totalPrice: z.string(),
+      currency: z.string(),
+      candidateName: z.string(),
+      email: z.string().email(),
+      whatsapp: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const newRequest = await db.insert(drizzleSchema.translationRequests).values({
+        documentType: input.documentType,
+        sourceLanguageCode: input.sourceLanguage,
+        targetLanguageCode: input.targetLanguage,
+        sourceDocumentUrl: input.fileUrl,
+        sourceDocumentName: input.fileName,
+        sourceDocumentSize: input.fileSize,
+        numberOfPages: input.numberOfPages,
+        pricePerPage: input.pricePerPage.toString(),
+        totalPrice: input.totalPrice.toString(),
+        currency: input.currency,
+        candidateName: input.candidateName,
+        candidateEmail: input.email,
+        candidatePhone: input.whatsapp,
+        status: "pending_payment",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return newRequest[0];
+    }),
 
-function Router() {
-  // Gérer l'inactivité et la déconnexion automatique
-  useSessionTimeout();
-  return (
-    <Switch>
-      {/* Pages publiques (SANS authentification) */}
-      <Route path={"/"} component={Home} />
-      <Route path={"/register"} component={Register} />
-      <Route path={"/signup"} component={SignUp} />
-      <Route path={"/simple-signup"} component={SimpleSignUp} />
-      <Route path={"/confirm-email"} component={ConfirmEmail} />
-      <Route path={"/forgot-password-simple"} component={ResetPasswordSimple} />
-      <Route path={"/login"} component={Login} />
-      <Route path={"/search"} component={SearchDemo} />
-      <Route path={"/evaluation"} component={Evaluation} />
-      <Route path={"/mon-espace"} component={EvaluationSpace} />
-      <Route path={"/rdv"} component={AppointmentBooking} />
-      <Route path={"/verify-email"} component={VerifyEmail} />
-      <Route path={"/verify-email-link"} component={VerifyEmailLink} />
-      <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
-      <Route path={"/complete-profile"} component={CompleteProfile} />
-      <Route path={"/forgot-password"} component={ForgotPassword} />
-      <Route path={"/reset-password"} component={ResetPassword} />
-      <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
+  getTranslationRequests: protectedProcedure
+    .input(z.object({
+      status: z.enum(["pending_payment", "pending_translation", "in_progress", "completed", "rejected"]).optional(),
+      email: z.string().email().optional(),
+      assignedToTranslator: z.string().email().optional(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const { db, user } = ctx;
+      if (!db) throw new Error("Database not available");
+  
+      if (!user || (user.role !== "admin" && user.role !== "translator")) {
+        throw new Error("Unauthorized");
+      }
+  
+      const conditions = [
+        user.role === "translator" && user.email ? eq(drizzleSchema.translationRequests.assignedToTranslator, user.email) : undefined,
+        input.status ? eq(drizzleSchema.translationRequests.status, input.status) : undefined,
+        input.email ? eq(drizzleSchema.translationRequests.candidateEmail, input.email) : undefined,
+        input.assignedToTranslator ? eq(drizzleSchema.translationRequests.assignedToTranslator, input.assignedToTranslator) : undefined,
+      ].filter(Boolean) as SQL[];
+  
+      if (conditions.length > 0) {
+        return db.select().from(drizzleSchema.translationRequests).where(and(...conditions));
+      } else {
+        return db.select().from(drizzleSchema.translationRequests);
+      }
+    }),
 
-      {/* Pages protégées — nécessitent un compte 3M Travel */}
-      <Route path={"/flights"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la recherche de vols de 3M Travel.">
-          <Flights />
-        </AuthGuard>
-      </Route>
-      <Route path={"/vols"}>
-        <AuthGuard message="Vous devez créer un compte ou vous connecter pour accéder à la réservation de vols.">
-          <Vols />
-        </AuthGuard>
-      </Route>
-      <Route path="/procedures" component={ProceduresResources} />
-      <Route path={"/assurance"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à nos offres d'assurance.">
-          <Assurance />
-        </AuthGuard>
-      </Route>
-      <Route path={"/assurance-inscription"}>
-        <AuthGuard message="Vous devez créer un compte pour vous inscrire à une assurance.">
-          <AssuranceInscription />
-        </AuthGuard>
-      </Route>
-      <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"}>
-        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
-          <EvisaDemande />
-        </AuthGuard>
-      </Route>
-      <Route path={"/about"} component={About} />
-      <Route path={"/contact"} component={Contact} />
-      <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
-      <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
-      <Route path={"/traduction/order"}>
-        <AuthGuard message="Vous devez créer un compte pour commander une traduction.">
-          <TranslationOrder />
-        </AuthGuard>
-      </Route>
-      <Route path={"/guide"} component={Guide} />
-      <Route path={"/visa-types"} component={VisaTypes} />
-      <Route path={"/destinations"} component={Destinations} />
-      <Route path={"/dashboard"}>
-        <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
-          <Dashboard />
-        </AuthGuard>
-      </Route>
+  getTranslationPricing: publicProcedure
+    .input(z.object({
+      documentType: z.enum([
+        "birth_certificate",
+        "diploma",
+        "transcript",
+        "criminal_record",
+        "marriage_certificate",
+        "divorce_decree",
+        "employment_letter",
+        "bank_statement",
+        "passport",
+        "driver_license",
+        "medical_report",
+        "other"
+      ]),
+      sourceLanguage: z.string(),
+      targetLanguage: z.string(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const pricing = await db.select().from(drizzleSchema.translationPricing).where(
+        and(
+          eq(drizzleSchema.translationPricing.documentType, input.documentType),
+          eq(drizzleSchema.translationPricing.sourceLanguageCode, input.sourceLanguage),
+          eq(drizzleSchema.translationPricing.targetLanguageCode, input.targetLanguage)
+        )
+      ).limit(1);
+      return pricing.length > 0 ? pricing[0] : null;
+    }),
 
-      {/* Ouverture de dossier & paiement */}
-      <Route path={"/open-dossier"}>
-        <AuthGuard message="Vous devez créer un compte pour ouvrir un dossier.">
-          <OpenDossier />
-        </AuthGuard>
-      </Route>
-      <Route path={"/verify-application-email"} component={VerifyApplicationEmail} />
-      <Route path={"/payment-success"} component={PaymentSuccess} />
-      <Route path={"/payment-failed"} component={PaymentFailed} />
-      <Route path={"/dossier-confirmation"} component={DossierConfirmation} />
+  validateTranslationPayment: publicProcedure
+    .input(z.object({
+      requestId: z.number(),
+      transactionId: z.string(),
+      paymentMethod: z.string(),
+      amount: z.string(),
+      currency: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+  
+      const request = await db.select().from(drizzleSchema.translationRequests).where(
+        eq(drizzleSchema.translationRequests.id, input.requestId)
+      ).limit(1);
+  
+      if (!request || request.length === 0) {
+        throw new Error("Translation request not found");
+      }
+  
+      await db.update(drizzleSchema.translationRequests).set({
+        paymentStatus: "completed",
+        paymentTransactionId: input.transactionId,
+        paymentMethod: input.paymentMethod,
+        paymentDate: new Date(),
+        totalPrice: input.amount,
+        currency: input.currency,
+        status: "pending_translation", // Move to next stage after payment
+        updatedAt: new Date(),
+      }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
+  
+      // TODO: Generate PDF invoice and send notifications (email/WhatsApp) to admin and client
+  
+      return { success: true };
+    }),
 
-      {/* Suivi de dossier candidat */}
-      <Route path={"/mon-dossier"}>
-        <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
-          <MonDossier />
-        </AuthGuard>
-      </Route>
+  uploadTranslatedDocument: protectedProcedure
+    .input(z.object({
+      requestId: z.number(),
+      translatedDocumentUrl: z.string().url(),
+      translatedDocumentName: z.string(),
+      translatedDocumentSize: z.number(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { db, user } = ctx;
+      if (!db) throw new Error("Database not available");
+  
+      if (!user || user.role !== "admin" && user.role !== "translator") {
+        throw new Error("Unauthorized");
+      }
+  
+      const request = await db.select().from(drizzleSchema.translationRequests).where(
+        eq(drizzleSchema.translationRequests.id, input.requestId)
+      ).limit(1);
+  
+      if (!request || request.length === 0) {
+        throw new Error("Translation request not found");
+      }
+  
+      await db.update(drizzleSchema.translationRequests).set({
+        translatedDocumentUrl: input.translatedDocumentUrl,
+        translatedDocumentName: input.translatedDocumentName,
+        translatedDocumentSize: input.translatedDocumentSize,
+        status: "completed",
+        completionDate: new Date(),
+        updatedAt: new Date(),
+      }).where(eq(drizzleSchema.translationRequests.id, input.requestId));
+  
+      // TODO: Send notification to client about completed translation
+  
+      return { success: true };
+    }),
 
-      {/* Mon Espace Candidat */}
-      <Route path={"/mon-espace-candidat"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
-        </AuthGuard>
-      </Route>
-      <Route path={"/my-space"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
-        </AuthGuard>
-      </Route>
+  downloadTranslatedDocument: publicProcedure
+    .input(z.object({
+      requestId: z.number(),
+    }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+  
+      const request = await db.select().from(drizzleSchema.translationRequests).where(
+        eq(drizzleSchema.translationRequests.id, input.requestId)
+      ).limit(1);
+  
+      if (!request || request.length === 0) {
+        throw new Error("Translation request not found");
+      }
+  
+      const translation = request[0];
+  
+      if (translation.status !== "completed" || !translation.translatedDocumentUrl) {
+        throw new Error("Translated document not available for download");
+      }
+  
+      // TODO: Implement secure, temporary URL generation for download
+      // For now, returning the direct URL (which should be S3 pre-signed URL)
+      return { url: translation.translatedDocumentUrl };
+    }),
 
-      {/* Depot des documents */}
-      <Route path={"/submit-documents"}>
-        <AuthGuard message="Vous devez créer un compte pour soumettre vos documents.">
-          <SubmitDocuments />
-        </AuthGuard>
-      </Route>
+  getTranslationLanguages: publicProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      return db.select().from(drizzleSchema.translationLanguages).where(eq(drizzleSchema.translationLanguages.isActive, true));
+    }),
 
-      {/* Comment ca marche */}
-      <Route path={"/how-it-works"} component={HowItWorks} />
-
-      {/* Bibliothèque de ressources PDF */}
-      <Route path={"/ressources"} component={Ressources} />
-
-      {/* Fiches détaillées par pays */}
-      <Route path={"/fiches"} component={Fiches} />
-
-      {/* Tarifs, Avis, Blog */}
-      <Route path={"/tarifs"} component={Tarifs} />
-      <Route path={"/avis"} component={Avis} />
-      <Route path={"/blog"} component={Blog} />
-      <Route path={"/evisas"} component={EvisasPage} />
-      <Route path={"/evisas/:countryCode"}>
-        <AuthGuard message="Vous devez créer un compte pour demander un e-visa.">
-          <EvisaApplicationForm />
-        </AuthGuard>
-      </Route>
-      <Route path={"/evisas/request"}>
-        <EvisaRequestForm />
-      </Route>
-      <Route path={"/mes-favoris"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à vos favoris.">
-          <MyFavorites />
-        </AuthGuard>
-      </Route>
-
-      {/* Routes Hotels */}
-
-      {/* Traduction assermentée */}
-
-      {/* Panneau admin — URL secrète d'accès */}
-      <Route path={"/admin/access-secret"} component={AdminLogin} />
-      <Route path={"/admin/login"} component={AdminLogin} />
-      <Route path={"/admin/dashboard"}>
-        <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
-          <Admin />
-        </AdminGuard>
-      </Route>
-      {/* Redirection /admin → / pour masquer l'existence du panneau */}
-      <Route path={"/admin"}>
-        {() => { window.location.replace('/'); return null; }}
-      </Route>
-      <Route path={"/admin/evaluation"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvaluation />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/accompagnement"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAccompagnement />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/procedures"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminProcedures />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/evaluations"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvaluations />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/candidates"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <CandidatesManager />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/admins"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminsList />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/users"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUsersManagement />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/users/:userId"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUserDetails />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/agency-dossiers"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
-        </AdminGuard>
-      </Route>
-      <Route path={"admin/agency-dossiers"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/email-templates">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEmailTemplates />
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDashboard />
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa/:id">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDetail />
-        </AdminGuard>
-      </Route>
-
-      <Route path="/client-dashboard">
-        <AuthGuard>
-          <ClientDashboard />
-        </AuthGuard>
-      </Route>
-
-      <Route path="/hotels">
-        <Hotels />
-      </Route>
-
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
-function App() {
-  // État pour gérer la restauration de la session
-  const [sessionRestored, setSessionRestored] = React.useState(false);
-
-  React.useEffect(() => {
-    // Vérifier si une session est présente dans localStorage
-    const savedToken = localStorage.getItem('3m_auth_token');
-    const savedUser = localStorage.getItem('3m_user');
-
-    if (savedToken && savedUser) {
-      // Attendre un peu pour montrer le loader
-      const timer = setTimeout(() => {
-        localStorage.setItem('3m_session_restored', 'true');
-        setSessionRestored(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    } else {
-      // Pas de session, marquer comme restauré immédiatement
-      localStorage.setItem('3m_session_restored', 'true');
-      setSessionRestored(true);
-    }
-  }, []);
-
-  return (
-    <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <SessionLoader isLoading={!sessionRestored} />
-          <Toaster />
-          {sessionRestored && (
-            <>
-              {/* Header global visible sur toutes les pages */}
-              <Navbar />
-              {/* Contenu des pages */}
-              <Router />
-              {/* Menu d'actions flottantes unifié */}
-              <FloatingActionMenu />
-            </>
-          )}
-        </TooltipProvider>
-      </ThemeProvider>
-    </ErrorBoundary>
-  );
-}
-
-export default App;
+  getTranslationDocumentTypes: publicProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Database not available");
+      const documentTypes = await db.selectDistinct({ documentType: drizzleSchema.translationPricing.documentType }).from(drizzleSchema.translationPricing);
+      return documentTypes.map(dt => dt.documentType);
+    }),
+});

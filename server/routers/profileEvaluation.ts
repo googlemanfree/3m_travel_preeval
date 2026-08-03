@@ -1,166 +1,251 @@
-import { publicProcedure, router } from "../_core/trpc";
-import { z } from "zod";
-import { profileEvaluations } from "../../drizzle/schema";
-import { getDb } from "../db";
-import { eq } from "drizzle-orm";
+/**
+ * Routeur tRPC — Gestion des Dossiers en Agence
+ * Permet aux administrateurs d'ajouter et gérer des dossiers manuellement
+ */
 
-export const profileEvaluationRouter = router({
+import { protectedProcedure, router } from "../_core/trpc";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { getDb } from "../db";
+import { agencyDossiers } from "../../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+
+export const agencyDossierRouter = router({
   /**
-   * Soumettre une évaluation de profil complète
+   * Créer un nouveau dossier en agence
    */
-  submit: publicProcedure
-    .input(
-      z.object({
-        destination: z.string(),
-        projectType: z.enum(["student", "visitor", "worker", "permanent_residence", "family_reunification", "other"]),
-        currentCountry: z.string().optional(),
-        communicationLanguage: z.enum(["fr", "en"]).default("fr"),
-        
-        // Informations personnelles
-        fullName: z.string(),
-        gender: z.enum(["homme", "femme", "autre"]).optional(),
-        dateOfBirth: z.string().optional(),
-        placeOfBirth: z.string().optional(),
-        nationality: z.string().optional(),
-        currentAddress: z.string().optional(),
-        whatsappPhone: z.string(),
-        email: z.string().email(),
-        
-        // Passeport
-        passportNumber: z.string().optional(),
-        passportCountry: z.string().optional(),
-        passportIssueDate: z.string().optional(),
-        passportExpiryDate: z.string().optional(),
-        passportCopyAvailable: z.boolean().default(false),
-        oldPassportAvailable: z.boolean().default(false),
-        idCardAvailable: z.boolean().default(false),
-        
-        // Famille
-        maritalStatus: z.enum(["single", "married", "divorced", "widowed", "civil_union"]).optional(),
-        spouseName: z.string().optional(),
-        numberOfChildren: z.number().default(0),
-        dependents: z.number().default(0),
-        familyInDestination: z.boolean().default(false),
-        familyMemberRelation: z.string().optional(),
-        familyMemberStatus: z.string().optional(),
-        
-        // Études
-        educationLevel: z.string().optional(),
-        latestDiploma: z.string().optional(),
-        fieldOfStudy: z.string().optional(),
-        diplomaYear: z.number().optional(),
-        institution: z.string().optional(),
-        diplomasAvailable: z.boolean().default(false),
-        
-        // Emploi
-        currentProfession: z.string().optional(),
-        currentEmployer: z.string().optional(),
-        yearsOfExperience: z.number().optional(),
-        previousExperiences: z.string().optional(), // JSON
-        monthlyIncome: z.number().optional(),
-        cvAvailable: z.boolean().default(false),
-        jobOfferAvailable: z.boolean().default(false),
-        
-        // Finances
-        bankBalance: z.number().optional(),
-        bankBalanceAverage6Months: z.number().optional(),
-        hasSponsor: z.boolean().default(false),
-        sponsorName: z.string().optional(),
-        fundSource: z.string().optional(),
-        realEstate: z.boolean().default(false),
-        businessActivity: z.boolean().default(false),
-        debts: z.boolean().default(false),
-        
-        // Voyage
-        countriesVisited: z.string().optional(), // JSON
-        visasObtained: z.string().optional(), // JSON
-        visaRefusals: z.boolean().default(false),
-        overstayHistory: z.boolean().default(false),
-        deportationOrRefusal: z.boolean().default(false),
-        previousApplications: z.string().optional(), // JSON
-        
-        // Admissibilité
-        criminalRecord: z.boolean().default(false),
-        immigrationIssues: z.boolean().default(false),
-        medicalConcerns: z.boolean().default(false),
-        falseDeclaration: z.boolean().default(false),
-        specialNeeds: z.string().optional(),
-        
-        // Documents
-        documentsAvailable: z.string().optional(), // JSON
-        
-        // Conditionnel: Étudiant
-        desiredProgram: z.string().optional(),
-        desiredEducationLevel: z.string().optional(),
-        targetInstitution: z.string().optional(),
-        admissionLetterAvailable: z.boolean().default(false),
-        intendedStartDate: z.string().optional(),
-        studyBudget: z.number().optional(),
-        studyFunder: z.string().optional(),
-        academicProject: z.string().optional(),
-        postStudiesProject: z.string().optional(),
-        companions: z.string().optional(), // JSON
-        
-        // Conditionnel: Visiteur
-        visitReason: z.string().optional(),
-        visitType: z.enum(["tourism", "family", "business", "event", "other"]).optional(),
-        plannedStayDuration: z.string().optional(),
-        estimatedTravelDate: z.string().optional(),
-        plannedAccommodation: z.string().optional(),
-        invitingPerson: z.string().optional(),
-        invitationLetterAvailable: z.boolean().default(false),
-        stayFunder: z.string().optional(),
-        tiesInHomeCountry: z.string().optional(), // JSON
-        
-        // Conditionnel: Travailleur
-        desiredPosition: z.string().optional(),
-        targetCity: z.string().optional(),
-        relatedExperience: z.number().optional(),
-        relatedDiplomas: z.string().optional(), // JSON
-        languageLevel: z.string().optional(),
-        departureAvailability: z.string().optional(),
-        
-        // Conditionnel: Résidence permanente
-        targetCategory: z.string().optional(),
-        age: z.number().optional(),
-        ecaAvailable: z.boolean().default(false),
-        experienceYears: z.number().optional(),
-        experienceInDestination: z.boolean().default(false),
-        provincialNomination: z.boolean().default(false),
-        availableFunds: z.number().optional(),
-        policeCertificatesAvailable: z.boolean().default(false),
-        
-        submissionNotes: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input }) => {
+  createDossier: protectedProcedure
+    .input(z.object({
+      fullName: z.string().min(2),
+      email: z.string().email(),
+      phone: z.string().min(5),
+      destination: z.string().min(2),
+      visaType: z.string().min(2),
+    }))
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database not available");
-      await db.insert(profileEvaluations).values({
-        ...input,
-        status: "submitted",
-      });
-      
-      return {
-        success: true,
-        message: "Votre évaluation de profil a été soumise avec succès. Notre équipe vous contactera sous 24h.",
-      };
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Seuls les administrateurs peuvent créer des dossiers en agence",
+        });
+      }
+
+      try {
+        const result = await db.insert(agencyDossiers).values({
+          fullName: input.fullName,
+          email: input.email,
+          phone: input.phone,
+          destination: input.destination,
+          visaType: input.visaType,
+          status: "nouveau",
+        });
+
+        return {
+          success: true,
+          message: "Dossier créé avec succès",
+        };
+      } catch (err) {
+        console.error("[Agency Dossier] Create error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la création du dossier",
+        });
+      }
     }),
 
   /**
-   * Récupérer une évaluation par ID
+   * Récupérer tous les dossiers en agence
    */
-  getById: publicProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+  getDossiers: protectedProcedure
+    .input(z.object({
+      limit: z.number().default(50),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
-      if (!db) return null;
-      const evaluation = await db
-        .select()
-        .from(profileEvaluations)
-        .where(eq(profileEvaluations.id, input.id))
-        .limit(1);
-      
-      return evaluation[0] || null;
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Seuls les administrateurs peuvent accéder aux dossiers en agence",
+        });
+      }
+
+      try {
+        const dossiers = await db
+          .select()
+          .from(agencyDossiers)
+          .orderBy(desc(agencyDossiers.createdAt))
+          .limit(input.limit)
+          .offset(input.offset);
+
+        return {
+          success: true,
+          dossiers,
+          total: dossiers.length,
+        };
+      } catch (err) {
+        console.error("[Agency Dossier] Get dossiers error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des dossiers",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer un dossier spécifique
+   */
+  getDossierById: protectedProcedure
+    .input(z.object({
+      dossierId: z.number(),
+    }))
+    .query(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Seuls les administrateurs peuvent accéder aux dossiers en agence",
+        });
+      }
+
+      try {
+        const dossier = await db
+          .select()
+          .from(agencyDossiers)
+          .where(eq(agencyDossiers.id, input.dossierId))
+          .limit(1);
+
+        if (dossier.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Dossier non trouvé",
+          });
+        }
+
+        return {
+          success: true,
+          dossier: dossier[0],
+        };
+      } catch (err) {
+        console.error("[Agency Dossier] Get dossier error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération du dossier",
+        });
+      }
+    }),
+
+  /**
+   * Mettre à jour le statut d'un dossier
+   */
+  updateStatus: protectedProcedure
+    .input(z.object({
+      dossierId: z.number(),
+      newStatus: z.enum(["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Seuls les administrateurs peuvent modifier les dossiers",
+        });
+      }
+
+      try {
+        const dossier = await db
+          .select()
+          .from(agencyDossiers)
+          .where(eq(agencyDossiers.id, input.dossierId))
+          .limit(1);
+
+        if (dossier.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Dossier non trouvé",
+          });
+        }
+
+        await db
+          .update(agencyDossiers)
+          .set({
+            status: input.newStatus,
+          })
+          .where(eq(agencyDossiers.id, input.dossierId));
+
+        return {
+          success: true,
+          message: "Statut mis à jour avec succès",
+        };
+      } catch (err) {
+        console.error("[Agency Dossier] Update status error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise à jour du statut",
+        });
+      }
+    }),
+
+  /**
+   * Supprimer un dossier
+   */
+  deleteDossier: protectedProcedure
+    .input(z.object({
+      dossierId: z.number(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      if (ctx.user?.role !== "admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Seuls les administrateurs peuvent supprimer des dossiers",
+        });
+      }
+
+      try {
+        const dossier = await db
+          .select()
+          .from(agencyDossiers)
+          .where(eq(agencyDossiers.id, input.dossierId))
+          .limit(1);
+
+        if (dossier.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Dossier non trouvé",
+          });
+        }
+
+        await db
+          .delete(agencyDossiers)
+          .where(eq(agencyDossiers.id, input.dossierId));
+
+        return {
+          success: true,
+          message: "Dossier supprimé avec succès",
+        };
+      } catch (err) {
+        console.error("[Agency Dossier] Delete error:", err);
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la suppression du dossier",
+        });
+      }
     }),
 });
+
+export default agencyDossierRouter;

@@ -1,363 +1,250 @@
-/**
- * Routeur tRPC — Gestion des Documents et Paiements Clients
- * Permet aux clients de soumettre des documents et des paiements
- * Permet aux admins de valider et générer des décharges/factures
- */
-
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { publicProcedure, router } from "../_core/trpc";
+import { candidateProcedure } from "./candidate";
 import { getDb } from "../db";
 import { evaluations } from "../../drizzle/schema";
-// import { clientDocuments} from "../../drizzle/schema"; // Tables supprimées
-import { eq, desc, and } from "drizzle-orm";
+import { storagePut } from "../storage";
+import { notifyOwner } from "../_core/notification";
+import { generateDossierCode } from "../utils/generateDossierCode";
+import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
+import { sendEmail } from "../_core/email";
 
-export const clientDocumentsRouter = router({
-  // ─────────────────────────────────────────────────────────────────────────
-  // DOCUMENTS CLIENTS
-  // ─────────────────────────────────────────────────────────────────────────
+const visaTypeEnum = z.enum([
+  "schengen_etude",
+  "schengen_tourisme",
+  "schengen_travail",
+  "canada_rp",
+  "canada_etude",
+  "canada_tourisme",
+  "autre",
+]);
 
-  /**
-   * Soumettre un document (côté client)
-   */
-  submitDocument: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-      documentType: z.enum([
-        "passport",
-        "cv",
-        "diploma",
-        "birth_certificate",
-        "marriage_certificate",
-        "bank_statement",
-        "employment_letter",
-        "language_test",
-        "medical_exam",
-        "police_clearance",
-        "other"
-      ]),
-      documentName: z.string(),
-      documentUrl: z.string().url(),
-      fileSize: z.number().int().optional(),
-    }))
+const destinationCategoryEnum = z.enum(["schengen", "canada", "autre"]);
+
+const evaluationInput = z.object({
+  // Informations personnelles
+  fullName: z.string().min(2, "Le nom complet est requis"),
+  email: z.string().email("Email invalide"),
+  phone: z.string().min(8, "Numéro de téléphone invalide"),
+  dateOfBirth: z.string().optional(),
+  nationality: z.string().optional(),
+  // Destination
+  destinationCategory: destinationCategoryEnum,
+  destinationCountry: z.string().optional(),
+  visaType: visaTypeEnum,
+  // Profil
+  educationLevel: z.string().optional(),
+  employmentStatus: z.string().optional(),
+  // Message
+  message: z.string().optional(),
+  // CV en base64 (optionnel)
+  cvBase64: z.string().optional(),
+  cvFileName: z.string().optional(),
+  cvMimeType: z.string().optional(),
+});
+
+// Schéma pour le formulaire multi-projets
+const multiProjectEvaluationInput = z.object({
+  // Étape 1 : Infos générales
+  fullName: z.string().min(2, "Le nom complet est requis"),
+  email: z.string().email("Email invalide"),
+  whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide"),
+  currentCity: z.string().optional(),
+  nationality: z.string().optional(),
+  projectType: z.enum(["travail", "etudes", "tourisme"]),
+
+  // Étape 2 : Champs conditionnels
+  // TRAVAIL
+  sector: z.string().optional(),
+  yearsOfExperience: z.number().optional(),
+  educationLevel: z.string().optional(),
+  languages: z.string().optional(),
+  cvAvailable: z.boolean().optional(),
+
+  // ÉTUDES
+  diplomaLevel: z.string().optional(),
+  averageGrade: z.string().optional(),
+  admissionLetter: z.boolean().optional(),
+  financialGuarantee: z.string().optional(),
+  transcriptAvailable: z.boolean().optional(),
+
+  // TOURISME
+  visitReason: z.string().optional(),
+  travelHistory: z.string().optional(),
+  previousRefusal: z.boolean().optional(),
+  socialTies: z.string().optional(),
+});
+
+export const evaluationRouter = router({
+  submitEvaluation: publicProcedure
+    .input(multiProjectEvaluationInput)
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
+
+      // Créer un enregistrement d'évaluation multi-projets
+      const evaluationData = {
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.whatsappPhone,
+        nationality: input.nationality,
+        dateOfBirth: undefined,
+        destinationCategory: "autre" as const,
+        destinationCountry: undefined,
+        visaType: "autre" as const,
+        educationLevel: input.educationLevel,
+        employmentStatus: undefined,
+        message: JSON.stringify({
+          projectType: input.projectType,
+          currentCity: input.currentCity,
+          sector: input.sector,
+          yearsOfExperience: input.yearsOfExperience,
+          languages: input.languages,
+          cvAvailable: input.cvAvailable,
+          diplomaLevel: input.diplomaLevel,
+          averageGrade: input.averageGrade,
+          admissionLetter: input.admissionLetter,
+          financialGuarantee: input.financialGuarantee,
+          transcriptAvailable: input.transcriptAvailable,
+          visitReason: input.visitReason,
+          travelHistory: input.travelHistory,
+          previousRefusal: input.previousRefusal,
+          socialTies: input.socialTies,
+        }),
+        cvFileUrl: undefined,
+        cvFileName: undefined,
+        status: "pending" as const,
+      };
+
+      await db.insert(evaluations).values(evaluationData);
+
+      // Notifier le propriétaire
+      const projectTypeLabels: Record<string, string> = {
+        travail: "Visa Travail",
+        etudes: "Visa Études",
+        tourisme: "Visa Tourisme",
+      };
 
       try {
-        // Vérifier que l'évaluation existe
-        const evals = await db
-          .select()
-          .from(evaluations)
-          .where(eq(evaluations.id, input.evaluationId))
-          .limit(1);
-
-        if (evals.length === 0) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
-        }
-
-        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        await db.insert(clientDocuments).values({
-          evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
-          documentType: input.documentType as any,
-          documentName: input.documentName,
-          documentUrl: input.documentUrl,
-          fileSize: input.fileSize,
-          status: "pending",
-          receiptNumber,
-          receiptGeneratedAt: new Date(),
+        await notifyOwner({
+          title: `Nouvelle évaluation multi-projets : ${input.fullName}`,
+          content: `
+**Candidat :** ${input.fullName}
+**Email :** ${input.email}
+**WhatsApp :** ${input.whatsappPhone}
+**Nationalité :** ${input.nationality || "Non précisée"}
+**Type de projet :** ${projectTypeLabels[input.projectType]}
+**Ville actuelle :** ${input.currentCity || "Non précisée"}
+          `.trim(),
         });
-
-        return {
-          success: true,
-          message: "Document soumis avec succès",
-          receiptNumber,
-        };
-      } catch (err) {
-        console.error("[Submit Document] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la soumission du document",
-        });
+      } catch (notifErr) {
+        console.warn("[MultiProjectEvaluation] Notification failed:", notifErr);
       }
-    }),
 
-  /**
-   * Récupérer les documents d'une évaluation
-   */
-  getDocuments: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      // Générer le code dossier
+      const dossierCode = generateDossierCode();
 
+      // Envoyer l'email de confirmation
       try {
-        const docs = await db
-          .select()
-          .from(clientDocuments)
-          .where(
-            and(
-              eq(clientDocuments.evaluationId, input.evaluationId),
-              eq(clientDocuments.candidateEmail, input.candidateEmail)
-            )
-          )
-          .orderBy(desc(clientDocuments.createdAt));
-
-        return docs;
-      } catch (err) {
-        console.error("[Get Documents] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des documents",
+        const emailHTML = getConfirmationEmailHTML({
+          fullName: input.fullName,
+          dossierCode,
+          projectType: input.projectType,
         });
+        await sendEmail({
+          to: input.email,
+          subject: `Confirmation - Numéro de dossier ${dossierCode}`,
+          html: emailHTML,
+        });
+      } catch (emailErr) {
+        console.warn("[MultiProjectEvaluation] Email confirmation failed:", emailErr);
       }
+
+      return { success: true, message: "Votre demande a été soumise avec succès. Vérifiez votre email pour le numéro de dossier.", dossierCode };
     }),
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // PAIEMENTS CLIENTS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Soumettre un paiement (côté client)
-   */
-  submitPayment: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-      amount: z.number().positive(),
-      currency: z.string().default("EUR"),
-      paymentMethod: z.enum(["bank_transfer", "card", "mobile_money", "other"]),
-      paymentDescription: z.string(),
-    }))
+  submit: candidateProcedure
+    .input(evaluationInput)
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
 
-      try {
-        // Vérifier que l'évaluation existe
-        const evals = await db
-          .select()
-          .from(evaluations)
-          .where(eq(evaluations.id, input.evaluationId))
-          .limit(1);
+      let cvFileUrl: string | undefined;
+      let cvFileName: string | undefined;
 
-        if (evals.length === 0) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
+      // Upload du CV si fourni
+      if (input.cvBase64 && input.cvFileName) {
+        try {
+          const base64Data = input.cvBase64.includes(",")
+            ? input.cvBase64.split(",")[1]
+            : input.cvBase64;
+          const fileBuffer = Buffer.from(base64Data!, "base64");
+          const mimeType = input.cvMimeType || "application/octet-stream";
+          const safeFileName = input.cvFileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const storageKey = `cv-uploads/${Date.now()}_${safeFileName}`;
+
+          const { url } = await storagePut(storageKey, fileBuffer, mimeType);
+          cvFileUrl = url;
+          cvFileName = input.cvFileName;
+        } catch (err) {
+          console.error("[Evaluation] CV upload failed:", err);
+          // On continue sans le CV si l'upload échoue
         }
-
-        await db.insert(clientPayments).values({
-          evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
-          amount: input.amount.toString(),
-          currency: input.currency,
-          paymentMethod: input.paymentMethod,
-          paymentDescription: input.paymentDescription,
-          status: "pending",
-        });
-
-        return {
-          success: true,
-          message: "Paiement soumis avec succès. En attente de confirmation.",
-        };
-      } catch (err) {
-        console.error("[Submit Payment] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la soumission du paiement",
-        });
       }
-    }),
 
-  /**
-   * Récupérer les paiements d'une évaluation
-   */
-  getPayments: publicProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-    }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      // Insérer en base de données
+      await db.insert(evaluations).values({
+        fullName: input.fullName,
+        email: input.email,
+        phone: input.phone,
+        dateOfBirth: input.dateOfBirth,
+        nationality: input.nationality,
+        destinationCategory: input.destinationCategory,
+        destinationCountry: input.destinationCountry,
+        visaType: input.visaType,
+        educationLevel: input.educationLevel,
+        employmentStatus: input.employmentStatus,
+        message: input.message,
+        cvFileUrl: cvFileUrl,
+        cvFileName: cvFileName,
+        status: "pending",
+      });
+
+      // Notifier le propriétaire du site
+      const visaLabels: Record<string, string> = {
+        schengen_etude: "Schengen - Visa Étude",
+        schengen_tourisme: "Schengen - Visa Tourisme",
+        schengen_travail: "Schengen - Visa Travail",
+        canada_rp: "Canada - Résidence Permanente",
+        canada_etude: "Canada - Visa Étude",
+        canada_tourisme: "Canada - Visa Tourisme",
+        autre: "Autre pays",
+      };
 
       try {
-        const payments = await db
-          .select()
-          .from(clientPayments)
-          .where(
-            and(
-              eq(clientPayments.evaluationId, input.evaluationId),
-              eq(clientPayments.candidateEmail, input.candidateEmail)
-            )
-          )
-          .orderBy(desc(clientPayments.createdAt));
-
-        return payments;
-      } catch (err) {
-        console.error("[Get Payments] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des paiements",
+        await notifyOwner({
+          title: `Nouvelle pré-évaluation : ${input.fullName}`,
+          content: `
+**Candidat :** ${input.fullName}
+**Email :** ${input.email}
+**Téléphone :** ${input.phone}
+**Nationalité :** ${input.nationality || "Non précisée"}
+**Type de visa :** ${visaLabels[input.visaType] || input.visaType}
+**Pays de destination :** ${input.destinationCountry || input.destinationCategory}
+**Niveau d'études :** ${input.educationLevel || "Non précisé"}
+**Situation professionnelle :** ${input.employmentStatus || "Non précisée"}
+**CV joint :** ${cvFileName ? `Oui (${cvFileName})` : "Non"}
+**Message :** ${input.message || "Aucun message"}
+          `.trim(),
         });
-      }
-    }),
-
-  /**
-   * Confirmer un paiement et générer une facture (côté admin)
-   */
-  confirmPayment: protectedProcedure
-    .input(z.object({
-      paymentId: z.number().int(),
-      status: z.enum(["confirmed", "verified", "cancelled"]),
-      adminNotes: z.string().optional(),
-      invoiceNumber: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      } catch (notifErr) {
+        console.warn("[Evaluation] Notification failed:", notifErr);
       }
 
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        // Générer un numéro de facture unique si confirmé
-        const invoiceNumber = input.invoiceNumber || `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        await db
-          .update(clientPayments)
-          .set({
-            status: input.status as any,
-            adminNotes: input.adminNotes,
-            confirmedByAdmin: input.status === "confirmed" || input.status === "verified",
-            invoiceNumber: input.status === "confirmed" ? invoiceNumber : undefined,
-            invoiceGeneratedAt: input.status === "confirmed" ? new Date() : undefined,
-          })
-          .where(eq(clientPayments.id, input.paymentId));
-
-        return {
-          success: true,
-          message: `Paiement ${input.status === "confirmed" ? "confirmé" : input.status === "verified" ? "vérifié" : "annulé"} avec succès`,
-          invoiceNumber: input.status === "confirmed" ? invoiceNumber : undefined,
-        };
-      } catch (err) {
-        console.error("[Confirm Payment] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la confirmation du paiement",
-        });
-      }
-    }),
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // GESTION HYBRIDE — ENREGISTREMENT MANUEL PAR L'ADMIN (AGENCE PHYSIQUE)
-  // ─────────────────────────────────────────────────────────────────────────
-
-  /**
-   * Admin : Enregistrer manuellement un document reçu en agence (papier numérisé)
-   */
-  adminAddDocument: protectedProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-      documentType: z.string(),
-      documentName: z.string(),
-      documentUrl: z.string().url().optional(),
-      adminNotes: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        await db.insert(clientDocuments).values({
-          evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
-          documentType: input.documentType as any,
-          documentName: input.documentName,
-          documentUrl: input.documentUrl,
-          status: "received",
-          receivedByAdmin: true,
-          adminNotes: input.adminNotes || "Enregistré manuellement par l'admin en agence",
-          receiptNumber,
-          receiptGeneratedAt: new Date(),
-        });
-
-        return {
-          success: true,
-          message: "Document enregistré avec succès",
-          receiptNumber,
-        };
-      } catch (err) {
-        console.error("[Admin Add Document] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de l'enregistrement du document",
-        });
-      }
-    }),
-
-  /**
-   * Admin : Enregistrer manuellement un paiement reçu en agence (cash, chèque, etc.)
-   */
-  adminAddPayment: protectedProcedure
-    .input(z.object({
-      evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
-      amount: z.number().positive(),
-      currency: z.string().default("EUR"),
-      paymentMethod: z.enum(["cash", "bank_transfer", "card", "mobile_money", "check", "other"]),
-      paymentDescription: z.string(),
-      adminNotes: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
-
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      try {
-        const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-        await db.insert(clientPayments).values({
-          evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
-          amount: input.amount.toString(),
-          currency: input.currency,
-          paymentMethod: input.paymentMethod as any,
-          paymentDescription: input.paymentDescription,
-          status: "confirmed",
-          confirmedByAdmin: true,
-          adminNotes: input.adminNotes || `Paiement en ${input.paymentMethod} enregistré en agence`,
-          invoiceNumber,
-          invoiceGeneratedAt: new Date(),
-        });
-
-        return {
-          success: true,
-          message: "Paiement enregistré avec succès",
-          invoiceNumber,
-        };
-      } catch (err) {
-        console.error("[Admin Add Payment] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de l'enregistrement du paiement",
-        });
-      }
+      return { success: true, message: "Votre demande a été soumise avec succès." };
     }),
 });

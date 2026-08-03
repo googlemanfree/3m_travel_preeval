@@ -1,7 +1,6 @@
 import { CronJob } from 'cron';
 import { getDb } from '../db';
-import { applications } from '../../drizzle/schema';
-// import {  from '../../drizzle/schema'; // Table supprimée
+import { applications, bilans } from '../../drizzle/schema';
 import { eq, and, lte, isNull } from 'drizzle-orm';
 import { sendEmail } from '../_core/email';
 

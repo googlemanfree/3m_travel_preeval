@@ -1,242 +1,275 @@
-import { useState } from "react";
-import { ChevronRight, CheckCircle, Clock, FileText, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PROCEDURES, VISA_TYPES } from "@shared/visaData";
 import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { 
+  Search, FileText, CheckCircle2, Clock, AlertCircle, 
+  Download, Mail, Eye, Edit2, Trash2, Send 
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
-export default function Guide() {
-  const [, navigate] = useLocation();
-  const [expandedStep, setExpandedStep] = useState<number | null>(null);
+export default function AdminEvaluations() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const [location, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
-  const procedures = PROCEDURES.general;
+  // Vérifier qu'une session admin existe
+  useEffect(() => {
+    if (!sessionToken) {
+      setLocation("/admin/login");
+    }
+  }, [sessionToken, setLocation]);
+
+  // Récupérer les bilans en attente
+  const { data: bilansData, isLoading } = trpc.admin.getPendingBilans.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
+
+  // Récupérer toutes les applications
+  const { data: applicationsData } = trpc.admin.getAllApplications.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
+
+  // Mutation pour publier le bilan
+  const publishBilanMutation = trpc.admin.publishBilanToClient.useMutation({
+    onSuccess: () => {
+      toast.success("Bilan publié avec succès!");
+      // Rafraîchir la liste
+      window.location.reload();
+    },
+    onError: (err) => {
+      toast.error("Erreur lors de la publication du bilan");
+    },
+  });
+
+  const handlePublishBilan = (bilanId: number) => {
+    if (confirm("Êtes-vous sûr de vouloir publier ce bilan?")) {
+      publishBilanMutation.mutate({ sessionToken, bilanId });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des évaluations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!sessionToken) {
+    return null;
+  }
+
+  const bilans = bilansData || [];
+  const applications = applicationsData || [];
+
+  // Filtrer les bilans
+  const filteredBilans = (bilans as any[]).filter((bilan: any) => {
+    const matchesSearch = 
+      bilan.candidateName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bilan.candidateEmail?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = 
+      filterStatus === "all" || bilan.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; variant: string; icon: React.ReactNode }> = {
+      draft: { label: "Brouillon", variant: "secondary", icon: <Clock className="w-4 h-4" /> },
+      pending_validation: { label: "En attente", variant: "default", icon: <Clock className="w-4 h-4" /> },
+      validated: { label: "Validé", variant: "default", icon: <CheckCircle2 className="w-4 h-4" /> },
+      sent: { label: "Envoyé", variant: "default", icon: <Mail className="w-4 h-4" /> },
+      rejected: { label: "Rejeté", variant: "destructive", icon: <AlertCircle className="w-4 h-4" /> },
+    };
+
+    const statusInfo = statusMap[status] || { label: status, variant: "secondary", icon: <Clock className="w-4 h-4" /> };
+    return (
+      <Badge variant={statusInfo.variant as any} className="gap-2">
+        {statusInfo.icon}
+        {statusInfo.label}
+      </Badge>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <Navbar />
 
-      {/* En-tête */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Guide Complet</h1>
-          <p className="text-lg text-blue-100 max-w-2xl">
-            Suivez notre guide étape par étape pour comprendre le processus de demande de visa et
-            maximiser vos chances de succès.
-          </p>
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">Accéder aux Évaluations</h1>
+          <p className="text-blue-100">Gérez et validez les bilans d'évaluation des candidats</p>
         </div>
-      </section>
+      </div>
 
-      {/* Procédures étape par étape */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl">
-          {/* Timeline visuelle */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-8">
-              {procedures.map((proc, idx) => (
-                <div key={idx} className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer transition-all ${
-                      expandedStep === proc.step
-                        ? "bg-blue-600 text-white shadow-lg scale-110"
-                        : "bg-blue-200 text-blue-600 hover:bg-blue-300"
-                    }`}
-                    onClick={() => setExpandedStep(expandedStep === proc.step ? null : proc.step)}
-                  >
-                    {proc.step}
-                  </div>
-                  <p className="text-xs text-gray-600 mt-2 text-center font-medium max-w-20">
-                    {proc.title.split(" ")[0]}
-                  </p>
-                  {idx < procedures.length - 1 && (
-                    <div className="hidden md:block w-full h-1 bg-blue-200 mx-2 mt-4 flex-1"></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto p-4 py-8">
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Bilans</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-blue-600">{bilans.length}</p>
+            </CardContent>
+          </Card>
 
-          {/* Détails des étapes */}
-          <div className="space-y-4">
-            {procedures.map((proc) => (
-              <Card
-                key={proc.step}
-                className="overflow-hidden border-0 cursor-pointer hover:shadow-lg transition-all"
-                onClick={() => setExpandedStep(expandedStep === proc.step ? null : proc.step)}
-              >
-                {/* En-tête de l'étape */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1">
-                    <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0">
-                      {proc.step}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-gray-900">{proc.title}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{proc.description}</p>
-                    </div>
-                  </div>
-                  <ChevronRight
-                    size={24}
-                    className={`text-gray-400 flex-shrink-0 transition-transform ${
-                      expandedStep === proc.step ? "rotate-90" : ""
-                    }`}
-                  />
-                </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">En Attente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-orange-600">
+                {bilans.filter((b: any) => b.status === "pending_validation").length}
+              </p>
+            </CardContent>
+          </Card>
 
-                {/* Contenu détaillé (expandable) */}
-                {expandedStep === proc.step && (
-                  <div className="p-6 bg-white border-t space-y-6">
-                    {/* Durée */}
-                    <div className="flex items-start gap-3 pb-6 border-b">
-                      <Clock size={20} className="text-blue-600 flex-shrink-0 mt-1" />
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">Durée estimée</p>
-                        <p className="text-sm text-gray-600">{proc.duration}</p>
-                      </div>
-                    </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Validés</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                {bilans.filter((b: any) => b.status === "validated").length}
+              </p>
+            </CardContent>
+          </Card>
 
-                    {/* Documents requis */}
-                    {proc.documents.length > 0 && (
-                      <div className="pb-6 border-b">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FileText size={20} className="text-blue-600" />
-                          <p className="text-sm font-semibold text-gray-900">Documents à préparer</p>
-                        </div>
-                        <ul className="space-y-2 ml-8">
-                          {proc.documents.map((doc, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                              <span className="text-blue-600 font-bold">•</span>
-                              {doc}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Conseils pratiques */}
-                    {proc.tips.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <AlertCircle size={20} className="text-amber-600" />
-                          <p className="text-sm font-semibold text-gray-900">Conseils pratiques</p>
-                        </div>
-                        <ul className="space-y-2 ml-8">
-                          {proc.tips.map((tip, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                              <span className="text-amber-600 font-bold">✓</span>
-                              {tip}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Envoyés</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600">
+                {bilans.filter((b: any) => b.status === "sent").length}
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </section>
 
-      {/* Section FAQ */}
-      <section className="bg-white py-16 border-t">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-gray-900">Questions Fréquemment Posées</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
-            {[
-              {
-                q: "Combien de temps prend généralement une demande de visa ?",
-                a: "Le délai varie selon le type de visa et la destination. Les visas touristiques prennent généralement 5-15 jours, tandis que les visas de résidence permanente peuvent prendre 6-18 mois.",
-              },
-              {
-                q: "Quels documents sont absolument essentiels ?",
-                a: "Un passeport valide, des documents d'identité, des certificats médicaux et une preuve de ressources financières sont généralement requis pour tous les types de visas.",
-              },
-              {
-                q: "Puis-je demander plusieurs visas simultanément ?",
-                a: "Oui, vous pouvez demander plusieurs visas, mais cela peut affecter votre demande. Consultez un expert avant de soumettre plusieurs demandes.",
-              },
-              {
-                q: "Que faire si ma demande est rejetée ?",
-                a: "Vous avez généralement le droit de faire appel ou de soumettre une nouvelle demande. Consultez notre équipe pour comprendre les raisons du rejet et améliorer votre dossier.",
-              },
-              {
-                q: "Les traductions doivent-elles être certifiées ?",
-                a: "Oui, la plupart des pays exigent que les traductions soient certifiées par un traducteur agréé. Vérifiez les exigences spécifiques de votre destination.",
-              },
-              {
-                q: "Puis-je travailler pendant que j'attends ma demande ?",
-                a: "Cela dépend du type de visa et de la destination. Certains pays permettent le travail temporaire pendant le traitement de la demande.",
-              },
-            ].map((faq, idx) => (
-              <div key={idx} className="space-y-2">
-                <p className="font-semibold text-gray-900 flex items-start gap-2">
-                  <span className="text-blue-600 flex-shrink-0">Q:</span>
-                  {faq.q}
-                </p>
-                <p className="text-gray-700 text-sm flex items-start gap-2 ml-6">
-                  <span className="text-green-600 flex-shrink-0 font-bold">A:</span>
-                  {faq.a}
-                </p>
+        {/* Recherche et Filtres */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Rechercher et Filtrer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Rechercher par nom ou email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="draft">Brouillon</option>
+                <option value="pending_validation">En attente</option>
+                <option value="validated">Validés</option>
+                <option value="sent">Envoyés</option>
+                <option value="rejected">Rejetés</option>
+              </select>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Section types de visa */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-12 text-gray-900">Types de Visa Détaillés</h2>
+        {/* Liste des Bilans */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bilans d'Évaluation ({filteredBilans.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-semibold">Candidat</th>
+                    <th className="text-left py-3 px-4 font-semibold">Email</th>
+                    <th className="text-left py-3 px-4 font-semibold">Score</th>
+                    <th className="text-left py-3 px-4 font-semibold">Statut</th>
+                    <th className="text-left py-3 px-4 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBilans.map((bilan: any) => (
+                    <tr key={bilan.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">{bilan.candidateName}</td>
+                      <td className="py-3 px-4">{bilan.candidateEmail}</td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-green-600">{bilan.score}/100</span>
+                      </td>
+                      <td className="py-3 px-4">{getStatusBadge(bilan.status)}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setLocation(`/admin/evaluations/${bilan.id}`)}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Voir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setLocation(`/admin/evaluations/${bilan.id}/edit`)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Éditer
+                          </Button>
+                          {bilan.status === 'validated' && (
+                            <Button
+                              size="sm"
+                              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => handlePublishBilan(bilan.id)}
+                              disabled={publishBilanMutation.isPending}
+                            >
+                              <Send className="w-4 h-4" />
+                              {publishBilanMutation.isPending ? "Publication..." : "Publier"}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Object.values(VISA_TYPES).map((visa) => (
-              <Card key={visa.id} className="p-6 border-0 hover:shadow-lg transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-3xl">{visa.icon}</span>
-                  <h3 className="font-bold text-gray-900">{visa.name}</h3>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">{visa.description}</p>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="font-semibold text-gray-900">Délai:</span>{" "}
-                    <span className="text-gray-600">{visa.processingTime}</span>
-                  </p>
-                  <p>
-                    <span className="font-semibold text-gray-900">Coût:</span>{" "}
-                    <span className="text-gray-600">{visa.cost}</span>
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/visa-types")}
-                  className="w-full mt-4"
-                >
-                  En savoir plus
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Prêt à commencer ?</h2>
-          <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            Suivez notre guide, préparez vos documents et lancez votre demande dès aujourd'hui. Notre
-            équipe d'experts est là pour vous accompagner.
-          </p>
-          <Button
-            onClick={() => navigate("/open-dossier")}
-            size="lg"
-            className="bg-white text-blue-600 hover:bg-blue-50 font-semibold"
-          >
-            Ouvrir un dossier
-          </Button>
-        </div>
-      </section>
+            {filteredBilans.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Aucun bilan trouvé</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <Footer />
     </div>

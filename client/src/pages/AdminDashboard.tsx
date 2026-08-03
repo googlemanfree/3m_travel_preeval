@@ -1,881 +1,835 @@
-/**
- * Dashboard Administrateur — 3M Travel & Services
- * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
- */
-import { useState, useCallback } from "react";
-import { trpc } from "@/lib/trpc";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  User, FileText, MessageCircle, Upload, LogOut, CheckCircle,
+  Clock, AlertCircle, XCircle, ChevronRight, Send, Paperclip,
+  Home, Globe, Award, Trash2, Eye,
+  FolderOpen, Star
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
-import {
-  Search,
-  RefreshCw,
-  Plus,
-  Eye,
-  Users,
-  Clock,
-  FileCheck,
-  Send,
-  CheckCircle,
-  Globe,
-  Building2,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Star,
-  AlertCircle,
-  LogOut,
-} from "lucide-react";
-import { useLocation } from "wouter";
-import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
-import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PendingActionsCards } from "@/components/PendingActionsCards";
+import { trpc } from "@/lib/trpc";
+import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
+import { toast } from "sonner";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 
-type AdminStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
-type CandidateSource = "WEB" | "AGENCY_PHYSICAL";
-
-interface Candidate {
-  id: string;
-  internalId: number;
-  folderCode: string;
-  fullName: string;
-  email: string;
-  whatsapp: string;
-  city: string;
-  destinationCountry: string;
-  projectType: string;
-  status: string;
-  internalStatus: string;
-  source: CandidateSource;
-  scoringTotal: number | null;
-  scoringBadge: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
-
-// ─── Constantes ───────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG: Record<AdminStatus, { label: string; color: string; icon: React.ReactNode; bg: string }> = {
-  PENDING_48H: {
-    label: "Évaluation 48h",
-    color: "text-amber-700",
-    bg: "bg-amber-50 border-amber-200",
-    icon: <Clock className="w-3 h-3" />,
-  },
-  PUBLISHED: {
-    label: "Bilan Disponible",
-    color: "text-blue-700",
-    bg: "bg-blue-50 border-blue-200",
-    icon: <FileCheck className="w-3 h-3" />,
-  },
-  DOCUMENTS_CHECK: {
-    label: "Collecte Documents",
-    color: "text-purple-700",
-    bg: "bg-purple-50 border-purple-200",
-    icon: <Send className="w-3 h-3" />,
-  },
-  SUBMITTED: {
-    label: "Soumission Consulaire",
-    color: "text-indigo-700",
-    bg: "bg-indigo-50 border-indigo-200",
-    icon: <Globe className="w-3 h-3" />,
-  },
-  APPROVED: {
-    label: "Visa Accordé",
-    color: "text-green-700",
-    bg: "bg-green-50 border-green-200",
-    icon: <CheckCircle className="w-3 h-3" />,
-  },
+// ─── Statuts du dossier ───────────────────────────────────────────────────────
+const STEP_TOOLTIPS: Record<string, { description: string; actions: string }> = {
+  nouveau: { description: "Votre dossier a été créé avec succès", actions: "Attendez notre première évaluation" },
+  evaluation: { description: "Notre équipe analyse votre profil", actions: "Consultez votre rapport d'évaluation" },
+  documents: { description: "Documents supplémentaires requis", actions: "Téléversez les documents demandés" },
+  traitement: { description: "Votre dossier est en cours de traitement", actions: "Notre équipe prépare votre dossier" },
+  soumis: { description: "Votre dossier a été soumis", actions: "Attendez la décision des autorités" },
+  approuve: { description: "Votre visa a été approuvé ✓", actions: "Félicitations ! Consultez les détails" },
 };
 
-const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; icon: React.ReactNode }> = {
-  WEB: {
-    label: "En ligne",
-    color: "text-sky-700 bg-sky-50 border-sky-200",
-    icon: <Globe className="w-3 h-3" />,
-  },
-  AGENCY_PHYSICAL: {
-    label: "Agence",
-    color: "text-orange-700 bg-orange-50 border-orange-200",
-    icon: <Building2 className="w-3 h-3" />,
-  },
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType; step: number }> = {
+  nouveau:     { label: "Nouveau dossier",       color: "text-gray-600",   bg: "bg-gray-100",   icon: Star,         step: 0 },
+  evaluation:  { label: "Évaluation en cours",   color: "text-blue-600",   bg: "bg-blue-100",   icon: Clock,        step: 1 },
+  documents:   { label: "Documents requis",      color: "text-amber-600",  bg: "bg-amber-100",  icon: AlertCircle,  step: 2 },
+  traitement:  { label: "Traitement du dossier", color: "text-indigo-600", bg: "bg-indigo-100", icon: FileText,     step: 3 },
+  soumis:      { label: "Dossier soumis",        color: "text-purple-600", bg: "bg-purple-100", icon: CheckCircle,  step: 4 },
+  approuve:    { label: "Visa approuvé ✓",       color: "text-green-600",  bg: "bg-green-100",  icon: CheckCircle,  step: 5 },
+  refuse:      { label: "Dossier refusé",        color: "text-red-600",    bg: "bg-red-100",    icon: XCircle,      step: -1 },
 };
 
-const SCORING_BADGE_CONFIG: Record<string, { label: string; color: string }> = {
-  eligible: { label: "Éligible", color: "text-green-700 bg-green-50 border-green-200" },
-  admissible: { label: "Admissible", color: "text-blue-700 bg-blue-50 border-blue-200" },
-  faible: { label: "Faible", color: "text-red-700 bg-red-50 border-red-200" },
-};
-
-const DESTINATION_OPTIONS = [
-  "Canada", "France", "Belgique", "Suisse", "Allemagne", "Royaume-Uni",
-  "États-Unis", "Portugal", "Espagne", "Italie", "Pays-Bas", "Maroc",
-  "Sénégal", "Côte d'Ivoire", "Autre",
+const DOSSIER_STEPS = [
+  { 
+    key: "nouveau", 
+    label: "Dossier créé",
+    description: "Votre dossier a été créé avec succès",
+    actions: "Attendez notre première évaluation"
+  },
+  { 
+    key: "evaluation", 
+    label: "Evaluation",
+    description: "Notre équipe analyse votre profil",
+    actions: "Consultez votre rapport d'évaluation dans vos messages"
+  },
+  { 
+    key: "documents", 
+    label: "Documents",
+    description: "Documents supplémentaires requis",
+    actions: "Téléversez les documents demandés dans l'onglet Documents"
+  },
+  { 
+    key: "traitement", 
+    label: "Traitement",
+    description: "Votre dossier est en cours de traitement",
+    actions: "Notre équipe prépare votre dossier pour la soumission"
+  },
+  { 
+    key: "soumis", 
+    label: "Soumis",
+    description: "Votre dossier a été soumis aux autorités",
+    actions: "Attendez la décision des autorités d'immigration"
+  },
+  { 
+    key: "approuve", 
+    label: "Approuvé",
+    description: "Votre visa a été approuvé ✓",
+    actions: "Félicitations ! Consultez les détails dans vos messages"
+  },
 ];
 
-const PROJECT_TYPE_OPTIONS = [
-  "Visa Étudiant", "Visa Travail", "Visa Tourisme", "Visa Famille",
-  "Résidence Permanente", "Visa Affaires", "Autre",
+const FILE_TYPES: { value: string; label: string }[] = [
+  { value: "cv",                    label: "CV / Curriculum Vitae" },
+  { value: "passeport",             label: "Passeport" },
+  { value: "diplome",               label: "Diplôme" },
+  { value: "releve_notes",          label: "Relevé de notes" },
+  { value: "photo",                 label: "Photo d'identité" },
+  { value: "justificatif_domicile", label: "Justificatif de domicile" },
+  { value: "extrait_naissance",     label: "Extrait de naissance" },
+  { value: "casier_judiciaire",     label: "Casier judiciaire" },
+  { value: "autre",                 label: "Autre document" },
 ];
 
-// ─── Composant Badge Statut ───────────────────────────────────────────────────
+type Tab = "overview" | "documents" | "messages" | "profile";
 
-function StatusBadge({ status }: { status: string }) {
-  const config = STATUS_CONFIG[status as AdminStatus];
-  if (!config) return <Badge variant="outline">{status}</Badge>;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.bg} ${config.color}`}>
-      {config.icon}
-      {config.label}
-    </span>
-  );
-}
-
-function SourceBadge({ source }: { source: string }) {
-  const config = SOURCE_CONFIG[source as CandidateSource];
-  if (!config) return <Badge variant="outline">{source}</Badge>;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.color}`}>
-      {config.icon}
-      {config.label}
-    </span>
-  );
-}
-
-// ─── Modale : Fiche Candidat ──────────────────────────────────────────────────
-
-function CandidateDetailModal({
-  candidateId,
-  onClose,
-  onStatusUpdated,
-}: {
-  candidateId: string;
-  onClose: () => void;
-  onStatusUpdated: () => void;
-}) {
-  const { toast } = useToast();
-  const [notifyClient, setNotifyClient] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<AdminStatus | "">("");
-
-  const { data, isLoading } = trpc.admin.getCandidateDetails.useQuery(
-    { candidateId },
-    { enabled: !!candidateId }
-  );
-
-  const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
-    onSuccess: (result) => {
-      toast({
-        title: "Statut mis à jour",
-        description: result.message + (result.notificationSent ? " — Client notifié par email." : ""),
-      });
-      onStatusUpdated();
-      onClose();
-    },
-    onError: (err) => {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const handleStatusUpdate = () => {
-    if (!selectedStatus) return;
-    updateStatusMutation.mutate({
-      candidateId,
-      newStatus: selectedStatus as AdminStatus,
-      notifyClient,
-    });
-  };
-
-  const candidate = data?.candidate;
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-blue-900">
-            <Users className="w-5 h-5" />
-            Fiche Candidat
-          </DialogTitle>
-        </DialogHeader>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
-          </div>
-        ) : candidate ? (
-          <div className="space-y-5">
-            {/* En-tête candidat */}
-            <div className="flex items-start justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-              <div>
-                <h3 className="text-lg font-bold text-blue-900">{candidate.fullName}</h3>
-                <p className="text-sm text-blue-600 font-mono">{candidate.folderCode}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <StatusBadge status={candidate.status} />
-                <SourceBadge source={candidate.source} />
-              </div>
-            </div>
-
-            {/* Informations de contact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Mail className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Email</p>
-                  <p className="text-sm font-medium text-gray-800 break-all">{candidate.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Phone className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">WhatsApp</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.whatsapp || "Non renseigné"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Ville</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.city}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Destination</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.destinationCountry}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Projet */}
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 mb-1">Type de projet</p>
-              <p className="text-sm font-medium text-gray-800">{candidate.projectType}</p>
-            </div>
-
-            {/* Score (si disponible) */}
-            {candidate.scoringTotal !== null && (
-              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-semibold text-green-800">Score d'éligibilité</span>
-                  </div>
-                  <span className="text-2xl font-bold text-green-700">{candidate.scoringTotal}/100</span>
-                </div>
-                {candidate.scoringBadge && SCORING_BADGE_CONFIG[candidate.scoringBadge] && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${SCORING_BADGE_CONFIG[candidate.scoringBadge].color}`}>
-                    {SCORING_BADGE_CONFIG[candidate.scoringBadge].label}
-                  </span>
-                )}
-                <div className="mt-2 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, candidate.scoringTotal)}%` }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Date de création */}
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Créé le {new Date(candidate.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</span>
-            </div>
-
-            {/* Mise à jour du statut */}
-            <div className="border-t pt-4">
-              <h4 className="text-sm font-semibold text-gray-800 mb-3">Mettre à jour le statut</h4>
-              <div className="space-y-3">
-                <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir un nouveau statut..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {cfg.icon}
-                          {cfg.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notifyClient}
-                    onChange={(e) => setNotifyClient(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600"
-                  />
-                  <span className="text-sm text-gray-700">Notifier le client par email</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center justify-center py-12 text-gray-500">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            Candidat introuvable
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Fermer</Button>
-          {selectedStatus && (
-            <Button
-              onClick={handleStatusUpdate}
-              disabled={updateStatusMutation.isPending}
-              className="bg-blue-700 hover:bg-blue-800 text-white"
-            >
-              {updateStatusMutation.isPending ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Mise à jour...</>
-              ) : (
-                "Confirmer le statut"
-              )}
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Modale : Saisir un dossier agence ────────────────────────────────────────
-
-function ImportAgencyModal({
-  onClose,
-  onImported,
-}: {
-  onClose: () => void;
-  onImported: () => void;
-}) {
-  const { toast } = useToast();
-  const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    whatsapp: "",
-    city: "Yaoundé",
-    destinationCountry: "",
-    projectType: "",
-    initialStatus: "DOCUMENTS_CHECK" as AdminStatus,
-  });
-
-  const importMutation = trpc.admin.importAgencyDossier.useMutation({
-    onSuccess: (result) => {
-      toast({
-        title: "Dossier créé",
-        description: `${result.message} — Un email de bienvenue a été envoyé.`,
-      });
-      onImported();
-      onClose();
-    },
-    onError: (err) => {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
-    },
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.fullName || !form.email || !form.whatsapp || !form.destinationCountry || !form.projectType) {
-      toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
-      return;
-    }
-    importMutation.mutate(form);
-  };
-
-  const setField = (key: keyof typeof form, value: string) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-blue-900">
-            <Building2 className="w-5 h-5" />
-            Saisir un dossier agence
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label htmlFor="fullName">Nom complet *</Label>
-              <Input
-                id="fullName"
-                value={form.fullName}
-                onChange={(e) => setField("fullName", e.target.value)}
-                placeholder="Ex: Jean-Pierre Mbarga"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(e) => setField("email", e.target.value)}
-                placeholder="candidat@email.com"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="whatsapp">WhatsApp / Téléphone *</Label>
-              <Input
-                id="whatsapp"
-                value={form.whatsapp}
-                onChange={(e) => setField("whatsapp", e.target.value)}
-                placeholder="+237 6XX XXX XXX"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="city">Ville</Label>
-              <Input
-                id="city"
-                value={form.city}
-                onChange={(e) => setField("city", e.target.value)}
-                placeholder="Yaoundé"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="destination">Pays de destination *</Label>
-              <Select value={form.destinationCountry} onValueChange={(v) => setField("destinationCountry", v)}>
-                <SelectTrigger id="destination">
-                  <SelectValue placeholder="Choisir un pays..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {DESTINATION_OPTIONS.map((d) => (
-                    <SelectItem key={d} value={d}>{d}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="projectType">Type de projet *</Label>
-              <Select value={form.projectType} onValueChange={(v) => setField("projectType", v)}>
-                <SelectTrigger id="projectType">
-                  <SelectValue placeholder="Choisir un type..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROJECT_TYPE_OPTIONS.map((p) => (
-                    <SelectItem key={p} value={p}>{p}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="initialStatus">Statut initial</Label>
-              <Select value={form.initialStatus} onValueChange={(v) => setField("initialStatus", v)}>
-                <SelectTrigger id="initialStatus">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                    <SelectItem key={key} value={key}>
-                      <span className="flex items-center gap-2">
-                        {cfg.icon}
-                        {cfg.label}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Annuler</Button>
-            <Button
-              type="submit"
-              disabled={importMutation.isPending}
-              className="bg-blue-700 hover:bg-blue-800 text-white"
-            >
-              {importMutation.isPending ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Création...</>
-              ) : (
-                <><Plus className="w-4 h-4 mr-2" />Créer le dossier</>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Page principale ──────────────────────────────────────────────────────────
-
-export default function AdminDashboard() {
+export default function Dashboard() {
   const [, navigate] = useLocation();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const { toast } = useToast();
+  const { candidate, logout, isAuthenticated } = useCandidateAuth();
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [messageText, setMessageText] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadType, setUploadType] = useState("cv");
+  const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
-  
-  // Générer les initiales pour l'avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  // Fonction pour actualiser manuellement
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      if (activeTab === "overview") {
+        await profileQuery.refetch();
+      } else if (activeTab === "documents") {
+        await documentsQuery.refetch();
+      } else if (activeTab === "messages") {
+        await messagesQuery.refetch();
+      }
+      toast.success("Donnees actualisees");
+    } catch (err) {
+      toast.error("Erreur lors de l'actualisation");
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
-    { search: search || undefined, status: statusFilter !== "ALL" ? statusFilter : undefined },
-    { enabled: true }
-  );
+  // Rediriger si non connecté
+  useEffect(() => {
+    if (!isAuthenticated) navigate("/login");
+  }, [isAuthenticated, navigate]);
 
-  const logoutMutation = trpc.adminAuth.logout.useMutation({
+  const utils = trpc.useUtils();
+
+  // Queries — le token est automatiquement injecté via main.tsx headers()
+  const profileQuery = trpc.candidate.getProfile.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const documentsQuery = trpc.candidate.listDocuments.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "documents",
+    retry: false,
+  });
+
+  const messagesQuery = trpc.candidate.getMessages.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "messages",
+    refetchInterval: false, // Desactiver le refetch automatique
+    retry: false,
+  });
+
+  const pendingActionsQuery = trpc.candidate.getPendingActions.useQuery(undefined, {
+    enabled: isAuthenticated && activeTab === "overview",
+    retry: false,
+  });
+
+  const sendMessageMutation = trpc.candidate.sendMessage.useMutation({
     onSuccess: () => {
-      localStorage.removeItem("adminSessionToken");
-      localStorage.removeItem("adminType");
-      localStorage.removeItem("adminName");
-      toast({ title: "Déconnexion réussie" });
-      navigate("/admin/login");
+      setMessageText("");
+      utils.candidate.getMessages.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const deleteDocMutation = trpc.candidate.deleteDocument.useMutation({
+    onSuccess: () => {
+      utils.candidate.listDocuments.invalidate();
+      toast.success("Document supprimé.");
     },
   });
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  const saveDocMutation = trpc.candidate.saveDocument.useMutation({
+    onSuccess: () => {
+      utils.candidate.listDocuments.invalidate();
+      utils.candidate.getProfile.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-  const candidates = data?.candidates || [];
-  const total = data?.total || 0;
+  // Scroll vers le bas dans les messages
+  useEffect(() => {
+    if (activeTab === "messages") {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    }
+  }, [messagesQuery.data, activeTab]);
 
-  // Statistiques rapides
-  const stats = {
-    total,
-    pending: candidates.filter((c) => c.status === "PENDING_48H").length,
-    published: candidates.filter((c) => c.status === "PUBLISHED").length,
-    documents: candidates.filter((c) => c.status === "DOCUMENTS_CHECK").length,
-    submitted: candidates.filter((c) => c.status === "SUBMITTED").length,
-    approved: candidates.filter((c) => c.status === "APPROVED").length,
-    web: candidates.filter((c) => c.source === "WEB").length,
-    agency: candidates.filter((c) => c.source === "AGENCY_PHYSICAL").length,
-  };
+  async function handleUpload() {
+    if (!uploadFile) { toast.error("Sélectionnez un fichier."); return; }
+    if (uploadFile.size > 10 * 1024 * 1024) { toast.error("Fichier trop volumineux (max 10 Mo)."); return; }
+
+    setIsUploading(true);
+    try {
+      const token = getCandidateToken();
+      const formData = new FormData();
+      formData.append("file", uploadFile);
+      formData.append("fileType", uploadType);
+
+      const res = await fetch("/api/candidate/upload", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Erreur upload" }));
+        throw new Error(err.error || "Erreur lors de l'upload");
+      }
+
+      const { fileUrl, fileKey, fileName, fileSizeBytes, mimeType } = await res.json();
+
+      await saveDocMutation.mutateAsync({
+        fileType: uploadType as any,
+        fileName: fileName || uploadFile.name,
+        fileUrl,
+        fileKey,
+        fileSizeBytes: fileSizeBytes || uploadFile.size,
+        mimeType: mimeType || uploadFile.type,
+      });
+
+      toast.success("Document uploadé avec succès !");
+      setUploadFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err: any) {
+      toast.error(err.message || "Erreur lors de l'upload");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function handleLogout() {
+    logout();
+    toast.success("Déconnexion réussie.");
+    navigate("/");
+  }
+
+  const profile = profileQuery.data;
+  const statusConfig = STATUS_CONFIG[profile?.dossierStatus ?? "nouveau"] ?? STATUS_CONFIG.nouveau;
+  const StatusIcon = statusConfig.icon;
+  const currentStep = statusConfig.step;
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* En-tête fixe */}
-      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white fixed top-0 left-0 right-0 z-50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={LOGO_URL} alt="3M Travel" className="w-9 h-9 rounded-lg object-cover" />
             <div>
-              <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
-              <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
-            </div>
-            
-            {/* Barre de recherche rapide */}
-            <div className="flex-1 max-w-xs">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Chercher un dossier ou utilisateur..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-white/10 border border-white/20 text-white placeholder-gray-300 rounded-lg focus:bg-white/15 focus:border-white/40 transition-all"
-                />
-              </div>
+              <div className="font-black text-[#1E3A8A] text-sm leading-tight">3M Travel & Services</div>
+              <div className="text-xs text-gray-400">Espace Candidat</div>
             </div>
           </div>
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <Button
-              variant="outline"
-              size="sm"
+
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:block text-sm text-gray-600 font-medium">
+              {candidate?.fullName ?? profile?.fullName}
+            </span>
+            <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${statusConfig.bg} ${statusConfig.color}`}>
+              <StatusIcon className="w-3.5 h-3.5" />
+              {statusConfig.label}
+            </div>
+            <button
               onClick={handleRefresh}
-              disabled={isLoading}
-              className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+              disabled={isRefreshing}
+              className="text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
+              title="Actualiser les données"
+              aria-label="Actualiser les données"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-              Actualiser
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => setShowImportModal(true)}
-              className="bg-white text-blue-900 hover:bg-blue-50 gap-1.5 font-semibold"
-            >
-              <Plus className="w-4 h-4" />
-              Saisir dossier agence
-            </Button>
-            
-            {/* Profil Admin */}
-            <div className="flex items-center gap-2 pl-3 border-l border-white/20">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-md shadow-orange-900/30 text-sm">
-                {getInitials(adminName)}
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <p className="text-sm font-semibold text-white leading-tight">{adminName}</p>
-                <p className="text-xs text-blue-200">Admin</p>
-              </div>
-            </div>
-            
-            <Button
-              size="sm"
-              onClick={() => logoutMutation.mutate({ sessionToken })}
-              disabled={logoutMutation.isPending}
-              className="bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-md shadow-red-900/30 transition-all duration-150 border-0"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
-            </Button>
+              <svg className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+            <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <Home className="w-5 h-5" />
+            </Link>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Se déconnecter" aria-label="Se déconnecter">
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* ── Sidebar ─────────────────────────────────────────────────────── */}
+          <aside className="lg:w-64 flex-shrink-0">
+            <nav className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              {[
+                { id: "overview" as Tab,   icon: Globe,         label: "Mon dossier" },
+                { id: "documents" as Tab,  icon: FolderOpen,    label: "Mes documents" },
+                { id: "messages" as Tab,   icon: MessageCircle, label: "Messagerie" },
+                { id: "profile" as Tab,    icon: User,          label: "Mon profil" },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium transition-colors ${
+                    activeTab === item.id
+                      ? "bg-[#1E3A8A] text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <item.icon className="w-4 h-4 flex-shrink-0" />
+                  {item.label}
+                  {activeTab === item.id && <ChevronRight className="w-4 h-4 ml-auto" />}
+                </button>
+              ))}
+            </nav>
+
+            {/* Carte contact conseiller */}
+            <div className="mt-4 bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] rounded-2xl p-4 text-white">
+              <div className="text-xs font-bold uppercase tracking-wide text-blue-200 mb-2">Votre conseiller</div>
+              <div className="font-bold text-sm">Équipe 3M Travel</div>
+              <div className="text-blue-200 text-xs mt-1">Disponible 8h–18h (GMT+1)</div>
+              <a
+                href="https://wa.me/237698104832?text=Bonjour%2C%20je%20suis%20candidat%203M%20Travel%20et%20j%27ai%20une%20question%20sur%20mon%20dossier."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp direct
+              </a>
+            </div>
+          </aside>
+
+          {/* ── Contenu principal ────────────────────────────────────────────── */}
+          <main className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              {/* ── Onglet : Mon dossier ─────────────────────────────────────── */}
+              {activeTab === "overview" && (
+                <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  {/* Message d'accueil personnalisé */}
+                  {(() => {
+                    const hour = new Date().getHours();
+                    const greeting = hour < 12 ? "Bonjour" : hour < 18 ? "Bon après-midi" : "Bonsoir";
+                    const name = candidate?.fullName ?? profile?.fullName ?? "";
+                    const firstName = name.split(" ")[0];
+                    return (
+                      <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] rounded-2xl p-5 mb-6 text-white">
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div>
+                            <h1 className="text-xl font-black">{greeting}, {firstName} ! 👋</h1>
+                            <p className="text-blue-200 text-sm mt-0.5">
+                              Bienvenue dans votre espace candidat 3M Travel & Services
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Link href="/flights" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                              <Globe className="w-3.5 h-3.5" /> Vols
+                            </Link>
+                            <Link href="/procedures" className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                              <FileText className="w-3.5 h-3.5" /> Procédures
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <h2 className="text-xl font-black text-gray-900 mb-6">Mon Dossier d'Immigration</h2>
+
+                  {/* Actions en attente */}
+                  {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions en attente</h3>
+                      <PendingActionsCards 
+                        actions={pendingActionsQuery.data} 
+                        isLoading={pendingActionsQuery.isLoading}
+                      />
+                    </div>
+                  )}
+
+                  {profileQuery.isLoading ? (
+                    <div className="bg-white rounded-2xl p-8 text-center text-gray-400">Chargement de votre dossier...</div>
+                  ) : profileQuery.error ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-red-50 rounded-2xl p-6 border-l-4 border-red-500"
+                    >
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-red-900 mb-1">Erreur de chargement</h3>
+                          <p className="text-red-700 text-sm mb-3">Impossible de charger votre dossier. Veuillez actualiser la page ou vous reconnecter.</p>
+                          <div className="flex gap-2">
+                            <button onClick={handleRefresh} className="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-sm rounded font-medium transition">
+                              Actualiser
+                            </button>
+                            <button onClick={handleLogout} className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded font-medium transition">
+                              Se reconnecter
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <>
+                      {/* Barre de progression des étapes */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-900">Progression de votre dossier</h3>
+                          <span className="text-xs font-medium text-gray-500">Etape {statusConfig.step + 1}/6</span>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                          {DOSSIER_STEPS.map((step, idx) => {
+                            const isActive = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step === idx;
+                            const isCompleted = STATUS_CONFIG[profileQuery.data?.dossierStatus || "nouveau"].step > idx;
+                            const tooltip = STEP_TOOLTIPS[step.key];
+                            return (
+                              <div key={step.key} className="flex-1 group relative">
+                                <motion.div
+                                  className={`flex-1 h-2 rounded-full transition-all cursor-help ${
+                                    isCompleted ? "bg-green-500" : isActive ? "bg-blue-500" : "bg-gray-200"
+                                  }`}
+                                  initial={{ scaleX: 0 }}
+                                  animate={{ scaleX: 1 }}
+                                  transition={{ delay: idx * 0.1 }}
+                                />
+                                {/* Infobulle */}
+                                <motion.div
+                                  initial={{ opacity: 0, y: -10 }}
+                                  whileHover={{ opacity: 1, y: 0 }}
+                                  className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50"
+                                >
+                                  <div className="bg-gray-900 text-white text-xs rounded-lg p-3 w-48 shadow-lg">
+                                    <div className="font-semibold mb-1">{step.label}</div>
+                                    <div className="text-gray-200 mb-2">{tooltip.description}</div>
+                                    <div className="text-blue-300 text-xs italic">📍 {tooltip.actions}</div>
+                                    {/* Flèche de l'infobulle */}
+                                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                                  </div>
+                                </motion.div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600">
+                          {DOSSIER_STEPS.map((step) => (
+                            <span key={step.key} className="text-center flex-1">{step.label}</span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Statut actuel */}
+                      <div className={`rounded-2xl p-5 mb-6 ${statusConfig.bg}`}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className={`w-10 h-10 rounded-xl ${statusConfig.bg} flex items-center justify-center border-2 border-current`}>
+                            <StatusIcon className={`w-5 h-5 ${statusConfig.color}`} />
+                          </div>
+                          <div>
+                            <div className={`font-black text-lg ${statusConfig.color}`}>{statusConfig.label}</div>
+                            <div className="text-sm text-gray-600">
+                              {profile?.dossierNote ?? "Votre dossier est en cours de traitement par notre équipe."}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Timeline des étapes */}
+                      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                        <h2 className="font-bold text-gray-800 mb-5">Progression de votre dossier</h2>
+                        <div className="relative">
+                          <div className="absolute top-5 left-5 right-5 h-0.5 bg-gray-200 z-0" />
+                          <div
+                            className="absolute top-5 left-5 h-0.5 bg-[#1E3A8A] z-0 transition-all duration-1000"
+                            style={{ width: `${Math.max(0, (currentStep / (DOSSIER_STEPS.length - 1)) * 100)}%` }}
+                          />
+                          <div className="relative z-10 flex justify-between">
+                            {DOSSIER_STEPS.map((step, i) => {
+                              const done = i < currentStep;
+                              const active = i === currentStep;
+                              return (
+                                <div key={step.key} className="flex flex-col items-center gap-2">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                                    done ? "bg-[#1E3A8A] border-[#1E3A8A]" :
+                                    active ? "bg-white border-[#1E3A8A] shadow-lg shadow-blue-200" :
+                                    "bg-white border-gray-200"
+                                  }`}>
+                                    {done ? (
+                                      <CheckCircle className="w-5 h-5 text-white" />
+                                    ) : (
+                                      <span className={`text-xs font-bold ${active ? "text-[#1E3A8A]" : "text-gray-400"}`}>{i + 1}</span>
+                                    )}
+                                  </div>
+                                  <span className={`text-xs font-medium text-center max-w-[60px] leading-tight ${active ? "text-[#1E3A8A] font-bold" : done ? "text-gray-600" : "text-gray-400"}`}>
+                                    {step.label}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Infos du dossier */}
+                      <div className="grid sm:grid-cols-2 gap-4">
+                        {[
+                          { label: "Destination", value: profile?.destination?.toUpperCase() ?? "—", icon: Globe },
+                          { label: "Type de visa", value: profile?.visaType ?? "À définir", icon: FileText },
+                          { label: "Formule choisie", value: profile?.formulaChosen ?? "Non sélectionnée", icon: Award },
+                          { label: "Membre depuis", value: profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString("fr-FR") : "—", icon: Clock },
+                        ].map((item) => (
+                          <div key={item.label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm flex items-center gap-3">
+                            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                              <item.icon className="w-5 h-5 text-[#1E3A8A]" />
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-400">{item.label}</div>
+                              <div className="font-bold text-gray-800 text-sm">{item.value}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* CTA si dossier nouveau */}
+                      {(profile?.dossierStatus === "nouveau" || profile?.dossierStatus === "documents") && (
+                        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                          <div className="flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <div className="font-bold text-amber-800">Action requise</div>
+                              <div className="text-sm text-amber-700 mt-1">
+                                Pour accélérer le traitement de votre dossier, uploadez vos documents (CV, passeport, diplômes) dans l'onglet <strong>Mes documents</strong>.
+                              </div>
+                              <button
+                                onClick={() => setActiveTab("documents")}
+                                className="mt-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-4 py-2 rounded-xl transition-colors flex items-center gap-2"
+                              >
+                                <Upload className="w-4 h-4" /> Uploader mes documents
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Documents ───────────────────────────────────────── */}
+              {activeTab === "documents" && (
+                <motion.div key="documents" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mes Documents</h1>
+
+                  {/* Zone d'upload */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <h2 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <Upload className="w-5 h-5 text-[#1E3A8A]" /> Ajouter un document
+                    </h2>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="uploadType" className="text-sm font-semibold text-gray-700">Type de document</Label>
+                        <Select value={uploadType} onValueChange={setUploadType}>
+                          <SelectTrigger id="uploadType" className="mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FILE_TYPES.map(t => (
+                              <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-semibold text-gray-700">Fichier (PDF, JPG, PNG — max 10 Mo)</Label>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
+                          className="mt-1 block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#1E3A8A] file:text-white file:font-semibold file:cursor-pointer hover:file:bg-[#2563EB] transition-colors"
+                        />
+                      </div>
+                    </div>
+                    {uploadFile && (
+                      <div className="mt-3 flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                        <Paperclip className="w-4 h-4 text-[#1E3A8A]" />
+                        <span className="font-medium">{uploadFile.name}</span>
+                        <span className="text-gray-400">({(uploadFile.size / 1024 / 1024).toFixed(2)} Mo)</span>
+                      </div>
+                    )}
+                    <Button
+                      onClick={handleUpload}
+                      disabled={!uploadFile || isUploading}
+                      className="mt-4 bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+                    >
+                      {isUploading ? (
+                        <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Upload en cours...</span>
+                      ) : (
+                        <span className="flex items-center gap-2"><Upload className="w-4 h-4" />Envoyer le document</span>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Liste des documents */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100">
+                      <h2 className="font-bold text-gray-800">Documents envoyés</h2>
+                    </div>
+                    {documentsQuery.isLoading ? (
+                      <div className="p-8 text-center text-gray-400">Chargement...</div>
+                    ) : !documentsQuery.data?.length ? (
+                      <div className="p-8 text-center">
+                        <FolderOpen className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                        <p className="text-gray-400 text-sm">Aucun document envoyé pour l'instant.</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-50">
+                        {documentsQuery.data.map((doc) => {
+                          const typeLabel = FILE_TYPES.find(t => t.value === doc.fileType)?.label ?? doc.fileType;
+                          const statusColors: Record<string, string> = {
+                            uploaded: "bg-blue-100 text-blue-700",
+                            verified: "bg-green-100 text-green-700",
+                            rejected: "bg-red-100 text-red-700",
+                          };
+                          return (
+                            <div key={doc.id} className="px-6 py-4 flex items-center gap-4">
+                              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <FileText className="w-5 h-5 text-[#1E3A8A]" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-gray-800 text-sm truncate">{doc.fileName}</div>
+                                <div className="text-xs text-gray-400">{typeLabel} · {new Date(doc.uploadedAt).toLocaleDateString("fr-FR")}</div>
+                              </div>
+                              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColors[doc.status] ?? "bg-gray-100 text-gray-600"}`}>
+                                {doc.status === "uploaded" ? "Envoyé" : doc.status === "verified" ? "Vérifié" : "Refusé"}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-[#1E3A8A] transition-colors" title="Voir">
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                                <button
+                                  onClick={() => deleteDocMutation.mutate({ fileId: doc.id })}
+                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Messagerie ──────────────────────────────────────── */}
+              {activeTab === "messages" && (
+                <motion.div key="messages" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-4">Messagerie</h1>
+                  <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {messagesQuery.isLoading ? (
+                        <div className="text-center text-gray-400 py-8">Chargement...</div>
+                      ) : !messagesQuery.data?.length ? (
+                        <div className="text-center py-12">
+                          <MessageCircle className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                          <p className="text-gray-400 text-sm">Aucun message pour l'instant.</p>
+                        </div>
+                      ) : (
+                        messagesQuery.data.map((msg) => {
+                          const isCandidate = msg.senderRole === "candidate";
+                          return (
+                            <div key={msg.id} className={`flex ${isCandidate ? "justify-end" : "justify-start"}`}>
+                              <div className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                                isCandidate
+                                  ? "bg-[#1E3A8A] text-white rounded-br-sm"
+                                  : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                              }`}>
+                                {!isCandidate && (
+                                  <div className="text-xs font-bold text-[#1E3A8A] mb-1">Conseiller 3M Travel</div>
+                                )}
+                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                                <div className={`text-xs mt-1.5 ${isCandidate ? "text-blue-200" : "text-gray-400"}`}>
+                                  {new Date(msg.createdAt).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Zone de saisie */}
+                    <div className="border-t border-gray-100 p-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Écrivez votre message..."
+                          value={messageText}
+                          onChange={e => setMessageText(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === "Enter" && !e.shiftKey && messageText.trim()) {
+                              e.preventDefault();
+                              sendMessageMutation.mutate({ content: messageText.trim() });
+                            }
+                          }}
+                          className="flex-1"
+                        />
+                        <Button
+                          onClick={() => {
+                            if (messageText.trim()) sendMessageMutation.mutate({ content: messageText.trim() });
+                          }}
+                          disabled={!messageText.trim() || sendMessageMutation.isPending}
+                          className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white px-4 rounded-xl"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">Appuyez sur Entrée pour envoyer · Notre équipe répond sous 24h</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Onglet : Profil ──────────────────────────────────────────── */}
+              {activeTab === "profile" && (
+                <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                  <h1 className="text-2xl font-black text-gray-900 mb-6">Mon Profil</h1>
+                  <ProfileEditor profile={profileQuery.data} onSaved={() => utils.candidate.getProfile.invalidate()} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </main>
         </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 mt-32">
-        {/* Statistiques */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Total", value: stats.total, icon: <Users className="w-4 h-4" />, color: "text-gray-700 bg-gray-100" },
-            { label: "Éval. 48h", value: stats.pending, icon: <Clock className="w-4 h-4" />, color: "text-amber-700 bg-amber-100" },
-            { label: "Bilan dispo", value: stats.published, icon: <FileCheck className="w-4 h-4" />, color: "text-blue-700 bg-blue-100" },
-            { label: "Documents", value: stats.documents, icon: <Send className="w-4 h-4" />, color: "text-purple-700 bg-purple-100" },
-            { label: "Soumis", value: stats.submitted, icon: <Globe className="w-4 h-4" />, color: "text-indigo-700 bg-indigo-100" },
-            { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="w-4 h-4" />, color: "text-green-700 bg-green-100" },
-          ].map((s) => (
-            <Card key={s.label} className="border-0 shadow-sm">
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500">{s.label}</p>
-                    <p className="text-2xl font-bold text-gray-800">{s.value}</p>
-                  </div>
-                  <div className={`p-2 rounded-lg ${s.color}`}>{s.icon}</div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+// ─── Sous-composant : éditeur de profil ──────────────────────────────────────
+function ProfileEditor({ profile, onSaved }: { profile: any; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    phone: "",
+    nationality: "",
+    dateOfBirth: "",
+    educationLevel: "",
+    employmentStatus: "",
+    languageLevel: "",
+    destination: "autre",
+    visaType: "",
+  });
 
-        {/* Sources */}
-        <div className="flex items-center gap-4 text-sm text-gray-600">
-          <span className="flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-sky-500" />
-            <strong>{stats.web}</strong> dossiers en ligne
-          </span>
-          <span className="text-gray-300">|</span>
-          <span className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 text-orange-500" />
-            <strong>{stats.agency}</strong> dossiers agence
-          </span>
-        </div>
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        fullName: profile.fullName ?? "",
+        phone: profile.phone ?? "",
+        nationality: profile.nationality ?? "",
+        dateOfBirth: profile.dateOfBirth ?? "",
+        educationLevel: profile.educationLevel ?? "",
+        employmentStatus: profile.employmentStatus ?? "",
+        languageLevel: profile.languageLevel ?? "",
+        destination: profile.destination ?? "autre",
+        visaType: profile.visaType ?? "",
+      });
+    }
+  }, [profile]);
 
-        {/* Onglets : Dossiers, Paiements, Documents */}
-        <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="candidates">Dossiers</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-          </TabsList>
+  const updateMutation = trpc.candidate.updateProfile.useMutation({
+    onSuccess: () => {
+      toast.success("Profil mis à jour !");
+      onSaved();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
-          <TabsContent value="candidates" className="space-y-6">
-            {/* Filtres & Recherche */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    updateMutation.mutate(form as any);
+  }
+
+  return (
+    <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="grid sm:grid-cols-2 gap-5">
+        {[
+          { id: "fullName", label: "Nom complet", type: "text", placeholder: "Jean Dupont" },
+          { id: "phone", label: "Téléphone", type: "tel", placeholder: "+237 6XX XXX XXX" },
+          { id: "nationality", label: "Nationalité", type: "text", placeholder: "Camerounaise" },
+          { id: "dateOfBirth", label: "Date de naissance", type: "date", placeholder: "" },
+          { id: "educationLevel", label: "Niveau d'études", type: "text", placeholder: "Master, Licence..." },
+          { id: "employmentStatus", label: "Situation professionnelle", type: "text", placeholder: "Salarié, Étudiant..." },
+          { id: "languageLevel", label: "Niveau de langue", type: "text", placeholder: "IELTS 7.0, DELF B2..." },
+          { id: "visaType", label: "Type de visa souhaité", type: "text", placeholder: "Résidence permanente..." },
+        ].map((field) => (
+          <div key={field.id}>
+            <Label htmlFor={field.id} className="text-sm font-semibold text-gray-700">{field.label}</Label>
             <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher par nom, email, n° dossier, destination..."
-              className="pl-9"
+              id={field.id}
+              type={field.type}
+              placeholder={field.placeholder}
+              value={(form as any)[field.id]}
+              onChange={e => setForm(f => ({ ...f, [field.id]: e.target.value }))}
+              className="mt-1"
             />
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-52">
-              <SelectValue placeholder="Tous les statuts" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Tous les statuts</SelectItem>
-              {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                <SelectItem key={key} value={key}>
-                  <span className="flex items-center gap-2">
-                    {cfg.icon}
-                    {cfg.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Tableau */}
-        <Card className="border-0 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Candidat</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Source</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {isLoading ? (
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 8 }).map((_, j) => (
-                        <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-gray-200 rounded w-3/4" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : candidates.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
-                      <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                      <p>Aucun candidat trouvé</p>
-                      {(search || statusFilter !== "ALL") && (
-                        <p className="text-xs mt-1">Essayez de modifier vos filtres</p>
-                      )}
-                    </td>
-                  </tr>
-                ) : (
-                  candidates.map((candidate) => (
-                    <tr
-                      key={candidate.id}
-                      className="hover:bg-blue-50/40 transition-colors cursor-pointer"
-                      onClick={() => setSelectedCandidateId(candidate.id)}
-                    >
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
-                          {candidate.folderCode}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
-                          <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
-                        <span className="text-gray-700 text-xs">{candidate.destinationCountry}</span>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <SourceBadge source={candidate.source} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={candidate.status} />
-                      </td>
-                      <td className="px-4 py-3 hidden sm:table-cell">
-                        {candidate.scoringTotal !== null ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-16 bg-gray-200 rounded-full h-1.5">
-                              <div
-                                className={`h-1.5 rounded-full ${
-                                  (candidate.scoringTotal ?? 0) >= 80 ? "bg-green-500" :
-                                  (candidate.scoringTotal ?? 0) >= 60 ? "bg-blue-500" : "bg-red-400"
-                                }`}
-                                style={{ width: `${Math.min(100, candidate.scoringTotal ?? 0)}%` }}
-                              />
-                            </div>
-                            <span className="text-xs font-medium text-gray-600">{candidate.scoringTotal}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 hidden xl:table-cell">
-                        <span className="text-xs text-gray-500">
-                          {new Date(candidate.createdAt).toLocaleDateString("fr-FR")}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 hover:bg-blue-100"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedCandidateId(candidate.id);
-                          }}
-                        >
-                          <Eye className="w-3.5 h-3.5 text-blue-600" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {candidates.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
-              {candidates.length} candidat{candidates.length > 1 ? "s" : ""} affiché{candidates.length > 1 ? "s" : ""}
-              {total !== candidates.length && ` sur ${total} au total`}
-            </div>
-          )}
-        </Card>
-          </TabsContent>
-
-          <TabsContent value="payments" className="space-y-6">
-            <AdminPaymentManagement />
-          </TabsContent>
-
-          <TabsContent value="documents" className="space-y-6">
-            <AdminDocumentsManagement />
-          </TabsContent>
-        </Tabs>
+        ))}
       </div>
 
-      {/* Modales */}
-      {selectedCandidateId && (
-        <CandidateDetailModal
-          candidateId={selectedCandidateId}
-          onClose={() => setSelectedCandidateId(null)}
-          onStatusUpdated={handleRefresh}
-        />
-      )}
+      <div className="mt-5">
+        <Label htmlFor="form-destination" className="text-sm font-semibold text-gray-700">Destination souhaitée</Label>
+        <Select value={form.destination} onValueChange={v => setForm(f => ({ ...f, destination: v }))}>
+          <SelectTrigger id="form-destination" className="mt-1">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {[
+              { value: "canada",     label: "🇨🇦 Canada" },
+              { value: "luxembourg", label: "🇱🇺 Luxembourg" },
+              { value: "pologne",    label: "🇵🇱 Pologne" },
+              { value: "europe",     label: "🇪🇺 Europe Schengen" },
+              { value: "golfe",      label: "🇦🇪 Golfe & Moyen-Orient" },
+              { value: "autre",      label: "Autre" },
+            ].map(d => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
-      {showImportModal && (
-        <ImportAgencyModal
-          onClose={() => setShowImportModal(false)}
-          onImported={handleRefresh}
-        />
-      )}
-    </div>
+      <div className="mt-6 flex items-center gap-3">
+        <Button
+          type="submit"
+          disabled={updateMutation.isPending}
+          className="bg-[#1E3A8A] hover:bg-[#2563EB] text-white font-bold px-6 py-2.5 rounded-xl transition-colors"
+        >
+          {updateMutation.isPending ? "Sauvegarde..." : "Sauvegarder les modifications"}
+        </Button>
+        <span className="text-xs text-gray-400">Email : {profile?.email}</span>
+      </div>
+    </form>
   );
 }

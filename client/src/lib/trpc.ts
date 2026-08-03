@@ -1,4 +1,855 @@
-import { createTRPCReact } from "@trpc/react-query";
-import type { AppRouter } from "../../../server/routers";
+/**
+ * Routeur tRPC — Gestion Admin Spécialisée
+ * Permet de gérer les 3 types d'admins : Évaluation, Accompagnement, Procédures
+ */
 
-export const trpc = createTRPCReact<AppRouter>();
+import { publicProcedure, router } from "../_core/trpc";
+import { requireValidAdminSession } from "./adminAuth";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import { getDb } from "../db";
+import { evaluations, aiReportHistory, users, applications, clientDocuments, bilans } from "../../drizzle/schema";
+import { eq, desc, like, or } from "drizzle-orm";
+
+export const adminRouter = router({
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADMIN ÉVALUATION — Gestion des CV et rapports IA
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer les rapports IA en attente de révision
+   */
+  getEvaluationPendingReports: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const reports = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.sendStatus, "pending"))
+          .orderBy(desc(aiReportHistory.createdAt))
+          .limit(50);
+
+        const evals = await db
+          .select()
+          .from(evaluations)
+          .where(eq(evaluations.status, "pending"))
+          .orderBy(desc(evaluations.createdAt))
+          .limit(50);
+
+        return {
+          success: true,
+          reports,
+          evaluations: evals,
+          count: reports.length + evals.length,
+        };
+      } catch (err) {
+        console.error("[Admin Evaluation] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des rapports",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les statistiques d'évaluation
+   */
+  getEvaluationStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allReports = await db.select().from(aiReportHistory);
+        const sentReports = allReports.filter(r => r.sendStatus === "sent");
+        const failedReports = allReports.filter(r => r.sendStatus === "failed");
+        const pendingReports = allReports.filter(r => r.sendStatus === "pending");
+
+        return {
+          success: true,
+          stats: {
+            total: allReports.length,
+            sent: sentReports.length,
+            failed: failedReports.length,
+            pending: pendingReports.length,
+            successRate: allReports.length > 0 ? Math.round((sentReports.length / allReports.length) * 100) : 0,
+          },
+        };
+      } catch (err) {
+        console.error("[Admin Evaluation Stats] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des statistiques",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADMIN ACCOMPAGNEMENT — Gestion de l'avancement des dossiers
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Avancer rapidement le statut d'une évaluation
+   */
+  advanceEvaluationStatus: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      evaluationId: z.number().int(),
+      newStatus: z.enum(["pending", "reviewed", "contacted", "closed"]),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const eval_ = await db
+          .select()
+          .from(evaluations)
+          .where(eq(evaluations.id, input.evaluationId))
+          .limit(1);
+
+        if (eval_.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
+        }
+
+        await db
+          .update(evaluations)
+          .set({
+            status: input.newStatus,
+          })
+          .where(eq(evaluations.id, input.evaluationId));
+
+        return {
+          success: true,
+          message: `Évaluation avancée au statut: ${input.newStatus}`,
+        };
+      } catch (err) {
+        console.error("[Admin Advance] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'avancement de l'évaluation",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les évaluations en attente de contact
+   */
+  getEvaluationsAwaitingContact: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const evals = await db
+          .select()
+          .from(evaluations)
+          .where(eq(evaluations.status, "reviewed"))
+          .orderBy(desc(evaluations.updatedAt))
+          .limit(50);
+
+        return {
+          success: true,
+          evaluations: evals,
+          count: evals.length,
+        };
+      } catch (err) {
+        console.error("[Admin Contact] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des évaluations",
+        });
+      }
+    }),
+
+  /**
+   * Ajouter des notes à une évaluation
+   */
+  addEvaluationNotes: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      evaluationId: z.number().int(),
+      notes: z.string().min(10),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const eval_ = await db
+          .select()
+          .from(evaluations)
+          .where(eq(evaluations.id, input.evaluationId))
+          .limit(1);
+
+        if (eval_.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
+        }
+
+        const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
+        const newNote = `[${timestamp}] ${input.notes}`;
+
+        return {
+          success: true,
+          message: "Note ajoutée à l'évaluation",
+        };
+      } catch (err) {
+        console.error("[Admin Notes] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'ajout de notes",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ADMIN PROCÉDURES — Gestion des procédures par pays
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer les statistiques par destination
+   */
+  getEvaluationsByDestination: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const evals = await db.select().from(evaluations);
+
+        // Grouper par destination
+        const byDestination: Record<string, any> = {};
+        evals.forEach(eval_ => {
+          const dest = eval_.destinationCountry || "Non spécifiée";
+          if (!byDestination[dest]) {
+            byDestination[dest] = {
+              destination: dest,
+              total: 0,
+              pending: 0,
+              reviewed: 0,
+              contacted: 0,
+              closed: 0,
+            };
+          }
+          byDestination[dest].total++;
+          byDestination[dest][eval_.status]++;
+        });
+
+        return {
+          success: true,
+          destinations: Object.values(byDestination),
+        };
+      } catch (err) {
+        console.error("[Admin Procedures] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des statistiques",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les évaluations par destination
+   */
+  getEvaluationsByDestinationName: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      destination: z.string(),
+      status: z.enum(["pending", "reviewed", "contacted", "closed"]).optional(),
+    }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        let query: any = db.select().from(evaluations).where(eq(evaluations.destinationCountry, input.destination));
+
+        if (input.status) {
+          query = query.where(eq(evaluations.status, input.status));
+        }
+
+        const evals = await query.orderBy(desc(evaluations.createdAt)).limit(100);
+
+        return {
+          success: true,
+          evaluations: evals,
+          count: evals.length,
+        };
+      } catch (err) {
+        console.error("[Admin Destination] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des évaluations",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les statistiques du dashboard admin
+   * Retourne : pending, reviewed, contacted, closed
+   */
+  getDashboardStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allEvals = await db.select().from(evaluations);
+        
+        return {
+          success: true,
+          stats: {
+            pending: allEvals.filter(e => e.status === "pending").length,
+            reviewed: allEvals.filter(e => e.status === "reviewed").length,
+            contacted: allEvals.filter(e => e.status === "contacted").length,
+            closed: allEvals.filter(e => e.status === "closed").length,
+            total: allEvals.length,
+          },
+        };
+      } catch (err) {
+        console.error("[Admin Dashboard Stats] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des statistiques du dashboard",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les statistiques globales
+   */
+  getGlobalStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const evals = await db.select().from(evaluations);
+        const reports = await db.select().from(aiReportHistory);
+
+        const stats = {
+          totalEvaluations: evals.length,
+          evaluationsByStatus: {
+            pending: evals.filter(e => e.status === "pending").length,
+            reviewed: evals.filter(e => e.status === "reviewed").length,
+            contacted: evals.filter(e => e.status === "contacted").length,
+            closed: evals.filter(e => e.status === "closed").length,
+          },
+          aiReports: {
+            total: reports.length,
+            sent: reports.filter(r => r.sendStatus === "sent").length,
+            failed: reports.filter(r => r.sendStatus === "failed").length,
+            pending: reports.filter(r => r.sendStatus === "pending").length,
+          },
+          conversionRate: evals.length > 0 ? Math.round((evals.filter(e => e.status !== "pending").length / evals.length) * 100) : 0,
+        };
+
+        return {
+          success: true,
+          stats,
+        };
+      } catch (err) {
+        console.error("[Admin Global Stats] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des statistiques globales",
+        });
+      }
+    }),
+
+  /**
+   * Valider un document
+   */
+  approveDocument: publicProcedure
+    .input(z.object({ sessionToken: z.string(), documentId: z.number(), comment: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(clientDocuments)
+          .set({
+            verificationStatus: "approved",
+            verificationComment: input.comment || null,
+            verifiedByAdmin: admin.email,
+            verifiedAt: new Date(),
+          })
+          .where(eq(clientDocuments.id, input.documentId));
+
+        return { success: true, message: "Document approuvé" };
+      } catch (err) {
+        console.error("[Admin Approve Document] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de l'approbation du document",
+        });
+      }
+    }),
+
+  /**
+   * Rejeter un document
+   */
+  rejectDocument: publicProcedure
+    .input(z.object({ sessionToken: z.string(), documentId: z.number(), comment: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(clientDocuments)
+          .set({
+            verificationStatus: "rejected",
+            verificationComment: input.comment,
+            verifiedByAdmin: admin.email,
+            verifiedAt: new Date(),
+          })
+          .where(eq(clientDocuments.id, input.documentId));
+
+        return { success: true, message: "Document rejeté" };
+      } catch (err) {
+        console.error("[Admin Reject Document] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors du rejet du document",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les détails complets d'un utilisateur avec tous ses dossiers et documents
+   */
+  getUserDetailsWithDocuments: publicProcedure
+    .input(z.object({ sessionToken: z.string(), userId: z.number() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const user = await db.select().from(users).where(eq(users.id, input.userId));
+        if (!user.length) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Utilisateur non trouvé" });
+        }
+
+        const userApps = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.candidateId, input.userId));
+
+        // Récupérer les documents pour chaque dossier
+        const appsWithDocs = await Promise.all(
+          userApps.map(async (app) => {
+            return { ...app, documents: [] };
+          })
+        );
+
+        return {
+          success: true,
+          user: user[0],
+          applications: appsWithDocs,
+        };
+      } catch (err) {
+        console.error("[Admin User Details] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des détails utilisateur",
+        });
+      }
+    }),
+
+  /**
+   * Récupérer la liste des utilisateurs avec leurs dossiers
+   */
+  getAllUsersWithApplications: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      search: z.string().optional(),
+      status: z.string().optional(),
+      limit: z.number().default(50),
+      offset: z.number().default(0),
+    }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allUsers = await db.select().from(users).limit(input.limit).offset(input.offset);
+
+        // Récupérer les dossiers pour chaque utilisateur
+        const usersWithApps = await Promise.all(
+          allUsers.map(async (user) => {
+            const userApps = await db
+              .select()
+              .from(applications)
+              .where(eq(applications.candidateId, user.id));
+
+            return {
+              ...user,
+              applications: userApps,
+              applicationCount: userApps.length,
+              lastApplication: userApps.length > 0 ? userApps[0] : null,
+              email: user.email || "",
+            };
+          })
+        );
+
+        return {
+          success: true,
+          users: usersWithApps,
+          total: allUsers.length,
+        };
+      } catch (err) {
+        console.error("[Admin Users] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des utilisateurs",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION DES BILANS D'ADMISSIBILITÉ
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer les bilans en attente de validation
+   */
+  getPendingBilans: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const pendingBilans = await db
+          .select()
+          .from(bilans)
+          .where(eq(bilans.status, "draft"))
+          .orderBy(desc(bilans.generatedAt))
+          .limit(50);
+
+        return pendingBilans;
+      } catch (err) {
+        console.error("[Admin Get Pending Bilans] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des bilans",
+        });
+      }
+    }),
+
+  /**
+   * Valider et envoyer un bilan au candidat
+   */
+  validateAndSendBilan: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        // Récupérer le bilan
+        const bilan = await db.select().from(bilans).where(eq(bilans.id, input.bilanId)).limit(1);
+        if (!bilan || bilan.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Bilan non trouvé" });
+        }
+
+        // Mettre à jour le statut
+        await db
+          .update(bilans)
+          .set({
+            status: "sent",
+            validatedBy: admin.fullName || "Admin",
+            validatedAt: new Date(),
+            sentAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return { success: true, message: "Bilan validé et envoyé" };
+      } catch (err) {
+        console.error("[Admin Validate Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la validation du bilan",
+        });
+      }
+    }),
+
+  /**
+   * Rejeter un bilan
+   */
+  rejectBilan: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number(), reason: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(bilans)
+          .set({
+            status: "rejected",
+            adminNotes: input.reason,
+            validatedBy: admin.fullName || "Admin",
+            validatedAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return { success: true, message: "Bilan rejeté" };
+      } catch (err) {
+        console.error("[Admin Reject Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors du rejet du bilan",
+        });
+      }
+    }),
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GESTION DES DOSSIERS
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Récupérer tous les dossiers
+   */
+  getAllApplications: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const allApps = await db
+          .select()
+          .from(applications)
+          .orderBy(desc(applications.createdAt))
+          .limit(100);
+
+        return allApps;
+      } catch (err) {
+        console.error("[Admin Get All Applications] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la récupération des dossiers",
+        });
+      }
+    }),
+
+  /**
+   * Mettre à jour le statut d'un dossier
+   */
+  updateApplicationStatus: publicProcedure
+    .input(z.object({ sessionToken: z.string(), applicationId: z.number(), status: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        await db
+          .update(applications)
+          .set({
+            dossierStatus: input.status as any,
+            lastStatusUpdateAt: new Date(),
+            lastStatusUpdatedBy: admin.fullName || "Admin",
+          })
+          .where(eq(applications.id, input.applicationId));
+
+        return { success: true, message: "Statut du dossier mis à jour" };
+      } catch (err) {
+        console.error("[Admin Update Application Status] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise à jour du statut",
+        });
+      }
+    }),
+
+  /**
+   * Modifier les donnees d'une application (par l'admin)
+   */
+  updateApplicationData: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      applicationId: z.number(),
+      data: z.object({
+      sessionToken: z.string(),
+        destinationCountry: z.string().optional(),
+        projectType: z.string().optional(),
+        studyLevel: z.string().optional(),
+        fieldOfStudy: z.string().optional(),
+        adminNotes: z.string().optional(),
+      }),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const updateData: any = {};
+        if (input.data.destinationCountry) updateData.destinationCountry = input.data.destinationCountry;
+        if (input.data.projectType) updateData.projectType = input.data.projectType;
+        if (input.data.studyLevel) updateData.studyLevel = input.data.studyLevel;
+        if (input.data.fieldOfStudy) updateData.fieldOfStudy = input.data.fieldOfStudy;
+        if (input.data.adminNotes) updateData.adminNotes = input.data.adminNotes;
+        updateData.lastStatusUpdateAt = new Date();
+        updateData.lastStatusUpdatedBy = admin.fullName || "Admin";
+
+        await db
+          .update(applications)
+          .set(updateData)
+          .where(eq(applications.id, input.applicationId));
+
+        return { success: true, message: "Donnees du dossier mises a jour" };
+      } catch (err) {
+        console.error("[Admin Update Application Data] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise a jour des donnees",
+        });
+      }
+    }),
+
+  /**
+   * Recuperer les details complets d'une application
+   */
+  getApplicationDetails: publicProcedure
+    .input(z.object({ sessionToken: z.string(), applicationId: z.number() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const app = await db
+          .select()
+          .from(applications)
+          .where(eq(applications.id, input.applicationId))
+          .limit(1);
+
+        if (app.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Application non trouvee" });
+        }
+
+        // Récupérer les documents du candidat
+        const documents = await db
+          .select()
+          .from(clientDocuments)
+          .where(eq(clientDocuments.candidateEmail, app[0].email))
+          .limit(50);
+
+        const reports = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.applicationId, input.applicationId))
+          .orderBy(desc(aiReportHistory.createdAt))
+          .limit(10);
+
+        return {
+          success: true,
+          application: app[0],
+          documents,
+          reports,
+        };
+      } catch (err) {
+        console.error("[Admin Get Application Details] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la recuperation des details",
+        });
+      }
+    }),
+
+  /**
+   * Publier le bilan vers l'espace personnel du client
+   */
+  publishBilanToClient: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const bilan = await db
+          .select()
+          .from(bilans)
+          .where(eq(bilans.id, input.bilanId))
+          .limit(1);
+
+        if (bilan.length === 0) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Bilan non trouve" });
+        }
+
+        await db
+          .update(bilans)
+          .set({
+            status: "sent",
+            sentAt: new Date(),
+          })
+          .where(eq(bilans.id, input.bilanId));
+
+        return {
+          success: true,
+          message: "Bilan publie avec succes",
+          publishedAt: new Date(),
+        };
+      } catch (err) {
+        console.error("[Admin Publish Bilan] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la publication du bilan",
+        });
+      }
+    }),
+});
