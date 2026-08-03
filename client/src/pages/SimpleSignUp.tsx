@@ -28,7 +28,7 @@ export default function SimpleSignUp() {
 
   // Calculer la force du mot de passe
   const getPasswordStrength = (password: string) => {
-    if (!password) return { score: 0, label: "", color: "bg-gray-300" };
+    if (!password) return { score: 0, label: "", color: "bg-gray-300", textColor: "" };
 
     let score = 0;
     if (password.length >= 8) score++;

@@ -38,7 +38,7 @@ export default function ResetPasswordSimple() {
 
   // Calculer la force du mot de passe
   const getPasswordStrength = (pwd: string) => {
-    if (!pwd) return { score: 0, label: "", color: "bg-gray-300" };
+    if (!pwd) return { score: 0, label: "", color: "bg-gray-300", textColor: "" };
 
     let score = 0;
     if (pwd.length >= 8) score++;

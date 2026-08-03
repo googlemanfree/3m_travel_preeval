@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Plane, Globe, GraduationCap, Briefcase, MapPin, Phone, Mail,
@@ -410,6 +411,8 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 export default function Home() {
+  const [, setLocation] = useLocation();
+  const { isAuthenticated } = useCandidateAuth();
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
@@ -519,6 +522,11 @@ export default function Home() {
   };
 
   const onSubmit = (data: FormValues) => {
+    if (!isAuthenticated) {
+      toast.error("Créez un compte gratuit pour lancer votre évaluation.");
+      setLocation("/register?redirect=/");
+      return;
+    }
     submitMutation.mutate({ ...data, cvBase64: cvBase64 || undefined });
   };
 
