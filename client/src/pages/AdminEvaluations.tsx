@@ -1,403 +1,274 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FileText, Users, TrendingUp, LogOut, CheckCircle2, Clock, AlertCircle, Loader2, RefreshCw, Building2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { trpc } from '@/lib/trpc';
+import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { 
+  Search, FileText, CheckCircle2, Clock, AlertCircle, 
+  Download, Mail, Eye, Edit2, Trash2, Send 
+} from "lucide-react";
+import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
-export default function AdminDashboard() {
-  const [, navigate] = useLocation();
-  const [activeTab, setActiveTab] = useState('overview');
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
-  const [isSyncing, setIsSyncing] = useState(false);
+export default function AdminEvaluations() {
+  const { user, loading: authLoading } = useAuth();
+  const [location, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
-  // Récupérer les infos de l'admin depuis localStorage
-  const adminName = localStorage.getItem('adminName') || 'Admin';
-  const sessionToken = localStorage.getItem('adminSessionToken') || '';
+  // Vérifier que l'utilisateur est admin
+  useEffect(() => {
+    if (!authLoading && (!user || (user as any)?.role !== "admin")) {
+      setLocation("/admin/login");
+    }
+  }, [user, authLoading, setLocation]);
 
-  // Récupérer les statistiques du dashboard depuis la DB
-  const { data: dashboardData, isLoading, refetch } = trpc.admin.getDashboardStats.useQuery({ sessionToken }, {
-    refetchInterval: 5000, // Actualiser toutes les 5 secondes
+  // Récupérer les bilans en attente
+  const { data: bilansData, isLoading } = trpc.admin.getPendingBilans.useQuery(undefined, {
+    enabled: !!user,
   });
 
-  const evaluationStats = dashboardData?.stats || {
-    pending: 0,
-    reviewed: 0,
-    contacted: 0,
-    closed: 0,
-    total: 0,
-  };
+  // Récupérer toutes les applications
+  const { data: applicationsData } = trpc.admin.getAllApplications.useQuery(undefined, {
+    enabled: !!user,
+  });
 
-  // Mutations
-  const logoutMutation = trpc.adminAuth.logout.useMutation({
+  // Mutation pour publier le bilan
+  const publishBilanMutation = trpc.admin.publishBilanToClient.useMutation({
     onSuccess: () => {
-      localStorage.removeItem('adminSessionToken');
-      localStorage.removeItem('adminType');
-      localStorage.removeItem('adminName');
-      toast.success('Déconnexion réussie');
-      navigate('/admin/login');
+      toast.success("Bilan publié avec succès!");
+      // Rafraîchir la liste
+      window.location.reload();
     },
-    onError: () => {
-      toast.error('Erreur lors de la déconnexion');
+    onError: (err) => {
+      toast.error("Erreur lors de la publication du bilan");
     },
   });
 
-  const handleLogout = () => {
-    logoutMutation.mutate({ sessionToken });
-  };
-
-  const handleRefresh = async () => {
-    setIsSyncing(true);
-    try {
-      await refetch();
-      setLastSyncTime(new Date());
-      toast.success('Données synchronisées');
-    } catch (err) {
-      toast.error('Erreur lors de la synchronisation');
-    } finally {
-      setIsSyncing(false);
+  const handlePublishBilan = (bilanId: number) => {
+    if (confirm("Êtes-vous sûr de vouloir publier ce bilan?")) {
+      publishBilanMutation.mutate({ bilanId });
     }
   };
 
-  // Synchronisation automatique toutes les 30 secondes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      handleRefresh();
-    }, 30000); // 30 secondes
-    return () => clearInterval(interval);
-  }, []);
-
-  // Données dynamiques basées sur les statistiques
-  const statusData = [
-    { name: 'Nouveau', value: evaluationStats.pending },
-    { name: 'Révisé', value: evaluationStats.reviewed },
-    { name: 'Contacté', value: evaluationStats.contacted },
-    { name: 'Fermé', value: evaluationStats.closed },
-  ].filter(d => d.value > 0);
-
-  const destinationData = [
-    { name: 'Canada', value: 0 },
-    { name: 'Schengen', value: 0 },
-    { name: 'Autre', value: 0 },
-  ];
-
-  const monthlyData = [
-    { month: 'Jan', dossiers: 0, paiements: 0 },
-    { month: 'Fév', dossiers: 0, paiements: 0 },
-    { month: 'Mar', dossiers: 0, paiements: 0 },
-    { month: 'Avr', dossiers: 0, paiements: 0 },
-    { month: 'Mai', dossiers: 0, paiements: 0 },
-    { month: 'Juin', dossiers: 0, paiements: 0 },
-  ];
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
-
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-white text-lg">Chargement du dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement des évaluations...</p>
         </div>
       </div>
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
+  const bilans = bilansData || [];
+  const applications = applicationsData || [];
+
+  // Filtrer les bilans
+  const filteredBilans = (bilans as any[]).filter((bilan: any) => {
+    const matchesSearch = 
+      bilan.candidateName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bilan.candidateEmail?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = 
+      filterStatus === "all" || bilan.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; variant: string; icon: React.ReactNode }> = {
+      draft: { label: "Brouillon", variant: "secondary", icon: <Clock className="w-4 h-4" /> },
+      pending_validation: { label: "En attente", variant: "default", icon: <Clock className="w-4 h-4" /> },
+      validated: { label: "Validé", variant: "default", icon: <CheckCircle2 className="w-4 h-4" /> },
+      sent: { label: "Envoyé", variant: "default", icon: <Mail className="w-4 h-4" /> },
+      rejected: { label: "Rejeté", variant: "destructive", icon: <AlertCircle className="w-4 h-4" /> },
+    };
+
+    const statusInfo = statusMap[status] || { label: status, variant: "secondary", icon: <Clock className="w-4 h-4" /> };
+    return (
+      <Badge variant={statusInfo.variant as any} className="gap-2">
+        {statusInfo.icon}
+        {statusInfo.label}
+      </Badge>
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">🛠️ Dashboard Admin</h1>
-            <p className="text-blue-100 mt-1">Bienvenue, {adminName}</p>
-            <p className="text-blue-200 text-xs mt-1">🔄 Synchronisation auto toutes les 30s • Dernière mise à jour: {lastSyncTime.toLocaleTimeString('fr-FR')}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleRefresh}
-              variant="outline"
-              className="text-white border-white hover:bg-white/10"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Actualiser
-            </Button>
-            <Button
-              onClick={handleLogout}
-              disabled={logoutMutation.isPending}
-              variant="outline"
-              className="text-white border-white hover:bg-white/10"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
-            </Button>
-          </div>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl font-bold mb-2">Accéder aux Évaluations</h1>
+          <p className="text-blue-100">Gérez et validez les bilans d'évaluation des candidats</p>
         </div>
       </div>
 
-      {/* Boutons d'Accès Rapide */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Button
-            onClick={() => navigate('/admin/evaluations')}
-            className="h-16 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-lg font-semibold rounded-lg shadow-lg"
-          >
-            📋 Accéder aux évaluations →
-          </Button>
-          <Button
-            onClick={() => navigate('/admin/procedures')}
-            className="h-16 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-lg font-semibold rounded-lg shadow-lg"
-          >
-            🔄 Gérer les procédures →
-          </Button>
-        </div>
-      </div>
-
-      {/* Contenu */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Cartes de statistiques */}
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto p-4 py-8">
+        {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="bg-slate-800 border-slate-700 hover:border-yellow-500 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Dossiers en attente</p>
-                  <p className="text-3xl font-bold text-white">{evaluationStats.pending}</p>
-                </div>
-                <Clock className="w-10 h-10 text-yellow-500 opacity-50" />
-              </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Total Bilans</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-blue-600">{bilans.length}</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700 hover:border-blue-500 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Dossiers révisés</p>
-                  <p className="text-3xl font-bold text-white">{evaluationStats.reviewed}</p>
-                </div>
-                <FileText className="w-10 h-10 text-blue-500 opacity-50" />
-              </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">En Attente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-orange-600">
+                {bilans.filter((b: any) => b.status === "pending_validation").length}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700 hover:border-green-500 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Candidats contactés</p>
-                  <p className="text-3xl font-bold text-white">{evaluationStats.contacted}</p>
-                </div>
-                <Users className="w-10 h-10 text-green-500 opacity-50" />
-              </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Validés</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                {bilans.filter((b: any) => b.status === "validated").length}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800 border-slate-700 hover:border-emerald-500 transition-colors">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-slate-400 text-sm">Dossiers fermés</p>
-                  <p className="text-3xl font-bold text-white">{evaluationStats.closed}</p>
-                </div>
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 opacity-50" />
-              </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Envoyés</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-purple-600">
+                {bilans.filter((b: any) => b.status === "sent").length}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Onglets */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-slate-800 border border-slate-700">
-            <TabsTrigger value="overview" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-              📊 Vue d'ensemble
-            </TabsTrigger>
-            <TabsTrigger value="evaluation" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-              📋 Évaluation
-            </TabsTrigger>
-
-            <TabsTrigger value="procedures" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-              🌍 Procédures
-            </TabsTrigger>
-            <TabsTrigger value="agency" className="text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700">
-              🏢 Agence
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Vue d'ensemble */}
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Graphique statut */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Répartition par statut</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {statusData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie data={statusData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${value}`} outerRadius={80} fill="#8884d8" dataKey="value">
-                          {statusData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-slate-400">
-                      <p>Aucune donnée disponible</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Graphique destination */}
-              <Card className="bg-slate-800 border-slate-700">
-                <CardHeader>
-                  <CardTitle className="text-white">Dossiers par destination</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {destinationData.some(d => d.value > 0) ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={destinationData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                        <XAxis dataKey="name" stroke="#94a3b8" />
-                        <YAxis stroke="#94a3b8" />
-                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
-                        <Bar dataKey="value" fill="#3b82f6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-[300px] flex items-center justify-center text-slate-400">
-                      <p>Aucune donnée disponible</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Graphique mensuel */}
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Tendance mensuelle</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {monthlyData.some(d => d.dossiers > 0 || d.paiements > 0) ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={monthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#475569" />
-                      <XAxis dataKey="month" stroke="#94a3b8" />
-                      <YAxis stroke="#94a3b8" />
-                      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', color: '#fff' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="dossiers" stroke="#3b82f6" strokeWidth={2} />
-                      <Line type="monotone" dataKey="paiements" stroke="#10b981" strokeWidth={2} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-[300px] flex items-center justify-center text-slate-400">
-                    <p>Aucune donnée disponible</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Évaluation */}
-          <TabsContent value="evaluation" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <FileText className="w-5 h-5" />
-                  Gestion des Évaluations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-slate-300">
-                  ✅ Gérer les CV et rapports IA<br/>
-                  ✅ Consulter l'historique des rapports<br/>
-                  ✅ Retenter l'envoi des rapports échoués<br/>
-                  ✅ Voir les statistiques d'évaluation
-                </p>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Accéder aux évaluations →
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-
-
-          {/* Procédures */}
-          <TabsContent value="procedures" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
-                  Gestion des Procédures
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-slate-300">
-                  ✅ Voir les procédures par destination<br/>
-                  ✅ Consulter les statistiques par pays<br/>
-                  ✅ Analyser les tendances de dossiers<br/>
-                  ✅ Générer des rapports par destination
-                </p>
-                <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                  Gérer les procédures →
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Dossiers en Agence */}
-          <TabsContent value="agency" className="mt-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-indigo-400" />
-                  Dossiers en Agence
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-slate-300">
-                  ✅ Ajouter manuellement des candidats reçus en agence<br/>
-                  ✅ Gérer les statuts et l'avancement des dossiers<br/>
-                  ✅ Ajouter des notes internes confidentielles<br/>
-                  ✅ Envoyer des notifications email automatiques<br/>
-                  ✅ Filtrer et rechercher par nom, destination, statut
-                </p>
-                <Button
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
-                  onClick={() => navigate('/admin/agency-dossiers')}
-                >
-                  <Building2 className="w-4 h-4 mr-2" />
-                  Gérer les Dossiers en Agence →
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Alerte info */}
-        <Card className="bg-blue-900/20 border-blue-700 mt-8">
-          <CardContent className="pt-6 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-blue-300 font-semibold">✨ Statistiques en temps réel</p>
-              <p className="text-blue-200 text-sm mt-1">
-                Les statistiques du dashboard se mettent à jour automatiquement toutes les 5 secondes. Chaque nouveau dossier créé ou statut modifié s'affichera immédiatement.
-              </p>
+        {/* Recherche et Filtres */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Rechercher et Filtrer</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                <Input
+                  placeholder="Rechercher par nom ou email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="draft">Brouillon</option>
+                <option value="pending_validation">En attente</option>
+                <option value="validated">Validés</option>
+                <option value="sent">Envoyés</option>
+                <option value="rejected">Rejetés</option>
+              </select>
             </div>
           </CardContent>
         </Card>
+
+        {/* Liste des Bilans */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bilans d'Évaluation ({filteredBilans.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-semibold">Candidat</th>
+                    <th className="text-left py-3 px-4 font-semibold">Email</th>
+                    <th className="text-left py-3 px-4 font-semibold">Score</th>
+                    <th className="text-left py-3 px-4 font-semibold">Statut</th>
+                    <th className="text-left py-3 px-4 font-semibold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBilans.map((bilan: any) => (
+                    <tr key={bilan.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-4">{bilan.candidateName}</td>
+                      <td className="py-3 px-4">{bilan.candidateEmail}</td>
+                      <td className="py-3 px-4">
+                        <span className="font-bold text-green-600">{bilan.score}/100</span>
+                      </td>
+                      <td className="py-3 px-4">{getStatusBadge(bilan.status)}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setLocation(`/admin/evaluations/${bilan.id}`)}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Voir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2"
+                            onClick={() => setLocation(`/admin/evaluations/${bilan.id}/edit`)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                            Éditer
+                          </Button>
+                          {bilan.status === 'validated' && (
+                            <Button
+                              size="sm"
+                              className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => handlePublishBilan(bilan.id)}
+                              disabled={publishBilanMutation.isPending}
+                            >
+                              <Send className="w-4 h-4" />
+                              {publishBilanMutation.isPending ? "Publication..." : "Publier"}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredBilans.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>Aucun bilan trouvé</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <Footer />
     </div>
   );
 }

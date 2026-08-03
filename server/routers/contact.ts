@@ -1,176 +1,139 @@
-import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
-import { profileEvaluations } from "../../drizzle/schema";
+import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { eq } from "drizzle-orm";
+// import { contactMessages } from "../../drizzle/schema"; // Table supprimée
+import { eq, and } from "drizzle-orm";
+import { sendEmail } from "../_core/email";
 
-export const profileEvaluationRouter = router({
+const sendContactEmailInput = z.object({
+  name: z.string().min(2, "Le nom est requis"),
+  email: z.string().email("Email invalide"),
+  phone: z.string().optional(),
+  subject: z.string().min(3, "Le sujet est requis"),
+  message: z.string().min(10, "Le message doit contenir au moins 10 caractères"),
+});
+
+const sendMessageInput = z.object({
+  visitorName: z.string().min(2, "Le nom est requis"),
+  visitorEmail: z.string().email("Email invalide"),
+  visitorPhone: z.string().optional(),
+  sessionId: z.string().min(1, "Session ID requis"),
+  content: z.string().min(1, "Le message ne peut pas être vide"),
+  subject: z.string().optional(),
+});
+
+const getMessagesInput = z.object({
+  sessionId: z.string().min(1, "Session ID requis"),
+});
+
+export const contactRouter = router({
   /**
-   * Soumettre une évaluation de profil complète
+   * Envoyer un message de chat depuis la page Contact
    */
-  submit: publicProcedure
-    .input(
-      z.object({
-        destination: z.string(),
-        projectType: z.enum(["student", "visitor", "worker", "permanent_residence", "family_reunification", "other"]),
-        currentCountry: z.string().optional(),
-        communicationLanguage: z.enum(["fr", "en"]).default("fr"),
-        
-        // Informations personnelles
-        fullName: z.string(),
-        gender: z.enum(["homme", "femme", "autre"]).optional(),
-        dateOfBirth: z.string().optional(),
-        placeOfBirth: z.string().optional(),
-        nationality: z.string().optional(),
-        currentAddress: z.string().optional(),
-        whatsappPhone: z.string(),
-        email: z.string().email(),
-        
-        // Passeport
-        passportNumber: z.string().optional(),
-        passportCountry: z.string().optional(),
-        passportIssueDate: z.string().optional(),
-        passportExpiryDate: z.string().optional(),
-        passportCopyAvailable: z.boolean().default(false),
-        oldPassportAvailable: z.boolean().default(false),
-        idCardAvailable: z.boolean().default(false),
-        
-        // Famille
-        maritalStatus: z.enum(["single", "married", "divorced", "widowed", "civil_union"]).optional(),
-        spouseName: z.string().optional(),
-        numberOfChildren: z.number().default(0),
-        dependents: z.number().default(0),
-        familyInDestination: z.boolean().default(false),
-        familyMemberRelation: z.string().optional(),
-        familyMemberStatus: z.string().optional(),
-        
-        // Études
-        educationLevel: z.string().optional(),
-        latestDiploma: z.string().optional(),
-        fieldOfStudy: z.string().optional(),
-        diplomaYear: z.number().optional(),
-        institution: z.string().optional(),
-        diplomasAvailable: z.boolean().default(false),
-        
-        // Emploi
-        currentProfession: z.string().optional(),
-        currentEmployer: z.string().optional(),
-        yearsOfExperience: z.number().optional(),
-        previousExperiences: z.string().optional(), // JSON
-        monthlyIncome: z.number().optional(),
-        cvAvailable: z.boolean().default(false),
-        jobOfferAvailable: z.boolean().default(false),
-        
-        // Finances
-        bankBalance: z.number().optional(),
-        bankBalanceAverage6Months: z.number().optional(),
-        hasSponsor: z.boolean().default(false),
-        sponsorName: z.string().optional(),
-        fundSource: z.string().optional(),
-        realEstate: z.boolean().default(false),
-        businessActivity: z.boolean().default(false),
-        debts: z.boolean().default(false),
-        
-        // Voyage
-        countriesVisited: z.string().optional(), // JSON
-        visasObtained: z.string().optional(), // JSON
-        visaRefusals: z.boolean().default(false),
-        overstayHistory: z.boolean().default(false),
-        deportationOrRefusal: z.boolean().default(false),
-        previousApplications: z.string().optional(), // JSON
-        
-        // Admissibilité
-        criminalRecord: z.boolean().default(false),
-        immigrationIssues: z.boolean().default(false),
-        medicalConcerns: z.boolean().default(false),
-        falseDeclaration: z.boolean().default(false),
-        specialNeeds: z.string().optional(),
-        
-        // Documents
-        documentsAvailable: z.string().optional(), // JSON
-        
-        // Conditionnel: Étudiant
-        desiredProgram: z.string().optional(),
-        desiredEducationLevel: z.string().optional(),
-        targetInstitution: z.string().optional(),
-        admissionLetterAvailable: z.boolean().default(false),
-        intendedStartDate: z.string().optional(),
-        studyBudget: z.number().optional(),
-        studyFunder: z.string().optional(),
-        academicProject: z.string().optional(),
-        postStudiesProject: z.string().optional(),
-        companions: z.string().optional(), // JSON
-        
-        // Conditionnel: Visiteur
-        visitReason: z.string().optional(),
-        visitType: z.enum(["tourism", "family", "business", "event", "other"]).optional(),
-        plannedStayDuration: z.string().optional(),
-        estimatedTravelDate: z.string().optional(),
-        plannedAccommodation: z.string().optional(),
-        invitingPerson: z.string().optional(),
-        invitationLetterAvailable: z.boolean().default(false),
-        stayFunder: z.string().optional(),
-        tiesInHomeCountry: z.string().optional(), // JSON
-        
-        // Conditionnel: Travailleur
-        desiredPosition: z.string().optional(),
-        targetCity: z.string().optional(),
-        relatedExperience: z.number().optional(),
-        relatedDiplomas: z.string().optional(), // JSON
-        languageLevel: z.string().optional(),
-        departureAvailability: z.string().optional(),
-        
-        // Conditionnel: Résidence permanente
-        targetCategory: z.string().optional(),
-        age: z.number().optional(),
-        ecaAvailable: z.boolean().default(false),
-        experienceYears: z.number().optional(),
-        experienceInDestination: z.boolean().default(false),
-        provincialNomination: z.boolean().default(false),
-        availableFunds: z.number().optional(),
-        policeCertificatesAvailable: z.boolean().default(false),
-        
-        submissionNotes: z.string().optional(),
-      })
-    )
+  sendMessage: publicProcedure
+    .input(sendMessageInput)
     .mutation(async ({ input }) => {
       const db = await getDb();
-      if (!db) throw new Error("Database not available");
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
 
-      const maritalStatusMap: Record<string, "celibataire" | "marie" | "divorce" | "veuf" | "union_libre"> = {
-        single: "celibataire",
-        married: "marie",
-        divorced: "divorce",
-        widowed: "veuf",
-        civil_union: "union_libre",
-      };
+      try {
+        // Insérer le message du visiteur
+        await db.insert(contactMessages).values({
+          visitorName: input.visitorName,
+          visitorEmail: input.visitorEmail,
+          visitorPhone: input.visitorPhone,
+          sessionId: input.sessionId,
+          senderRole: "visitor",
+          content: input.content,
+          subject: input.subject,
+          status: "active",
+        });
 
-      await db.insert(profileEvaluations).values({
-        ...input,
-        maritalStatus: input.maritalStatus ? maritalStatusMap[input.maritalStatus] : undefined,
-        status: "submitted",
-      });
-      
-      return {
-        success: true,
-        message: "Votre évaluation de profil a été soumise avec succès. Notre équipe vous contactera sous 24h.",
-      };
+        return {
+          success: true,
+          message: "Message envoyé avec succès",
+        };
+      } catch (error) {
+        console.error("[Contact] Send message error:", error);
+        throw new Error("Erreur lors de l'envoi du message");
+      }
     }),
 
   /**
-   * Récupérer une évaluation par ID
+   * Récupérer les messages d'une session de chat
    */
-  getById: publicProcedure
-    .input(z.object({ id: z.number() }))
+  getMessages: publicProcedure
+    .input(getMessagesInput)
     .query(async ({ input }) => {
       const db = await getDb();
-      if (!db) return null;
-      const evaluation = await db
-        .select()
-        .from(profileEvaluations)
-        .where(eq(profileEvaluations.id, input.id))
-        .limit(1);
-      
-      return evaluation[0] || null;
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
+
+      try {
+        const messages = await db
+          .select()
+          .from(contactMessages)
+          .where(eq(contactMessages.sessionId, input.sessionId))
+          .orderBy(contactMessages.createdAt);
+
+        return messages;
+      } catch (error) {
+        console.error("[Contact] Get messages error:", error);
+        throw new Error("Erreur lors de la récupération des messages");
+      }
+    }),
+
+  /**
+   * Clôturer une session de chat
+   */
+  closeSession: publicProcedure
+    .input(z.object({ sessionId: z.string() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new Error("Base de données non disponible");
+      }
+
+      try {
+        await db
+          .update(contactMessages)
+          .set({ status: "closed" })
+          .where(eq(contactMessages.sessionId, input.sessionId));
+
+        return { success: true, message: "Session fermée" };
+      } catch (error) {
+        console.error("[Contact] Close session error:", error);
+        throw new Error("Erreur lors de la fermeture de la session");
+      }
+    }),
+
+  sendContactEmail: publicProcedure
+    .input(sendContactEmailInput)
+    .mutation(async ({ input }) => {
+      try {
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `[Contact] ${input.subject}`,
+          html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${input.name}</p><p><strong>Email:</strong> ${input.email}</p>${input.phone ? `<p><strong>Telephone:</strong> ${input.phone}</p>` : ""}<p><strong>Sujet:</strong> ${input.subject}</p><hr /><p><strong>Message:</strong></p><p>${input.message.replace(/\n/g, "<br />")}</p>`,
+          replyTo: input.email,
+        });
+
+        await sendEmail({
+          to: input.email,
+          subject: "Confirmation de votre demande - 3M Travel & Services",
+          html: `<h2>Merci pour votre demande</h2><p>Bonjour ${input.name},</p><p>Nous avons bien recu votre demande. Notre equipe vous repondra dans les 24 heures ouvrables.</p><p>Cordialement,<br />L'equipe 3M Travel & Services</p>`,
+        });
+
+        return {
+          success: true,
+          message: "Votre demande a ete envoyee avec succes. Vous recevrez une reponse dans les 24 heures.",
+        };
+      } catch (error) {
+        console.error("[Contact] Send email error:", error);
+        throw new Error("Erreur lors de l'envoi de votre demande. Veuillez reessayer.");
+      }
     }),
 });
