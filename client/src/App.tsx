@@ -44,6 +44,7 @@ import AdminEvaluation from "./pages/AdminEvaluation";
 import AdminAccompagnement from "./pages/AdminAccompagnement";
 import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
+import AdminChangePasswordRequired from "./pages/AdminChangePasswordRequired";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
