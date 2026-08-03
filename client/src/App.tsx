@@ -223,6 +223,7 @@ function Router() {
       {/* Panneau admin — URL secrète d'accès */}
       <Route path={"/admin/access-secret"} component={AdminLogin} />
       <Route path={"/admin/login"} component={AdminLogin} />
+      <Route path={"/admin/change-password"} component={AdminChangePasswordRequired} />
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />

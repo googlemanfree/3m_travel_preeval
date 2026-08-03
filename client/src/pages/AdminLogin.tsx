@@ -23,7 +23,13 @@ export default function AdminLogin() {
       localStorage.setItem('adminName', data.fullName);
       localStorage.setItem('adminEmail', data.email);
       toast.success(`Bienvenue, ${data.fullName} !`);
-      navigate('/admin');
+      
+      // Vérifier si le changement de mot de passe est obligatoire
+      if (data.requiresPasswordChange) {
+        navigate('/admin/change-password');
+      } else {
+        navigate('/admin');
+      }
     },
     onError: (err) => {
       setLocalError(err.message || 'Email ou mot de passe incorrect.');
