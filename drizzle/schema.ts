@@ -874,3 +874,4 @@ export const evaluationEmails = mysqlTable("evaluation_emails", {
 });
 export type EvaluationEmail = typeof evaluationEmails.$inferSelect;
 export type InsertEvaluationEmail = typeof evaluationEmails.$inferInsert;
+
