@@ -1,6 +1,8 @@
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+
+// Import des routeurs existants
 import { evaluationRouter } from "./routers/evaluation";
 import { flightsRouter } from "./routers/flights";
 import { candidateRouter } from "./routers/candidate";
@@ -40,10 +42,15 @@ import { signupRouter } from "./routers/signup";
 import { simpleAuthRouter } from "./routers/simpleAuth";
 import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 
+// Import des nouveaux routeurs créés
+import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
+import { applicationRouter as applicationRouterNew } from "./routers/applicationRouter";
+import { evaluationRouter as evaluationRouterNew } from "./routers/evaluationRouter";
+
 const COOKIE_NAME = "manus_session";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  // Système et authentification
   system: systemRouter,
   signup: signupRouter,
   simpleAuth: simpleAuthRouter,
@@ -58,6 +65,7 @@ export const appRouter = router({
     }),
   }),
 
+  // Routeurs existants
   evaluation: evaluationRouter,
   evaluationAI: evaluationAIRouter,
   evaluationAdmin: evaluationAdminRouter,
@@ -66,8 +74,7 @@ export const appRouter = router({
   cvAI: cvAIRouter,
   flights: flightsRouter,
   candidate: candidateRouter,
-  // Nouveau: Authentification OTP sécurisée (France-Visas compliant)
-  // candidateAuthOTP: candidateAuthOTPRouter, // Utiliser à la place de candidate pour OTP
+  candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,
   heartbeat: heartbeatRouter,
   contact: contactRouter,
@@ -78,7 +85,6 @@ export const appRouter = router({
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
   documentSubmission: documentSubmissionRouter,
-  candidateAuthOTP: candidateAuthOTPRouter,
   monitoring: monitoringRouter,
   payment: paymentRouter,
   cinetpayPayment: cinetpayPaymentRouter,
@@ -96,6 +102,11 @@ export const appRouter = router({
   upload: uploadRouter,
   passportAnalysis: passportAnalysisRouter,
   evisaAdmin: evisaAdminRouter,
+
+  // Nouveaux routeurs créés (versions simplifiées)
+  candidateV2: candidateRouterNew,
+  applicationV2: applicationRouterNew,
+  evaluationV2: evaluationRouterNew,
 });
 
 export type AppRouter = typeof appRouter;
