@@ -465,6 +465,7 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   // Identifiants
   email: varchar("email", { length: 320 }).notNull().unique(),
   adminType: mysqlEnum("adminType", ["evaluation", "accompagnement", "procedures"]).notNull(),
+  passwordHash: varchar("passwordHash", { length: 255 }),  // Mot de passe hashé (bcrypt) - optionnel si OTP
   // OTP
   otpCode: varchar("otpCode", { length: 6 }),  // Code OTP actuel
   otpExpiresAt: timestamp("otpExpiresAt"),  // Expiration du code OTP

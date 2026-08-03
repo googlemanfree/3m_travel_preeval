@@ -352,7 +352,7 @@ export const adminDashboardStatsRouter = router({
         const recentTransactions = await db
           .select()
           .from(transactions)
-          .orderBy(desc(transactions.createdAt))
+          .orderBy(desc(allTransactions.createdAt))
           .limit(input.limit);
 
         return {
