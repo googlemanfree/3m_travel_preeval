@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 
 interface AdminChangePasswordRequiredProps {
   sessionToken: string;
@@ -22,11 +24,33 @@ export default function AdminChangePasswordRequired({
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
+  const changePasswordMutation = trpc.adminAuth.changePassword.useMutation({
+    onSuccess: () => {
+      setSuccess(true);
+      toast.success('Mot de passe changé avec succès !');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => {
+        if (onPasswordChanged) {
+          onPasswordChanged();
+        } else {
+          setLocation('/admin/dashboard');
+        }
+      }, 2000);
+    },
+    onError: (err) => {
+      setError(err.message || 'Erreur lors du changement de mot de passe');
+      toast.error(err.message || 'Erreur lors du changement de mot de passe');
+    },
+  });
+
+  const loading = changePasswordMutation.isPending;
+
+  const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(false);
@@ -52,45 +76,12 @@ export default function AdminChangePasswordRequired({
       return;
     }
 
-    setLoading(true);
-
-    try {
-      // Appel à la procédure tRPC pour changer le mot de passe
-      const response = await fetch('/api/trpc/adminAuth.changePassword', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionToken,
-          currentPassword,
-          newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erreur lors du changement de mot de passe');
-      }
-
-      setSuccess(true);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-
-      // Rediriger après 2 secondes
-      setTimeout(() => {
-        if (onPasswordChanged) {
-          onPasswordChanged();
-        } else {
-          setLocation('/admin/dashboard');
-        }
-      }, 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du changement de mot de passe');
-    } finally {
-      setLoading(false);
-    }
+    // Appel à la mutation tRPC
+    changePasswordMutation.mutate({
+      sessionToken,
+      currentPassword,
+      newPassword,
+    });
   };
 
   return (
