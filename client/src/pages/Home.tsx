@@ -1219,16 +1219,86 @@ export default function Home() {
             <CredibilityBadge />
           </motion.div>
 
-          {/* Section Contact */}
+          {/* Section Contact Améliorée */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">📍 Visitez-nous en Agence</h3>
-            <div className="bg-gray-100 rounded-lg p-8 text-center">
-              <p className="text-gray-700 mb-4">Nous sommes situés à Douala, Cameroun</p>
-              <p className="text-gray-600">Contactez-nous via WhatsApp ou email pour plus d'informations</p>
+            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">📍 Nous Contacter</h3>
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Informations de contact */}
+              <div className="space-y-6">
+                <div className="flex gap-4 items-start">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Adresse</h4>
+                    <p className="text-gray-600">Douala, Cameroun</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">WhatsApp</h4>
+                    <p className="text-gray-600">+237 698 104 832</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
+                    <p className="text-gray-600">hello@3mtravelagency.click</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Formulaire de contact simple */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+                <h4 className="font-semibold text-gray-900 mb-4">Envoyez-nous un message</h4>
+                <form className="space-y-4">
+                  <div>
+                    <Label htmlFor="contact-name" className="text-sm font-medium text-gray-700 mb-1 block">
+                      Votre nom
+                    </Label>
+                    <Input
+                      id="contact-name"
+                      placeholder="Jean Dupont"
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact-email" className="text-sm font-medium text-gray-700 mb-1 block">
+                      Votre email
+                    </Label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      placeholder="jean@example.com"
+                      className="bg-white border-gray-300"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact-message" className="text-sm font-medium text-gray-700 mb-1 block">
+                      Message
+                    </Label>
+                    <Textarea
+                      id="contact-message"
+                      placeholder="Votre message..."
+                      className="bg-white border-gray-300 resize-none"
+                      rows={3}
+                    />
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                    Envoyer
+                  </Button>
+                </form>
+              </div>
             </div>
           </motion.div>
         </div>

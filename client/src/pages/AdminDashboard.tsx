@@ -650,10 +650,12 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => logoutMutation.mutate({ sessionToken })}
               disabled={logoutMutation.isPending}
-              className="bg-red-500 hover:bg-red-600 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-md shadow-red-900/30 transition-all duration-150 border-0"
+              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-lg shadow-red-900/40 transition-all duration-150 border-0 flex items-center"
+              title="Déconnecter votre session admin"
             >
               <LogOut className="w-4 h-4" />
-              <span>{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
+              <span className="hidden sm:inline">{logoutMutation.isPending ? "Déconnexion..." : "Déconnexion"}</span>
+              <span className="sm:hidden">{logoutMutation.isPending ? "..." : "Sortir"}</span>
             </Button>
           </div>
         </div>
