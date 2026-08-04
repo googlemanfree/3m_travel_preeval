@@ -167,7 +167,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    minify: "terser",
+    minify: "esbuild",
     rollupOptions: {
       output: {
         manualChunks: {
@@ -179,7 +179,7 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 1000,
     assetsInlineLimit: 4096,
-    reportCompressedSize: true,
+    reportCompressedSize: false,
   },
   server: {
     host: true,
