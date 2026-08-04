@@ -153,11 +153,11 @@ export const clientDocumentsRouter = router({
         await db.insert(clientPayments).values({
           evaluationId: input.evaluationId,
           candidateEmail: input.candidateEmail,
-          amount: input.amount.toString(),
+          amount: parseFloat(input.amount.toString()),
           currency: input.currency,
-          paymentMethod: input.paymentMethod,
+          paymentMethod: input.paymentMethod as any,
           paymentDescription: input.paymentDescription,
-          status: "pending",
+          status: "pending" as any,
         });
 
         return {
@@ -335,11 +335,11 @@ export const clientDocumentsRouter = router({
         await db.insert(clientPayments).values({
           evaluationId: input.evaluationId,
           candidateEmail: input.candidateEmail,
-          amount: input.amount.toString(),
+          amount: parseFloat(input.amount.toString()),
           currency: input.currency,
           paymentMethod: input.paymentMethod as any,
           paymentDescription: input.paymentDescription,
-          status: "confirmed",
+          status: "confirmed" as any,
           confirmedByAdmin: true,
           adminNotes: input.adminNotes || `Paiement en ${input.paymentMethod} enregistré en agence`,
           invoiceNumber,

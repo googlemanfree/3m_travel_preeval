@@ -226,7 +226,7 @@ export async function generateInvoicePDF(paymentId: number): Promise<{ success: 
       date: payment.invoiceGeneratedAt ?? new Date(),
       candidateName: payment.candidateEmail.split("@")[0], // Utiliser l'email comme fallback
       candidateEmail: payment.candidateEmail,
-      amount: payment.amount,
+      amount: String(payment.amount),
       currency: payment.currency,
       paymentDescription: payment.paymentDescription,
       paymentMethod: payment.paymentMethod,

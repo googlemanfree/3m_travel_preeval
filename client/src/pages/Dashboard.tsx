@@ -427,11 +427,11 @@ export default function Dashboard() {
                   )}
 
                   {/* Actions en attente */}
-                  {pendingActionsQuery.data && pendingActionsQuery.data.length > 0 && (
+                  {pendingActionsQuery.data && Array.isArray(pendingActionsQuery.data) && (pendingActionsQuery.data as any[]).length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions en attente</h3>
                       <PendingActionsCards 
-                        actions={pendingActionsQuery.data} 
+                        actions={(pendingActionsQuery.data as any[]) || []} 
                         isLoading={pendingActionsQuery.isLoading}
                       />
                     </div>

@@ -121,6 +121,10 @@ export const adminAuthRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
+      if (!admin.passwordHash) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Mot de passe actuel incorrect." });
+      }
+
       const valid = await bcrypt.compare(input.currentPassword, admin.passwordHash);
       if (!valid) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Mot de passe actuel incorrect." });
