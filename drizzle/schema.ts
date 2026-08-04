@@ -489,6 +489,25 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/**
+ * Notifications internes du tableau de bord admin
+ * Système par sondage (polling) pour les événements importants
+ */
+export const adminNotifications = mysqlTable("admin_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  type: mysqlEnum("type", ["new_evaluation", "new_contact_message", "new_document", "payment_received"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  relatedId: varchar("relatedId", { length: 100 }),
+  // Cible : un type d'admin précis, ou tous si vide.
+  targetAdminType: mysqlEnum("targetAdminType", ["evaluation", "accompagnement", "procedures"]),
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AdminNotification = typeof adminNotifications.$inferSelect;
+export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
+
 export const clientDocuments = mysqlTable("client_documents", {
   id: int("id").autoincrement().primaryKey(),
   evaluationId: int("evaluationId").notNull(),

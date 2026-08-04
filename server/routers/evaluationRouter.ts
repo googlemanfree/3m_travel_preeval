@@ -192,7 +192,7 @@ export const evaluationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        let query = db.select().from(evaluations);
+        let query: any = db.select().from(evaluations);
 
         if (input.status) {
           query = query.where(eq(evaluations.status, input.status as any));

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -63,7 +64,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
 
             <div className="space-y-3">
               <Button
-                onClick={() => navigate("/admin/access-secret")}
+                onClick={() => navigate("/admin/login")}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors"
               >
                 Se connecter en tant qu'Admin
@@ -87,5 +88,12 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <div className="fixed top-3 right-4 z-[60] bg-white rounded-full shadow-md border border-gray-100">
+        <AdminNotificationBell />
+      </div>
+      {children}
+    </>
+  );
 }

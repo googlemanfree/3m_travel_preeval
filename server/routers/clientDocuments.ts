@@ -8,8 +8,7 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations } from "../../drizzle/schema";
-// import { clientDocuments} from "../../drizzle/schema"; // Tables supprimées
+import { evaluations, clientDocuments, clientPayments } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export const clientDocumentsRouter = router({

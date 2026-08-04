@@ -47,6 +47,7 @@ import {
 import { useLocation } from "wouter";
 import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
+import AdminNotificationBell from "@/components/AdminNotificationBell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -634,6 +635,9 @@ export default function AdminDashboard() {
               <Plus className="w-4 h-4" />
               Saisir dossier agence
             </Button>
+            
+            {/* Notifications */}
+            <AdminNotificationBell />
             
             {/* Profil Admin */}
             <div className="flex items-center gap-2 pl-3 border-l border-white/20">

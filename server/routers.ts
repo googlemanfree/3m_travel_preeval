@@ -42,6 +42,7 @@ import { signupRouter } from "./routers/signup";
 import { simpleAuthRouter } from "./routers/simpleAuth";
 import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 import { adminPasswordResetRouter } from "./routers/adminPasswordReset";
+import { adminNotificationsRouter } from "./routers/adminNotifications";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -111,6 +112,9 @@ export const appRouter = router({
   
   // Réinitialisation de mot de passe
   adminPasswordReset: adminPasswordResetRouter,
+  
+  // Notifications admin
+  adminNotifications: adminNotificationsRouter,
 });
 
 export type AppRouter = typeof appRouter;
