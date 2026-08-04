@@ -26,7 +26,7 @@ import ServicesSection from "@/components/ServicesSection";
 import HeroSection from "@/components/HeroSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
-import { LocationMap } from "@/components/LocationMap";
+
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import { VisasCarousel } from "@/components/VisasCarousel";
 import { SimulatorExpress } from "@/components/SimulatorExpress";
@@ -1219,14 +1219,17 @@ export default function Home() {
             <CredibilityBadge />
           </motion.div>
 
-          {/* Carte Google Maps */}
+          {/* Section Contact */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">📍 Visitez-nous en Agence</h3>
-            <LocationMap />
+            <div className="bg-gray-100 rounded-lg p-8 text-center">
+              <p className="text-gray-700 mb-4">Nous sommes situés à Douala, Cameroun</p>
+              <p className="text-gray-600">Contactez-nous via WhatsApp ou email pour plus d'informations</p>
+            </div>
           </motion.div>
         </div>
       </section>
