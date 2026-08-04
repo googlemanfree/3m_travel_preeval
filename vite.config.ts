@@ -182,7 +182,7 @@ export default defineConfig({
     reportCompressedSize: false,
   },
   server: {
-    host: true,
+    host: "0.0.0.0",
     allowedHosts: [
       ".manuspre.computer",
       ".manus.computer",
@@ -191,6 +191,7 @@ export default defineConfig({
       ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "3000-i49bdmlqi41qd5g2vwvj6-e9a4173d.us2.manus.computer",
     ],
     fs: {
       strict: true,
@@ -198,7 +199,7 @@ export default defineConfig({
     },
     hmr: {
       protocol: "wss",
-      host: "3000-iotj9bc0r8n9krzynwt43-83d40acf.us2.manus.computer",
+      host: typeof window !== 'undefined' ? window.location.hostname : "localhost",
       port: 443,
     },
   },
