@@ -2,15 +2,18 @@ import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
+import { logger } from "./logger";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
   errorFormatter(opts) {
-    const { shape, error } = opts;
+    const { shape, error, path } = opts;
 
-    // Toujours journaliser l'erreur complète côté serveur pour le débogage.
+    // Toujours journaliser l'erreur côté serveur pour le débogage et le suivi.
     if (error.code === "INTERNAL_SERVER_ERROR") {
-      console.error("[tRPC] Internal error:", error.cause ?? error);
+      logger.error("trpc.internal_error", { path }, error.cause ?? error);
+    } else {
+      logger.warn("trpc.request_error", { path, code: error.code, message: error.message });
     }
 
     // Ne jamais renvoyer le message brut d'une erreur interne (qui peut
