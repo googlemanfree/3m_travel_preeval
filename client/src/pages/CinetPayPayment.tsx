@@ -1,91 +1,128 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
+import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { AlertCircle, CheckCircle, Loader, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { trpc } from '@/lib/trpc';
 
-interface PaymentData {
-  dossierNumber: string;
-  candidateName: string;
-  email: string;
-  amount: number;
-  currency: string;
-  description: string;
-}
+type PaymentStatus = 'idle' | 'opening' | 'waiting' | 'success' | 'failed' | 'error';
+
+const PAYMENT_AMOUNT = 65000;
+const PAYMENT_CURRENCY = 'XAF';
 
 export default function CinetPayPayment() {
   const { dossierNumber } = useParams<{ dossierNumber: string }>();
-  const [, setLocation] = useLocation();
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<'pending' | 'processing' | 'success' | 'error'>('pending');
+  const [status, setStatus] = useState<PaymentStatus>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const transactionIdRef = useRef<string>('');
+
+  // Charger les vraies données du dossier
+  const { data: application, isLoading, error: loadError } = trpc.application.getApplicationByDossierNumber.useQuery(
+    { dossierNumber: dossierNumber || '' },
+    { enabled: !!dossierNumber, retry: 1 }
+  );
+
+  const confirmPaymentMutation = trpc.payment.confirmPayment.useMutation();
 
   useEffect(() => {
-    // Charger les données du dossier
-    const loadDossierData = async () => {
-      try {
-        // TODO: Récupérer les données du dossier via tRPC
-        setPaymentData({
-          dossierNumber: dossierNumber || '',
-          candidateName: 'Candidat',
-          email: 'candidat@example.com',
-          amount: 65000,
-          currency: 'XAF',
-          description: 'Frais d\'ouverture de dossier 3M Travel',
-        });
-        setIsLoading(false);
-      } catch (err) {
-        setError('Erreur lors du chargement des données du dossier');
-        setIsLoading(false);
-      }
-    };
+    // Enregistre le callback CinetPay dès que le SDK est disponible, une seule fois.
+    const CinetPay = (window as any).CinetPay;
+    if (!CinetPay || typeof CinetPay.waitResponse !== 'function') return;
 
-    loadDossierData();
-  }, [dossierNumber]);
+    CinetPay.waitResponse((data: { status: string }) => {
+      if (data.status === 'ACCEPTED') {
+        setStatus('success');
+        confirmPaymentMutation.mutate({
+          transactionId: transactionIdRef.current,
+          dossierNumber: dossierNumber || '',
+        });
+      } else if (data.status === 'REFUSED') {
+        setStatus('failed');
+        setErrorMessage("Le paiement a été refusé par votre opérateur ou votre banque. Vérifiez votre solde et réessayez, ou choisissez un autre moyen de paiement.");
+      } else {
+        // PENDING, CANCELLED, ou autre statut intermédiaire
+        setStatus('failed');
+        setErrorMessage("Le paiement n'a pas pu être finalisé. Vous pouvez réessayer.");
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCinetPayPayment = async () => {
-    if (!paymentData) return;
+    if (!application) return;
 
-    setPaymentStatus('processing');
+    setStatus('opening');
+    setErrorMessage(null);
 
     try {
-      // Initialiser CinetPay
       const CinetPay = (window as any).CinetPay;
       if (!CinetPay) {
-        throw new Error('CinetPay SDK not loaded');
+        throw new Error("Le module de paiement n'a pas pu se charger. Vérifiez votre connexion internet et rechargez la page.");
       }
 
+      const apikey = import.meta.env.VITE_CINETPAY_API_KEY;
+      const siteId = import.meta.env.VITE_CINETPAY_SITE_ID;
+
+      if (!apikey || !siteId) {
+        throw new Error("Le paiement en ligne n'est pas encore configuré. Merci de contacter notre équipe sur WhatsApp pour finaliser votre paiement autrement.");
+      }
+
+      const transactionId = `3M-${dossierNumber}-${Date.now()}`;
+      transactionIdRef.current = transactionId;
+
       CinetPay.setConfig({
-        apikey: process.env.VITE_CINETPAY_API_KEY,
-        site_id: process.env.VITE_CINETPAY_SITE_ID,
-        notify_url: `${window.location.origin}/api/cinetpay/callback`,
-        return_url: `${window.location.origin}/payment-success/${dossierNumber}`,
+        apikey,
+        site_id: siteId,
+        notify_url: `${window.location.origin}/api/cinetpay/webhook`,
+        mode: import.meta.env.PROD ? 'PRODUCTION' : 'TEST',
       });
+
+      setStatus('waiting');
 
       CinetPay.getCheckout({
-        transaction_id: `3M-${Date.now()}`,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        customer_name: paymentData.candidateName,
-        customer_email: paymentData.email,
-        description: paymentData.description,
+        transaction_id: transactionId,
+        amount: PAYMENT_AMOUNT,
+        currency: PAYMENT_CURRENCY,
         channels: 'ALL',
+        description: `Frais d'ouverture de dossier — ${dossierNumber}`,
+        customer_name: application.fullName?.split(' ')[0] || application.fullName,
+        customer_surname: application.fullName?.split(' ').slice(1).join(' ') || '',
+        customer_email: application.email,
+        customer_phone_number: application.whatsappNumber || '',
+        customer_address: 'N/A',
+        customer_city: 'Yaoundé',
+        customer_country: 'CM',
+        customer_state: 'CM',
+        customer_zip_code: '00000',
       });
-
-      setPaymentStatus('success');
-    } catch (err) {
+      // La suite (succès/échec) est gérée par CinetPay.waitResponse() ci-dessus.
+    } catch (err: any) {
       console.error('Erreur CinetPay:', err);
-      setError('Erreur lors de l\'initialisation du paiement');
-      setPaymentStatus('error');
+      setErrorMessage(err.message || "Une erreur inattendue est survenue lors de l'initialisation du paiement.");
+      setStatus('error');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <Loader className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="text-gray-500 text-sm">Chargement de votre dossier...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !application) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="p-8 max-w-md text-center">
+          <XCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
+          <h1 className="text-lg font-bold text-gray-900 mb-2">Dossier introuvable</h1>
+          <p className="text-gray-600 text-sm">
+            Le numéro de dossier « {dossierNumber} » n'a pas pu être trouvé. Vérifiez le lien reçu ou contactez notre équipe.
+          </p>
+        </Card>
       </div>
     );
   }
@@ -101,64 +138,87 @@ export default function CinetPayPayment() {
           <Card className="p-8 shadow-lg">
             <div className="text-center mb-6">
               <h1 className="text-2xl font-bold text-gray-800 mb-2">Paiement du Dossier</h1>
-              <p className="text-gray-600">Numéro de dossier: {dossierNumber}</p>
+              <p className="text-gray-600">Numéro de dossier : {dossierNumber}</p>
             </div>
 
-            {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3"
-              >
-                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{error}</p>
-              </motion.div>
-            )}
+            <AnimatePresence mode="wait">
+              {errorMessage && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3"
+                >
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-red-700 text-sm">{errorMessage}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {paymentData && (
-              <div className="space-y-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Montant à payer</p>
-                  <p className="text-3xl font-bold text-blue-600">
-                    {paymentData.amount.toLocaleString()} {paymentData.currency}
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Nom du candidat</p>
-                  <p className="font-semibold text-gray-800">{paymentData.candidateName}</p>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Email</p>
-                  <p className="font-semibold text-gray-800">{paymentData.email}</p>
-                </div>
+            <div className="space-y-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Montant à payer</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {PAYMENT_AMOUNT.toLocaleString()} {PAYMENT_CURRENCY}
+                </p>
               </div>
-            )}
 
-            {paymentStatus === 'success' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3"
-              >
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-green-700 text-sm">Paiement en cours...</p>
-              </motion.div>
-            )}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Nom du candidat</p>
+                <p className="font-semibold text-gray-800">{application.fullName}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-sm text-gray-600 mb-1">Email</p>
+                <p className="font-semibold text-gray-800">{application.email}</p>
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {status === 'success' && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex gap-3"
+                >
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <p className="text-green-700 text-sm font-medium">Paiement confirmé ! Vous pouvez maintenant soumettre vos documents.</p>
+                </motion.div>
+              )}
+              {status === 'failed' && (
+                <motion.div
+                  key="failed"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg flex gap-3"
+                >
+                  <XCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <p className="text-amber-700 text-sm">Paiement non abouti. Vous pouvez réessayer ci-dessous.</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <Button
               onClick={handleCinetPayPayment}
-              disabled={paymentStatus === 'processing' || paymentStatus === 'success'}
+              disabled={status === 'opening' || status === 'waiting' || status === 'success'}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all"
             >
-              {paymentStatus === 'processing' ? (
+              {status === 'opening' ? (
                 <span className="flex items-center gap-2">
                   <Loader className="w-4 h-4 animate-spin" />
-                  Traitement en cours...
+                  Ouverture du guichet de paiement...
                 </span>
-              ) : paymentStatus === 'success' ? (
-                'Redirection en cours...'
+              ) : status === 'waiting' ? (
+                <span className="flex items-center gap-2">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  En attente de votre paiement...
+                </span>
+              ) : status === 'success' ? (
+                'Paiement effectué ✓'
+              ) : status === 'failed' || status === 'error' ? (
+                'Réessayer le paiement'
               ) : (
                 'Procéder au Paiement CinetPay'
               )}
