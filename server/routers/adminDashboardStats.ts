@@ -11,6 +11,8 @@ import {
   applications,
   candidates,
   transactions,
+  clientDocuments,
+  agencyDossiers,
 } from "../../drizzle/schema";
 import { eq, desc, and, gte, lte, count, sql } from "drizzle-orm";
 
@@ -352,7 +354,7 @@ export const adminDashboardStatsRouter = router({
         const recentTransactions = await db
           .select()
           .from(transactions)
-          .orderBy(desc(allTransactions.createdAt))
+          .orderBy(desc(transactions.createdAt))
           .limit(input.limit);
 
         return {

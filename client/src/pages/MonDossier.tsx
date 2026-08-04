@@ -40,7 +40,7 @@ interface DossierData {
   formulaChosen: string;
   dossierStatus: DossierStatus;
   paymentStatus: string;
-  paymentDate: Date | null;
+  paymentDate: string | null;
   emailVerified: boolean;
   agreementSigned: boolean;
   agreementSignedAt: number | null;
@@ -51,8 +51,8 @@ interface DossierData {
   documentsUrls: string | null;
   scoringTotal: number | null;
   scoringBadge: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Configuration des étapes de la timeline ──────────────────────────────────
@@ -274,7 +274,7 @@ export default function MonDossier() {
               {/* Barre de progression visuelle */}
               <DossierProgressBar
                 status={dossier.dossierStatus as any}
-                createdAt={dossier.createdAt}
+                createdAt={dossier.createdAt ? new Date(dossier.createdAt) : undefined}
                 evaluationCompletedAt={undefined}
                 documentsReceivedAt={undefined}
                 submittedToAgenciesAt={undefined}

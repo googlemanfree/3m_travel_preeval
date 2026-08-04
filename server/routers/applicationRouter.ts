@@ -259,16 +259,16 @@ export const applicationRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        let query = db.select().from(applications);
-
-        if (input.status) {
-          query = query.where(eq(applications.dossierStatus, input.status as any));
-        }
-
-        const apps = await query
-          .orderBy(desc(applications.createdAt))
-          .limit(input.limit)
-          .offset(input.offset);
+        const apps = input.status
+          ? await db.select().from(applications)
+              .where(eq(applications.dossierStatus, input.status as any))
+              .orderBy(desc(applications.createdAt))
+              .limit(input.limit)
+              .offset(input.offset)
+          : await db.select().from(applications)
+              .orderBy(desc(applications.createdAt))
+              .limit(input.limit)
+              .offset(input.offset);
 
         return apps;
       } catch (err) {

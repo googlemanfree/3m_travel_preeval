@@ -22,7 +22,7 @@ import {
 import { useState } from "react";
 
 export default function AdminUserDetails() {
-  const [, params] = useRoute("/admin/users/:userId");
+  const [, params] = useRoute<{ userId: string }>("/admin/users/:userId");
   const userId = params?.userId ? parseInt(params.userId) : null;
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 

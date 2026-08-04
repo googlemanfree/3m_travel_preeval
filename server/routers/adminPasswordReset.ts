@@ -78,6 +78,7 @@ export const adminPasswordResetRouter = router({
         const emailTemplate = getPasswordResetEmailTemplate({
           adminName: admin.fullName || admin.email,
           adminEmail: admin.email,
+          adminType: admin.adminType,
           resetLink,
           expiresIn: "1 heure",
           timestamp: new Date(),
@@ -195,6 +196,7 @@ export const adminPasswordResetRouter = router({
         const emailTemplate = getPasswordResetSuccessEmailTemplate({
           adminName: admin.fullName || admin.email,
           adminEmail: admin.email,
+          adminType: admin.adminType,
           timestamp: now,
         });
 

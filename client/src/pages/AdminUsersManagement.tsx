@@ -22,14 +22,14 @@ import {
 } from "lucide-react";
 
 interface UserWithApplications {
-  id: number;
-  email: string | null;
-  name: string | null;
-  role: string;
-  createdAt: Date;
-  applications: any[];
-  applicationCount: number;
-  lastApplication: any;
+  id?: number;
+  email?: string | null;
+  name?: string | null;
+  role?: string;
+  createdAt?: string;
+  applications?: any[];
+  applicationCount?: number;
+  lastApplication?: any;
 }
 
 function ViewUserButton({ userId }: { userId: number }) {

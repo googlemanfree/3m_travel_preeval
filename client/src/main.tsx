@@ -42,7 +42,6 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
-      transformer: superjson,
       headers() {
         // 1. Admin session token (takes priority for admin routes)
         try {

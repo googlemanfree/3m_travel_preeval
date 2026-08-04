@@ -15,7 +15,7 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action as React.ReactNode}
+            {action as unknown as React.ReactNode}
             <ToastClose />
           </Toast>
         )

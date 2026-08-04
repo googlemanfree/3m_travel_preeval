@@ -84,10 +84,10 @@ interface Dossier {
   employmentStatus?: string | null;
   monthlyIncome?: number | null;
   bankBalance?: number | null;
-  lastStatusChangeAt?: Date | null;
+  lastStatusChangeAt?: string | null;
   lastStatusChangeBy?: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────

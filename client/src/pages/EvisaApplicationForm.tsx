@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 
 export default function EvisaApplicationForm() {
   const [, setLocation] = useLocation();
-  const params = useParams();
+  const params = useParams<{ countryCode: string }>();
   const countryCode = params?.countryCode || '';
 
   const [formData, setFormData] = useState({

@@ -180,7 +180,7 @@ export default function MySpace() {
             </CardHeader>
             <CardContent>
               <p className="text-red-700">
-                {error?.message || dossierData?.message || "Impossible de charger vos données"}
+                {error?.message || "Impossible de charger vos données"}
               </p>
               <Button onClick={() => setLocation("/")} className="mt-4">
                 Retour à l'accueil

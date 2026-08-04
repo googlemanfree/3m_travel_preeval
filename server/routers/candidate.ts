@@ -52,11 +52,41 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
   return rows[0];
 }
 
+// ─── Lier un compte plateforme (Google/Facebook/Manus) à un dossier candidat réel ─
+// Au lieu de renvoyer des données fictives pour les utilisateurs OAuth, on leur
+// associe (ou crée) une vraie ligne dans `candidates`, pour qu'ils bénéficient
+// exactement du même système (documents, messages, dossier) que les candidats
+// inscrits par email/mot de passe.
+export async function getOrCreateCandidateForPlatformUser(user: { id: number; name: string | null; email: string | null }) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+  const email = user.email;
+  if (!email) throw new TRPCError({ code: "BAD_REQUEST", message: "Adresse email manquante sur le compte." });
+
+  const existing = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+  if (existing.length > 0) return existing[0];
+
+  await db.insert(candidates).values({
+    fullName: user.name || email.split("@")[0],
+    email,
+    passwordHash: "",
+    emailVerified: true,
+    dossierStatus: "nouveau",
+    destination: "autre",
+  });
+
+  const created = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+  if (!created.length) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la création du dossier." });
+  return created[0];
+}
+
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
 // On crée une procédure custom qui lit le header Authorization candidat
 const candidateProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (ctx.user) {
-    return next({ ctx: { ...ctx, candidate: null, isManuUser: true } });
+    const candidate = await getOrCreateCandidateForPlatformUser(ctx.user);
+    return next({ ctx: { ...ctx, candidate, isManuUser: true } });
   }
   const authHeader = (ctx.req as any)?.headers?.authorization as string | undefined;
   const candidate = await getCandidateFromHeader(authHeader);
@@ -76,6 +106,39 @@ export const DOSSIER_STEPS = [
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
+  // ── Renvoyer l'email de vérification ────────────────────────────────────────
+  resendVerificationEmail: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      // Réponse volontairement identique que le compte existe ou non, pour ne
+      // pas laisser deviner quels emails sont inscrits.
+      if (!rows.length || rows[0].emailVerified) {
+        return { success: true, message: "Si un compte existe avec cet email, un lien de vérification a été envoyé." };
+      }
+
+      const candidate = rows[0];
+      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      await db.update(candidates)
+        .set({ verificationToken, verificationExpiresAt })
+        .where(eq(candidates.id, candidate.id));
+
+      try {
+        await sendVerificationLink(candidate.email, candidate.fullName, verificationToken);
+      } catch (err) {
+        console.error("[ResendVerification] Email send failed:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi de l'email." });
+      }
+
+      return { success: true, message: "Si un compte existe avec cet email, un lien de vérification a été envoyé." };
+    }),
+
+
   // ── Inscription ────────────────────────────────────────────────────────────
   register: publicProcedure
     .input(
@@ -612,7 +675,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
-        const { sendEmail } = await import("../emailService");
+        const { sendEmail } = await import("../_core/email");
         const confirmationHTML = `
           <h2>Protocole d'Accord Signé</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -621,7 +684,7 @@ export const candidateRouter = router({
           <p>Vous pouvez maintenant soumettre vos documents dans votre espace candidat.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        await sendEmail(app[0].email, `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, confirmationHTML);
+        await sendEmail({ to: app[0].email, subject: `✅ Protocole d'Accord Signé - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
@@ -686,7 +749,7 @@ export const candidateRouter = router({
 
       // Envoyer un email de confirmation
       try {
-        const { sendEmail } = await import("../emailService");
+        const { sendEmail } = await import("../_core/email");
         const confirmationHTML = `
           <h2>Documents Reçus</h2>
           <p>Bonjour ${app[0].fullName},</p>
@@ -695,7 +758,7 @@ export const candidateRouter = router({
           <p>Notre équipe va maintenant analyser votre profil et vos documents.</p>
           <p>Cordialement,<br/>3M Travel & Services</p>
         `;
-        await sendEmail(app[0].email, `📄 Documents Reçus - Dossier ${input.dossierNumber}`, confirmationHTML);
+        await sendEmail({ to: app[0].email, subject: `📄 Documents Reçus - Dossier ${input.dossierNumber}`, html: confirmationHTML });
       } catch (err) {
         console.warn("Email confirmation failed:", err);
       }
