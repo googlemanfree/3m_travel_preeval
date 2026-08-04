@@ -5,7 +5,7 @@
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-// import { evaluationComments } from "../../drizzle/schema"; // Table supprimée
+import { evaluationComments } from "../../drizzle/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { sendEmail } from "../_core/email";

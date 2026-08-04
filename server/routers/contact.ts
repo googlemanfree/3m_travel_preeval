@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-// import { contactMessages } from "../../drizzle/schema"; // Table supprimée
+import { contactMessages } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
+import { requireValidAdminSession } from "./adminAuth";
 
 const sendContactEmailInput = z.object({
   name: z.string().min(2, "Le nom est requis"),
@@ -113,9 +114,32 @@ export const contactRouter = router({
   sendContactEmail: publicProcedure
     .input(sendContactEmailInput)
     .mutation(async ({ input }) => {
+      const db = await getDb();
+
+      // Enregistrer le message en base pour garder une trace consultable
+      // (avant l'envoi d'email, pour ne jamais perdre la demande même si
+      // l'envoi d'email échoue ensuite).
+      if (db) {
+        try {
+          await db.insert(contactMessages).values({
+            visitorName: input.name,
+            visitorEmail: input.email,
+            visitorPhone: input.phone,
+            sessionId: `contact-form-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            senderRole: "visitor",
+            content: input.message,
+            subject: input.subject,
+            status: "active",
+          });
+        } catch (error) {
+          console.error("[Contact] Failed to store contact message:", error);
+          // Non bloquant : on continue quand même à essayer d'envoyer l'email.
+        }
+      }
+
       try {
         await sendEmail({
-          to: "hello@3mtravelagency.com",
+          to: "hello@3mtravelagency.click",
           subject: `[Contact] ${input.subject}`,
           html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${input.name}</p><p><strong>Email:</strong> ${input.email}</p>${input.phone ? `<p><strong>Telephone:</strong> ${input.phone}</p>` : ""}<p><strong>Sujet:</strong> ${input.subject}</p><hr /><p><strong>Message:</strong></p><p>${input.message.replace(/\n/g, "<br />")}</p>`,
           replyTo: input.email,
@@ -135,5 +159,24 @@ export const contactRouter = router({
         console.error("[Contact] Send email error:", error);
         throw new Error("Erreur lors de l'envoi de votre demande. Veuillez reessayer.");
       }
+    }),
+
+  /**
+   * Lister les messages reçus via le formulaire de contact (réservé aux admins).
+   */
+  listContactMessages: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new Error("Base de données non disponible");
+
+      const messages = await db
+        .select()
+        .from(contactMessages)
+        .orderBy(contactMessages.createdAt);
+
+      return messages;
     }),
 });

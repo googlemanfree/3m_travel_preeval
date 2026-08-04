@@ -7,7 +7,7 @@ import { protectedProcedure, adminProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
-import { applications} from "../../drizzle/schema";
+import { applications, candidates, transactions } from "../../drizzle/schema";
 import { desc } from "drizzle-orm"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import * as fs from "fs";
 import * as path from "path";

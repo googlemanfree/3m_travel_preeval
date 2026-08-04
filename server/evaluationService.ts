@@ -312,7 +312,7 @@ export function generateEvaluationReportHTML(app: Application): string {
     
     <div class="footer">
       <p><strong>3M Travel & Services SARL</strong></p>
-      <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
+      <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.click</p>
       <p>RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
       <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>
     </div>
@@ -393,7 +393,7 @@ Cordialement,
 Aureol DONFACK - PDG
 3M Travel & Services SARL
 Yaoundé, Cameroun
-+237 698 104 832 | hello@3mtravelagency.com
++237 698 104 832 | hello@3mtravelagency.click
 RC/YAO/2019/A/2567 | NIU: M112417203369H
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."

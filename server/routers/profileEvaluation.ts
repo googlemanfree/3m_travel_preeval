@@ -36,7 +36,7 @@ export const profileEvaluationRouter = router({
         idCardAvailable: z.boolean().default(false),
         
         // Famille
-        maritalStatus: z.enum(["single", "married", "divorced", "widowed", "civil_union"]).optional(),
+        maritalStatus: z.enum(["celibataire", "marie", "divorce", "veuf", "union_libre"]).optional(),
         spouseName: z.string().optional(),
         numberOfChildren: z.number().default(0),
         dependents: z.number().default(0),

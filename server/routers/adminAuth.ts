@@ -75,6 +75,10 @@ export const adminAuthRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Ce compte administrateur est désactivé." });
       }
 
+      if (!admin.passwordHash) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
+      }
+
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });

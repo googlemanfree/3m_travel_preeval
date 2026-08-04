@@ -83,7 +83,7 @@ export default function AdminChangePasswordRequired({
         if (onPasswordChanged) {
           onPasswordChanged();
         } else {
-          setLocation('/admin-dashboard');
+          setLocation('/admin/dashboard');
         }
       }, 2000);
     } catch (err) {
