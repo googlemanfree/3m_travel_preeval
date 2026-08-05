@@ -14,7 +14,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
 
-  const resetMutation = trpc.simpleAuth.forgotPassword.useMutation({
+  const resetMutation = trpc.candidate.requestPasswordReset.useMutation({
     onSuccess: (data) => {
         setSent(true);
       toast.success("Email de réinitialisation envoyé ! Vérifiez votre boîte de réception et vos spams.");
