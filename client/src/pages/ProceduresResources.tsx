@@ -394,6 +394,19 @@ const ProceduresResources = () => {
 
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-12">
+        {/* Bannière — Nouvelle fiche détaillée Luxembourg */}
+        <a href="/procedures/luxembourg" className="block mb-8">
+          <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-xl p-6 flex items-center justify-between hover:opacity-95 transition-opacity">
+            <div>
+              <p className="font-bold text-lg">🇱🇺 Nouveau : Guide complet Luxembourg — Visa de Travail</p>
+              <p className="text-blue-200 text-sm mt-1">Procédure officielle en 8 étapes, alerte anti-arnaque ADEM, tarifs détaillés et FAQ.</p>
+            </div>
+            <span className="hidden sm:inline-block bg-white text-blue-900 font-semibold px-4 py-2 rounded-lg text-sm whitespace-nowrap">
+              Consulter →
+            </span>
+          </div>
+        </a>
+
         {/* Filter Section */}
         <div className="mb-8 space-y-6">
           {/* Type Filters */}
