@@ -78,10 +78,6 @@ export const evaluations = mysqlTable("evaluations", {
   cvFileUrl: text("cvFileUrl"),
   cvFileName: varchar("cvFileName", { length: 255 }),
   status: mysqlEnum("status", ["pending", "reviewed", "contacted", "closed"]).default("pending").notNull(),
-  // Analyse automatique par IA (déclenchée à la soumission si un CV est fourni)
-  aiReportContent: text("aiReportContent"),
-  aiProcessedAt: timestamp("aiProcessedAt"),
-  aiProcessingError: text("aiProcessingError"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -950,3 +946,33 @@ export const luxembourgEvaluations = mysqlTable("luxembourg_evaluations", {
 
 export type LuxembourgEvaluation = typeof luxembourgEvaluations.$inferSelect;
 export type InsertLuxembourgEvaluation = typeof luxembourgEvaluations.$inferInsert;
+
+/**
+ * Évaluations d'éligibilité Visa Études — scoring automatique par grille de
+ * points (niveau académique, langue, financement, admission, projet de retour).
+ */
+export const studyVisaEvaluations = mysqlTable("study_visa_evaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  targetCountry: varchar("targetCountry", { length: 100 }),
+  academicLevel: mysqlEnum("academicLevel", ["master_mention", "licence", "bac2", "bac"]).notNull(),
+  gradeLevel: mysqlEnum("gradeLevel", ["tres_bien", "bien", "assez_bien", "passable"]).notNull(),
+  languageLevel: mysqlEnum("languageLevel", ["c1_c2", "b2", "b1", "moins_b1"]).notNull(),
+  admissionStatus: mysqlEnum("admissionStatus", ["admis", "en_cours", "pas_commence"]).notNull(),
+  financialCapacity: mysqlEnum("financialCapacity", ["complete", "partielle", "incertaine"]).notNull(),
+  returnTies: mysqlEnum("returnTies", ["solide", "modere", "faible"]).notNull(),
+  scoreAcademic: int("scoreAcademic").notNull(),
+  scoreGrades: int("scoreGrades").notNull(),
+  scoreLanguage: int("scoreLanguage").notNull(),
+  scoreAdmission: int("scoreAdmission").notNull(),
+  scoreFinancial: int("scoreFinancial").notNull(),
+  scoreReturnTies: int("scoreReturnTies").notNull(),
+  scoreTotal: int("scoreTotal").notNull(),
+  eligibilityStatus: mysqlEnum("eligibilityStatus", ["tres_favorable", "favorable", "a_renforcer", "risque_eleve"]).notNull(),
+  emailSentAt: timestamp("emailSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type StudyVisaEvaluation = typeof studyVisaEvaluations.$inferSelect;
+export type InsertStudyVisaEvaluation = typeof studyVisaEvaluations.$inferInsert;

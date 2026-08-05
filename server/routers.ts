@@ -44,6 +44,7 @@ import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 import { adminPasswordResetRouter } from "./routers/adminPasswordReset";
 import { adminNotificationsRouter } from "./routers/adminNotifications";
 import { luxembourgEvaluationRouter } from "./routers/luxembourgEvaluation";
+import { studyVisaEvaluationRouter } from "./routers/studyVisaEvaluation";
 import { proceduresRouter } from "./routers/proceduresRouter";
 
 // Import des nouveaux routeurs créés
@@ -120,6 +121,7 @@ export const appRouter = router({
   
   // Évaluation Luxembourg
   luxembourgEvaluation: luxembourgEvaluationRouter,
+  studyVisaEvaluation: studyVisaEvaluationRouter,
   procedures: proceduresRouter,
 });
 
