@@ -89,6 +89,7 @@ import React from "react";
 import Navbar from "./components/Navbar";
 import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
 import AdminEvisaDetail from "./pages/AdminEvisaDetail";
+import LuxembourgEvaluation from "./pages/LuxembourgEvaluation";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -127,6 +128,7 @@ function Router() {
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
       <Route path={"/evisa-demande"} component={EvisaDemande} />
+      <Route path={"/evaluation-luxembourg"} component={LuxembourgEvaluation} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
