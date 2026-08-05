@@ -22,30 +22,10 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   startLogin();
 };
 
-// Gestionnaire global pour les erreurs de transformation de réponse
-const handleResponseError = (error: unknown) => {
-  if (typeof window === "undefined") return;
-  
-  // Erreur de transformation JSON
-  if (error instanceof Error && error.message.includes("Unable to transform response")) {
-    console.error("[Response Transform Error]", error);
-    return "Erreur de communication avec le serveur. Veuillez réessayer.";
-  }
-  
-  // Erreur réseau générale
-  if (error instanceof Error && (error.message.includes("fetch") || error.message.includes("network"))) {
-    console.error("[Network Error]", error);
-    return "Erreur de connexion réseau. Vérifiez votre connexion Internet.";
-  }
-  
-  return null;
-};
-
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    handleResponseError(error);
     console.error("[API Query Error]", error);
   }
 });
@@ -54,7 +34,6 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
-    handleResponseError(error);
     console.error("[API Mutation Error]", error);
   }
 });
@@ -63,6 +42,11 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
+      // ⚠️ CRITICAL FIX: transformer MUST be set on the link in tRPC v11
+      // Without this line: "Unable to transform response from server" error on ALL requests
+      // See: https://trpc.io/docs/migrate-from-v10-to-v11#transformers-are-moved-to-links-breaking
+      // @ts-expect-error - known TypeScript inference bug, runtime behavior is correct
+      transformer: superjson,
       headers() {
         // 1. Admin session token (takes priority for admin routes)
         try {
