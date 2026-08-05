@@ -25,7 +25,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 
   try {
     const result = await resend.emails.send({
-      from: "onboarding@resend.dev",
+      from: "hello@3mtravelagency.click",
       to: options.to,
       subject: options.subject,
       html: options.html,
