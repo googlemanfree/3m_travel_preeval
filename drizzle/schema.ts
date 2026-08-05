@@ -78,6 +78,10 @@ export const evaluations = mysqlTable("evaluations", {
   cvFileUrl: text("cvFileUrl"),
   cvFileName: varchar("cvFileName", { length: 255 }),
   status: mysqlEnum("status", ["pending", "reviewed", "contacted", "closed"]).default("pending").notNull(),
+  // Analyse automatique par IA (déclenchée à la soumission si un CV est fourni)
+  aiReportContent: text("aiReportContent"),
+  aiProcessedAt: timestamp("aiProcessedAt"),
+  aiProcessingError: text("aiProcessingError"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

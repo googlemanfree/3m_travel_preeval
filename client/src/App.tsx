@@ -26,6 +26,7 @@ import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
 import VisaTypes from "./pages/VisaTypes";
+import VisaEtudes from "./pages/VisaEtudes";
 import Destinations from "./pages/Destinations";
 import Guide from "./pages/Guide";
 import MonDossier from "./pages/MonDossier";
@@ -136,6 +137,7 @@ function Router() {
       <Route path={"/traduction/order"} component={TranslationOrder} />
       <Route path={"/guide"} component={Guide} />
       <Route path={"/visa-types"} component={VisaTypes} />
+      <Route path={"/visa-etudes"} component={VisaEtudes} />
       <Route path={"/destinations"} component={Destinations} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>

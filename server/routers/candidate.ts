@@ -83,7 +83,7 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
 // On crée une procédure custom qui lit le header Authorization candidat
-const candidateProcedure = publicProcedure.use(async ({ ctx, next }) => {
+export const candidateProcedure = publicProcedure.use(async ({ ctx, next }) => {
   if (ctx.user) {
     const candidate = await getOrCreateCandidateForPlatformUser(ctx.user);
     return next({ ctx: { ...ctx, candidate, isManuUser: true } });

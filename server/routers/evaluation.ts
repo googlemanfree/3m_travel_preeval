@@ -7,6 +7,11 @@ import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEmail } from "../_core/email";
+import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { logger } from "../_core/logger";
+import { eq } from "drizzle-orm";
+import { candidateProcedure } from "./candidate";
+import { requireValidAdminSession } from "./adminAuth";
 
 const visaTypeEnum = z.enum([
   "schengen_etude",
@@ -196,7 +201,7 @@ export const evaluationRouter = router({
       }
 
       // Insérer en base de données
-      await db.insert(evaluations).values({
+      const inserted = await db.insert(evaluations).values({
         fullName: input.fullName,
         email: input.email,
         phone: input.phone,
@@ -211,7 +216,37 @@ export const evaluationRouter = router({
         cvFileUrl: cvFileUrl,
         cvFileName: cvFileName,
         status: "pending",
-      });
+      }).$returningId();
+
+      const evaluationId = inserted[0]?.id;
+
+      // Analyse automatique par IA — se déclenche seule dès qu'un CV est
+      // fourni, sans intervention d'un admin. Faite en arrière-plan pour ne
+      // jamais ralentir la confirmation de soumission du candidat ; toute
+      // erreur est journalisée sans jamais faire échouer la soumission.
+      if (evaluationId && input.cvBase64) {
+        (async () => {
+          try {
+            const base64Data = input.cvBase64!.includes(",") ? input.cvBase64!.split(",")[1] : input.cvBase64!;
+            const cvBuffer = Buffer.from(base64Data!, "base64");
+            const cvText = await extractTextFromPDF(cvBuffer);
+            const openaiKey = process.env.OPENAI_API_KEY;
+            const report = await generateAIEvaluationReport(
+              cvText,
+              input.fullName,
+              input.destinationCountry || input.destinationCategory,
+              openaiKey
+            );
+            await db.update(evaluations).set({ aiReportContent: report, aiProcessedAt: new Date() }).where(eq(evaluations.id, evaluationId));
+            logger.info("evaluation.ai_analysis.completed", { evaluationId });
+          } catch (err) {
+            logger.error("evaluation.ai_analysis.failed", { evaluationId }, err);
+            try {
+              await db.update(evaluations).set({ aiProcessingError: err instanceof Error ? err.message : String(err) }).where(eq(evaluations.id, evaluationId));
+            } catch {}
+          }
+        })();
+      }
 
       // Notifier le propriétaire du site
       const visaLabels: Record<string, string> = {
@@ -245,5 +280,42 @@ export const evaluationRouter = router({
       }
 
       return { success: true, message: "Votre demande a été soumise avec succès." };
+    }),
+
+  /**
+   * Évaluations (pré-évaluations générales) du candidat connecté, avec le
+   * rapport IA quand il est disponible — pour "Mon Espace".
+   */
+  getMyEvaluations: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new Error("Base de données non disponible");
+
+    const rows = await db.select().from(evaluations)
+      .where(eq(evaluations.email, ctx.candidate.email))
+      .orderBy(evaluations.createdAt);
+
+    return rows;
+  }),
+
+  /**
+   * Liste des pré-évaluations pour le tableau de bord admin, avec le statut
+   * de l'analyse IA automatique (terminée / en cours / échouée).
+   */
+  listForAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new Error("Base de données non disponible");
+
+      const rows = await db.select().from(evaluations).orderBy(evaluations.createdAt);
+      const total = rows.length;
+      const page = rows.slice(input.offset, input.offset + input.limit).reverse();
+
+      return { items: page, total };
     }),
 });

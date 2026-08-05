@@ -17,14 +17,14 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { CommentsSection } from "@/components/CommentsSection";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { DocumentProgressBar } from "@/components/DocumentProgressBar";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { candidate, isAuthenticated } = useCandidateAuth();
   const [dossierNumber, setDossierNumber] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState<string>('');
   const [userDossierLoading, setUserDossierLoading] = useState(true);
@@ -63,32 +63,41 @@ export default function EvaluationSpace() {
     if (dossier) {
       setDossierNumber(dossier);
       setUserDossierLoading(false);
-    } else if (isAuthenticated && user?.email) {
-      // Charger le dossier de l'utilisateur connecté
-      const fetchUserDossier = async () => {
-        try {
-          const response = await fetch(`/api/candidates/user-dossier?email=${encodeURIComponent(user.email || '')}`);
-          const data = await response.json();
-          if (data.success && data.candidate?.folderCode) {
-            setDossierNumber(data.candidate.folderCode as string);
-          }
-        } catch (error) {
-          console.error('Erreur lors du chargement du dossier utilisateur:', error);
-        } finally {
-          setUserDossierLoading(false);
-        }
-      };
-      fetchUserDossier();
+    } else if (isAuthenticated) {
+      // Charger le dossier du candidat connecté (résolu depuis son JWT,
+      // jamais depuis un email fourni côté client)
+      setUserDossierLoading(false); // la vraie recherche se fait via la query dédiée ci-dessous
     } else {
       setUserDossierLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, candidate]);
+
+  // Récupérer le dossier réel du candidat connecté (authentifié via son JWT)
+  const { data: myDossierData } = trpc.candidate.getMyDossierData.useQuery(undefined, {
+    enabled: isAuthenticated && !dossierNumber,
+  });
+
+  useEffect(() => {
+    if (!dossierNumber && myDossierData?.success && myDossierData.data?.application?.dossierNumber) {
+      setDossierNumber(myDossierData.data.application.dossierNumber);
+    }
+  }, [myDossierData, dossierNumber]);
 
   // Récupérer le bilan
   const { data: bilanData, isLoading, error } = trpc.evaluationAI.getBilan.useQuery(
     { dossierNumber: dossierNumber || "" },
     { enabled: !!dossierNumber }
   );
+
+  // Récupérer l'historique des évaluations Luxembourg du candidat connecté
+  const { data: myEvaluations } = trpc.luxembourgEvaluation.getMyEvaluations.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  // Récupérer l'historique des pré-évaluations générales (avec rapport IA)
+  const { data: myGeneralEvaluations } = trpc.evaluation.getMyEvaluations.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   if (userDossierLoading) {
     return (
@@ -123,6 +132,54 @@ export default function EvaluationSpace() {
                   Veuillez vérifier votre numéro de dossier ou effectuer une recherche ci-dessous.
                 </p>
               </div>
+
+              {/* Évaluations Luxembourg du candidat connecté */}
+              {myEvaluations && myEvaluations.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="font-bold text-gray-900 mb-3">🌍 Vos évaluations Luxembourg</h3>
+                  <div className="space-y-3">
+                    {myEvaluations.map((ev) => (
+                      <div key={ev.id} className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg p-4">
+                        <div>
+                          <p className="font-semibold text-gray-900">{ev.jobTitle}</p>
+                          <p className="text-xs text-gray-500">{new Date(ev.createdAt).toLocaleDateString("fr-FR")}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-blue-600">{ev.scoreTotal}/100</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pré-évaluations générales, avec statut de l'analyse IA */}
+              {myGeneralEvaluations && myGeneralEvaluations.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="font-bold text-gray-900 mb-3">📋 Vos pré-évaluations</h3>
+                  <div className="space-y-3">
+                    {myGeneralEvaluations.map((ev) => (
+                      <div key={ev.id} className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-semibold text-gray-900">{ev.destinationCountry || ev.destinationCategory}</p>
+                          <span className="text-xs text-gray-500">{new Date(ev.createdAt).toLocaleDateString("fr-FR")}</span>
+                        </div>
+                        {ev.aiReportContent ? (
+                          <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-4">{ev.aiReportContent}</p>
+                        ) : ev.aiProcessingError ? (
+                          <p className="text-sm text-amber-600">Analyse IA en attente — notre équipe l'examinera manuellement.</p>
+                        ) : ev.cvFileUrl ? (
+                          <p className="text-sm text-blue-600 flex items-center gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> Analyse IA en cours...
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-500">Dossier en attente d'analyse par notre équipe.</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Champ de recherche manuel */}
               <form
@@ -162,7 +219,7 @@ export default function EvaluationSpace() {
                   Retour à l'accueil
                 </Button>
                 <a
-                  href="https://wa.me/33612345678?text=Bonjour%2C%20j'ai%20besoin%20d'aide%20pour%20accéder%20à%20mon%20dossier"
+                  href="https://wa.me/237698104832?text=Bonjour%2C%20j'ai%20besoin%20d'aide%20pour%20accéder%20à%20mon%20dossier"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition text-center"

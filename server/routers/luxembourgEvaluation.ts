@@ -14,6 +14,9 @@ import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 import { computeLuxembourgScore, getAlternativeDestinations } from "../luxembourgScoringEngine";
 import { generateLuxembourgPDF } from "../luxembourgPdfGenerator";
+import { requireValidAdminSession } from "./adminAuth";
+import { candidateProcedure } from "./candidate";
+import { applications } from "../../drizzle/schema";
 
 const submitInput = z.object({
   fullName: z.string().min(3),
@@ -196,5 +199,97 @@ export const luxembourgEvaluationRouter = router({
         alternatives: result.eligibilityStatus === "non_eligible" ? alternatives : [],
         teamWhatsappUrl,
       };
+    }),
+
+  /**
+   * Historique des évaluations du candidat connecté (pour "Mon Espace"),
+   * résolu depuis son JWT — jamais depuis un paramètre client.
+   */
+  getMyEvaluations: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+    const rows = await db.select().from(luxembourgEvaluations)
+      .where(eq(luxembourgEvaluations.email, ctx.candidate.email))
+      .orderBy(desc(luxembourgEvaluations.createdAt));
+
+    return rows;
+  }),
+
+  /**
+   * Historique des évaluations (réservé aux admins), avec recherche et
+   * filtre par statut d'éligibilité.
+   */
+  listEvaluations: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      search: z.string().optional(),
+      status: z.enum(["tres_eligible", "eligible", "moderement_eligible", "non_eligible"]).optional(),
+      limit: z.number().min(1).max(100).default(50),
+      offset: z.number().min(0).default(0),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const rows = await db.select().from(luxembourgEvaluations).orderBy(desc(luxembourgEvaluations.createdAt));
+
+      let filtered = rows;
+      if (input.status) filtered = filtered.filter((r) => r.eligibilityStatus === input.status);
+      if (input.search) {
+        const q = input.search.toLowerCase();
+        filtered = filtered.filter((r) => r.fullName.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+      }
+
+      const total = filtered.length;
+      const page = filtered.slice(input.offset, input.offset + input.limit);
+
+      const applicationRows = await db.select({ email: applications.email }).from(applications);
+      const convertedEmails = new Set(applicationRows.map((a) => a.email.toLowerCase()));
+
+      const items = page.map((r) => ({
+        ...r,
+        convertedToDossier: convertedEmails.has(r.email.toLowerCase()),
+      }));
+
+      return { items, total };
+    }),
+
+  /**
+   * Statistiques agrégées pour le tableau de bord admin.
+   */
+  getStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const rows = await db.select().from(luxembourgEvaluations);
+      const applicationRows = await db.select({ email: applications.email }).from(applications);
+      const convertedEmails = new Set(applicationRows.map((a) => a.email.toLowerCase()));
+
+      const total = rows.length;
+      const byStatus = {
+        tres_eligible: rows.filter((r) => r.eligibilityStatus === "tres_eligible").length,
+        eligible: rows.filter((r) => r.eligibilityStatus === "eligible").length,
+        moderement_eligible: rows.filter((r) => r.eligibilityStatus === "moderement_eligible").length,
+        non_eligible: rows.filter((r) => r.eligibilityStatus === "non_eligible").length,
+      };
+      const avgScore = total > 0 ? Math.round(rows.reduce((sum, r) => sum + r.scoreTotal, 0) / total) : 0;
+      const convertedCount = rows.filter((r) => convertedEmails.has(r.email.toLowerCase())).length;
+      const conversionRate = total > 0 ? Math.round((convertedCount / total) * 1000) / 10 : 0;
+      const emailSuccessCount = rows.filter((r) => r.emailSentAt !== null).length;
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentByDay: Record<string, number> = {};
+      for (const r of rows) {
+        if (new Date(r.createdAt) < thirtyDaysAgo) continue;
+        const day = new Date(r.createdAt).toISOString().slice(0, 10);
+        recentByDay[day] = (recentByDay[day] || 0) + 1;
+      }
+
+      return { total, byStatus, avgScore, convertedCount, conversionRate, emailSuccessCount, recentByDay };
     }),
 });

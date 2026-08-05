@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft, CheckCircle, Send } from "lucide-react";
@@ -13,45 +13,29 @@ const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const [canResend, setCanResend] = useState(true);
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (countdown === 0 && !canResend) {
-      setCanResend(true);
-    }
-  }, [countdown, canResend]);
 
   const resetMutation = trpc.candidate.requestPasswordReset.useMutation({
     onSuccess: (data) => {
-      setSent(true);
-      setCountdown(60); // Start 60-second countdown
-      setCanResend(false);
+        setSent(true);
       toast.success("Email de réinitialisation envoyé ! Vérifiez votre boîte de réception et vos spams.");
     },
     onError: (err) => {
-      toast.error(err.message || "Erreur lors de l'envoi du lien");
+        toast.error(err.message || "Erreur lors de l'envoi du lien");
     },
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) {
-      toast.error("Veuillez entrer votre adresse email.");
-      return;
+    if (!email) { 
+      toast.error("Veuillez entrer votre adresse email."); 
+      return; 
     }
     resetMutation.mutate({ email });
   }
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}
-    >
+    <div className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,16 +71,14 @@ export default function ForgotPassword() {
             {!sent ? (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email" className="text-gray-700 font-medium">
-                    Adresse email
-                  </Label>
+                  <Label htmlFor="email" className="text-gray-700 font-medium">Adresse email</Label>
                   <div className="relative mt-1">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                       id="email"
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={e => setEmail(e.target.value)}
                       placeholder="votre@email.com"
                       className="pl-10 h-11"
                       required
@@ -116,53 +98,8 @@ export default function ForgotPassword() {
               </form>
             ) : (
               <div className="text-center space-y-4">
-                {/* Resend button with countdown */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Button
-                    onClick={() => resetMutation.mutate({ email })}
-                    disabled={!canResend || resetMutation.isPending}
-                    className="w-full h-11 font-semibold transition-all"
-                    style={{
-                      background: canResend ? "linear-gradient(135deg, #10b981, #059669)" : "#d1d5db",
-                      cursor: canResend ? "pointer" : "not-allowed",
-                      opacity: canResend ? 1 : 0.7,
-                    }}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    {resetMutation.isPending
-                      ? "Envoi en cours..."
-                      : canResend
-                      ? "Renvoyer l'email"
-                      : `Renvoyer dans ${countdown}s`}
-                  </Button>
-                </motion.div>
-
-                {/* Countdown visual indicator */}
-                {!canResend && (
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-1 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
-                    style={{
-                      width: `${((60 - countdown) / 60) * 100}%`,
-                      transformOrigin: "left",
-                    }}
-                  />
-                )}
-
-                {/* Try another email button */}
                 <Button
-                  onClick={() => {
-                    setSent(false);
-                    setEmail("");
-                    setCountdown(0);
-                    setCanResend(true);
-                  }}
+                  onClick={() => { setSent(false); setEmail(""); }}
                   variant="outline"
                   className="w-full"
                 >
@@ -172,10 +109,7 @@ export default function ForgotPassword() {
             )}
 
             <div className="mt-6 pt-4 border-t border-gray-100 text-center">
-              <Link
-                href="/login"
-                className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-sm justify-center transition-colors"
-              >
+              <Link href="/login" className="flex items-center gap-1 text-gray-400 hover:text-gray-600 text-sm justify-center transition-colors">
                 <ArrowLeft className="w-4 h-4" />
                 Retour à la connexion
               </Link>
