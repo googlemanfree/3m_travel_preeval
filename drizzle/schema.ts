@@ -901,3 +901,48 @@ export const evaluationEmails = mysqlTable("evaluation_emails", {
 export type EvaluationEmail = typeof evaluationEmails.$inferSelect;
 export type InsertEvaluationEmail = typeof evaluationEmails.$inferInsert;
 
+
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * SYSTÈME D'ÉVALUATION LUXEMBOURG
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * Évaluation d'éligibilité pour le Luxembourg avec scoring automatique.
+ * Grille de points fixe (algorithme déclaratif, pas d'IA).
+ */
+export const luxembourgEvaluations = mysqlTable("luxembourg_evaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  // Informations candidat
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  jobTitle: varchar("jobTitle", { length: 255 }).notNull(),
+  yearsExperience: int("yearsExperience").notNull(),
+  sector: mysqlEnum("sector", [
+    "sante", "documentation", "education", "finance", "technologie",
+    "administration", "rh", "metiers_mecanique", "autre",
+  ]).notNull(),
+  // Facteurs de notation déclarés par le candidat
+  educationLevel: mysqlEnum("educationLevel", ["master_dual", "licence_cert", "bac_cqp"]).notNull(),
+  frenchLevel: mysqlEnum("frenchLevel", ["natif_c2", "b2", "b1"]).notNull(),
+  englishLevel: mysqlEnum("englishLevel", ["b2_plus", "b1_b2", "moins_b1", "absent"]).notNull(),
+  skillsLevel: mysqlEnum("skillsLevel", ["excellentes", "bonnes", "basiques"]).notNull(),
+  softSkills: json("softSkills").$type<string[]>().default([]), // leadership, gestion_stress, adaptabilite, communication
+  // Résultat du calcul
+  scoreFormation: int("scoreFormation").notNull(),
+  scoreExperience: int("scoreExperience").notNull(),
+  scoreFrancais: int("scoreFrancais").notNull(),
+  scoreAnglais: int("scoreAnglais").notNull(),
+  scoreSecteur: int("scoreSecteur").notNull(),
+  scoreCompetences: int("scoreCompetences").notNull(),
+  scoreBonus: int("scoreBonus").notNull(),
+  scoreTotal: int("scoreTotal").notNull(),
+  eligibilityStatus: mysqlEnum("eligibilityStatus", ["tres_eligible", "eligible", "moderement_eligible", "non_eligible"]).notNull(),
+  // Suivi
+  emailSentAt: timestamp("emailSentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type LuxembourgEvaluation = typeof luxembourgEvaluations.$inferSelect;
+export type InsertLuxembourgEvaluation = typeof luxembourgEvaluations.$inferInsert;

@@ -43,6 +43,7 @@ import { simpleAuthRouter } from "./routers/simpleAuth";
 import { oauthUserDashboardRouter } from "./routers/oauthUserDashboard";
 import { adminPasswordResetRouter } from "./routers/adminPasswordReset";
 import { adminNotificationsRouter } from "./routers/adminNotifications";
+import { luxembourgEvaluationRouter } from "./routers/luxembourgEvaluation";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -115,6 +116,9 @@ export const appRouter = router({
   
   // Notifications admin
   adminNotifications: adminNotificationsRouter,
+  
+  // Évaluation Luxembourg
+  luxembourgEvaluation: luxembourgEvaluationRouter,
 });
 
 export type AppRouter = typeof appRouter;
