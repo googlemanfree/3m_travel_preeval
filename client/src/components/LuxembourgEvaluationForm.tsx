@@ -219,18 +219,23 @@ export default function LuxembourgEvaluationForm() {
         </div>
 
         {alternatives.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-bold text-gray-900 mb-3">🌍 Destinations alternatives recommandées</h3>
-            <div className="grid sm:grid-cols-2 gap-3">
+          <div className="mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-6">
+            <h3 className="font-bold text-gray-900 mb-4 text-lg">🌍 Destinations alternatives recommandées</h3>
+            <p className="text-sm text-gray-700 mb-4">Votre profil est très attractif pour ces destinations. Explorez les opportunités ci-dessous.</p>
+            <div className="grid sm:grid-cols-2 gap-4">
               {alternatives.map((alt) => (
-                <div key={alt.name} className="border border-gray-200 rounded-lg p-3">
-                  <p className="font-semibold text-gray-900">{alt.name}</p>
-                  <p className="text-sm text-gray-600">{alt.salaryRange}</p>
-                  <p className="text-xs text-gray-500">{alt.timeline}</p>
-                  <p className="text-xs text-indigo-600 mt-1">{alt.advantage}</p>
+                <div key={alt.name} className="bg-white border-l-4 border-indigo-500 rounded-lg p-4 hover:shadow-lg transition-shadow">
+                  <div className="flex justify-between items-start mb-2">
+                    <p className="font-bold text-gray-900 text-lg">{alt.name}</p>
+                    <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded">Score: {alt.estimatedScore}/100</span>
+                  </div>
+                  <p className="text-sm font-semibold text-green-600 mb-2">{alt.salaryRange}</p>
+                  <p className="text-xs text-gray-600 mb-2">⏱️ {alt.timeline}</p>
+                  <p className="text-xs text-indigo-600 font-semibold">{alt.advantage}</p>
                 </div>
               ))}
             </div>
+            <p className="text-xs text-gray-500 mt-4 text-center italic">Les délais et salaires sont des estimations basées sur les données 2024-2025.</p>
           </div>
         )}
 

@@ -13,6 +13,7 @@ import { eq, desc } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
 import { computeLuxembourgScore, getAlternativeDestinations } from "../luxembourgScoringEngine";
+import { generateLuxembourgPDF } from "../luxembourgPdfGenerator";
 
 const submitInput = z.object({
   fullName: z.string().min(3),
@@ -138,9 +139,31 @@ export const luxembourgEvaluationRouter = router({
 
       const emailHtml = buildResultEmailHtml(input.fullName, result, alternatives);
 
-      // Email au candidat
+      // Email au candidat avec PDF
       try {
-        await sendEmail({ to: input.email, subject: `🌍 Votre évaluation Luxembourg — Score ${result.scoreTotal}/100`, html: emailHtml });
+        const pdfBuffer = generateLuxembourgPDF({
+          fullName: input.fullName,
+          email: input.email,
+          jobTitle: input.jobTitle,
+          yearsExperience: input.yearsExperience,
+          scoreFormation: result.scoreFormation,
+          scoreExperience: result.scoreExperience,
+          scoreFrancais: result.scoreFrancais,
+          scoreAnglais: result.scoreAnglais,
+          scoreSecteur: result.scoreSecteur,
+          scoreCompetences: result.scoreCompetences,
+          scoreBonus: result.scoreBonus,
+          scoreTotal: result.scoreTotal,
+          statusLabel: result.statusLabel,
+          recommendationText: result.recommendationText,
+        });
+
+        const emailWithPdf = emailHtml + `
+          <p style="margin-top:24px;font-size:12px;color:#666;">
+            <strong>📎 Pièce jointe :</strong> Votre rapport d'évaluation (PDF) est joint à cet email.
+          </p>`;
+
+        await sendEmail({ to: input.email, subject: `🌍 Votre évaluation Luxembourg — Score ${result.scoreTotal}/100`, html: emailWithPdf });
         await db.update(luxembourgEvaluations).set({ emailSentAt: new Date() }).where(eq(luxembourgEvaluations.id, evaluationId));
       } catch (err) {
         logger.error("luxembourg_evaluation.candidate_email_failed", { email: input.email }, err);
