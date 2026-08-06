@@ -47,12 +47,12 @@ import SignUp from "./pages/SignUp";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import SubmitDocuments from "./pages/SubmitDocuments";
 import HowItWorks from "./pages/HowItWorks";
+import Procedures from "./pages/Procedures";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
 import Avis from "./pages/Avis";
 import Blog from "./pages/Blog";
-import SearchDemo from "./pages/SearchDemo";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import AdminAddDossier from "./pages/AdminAddDossier";
@@ -87,7 +87,6 @@ function Router() {
       <Route path={"/signup"} component={SignUp} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
-      <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"}>
         <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
           <Evaluation />
