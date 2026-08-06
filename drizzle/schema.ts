@@ -1010,3 +1010,140 @@ export const consultationRequests = mysqlTable("consultation_requests", {
 });
 export type ConsultationRequest = typeof consultationRequests.$inferSelect;
 export type InsertConsultationRequest = typeof consultationRequests.$inferInsert;
+
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * SYSTÈME D'ÉVALUATION IA ENRICHIE POUR TOUTES DESTINATIONS
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * Évaluations IA enrichies avec quiz intelligent et recommandations personnalisées
+ * pour les 107 destinations disponibles.
+ */
+export const aiEvaluations = mysqlTable("ai_evaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Candidat
+  candidateId: int("candidateId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  
+  // Réponses du quiz
+  quizResponses: text("quizResponses").notNull(),  // JSON des réponses
+  
+  // Résultats IA
+  aiScore: int("aiScore"),  // Score total 0-100
+  aiRecommendations: text("aiRecommendations"),  // JSON array des recommandations
+  aiReport: text("aiReport"),  // Rapport détaillé généré par IA
+  aiProcessedAt: timestamp("aiProcessedAt"),
+  
+  // Destinations recommandées
+  recommendedDestinations: text("recommendedDestinations"),  // JSON array {country, score, reason}
+  
+  // État
+  status: mysqlEnum("status", ["draft", "completed", "submitted", "approved", "rejected"]).default("draft").notNull(),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AiEvaluation = typeof aiEvaluations.$inferSelect;
+export type InsertAiEvaluation = typeof aiEvaluations.$inferInsert;
+
+/**
+ * Dossiers clients ouverts après évaluation IA et paiement
+ */
+export const clientDossiers = mysqlTable("client_dossiers", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Numéro de dossier unique : 3M-YYYY-XXXX
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull().unique(),
+  
+  // Candidat
+  candidateId: int("candidateId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  whatsappNumber: varchar("whatsappNumber", { length: 50 }).notNull(),
+  
+  // Évaluation IA
+  aiEvaluationId: int("aiEvaluationId").notNull(),
+  aiScore: int("aiScore"),
+  recommendedDestination: varchar("recommendedDestination", { length: 100 }),
+  
+  // Paiement
+  paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("PENDING").notNull(),
+  paymentAmount: int("paymentAmount").default(65000).notNull(),  // 65000 FCFA
+  paymentCurrency: varchar("paymentCurrency", { length: 10 }).default("XAF").notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),  // MTN, ORANGE, CARD
+  paymentTransactionId: varchar("paymentTransactionId", { length: 255 }),
+  paymentDate: timestamp("paymentDate"),
+  
+  // État du dossier
+  dossierStatus: mysqlEnum("dossierStatus", [
+    "nouveau",
+    "evaluation_complete",
+    "en_attente_paiement",
+    "paye",
+    "en_attente_documents",
+    "documents_recus",
+    "en_cours_traitement",
+    "approuve",
+    "refuse"
+  ]).default("nouveau").notNull(),
+  
+  // Suivi administratif
+  adminAssignedTo: varchar("adminAssignedTo", { length: 255 }),
+  adminNote: text("adminNote"),
+  lastStatusUpdateAt: timestamp("lastStatusUpdateAt"),
+  lastStatusUpdatedBy: varchar("lastStatusUpdatedBy", { length: 255 }),
+  
+  // Documents
+  documentsUrls: text("documentsUrls"),  // JSON array {type, url, key, name}
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type ClientDossier = typeof clientDossiers.$inferSelect;
+export type InsertClientDossier = typeof clientDossiers.$inferInsert;
+
+/**
+ * Historique des mises à jour de dossiers (synchronisation admin-client)
+ */
+export const dossierUpdates = mysqlTable("dossier_updates", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Référence au dossier
+  dossierId: int("dossierId").notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 20 }).notNull(),
+  
+  // Type de mise à jour
+  updateType: mysqlEnum("updateType", [
+    "status_change",
+    "document_received",
+    "payment_received",
+    "admin_note",
+    "approval",
+    "rejection"
+  ]).notNull(),
+  
+  // Détails
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  description: text("description"),
+  
+  // Qui a fait la mise à jour
+  updatedBy: varchar("updatedBy", { length: 255 }).notNull(),
+  
+  // Notification
+  notificationSent: boolean("notificationSent").default(false).notNull(),
+  notificationSentAt: timestamp("notificationSentAt"),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type DossierUpdate = typeof dossierUpdates.$inferSelect;
+export type InsertDossierUpdate = typeof dossierUpdates.$inferInsert;

@@ -69,6 +69,9 @@ import Procedures from "./pages/Procedures";
 import ProceduresComplete from "./pages/ProceduresComplete";
 import ProceduresEnhanced from "./pages/ProceduresEnhanced";
 import ProceduresAdvanced from "./pages/ProceduresAdvanced";
+import AIEvaluation from "./pages/AIEvaluation";
+import ClientSpace from "./pages/ClientSpace";
+import AdminDossierManagement from "./pages/AdminDossierManagement";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -183,6 +186,9 @@ function Router() {
       <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />
       <Route path={"/procedures-advanced"} component={ProceduresAdvanced} />
+      <Route path={"/evaluation-ia"} component={AIEvaluation} />
+      <Route path={"/mon-espace"} component={ClientSpace} />
+      <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
