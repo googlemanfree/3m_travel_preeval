@@ -140,7 +140,6 @@ function Router() {
       {/* Mon Espace Candidat */}
       <Route path={"/mon-espace-candidat"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
         </AuthGuard>
       </Route>
 
@@ -185,7 +184,6 @@ function Router() {
       </Route>
       <Route path={"/mes-favoris"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à vos favoris.">
-          <MyFavorites />
         </AuthGuard>
       </Route>
 
@@ -225,27 +223,13 @@ function Router() {
           <AdminDashboard />
         </AdminGuard>
       </Route>
-      <Route path={"/admin/add-dossier"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/document-verification"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
+
       <Route path={"/admin/evaluation"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluation />
         </AdminGuard>
       </Route>
-      <Route path={"/admin/accompagnement"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/procedures"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
+
       <Route path={"/admin/evaluations"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEvaluations />
