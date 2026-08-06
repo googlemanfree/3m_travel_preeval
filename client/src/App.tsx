@@ -58,11 +58,6 @@ import EvaluationSpace from "./pages/EvaluationSpace";
 import AdminDashboard from "./pages/AdminDashboard";
 import AmbassadorProgram from "./pages/AmbassadorProgram";
 import CVGenerator from "./pages/CVGenerator";
-import EvaluationResult from "./pages/EvaluationResult";
-import ScheduleAgency from "./pages/ScheduleAgency";
-import ComponentsShowcase from "./pages/ComponentShowcase";
-import AppointmentBooking from "./pages/AppointmentBooking";
-import AdminEmailTemplates from "./pages/AdminEmailTemplates";
 import CinetPayPayment from "./pages/CinetPayPayment";
 import EvisasPage from "./pages/Evisas";
 import EvisaApplicationForm from "./pages/EvisaApplicationForm";
@@ -91,7 +86,6 @@ function Router() {
         </AuthGuard>
       </Route>
       <Route path={"/mon-espace"} component={EvaluationSpace} />
-      <Route path={"/rdv"} component={AppointmentBooking} />
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
@@ -153,7 +147,6 @@ function Router() {
       </Route>
 
       {/* Prise de rendez-vous en agence */}
-      <Route path={"/schedule-agency"} component={ScheduleAgency} />
 
       {/* Programme Ambassadeur */}
       <Route path={"/ambassador-program"} component={AmbassadorProgram} />
@@ -162,7 +155,6 @@ function Router() {
       <Route path={"/cv-generator"} component={CVGenerator} />
 
       {/* Résultat d'évaluation */}
-      <Route path={"/evaluation-result"} component={EvaluationResult} />
 
       {/* Vitrine des composants (usage interne / référence design) */}
       <Route path={"/component-showcase"} component={ComponentsShowcase} />
@@ -284,7 +276,6 @@ function Router() {
       </Route>
       <Route path="/admin/email-templates">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEmailTemplates />
         </AdminGuard>
       </Route>
       <Route path="/admin/evisa">
