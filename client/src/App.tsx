@@ -63,8 +63,6 @@ import EvisasPage from "./pages/Evisas";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
-import AdminEvisaDashboard from "./pages/AdminEvisaDashboard";
-import AdminEvisaDetail from "./pages/AdminEvisaDetail";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -274,12 +272,10 @@ function Router() {
       </Route>
       <Route path="/admin/evisa">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDashboard />
         </AdminGuard>
       </Route>
       <Route path="/admin/evisa/:id">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDetail />
         </AdminGuard>
       </Route>
 
