@@ -66,6 +66,7 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 import SubmitDocuments from "./pages/SubmitDocuments";
 import HowItWorks from "./pages/HowItWorks";
 import Procedures from "./pages/Procedures";
+import ProceduresComplete from "./pages/ProceduresComplete";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -177,6 +178,7 @@ function Router() {
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/visa-etudes"} component={VisaEtudes} />
       <Route path={"/procedures"} component={Procedures} />
+      <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
