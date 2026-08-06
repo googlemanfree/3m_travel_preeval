@@ -257,46 +257,21 @@ function Router() {
       </Route>
       <Route path={"/admin/candidates"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <CandidatesManager />
         </AdminGuard>
       </Route>
       <Route path={"/admin/admins"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminsList />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUsersManagement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users/:userId"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUserDetails />
         </AdminGuard>
       </Route>
-      <Route path={"/admin/agency-dossiers"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
-        </AdminGuard>
-      </Route>
-      <Route path={"admin/agency-dossiers"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/email-templates">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa/:id">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
+
 
       <Route path="/hotels">
         <Hotels />
