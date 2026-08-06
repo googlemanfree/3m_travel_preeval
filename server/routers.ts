@@ -49,6 +49,7 @@ import { aiEvaluationManagementRouter } from "./routers/aiEvaluationManagement";
 import { studyVisaEvaluationRouter } from "./routers/studyVisaEvaluation";
 import { proceduresRouter } from "./routers/proceduresRouter";
 import { cvAnalysisRouter } from "./routers/cvAnalysis";
+import { aiCopilotRouter } from "./routers/aiCopilot";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -81,6 +82,7 @@ export const appRouter = router({
   profileEvaluation: profileEvaluationRouter,
   cvAI: cvAIRouter,
   cvAnalysis: cvAnalysisRouter,
+  aiCopilot: aiCopilotRouter,
   flights: flightsRouter,
   candidate: candidateRouter,
   candidateAuthOTP: candidateAuthOTPRouter,

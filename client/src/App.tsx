@@ -75,6 +75,7 @@ import AdminDossierManagement from "./pages/AdminDossierManagement";
 import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
 import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 import ClientSpaceEnhanced from "./pages/ClientSpaceEnhanced";
+import AiCopilotWidget from "./components/AiCopilotWidget";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -363,6 +364,8 @@ function App() {
               <Router />
               {/* Menu d'actions flottantes unifié */}
               <FloatingActionMenu />
+              {/* Copilote IA flottant */}
+              <AiCopilotWidget />
             </>
           )}
         </TooltipProvider>
