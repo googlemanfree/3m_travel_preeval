@@ -9,8 +9,6 @@ import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import Vols from "./pages/Vols";
-import ProceduresResources from "./pages/ProceduresResources";
-import ProcedureLuxembourg from "./pages/ProcedureLuxembourg";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -126,8 +124,6 @@ function Router() {
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/vols"} component={Vols} />
-      <Route path="/procedures" component={ProceduresResources} />
-      <Route path="/procedures/luxembourg" component={ProcedureLuxembourg} />
       <Route path={"/assurance"} component={Assurance} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
