@@ -24,6 +24,24 @@ import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
 import AdminConsultationRequests from "./pages/AdminConsultationRequests";
+import AdminsList from "./pages/AdminsList";
+import CandidatesManager from "./pages/CandidatesManager";
+import ClientDashboard from "./pages/ClientDashboard";
+import AdminAccompagnement from "./pages/AdminAccompagnement";
+import ResetPasswordSimple from "./pages/ResetPasswordSimple";
+import SimpleSignUp from "./pages/SimpleSignUp";
+import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
+import MySpace from "./pages/MySpace";
+import AdminUsersManagement from "./pages/AdminUsersManagement";
+import AdminAddDossier from "./pages/AdminAddDossier";
+import { AdminDocumentVerification } from "./pages/AdminDocumentVerification";
+import AdminProcedures from "./pages/AdminProcedures";
+import AdminUserDetails from "./pages/AdminUserDetails";
+import VisaEtudes from "./pages/VisaEtudes";
+import ProcedureLuxembourg from "./pages/ProcedureLuxembourg";
+import MonDossier from "./pages/MonDossier";
+import EvisaRequestForm from "./pages/EvisaRequestForm";
+import EvaluationResult from "./pages/EvaluationResult";
 import AdminAIEvaluationDashboard from "./pages/AdminAIEvaluationDashboard";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
@@ -121,16 +139,19 @@ function Router() {
       {/* Suivi de dossier candidat */}
       <Route path={"/mon-dossier"}>
         <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
+          <MonDossier />
         </AuthGuard>
       </Route>
 
       {/* Mon Espace Candidat */}
       <Route path={"/mon-espace-candidat"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
+          <MySpace />
         </AuthGuard>
       </Route>
       <Route path={"/my-space"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
+          <MySpace />
         </AuthGuard>
       </Route>
 
@@ -150,12 +171,13 @@ function Router() {
       <Route path={"/cv-generator"} component={CVGenerator} />
 
       {/* Résultat d'évaluation */}
-
-      {/* Vitrine des composants (usage interne / référence design) */}
-      <Route path={"/component-showcase"} component={ComponentsShowcase} />
+      <Route path={"/evaluation-result"} component={EvaluationResult} />
 
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />
+      <Route path={"/visa-etudes"} component={VisaEtudes} />
+      <Route path={"/procedures"} component={Procedures} />
+      <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"} component={Ressources} />
@@ -169,10 +191,7 @@ function Router() {
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasPage} />
       <Route path={"/evisas/request"}>
-      </Route>
-      <Route path={"/mes-favoris"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à vos favoris.">
-        </AuthGuard>
+        <EvisaRequestForm />
       </Route>
 
       {/* Routes Hotels */}
@@ -218,10 +237,12 @@ function Router() {
       </Route>
       <Route path={"/admin/add-dossier"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAddDossier />
         </AdminGuard>
       </Route>
       <Route path={"/admin/document-verification"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDocumentVerification />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluation"}>
@@ -231,10 +252,12 @@ function Router() {
       </Route>
       <Route path={"/admin/accompagnement"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAccompagnement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminProcedures />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluations"}>
@@ -244,43 +267,33 @@ function Router() {
       </Route>
       <Route path={"/admin/candidates"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <CandidatesManager />
         </AdminGuard>
       </Route>
       <Route path={"/admin/admins"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminsList />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminUsersManagement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users/:userId"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminUserDetails />
         </AdminGuard>
       </Route>
       <Route path={"/admin/agency-dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"admin/agency-dossiers"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/email-templates">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa">
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path="/admin/evisa/:id">
-        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAgencyDossiers />
         </AdminGuard>
       </Route>
 
       <Route path="/client-dashboard">
-        <AuthGuard>
+        <AuthGuard message="Vous devez créer un compte pour accéder à votre tableau de bord.">
+          <ClientDashboard />
         </AuthGuard>
       </Route>
 
