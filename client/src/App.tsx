@@ -47,6 +47,7 @@ import SignUp from "./pages/SignUp";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import SubmitDocuments from "./pages/SubmitDocuments";
 import HowItWorks from "./pages/HowItWorks";
+import VisaTimelineDemo from "./pages/VisaTimelineDemo";
 
 import AdminGuard from "./components/AdminGuard";
 
@@ -111,6 +112,7 @@ function Router() {
       <Route path={"/evisa-demande"} component={EvisaDemande} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
+      <Route path={"/visa-timeline"} component={VisaTimelineDemo} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
