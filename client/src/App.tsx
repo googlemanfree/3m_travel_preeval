@@ -72,6 +72,8 @@ import ProceduresAdvanced from "./pages/ProceduresAdvanced";
 import AIEvaluation from "./pages/AIEvaluation";
 import ClientSpace from "./pages/ClientSpace";
 import AdminDossierManagement from "./pages/AdminDossierManagement";
+import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
+import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -189,6 +191,8 @@ function Router() {
       <Route path={"/evaluation-ia"} component={AIEvaluation} />
       <Route path={"/mon-espace"} component={ClientSpace} />
       <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
+      <Route path={"/evaluation-primaire"} component={PrimaryEvaluationForm} />
+      <Route path={"/admin/evaluations"} component={AdminEvaluationValidation} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
