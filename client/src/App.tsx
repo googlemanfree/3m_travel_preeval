@@ -25,11 +25,6 @@ import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
 import AdminConsultationRequests from "./pages/AdminConsultationRequests";
 import AdminAIEvaluationDashboard from "./pages/AdminAIEvaluationDashboard";
-import VisaTypes from "./pages/VisaTypes";
-import VisaEtudes from "./pages/VisaEtudes";
-import Destinations from "./pages/Destinations";
-import Guide from "./pages/Guide";
-import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
@@ -43,28 +38,18 @@ import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import DossierConfirmation from "./pages/DossierConfirmation";
 import ConditionsUtilisation from "./pages/ConditionsUtilisation";
 import AdminEvaluation from "./pages/AdminEvaluation";
-import AdminAccompagnement from "./pages/AdminAccompagnement";
-import AdminProcedures from "./pages/AdminProcedures";
 import AdminLogin from "./pages/AdminLogin";
 import AdminChangePasswordRequired from "./pages/AdminChangePasswordRequired";
 import AdminEvaluations from "./pages/AdminEvaluations";
 import Hotels from "./pages/Hotels";
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
-import CandidatesManager from "./pages/CandidatesManager";
 import SignUp from "./pages/SignUp";
-import SimpleSignUp from "./pages/SimpleSignUp";
 import ConfirmEmail from "./pages/ConfirmEmail";
-import ResetPasswordSimple from "./pages/ResetPasswordSimple";
-import AdminsList from "./pages/AdminsList";
-import AdminAgencyDossiers from "./pages/AdminAgencyDossiers";
 import SubmitDocuments from "./pages/SubmitDocuments";
 import ClientDashboard from "./pages/ClientDashboard";
 import HowItWorks from "./pages/HowItWorks";
-import MySpace from "./pages/MySpace";
 
 import AdminGuard from "./components/AdminGuard";
-import AdminUsersManagement from "./pages/AdminUsersManagement";
-import AdminUserDetails from "./pages/AdminUserDetails";
 import Tarifs from "./pages/Tarifs";
 import Avis from "./pages/Avis";
 import Blog from "./pages/Blog";
@@ -101,9 +86,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/register"} component={Register} />
       <Route path={"/signup"} component={SignUp} />
-      <Route path={"/simple-signup"} component={SimpleSignUp} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
-      <Route path={"/forgot-password-simple"} component={ResetPasswordSimple} />
       <Route path={"/login"} component={Login} />
       <Route path={"/search"} component={SearchDemo} />
       <Route path={"/evaluation"}>
@@ -133,10 +116,6 @@ function Router() {
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
-      <Route path={"/guide"} component={Guide} />
-      <Route path={"/visa-types"} component={VisaTypes} />
-      <Route path={"/visa-etudes"} component={VisaEtudes} />
-      <Route path={"/destinations"} component={Destinations} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />
@@ -157,19 +136,16 @@ function Router() {
       {/* Suivi de dossier candidat */}
       <Route path={"/mon-dossier"}>
         <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
-          <MonDossier />
         </AuthGuard>
       </Route>
 
       {/* Mon Espace Candidat */}
       <Route path={"/mon-espace-candidat"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
         </AuthGuard>
       </Route>
       <Route path={"/my-space"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
         </AuthGuard>
       </Route>
 
@@ -277,12 +253,10 @@ function Router() {
       </Route>
       <Route path={"/admin/accompagnement"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAccompagnement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminProcedures />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluations"}>
@@ -292,32 +266,26 @@ function Router() {
       </Route>
       <Route path={"/admin/candidates"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <CandidatesManager />
         </AdminGuard>
       </Route>
       <Route path={"/admin/admins"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminsList />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUsersManagement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users/:userId"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminUserDetails />
         </AdminGuard>
       </Route>
       <Route path={"/admin/agency-dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
         </AdminGuard>
       </Route>
       <Route path={"admin/agency-dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAgencyDossiers />
         </AdminGuard>
       </Route>
       <Route path="/admin/email-templates">
