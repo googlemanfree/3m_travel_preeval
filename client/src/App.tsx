@@ -157,10 +157,6 @@ function Router() {
           <MySpace />
         </AuthGuard>
       </Route>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
-        </AuthGuard>
-      </Route>
 
       {/* Depot des documents */}
       <Route path={"/submit-documents"}>
@@ -305,23 +301,15 @@ function Router() {
       </Route>
       <Route path="/admin/email-templates">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEmailTemplates />
         </AdminGuard>
       </Route>
       <Route path="/admin/evisa">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDashboard />
         </AdminGuard>
       </Route>
       <Route path="/admin/evisa/:id">
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEvisaDetail />
         </AdminGuard>
-      </Route>
-
-        <AuthGuard>
-          <ClientDashboard />
-        </AuthGuard>
       </Route>
 
       <Route path="/hotels">
