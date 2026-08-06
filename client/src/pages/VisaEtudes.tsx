@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import StudyVisaEvaluationWidget from '@/components/StudyVisaEvaluationWidget';
 import { Link } from 'wouter';
 
+import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
+
 export default function VisaEtudes() {
   // Informations factuelles sur les démarches propres à chaque destination.
   // Campus France, uni-assist, etc. sont des plateformes officielles réelles
@@ -67,6 +69,9 @@ export default function VisaEtudes() {
                 <ArrowRight size={20} />
               </motion.button>
             </a>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="max-w-xl mx-auto mt-12">
+            <StudyAbroadIllustration className="w-full h-auto" />
           </motion.div>
         </div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />

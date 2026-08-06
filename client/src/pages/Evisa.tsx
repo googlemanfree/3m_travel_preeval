@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Globe, FileText, Clock, Shield, Zap, ArrowRight, AlertCircle, CreditCard, Camera, Plane, MessageCircle, Search, XCircle } from 'lucide-react';
+import GlobalMobilityIllustration from '@/components/illustrations/GlobalMobilityIllustration';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
@@ -231,6 +232,10 @@ export default function Evisa() {
             <p className="text-sm text-gray-500 mb-8 max-w-2xl mx-auto">
               Informations vérifiées pour les titulaires d'un passeport camerounais. Les règles évoluent : nous confirmons toujours votre cas exact avant toute soumission.
             </p>
+
+            <div className="max-w-md mx-auto mb-10">
+              <GlobalMobilityIllustration className="w-full h-auto" />
+            </div>
 
             {/* Search bar */}
             <div className="relative max-w-xl mx-auto mb-6">
