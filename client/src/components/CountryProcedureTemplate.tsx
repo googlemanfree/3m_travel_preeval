@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, Phone, Mail, Globe, MapPin, ShieldCheck } 
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import type { CountryProcedure } from "@/data/countryProcedures/types";
+import ConsultationRequestForm from "@/components/ConsultationRequestForm";
 
 /**
  * Fiche procédure pays réutilisable — structure officielle 3M Travel & Services
@@ -193,6 +194,15 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </Accordion>
         </section>
 
+        {/* Demande de consultation avec CV */}
+        <section>
+          <h2 className="text-xl font-bold text-blue-900 mb-2 text-center">Demander ma consultation gratuite</h2>
+          <p className="text-center text-gray-500 text-sm mb-6 max-w-xl mx-auto">
+            Joignez votre CV pour une analyse personnalisée de votre profil par notre équipe. Vous recevrez une réponse détaillée par email.
+          </p>
+          <ConsultationRequestForm defaultCountry={data.country} />
+        </section>
+
         {/* Contacts officiels */}
         <section>
           <Card className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white text-center">
@@ -205,7 +215,7 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
             <p className="flex items-center justify-center gap-1 text-sm mt-3 text-blue-200"><MapPin className="w-4 h-4" /> {data.contact.address}</p>
             <p className="text-sm mt-2 text-blue-200">{data.contact.consulate}</p>
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-block mt-5 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-full transition-colors">
-              💬 Demander ma consultation gratuite
+              💬 Nous contacter directement sur WhatsApp
             </a>
             <p className="text-xs text-blue-300 mt-4 italic">{data.documentNote}</p>
           </Card>

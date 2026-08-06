@@ -99,6 +99,11 @@ export default function EvaluationSpace() {
     enabled: isAuthenticated,
   });
 
+  // Récupérer l'historique des demandes de consultation (avec CV)
+  const { data: myConsultations } = trpc.consultationRequest.getMyConsultations.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
   if (userDossierLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -179,6 +184,29 @@ export default function EvaluationSpace() {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Demandes de consultation (validées par un admin uniquement) */}
+              {myConsultations && myConsultations.filter((c) => c.status === "validated_sent").length > 0 && (
+                <div className="mb-8">
+                  <h3 className="font-bold text-gray-900 mb-3">💬 Vos consultations</h3>
+                  <div className="space-y-3">
+                    {myConsultations.filter((c) => c.status === "validated_sent").map((c) => (
+                      <div key={c.id} className="bg-green-50 border border-green-100 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-gray-900">{c.targetCountry || "Consultation générale"}</p>
+                          <span className="text-xs text-gray-500">{c.sentToClientAt ? new Date(c.sentToClientAt).toLocaleDateString("fr-FR") : ""}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 whitespace-pre-line">{c.finalReportContent}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {myConsultations && myConsultations.some((c) => c.status !== "validated_sent") && (
+                <p className="text-sm text-gray-500 mb-8">
+                  ⏳ Une ou plusieurs demandes de consultation sont en cours d'examen par notre équipe.
+                </p>
               )}
 
               {/* Champ de recherche manuel */}

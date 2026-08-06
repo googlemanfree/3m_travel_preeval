@@ -25,6 +25,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
+import AdminConsultationRequests from "./pages/AdminConsultationRequests";
 import VisaTypes from "./pages/VisaTypes";
 import VisaEtudes from "./pages/VisaEtudes";
 import Destinations from "./pages/Destinations";
@@ -244,6 +245,11 @@ function Router() {
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/consultation-requests"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminConsultationRequests />
         </AdminGuard>
       </Route>
       {/* Redirection /admin → / pour masquer l'existence du panneau */}

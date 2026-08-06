@@ -78,6 +78,9 @@ export const evaluations = mysqlTable("evaluations", {
   cvFileUrl: text("cvFileUrl"),
   cvFileName: varchar("cvFileName", { length: 255 }),
   status: mysqlEnum("status", ["pending", "reviewed", "contacted", "closed"]).default("pending").notNull(),
+  aiReportContent: text("aiReportContent"),
+  aiProcessedAt: timestamp("aiProcessedAt"),
+  aiProcessingError: text("aiProcessingError"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -976,3 +979,34 @@ export const studyVisaEvaluations = mysqlTable("study_visa_evaluations", {
 });
 export type StudyVisaEvaluation = typeof studyVisaEvaluations.$inferSelect;
 export type InsertStudyVisaEvaluation = typeof studyVisaEvaluations.$inferInsert;
+
+/**
+ * Demandes de consultation avec CV (ex: bouton "Demander ma consultation
+ * gratuite" sur les fiches procédure pays). Le CV est analysé automatiquement
+ * par IA, puis un admin valide (et peut ajuster) avant l'envoi au candidat.
+ */
+export const consultationRequests = mysqlTable("consultation_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  targetCountry: varchar("targetCountry", { length: 100 }),
+  message: text("message"),
+  cvFileUrl: text("cvFileUrl"),
+  cvFileName: varchar("cvFileName", { length: 255 }),
+  // Analyse automatique par IA
+  aiReportContent: text("aiReportContent"),
+  aiProcessedAt: timestamp("aiProcessedAt"),
+  aiProcessingError: text("aiProcessingError"),
+  // Validation admin avant envoi (le rapport IA n'est jamais envoyé tel quel
+  // sans relecture humaine)
+  status: mysqlEnum("status", ["pending_ai", "pending_review", "validated_sent", "rejected"]).default("pending_ai").notNull(),
+  finalReportContent: text("finalReportContent"), // version éventuellement modifiée par l'admin avant envoi
+  adminNotes: text("adminNotes"),
+  validatedByAdminEmail: varchar("validatedByAdminEmail", { length: 320 }),
+  validatedAt: timestamp("validatedAt"),
+  sentToClientAt: timestamp("sentToClientAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ConsultationRequest = typeof consultationRequests.$inferSelect;
+export type InsertConsultationRequest = typeof consultationRequests.$inferInsert;

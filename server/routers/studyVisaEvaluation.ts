@@ -12,7 +12,52 @@ import { studyVisaEvaluations } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { logger } from "../_core/logger";
-import { computeStudyVisaScore } from "../studyVisaScoringEngine";
+// Moteur de scoring autonome (ne dépend pas de studyVisaScoringEngine.ts,
+// qui sert désormais un système d'évaluation études plus riche et séparé —
+// pour éviter tout conflit futur entre les deux).
+function computeSimpleStudyScore(input: {
+  academicLevel: string; gradeLevel: string; languageLevel: string;
+  admissionStatus: string; financialCapacity: string; returnTies: string;
+}) {
+  const academicMap: Record<string, number> = { master_mention: 20, licence: 15, bac2: 10, bac: 5 };
+  const gradeMap: Record<string, number> = { tres_bien: 15, bien: 11, assez_bien: 7, passable: 3 };
+  const languageMap: Record<string, number> = { c1_c2: 20, b2: 15, b1: 8, moins_b1: 3 };
+  const admissionMap: Record<string, number> = { admis: 15, en_cours: 8, pas_commence: 3 };
+  const financialMap: Record<string, number> = { complete: 20, partielle: 10, incertaine: 3 };
+  const tiesMap: Record<string, number> = { solide: 10, modere: 5, faible: 2 };
+
+  const scoreAcademic = academicMap[input.academicLevel] ?? 0;
+  const scoreGrades = gradeMap[input.gradeLevel] ?? 0;
+  const scoreLanguage = languageMap[input.languageLevel] ?? 0;
+  const scoreAdmission = admissionMap[input.admissionStatus] ?? 0;
+  const scoreFinancial = financialMap[input.financialCapacity] ?? 0;
+  const scoreReturnTies = tiesMap[input.returnTies] ?? 0;
+  const scoreTotal = scoreAcademic + scoreGrades + scoreLanguage + scoreAdmission + scoreFinancial + scoreReturnTies;
+
+  let eligibilityStatus: "tres_favorable" | "favorable" | "a_renforcer" | "risque_eleve";
+  let statusLabel: string;
+  let recommendationText: string;
+
+  if (scoreTotal >= 80) {
+    eligibilityStatus = "tres_favorable";
+    statusLabel = "✅✅✅ Profil très favorable";
+    recommendationText = "Votre profil réunit les éléments généralement recherchés pour une demande de visa étudiant solide. Nous pouvons démarrer la constitution de votre dossier rapidement.";
+  } else if (scoreTotal >= 65) {
+    eligibilityStatus = "favorable";
+    statusLabel = "✅✅ Profil favorable";
+    recommendationText = "Votre profil est globalement solide. Quelques points peuvent encore être renforcés (langue, preuve de financement) pour maximiser vos chances.";
+  } else if (scoreTotal >= 45) {
+    eligibilityStatus = "a_renforcer";
+    statusLabel = "🟡 Profil à renforcer";
+    recommendationText = "Certains critères clés méritent d'être consolidés avant le dépôt — notamment le niveau de langue ou la preuve de ressources financières. Nous pouvons vous accompagner pour les renforcer.";
+  } else {
+    eligibilityStatus = "risque_eleve";
+    statusLabel = "🔴 Risque de refus élevé en l'état";
+    recommendationText = "En l'état, plusieurs critères déterminants sont faibles. Un accompagnement rapproché est recommandé avant tout dépôt pour identifier une stratégie réaliste.";
+  }
+
+  return { scoreAcademic, scoreGrades, scoreLanguage, scoreAdmission, scoreFinancial, scoreReturnTies, scoreTotal, eligibilityStatus, statusLabel, recommendationText };
+}
 import { requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure } from "./candidate";
 
@@ -29,7 +74,7 @@ const submitInput = z.object({
   returnTies: z.enum(["solide", "modere", "faible"]),
 });
 
-function buildResultEmailHtml(fullName: string, result: ReturnType<typeof computeStudyVisaScore>, targetCountry?: string) {
+function buildResultEmailHtml(fullName: string, result: ReturnType<typeof computeSimpleStudyScore>, targetCountry?: string) {
   const rows = [
     ["Niveau académique", result.scoreAcademic, 20],
     ["Résultats scolaires", result.scoreGrades, 15],
@@ -77,7 +122,7 @@ export const studyVisaEvaluationRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-      const result = computeStudyVisaScore(input);
+      const result = computeSimpleStudyScore(input);
 
       let evaluationId: number;
       try {
