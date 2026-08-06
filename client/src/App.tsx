@@ -46,7 +46,6 @@ import { FloatingActionMenu } from "./components/FloatingActionMenu";
 import SignUp from "./pages/SignUp";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import SubmitDocuments from "./pages/SubmitDocuments";
-import ClientDashboard from "./pages/ClientDashboard";
 import HowItWorks from "./pages/HowItWorks";
 
 import AdminGuard from "./components/AdminGuard";
@@ -306,7 +305,6 @@ function Router() {
 
       <Route path="/client-dashboard">
         <AuthGuard>
-          <ClientDashboard />
         </AuthGuard>
       </Route>
 
