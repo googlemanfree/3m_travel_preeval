@@ -55,9 +55,7 @@ import Avis from "./pages/Avis";
 import Blog from "./pages/Blog";
 import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
-import AdminAddDossier from "./pages/AdminAddDossier";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminDocumentVerification from "./pages/AdminDocumentVerification";
 import AmbassadorProgram from "./pages/AmbassadorProgram";
 import CVGenerator from "./pages/CVGenerator";
 import EvaluationResult from "./pages/EvaluationResult";
@@ -236,12 +234,10 @@ function Router() {
       </Route>
       <Route path={"/admin/add-dossier"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAddDossier />
         </AdminGuard>
       </Route>
       <Route path={"/admin/document-verification"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminDocumentVerification />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluation"}>
