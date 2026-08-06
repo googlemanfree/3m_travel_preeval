@@ -54,6 +54,12 @@ export default function CandidateDashboard() {
         recommendations: [],
         alternatives: [],
         requiredDocuments: [],
+        nextSteps: [
+          'Téléchargez votre rapport PDF',
+          'Préparez les documents requis',
+          'Contactez notre équipe pour les prochaines étapes',
+          'Planifiez votre consultation personnalisée',
+        ],
         estimatedTimeline: '3-6 mois',
         estimatedCost: 3000,
         createdAt: consultation.createdAt,

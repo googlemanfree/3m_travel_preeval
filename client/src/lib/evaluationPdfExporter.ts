@@ -17,35 +17,52 @@ export interface EvaluationResult {
   recommendations: string[];
   alternatives: string[];
   requiredDocuments: string[];
+  nextSteps: string[];
   estimatedTimeline: string;
   estimatedCost: number;
   createdAt: Date;
+  logoUrl?: string;
 }
 
 export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  let yPosition = 15;
+  let yPosition = 20;
 
-  // ===== HEADER =====
+  // ===== HEADER WITH LOGO =====
   doc.setFillColor(25, 55, 109); // Dark blue
-  doc.rect(0, 0, pageWidth, 30, 'F');
+  doc.rect(0, 0, pageWidth, 40, 'F');
 
-  // Logo and title
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  // Logo circle badge
+  doc.setFillColor(255, 255, 255);
+  doc.circle(20, 20, 7, 'F');
+  doc.setDrawColor(25, 55, 109);
+  doc.setLineWidth(1);
+  doc.circle(20, 20, 7, 'S');
+  
+  // Logo text inside circle
+  doc.setTextColor(25, 55, 109);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('3M Travel & Services', 15, 12);
+  doc.text('3M', 20, 22, { align: 'center' });
+
+  // Title and subtitle
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('3M Travel & Services', 32, 14);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Visa & Immigration Simplifiés', 15, 20);
+  doc.text('Visa & Immigration Simplifiés', 32, 22);
 
-  // Date
-  doc.setFontSize(9);
-  doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - 40, 12);
+  // Date and report reference
+  doc.setFontSize(8);
+  doc.setTextColor(200, 200, 200);
+  doc.text(`Rapport d'Évaluation - ${new Date().toLocaleDateString('fr-FR')}`, pageWidth - 15, 14, { align: 'right' });
+  doc.text(`Réf: ${new Date().getTime()}`, pageWidth - 15, 20, { align: 'right' });
 
-  yPosition = 40;
+  yPosition = 50;
 
   // ===== CANDIDATE INFO =====
   doc.setTextColor(0, 0, 0);
@@ -115,8 +132,37 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
     yPosition = (doc as any).lastAutoTable.finalY + 10;
   }
 
+  // ===== NEXT STEPS SECTION =====
+  if (evaluation.nextSteps && evaluation.nextSteps.length > 0 && yPosition < pageHeight - 60) {
+    doc.setFillColor(240, 248, 255); // Light blue
+    doc.rect(15, yPosition - 5, pageWidth - 30, 5, 'F');
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(25, 118, 210);
+    doc.text('🎯 Prochaines Étapes Recommandées', 15, yPosition);
+
+    yPosition += 8;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+
+    evaluation.nextSteps.forEach((step, index) => {
+      const lines = doc.splitTextToSize(`${index + 1}. ${step}`, pageWidth - 30);
+      doc.text(lines, 15, yPosition);
+      yPosition += lines.length * 5 + 3;
+
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = 15;
+      }
+    });
+
+    yPosition += 8;
+  }
+
   // ===== RECOMMENDATIONS =====
-  if (evaluation.recommendations.length > 0) {
+  if (evaluation.recommendations.length > 0 && yPosition < pageHeight - 50) {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('Recommandations', 15, yPosition);
@@ -130,8 +176,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
       doc.text(lines, 15, yPosition);
       yPosition += lines.length * 5 + 2;
 
-      // Check if we need a new page
-      if (yPosition > pageHeight - 20) {
+      if (yPosition > pageHeight - 30) {
         doc.addPage();
         yPosition = 15;
       }
@@ -141,7 +186,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
   }
 
   // ===== ALTERNATIVES =====
-  if (evaluation.alternatives.length > 0) {
+  if (evaluation.alternatives.length > 0 && yPosition < pageHeight - 50) {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('Destinations Alternatives', 15, yPosition);
@@ -155,7 +200,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
       doc.text(lines, 15, yPosition);
       yPosition += lines.length * 5 + 2;
 
-      if (yPosition > pageHeight - 20) {
+      if (yPosition > pageHeight - 30) {
         doc.addPage();
         yPosition = 15;
       }
@@ -165,7 +210,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
   }
 
   // ===== REQUIRED DOCUMENTS =====
-  if (evaluation.requiredDocuments.length > 0 && yPosition < pageHeight - 40) {
+  if (evaluation.requiredDocuments.length > 0 && yPosition < pageHeight - 50) {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.text('Documents Requis', 15, yPosition);
@@ -187,7 +232,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
   }
 
   // ===== TIMELINE AND COST =====
-  if (yPosition < pageHeight - 30) {
+  if (yPosition < pageHeight - 50) {
     const timelineCostData = [
       ['Timeline Estimé', evaluation.estimatedTimeline],
       ['Coût Estimé', `$${evaluation.estimatedCost.toLocaleString()}`],
@@ -202,13 +247,39 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
       bodyStyles: { textColor: 0 },
       margin: { left: 15, right: 15 },
     });
+
+    yPosition = (doc as any).lastAutoTable.finalY + 10;
+  }
+
+  // ===== CONTACT SECTION =====
+  if (yPosition < pageHeight - 30) {
+    doc.setFillColor(245, 245, 245);
+    doc.rect(15, yPosition, pageWidth - 30, 20, 'F');
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(25, 55, 109);
+    doc.text('📞 Besoin d\'aide ?', 15, yPosition + 5);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Email: contact@3mtravelagency.com', 15, yPosition + 10);
+    doc.text('WhatsApp: +237 6XX XXX XXX | Web: www.3mtravelagency.com', 15, yPosition + 15);
   }
 
   // ===== FOOTER =====
   const totalPages = (doc as any).internal.pages.length - 1;
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
+    
+    // Separator line
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.3);
+    doc.line(15, pageHeight - 15, pageWidth - 15, pageHeight - 15);
+    
+    // Footer text
+    doc.setFontSize(7);
     doc.setTextColor(128, 128, 128);
     doc.text(
       `Page ${i} / ${totalPages}`,
@@ -217,7 +288,7 @@ export async function exportEvaluationToPDF(evaluation: EvaluationResult): Promi
       { align: 'center' }
     );
     doc.text(
-      '© 2026 3M Travel & Services - Tous droits réservés',
+      '© 2026 3M Travel & Services - Tous droits réservés | Confidentiel',
       pageWidth / 2,
       pageHeight - 5,
       { align: 'center' }
