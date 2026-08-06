@@ -227,12 +227,10 @@ function Router() {
       </Route>
       <Route path={"/admin/add-dossier"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAddDossier />
         </AdminGuard>
       </Route>
       <Route path={"/admin/document-verification"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminDocumentVerification />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluation"}>
@@ -242,12 +240,10 @@ function Router() {
       </Route>
       <Route path={"/admin/accompagnement"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminAccompagnement />
         </AdminGuard>
       </Route>
       <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminProcedures />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluations"}>
@@ -255,22 +251,7 @@ function Router() {
           <AdminEvaluations />
         </AdminGuard>
       </Route>
-      <Route path={"/admin/candidates"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/admins"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/users"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/users/:userId"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-        </AdminGuard>
-      </Route>
+
 
 
       <Route path="/hotels">
