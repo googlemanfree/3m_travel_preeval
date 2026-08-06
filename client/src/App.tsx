@@ -9,8 +9,6 @@ import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
 import Flights from "./pages/Flights";
 import Vols from "./pages/Vols";
-import ProceduresResources from "./pages/ProceduresResources";
-import ProcedureLuxembourg from "./pages/ProcedureLuxembourg";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -26,11 +24,6 @@ import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
 import Admin from "./pages/Admin";
 import AdminConsultationRequests from "./pages/AdminConsultationRequests";
-import VisaTypes from "./pages/VisaTypes";
-import VisaEtudes from "./pages/VisaEtudes";
-import Destinations from "./pages/Destinations";
-import Guide from "./pages/Guide";
-import MonDossier from "./pages/MonDossier";
 import Ressources from "./pages/Ressources";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
@@ -112,8 +105,6 @@ function Router() {
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/vols"} component={Vols} />
-      <Route path="/procedures" component={ProceduresResources} />
-      <Route path="/procedures/luxembourg" component={ProcedureLuxembourg} />
       <Route path={"/assurance"} component={Assurance} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
@@ -123,10 +114,6 @@ function Router() {
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
-      <Route path={"/guide"} component={Guide} />
-      <Route path={"/visa-types"} component={VisaTypes} />
-      <Route path={"/visa-etudes"} component={VisaEtudes} />
-      <Route path={"/destinations"} component={Destinations} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
           <Dashboard />
@@ -147,7 +134,6 @@ function Router() {
       {/* Suivi de dossier candidat */}
       <Route path={"/mon-dossier"}>
         <AuthGuard message="Vous devez créer un compte pour suivre votre dossier.">
-          <MonDossier />
         </AuthGuard>
       </Route>
 
