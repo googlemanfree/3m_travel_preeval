@@ -60,9 +60,6 @@ import AmbassadorProgram from "./pages/AmbassadorProgram";
 import CVGenerator from "./pages/CVGenerator";
 import CinetPayPayment from "./pages/CinetPayPayment";
 import EvisasPage from "./pages/Evisas";
-import EvisaApplicationForm from "./pages/EvisaApplicationForm";
-import MyFavorites from "./pages/MyFavorites";
-import EvisaRequestForm from "./pages/EvisaRequestForm";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -173,13 +170,10 @@ function Router() {
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasPage} />
-      <Route path={"/evisas/:countryCode"} component={EvisaApplicationForm} />
       <Route path={"/evisas/request"}>
-        <EvisaRequestForm />
       </Route>
       <Route path={"/mes-favoris"}>
         <AuthGuard message="Vous devez créer un compte pour accéder à vos favoris.">
-          <MyFavorites />
         </AuthGuard>
       </Route>
 
