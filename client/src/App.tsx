@@ -94,6 +94,7 @@ import CVGenerator from "./pages/CVGenerator";
 import CinetPayPayment from "./pages/CinetPayPayment";
 import EvisasPage from "./pages/Evisas";
 import EvisasEnhanced from "./pages/EvisasEnhanced";
+import EvisasV3 from "./pages/EvisasV3";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -219,6 +220,7 @@ function Router() {
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasPage} />
       <Route path={"/evisas-enhanced"} component={EvisasEnhanced} />
+      <Route path={"/evisas-v3"} component={EvisasV3} />
       <Route path={"/evisas/request"}>
         <EvisaRequestForm />
       </Route>
