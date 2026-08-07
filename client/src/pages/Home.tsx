@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Checkbox } from "@/components/ui/checkbox";
 
 import ServicesSection from "@/components/ServicesSection";
-import HeroSection from "@/components/HeroSection";
+import HeroSectionVIP from "@/components/HeroSectionVIP";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
 
@@ -536,9 +536,9 @@ export default function Home() {
       {/* ─── HEADER ─────────────────────────────────────────────────────── */}
 
       {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <HeroSection
+      <HeroSectionVIP
         onEvalClick={() => setShowEvalModal(true)}
-        logoUrl="/manus-storage/logo_3m_d0e23210.jpeg"
+        logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
