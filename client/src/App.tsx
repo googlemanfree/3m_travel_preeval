@@ -76,6 +76,9 @@ import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
 import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 import ClientSpaceEnhanced from "./pages/ClientSpaceEnhanced";
 import ClientSpaceEnhancedV2 from "./pages/ClientSpaceEnhancedV2";
+import DocumentUploadPage from "./pages/DocumentUploadPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentErrorPage from "./pages/PaymentErrorPage";
 import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 
 import AdminGuard from "./components/AdminGuard";
@@ -198,6 +201,7 @@ function Router() {
       <Route path={"/admin/evaluations"} component={AdminEvaluationValidation} />
       <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
       <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
+      <Route path={"/document-upload"} component={DocumentUploadPage} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
@@ -321,6 +325,9 @@ function Router() {
       <Route path="/hotels">
         <Hotels />
       </Route>
+
+      <Route path={"/payment/success"} component={PaymentSuccessPage} />
+      <Route path={"/payment/error"} component={PaymentErrorPage} />
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
