@@ -120,7 +120,11 @@ function Router() {
           <Evaluation />
         </AuthGuard>
       </Route>
-      <Route path={"/mon-espace"} component={EvaluationSpace} />
+      <Route path={"/mon-espace"}>
+        <AuthGuard message="Veuillez créer un compte ou vous connecter pour accéder à votre espace.">
+          <EvaluationSpace />
+        </AuthGuard>
+      </Route>
       <Route path={"/verify-email"} component={VerifyEmail} />
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
