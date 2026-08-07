@@ -177,10 +177,11 @@ function CandidateDetailModal({
   const { toast } = useToast();
   const [notifyClient, setNotifyClient] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<AdminStatus | "">("");
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
 
   const { data, isLoading } = trpc.admin.getCandidateDetails.useQuery(
-    { candidateId },
-    { enabled: !!candidateId }
+    { sessionToken, candidateId },
+    { enabled: !!candidateId && !!sessionToken }
   );
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
@@ -200,6 +201,7 @@ function CandidateDetailModal({
   const handleStatusUpdate = () => {
     if (!selectedStatus) return;
     updateStatusMutation.mutate({
+      sessionToken,
       candidateId,
       newStatus: selectedStatus as AdminStatus,
       notifyClient,
@@ -404,7 +406,7 @@ function ImportAgencyModal({
       toast({ title: "Champs requis", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
     }
-    importMutation.mutate(form);
+    importMutation.mutate({ sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "", ...form });
   };
 
   const setField = (key: keyof typeof form, value: string) =>
@@ -558,8 +560,8 @@ export default function AdminDashboard() {
   };
 
   const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
-    { search: search || undefined, status: statusFilter !== "ALL" ? statusFilter : undefined },
-    { enabled: true }
+    { sessionToken, search: search || undefined, status: statusFilter !== "ALL" ? statusFilter : undefined },
+    { enabled: !!sessionToken }
   );
 
   const logoutMutation = trpc.adminAuth.logout.useMutation({

@@ -22,13 +22,14 @@ import {
 import { useState } from "react";
 
 export default function AdminUserDetails() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [, params] = useRoute<{ userId: string }>("/admin/users/:userId");
   const userId = params?.userId ? parseInt(params.userId) : null;
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
 
   const { data: userDetails, isLoading } = trpc.admin.getUserDetailsWithDocuments.useQuery(
-    { userId: userId || 0 },
-    { enabled: !!userId }
+    { sessionToken, userId: userId || 0 },
+    { enabled: !!userId && !!sessionToken }
   );
 
   if (!userId) {

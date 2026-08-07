@@ -9,19 +9,21 @@ import { Globe, TrendingUp, Users } from 'lucide-react';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function AdminProcedures() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [selectedDestination, setSelectedDestination] = useState<string>('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
 
   // Récupérer les statistiques par destination
-  const { data: destData, isLoading: destLoading } = trpc.admin.getEvaluationsByDestination.useQuery();
+  const { data: destData, isLoading: destLoading } = trpc.admin.getEvaluationsByDestination.useQuery({ sessionToken }, { enabled: !!sessionToken });
 
   // Récupérer les évaluations par destination
   const { data: evalsData, isLoading: evalsLoading } = trpc.admin.getEvaluationsByDestinationName.useQuery(
     {
+      sessionToken,
       destination: selectedDestination,
       status: selectedStatus as any,
     },
-    { enabled: !!selectedDestination }
+    { enabled: !!selectedDestination && !!sessionToken }
   );
 
   const destinations = destData?.destinations || [];

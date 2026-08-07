@@ -3,7 +3,8 @@
  * Permet de gérer les 3 types d'admins : Évaluation, Accompagnement, Procédures
  */
 
-import { protectedProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
+import { requireValidAdminSession } from "./adminAuth";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
@@ -20,11 +21,10 @@ export const adminRouter = router({
   /**
    * Récupérer les rapports IA en attente de révision
    */
-  getEvaluationPendingReports: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getEvaluationPendingReports: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -62,11 +62,10 @@ export const adminRouter = router({
   /**
    * Récupérer les statistiques d'évaluation
    */
-  getEvaluationStats: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getEvaluationStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -103,16 +102,15 @@ export const adminRouter = router({
   /**
    * Avancer rapidement le statut d'une évaluation
    */
-  advanceEvaluationStatus: protectedProcedure
+  advanceEvaluationStatus: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       evaluationId: z.number().int(),
       newStatus: z.enum(["pending", "reviewed", "contacted", "closed"]),
       notes: z.string().optional(),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -151,11 +149,10 @@ export const adminRouter = router({
   /**
    * Récupérer les évaluations en attente de contact
    */
-  getEvaluationsAwaitingContact: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getEvaluationsAwaitingContact: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -185,15 +182,14 @@ export const adminRouter = router({
   /**
    * Ajouter des notes à une évaluation
    */
-  addEvaluationNotes: protectedProcedure
+  addEvaluationNotes: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       evaluationId: z.number().int(),
       notes: z.string().min(10),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -232,11 +228,10 @@ export const adminRouter = router({
   /**
    * Récupérer les statistiques par destination
    */
-  getEvaluationsByDestination: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getEvaluationsByDestination: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -278,15 +273,14 @@ export const adminRouter = router({
   /**
    * Récupérer les évaluations par destination
    */
-  getEvaluationsByDestinationName: protectedProcedure
+  getEvaluationsByDestinationName: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       destination: z.string(),
       status: z.enum(["pending", "reviewed", "contacted", "closed"]).optional(),
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -318,11 +312,10 @@ export const adminRouter = router({
    * Récupérer les statistiques du dashboard admin
    * Retourne : pending, reviewed, contacted, closed
    */
-  getDashboardStats: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getDashboardStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -352,11 +345,10 @@ export const adminRouter = router({
   /**
    * Récupérer les statistiques globales
    */
-  getGlobalStats: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getGlobalStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -398,12 +390,10 @@ export const adminRouter = router({
   /**
    * Valider un document
    */
-  approveDocument: protectedProcedure
-    .input(z.object({ documentId: z.number(), comment: z.string().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  approveDocument: publicProcedure
+    .input(z.object({ sessionToken: z.string(), documentId: z.number(), comment: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -414,7 +404,7 @@ export const adminRouter = router({
           .set({
             verificationStatus: "approved",
             verificationComment: input.comment || null,
-            verifiedByAdmin: ctx.user.email,
+            verifiedByAdmin: admin.email,
             verifiedAt: new Date(),
           })
           .where(eq(clientDocuments.id, input.documentId));
@@ -432,12 +422,10 @@ export const adminRouter = router({
   /**
    * Rejeter un document
    */
-  rejectDocument: protectedProcedure
-    .input(z.object({ documentId: z.number(), comment: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  rejectDocument: publicProcedure
+    .input(z.object({ sessionToken: z.string(), documentId: z.number(), comment: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -448,7 +436,7 @@ export const adminRouter = router({
           .set({
             verificationStatus: "rejected",
             verificationComment: input.comment,
-            verifiedByAdmin: ctx.user.email,
+            verifiedByAdmin: admin.email,
             verifiedAt: new Date(),
           })
           .where(eq(clientDocuments.id, input.documentId));
@@ -466,12 +454,10 @@ export const adminRouter = router({
   /**
    * Récupérer les détails complets d'un utilisateur avec tous ses dossiers et documents
    */
-  getUserDetailsWithDocuments: protectedProcedure
-    .input(z.object({ userId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getUserDetailsWithDocuments: publicProcedure
+    .input(z.object({ sessionToken: z.string(), userId: z.number() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -511,17 +497,16 @@ export const adminRouter = router({
   /**
    * Récupérer la liste des utilisateurs avec leurs dossiers
    */
-  getAllUsersWithApplications: protectedProcedure
+  getAllUsersWithApplications: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       search: z.string().optional(),
       status: z.string().optional(),
       limit: z.number().default(50),
       offset: z.number().default(0),
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -568,11 +553,10 @@ export const adminRouter = router({
   /**
    * Récupérer les bilans en attente de validation
    */
-  getPendingBilans: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getPendingBilans: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -598,12 +582,10 @@ export const adminRouter = router({
   /**
    * Valider et envoyer un bilan au candidat
    */
-  validateAndSendBilan: protectedProcedure
-    .input(z.object({ bilanId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  validateAndSendBilan: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -620,7 +602,7 @@ export const adminRouter = router({
           .update(bilans)
           .set({
             status: "sent",
-            validatedBy: ctx.user.name || "Admin",
+            validatedBy: admin.fullName || "Admin",
             validatedAt: new Date(),
             sentAt: new Date(),
           })
@@ -639,12 +621,10 @@ export const adminRouter = router({
   /**
    * Rejeter un bilan
    */
-  rejectBilan: protectedProcedure
-    .input(z.object({ bilanId: z.number(), reason: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  rejectBilan: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number(), reason: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -655,7 +635,7 @@ export const adminRouter = router({
           .set({
             status: "rejected",
             adminNotes: input.reason,
-            validatedBy: ctx.user.name || "Admin",
+            validatedBy: admin.fullName || "Admin",
             validatedAt: new Date(),
           })
           .where(eq(bilans.id, input.bilanId));
@@ -677,11 +657,10 @@ export const adminRouter = router({
   /**
    * Récupérer tous les dossiers
    */
-  getAllApplications: protectedProcedure
-    .query(async ({ ctx }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  getAllApplications: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -706,12 +685,10 @@ export const adminRouter = router({
   /**
    * Mettre à jour le statut d'un dossier
    */
-  updateApplicationStatus: protectedProcedure
-    .input(z.object({ applicationId: z.number(), status: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+  updateApplicationStatus: publicProcedure
+    .input(z.object({ sessionToken: z.string(), applicationId: z.number(), status: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -722,7 +699,7 @@ export const adminRouter = router({
           .set({
             dossierStatus: input.status as any,
             lastStatusUpdateAt: new Date(),
-            lastStatusUpdatedBy: ctx.user.name || "Admin",
+            lastStatusUpdatedBy: admin.fullName || "Admin",
           })
           .where(eq(applications.id, input.applicationId));
 
@@ -739,10 +716,12 @@ export const adminRouter = router({
   /**
    * Modifier les donnees d'une application (par l'admin)
    */
-  updateApplicationData: protectedProcedure
+  updateApplicationData: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       applicationId: z.number(),
       data: z.object({
+      sessionToken: z.string(),
         destinationCountry: z.string().optional(),
         projectType: z.string().optional(),
         studyLevel: z.string().optional(),
@@ -750,10 +729,8 @@ export const adminRouter = router({
         adminNotes: z.string().optional(),
       }),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -766,7 +743,7 @@ export const adminRouter = router({
         if (input.data.fieldOfStudy) updateData.fieldOfStudy = input.data.fieldOfStudy;
         if (input.data.adminNotes) updateData.adminNotes = input.data.adminNotes;
         updateData.lastStatusUpdateAt = new Date();
-        updateData.lastStatusUpdatedBy = ctx.user.name || "Admin";
+        updateData.lastStatusUpdatedBy = admin.fullName || "Admin";
 
         await db
           .update(applications)
@@ -786,12 +763,10 @@ export const adminRouter = router({
   /**
    * Recuperer les details complets d'une application
    */
-  getApplicationDetails: protectedProcedure
-    .input(z.object({ applicationId: z.number() }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
-      }
+  getApplicationDetails: publicProcedure
+    .input(z.object({ sessionToken: z.string(), applicationId: z.number() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -839,12 +814,10 @@ export const adminRouter = router({
   /**
    * Publier le bilan vers l'espace personnel du client
    */
-  publishBilanToClient: protectedProcedure
-    .input(z.object({ bilanId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Acces reserve aux administrateurs" });
-      }
+  publishBilanToClient: publicProcedure
+    .input(z.object({ sessionToken: z.string(), bilanId: z.number() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -890,17 +863,16 @@ export const adminRouter = router({
    * Lister tous les candidats pour le dashboard admin
    * Combine les dossiers en ligne (applications) + dossiers agence (agencyDossiers)
    */
-  listCandidates: protectedProcedure
+  listCandidates: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       search: z.string().optional(),
       status: z.string().optional(),
       limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -1029,16 +1001,15 @@ export const adminRouter = router({
   /**
    * Mettre à jour le statut d'un candidat et notifier le client
    */
-  updateCandidateStatus: protectedProcedure
+  updateCandidateStatus: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       candidateId: z.string(), // Format: "online_123" ou "agency_456"
       newStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]),
       notifyClient: z.boolean().default(true),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -1077,7 +1048,7 @@ export const adminRouter = router({
             .set({
               dossierStatus: internalStatusMap[input.newStatus] as any,
               lastStatusUpdateAt: new Date(),
-              lastStatusUpdatedBy: ctx.user.name || "Admin",
+              lastStatusUpdatedBy: admin.fullName || "Admin",
             })
             .where(eq(applications.id, id));
 
@@ -1101,7 +1072,7 @@ export const adminRouter = router({
             .set({
               status: internalStatusMap[input.newStatus] as any,
               lastStatusChangeAt: new Date(),
-              lastStatusChangeBy: ctx.user.name || "Admin",
+              lastStatusChangeBy: admin.fullName || "Admin",
             })
             .where(eq(agencyDossiers.id, id));
 
@@ -1165,8 +1136,9 @@ export const adminRouter = router({
   /**
    * Importer un dossier physique d'agence
    */
-  importAgencyDossier: protectedProcedure
+  importAgencyDossier: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       fullName: z.string().min(2),
       email: z.string().email(),
       whatsapp: z.string().min(5),
@@ -1175,10 +1147,8 @@ export const adminRouter = router({
       projectType: z.string().min(2),
       initialStatus: z.enum(["PENDING_48H", "PUBLISHED", "DOCUMENTS_CHECK", "SUBMITTED", "APPROVED"]).default("DOCUMENTS_CHECK"),
     }))
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -1200,9 +1170,9 @@ export const adminRouter = router({
           destination: input.destinationCountry,
           visaType: input.projectType,
           status: internalStatusMap[input.initialStatus] as any,
-          createdByAdmin: ctx.user.email || "admin",
+          createdByAdmin: admin.email || "admin",
           source: "manual_admin" as any,
-          adminNotes: `Dossier physique importé par ${ctx.user.name || "Admin"} le ${new Date().toLocaleDateString("fr-FR")}`,
+          adminNotes: `Dossier physique importé par ${admin.fullName || "Admin"} le ${new Date().toLocaleDateString("fr-FR")}`,
         });
 
         const dossierId = (result as any)[0]?.insertId || 0;
@@ -1260,14 +1230,13 @@ export const adminRouter = router({
   /**
    * Récupérer les détails complets d'un candidat pour la fiche admin
    */
-  getCandidateDetails: protectedProcedure
+  getCandidateDetails: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       candidateId: z.string(), // Format: "online_123" ou "agency_456"
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -1385,17 +1354,16 @@ export const adminRouter = router({
   /**
    * Lister les documents avec filtrage et recherche
    */
-  listDocuments: protectedProcedure
+  listDocuments: publicProcedure
     .input(z.object({
+      sessionToken: z.string(),
       search: z.string().optional(),
       verificationStatus: z.enum(["pending", "approved", "rejected"]).optional(),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
     }))
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -1461,18 +1429,17 @@ export const adminRouter = router({
   /**
    * Récupérer la prévisualisation d'un modèle d'email
    */
-  getEmailTemplatePreview: protectedProcedure
+  getEmailTemplatePreview: publicProcedure
     .input(
       z.object({
+      sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
         testEmail: z.string().email("Email invalide"),
         testName: z.string().min(2, "Nom trop court"),
       })
     )
-    .query(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const { templateId, testEmail, testName } = input;
 
@@ -1524,18 +1491,17 @@ export const adminRouter = router({
   /**
    * Envoyer un email de test
    */
-  sendTestEmail: protectedProcedure
+  sendTestEmail: publicProcedure
     .input(
       z.object({
+      sessionToken: z.string(),
         templateId: z.enum(["verification", "otp", "password-reset", "welcome", "dossier-confirmation"]),
         email: z.string().email("Email invalide"),
         testName: z.string().min(2, "Nom trop court"),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (ctx.user.role !== "admin") {
-        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
-      }
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
 
       const { templateId, email, testName } = input;
 

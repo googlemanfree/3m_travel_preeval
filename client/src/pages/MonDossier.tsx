@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import Footer from "@/components/Footer";
 import { DossierProgressBar } from "@/components/DossierProgressBar";
+import SignatureCanvas from "@/components/SignatureCanvas";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -148,6 +149,8 @@ export default function MonDossier() {
   const [credentials, setCredentials] = useState<{ dossierNumber: string; email: string } | null>(null);
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [signatureName, setSignatureName] = useState("");
 
   // Query de suivi (activée seulement après soumission)
   const { data: dossier, isLoading, error, refetch } = trpc.application.getDossierStatus.useQuery(
@@ -168,6 +171,33 @@ export default function MonDossier() {
       toast.error(err.message);
     },
   });
+
+  const signMutation = trpc.candidate.signAgreementProtocol.useMutation({
+    onSuccess: () => {
+      toast.success("Protocole d'accord signé avec succès !");
+      refetch();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Erreur lors de la signature.");
+    },
+  });
+
+  const handleSign = () => {
+    if (!signatureName.trim()) {
+      toast.error("Veuillez indiquer votre nom complet pour signer.");
+      return;
+    }
+    if (!signatureDataUrl) {
+      toast.error("Veuillez tracer votre signature dans la zone prévue.");
+      return;
+    }
+    if (!dossier?.dossierNumber) return;
+    signMutation.mutate({
+      dossierNumber: dossier.dossierNumber,
+      signatureName: signatureName.trim(),
+      signatureDataUrl,
+    });
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -508,13 +538,41 @@ export default function MonDossier() {
                 </CardHeader>
                 <CardContent>
                   {dossier.dossierStatus === "nouveau" && !dossier.agreementSigned && (
-                    <div className="flex items-start gap-3">
-                      <Shield className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-gray-900">Signez votre protocole d'accord</p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Vous devez signer le protocole d'accord pour valider votre engagement et procéder au paiement.
-                        </p>
+                    <div>
+                      <div className="flex items-start gap-3 mb-4">
+                        <Shield className="w-8 h-8 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-gray-900">Signez votre protocole d'accord</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Vous devez signer le protocole d'accord pour valider votre engagement et procéder au paiement.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-3 bg-white rounded-lg p-4 border border-blue-100">
+                        <div>
+                          <Label htmlFor="signature-name">Nom complet (vaut confirmation d'identité) *</Label>
+                          <Input
+                            id="signature-name"
+                            value={signatureName}
+                            onChange={(e) => setSignatureName(e.target.value)}
+                            placeholder="Votre nom complet"
+                            className="mt-1"
+                            disabled={signMutation.isPending}
+                          />
+                        </div>
+                        <div>
+                          <Label>Signature *</Label>
+                          <div className="mt-1">
+                            <SignatureCanvas onSignatureChange={setSignatureDataUrl} />
+                          </div>
+                        </div>
+                        <Button
+                          onClick={handleSign}
+                          disabled={signMutation.isPending || !signatureName.trim() || !signatureDataUrl}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          {signMutation.isPending ? "Signature en cours..." : "✍️ Signer le protocole d'accord"}
+                        </Button>
                       </div>
                     </div>
                   )}

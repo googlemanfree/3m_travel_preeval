@@ -635,6 +635,7 @@ export const candidateRouter = router({
       z.object({
         dossierNumber: z.string(),
         signatureName: z.string().min(2, "Le nom est requis"),
+        signatureDataUrl: z.string().optional(), // signature dessinée (PNG en base64), optionnelle
         ipAddress: z.string().optional(),
       })
     )
@@ -657,6 +658,20 @@ export const candidateRouter = router({
 
       if (!app || app.length === 0) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Dossier non trouvé" });
+      }
+
+      // Sauvegarder l'image de la signature dessinée, si fournie
+      let signatureImageUrl: string | undefined;
+      if (input.signatureDataUrl) {
+        try {
+          const { storagePut } = await import("../storage");
+          const base64Data = input.signatureDataUrl.includes(",") ? input.signatureDataUrl.split(",")[1] : input.signatureDataUrl;
+          const buffer = Buffer.from(base64Data, "base64");
+          const uploadResult = await storagePut(`signatures/${input.dossierNumber}-${Date.now()}.png`, buffer, "image/png");
+          signatureImageUrl = uploadResult.url;
+        } catch (err) {
+          console.warn("Signature image upload failed:", err);
+        }
       }
 
       // Mettre à jour le protocole d'accord

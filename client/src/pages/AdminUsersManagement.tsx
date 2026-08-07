@@ -48,16 +48,18 @@ function ViewUserButton({ userId }: { userId: number }) {
 }
 
 export default function AdminUsersManagement() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 20;
 
   // Récupérer les utilisateurs
   const { data: usersData, isLoading } = trpc.admin.getAllUsersWithApplications.useQuery({
+    sessionToken,
     search: searchTerm,
     limit: itemsPerPage,
     offset: currentPage * itemsPerPage,
-  });
+  }, { enabled: !!sessionToken });
 
   const users = usersData?.users || [];
   const totalUsers = usersData?.total || 0;

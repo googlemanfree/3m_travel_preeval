@@ -192,6 +192,7 @@ export default defineConfig({
       "localhost",
       "127.0.0.1",
       "3000-i49bdmlqi41qd5g2vwvj6-e9a4173d.us2.manus.computer",
+      "3000-iw2chmo7w098mi2i1popm-cb23c630.us2.manus.computer",
     ],
     fs: {
       strict: true,
@@ -199,7 +200,7 @@ export default defineConfig({
     },
     hmr: {
       protocol: "wss",
-      host: typeof window !== 'undefined' ? window.location.hostname : "localhost",
+      host: "3000-iw2chmo7w098mi2i1popm-cb23c630.us2.manus.computer",
       port: 443,
     },
   },

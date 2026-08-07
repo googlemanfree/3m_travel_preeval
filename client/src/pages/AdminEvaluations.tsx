@@ -1,4 +1,3 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -15,27 +14,29 @@ import Footer from "@/components/Footer";
 import { toast } from "sonner";
 
 export default function AdminEvaluations() {
-  const { user, loading: authLoading } = useAuth();
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // Vérifier que l'utilisateur est admin
+  // Vérifier qu'une session admin existe
   useEffect(() => {
-    if (!authLoading && (!user || (user as any)?.role !== "admin")) {
+    if (!sessionToken) {
       setLocation("/admin/login");
     }
-  }, [user, authLoading, setLocation]);
+  }, [sessionToken, setLocation]);
 
   // Récupérer les bilans en attente
-  const { data: bilansData, isLoading } = trpc.admin.getPendingBilans.useQuery(undefined, {
-    enabled: !!user,
-  });
+  const { data: bilansData, isLoading } = trpc.admin.getPendingBilans.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
 
   // Récupérer toutes les applications
-  const { data: applicationsData } = trpc.admin.getAllApplications.useQuery(undefined, {
-    enabled: !!user,
-  });
+  const { data: applicationsData } = trpc.admin.getAllApplications.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
 
   // Mutation pour publier le bilan
   const publishBilanMutation = trpc.admin.publishBilanToClient.useMutation({
@@ -51,11 +52,11 @@ export default function AdminEvaluations() {
 
   const handlePublishBilan = (bilanId: number) => {
     if (confirm("Êtes-vous sûr de vouloir publier ce bilan?")) {
-      publishBilanMutation.mutate({ bilanId });
+      publishBilanMutation.mutate({ sessionToken, bilanId });
     }
   };
 
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center">
@@ -66,7 +67,7 @@ export default function AdminEvaluations() {
     );
   }
 
-  if (!user) {
+  if (!sessionToken) {
     return null;
   }
 

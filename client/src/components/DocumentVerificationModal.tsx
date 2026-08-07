@@ -30,6 +30,7 @@ export function DocumentVerificationModal({
     setIsLoading(true);
     try {
       await approveMutation.mutateAsync({
+        sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "",
         documentId: document.id,
         comment,
       });
@@ -52,6 +53,7 @@ export function DocumentVerificationModal({
     setIsLoading(false);
     try {
       await rejectMutation.mutateAsync({
+        sessionToken: typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "",
         documentId: document.id,
         comment,
       });

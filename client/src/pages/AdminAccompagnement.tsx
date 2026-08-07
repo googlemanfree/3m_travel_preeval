@@ -8,15 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, CheckCircle2, MessageSquare, Zap } from 'lucide-react';
 
 export default function AdminAccompagnement() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [selectedEval, setSelectedEval] = useState<any>(null);
   const [newStatus, setNewStatus] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
 
   // Récupérer les évaluations en attente de contact
-  const { data: evalsData, isLoading: evalsLoading, refetch: refetchEvals } = trpc.admin.getEvaluationsAwaitingContact.useQuery();
+  const { data: evalsData, isLoading: evalsLoading, refetch: refetchEvals } = trpc.admin.getEvaluationsAwaitingContact.useQuery({ sessionToken }, { enabled: !!sessionToken });
 
   // Récupérer les statistiques globales
-  const { data: statsData, isLoading: statsLoading } = trpc.admin.getGlobalStats.useQuery();
+  const { data: statsData, isLoading: statsLoading } = trpc.admin.getGlobalStats.useQuery({ sessionToken }, { enabled: !!sessionToken });
 
   // Mutation pour avancer le statut
   const advanceStatusMutation = trpc.admin.advanceEvaluationStatus.useMutation({
@@ -221,6 +222,7 @@ export default function AdminAccompagnement() {
                     onClick={() => {
                       if (newStatus) {
                         advanceStatusMutation.mutate({
+                          sessionToken,
                           evaluationId: selectedEval.id,
                           newStatus: newStatus as any,
                           notes: notes || undefined,

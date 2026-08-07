@@ -24,6 +24,7 @@ interface Document {
 }
 
 export function AdminDocumentsManagement() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
@@ -34,6 +35,7 @@ export function AdminDocumentsManagement() {
   // Récupérer les documents via tRPC
   const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
     { 
+      sessionToken,
       search: searchTerm, 
       verificationStatus: filterStatus === "all" ? undefined : (filterStatus as any),
       limit: 100,
