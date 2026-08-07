@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { CheckCircle2, ChevronRight, ChevronLeft, Zap } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { procedures107Complete } from '@/data/procedures107Complete';
 
 const STEPS = [
   { id: 1, title: 'Destination', icon: '🌍' },
@@ -187,24 +188,24 @@ export default function EvaluationRapideEnhanced() {
                 Choisissez le pays où vous aimeriez vous installer ou étudier.
               </p>
               <div className="space-y-3">
-                {['Canada', 'Luxembourg', 'Pologne', 'Allemagne', 'Autre'].map(
-                  (dest) => (
+                {procedures107Complete.map(
+                  (country) => (
                     <label
-                      key={dest}
+                      key={country.id}
                       className="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
                     >
                       <input
                         type="radio"
                         name="destination"
-                        value={dest}
-                        checked={formData.destination === dest}
+                        value={country.name}
+                        checked={formData.destination === country.name}
                         onChange={(e) =>
                           handleInputChange('destination', e.target.value)
                         }
                         className="w-5 h-5"
                       />
                       <span className="ml-3 font-semibold text-gray-900">
-                        {dest}
+                        {country.name}
                       </span>
                     </label>
                   )
