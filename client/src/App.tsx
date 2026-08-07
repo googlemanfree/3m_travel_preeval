@@ -95,6 +95,8 @@ import CinetPayPayment from "./pages/CinetPayPayment";
 import EvisasPage from "./pages/Evisas";
 import EvisasEnhanced from "./pages/EvisasEnhanced";
 import EvisasV3 from "./pages/EvisasV3";
+import PaymentMethodSelection from "./pages/PaymentMethodSelection";
+import PaymentAgencyConfirmation from "./pages/PaymentAgencyConfirmation";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -122,6 +124,10 @@ function Router() {
       <Route path={"/complete-profile"} component={CompleteProfile} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
+      <Route path={"/payment/method-selection"} component={PaymentMethodSelection} />
+      <Route path={"/payment/agency-confirmation"} component={PaymentAgencyConfirmation} />
+      <Route path={"/payment/success"} component={PaymentSuccessPage} />
+      <Route path={"/payment/error"} component={PaymentErrorPage} />
       <Route path={"/payment/:dossierNumber"} component={CinetPayPayment} />
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
@@ -332,8 +338,7 @@ function Router() {
         <Hotels />
       </Route>
 
-      <Route path={"/payment/success"} component={PaymentSuccessPage} />
-      <Route path={"/payment/error"} component={PaymentErrorPage} />
+
 
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
