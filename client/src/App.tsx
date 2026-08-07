@@ -98,6 +98,7 @@ import EvisasV3 from "./pages/EvisasV3";
 import PaymentMethodSelection from "./pages/PaymentMethodSelection";
 import PaymentAgencyConfirmation from "./pages/PaymentAgencyConfirmation";
 import AdminPaymentValidation from "./pages/AdminPaymentValidation";
+import AdminCustomerReviews from "./pages/AdminCustomerReviews";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -321,6 +322,11 @@ function Router() {
       <Route path={"/admin/payment-validation"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminPaymentValidation />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/customer-reviews"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminCustomerReviews />
         </AdminGuard>
       </Route>
       <Route path={"/admin/users/:userId"}>

@@ -49,6 +49,7 @@ import { aiEvaluationManagementRouter } from "./routers/aiEvaluationManagement";
 import { studyVisaEvaluationRouter } from "./routers/studyVisaEvaluation";
 import { proceduresRouter } from "./routers/proceduresRouter";
 import { paymentValidationRouter } from "./routers/paymentValidation";
+import { customerReviewRouter } from "./routers/customerReview";
 import { cvAnalysisRouter } from "./routers/cvAnalysis";
 import { aiCopilotRouter } from "./routers/aiCopilot";
 
@@ -100,6 +101,7 @@ export const appRouter = router({
   monitoring: monitoringRouter,
   payment: paymentRouter,
   paymentValidation: paymentValidationRouter,
+  customerReview: customerReviewRouter,
   cinetpayPayment: cinetpayPaymentRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
