@@ -75,7 +75,8 @@ import AdminDossierManagement from "./pages/AdminDossierManagement";
 import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
 import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 import ClientSpaceEnhanced from "./pages/ClientSpaceEnhanced";
-import AiCopilotWidget from "./components/AiCopilotWidget";
+import ClientSpaceEnhancedV2 from "./pages/ClientSpaceEnhancedV2";
+import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -196,6 +197,7 @@ function Router() {
       <Route path={"/evaluation-primaire"} component={PrimaryEvaluationForm} />
       <Route path={"/admin/evaluations"} component={AdminEvaluationValidation} />
       <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
+      <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
@@ -365,7 +367,7 @@ function App() {
               {/* Menu d'actions flottantes unifié */}
               <FloatingActionMenu />
               {/* Copilote IA flottant */}
-              <AiCopilotWidget />
+              <AiCopilotWidgetEnhanced />
             </>
           )}
         </TooltipProvider>
