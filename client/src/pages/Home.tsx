@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ServicesSection from "@/components/ServicesSection";
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhanced";
+import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
 
@@ -1156,6 +1157,9 @@ export default function Home() {
       </section>
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
       <TestimonialsSectionEnhanced />
+
+      {/* ─── AVIS CLIENTS APPROUVÉS ─────────────────────────────────────────────────── */}
+      <ApprovedReviewsSection />
 
       {/* --- TARIFS & GARANTIES --- */}
       <PricingSection />

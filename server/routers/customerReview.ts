@@ -106,10 +106,17 @@ export const customerReviewRouter = router({
 
       pendingReviews.push(newReview);
 
-      // Envoyer une notification à l'équipe (à implémenter avec Resend)
-      console.log(
-        `[REVIEW] Nouvel avis en attente de validation: ${input.fullName} (${input.rating}/5)`
-      );
+      // Envoyer une notification à l'équipe via Resend
+      try {
+        // À implémenter avec Resend
+        console.log(
+          `[REVIEW] Nouvel avis en attente de validation: ${input.fullName} (${input.rating}/5) - Email: ${input.email}`
+        );
+        // Vous pouvez ajouter l'envoi d'email Resend ici
+        // await sendEmailToAdmin(newReview);
+      } catch (error) {
+        console.error('[REVIEW] Erreur lors de l\'envoi de la notification:', error);
+      }
 
       return {
         success: true,

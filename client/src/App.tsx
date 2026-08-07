@@ -99,6 +99,7 @@ import PaymentMethodSelection from "./pages/PaymentMethodSelection";
 import PaymentAgencyConfirmation from "./pages/PaymentAgencyConfirmation";
 import AdminPaymentValidation from "./pages/AdminPaymentValidation";
 import AdminCustomerReviews from "./pages/AdminCustomerReviews";
+import SubmitReview from "./pages/SubmitReview";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
@@ -328,6 +329,9 @@ function Router() {
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminCustomerReviews />
         </AdminGuard>
+      </Route>
+      <Route path={"/submit-review"}>
+        <SubmitReview />
       </Route>
       <Route path={"/admin/users/:userId"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
