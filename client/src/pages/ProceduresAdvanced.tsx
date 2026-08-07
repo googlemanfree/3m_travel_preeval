@@ -514,21 +514,33 @@ export default function ProceduresAdvanced() {
                         ))}
                       </div>
 
-                      {/* Download Button */}
-                      <a
-                        href={country.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="w-full"
-                      >
-                        <Button
-                          className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                      {/* Buttons Container */}
+                      <div className="flex gap-3">
+                        {/* Launch Procedure Button */}
+                        <a href="/evaluation-primaire" className="flex-1">
+                          <Button
+                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                          >
+                            🚀 Lancer ma Procédure
+                          </Button>
+                        </a>
+
+                        {/* Download Button */}
+                        <a
+                          href={country.pdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1"
                         >
-                          <Download className="w-4 h-4" />
-                          Télécharger le PDF
-                        </Button>
-                      </a>
+                          <Button
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                          >
+                            <Download className="w-4 h-4" />
+                            PDF
+                          </Button>
+                        </a>
+                      </div>
                     </div>
 
                     {/* Expanded Content */}
