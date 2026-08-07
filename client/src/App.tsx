@@ -70,6 +70,7 @@ import ProceduresComplete from "./pages/ProceduresComplete";
 import ProceduresEnhanced from "./pages/ProceduresEnhanced";
 import ProceduresAdvanced from "./pages/ProceduresAdvanced";
 import AIEvaluation from "./pages/AIEvaluation";
+import EvaluationRapideEnhanced from "./pages/EvaluationRapideEnhanced";
 import ClientSpace from "./pages/ClientSpace";
 import AdminDossierManagement from "./pages/AdminDossierManagement";
 import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
@@ -194,7 +195,8 @@ function Router() {
       <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />
       <Route path={"/procedures-advanced"} component={ProceduresAdvanced} />
-      <Route path={"/evaluation-ia"} component={AIEvaluation} />
+      <Route path={"/evaluation-rapide"} component={AIEvaluation} />
+      <Route path={"/evaluation-rapide-enhanced"} component={EvaluationRapideEnhanced} />
       <Route path={"/mon-espace"} component={ClientSpace} />
       <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
       <Route path={"/evaluation-primaire"} component={PrimaryEvaluationForm} />
