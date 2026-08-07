@@ -48,6 +48,7 @@ import { consultationRequestRouter } from "./routers/consultationRequest";
 import { aiEvaluationManagementRouter } from "./routers/aiEvaluationManagement";
 import { studyVisaEvaluationRouter } from "./routers/studyVisaEvaluation";
 import { proceduresRouter } from "./routers/proceduresRouter";
+import { paymentValidationRouter } from "./routers/paymentValidation";
 import { cvAnalysisRouter } from "./routers/cvAnalysis";
 import { aiCopilotRouter } from "./routers/aiCopilot";
 
@@ -98,6 +99,7 @@ export const appRouter = router({
   documentSubmission: documentSubmissionRouter,
   monitoring: monitoringRouter,
   payment: paymentRouter,
+  paymentValidation: paymentValidationRouter,
   cinetpayPayment: cinetpayPaymentRouter,
   notification: notificationRouter,
   adminDashboardStats: adminDashboardStatsRouter,
