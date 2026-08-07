@@ -9,7 +9,7 @@ const menuItems = [
   { href: '/vols', label: 'Vols', icon: '✈️' },
   { href: '/procedures', label: 'Procédures', icon: '📖' },
   { href: '/ressources', label: 'Ressources', icon: '🌐' },
-  { href: '/evaluation-ia', label: 'Évaluation Rapide', icon: '⚡' },
+  { href: '/evaluation-rapide-enhanced', label: 'Évaluation Rapide', icon: '⚡' },
   { href: '/mon-espace', label: 'Suivi de dossier', icon: '📂' },
   { href: '/evisas', label: 'E-Visa', icon: '📱', highlight: true },
 ];
