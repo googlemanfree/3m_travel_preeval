@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { protectedProcedure, publicProcedure } from './../../server/_core/trpc';
 import { TRPCError } from '@trpc/server';
+import { sendEvaluationEmail } from '../services/emailTemplates';
+import { createEvaluationAlert, broadcastAlert } from '../services/adminAlerts';
 
 // Pricing formulas
 export const PRICING_FORMULAS = {
@@ -161,7 +163,7 @@ export const evaluationEngineRouter = {
         else if (score < 60) status = 'CONDITIONAL';
         else if (score >= 80) status = 'HIGHLY_ELIGIBLE';
 
-        return {
+        const result = {
           folderId: `3M-EVAL-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
           score,
           status,
@@ -184,6 +186,42 @@ export const evaluationEngineRouter = {
             'Soumettre les documents complets',
           ],
         };
+
+        // Send VIP evaluation email
+        if (ctx.user?.email) {
+          const emailData = {
+            fullName: ctx.user.name || 'Candidat',
+            email: ctx.user.email,
+            destination: input.destination,
+            score,
+            status,
+            strategy: countryRules.strategy,
+            strategyDescription: countryRules.description,
+            requiredDocuments: countryRules.documents,
+            folderId: result.folderId,
+            pricingFormulas: result.pricingFormulas,
+            recommendation: result.recommendation,
+            nextSteps: result.nextSteps,
+          };
+
+          const resendApiKey = process.env.RESEND_API_KEY || '';
+          if (resendApiKey) {
+            await sendEvaluationEmail(emailData, resendApiKey).catch(err =>
+              console.error('[Evaluation] Email error:', err)
+            );
+          }
+        }
+
+        // Create and broadcast admin alert
+        const alert = createEvaluationAlert(
+          ctx.user?.name || 'Candidat',
+          input.destination,
+          result.folderId,
+          score
+        );
+        broadcastAlert(alert);
+
+        return result;
       } catch (error) {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
