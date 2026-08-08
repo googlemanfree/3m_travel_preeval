@@ -18,42 +18,31 @@ export async function generateDossierNumber(): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `3M-${year}-`;
 
-  // Récupère le dernier numéro de dossier de l'année actuelle
-  const lastDossier = await db
-    .select({ dossierNumber: applications.dossierNumber })
-    .from(applications)
-    .where(sql`${applications.dossierNumber} LIKE ${prefix + "%"}`)
-    .orderBy(sql`${applications.dossierNumber} DESC`)
-    .limit(1);
-
+  // Trouver le prochain numéro disponible en boucle
   let sequence = 1;
+  let maxAttempts = 9999;
+  let dossierNumber = "";
 
-  if (lastDossier.length > 0) {
-    const lastNumber = lastDossier[0].dossierNumber;
-    const lastSequence = parseInt(lastNumber.split("-")[2], 10);
-    sequence = lastSequence + 1;
+  while (maxAttempts > 0) {
+    dossierNumber = `${prefix}${sequence.toString().padStart(4, "0")}`;
 
-    // Vérifier que la séquence ne dépasse pas 9999
-    if (sequence > 9999) {
-      throw new Error("Séquence de dossier dépassée pour l'année actuelle");
+    // Vérifier si ce numéro existe déjà
+    const existing = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(sql`${applications.dossierNumber} = ${dossierNumber}`)
+      .limit(1);
+
+    if (existing.length === 0) {
+      // Numéro disponible trouvé
+      return dossierNumber;
     }
+
+    sequence++;
+    maxAttempts--;
   }
 
-  const dossierNumber = `${prefix}${sequence.toString().padStart(4, "0")}`;
-
-  // Vérifier l'unicité
-  const existing = await db
-    .select({ id: applications.id })
-    .from(applications)
-    .where(sql`${applications.dossierNumber} = ${dossierNumber}`)
-    .limit(1);
-
-  if (existing.length > 0) {
-    // Si le numéro existe déjà, réessayer avec le suivant
-    return generateDossierNumber();
-  }
-
-  return dossierNumber;
+  throw new Error("Impossible de générer un numéro de dossier unique (capacité annuelle atteinte)");
 }
 
 /**
