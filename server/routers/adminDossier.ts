@@ -1,5 +1,4 @@
 import { protectedProcedure, router } from '../_core/trpc';
-import { generateDossierNumber } from "../services/dossierNumberService";
 import { z } from 'zod';
 import { getDb } from '../db';
 import { applications, candidates } from '../../drizzle/schema';
@@ -8,6 +7,18 @@ import { sendDossierConfirmationEmail } from '../emailService';
 import crypto from 'crypto';
 
 // Générer un numéro de dossier unique au format #3M-AAAA-XXXX
+async function generateDossierNumber(): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  
+  const year = new Date().getFullYear();
+  const count = await (db as any).query.applications.findMany();
+  const yearCount = count.filter((app: any) => new Date(app.createdAt).getFullYear() === year).length;
+  
+  const sequence = String(yearCount + 1).padStart(4, '0');
+  return `#3M-${year}-${sequence}`;
+}
+
 export const adminDossierRouter = router({
   createManualDossier: protectedProcedure
     .input(
@@ -32,13 +43,16 @@ export const adminDossierRouter = router({
             error: 'Accès refusé - Admin requis',
           };
         }
+
         // Générer le numéro de dossier
         const dossierNumber = await generateDossierNumber();
         const accessCode = crypto.randomBytes(6).toString('hex').toUpperCase();
+
         // Vérifier si le candidat existe
         let candidate = await (db as any).query.candidates.findFirst({
           where: eq(candidates.email, input.email),
         });
+
         // Créer le candidat s'il n'existe pas
         if (!candidate) {
           // Générer un mot de passe temporaire
@@ -48,10 +62,13 @@ export const adminDossierRouter = router({
           await db.execute(
             sql`INSERT INTO candidates (fullName, email, passwordHash, emailVerified, verificationToken, verificationExpiresAt, passwordResetToken, passwordResetExpiresAt, createdAt, updatedAt, lastLoginAt) VALUES (${input.fullName}, ${input.email.toLowerCase().trim()}, ${tempPassword}, true, '', NULL, NULL, NULL, ${now}, ${now}, ${now})`
           );
+          
           // Récupérer le candidat créé
           candidate = await (db as any).query.candidates.findFirst({
             where: eq(candidates.email, input.email),
           });
+        }
+
         // Créer l'application/dossier
         await db
           .insert(applications)
@@ -69,44 +86,82 @@ export const adminDossierRouter = router({
             emailVerified: true,
             createdAt: new Date(),
             updatedAt: new Date(),
+          });
+        
         // Récupérer l'application créée
         const application = await (db as any).query.applications.findFirst({
           where: eq(applications.dossierNumber, dossierNumber),
+        });
+
         // Envoyer l'email de confirmation
         try {
           await sendDossierConfirmationEmail(
             input.email,
             input.fullName,
+            dossierNumber,
             input.destinationCountry,
             65000
+          );
         } catch (emailError) {
           console.warn('Erreur envoi email:', emailError);
           // Continuer même si l'email échoue
+        }
+
         return {
           success: true,
           dossier: {
             id: application.id,
+            dossierNumber,
             accessCode,
             candidateName: input.fullName,
+            email: input.email,
           },
         };
       } catch (error) {
         console.error('Erreur création dossier manuel:', error);
+        return {
           success: false,
           error: 'Erreur lors de la création du dossier',
+        };
       }
     }),
+
   getDossierByNumber: protectedProcedure
     .input(z.object({ dossierNumber: z.string() }))
     .query(async ({ input }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        
+        const application = await (db as any).query.applications.findFirst({
           where: eq(applications.dossierNumber, input.dossierNumber),
           with: {
             candidate: true,
+          },
+        });
+
         if (!application) {
+          return {
+            success: false,
             error: 'Dossier non trouvé',
+          };
+        }
+
+        return {
+          success: true,
           dossier: application,
+        };
+      } catch (error) {
+        return {
+          success: false,
           error: 'Erreur lors de la récupération du dossier',
+        };
+      }
+    }),
+
   updateDossierStatus: protectedProcedure
+    .input(
+      z.object({
         dossierNumber: z.string(),
         dossierStatus: z.enum([
           'nouveau',
@@ -122,13 +177,41 @@ export const adminDossierRouter = router({
           'visa_approuve',
           'refuse',
         ]),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error('Database not available');
+        
+        if (ctx.user?.role !== 'admin') {
+          return {
+            success: false,
             error: 'Accès refusé',
+          };
+        }
+
+        await db
           .update(applications)
           .set({
             dossierStatus: input.dossierStatus,
+            updatedAt: new Date(),
           })
           .where(eq(applications.dossierNumber, input.dossierNumber));
+        
         const updated = await (db as any).query.applications.findFirst({
+          where: eq(applications.dossierNumber, input.dossierNumber),
+        });
+
+        return {
+          success: true,
           dossier: updated,
+        };
+      } catch (error) {
+        return {
+          success: false,
           error: 'Erreur lors de la mise à jour',
+        };
+      }
+    }),
 });

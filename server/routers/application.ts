@@ -1,5 +1,4 @@
 /**
-import { generateDossierNumber } from "../services/dossierNumberService";
  * Routeur tRPC — Dossiers d'immigration & Paiement CinetPay
  */
 
@@ -13,7 +12,15 @@ import { eq, desc, or, like, ilike } from "drizzle-orm";
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function generateDossierNumber(): string {
+  const year = new Date().getFullYear();
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `3M-${year}-${rand}`;
+}
+
 async function initCinetPayTransaction(params: {
   transactionId: string;
   amount: number;
@@ -52,19 +59,26 @@ async function initCinetPayTransaction(params: {
     lang: "fr",
     invoice_data: {},
   };
+
   const response = await fetch("https://api-checkout.cinetpay.com/v2/payment", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
+
   const data = await response.json() as { code: string; message: string; data?: { payment_url: string } };
+
   if (data.code !== "201") {
     throw new Error(`CinetPay error: ${data.message}`);
   }
+
   return { paymentUrl: data.data?.payment_url ?? "" };
 }
+
 // ─── Routeur ──────────────────────────────────────────────────────────────────
+
 export const applicationRouter = router({
+
   /** Créer un dossier et initialiser le paiement CinetPay */
   createApplication: publicProcedure
     .input(z.object({
@@ -129,6 +143,7 @@ export const applicationRouter = router({
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
       const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+
       // Générer un numéro de dossier unique
       let dossierNumber = generateDossierNumber();
       let existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
@@ -136,10 +151,13 @@ export const applicationRouter = router({
         dossierNumber = generateDossierNumber();
         existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
       }
+
       const transactionId = `${dossierNumber.replace(/-/g, "")}${Date.now()}`.slice(0, 50);
+
       // Générer un OTP à 6 chiffres pour la vérification email
       const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
       const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
         candidateId: input.candidateId ?? null,
@@ -203,60 +221,114 @@ export const applicationRouter = router({
         // Type de visa
         visaType: input.visaType ?? null,
       });
+
       // Envoyer l'OTP au candidat
       Promise.resolve().then(() => sendVerificationOtp(input.email, input.fullName, emailOtp))
         .catch(err => console.error("[Email] OTP send error:", err));
+
       // Envoyer l'email de confirmation au candidat
       Promise.resolve().then(() => sendClientDossierConfirmationEmail(
         input.email,
         input.fullName,
+        dossierNumber,
         input.destination,
         65000, // Montant en FCFA
         "XAF"
       )).catch(err => console.error("[Email] Dossier confirmation error:", err));
+
       // Envoyer l'alerte admin
       Promise.resolve().then(() => sendAdminNewDossierAlertEmail(
+        dossierNumber,
+        input.fullName,
+        input.destination,
         65000,
+        "XAF"
       )).catch(err => console.error("[Email] Admin alert error:", err));
+
       // Récupérer l'ID de l'application insérée
       const [newApp] = await db
         .select({ id: applications.id })
         .from(applications)
         .where(eq(applications.dossierNumber, dossierNumber))
         .limit(1);
+
       return {
         applicationId: newApp?.id ?? 0,
+        dossierNumber,
         transactionId,
         requiresEmailVerification: true,
         paymentUrl: null, // Sera généré après vérification OTP
         message: "Dossier créé — vérification email requise avant paiement",
       };
     }),
+
   /** Renvoyer l'OTP si expiré */
   resendApplicationOtp: publicProcedure
+    .input(z.object({
       dossierNumber: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
       const [app] = await db
         .select()
+        .from(applications)
         .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
       if (app.emailVerified) throw new TRPCError({ code: "BAD_REQUEST", message: "Email déjà vérifié" });
+
       // Générer un nouvel OTP
+      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
+
       await db.update(applications)
         .set({ emailOtp, emailOtpExpiresAt })
         .where(eq(applications.dossierNumber, input.dossierNumber));
+
       // Envoyer le nouvel OTP
       Promise.resolve().then(() => sendVerificationOtp(app.email, app.fullName, emailOtp))
         .catch(err => console.error("[Email] OTP resend error:", err));
+
+      return {
         dossierNumber: input.dossierNumber,
         message: "Nouveau code OTP envoyé par email",
+      };
+    }),
+
   /** Vérifier l'OTP et initialiser le paiement CinetPay */
   verifyApplicationOtp: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string(),
       otp: z.string().length(6),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const siteId = process.env.CINETPAY_SITE_ID ?? "";
+      const apiKey = process.env.CINETPAY_API_KEY ?? "";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (app.emailVerified) throw new TRPCError({ code: "BAD_REQUEST", message: "Email déjà vérifié" });
       if (app.emailOtp !== input.otp) throw new TRPCError({ code: "BAD_REQUEST", message: "Code OTP invalide" });
       if (!app.emailOtpExpiresAt || app.emailOtpExpiresAt < new Date()) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Code OTP expiré (15 minutes)" });
+      }
+
       // Marquer l'email comme vérifié
+      await db.update(applications)
         .set({ emailVerified: true, emailOtp: null, emailOtpExpiresAt: null })
+        .where(eq(applications.dossierNumber, input.dossierNumber));
+
       // Initialiser le paiement CinetPay
       if (!siteId || !apiKey) {
         return {
@@ -265,6 +337,8 @@ export const applicationRouter = router({
           demoMode: true,
           message: "Email vérifié (mode démo — CinetPay non configuré)",
         };
+      }
+
       try {
         const result = await initCinetPayTransaction({
           transactionId: app.paymentTransactionId ?? "",
@@ -279,51 +353,143 @@ export const applicationRouter = router({
           siteId,
           apiKey,
         });
+
+        return {
+          dossierNumber: input.dossierNumber,
           paymentUrl: result.paymentUrl as string | null,
           demoMode: false,
           message: "Email vérifié — redirection vers le paiement",
+        };
       } catch (err) {
         console.error("[CinetPay] Init error:", err);
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: null as string | null,
+          demoMode: true,
           message: "Email vérifié — paiement à effectuer manuellement",
+        };
+      }
+    }),
+
   /** Initier un paiement CinetPay direct depuis la progression */
   initiateCinetPayPayment: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string(),
+      email: z.string().email(),
       amount: z.number().default(65000),
       paymentMethod: z.enum(["mtn", "orange", "card"]).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const siteId = process.env.CINETPAY_SITE_ID ?? "";
+      const apiKey = process.env.CINETPAY_API_KEY ?? "";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
+
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
       if (app.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Paiement déjà effectué" });
+
+      // Initialiser le paiement CinetPay
+      if (!siteId || !apiKey) {
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: null as string | null,
+          demoMode: true,
           message: "Mode démo — CinetPay non configuré",
+        };
+      }
+
+      try {
+        const result = await initCinetPayTransaction({
           transactionId: app.paymentTransactionId ?? `${input.dossierNumber}-${Date.now()}`,
           amount: input.amount,
+          currency: "XAF",
           description: `Paiement dossier immigration 3M Travel — ${input.dossierNumber}`,
+          customerName: app.fullName,
           customerEmail: input.email,
+          customerPhone: app.whatsappNumber,
+          returnUrl: `${baseUrl}/payment-success?dossier=${input.dossierNumber}`,
+          notifyUrl: `${baseUrl}/api/cinetpay/webhook`,
+          siteId,
+          apiKey,
+        });
+
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: result.paymentUrl as string | null,
+          demoMode: false,
           message: "Paiement initié",
+        };
+      } catch (err) {
+        console.error("[CinetPay] Init error:", err);
+        return {
+          dossierNumber: input.dossierNumber,
+          paymentUrl: null as string | null,
+          demoMode: true,
           message: "Erreur lors de l'initiation du paiement",
+        };
+      }
+    }),
+
   /** Récupérer un dossier par son numéro */
   getApplicationByDossierNumber: publicProcedure
     .input(z.object({ dossierNumber: z.string() }))
     .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
       return app;
+    }),
+
   /** Récupérer les dossiers d'un candidat */
   getMyApplications: publicProcedure
     .input(z.object({ candidateId: z.number().int() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       return db
+        .select()
+        .from(applications)
         .where(eq(applications.candidateId, input.candidateId))
         .orderBy(desc(applications.createdAt));
+    }),
+
   /** Lister tous les dossiers (admin) */
   listApplications: protectedProcedure
+    .input(z.object({
       paymentStatus: z.enum(["ALL", "PENDING", "SUCCESS", "FAILED", "CANCELLED"]).default("ALL"),
       search: z.string().optional(),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
+    }))
     .query(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       const results: Application[] = await db
+        .select()
+        .from(applications)
         .orderBy(desc(applications.createdAt))
         .limit(input.limit)
         .offset(input.offset);
+
       let filtered = results;
       if (input.paymentStatus !== "ALL") {
         filtered = filtered.filter((a: Application) => a.paymentStatus === input.paymentStatus);
+      }
       if (input.search) {
         const s = input.search.toLowerCase();
         filtered = filtered.filter((a: Application) =>
@@ -332,40 +498,87 @@ export const applicationRouter = router({
           a.dossierNumber.toLowerCase().includes(s) ||
           (a.whatsappNumber ?? "").includes(s)
         );
+      }
       return filtered;
+    }),
+
   /** Changer le statut d'un dossier (admin) */
   updateApplicationStatus: protectedProcedure
+    .input(z.object({
       id: z.number().int(),
       dossierStatus: z.enum(["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"]),
       adminNote: z.string().optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      await db.update(applications)
         .set({
           dossierStatus: input.dossierStatus,
           ...(input.adminNote !== undefined ? { adminNote: input.adminNote } : {}),
         })
         .where(eq(applications.id, input.id));
       return { success: true };
+    }),
+
   /** Envoyer le rapport d'évaluation automatique par email */
   sendEvaluationReport: protectedProcedure
+    .input(z.object({
       applicationId: z.number().int(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
       
+      const [app] = await db
+        .select()
+        .from(applications)
         .where(eq(applications.id, input.applicationId))
+        .limit(1);
+      
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      
       // Générer le rapport HTML
       const reportHtml = generateEvaluationReportHTML(app);
+      
       // Envoyer par email
+      try {
         await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
         return { success: true, message: "Rapport d'évaluation envoyé avec succès" };
+      } catch (err) {
         console.error("[Evaluation Report] Send error:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi du rapport" });
+      }
+    }),
+
   /** Envoyer les rapports d'évaluation à tous les dossiers non évalués */
   sendBulkEvaluationReports: protectedProcedure
+    .input(z.object({
       dossierStatus: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      
       // Récupérer les dossiers non évalués (status = "nouveau")
       const apps = await db
+        .select()
+        .from(applications)
         .where(eq(applications.dossierStatus, "nouveau"))
         .limit(100);
+      
       let successCount = 0;
       let errorCount = 0;
+      
       for (const app of apps) {
         try {
           const reportHtml = generateEvaluationReportHTML(app);
@@ -375,23 +588,38 @@ export const applicationRouter = router({
           await db.update(applications)
             .set({ dossierStatus: "en_attente_paiement" })
             .where(eq(applications.id, app.id));
+          
           successCount++;
         } catch (err) {
           console.error(`[Evaluation Report] Error for ${app.dossierNumber}:`, err);
           errorCount++;
         }
+      }
+      
+      return {
         success: true,
         message: `${successCount} rapports envoyés, ${errorCount} erreurs`,
         successCount,
         errorCount,
         totalProcessed: apps.length,
+      };
+    }),
+
   evaluateCVWithAI: publicProcedure
+    .input(z.object({
       cvBase64: z.string(),
       candidateName: z.string(),
       destination: z.string(),
+      email: z.string().email(),
       applicationId: z.number().int().optional(),
+      candidateId: z.number().int().optional(),
+    }))
+    .mutation(async ({ input }) => {
       const reportId = `3M-AI-${Date.now()}`;
+      const db = await getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      
+      try {
         // Créer l'enregistrement d'historique avec statut pending
         await db.insert(aiReportHistory).values({
           applicationId: input.applicationId,
@@ -402,6 +630,7 @@ export const applicationRouter = router({
           reportId,
           sendStatus: 'pending',
           sendAttempts: 0,
+        });
         
         const cvBuffer = Buffer.from(input.cvBase64, 'base64');
         const cvText = await extractTextFromPDF(cvBuffer);
@@ -411,12 +640,16 @@ export const applicationRouter = router({
           input.candidateName,
           input.destination,
           openaiKey
+        );
+        
         // Mettre à jour l'enregistrement avec le contenu du rapport
         await db
           .update(aiReportHistory)
           .set({ reportContent: report })
           .where(eq(aiReportHistory.reportId, reportId));
+        
         let emailSendSuccess = false;
+        try {
           await sendEvisaStatusUpdateEmail(
             input.email,
             input.candidateName,
@@ -426,6 +659,7 @@ export const applicationRouter = router({
             `<pre style="font-family: monospace; white-space: pre-wrap;">${report}</pre>`
           );
           emailSendSuccess = true;
+          
           // Mettre à jour l'historique avec le statut sent
           await db
             .update(aiReportHistory)
@@ -433,35 +667,70 @@ export const applicationRouter = router({
             .where(eq(aiReportHistory.reportId, reportId));
         } catch (emailErr) {
           console.error('[AI Evaluation] Email send error:', emailErr);
+          
           // Mettre à jour l'historique avec le statut failed
+          await db
+            .update(aiReportHistory)
             .set({
               sendStatus: 'failed',
               lastSendError: emailErr instanceof Error ? emailErr.message : 'Erreur d\'envoi inconnue',
               sendAttempts: 1,
             })
+            .where(eq(aiReportHistory.reportId, reportId));
+        }
+        
+        return {
           success: true,
           report,
+          reportId,
           emailSent: emailSendSuccess,
           message: emailSendSuccess
             ? 'Rapport d\'évaluation IA généré et envoyé avec succès'
             : 'Rapport généré mais l\'envoi par email a échoué',
+        };
+      } catch (err) {
         console.error('[AI Evaluation] Error:', err);
+        
         // Mettre à jour l'historique avec l'erreur
+        try {
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'failed',
               lastSendError: err instanceof Error ? err.message : 'Erreur inconnue',
+            })
+            .where(eq(aiReportHistory.reportId, reportId));
         } catch (updateErr) {
           console.error('[AI Evaluation] Failed to update history:', updateErr);
+        }
+        
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de l\'évaluation IA du CV',
+        });
+      }
+    }),
+
   // ─── Signature du Protocole d'Accord ─────────────────────────────────────────
   signAgreement: publicProcedure
+    .input(z.object({
       applicationId: z.number(),
       signatureName: z.string().min(2).max(255),
+    }))
     .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.id, input.applicationId))
+        .limit(1);
       if (!app) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable' });
+      }
       if (app.agreementSigned) {
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Ce protocole a déjà été signé' });
+      }
       // Récupérer l'IP du candidat
       const ipAddress =
         (ctx as any)?.req?.headers?.['x-forwarded-for'] as string ||
@@ -470,27 +739,51 @@ export const applicationRouter = router({
       const signedAt = Math.floor(Date.now() / 1000);
       await db
         .update(applications)
+        .set({
           agreementSigned: true,
           agreementSignedAt: signedAt,
           agreementSignatureName: input.signatureName,
           agreementIpAddress: typeof ipAddress === 'string' ? ipAddress.split(',')[0].trim() : 'unknown',
+        })
         .where(eq(applications.id, input.applicationId));
       console.log(`[Agreement] Signed by ${input.signatureName} for dossier ${app.dossierNumber} at ${new Date(signedAt * 1000).toISOString()}`);
+      return {
+        success: true,
         signedAt,
         dossierNumber: app.dossierNumber,
         message: 'Protocole d\'accord signé avec succès',
+      };
+    }),
+
   // ─── Suivi de dossier candidat (sans compte) ────────────────────────────────
+
   /**
    * Récupère le statut d'un dossier par numéro + email (accès public sécurisé)
    */
   getDossierStatus: publicProcedure
+    .input(z.object({
       dossierNumber: z.string().min(5),
+      email: z.string().email(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+      if (!app) {
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable. Vérifiez le numéro et l\'email.' });
+      }
       // Vérification email pour sécuriser l'accès
       if (app.email.toLowerCase() !== input.email.toLowerCase()) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Email incorrect pour ce dossier.' });
+      }
       // Retourner les infos sans données sensibles (OTP, etc.)
+      return {
         id: app.id,
+        dossierNumber: app.dossierNumber,
         fullName: app.fullName,
         email: app.email,
         destination: app.destination,
@@ -511,90 +804,241 @@ export const applicationRouter = router({
         scoringBadge: app.scoringBadge,
         createdAt: app.createdAt,
         updatedAt: app.updatedAt,
+      };
+    }),
+
+  /**
    * Envoyer un message au conseiller depuis le tableau de bord candidat
+   */
   sendCandidateMessage: publicProcedure
+    .input(z.object({
+      dossierNumber: z.string().min(5),
+      email: z.string().email(),
       message: z.string().min(5).max(2000),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
       // Vérifier que le dossier existe et que l'email correspond
+      const [app] = await db
         .select({ id: applications.id, email: applications.email, dossierNumber: applications.dossierNumber })
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
       if (!app || app.email.toLowerCase() !== input.email.toLowerCase()) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès non autorisé.' });
+      }
       // Stocker le message dans adminNote (append)
       const [current] = await db
         .select({ adminNote: applications.adminNote })
+        .from(applications)
         .where(eq(applications.id, app.id))
+        .limit(1);
       const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
       const newNote = `[MSG CANDIDAT — ${timestamp}]\n${input.message}`;
       const updatedNote = current?.adminNote
         ? `${current.adminNote}\n\n${newNote}`
         : newNote;
+      await db
+        .update(applications)
         .set({ adminNote: updatedNote })
         .where(eq(applications.id, app.id));
       return { success: true, message: 'Message envoyé à votre conseiller.' };
+    }),
+
+  /**
    * Admin : répondre à un candidat (ajoute une note admin)
+   */
   replyToCandidate: protectedProcedure
+    .input(z.object({
+      applicationId: z.number(),
       reply: z.string().min(5).max(2000),
+    }))
+    .mutation(async ({ input, ctx }) => {
       if (ctx.user.role !== 'admin') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Accès réservé aux administrateurs.' });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+      const [current] = await db
+        .select({ adminNote: applications.adminNote })
+        .from(applications)
+        .where(eq(applications.id, input.applicationId))
+        .limit(1);
+      const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' });
       const newReply = `[RÉPONSE CONSEILLER — ${timestamp}]\n${input.reply}`;
+      const updatedNote = current?.adminNote
         ? `${current.adminNote}\n\n${newReply}`
         : newReply;
+      await db
+        .update(applications)
+        .set({ adminNote: updatedNote })
+        .where(eq(applications.id, input.applicationId));
+      return { success: true };
+    }),
+
   // ─── Historique des rapports IA ──────────────────────────────────────────
+
+  /**
    * Récupérer l'historique des rapports IA envoyés
+   */
   getAIReportHistory: publicProcedure
+    .input(z.object({
+      applicationId: z.number().int().optional(),
+      candidateId: z.number().int().optional(),
       email: z.string().email().optional(),
       limit: z.number().int().default(50),
       offset: z.number().int().default(0),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
         let whereCondition: any = undefined;
+
         if (input.applicationId) {
           whereCondition = eq(aiReportHistory.applicationId, input.applicationId);
         } else if (input.candidateId) {
           whereCondition = eq(aiReportHistory.candidateId, input.candidateId);
         } else if (input.email) {
           whereCondition = eq(aiReportHistory.candidateEmail, input.email);
+        }
+
         const query = db.select().from(aiReportHistory);
         const baseQuery = whereCondition ? query.where(whereCondition) : query;
+
         const reports = await baseQuery
           .orderBy(desc(aiReportHistory.createdAt))
           .limit(input.limit)
           .offset(input.offset);
+
+        return {
+          success: true,
           reports,
           count: reports.length,
+        };
+      } catch (err) {
         console.error('[AI Report History] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de la récupération de l\'historique',
+        });
+      }
+    }),
+
+  /**
    * Récupérer un rapport IA spécifique par son ID
+   */
   getAIReport: publicProcedure
+    .input(z.object({
       reportId: z.string(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
         const [report] = await db
           .select()
           .from(aiReportHistory)
           .where(eq(aiReportHistory.reportId, input.reportId))
           .limit(1);
+
         if (!report) {
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouvé' });
+        }
+
+        return {
+          success: true,
+          report,
+        };
+      } catch (err) {
         console.error('[AI Report] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de la récupération du rapport',
+        });
+      }
+    }),
+
+  /**
    * Retenter l'envoi d'un rapport IA qui a échoué
+   */
   retryAIReportSend: publicProcedure
+    .input(z.object({
+      reportId: z.string(),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB non disponible' });
+
+      try {
+        const [report] = await db
+          .select()
+          .from(aiReportHistory)
+          .where(eq(aiReportHistory.reportId, input.reportId))
+          .limit(1);
+
+        if (!report) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Rapport non trouvé' });
+        }
+
         if (!report.reportContent) {
           throw new TRPCError({
             code: 'BAD_REQUEST',
             message: 'Le contenu du rapport est vide',
           });
+        }
+
+        let emailSendSuccess = false;
+        try {
+          await sendEvisaStatusUpdateEmail(
             report.candidateEmail,
             report.candidateName,
             report.reportId,
+            "autre",
+            "processing",
             `<pre style="font-family: monospace; white-space: pre-wrap;">${report.reportContent}</pre>`
+          );
+          emailSendSuccess = true;
+
           // Mettre à jour l'historique
+          await db
+            .update(aiReportHistory)
+            .set({
               sendStatus: 'sent',
               sentAt: new Date(),
               sendAttempts: (report.sendAttempts || 0) + 1,
               lastSendError: null,
+            })
             .where(eq(aiReportHistory.reportId, input.reportId));
+        } catch (emailErr) {
           console.error('[AI Report Retry] Email send error:', emailErr);
+
           // Mettre à jour l'historique avec l'erreur
+          await db
+            .update(aiReportHistory)
+            .set({
+              sendStatus: 'failed',
+              sendAttempts: (report.sendAttempts || 0) + 1,
+              lastSendError: emailErr instanceof Error ? emailErr.message : 'Erreur d\'envoi inconnue',
+            })
+            .where(eq(aiReportHistory.reportId, input.reportId));
+        }
+
+        return {
           success: emailSendSuccess,
+          message: emailSendSuccess
             ? 'Rapport renvoyé avec succès'
             : 'Erreur lors de l\'envoi du rapport',
+        };
+      } catch (err) {
         console.error('[AI Report Retry] Error:', err);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors du renvoi du rapport',
+        });
+      }
+    }),
 });
