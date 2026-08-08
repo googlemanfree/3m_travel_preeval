@@ -1,56 +1,22 @@
 /**
- * Routeur tRPC — Avis clients réels (version simplifiée)
+ * Routeur tRPC — Avis clients réels
  *
  * Flux : un client soumet son avis avec un consentement explicite à la
  * publication → un admin relit et valide → seuls les avis validés ET
- * consentis sont visibles publiquement.
+ * consentis sont visibles publiquement. Rien n'est jamais publié
+ * automatiquement, et aucune donnée fictive n'est utilisée — tout passe
+ * par la vraie base de données.
  */
 
 import { z } from "zod";
-import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
+import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
-
-// Mock data - À remplacer par une vraie base de données
-const approvedReviews = [
-  {
-    id: "1",
-    fullName: "Aurèol Donfack",
-    displayName: "Aurèol D.",
-    email: "aureoldonfack@gmail.com",
-    destinationCountry: "Luxembourg",
-    serviceType: "Visa Travail",
-    rating: 5,
-    reviewText: "Excellent service ! L'équipe 3M Travel m'a guidé tout au long du processus. Mon visa a été approuvé en 3 semaines. Très professionnel et courtois.",
-    status: "approved",
-    createdAt: new Date("2026-07-15"),
-  },
-  {
-    id: "2",
-    fullName: "Fatima Traore",
-    displayName: "Fatima T.",
-    email: "fatima@email.com",
-    destinationCountry: "Canada",
-    serviceType: "Visa Études",
-    rating: 5,
-    reviewText: "Je recommande vivement 3M Travel. Ils m'ont aidée à préparer tous mes documents pour ma demande de visa étudiant. Très efficace !",
-    status: "approved",
-    createdAt: new Date("2026-07-10"),
-  },
-  {
-    id: "3",
-    fullName: "Jean Claude Mbarga",
-    displayName: "Jean C.",
-    email: "jean@email.com",
-    destinationCountry: "France",
-    serviceType: "Visa Visiteur",
-    rating: 4,
-    reviewText: "Bon service. L'équipe a répondu rapidement à mes questions. Mon visa a été approuvé. Merci !",
-    status: "approved",
-    createdAt: new Date("2026-07-05"),
-  },
-];
-
-const pendingReviews: typeof approvedReviews = [];
+import { getDb } from "../db";
+import { customerReviews } from "../../drizzle/schema";
+import { eq, desc, and } from "drizzle-orm";
+import { sendEmail } from "../_core/email";
+import { logger } from "../_core/logger";
+import { requireValidAdminSession } from "./adminAuth";
 
 function displayName(fullName: string, choice: "full_name" | "first_name_only" | "initials"): string {
   const parts = fullName.trim().split(/\s+/);
@@ -61,191 +27,121 @@ function displayName(fullName: string, choice: "full_name" | "first_name_only" |
 
 export const customerReviewRouter = router({
   /**
-   * Soumission d'un avis par un client (public, pas besoin d'être connecté)
+   * Soumission d'un avis par un client (public, pas besoin d'être connecté —
+   * un client satisfait doit pouvoir laisser un avis facilement).
    */
   submit: publicProcedure
-    .input(
-      z.object({
-        fullName: z.string().min(3, "Le nom doit contenir au moins 3 caractères"),
-        email: z.string().email("Email invalide"),
-        destinationCountry: z.string().optional(),
-        serviceType: z.string().optional(),
-        rating: z.number().min(1).max(5, "La note doit être entre 1 et 5"),
-        reviewText: z
-          .string()
-          .min(10, "L'avis doit contenir au moins 10 caractères")
-          .max(1000, "L'avis ne doit pas dépasser 1000 caractères"),
-        consentToPublish: z.boolean(),
-        displayNameChoice: z
-          .enum(["full_name", "first_name_only", "initials"])
-          .default("first_name_only"),
-      })
-    )
+    .input(z.object({
+      fullName: z.string().min(3),
+      email: z.string().email(),
+      destinationCountry: z.string().optional(),
+      serviceType: z.string().optional(),
+      rating: z.number().min(1).max(5),
+      reviewText: z.string().min(10).max(1000),
+      consentToPublish: z.boolean(),
+      displayNameChoice: z.enum(["full_name", "first_name_only", "initials"]).default("first_name_only"),
+    }))
     .mutation(async ({ input }) => {
       if (!input.consentToPublish) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message:
-            "Le consentement à la publication est requis pour soumettre un avis.",
-        });
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le consentement à la publication est requis pour soumettre un avis." });
       }
 
-      // Créer l'avis en attente de validation
-      const newReview = {
-        id: `pending_${Date.now()}`,
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      await db.insert(customerReviews).values({
         fullName: input.fullName,
-        displayName: displayName(input.fullName, input.displayNameChoice),
         email: input.email,
         destinationCountry: input.destinationCountry,
         serviceType: input.serviceType,
         rating: input.rating,
         reviewText: input.reviewText,
-        status: "pending_review" as const,
-        createdAt: new Date(),
-      };
+        consentToPublish: input.consentToPublish,
+        displayNameChoice: input.displayNameChoice,
+        status: "pending_review",
+      });
 
-      pendingReviews.push(newReview);
-
-      // Envoyer une notification à l'équipe via Resend
       try {
-        // À implémenter avec Resend
-        console.log(
-          `[REVIEW] Nouvel avis en attente de validation: ${input.fullName} (${input.rating}/5) - Email: ${input.email}`
-        );
-        // Vous pouvez ajouter l'envoi d'email Resend ici
-        // await sendEmailToAdmin(newReview);
-      } catch (error) {
-        console.error('[REVIEW] Erreur lors de l\'envoi de la notification:', error);
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `⭐ Nouvel avis client — ${input.rating}/5 (${input.fullName})`,
+          html: `<p><strong>${input.fullName}</strong> (${input.email}) a laissé un avis ${input.rating}/5.</p><p>${input.reviewText}</p><p>À valider dans le tableau de bord admin avant publication.</p>`,
+        });
+      } catch (err) {
+        logger.error("customer_review.team_notification_failed", {}, err);
       }
 
-      return {
-        success: true,
-        message: "Votre avis a été reçu et sera publié après validation par notre équipe.",
-      };
+      logger.info("customer_review.submitted", { email: input.email, rating: input.rating });
+
+      return { success: true };
     }),
 
-  /**
-   * Récupérer les avis publics approuvés
-   */
+  /** Avis publics approuvés et consentis — c'est tout ce qu'un visiteur peut voir. */
   listApproved: publicProcedure.query(async () => {
-    return approvedReviews.map((review) => ({
-      id: review.id,
-      displayName: review.displayName,
-      destinationCountry: review.destinationCountry,
-      serviceType: review.serviceType,
-      rating: review.rating,
-      reviewText: review.reviewText,
-      createdAt: review.createdAt,
+    const db = await getDb();
+    if (!db) return [];
+
+    const rows = await db.select().from(customerReviews)
+      .where(and(eq(customerReviews.status, "approved"), eq(customerReviews.consentToPublish, true)))
+      .orderBy(desc(customerReviews.createdAt))
+      .limit(30);
+
+    return rows.map((r) => ({
+      id: r.id,
+      displayName: displayName(r.fullName, r.displayNameChoice),
+      destinationCountry: r.destinationCountry,
+      serviceType: r.serviceType,
+      rating: r.rating,
+      reviewText: r.reviewText,
+      createdAt: r.createdAt,
     }));
   }),
 
-  /**
-   * Récupérer les avis en attente (Admin uniquement)
-   */
-  getPendingReviews: protectedProcedure.query(async ({ ctx }) => {
-    if (ctx.user?.role !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Accès réservé aux administrateurs",
-      });
-    }
+  /** Liste complète pour modération admin. */
+  listForAdmin: publicProcedure
+    .input(z.object({ sessionToken: z.string(), status: z.enum(["pending_review", "approved", "rejected"]).optional() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-    return pendingReviews;
-  }),
-
-  /**
-   * Approuver un avis (Admin uniquement)
-   */
-  approveReview: protectedProcedure
-    .input(z.object({ reviewId: z.string() }))
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Accès réservé aux administrateurs",
-        });
-      }
-
-      const index = pendingReviews.findIndex((r) => r.id === input.reviewId);
-      if (index === -1) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Avis non trouvé",
-        });
-      }
-
-      const review = pendingReviews[index];
-      approvedReviews.push({
-        ...review,
-        status: "approved" as const,
-      });
-
-      pendingReviews.splice(index, 1);
-
-      console.log(`[REVIEW] Avis approuvé: ${review.fullName}`);
-
-      return {
-        success: true,
-        message: "Avis approuvé et publié",
-      };
+      const rows = await db.select().from(customerReviews).orderBy(desc(customerReviews.createdAt));
+      return input.status ? rows.filter((r) => r.status === input.status) : rows;
     }),
 
-  /**
-   * Rejeter un avis (Admin uniquement)
-   */
-  rejectReview: protectedProcedure
-    .input(z.object({ reviewId: z.string(), reason: z.string().optional() }))
-    .mutation(async ({ input, ctx }) => {
-      if (ctx.user?.role !== "admin") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Accès réservé aux administrateurs",
-        });
-      }
+  /** Un admin approuve un avis pour publication. */
+  approve: publicProcedure
+    .input(z.object({ sessionToken: z.string(), reviewId: z.number(), adminNotes: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const index = pendingReviews.findIndex((r) => r.id === input.reviewId);
-      if (index === -1) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Avis non trouvé",
-        });
-      }
+      await db.update(customerReviews).set({
+        status: "approved",
+        adminNotes: input.adminNotes,
+        reviewedByAdminEmail: admin.email,
+        reviewedAt: new Date(),
+      }).where(eq(customerReviews.id, input.reviewId));
 
-      const review = pendingReviews[index];
-      pendingReviews.splice(index, 1);
-
-      console.log(
-        `[REVIEW] Avis rejeté: ${review.fullName} - Raison: ${input.reason || "Non spécifiée"}`
-      );
-
-      return {
-        success: true,
-        message: "Avis rejeté",
-      };
+      return { success: true };
     }),
 
-  /**
-   * Obtenir les statistiques des avis
-   */
-  getStats: publicProcedure.query(async () => {
-    const totalReviews = approvedReviews.length;
-    const averageRating =
-      totalReviews > 0
-        ? (approvedReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews).toFixed(1)
-        : 0;
+  /** Un admin rejette un avis (jamais publié). */
+  reject: publicProcedure
+    .input(z.object({ sessionToken: z.string(), reviewId: z.number(), adminNotes: z.string().optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-    const ratingDistribution = {
-      5: approvedReviews.filter((r) => r.rating === 5).length,
-      4: approvedReviews.filter((r) => r.rating === 4).length,
-      3: approvedReviews.filter((r) => r.rating === 3).length,
-      2: approvedReviews.filter((r) => r.rating === 2).length,
-      1: approvedReviews.filter((r) => r.rating === 1).length,
-    };
+      await db.update(customerReviews).set({
+        status: "rejected",
+        adminNotes: input.adminNotes,
+        reviewedByAdminEmail: admin.email,
+        reviewedAt: new Date(),
+      }).where(eq(customerReviews.id, input.reviewId));
 
-    return {
-      totalReviews,
-      averageRating: parseFloat(averageRating as string),
-      ratingDistribution,
-    };
-  }),
+      return { success: true };
+    }),
 });
