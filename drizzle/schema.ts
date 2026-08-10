@@ -56,11 +56,33 @@ export type InsertUserAccount = typeof userAccounts.$inferInsert;
  */
 export const evaluations = mysqlTable("evaluations", {
   id: int("id").autoincrement().primaryKey(),
+  // Candidat connecté (si applicable — permet de compter ses évaluations)
+  candidateId: int("candidateId"),
+  // État civil
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 50 }).notNull(),
   dateOfBirth: varchar("dateOfBirth", { length: 20 }),
   nationality: varchar("nationality", { length: 100 }),
+  cityOfResidence: varchar("cityOfResidence", { length: 150 }),
+  maritalStatus: varchar("maritalStatus", { length: 50 }),
+  numberOfDependents: int("numberOfDependents"),
+  // Études
+  educationLevel: varchar("educationLevel", { length: 100 }),
+  diplomaTitle: varchar("diplomaTitle", { length: 255 }),
+  graduationYear: varchar("graduationYear", { length: 10 }),
+  fieldOfStudy: varchar("fieldOfStudy", { length: 255 }),
+  // Expérience professionnelle
+  employmentStatus: varchar("employmentStatus", { length: 100 }),
+  currentJobTitle: varchar("currentJobTitle", { length: 255 }),
+  yearsOfExperience: varchar("yearsOfExperience", { length: 20 }),
+  industrySector: varchar("industrySector", { length: 150 }),
+  mainTasks: text("mainTasks"),
+  // Compétences linguistiques
+  frenchLevel: varchar("frenchLevel", { length: 50 }),
+  englishLevel: varchar("englishLevel", { length: 50 }),
+  languageTestsTaken: varchar("languageTestsTaken", { length: 255 }),
+  // Projet & destination
   destinationCategory: mysqlEnum("destinationCategory", ["schengen", "canada", "autre"]).notNull(),
   destinationCountry: varchar("destinationCountry", { length: 100 }),
   visaType: mysqlEnum("visaType", [
@@ -72,8 +94,13 @@ export const evaluations = mysqlTable("evaluations", {
     "canada_tourisme",
     "autre",
   ]).notNull(),
-  educationLevel: varchar("educationLevel", { length: 100 }),
-  employmentStatus: varchar("employmentStatus", { length: 100 }),
+  travelReason: varchar("travelReason", { length: 255 }),
+  availableBudget: varchar("availableBudget", { length: 100 }),
+  // Historique & antécédents
+  priorVisaRefusal: boolean("priorVisaRefusal").default(false),
+  priorVisaRefusalCountry: varchar("priorVisaRefusalCountry", { length: 150 }),
+  criminalRecord: boolean("criminalRecord").default(false),
+  familyAbroad: boolean("familyAbroad").default(false),
   message: text("message"),
   cvFileUrl: text("cvFileUrl"),
   cvFileName: varchar("cvFileName", { length: 255 }),
@@ -1147,3 +1174,22 @@ export const dossierUpdates = mysqlTable("dossier_updates", {
 
 export type DossierUpdate = typeof dossierUpdates.$inferSelect;
 export type InsertDossierUpdate = typeof dossierUpdates.$inferInsert;
+
+export const customerReviews = mysqlTable("customer_reviews", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  destinationCountry: varchar("destinationCountry", { length: 100 }),
+  serviceType: varchar("serviceType", { length: 100 }),
+  rating: int("rating").notNull(),
+  reviewText: text("reviewText").notNull(),
+  consentToPublish: boolean("consentToPublish").default(false).notNull(),
+  displayNameChoice: mysqlEnum("displayNameChoice", ["full_name", "first_name_only", "initials"]).default("first_name_only").notNull(),
+  status: mysqlEnum("status", ["pending_review", "approved", "rejected"]).default("pending_review").notNull(),
+  adminNotes: text("adminNotes"),
+  reviewedByAdminEmail: varchar("reviewedByAdminEmail", { length: 320 }),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type CustomerReview = typeof customerReviews.$inferSelect;
+export type InsertCustomerReview = typeof customerReviews.$inferInsert;

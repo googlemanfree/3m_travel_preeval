@@ -4,7 +4,7 @@ import { Star, Quote } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 interface Review {
-  id?: string;
+  id?: number;
   displayName?: string;
   destinationCountry?: string;
   serviceType?: string;

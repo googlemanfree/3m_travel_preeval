@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { evaluations } from "../../drizzle/schema";
@@ -26,19 +27,41 @@ const visaTypeEnum = z.enum([
 const destinationCategoryEnum = z.enum(["schengen", "canada", "autre"]);
 
 const evaluationInput = z.object({
-  // Informations personnelles
+  // État civil & famille
   fullName: z.string().min(2, "Le nom complet est requis"),
   email: z.string().email("Email invalide"),
   phone: z.string().min(8, "Numéro de téléphone invalide"),
   dateOfBirth: z.string().optional(),
   nationality: z.string().optional(),
-  // Destination
+  cityOfResidence: z.string().optional(),
+  maritalStatus: z.string().optional(),
+  numberOfDependents: z.number().min(0).max(20).optional(),
+  // Études & académique
+  educationLevel: z.string().optional(),
+  diplomaTitle: z.string().optional(),
+  graduationYear: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+  // Expérience professionnelle
+  employmentStatus: z.string().optional(),
+  currentJobTitle: z.string().optional(),
+  yearsOfExperience: z.string().optional(),
+  industrySector: z.string().optional(),
+  mainTasks: z.string().optional(),
+  // Compétences linguistiques
+  frenchLevel: z.string().optional(),
+  englishLevel: z.string().optional(),
+  languageTestsTaken: z.string().optional(),
+  // Projet & destination
   destinationCategory: destinationCategoryEnum,
   destinationCountry: z.string().optional(),
   visaType: visaTypeEnum,
-  // Profil
-  educationLevel: z.string().optional(),
-  employmentStatus: z.string().optional(),
+  travelReason: z.string().optional(),
+  availableBudget: z.string().optional(),
+  // Historique & antécédents
+  priorVisaRefusal: z.boolean().optional(),
+  priorVisaRefusalCountry: z.string().optional(),
+  criminalRecord: z.boolean().optional(),
+  familyAbroad: z.boolean().optional(),
   // Message
   message: z.string().optional(),
   // CV en base64 (optionnel)
@@ -177,6 +200,15 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
+      // Règle des 2 évaluations gratuites maximum, par adresse email.
+      const previousCount = await db.select().from(evaluations).where(eq(evaluations.email, input.email));
+      if (previousCount.length >= 2) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "⚠️ Vous avez atteint la limite maximale de 2 évaluations gratuites. Pour toute analyse complémentaire ou pour faire le point sur votre dossier, veuillez contacter directement notre direction au +237 698 104 832 ou vous rendre en agence à Biyem-Assi (Yaoundé).",
+        });
+      }
+
       let cvFileUrl: string | undefined;
       let cvFileName: string | undefined;
 
@@ -207,11 +239,30 @@ export const evaluationRouter = router({
         phone: input.phone,
         dateOfBirth: input.dateOfBirth,
         nationality: input.nationality,
+        cityOfResidence: input.cityOfResidence,
+        maritalStatus: input.maritalStatus,
+        numberOfDependents: input.numberOfDependents,
+        educationLevel: input.educationLevel,
+        diplomaTitle: input.diplomaTitle,
+        graduationYear: input.graduationYear,
+        fieldOfStudy: input.fieldOfStudy,
+        employmentStatus: input.employmentStatus,
+        currentJobTitle: input.currentJobTitle,
+        yearsOfExperience: input.yearsOfExperience,
+        industrySector: input.industrySector,
+        mainTasks: input.mainTasks,
+        frenchLevel: input.frenchLevel,
+        englishLevel: input.englishLevel,
+        languageTestsTaken: input.languageTestsTaken,
         destinationCategory: input.destinationCategory,
         destinationCountry: input.destinationCountry,
         visaType: input.visaType,
-        educationLevel: input.educationLevel,
-        employmentStatus: input.employmentStatus,
+        travelReason: input.travelReason,
+        availableBudget: input.availableBudget,
+        priorVisaRefusal: input.priorVisaRefusal,
+        priorVisaRefusalCountry: input.priorVisaRefusalCountry,
+        criminalRecord: input.criminalRecord,
+        familyAbroad: input.familyAbroad,
         message: input.message,
         cvFileUrl: cvFileUrl,
         cvFileName: cvFileName,

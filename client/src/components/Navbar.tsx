@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import EvaluationButton from './EvaluationButton';
 
 const menuItems = [
   { href: '/', label: 'Accueil', icon: '🏠' },
@@ -151,12 +150,17 @@ export default function Navbar() {
             ) : (
               /* --- BOUTONS D'ACTION INVITÉ --- */
               <>
-                <EvaluationButton variant="primary" size="md" />
-                <button 
+                <button
                   onClick={() => setLocation("/login")}
                   className="bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95"
                 >
-                  👤 Mon Espace
+                  👤 Accès Client
+                </button>
+                <button
+                  onClick={() => setLocation("/register")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 shadow-sm"
+                >
+                  ✍️ Créer un compte
                 </button>
               </>
             )}
@@ -273,7 +277,13 @@ export default function Navbar() {
                   onClick={() => { setLocation("/login"); setIsMenuOpen(false); }}
                   className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold border border-blue-100 transition-all" 
                 >
-                  👤 Mon Espace
+                  👤 Accès Client
+                </button>
+                <button 
+                  onClick={() => { setLocation("/register"); setIsMenuOpen(false); }}
+                  className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl font-bold transition-all mt-2" 
+                >
+                  ✍️ Créer un compte
                 </button>
               </motion.div>
             )}

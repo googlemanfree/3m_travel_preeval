@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AuthGuard from "./components/AuthGuard";
@@ -210,11 +210,10 @@ function Router() {
       <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />
       <Route path={"/procedures-advanced"} component={ProceduresAdvanced} />
-      <Route path={"/evaluation-rapide"} component={AIEvaluation} />
-      <Route path={"/evaluation-rapide-enhanced"} component={EvaluationRapideEnhanced} />
-      <Route path={"/mon-espace"} component={ClientSpace} />
+      <Route path={"/evaluation-rapide"}>{() => <Redirect to="/evaluation" />}</Route>
+      <Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
-      <Route path={"/evaluation-primaire"} component={PrimaryEvaluationForm} />
+      <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/admin/evaluations"} component={AdminEvaluationValidation} />
       <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
       <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
