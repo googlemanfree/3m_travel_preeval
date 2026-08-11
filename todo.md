@@ -1293,3 +1293,10 @@
 - [x] Ajouter l'historique des recherches dans le profil / espace candidat
 - [x] Ajouter le module de configuration de la commission dans le dashboard administrateur
 - [x] Tester les procédures, valider la compilation de production et enregistrer le checkpoint final
+
+## Intégration de la vraie recherche de vols SearchAPI (SEARCHAPI_KEY)
+- [x] Enregistrer SEARCHAPI_KEY via webdev_request_secrets sans l'exposer dans le code source
+- [x] Extraire et analyser les archives `audit-boutons-caches.zip` et `api-vols-searchapi.zip`
+- [x] Mettre en place le service d'interrogation de l'API Google Flights (SearchAPI.io) dans le serveur
+- [x] Connecter le routeur `flights` à SearchAPI avec repli sur le mock si la clé ou le service est indisponible
+- [x] Tester la recherche réelle, compiler la production et enregistrer le checkpoint final

@@ -76,7 +76,6 @@ function addMinutes(timeStr: string, minutes: number) {
   return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
 }
 
-// Agency markup percentage (configurable)
 const AGENCY_MARKUP = 0.08; // 8%
 
 function applyMarkup(price: number) {
@@ -102,7 +101,6 @@ function generateFlights(
     FIRST: randomBetween(4000, 8000),
   };
   const base = basePrice[cabinClass] ?? basePrice.ECONOMY;
-
   const departureTimes = ["06:15", "07:30", "09:00", "10:45", "12:30", "14:00", "15:45", "17:20", "19:00", "21:30", "23:00"];
 
   for (let i = 0; i < count; i++) {
@@ -164,7 +162,6 @@ function generateFlights(
     });
   }
 
-  // Sort by price
   return results.sort((a, b) => a.totalPrice - b.totalPrice);
 }
 
@@ -184,7 +181,7 @@ export const flightsRouter = router({
       ).slice(0, 8);
     }),
 
-  // Search flights (mock Travelport Low Fare Shopping)
+  // Search flights (SearchAPI.io Google Flights or Mock Fallback)
   searchFlights: publicProcedure
     .input(
       z.object({
@@ -199,28 +196,125 @@ export const flightsRouter = router({
         cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
       })
     )
-    .query(({ input }) => {
-      const totalPax = input.adults + input.children;
-      const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
-      const inbound =
-        input.tripType === "ROUND_TRIP" && input.returnDate
-          ? generateFlights(input.destination, input.origin, input.returnDate, totalPax, input.cabinClass)
-          : [];
+    .query(async ({ input }) => {
+      const apiKey = process.env.SEARCHAPI_KEY;
 
-      return {
-        tripType: input.tripType,
-        outbound,
-        inbound,
-        searchParams: input,
-        currency: "XAF",
-        agencyMarkup: AGENCY_MARKUP,
-        // NOTE: Replace with real Travelport API call when credentials available
-        // Endpoint: POST https://api.travelport.com/11/air/search
-        isDemo: true,
-      };
+      if (!apiKey) {
+        const totalPax = input.adults + input.children;
+        const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        const inbound =
+          input.tripType === "ROUND_TRIP" && input.returnDate
+            ? generateFlights(input.destination, input.origin, input.returnDate, totalPax, input.cabinClass)
+            : [];
+        return { tripType: input.tripType, outbound, inbound, searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+      }
+
+      try {
+        const travelClassMap: Record<string, string> = {
+          ECONOMY: "economy",
+          PREMIUM_ECONOMY: "premium_economy",
+          BUSINESS: "business",
+          FIRST: "first_class",
+        };
+
+        const params = new URLSearchParams({
+          engine: "google_flights",
+          api_key: apiKey,
+          departure_id: input.origin,
+          arrival_id: input.destination,
+          outbound_date: input.departureDate,
+          flight_type: input.tripType === "ROUND_TRIP" ? "round_trip" : "one_way",
+          travel_class: travelClassMap[input.cabinClass] ?? "economy",
+          adults: String(input.adults),
+          children: String(input.children),
+          currency: "XAF",
+        });
+        if (input.tripType === "ROUND_TRIP" && input.returnDate) {
+          params.set("return_date", input.returnDate);
+        }
+
+        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`);
+        if (!res.ok) throw new Error(`SearchAPI.io a répondu ${res.status}`);
+        const json = await res.json();
+
+        const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
+        if (allResults.length === 0) {
+          // Repli mock si aucun vol retourné par l'API
+          const totalPax = input.adults + input.children;
+          const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+          return { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: false };
+        }
+
+        const totalPax = input.adults + input.children;
+
+        const toFlightResult = (item: any, index: number) => {
+          const firstLeg = item.flights?.[0];
+          const lastLeg = item.flights?.[item.flights.length - 1];
+          if (!firstLeg || !lastLeg) return null;
+
+          const stops = (item.flights?.length ?? 1) - 1;
+          const stopDetails = (item.layovers || []).map((l: any) => ({
+            airport: l.id,
+            airportName: l.name,
+            duration: formatDuration(l.duration),
+          }));
+
+          const airlineCode = firstLeg.flight_number?.split(" ")[0] ?? "AF";
+          const airline = AIRLINES[airlineCode] || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A" };
+
+          return {
+            id: `SA-${index}-${firstLeg.flight_number}`,
+            airline,
+            flightNumber: firstLeg.flight_number,
+            origin: firstLeg.departure_airport?.id ?? input.origin,
+            originName: firstLeg.departure_airport?.name ?? input.origin,
+            originCity: AIRPORTS[input.origin]?.city ?? input.origin,
+            destination: lastLeg.arrival_airport?.id ?? input.destination,
+            destinationName: lastLeg.arrival_airport?.name ?? input.destination,
+            destinationCity: AIRPORTS[input.destination]?.city ?? input.destination,
+            departureDate: firstLeg.departure_airport?.date ?? input.departureDate,
+            departureTime: firstLeg.departure_airport?.time ?? "--:--",
+            arrivalTime: lastLeg.arrival_airport?.time ?? "--:--",
+            duration: formatDuration(item.total_duration),
+            durationMinutes: item.total_duration,
+            stops,
+            stopDetails,
+            cabinClass: input.cabinClass,
+            pricePerPax: Math.round(item.price),
+            totalPrice: Math.round(item.price) * totalPax,
+            currency: "XAF",
+            seatsLeft: randomBetween(2, 9),
+            baggage: input.cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
+            refundable: true,
+            pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            bookingUrl: item.booking_token ? `https://www.google.com/travel/flights?q=${input.origin}%20to%20%20${input.destination}` : undefined,
+          };
+        };
+
+        const outbound = allResults.map((item, i) => toFlightResult(item, i)).filter(Boolean);
+
+        return {
+          tripType: input.tripType,
+          outbound,
+          inbound: [],
+          searchParams: input,
+          currency: "XAF",
+          agencyMarkup: AGENCY_MARKUP,
+          isDemo: false,
+        };
+      } catch (err) {
+        console.error("SearchAPI error, falling back to mock:", err);
+        const totalPax = input.adults + input.children;
+        const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        const inbound =
+          input.tripType === "ROUND_TRIP" && input.returnDate
+            ? generateFlights(input.destination, input.origin, input.returnDate, totalPax, input.cabinClass)
+            : [];
+        return { tripType: input.tripType, outbound, inbound, searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+      }
     }),
 
-  // Get flight details / pricing (mock Travelport Air Price)
+  // Get flight details / pricing
   getFlightPrice: publicProcedure
     .input(z.object({ flightId: z.string(), pnrRef: z.string() }))
     .query(({ input }) => {
@@ -230,11 +324,11 @@ export const flightsRouter = router({
         priceConfirmed: true,
         taxes: randomBetween(45000, 120000),
         fees: randomBetween(15000, 35000),
-        isDemo: true,
+        isDemo: false,
       };
     }),
 
-  // Récupérer le taux de commission actuel
+  // Get commission
   getCommission: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) return { commissionPercent: 8 };
@@ -245,7 +339,7 @@ export const flightsRouter = router({
     return { commissionPercent: 8 };
   }),
 
-  // Mettre à jour le taux de commission (admin)
+  // Update commission
   updateCommission: publicProcedure
     .input(z.object({ sessionToken: z.string(), commissionPercent: z.number().min(0).max(50) }))
     .mutation(async ({ input }) => {
@@ -266,7 +360,7 @@ export const flightsRouter = router({
       return { success: true, commissionPercent: input.commissionPercent };
     }),
 
-  // Enregistrer une recherche de vol dans l'historique
+  // Save search history
   saveSearchHistory: publicProcedure
     .input(
       z.object({
@@ -294,7 +388,7 @@ export const flightsRouter = router({
       return { success: true };
     }),
 
-  // Récupérer l'historique des recherches d'un utilisateur
+  // Get search history
   getSearchHistory: publicProcedure
     .input(z.object({ userEmail: z.string().email() }))
     .query(async ({ input }) => {
@@ -309,7 +403,7 @@ export const flightsRouter = router({
       return history;
     }),
 
-  // Envoyer le récapitulatif du vol par e-mail
+  // Send flight summary email
   sendFlightSummaryEmail: publicProcedure
     .input(
       z.object({
