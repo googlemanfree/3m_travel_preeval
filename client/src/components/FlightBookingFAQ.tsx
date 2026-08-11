@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { HelpCircle, ChevronDown, MessageSquare, Mail, Phone } from "lucide-react";
+import { useEffect, useState } from "react";
+import { HelpCircle, ChevronDown, MessageSquare, Mail, ThumbsDown, ThumbsUp } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { canSubmitFaqFeedback, FAQ_FEEDBACK_STORAGE_KEY, parseStoredFaqFeedback, type FaqFeedbackValue } from "@shared/faqFeedback";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -40,6 +42,38 @@ const FAQ_ITEMS: FaqItem[] = [
 export function FlightBookingFAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [activeCategory, setActiveCategory] = useState<string>("Tous");
+  const [feedbackByQuestion, setFeedbackByQuestion] = useState<Record<string, FaqFeedbackValue>>(() => {
+    if (typeof window === "undefined") return {};
+    return parseStoredFaqFeedback(window.localStorage.getItem(FAQ_FEEDBACK_STORAGE_KEY));
+  });
+  const submitFeedback = trpc.aiCopilot.submitFaqFeedback.useMutation();
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(FAQ_FEEDBACK_STORAGE_KEY, JSON.stringify(feedbackByQuestion));
+    } catch {
+      // Le stockage local peut être désactivé : le vote reste fonctionnel pour la session.
+    }
+  }, [feedbackByQuestion]);
+
+  const handleFeedback = (question: string, helpful: boolean) => {
+    if (!canSubmitFaqFeedback(feedbackByQuestion, question)) return;
+
+    const value = helpful ? "helpful" : "notHelpful";
+    setFeedbackByQuestion((current) => ({ ...current, [question]: value }));
+    submitFeedback.mutate(
+      { questionKey: question, helpful },
+      {
+        onError: () => {
+          setFeedbackByQuestion((current) => {
+            const next = { ...current };
+            delete next[question];
+            return next;
+          });
+        },
+      }
+    );
+  };
 
   const categories = ["Tous", "Réservation", "Paiement", "Agence"];
 
@@ -120,6 +154,48 @@ export function FlightBookingFAQ() {
               {isOpen && (
                 <CardContent className="px-5 pb-5 pt-0 text-slate-600 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-100 dark:border-slate-800/50 mt-2 pt-4 animate-fadeIn">
                   <p>{item.answer}</p>
+                  <div className="mt-5 flex flex-col gap-2 border-t border-slate-200/70 dark:border-slate-800/70 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400" id={`faq-feedback-${idx}`}>
+                      Cette réponse vous a-t-elle été utile ?
+                    </span>
+                    <div className="flex items-center gap-2" aria-describedby={`faq-feedback-${idx}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleFeedback(item.question, true)}
+                        disabled={Boolean(feedbackByQuestion[item.question]) || submitFeedback.isPending}
+                        aria-label={`Marquer la réponse « ${item.question} » comme utile`}
+                        aria-pressed={feedbackByQuestion[item.question] === "helpful"}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-default ${
+                          feedbackByQuestion[item.question] === "helpful"
+                            ? "border-emerald-400 bg-emerald-100 text-emerald-700 dark:border-emerald-500/70 dark:bg-emerald-950/50 dark:text-emerald-300"
+                            : "border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-emerald-500/60 dark:hover:bg-emerald-950/40"
+                        }`}
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                        Utile
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleFeedback(item.question, false)}
+                        disabled={Boolean(feedbackByQuestion[item.question]) || submitFeedback.isPending}
+                        aria-label={`Marquer la réponse « ${item.question} » comme non utile`}
+                        aria-pressed={feedbackByQuestion[item.question] === "notHelpful"}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-default ${
+                          feedbackByQuestion[item.question] === "notHelpful"
+                            ? "border-rose-400 bg-rose-100 text-rose-700 dark:border-rose-500/70 dark:bg-rose-950/50 dark:text-rose-300"
+                            : "border-slate-200 bg-white/70 text-slate-600 hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:border-rose-500/60 dark:hover:bg-rose-950/40"
+                        }`}
+                      >
+                        <ThumbsDown className="h-3.5 w-3.5" />
+                        Non utile
+                      </button>
+                    </div>
+                  </div>
+                  {feedbackByQuestion[item.question] && (
+                    <p className="mt-2 text-right text-xs text-blue-600 dark:text-blue-300" role="status">
+                      Merci pour votre retour.
+                    </p>
+                  )}
                 </CardContent>
               )}
             </Card>

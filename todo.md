@@ -1354,3 +1354,9 @@
 - [x] Créer un composant FAQ accordéon avec le style glassmorphism pour répondre aux questions de réservation de vols
 - [x] Intégrer la section FAQ sur la page d'accueil (`Home.tsx`) juste avant le pied de page
 - [x] Tester les interactions d'ouverture/fermeture, vérifier le build de production et enregistrer le checkpoint final
+
+## Votes Utile / Non utile sur la FAQ de l'accueil
+- [x] Ajouter la table `faq_feedback` dans `drizzle/schema.ts` pour stocker les votes des utilisateurs sur les questions FAQ
+- [x] Créer la procédure tRPC de vote dans le routeur backend
+- [x] Intégrer les boutons « Utile / Non utile » interactifs et animés dans le composant `FlightBookingFAQ.tsx`
+- [x] Tester les votes via Vitest, valider le build de production et enregistrer le checkpoint final

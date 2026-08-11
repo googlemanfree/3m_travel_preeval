@@ -11,7 +11,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
-import { aureolQuestions } from "../../drizzle/schema";
+import { aureolQuestions, faqFeedback } from "../../drizzle/schema";
 import { desc, sql, count } from "drizzle-orm";
 
 const SYSTEM_PROMPT = `Tu es le "Copilote IA 3M Travel", l'assistant virtuel de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
@@ -138,6 +138,38 @@ export const aiCopilotRouter = router({
           message: "Erreur lors de la génération de la réponse",
         });
       }
+    }),
+
+  /**
+   * Enregistrer le vote de pertinence d'une réponse FAQ publique.
+   * Le vote est volontairement anonyme : aucune adresse IP ni donnée personnelle
+   * n'est persistée, et le client limite les votes répétés par question.
+   */
+  submitFaqFeedback: publicProcedure
+    .input(
+      z.object({
+        questionKey: z.string().min(1).max(191),
+        helpful: z.boolean(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Base de données indisponible",
+        });
+      }
+
+      await db.insert(faqFeedback).values({
+        questionKey: input.questionKey,
+        helpful: input.helpful,
+      });
+
+      return {
+        success: true,
+        message: input.helpful ? "Merci pour votre retour utile." : "Merci pour votre retour.",
+      };
     }),
 
   /**

@@ -1275,3 +1275,16 @@ export const agencySettings = mysqlTable("agency_settings", {
 });
 export type AgencySetting = typeof agencySettings.$inferSelect;
 export type InsertAgencySetting = typeof agencySettings.$inferInsert;
+
+/**
+ * Votes anonymes de pertinence sur les réponses de la FAQ publique.
+ * Aucun contenu personnel ni adresse IP n'est stocké.
+ */
+export const faqFeedback = mysqlTable("faq_feedback", {
+  id: int("id").autoincrement().primaryKey(),
+  questionKey: varchar("questionKey", { length: 191 }).notNull(),
+  helpful: boolean("helpful").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FaqFeedback = typeof faqFeedback.$inferSelect;
+export type InsertFaqFeedback = typeof faqFeedback.$inferInsert;
