@@ -28,6 +28,16 @@ interface UnifiedItem {
   hasConverted: boolean;
   priority: Priority;
   suggestedAction: string;
+  destinationCategory?: string | null;
+  destinationCountry?: string | null;
+  nationality?: string | null;
+  educationLevel?: string | null;
+  employmentStatus?: string | null;
+  maritalStatus?: string | null;
+  status?: string | null;
+  priorVisaRefusal?: boolean | null;
+  criminalRecord?: boolean | null;
+  familyAbroad?: boolean | null;
 }
 
 function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
@@ -74,7 +84,28 @@ export const aiEvaluationManagementRouter = router({
       for (const e of genEvals) {
         const hasConverted = convertedEmails.has(e.email.toLowerCase());
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: false });
-        items.push({ id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email, createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction });
+        items.push({
+          id: `evaluation-${e.id}`,
+          type: "evaluation",
+          typeLabel: "Pré-évaluation",
+          fullName: e.fullName,
+          email: e.email,
+          createdAt: e.createdAt,
+          score: null,
+          hasConverted,
+          priority,
+          suggestedAction,
+          destinationCategory: e.destinationCategory,
+          destinationCountry: e.destinationCountry,
+          nationality: e.nationality,
+          educationLevel: e.educationLevel,
+          employmentStatus: e.employmentStatus,
+          maritalStatus: e.maritalStatus,
+          status: e.status,
+          priorVisaRefusal: e.priorVisaRefusal,
+          criminalRecord: e.criminalRecord,
+          familyAbroad: e.familyAbroad,
+        });
       }
 
       for (const e of luxEvals) {

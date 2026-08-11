@@ -1196,3 +1196,11 @@
 - [x] Mettre à jour la route de soumission si nécessaire
 - [x] Tester la soumission d'une évaluation complète sans erreur interne
 - [x] Valider la compilation de production et créer un checkpoint de correction
+
+## Confirmation, exports et recherche des évaluations complètes
+- [x] Ajouter une animation et un message de confirmation après soumission de l’évaluation
+- [x] Ajouter les filtres et tris administrateurs sur les nouveaux critères
+- [x] Ajouter l’export CSV des évaluations complètes
+- [x] Ajouter l’export PDF des évaluations complètes
+- [x] Tester le formulaire, les exports et la compilation de production
+- [x] Créer un checkpoint après validation

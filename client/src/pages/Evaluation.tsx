@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { motion } from 'framer-motion';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -138,13 +139,31 @@ export default function Evaluation() {
   if (submitMutation.data?.success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-b from-blue-50 to-white">
-        <Card className="p-8 max-w-lg text-center">
-          <CheckCircle2 className="w-14 h-14 text-green-600 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Évaluation envoyée !</h2>
-          <p className="text-gray-600 text-sm">
-            Notre équipe (assistée par IA) analyse votre profil. Vous recevrez le résultat par email et il sera aussi visible dans votre espace candidat.
-          </p>
-        </Card>
+        <motion.div
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.32, ease: 'easeOut' }}
+          className="w-full max-w-lg"
+        >
+          <Card className="p-8 text-center shadow-lg">
+            <motion.div
+              initial={{ scale: 0.5, rotate: -12 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 16, delay: 0.12 }}
+              className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
+            >
+              <CheckCircle2 className="h-10 w-10 text-green-600" aria-hidden="true" />
+            </motion.div>
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-green-700">Confirmation reçue</p>
+            <h2 className="mb-3 text-2xl font-bold text-gray-900">Votre évaluation a bien été envoyée</h2>
+            <p className="text-sm leading-6 text-gray-600">
+              Merci pour votre confiance. Notre équipe, assistée par IA, analyse maintenant votre profil. Le résultat sera envoyé par email et disponible dans votre espace candidat.
+            </p>
+            <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm text-blue-900" role="status" aria-live="polite">
+              <strong>Prochaine étape :</strong> surveillez votre boîte email et votre espace candidat pour consulter votre rapport.
+            </div>
+          </Card>
+        </motion.div>
       </div>
     );
   }
