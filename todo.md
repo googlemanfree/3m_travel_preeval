@@ -1308,3 +1308,10 @@
 - [x] Ajouter une animation de chargement fluide et immersive pendant la recherche en temps réel
 - [x] Créer la compétence réutilisable `searchapi-flights-integration` avec skill-creator
 - [x] Valider la compétence, compiler le projet et enregistrer le checkpoint final
+
+## Refonte du Design Global (Style Ease.travel)
+- [x] Auditer le design system actuel (typographie, espacements, cartes, boutons, header)
+- [x] Moderniser le Navbar et les cartes principales avec des styles épurés, des effets de verre (glassmorphism) et des micro-animations fluides
+- [x] Refondre la page d'accueil avec une hiérarchie visuelle premium, des sections aérées et des CTA marqués
+- [x] Harmoniser l'ensemble des pages et des espaces utilisateurs pour reflter l'identité visuelle moderne
+- [x] Tester la responsivité, valider la compilation de production et enregistrer le checkpoint final
