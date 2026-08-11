@@ -90,38 +90,43 @@
 }
 
 .dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  color-scheme: dark;
+  --brand-royal: #93c5fd;
+  --brand-mid: #60a5fa;
+  --brand-sky: #bfdbfe;
+  --brand-light: #172554;
+  --primary: #60a5fa;
+  --primary-foreground: #071426;
+  --sidebar-primary: #60a5fa;
+  --sidebar-primary-foreground: #071426;
+  --background: #071426;
+  --foreground: #e5eefc;
+  --card: #0d1b2e;
+  --card-foreground: #e5eefc;
+  --popover: #10223a;
+  --popover-foreground: #e5eefc;
+  --secondary: #132946;
+  --secondary-foreground: #dbeafe;
+  --muted: #18304f;
+  --muted-foreground: #9fb3cc;
+  --accent: #1d4ed8;
+  --accent-foreground: #eff6ff;
+  --destructive: #f87171;
+  --destructive-foreground: #fff1f2;
+  --border: rgba(148, 163, 184, 0.2);
+  --input: rgba(148, 163, 184, 0.24);
+  --ring: #60a5fa;
+  --chart-1: #93c5fd;
+  --chart-2: #60a5fa;
+  --chart-3: #3b82f6;
+  --chart-4: #2563eb;
+  --chart-5: #1d4ed8;
+  --sidebar: #08172a;
+  --sidebar-foreground: #e5eefc;
+  --sidebar-accent: #132946;
+  --sidebar-accent-foreground: #eff6ff;
+  --sidebar-border: rgba(148, 163, 184, 0.2);
+  --sidebar-ring: #60a5fa;
 }
 
 @layer base {
@@ -300,4 +305,71 @@
 .ease-pill:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -4px rgba(37, 99, 235, 0.25);
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.16), transparent 32rem),
+    radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.1), transparent 28rem),
+    var(--background);
+}
+
+.dark .glass-card {
+  background: rgba(13, 27, 46, 0.78);
+  border-color: rgba(148, 163, 184, 0.18);
+  box-shadow: 0 18px 50px -18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark .glass-nav {
+  background: rgba(7, 20, 38, 0.88);
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+.dark .bg-white,
+.dark .bg-white\/95,
+.dark .bg-white\/90,
+.dark .bg-white\/80 {
+  background-color: rgba(13, 27, 46, 0.9) !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-slate-50,
+.dark .bg-gray-100 {
+  background-color: rgba(24, 48, 79, 0.72) !important;
+}
+
+.dark .text-gray-700,
+.dark .text-gray-800,
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-\[\#0a2540\] {
+  color: #e5eefc !important;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-slate-500,
+.dark .text-slate-600 {
+  color: #9fb3cc !important;
+}
+
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-slate-200 {
+  border-color: rgba(148, 163, 184, 0.18) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.page-transition-shell {
+  isolation: isolate;
 }

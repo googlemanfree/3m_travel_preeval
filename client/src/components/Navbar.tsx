@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from './ThemeToggle';
 
 const menuItems = [
   { href: '/', label: 'Accueil', icon: '🏠' },
@@ -92,6 +93,7 @@ export default function Navbar() {
 
           {/* 3. ZONE D'ACTION / PROFIL CANDIDAT */}
           <div className="hidden lg:flex items-center space-x-3">
+            <ThemeToggle />
             {candidate ? (
               /* --- MENU CANDIDAT CONNECTÉ --- */
               <div className="relative">
@@ -168,7 +170,8 @@ export default function Navbar() {
           </div>
 
           {/* 4. HAMBURGER MOBILE AVEC ANIMATION */}
-          <div className="flex lg:hidden items-center">
+          <div className="flex lg:hidden items-center gap-2">
+            <ThemeToggle compact />
             <motion.button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition focus:outline-none"
@@ -193,7 +196,7 @@ export default function Navbar() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="lg:hidden bg-white/95 backdrop-blur-2xl border-t border-gray-100 px-4 pt-3 pb-8 shadow-2xl"
+            className="lg:hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border-t border-gray-100 dark:border-white/10 px-4 pt-3 pb-8 shadow-2xl"
             variants={menuVariants}
             initial="hidden"
             animate="visible"

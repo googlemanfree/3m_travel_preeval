@@ -104,6 +104,7 @@ import SubmitReview from "./pages/SubmitReview";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
+import PageTransition from "./components/PageTransition";
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -393,7 +394,7 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
@@ -401,8 +402,10 @@ function App() {
             <>
               {/* Header global visible sur toutes les pages */}
               <Navbar />
-              {/* Contenu des pages */}
-              <Router />
+              {/* Contenu des pages avec transition douce entre les routes */}
+              <PageTransition>
+                <Router />
+              </PageTransition>
               {/* Menu d'actions flottantes unifié */}
               <FloatingActionMenu />
               {/* Copilote IA flottant */}

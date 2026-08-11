@@ -1315,3 +1315,10 @@
 - [x] Refondre la page d'accueil avec une hiérarchie visuelle premium, des sections aérées et des CTA marqués
 - [x] Harmoniser l'ensemble des pages et des espaces utilisateurs pour reflter l'identité visuelle moderne
 - [x] Tester la responsivité, valider la compilation de production et enregistrer le checkpoint final
+
+## Mode Sombre Glassmorphism, Transitions Fluides et Compétence
+- [x] Étendre `client/src/index.css` pour définir les variables du mode sombre (classes `.dark`) avec effet verre
+- [x] Créer un composant ou un bouton de bascule du mode sombre (ThemeToggle) accessible dans la navigation
+- [x] Intégrer des transitions de page fluides basées sur Framer Motion respectant `prefers-reduced-motion`
+- [x] Créer la compétence réutilisable `glass-theme-transitions` avec `init_skill.py` et `quick_validate.py`
+- [x] Compiler la production et enregistrer le checkpoint final
