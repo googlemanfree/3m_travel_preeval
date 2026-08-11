@@ -1,7 +1,9 @@
 import { trpc } from "@/lib/trpc";
+import { useMemo, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AIScoreGauge } from "@/components/AIScoreGauge";
 import { Loader, Sparkles, TrendingUp, CheckCircle2, AlertTriangle } from "lucide-react";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -27,6 +29,24 @@ export default function AdminAIEvaluationDashboard() {
 
   const items = data?.items ?? [];
   const summary = data?.summary;
+  const [scoreSort, setScoreSort] = useState<"default" | "desc" | "asc">("default");
+  const [scoreFilter, setScoreFilter] = useState<"all" | "scored" | "pending">("all");
+
+  const visibleItems = useMemo(() => {
+    const filtered = items.filter((item) => {
+      if (scoreFilter === "scored") return typeof item.score === "number";
+      if (scoreFilter === "pending") return typeof item.score !== "number";
+      return true;
+    });
+
+    if (scoreSort === "default") return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const aScore = typeof a.score === "number" ? a.score : -1;
+      const bScore = typeof b.score === "number" ? b.score : -1;
+      return scoreSort === "desc" ? bScore - aScore : aScore - bScore;
+    });
+  }, [items, scoreFilter, scoreSort]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -46,6 +66,39 @@ export default function AdminAIEvaluationDashboard() {
           </div>
         )}
 
+        <div className="mb-6 flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Lecture des scores IA</p>
+            <p className="text-xs text-slate-500">Classez rapidement les profils à examiner en priorité.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <label className="text-xs font-medium text-slate-600">
+              Affichage
+              <select
+                value={scoreFilter}
+                onChange={(event) => setScoreFilter(event.target.value as typeof scoreFilter)}
+                className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+              >
+                <option value="all">Tous les dossiers</option>
+                <option value="scored">Score disponible</option>
+                <option value="pending">Score en attente</option>
+              </select>
+            </label>
+            <label className="text-xs font-medium text-slate-600">
+              Trier par score
+              <select
+                value={scoreSort}
+                onChange={(event) => setScoreSort(event.target.value as typeof scoreSort)}
+                className="mt-1 block rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+              >
+                <option value="default">Priorité de suivi</option>
+                <option value="desc">Score décroissant</option>
+                <option value="asc">Score croissant</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
         {summary && (
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
             <Card className="p-4"><p className="text-xs text-gray-500">Total</p><p className="text-2xl font-bold text-gray-900">{summary.total}</p></Card>
@@ -58,11 +111,11 @@ export default function AdminAIEvaluationDashboard() {
 
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader className="w-6 h-6 animate-spin text-blue-600" /></div>
-        ) : items.length === 0 ? (
-          <p className="text-center text-gray-500 py-16">Aucune évaluation pour le moment.</p>
+        ) : visibleItems.length === 0 ? (
+          <p className="text-center text-gray-500 py-16">Aucune évaluation correspondant à ce filtre.</p>
         ) : (
           <div className="space-y-3">
-            {items.map((item) => (
+            {visibleItems.map((item) => (
               <Card key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${PRIORITY_STYLES[item.priority].border}`}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -76,11 +129,9 @@ export default function AdminAIEvaluationDashboard() {
                     <TrendingUp className="w-3 h-3 text-blue-500 flex-shrink-0" /> {item.suggestedAction}
                   </p>
                 </div>
-                {item.score !== null && (
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-2xl font-bold text-blue-600">{item.score}<span className="text-sm text-gray-400">/100</span></p>
-                  </div>
-                )}
+                <div className="w-full sm:w-48 flex-shrink-0">
+                  <AIScoreGauge score={typeof item.score === "number" ? item.score : null} compact label="Score IA" />
+                </div>
               </Card>
             ))}
           </div>

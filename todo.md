@@ -1182,3 +1182,10 @@
 - [x] Tester le scoring par pays et compiler le projet en production
 - [x] Créer un checkpoint après validation de l’intégration
 
+
+## Score IA, tri administrateur et routeur des avis
+- [x] Ajouter une jauge colorée du score IA dans l’espace candidat
+- [x] Afficher et permettre le tri/filtrage du score IA dans le dashboard administrateur
+- [x] Corriger le routeur customer_reviews et vérifier sa synchronisation avec la base existante
+- [x] Tester les flux candidat/admin et compiler la production
+- [x] Créer un checkpoint après validation

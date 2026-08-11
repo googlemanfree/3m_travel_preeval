@@ -21,6 +21,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { DocumentProgressBar } from "@/components/DocumentProgressBar";
+import { AIScoreGauge } from "@/components/AIScoreGauge";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -432,6 +433,9 @@ export default function EvaluationSpace() {
                       {score}
                     </span>
                     <span className="text-2xl text-gray-400">/100</span>
+                  </div>
+                  <div className="mt-5 max-w-sm">
+                    <AIScoreGauge score={score} label="Progression du score IA" />
                   </div>
                 </div>
 
