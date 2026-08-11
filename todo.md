@@ -1263,3 +1263,9 @@
 - [x] Créer un widget ou une section d'administration pour consulter les questions posées et les sujets fréquents
 - [x] Tester le stockage et l'agrégation via Vitest et compiler la production
 - [x] Créer le checkpoint final
+
+## Transition vers hello@3mtravelagency.com pour l'expéditeur et les réceptions CV/évaluations
+- [x] Rechercher et remplacer les occurrences opérationnelles de hello@3mtravelagency.click par hello@3mtravelagency.com dans les services d'envoi d'emails et routeurs
+- [x] Mettre à jour les destinataires administratifs des CV, soumissions d'évaluation et formulaires de contact vers hello@3mtravelagency.com
+- [x] Valider l'intégrité des services Resend / SMTP et exécuter les tests ciblés
+- [x] Compiler la production et enregistrer le checkpoint final

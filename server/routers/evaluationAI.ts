@@ -128,13 +128,13 @@ async function sendConfirmationEmail(
       <p>Votre CV et votre formulaire d'évaluation ont été enregistrés sous le N° <strong>${dossierNumber}</strong>.</p>
       <p>Votre <strong>Bilan d'Admissibilité Officiel</strong> sera publié sur votre Espace Client et envoyé par mail dans <strong>48 heures</strong>.</p>
       <p style="text-align: center; margin: 25px 0;">
-        <a href="https://3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
            style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Suivre mon dossier en ligne
         </a>
       </p>
       <hr />
-      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
     </div>
   `;
 
@@ -181,13 +181,13 @@ async function sendBilanEmail(
       </ul>
 
       <p style="text-align: center; margin: 25px 0;">
-        <a href="https://3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
+        <a href="https://www.3mtravelagency.com/mon-espace?dossier=${dossierNumber}" 
            style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
           Consulter mon Bilan Complet
         </a>
       </p>
       <hr />
-      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
+      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | hello@3mtravelagency.com</p>
     </div>
   `;
 

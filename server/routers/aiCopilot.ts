@@ -28,7 +28,7 @@ Informations factuelles à utiliser si pertinentes :
 - Destinations : 107 pays disponibles (Travail, Études, Visiteur)
 - Processus : Évaluation primaire (CV + infos) → Analyse IA → Validation admin → Paiement → Documents → Traitement
 - Documents généralement demandés : CV, diplômes, casier judiciaire, passeport valide, preuve de ressources
-- Contact : WhatsApp +237 698 104 832, email hello@3mtravelagency.click
+- Contact : WhatsApp +237 698 104 832, email hello@3mtravelagency.com
 - Adresse : Biyem-Assi, Montée Chapelle Obili, Yaoundé
 
 Règles strictes :

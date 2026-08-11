@@ -139,7 +139,7 @@ export const contactRouter = router({
 
       try {
         await sendEmail({
-          to: "hello@3mtravelagency.click",
+          to: "hello@3mtravelagency.com",
           subject: `[Contact] ${input.subject}`,
           html: `<h2>Nouvelle demande de contact</h2><p><strong>Nom:</strong> ${input.name}</p><p><strong>Email:</strong> ${input.email}</p>${input.phone ? `<p><strong>Telephone:</strong> ${input.phone}</p>` : ""}<p><strong>Sujet:</strong> ${input.subject}</p><hr /><p><strong>Message:</strong></p><p>${input.message.replace(/\n/g, "<br />")}</p>`,
           replyTo: input.email,
