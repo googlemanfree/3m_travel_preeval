@@ -28,6 +28,7 @@ import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhance
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
+import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import { VisasCarousel } from "@/components/VisasCarousel";
@@ -1261,7 +1262,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-                    <p className="text-gray-600">hello@3mtravelagency.click</p>
+                    <p className="text-gray-600">hello@3mtravelagency.com</p>
                   </div>
                 </div>
               </div>
@@ -1311,6 +1312,9 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* ─── FAQ INTERACTIVE DES RÉSERVATIONS ET VOLS ──────────────────────── */}
+      <FlightBookingFAQ />
 
       {/* ─── FOOTER ──────────────────────────────────────────────────────── */}
       <footer id="contact" style={{ background: 'linear-gradient(180deg, #0f1e4a 0%, #0a1230 100%)' }} className="text-gray-400 py-14">

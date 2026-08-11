@@ -1349,3 +1349,8 @@
 - [x] S'assurer que chaque page publique, utilisateur et administrateur gère correctement les états de chargement et d'erreur
 - [x] Unifier le style glassmorphism et les préférences d'animation sur l'ensemble des écrans
 - [x] Valider le build de production complet et enregistrer le checkpoint final
+
+## Section FAQ interactive des réservations sur l'accueil
+- [x] Créer un composant FAQ accordéon avec le style glassmorphism pour répondre aux questions de réservation de vols
+- [x] Intégrer la section FAQ sur la page d'accueil (`Home.tsx`) juste avant le pied de page
+- [x] Tester les interactions d'ouverture/fermeture, vérifier le build de production et enregistrer le checkpoint final
