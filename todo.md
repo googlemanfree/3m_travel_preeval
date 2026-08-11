@@ -1372,3 +1372,9 @@
 - [x] Importer `requireValidAdminSession` depuis `./adminAuth` et l'appliquer à `updateCommission`
 - [x] Tester la compilation et vérifier le build de production
 - [x] Enregistrer le checkpoint final sécurisé
+
+## Analyse et correction ciblée des 4 fichiers (Auth, PDG, getFrequentQuestions)
+- [x] Analyser les pages de login/register (`Login.tsx`, `Register.tsx`, `AdminLogin.tsx`, etc.) pour identifier le bug d'authentification récurrent
+- [x] Localiser et retirer toute fausse donnée ou mention de « PDG » dans les composants ou pages de présentation
+- [x] Inspecter le routeur Aureol / `aiCopilot.ts` pour sécuriser `getFrequentQuestions` avec `requireValidAdminSession`
+- [x] Mettre à jour les fichiers ciblés en conservant leurs chemins exacts, compiler la production et enregistrer le checkpoint

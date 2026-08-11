@@ -13,6 +13,7 @@ import { invokeLLM } from "../_core/llm";
 import { getDb } from "../db";
 import { aureolQuestions, faqFeedback } from "../../drizzle/schema";
 import { desc, sql, count } from "drizzle-orm";
+import { requireValidAdminSession } from "./adminAuth";
 
 const SYSTEM_PROMPT = `Tu es le "Copilote IA 3M Travel", l'assistant virtuel de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
@@ -178,6 +179,8 @@ export const aiCopilotRouter = router({
   getFrequentQuestions: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), limit: z.number().default(50) }))
     .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
 
