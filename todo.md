@@ -1378,3 +1378,8 @@
 - [x] Localiser et retirer toute fausse donnée ou mention de « PDG » dans les composants ou pages de présentation
 - [x] Inspecter le routeur Aureol / `aiCopilot.ts` pour sécuriser `getFrequentQuestions` avec `requireValidAdminSession`
 - [x] Mettre à jour les fichiers ciblés en conservant leurs chemins exacts, compiler la production et enregistrer le checkpoint
+
+## Suggestions de réponses IA pour les questions fréquentes d'Aureol
+- [x] Ajouter une procédure tRPC admin `generateAiFrequentAnswers` dans `server/routers/aiCopilot.ts` protégée par `requireValidAdminSession` pour analyser les questions fréquentes et générer des suggestions structurées
+- [x] Créer un composant ou un onglet dédié dans le dashboard administrateur pour déclencher la génération IA, prévisualiser et copier les suggestions de réponses
+- [x] Valider le build de production, tester les flux et enregistrer le checkpoint final

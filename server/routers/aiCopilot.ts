@@ -206,4 +206,105 @@ export const aiCopilotRouter = router({
         recentLogs,
       };
     }),
+
+  /**
+   * Générer automatiquement par IA des suggestions de réponses pour les questions fréquentes (Admin)
+   */
+  generateAiFrequentAnswers: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const topQuestions = await db
+        .select({
+          question: aureolQuestions.question,
+          count: count(),
+        })
+        .from(aureolQuestions)
+        .groupBy(aureolQuestions.question)
+        .orderBy(desc(count()))
+        .limit(6);
+
+      if (topQuestions.length === 0) {
+        return {
+          success: true,
+          suggestions: [],
+          message: "Aucune question enregistrée pour le moment.",
+        };
+      }
+
+      const questionsListText = topQuestions.map((q, i) => `${i + 1}. "${q.question}" (posée ${q.count} fois)`).join("\n");
+
+      const prompt = `Tu es l'expert en mobilité internationale de 3M Travel & Services à Yaoundé, Cameroun.
+Voici les questions les plus fréquentes posées par nos candidats au chatbot Aureol :
+${questionsListText}
+
+Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +237 698 104 832, email hello@3mtravelagency.com) et les frais (65 000 FCFA pour l'ouverture de dossier).
+
+Format de sortie attendu en JSON strict (sans markdown autour si possible, ou dans un bloc json) :
+[
+  {
+    "question": "Texte exact de la question",
+    "frequency": nombre_de_fois,
+    "suggestedAnswer": "Réponse officielle suggérée..."
+  }
+]`;
+
+      try {
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "Tu es un assistant expert qui génère des suggestions de réponses structurées en JSON strict." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "ai_suggestions_schema",
+              strict: false,
+              schema: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    question: { type: "string" },
+                    frequency: { type: "integer" },
+                    suggestedAnswer: { type: "string" },
+                  },
+                  required: ["question", "frequency", "suggestedAnswer"],
+                },
+              },
+            },
+          },
+          max_tokens: 1500,
+        });
+
+        const content = response.choices[0]?.message?.content || "[]";
+        let parsed = [];
+        try {
+          const cleanJson = typeof content === "string" ? content.replace(/```json/g, "").replace(/```/g, "").trim() : JSON.stringify(content);
+          parsed = JSON.parse(cleanJson);
+        } catch (parseErr) {
+          console.error("Failed to parse AI suggestions JSON:", parseErr, content);
+          parsed = topQuestions.map(q => ({
+            question: q.question,
+            frequency: q.count,
+            suggestedAnswer: "Contactez notre agence au +237 698 104 832 ou par email à hello@3mtravelagency.com pour un accompagnement personnalisé sur cette démarche.",
+          }));
+        }
+
+        return {
+          success: true,
+          suggestions: parsed,
+        };
+      } catch (err) {
+        console.error("generateAiFrequentAnswers error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la génération IA des suggestions de réponses.",
+        });
+      }
+    }),
 });

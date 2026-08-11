@@ -46,6 +46,7 @@ import {
   LogOut,
   Download,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 import {
   BarChart,
@@ -613,6 +614,24 @@ export default function AdminDashboard() {
     },
   });
 
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ question: string; frequency: number; suggestedAnswer: string }>>([]);
+  const generateAiSuggestionsMutation = trpc.aiCopilot.generateAiFrequentAnswers.useMutation({
+    onSuccess: (res) => {
+      setAiSuggestions(res.suggestions || []);
+      toast({
+        title: "Suggestions IA générées",
+        description: `${res.suggestions?.length || 0} suggestion(s) prête(s) pour vos questions fréquentes.`,
+      });
+    },
+    onError: (err) => {
+      toast({
+        title: "Génération IA impossible",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const logoutMutation = trpc.adminAuth.logout.useMutation({
     onSuccess: () => {
       localStorage.removeItem("adminSessionToken");
@@ -872,6 +891,76 @@ export default function AdminDashboard() {
                   </div>
                 )}
               </div>
+
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                  <h4 className="font-bold text-blue-900 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-blue-600 animate-pulse" />
+                    Assistant IA — Suggestions de réponses officielles
+                  </h4>
+                  <p className="text-xs text-blue-700 mt-0.5">
+                    Générez automatiquement par IA des réponses optimisées pour les questions les plus fréquentes posées par vos candidats.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => generateAiSuggestionsMutation.mutate({ sessionToken })}
+                  disabled={generateAiSuggestionsMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-2 text-sm shrink-0"
+                >
+                  <Sparkles className={`w-4 h-4 ${generateAiSuggestionsMutation.isPending ? "animate-spin" : ""}`} />
+                  {generateAiSuggestionsMutation.isPending ? "Génération en cours..." : "Générer les suggestions IA"}
+                </Button>
+              </div>
+
+              {aiSuggestions.length > 0 && (
+                <div className="mb-8 p-5 bg-white rounded-xl border shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-bold text-gray-900 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-amber-500" />
+                      Suggestions générées par l’IA pour vos questions fréquentes
+                    </h5>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAiSuggestions([])}
+                      className="text-xs text-gray-500 hover:text-gray-700"
+                    >
+                      Masquer
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {aiSuggestions.map((item, idx) => (
+                      <div key={idx} className="p-4 rounded-xl bg-slate-50 border space-y-2 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                              Posée {item.frequency} fois
+                            </span>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900">« {item.question} »</p>
+                          <p className="text-xs text-gray-600 mt-2 bg-white p-3 rounded-lg border border-slate-200/80 italic">
+                            {item.suggestedAnswer}
+                          </p>
+                        </div>
+                        <div className="pt-2 flex justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs gap-1.5"
+                            onClick={() => {
+                              navigator.clipboard.writeText(item.suggestedAnswer);
+                              toast({ title: "Copié !", description: "La suggestion a été copiée dans le presse-papier." });
+                            }}
+                          >
+                            <Download className="w-3 h-3" />
+                            Copier la réponse
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {isLoadingFaqSatisfaction ? (
                 <div className="h-64 flex items-center justify-center text-sm text-gray-500">
