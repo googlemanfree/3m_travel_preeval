@@ -9,6 +9,7 @@ import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEmail } from "../_core/email";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { computeDestinationScore } from "../destinationScoringEngine";
 import { logger } from "../_core/logger";
 import { eq } from "drizzle-orm";
 import { candidateProcedure } from "./candidate";
@@ -271,25 +272,62 @@ export const evaluationRouter = router({
 
       const evaluationId = inserted[0]?.id;
 
-      // Analyse automatique par IA — se déclenche seule dès qu'un CV est
-      // fourni, sans intervention d'un admin. Faite en arrière-plan pour ne
-      // jamais ralentir la confirmation de soumission du candidat ; toute
-      // erreur est journalisée sans jamais faire échouer la soumission.
-      if (evaluationId && input.cvBase64) {
+      // Scoring déterministe par pays + rapport IA explicatif. Le calcul est
+      // lancé en arrière-plan pour ne pas ralentir la confirmation de dépôt.
+      // Aucun nouveau champ SQL n'est requis : le score et sa grille sont
+      // conservés au début de aiReportContent, puis affichés dans l'espace
+      // candidat avec le rapport généré.
+      if (evaluationId) {
         (async () => {
           try {
-            const base64Data = input.cvBase64!.includes(",") ? input.cvBase64!.split(",")[1] : input.cvBase64!;
-            const cvBuffer = Buffer.from(base64Data!, "base64");
-            const cvText = await extractTextFromPDF(cvBuffer);
+            const scoring = computeDestinationScore({
+              destinationCategory: input.destinationCategory,
+              destinationCountry: input.destinationCountry,
+              educationLevel: input.educationLevel,
+              yearsOfExperience: input.yearsOfExperience,
+              frenchLevel: input.frenchLevel,
+              englishLevel: input.englishLevel,
+              currentJobTitle: input.currentJobTitle,
+              industrySector: input.industrySector,
+              priorVisaRefusal: input.priorVisaRefusal,
+              criminalRecord: input.criminalRecord,
+              familyAbroad: input.familyAbroad,
+            });
+
+            let cvText = "";
+            if (input.cvBase64) {
+              const base64Data = input.cvBase64.includes(",") ? input.cvBase64.split(",")[1] : input.cvBase64;
+              const cvBuffer = Buffer.from(base64Data!, "base64");
+              cvText = await extractTextFromPDF(cvBuffer);
+            }
+
+            const scoreSummary = [
+              `SCORE D'ADMISSIBILITÉ : ${scoring.scoreTotal}/100`,
+              `STATUT : ${scoring.statusLabel}`,
+              `STRATÉGIE : ${scoring.strategyType}`,
+              "DÉTAIL DU SCORE :",
+              ...scoring.breakdown.map((item) => `- ${item.label}: ${item.points}/${item.max}`),
+              `VOIE RECOMMANDÉE : ${scoring.recommendedPath}`,
+              `CONTEXTE : ${scoring.legalContext}`,
+              "DOCUMENTS À PRÉPARER :",
+              ...scoring.documentChecklist.map((document) => `- ${document}`),
+            ].join("\\n");
+
             const openaiKey = process.env.OPENAI_API_KEY;
+            const contextForAI = `${cvText || "CV non fourni — analyse basée sur les informations déclarées."}\\n\\n--- SCORE VÉRIFIABLE ---\\n${scoreSummary}`;
             const report = await generateAIEvaluationReport(
-              cvText,
+              contextForAI,
               input.fullName,
               input.destinationCountry || input.destinationCategory,
               openaiKey
             );
-            await db.update(evaluations).set({ aiReportContent: report, aiProcessedAt: new Date() }).where(eq(evaluations.id, evaluationId));
-            logger.info("evaluation.ai_analysis.completed", { evaluationId });
+
+            await db.update(evaluations).set({
+              aiReportContent: `${scoreSummary}\\n\\n--- RAPPORT IA ---\\n${report}`,
+              aiProcessedAt: new Date(),
+              aiProcessingError: null,
+            }).where(eq(evaluations.id, evaluationId));
+            logger.info("evaluation.ai_analysis.completed", { evaluationId, score: scoring.scoreTotal, strategy: scoring.strategyType });
           } catch (err) {
             logger.error("evaluation.ai_analysis.failed", { evaluationId }, err);
             try {

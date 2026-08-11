@@ -1174,3 +1174,11 @@
 - [x] Créer un checkpoint après validation de la correction du champ CV
 
 **Note de suivi — 2026-08-11 :** Demande utilisateur : rendre le bouton CV clairement visible dans l’évaluation primaire.
+
+## Intégration du moteur IA de scoring par pays
+- [x] Extraire et auditer le contenu de moteur-ia-scoring-pays.zip
+- [x] Comparer ses règles avec le moteur d’évaluation IA existant
+- [x] Intégrer uniquement les règles compatibles sans remplacer le système existant
+- [x] Tester le scoring par pays et compiler le projet en production
+- [x] Créer un checkpoint après validation de l’intégration
+
