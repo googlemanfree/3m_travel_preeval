@@ -4,6 +4,7 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
@@ -395,7 +396,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
-        <TooltipProvider>
+        <AnimationPreferencesProvider>
+          <TooltipProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
           {sessionRestored && (
@@ -412,7 +414,8 @@ function App() {
               <AiCopilotWidgetEnhanced />
             </>
           )}
-        </TooltipProvider>
+          </TooltipProvider>
+        </AnimationPreferencesProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

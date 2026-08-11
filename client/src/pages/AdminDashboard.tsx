@@ -847,11 +847,11 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tableau */}
-        <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">
+        <Card className="admin-glass-table border-0 overflow-hidden hover:-translate-y-0.5" aria-busy={isLoading}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="border-b border-gray-200/70">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">N° Dossier</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Candidat</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
@@ -862,13 +862,13 @@ export default function AdminDashboard() {
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100/70">
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
                       {Array.from({ length: 8 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
-                          <div className="h-4 bg-gray-200 rounded w-3/4" />
+                          <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
                       ))}
                     </tr>
@@ -954,7 +954,7 @@ export default function AdminDashboard() {
           </div>
 
           {candidates.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500">
+            <div className="px-4 py-3 border-t border-gray-200/70 bg-white/30 text-xs text-gray-500 dark:bg-slate-900/20">
               {candidates.length} candidat{candidates.length > 1 ? "s" : ""} affiché{candidates.length > 1 ? "s" : ""}
               {total !== candidates.length && ` sur ${total} au total`}
             </div>

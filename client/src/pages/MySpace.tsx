@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, FileText, MessageSquare, Download, LogOut, Languages, ExternalLink, CreditCard, Settings, Gauge, ZapOff } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { QuickActionNotification, MissingDocumentsList } from "@/components/QuickActionNotification";
@@ -18,6 +18,8 @@ import { DossierStatusPipeline, type StatusStep } from "@/components/DossierStat
 import { DashboardStats } from "@/components/DashboardStats";
 import { PaymentHistory } from "@/components/PaymentHistory";
 import { DocumentsStatus } from "@/components/DocumentsStatus";
+import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
+import { type AnimationPreference } from "@shared/animationPreferences";
 import { DossierOverview } from "@/components/DossierOverview";
 
 // Composant onglet Paiements
@@ -117,6 +119,7 @@ export default function MySpace() {
   const [pipelineSteps, setPipelineSteps] = useState<StatusStep[]>([]);
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [isResendingEmail, setIsResendingEmail] = useState(false);
+  const { preference: animationPreference, setPreference: setAnimationPreference } = useAnimationPreferences();
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading, error } = trpc.candidate.getMyDossierData.useQuery(
@@ -426,6 +429,7 @@ export default function MySpace() {
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="translations">Traductions</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
+            <TabsTrigger value="settings">Préférences</TabsTrigger>
             <TabsTrigger value="agreement">Accord</TabsTrigger>
           </TabsList>
 
@@ -598,6 +602,39 @@ export default function MySpace() {
           {/* Paiements */}
           <TabsContent value="payments" className="space-y-6">
             <PaymentsTab dossierNumber={app?.dossierNumber} />
+          </TabsContent>
+
+          {/* Préférences */}
+          <TabsContent value="settings" className="space-y-6">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Settings className="w-5 h-5 text-blue-600" /> Préférences d’animation</CardTitle>
+                <CardDescription>Choisissez la vitesse des animations de l’interface ou désactivez-les complètement. Votre choix est enregistré sur cet appareil.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Vitesse des animations">
+                  {([
+                    { value: "normal", label: "Standard", description: "Transitions équilibrées", icon: Gauge },
+                    { value: "fast", label: "Rapide", description: "Réponses plus immédiates", icon: ZapOff },
+                    { value: "off", label: "Désactivées", description: "Réduit les mouvements", icon: ZapOff },
+                  ] as const).map(({ value, label, description, icon: Icon }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={animationPreference === value}
+                      onClick={() => setAnimationPreference(value as AnimationPreference)}
+                      className={`rounded-2xl border p-4 text-left transition-all ${animationPreference === value ? "border-blue-500 bg-blue-50/80 shadow-md dark:bg-blue-950/40" : "border-slate-200/80 bg-white/50 hover:border-blue-300 hover:bg-blue-50/40 dark:border-slate-700 dark:bg-slate-900/30"}`}
+                    >
+                      <Icon className={`mb-3 h-5 w-5 ${animationPreference === value ? "text-blue-600" : "text-slate-500"}`} aria-hidden="true" />
+                      <span className="block font-semibold text-slate-800 dark:text-slate-100">{label}</span>
+                      <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">{description}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">Le mode « Désactivées » conserve les retours essentiels et respecte la préférence de réduction des mouvements de votre système.</p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Accord */}

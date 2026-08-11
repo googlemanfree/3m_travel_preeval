@@ -373,3 +373,81 @@
 .page-transition-shell {
   isolation: isolate;
 }
+
+/* ── Tables admin glassmorphism & préférence de mouvement ───────────────────── */
+.admin-glass-table {
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.45);
+}
+
+.admin-glass-table thead {
+  background: rgba(248, 250, 252, 0.82);
+  backdrop-filter: blur(12px);
+}
+
+.admin-glass-table tbody tr {
+  transition: background-color 220ms cubic-bezier(0.23, 1, 0.32, 1), transform 220ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 220ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.admin-glass-table tbody tr:hover {
+  background: rgba(239, 246, 255, 0.7);
+  transform: translateX(2px);
+  box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.6);
+}
+
+.admin-table-skeleton {
+  background: linear-gradient(100deg, rgba(226, 232, 240, 0.75) 25%, rgba(255, 255, 255, 0.95) 37%, rgba(226, 232, 240, 0.75) 63%);
+  background-size: 400% 100%;
+  animation: adminSkeletonShimmer 1.35s ease-in-out infinite;
+}
+
+@keyframes adminSkeletonShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.dark .admin-glass-table {
+  background: rgba(13, 27, 46, 0.72);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 22px 55px -30px rgba(0, 0, 0, 0.8);
+}
+
+.dark .admin-glass-table thead {
+  background: rgba(24, 48, 79, 0.78);
+}
+
+.dark .admin-glass-table tbody tr:hover {
+  background: rgba(30, 64, 175, 0.2);
+  box-shadow: inset 3px 0 0 rgba(96, 165, 250, 0.75);
+}
+
+.dark .admin-table-skeleton {
+  background: linear-gradient(100deg, rgba(30, 58, 95, 0.7) 25%, rgba(71, 100, 140, 0.8) 37%, rgba(30, 58, 95, 0.7) 63%);
+  background-size: 400% 100%;
+}
+
+html[data-animation-preference="fast"] .ease-pill,
+html[data-animation-preference="fast"] .admin-glass-table tbody tr {
+  transition-duration: 120ms;
+}
+
+html[data-animation-preference="fast"] .admin-table-skeleton {
+  animation-duration: 850ms;
+}
+
+html.motion-disabled *,
+html.motion-disabled *::before,
+html.motion-disabled *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
+html.motion-disabled .ease-pill:hover,
+html.motion-disabled .admin-glass-table tbody tr:hover {
+  transform: none !important;
+}

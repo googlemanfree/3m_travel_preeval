@@ -1329,3 +1329,11 @@
 - [x] Appliquer les classes `glass-card`, `backdrop-blur-xl` et des animations Framer Motion aux modales et aux composants du dashboard admin
 - [x] Ajouter des animations de survol (hover scale, lueur subtile, transition douce) sur les cartes de vols et les boutons principaux
 - [x] Compiler la production et sauvegarder le checkpoint final
+
+## Tableaux Admin Glassmorphism, Chargements Animés et Vitesse des Animations
+- [x] Extraire et analyser l'archive `analyse-vols-securite.zip`
+- [x] Créer le contexte et les helpers de vitesse des animations utilisateur (vitesse normale, rapide, désactivée)
+- [x] Intégrer l'option de réglage des animations dans l'espace / profil utilisateur
+- [x] Appliquer les styles glassmorphism et des squelettes de chargement animés aux tableaux du dashboard administrateur
+- [x] Créer la compétence réutilisable `glassmorphism-admin-dashboard` via `init_skill.py` et la valider avec `quick_validate.py`
+- [x] Compiler la production, tester les interactions et enregistrer le checkpoint final
