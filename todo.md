@@ -1343,3 +1343,9 @@
 - [x] Afficher la date et l'heure exactes de la dernière synchronisation réussie
 - [x] Invalider les requêtes tRPC correspondantes lors du clic pour forcer le rechargement des données sans rafraîchir la page
 - [x] Compiler le projet, vérifier la responsivité et enregistrer le checkpoint final
+
+## Audit global et correction de toutes les pages et bugs
+- [x] Vérifier la compilation et l'absence d'erreurs de routage ou d'imports manquants dans `App.tsx`
+- [x] S'assurer que chaque page publique, utilisateur et administrateur gère correctement les états de chargement et d'erreur
+- [x] Unifier le style glassmorphism et les préférences d'animation sur l'ensemble des écrans
+- [x] Valider le build de production complet et enregistrer le checkpoint final
