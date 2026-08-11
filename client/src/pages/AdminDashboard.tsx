@@ -61,6 +61,7 @@ import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatAdminSyncTime } from "@shared/adminSync";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -556,6 +557,8 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const { toast } = useToast();
 
   const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
@@ -580,6 +583,12 @@ export default function AdminDashboard() {
     { sessionToken, limit: 12 },
     { enabled: !!sessionToken }
   );
+
+  useEffect(() => {
+    if (!isLoading && !isLoadingCountryDistribution && (data || countryDistribution) && !lastSyncedAt) {
+      setLastSyncedAt(new Date());
+    }
+  }, [data, countryDistribution, isLoading, isLoadingCountryDistribution, lastSyncedAt]);
 
   const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
     onSuccess: (result) => {
@@ -610,8 +619,25 @@ export default function AdminDashboard() {
   });
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([refetch(), refetchCountryDistribution()]);
-  }, [refetch, refetchCountryDistribution]);
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetch(), refetchCountryDistribution()]);
+      const syncedAt = new Date();
+      setLastSyncedAt(syncedAt);
+      toast({
+        title: "Synchronisation terminée",
+        description: `Données mises à jour à ${syncedAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Synchronisation impossible",
+        description: error instanceof Error ? error.message : "Veuillez réessayer.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch, refetchCountryDistribution, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -654,16 +680,24 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoading || isLoadingCountryDistribution}
-              className="gap-1.5 border-white/30 text-white hover:bg-white/10"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading || isLoadingCountryDistribution ? "animate-spin" : ""}`} />
-              Actualiser
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading || isLoadingCountryDistribution}
+                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+                aria-label="Actualiser manuellement les données du dashboard"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing || isLoading || isLoadingCountryDistribution ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Synchronisation..." : "Actualiser"}
+              </Button>
+              <span className="text-xs text-blue-100/90" aria-live="polite">
+                {lastSyncedAt
+                  ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
+                  : formatAdminSyncTime(null)}
+              </span>
+            </div>
             <Button
               variant="outline"
               size="sm"

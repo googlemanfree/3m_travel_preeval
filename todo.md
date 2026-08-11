@@ -1337,3 +1337,9 @@
 - [x] Appliquer les styles glassmorphism et des squelettes de chargement animés aux tableaux du dashboard administrateur
 - [x] Créer la compétence réutilisable `glassmorphism-admin-dashboard` via `init_skill.py` et la valider avec `quick_validate.py`
 - [x] Compiler la production, tester les interactions et enregistrer le checkpoint final
+
+## Actualisation manuelle du dashboard administrateur
+- [x] Ajouter un bouton d'actualisation manuelle avec icône de synchronisation dans l'en-tête du dashboard admin
+- [x] Afficher la date et l'heure exactes de la dernière synchronisation réussie
+- [x] Invalider les requêtes tRPC correspondantes lors du clic pour forcer le rechargement des données sans rafraîchir la page
+- [x] Compiler le projet, vérifier la responsivité et enregistrer le checkpoint final
