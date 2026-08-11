@@ -535,9 +535,24 @@ export default function MySpace() {
                             <p className="text-sm text-gray-600">{doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString('fr-FR') : '—'}</p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
+                        {doc.fileUrl ? (
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={doc.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Télécharger ${doc.fileName || "le document"}`}
+                            >
+                              <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                              Télécharger
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" disabled aria-label="Document indisponible">
+                            <Download className="w-4 h-4 mr-2" aria-hidden="true" />
+                            Indisponible
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>

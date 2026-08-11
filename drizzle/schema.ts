@@ -1193,3 +1193,22 @@ export const customerReviews = mysqlTable("customer_reviews", {
 });
 export type CustomerReview = typeof customerReviews.$inferSelect;
 export type InsertCustomerReview = typeof customerReviews.$inferInsert;
+
+/**
+ * Historique des actions administrateur sur les évaluations et des exports.
+ * Table isolée : aucune modification des tables métier existantes.
+ */
+export const adminActivityLogs = mysqlTable("admin_activity_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  action: mysqlEnum("action", ["status_changed", "csv_exported", "pdf_exported"]).notNull(),
+  evaluationType: varchar("evaluationType", { length: 50 }),
+  evaluationId: varchar("evaluationId", { length: 100 }),
+  oldStatus: varchar("oldStatus", { length: 80 }),
+  newStatus: varchar("newStatus", { length: 80 }),
+  resultCount: int("resultCount"),
+  details: text("details"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;
+export type InsertAdminActivityLog = typeof adminActivityLogs.$inferInsert;

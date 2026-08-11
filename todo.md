@@ -1204,3 +1204,24 @@
 - [x] Ajouter l’export PDF des évaluations complètes
 - [x] Tester le formulaire, les exports et la compilation de production
 - [x] Créer un checkpoint après validation
+
+## Dashboard admin : pagination, prévisualisation et historique
+- [ ] Auditer les composants et routes d’export existants
+- [ ] Ajouter une pagination robuste des évaluations
+- [ ] Ajouter des actions rapides pour modifier le statut depuis la liste
+- [ ] Ajouter une prévisualisation PDF avant téléchargement
+- [ ] Persister et afficher l’historique des exports et actions admin
+- [ ] Tester les flux et compiler la production
+
+## Compétence réutilisable du processus dashboard admin
+- [ ] Initialiser la compétence avec skill-creator
+- [ ] Rédiger les instructions et ressources réutilisables
+- [ ] Valider la compétence avec quick_validate.py
+- [ ] Livrer le fichier SKILL.md à l’utilisateur
+
+## Audit des boutons cachés
+- [x] Extraire et auditer audit-boutons-caches.zip
+- [x] Comparer les boutons signalés avec les composants et routes actuels
+- [x] Corriger la visibilité, les états et l’accessibilité des boutons concernés
+- [x] Tester les boutons sur les vues desktop et mobile et compiler la production
+- [x] Créer un checkpoint après validation de l’audit

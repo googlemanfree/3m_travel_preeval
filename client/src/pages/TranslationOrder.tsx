@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -45,6 +45,8 @@ export default function TranslationOrder() {
   const [pricePerPage, setPricePerPage] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('EUR');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createTranslationRequest = trpc.translation.createTranslationRequest.useMutation({
     onSuccess: () => {
@@ -130,8 +132,24 @@ export default function TranslationOrder() {
       return;
     }
 
-    // TODO: Implement file upload to S3 and get fileUrl
-    const fileUrl = "https://example.com/placeholder.pdf"; // Placeholder
+        setIsUploading(true);
+    let fileUrl: string;
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("fileType", "document_traduction");
+      const res = await fetch("/api/candidate/upload-public", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Échec de l'envoi du document.");
+      const data = await res.json();
+      fileUrl = data.fileUrl;
+    } catch {
+      toast({
+        title: "Erreur d'envoi",
+        description: "Le document n’a pas pu être téléversé. Veuillez réessayer.",
+      });
+      setIsUploading(false);
+      return;
+    }
 
     createTranslationRequest.mutate({
       documentType: documentType as any,
@@ -147,6 +165,8 @@ export default function TranslationOrder() {
       candidateName,
       email,
       whatsapp,
+    }, {
+      onSettled: () => setIsUploading(false),
     });
   };
 
@@ -247,15 +267,30 @@ export default function TranslationOrder() {
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <Label htmlFor="documentFile">Document à Traduire</Label>
-          <Input
+          <input
+            ref={fileInputRef}
             id="documentFile"
             type="file"
+            className="sr-only"
             onChange={handleFileChange}
             required
           />
-          {fileName && <p className="text-sm text-gray-500 mt-1">Fichier sélectionné: {fileName} ({ (fileSize / 1024 / 1024).toFixed(2) } MB)</p>}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              aria-controls="documentFile"
+            >
+              Choisir un document
+            </Button>
+            <span className="text-sm text-gray-600" aria-live="polite">
+              {fileName ? `${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)` : "Aucun fichier sélectionné"}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500">PDF, image ou document bureautique accepté. Le fichier sera envoyé de manière sécurisée.</p>
         </div>
 
         {pricePerPage > 0 && (
