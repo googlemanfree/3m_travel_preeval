@@ -32,8 +32,8 @@ import { CredibilityBadge } from "@/components/CredibilityBadge";
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import { VisasCarousel } from "@/components/VisasCarousel";
 import { SimulatorExpress } from "@/components/SimulatorExpress";
-import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { FooterLegal } from "@/components/FooterLegal";
+import AureolQuestionField from "@/components/AureolQuestionField";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -543,6 +543,9 @@ export default function Home() {
         logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      {/* ─── QUESTIONS À AUREOL ───────────────────────────────────────────── */}
+      <AureolQuestionField />
 
       {/* ─── SERVICES ────────────────────────────────────────────────────── */}
       <section id="services" className="py-12 md:py-20 bg-white">
@@ -1433,11 +1436,8 @@ export default function Home() {
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />
 
-      {/* ─── WIDGET WHATSAPP FLOTTANT ─────────────────────────────────────── */}
-      <WhatsAppWidget />
-
-      {/* ─── BOUTON WHATSAPP FLOTTANT (Legacy) ─────────────────────────────────────── */}
-      <WhatsAppButton />
+      {/* Les boutons WhatsApp et Aureol sont désormais montés une seule fois
+          dans App.tsx afin de rester séparés sur toutes les pages. */}
     </div>
   );
 }

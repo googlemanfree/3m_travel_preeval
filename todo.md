@@ -1231,3 +1231,26 @@
 - [x] Remplacer les 2 fichiers en conservant les chemins et la logique d’authentification correcte
 - [x] Vérifier la table evaluations en production et tracer la migration manquante
 - [x] Compiler la production et sauvegarder le checkpoint final
+
+## Widget statistiques par pays, filtres de documents par classification IA et export CSV des rapports d'activité
+- [x] Créer une procédure tRPC pour agréger les statistiques par pays des candidats et évaluations
+- [x] Intégrer un widget graphique / tableau interactif de répartition par pays dans le dashboard administrateur
+- [x] Ajouter la recherche, les filtres et le tri par classification IA sur la page de gestion des documents admin
+- [x] Implémenter une procédure tRPC et un bouton d'export CSV pour les rapports d'activité administrateur
+- [x] Tester les nouvelles fonctionnalités, vérifier la compilation de production et créer un checkpoint final
+
+## Assistance Aureol, boutons flottants séparés et lien partageable des procédures
+- [x] Séparer visuellement et fonctionnellement les boutons WhatsApp et assistant IA flottants sur desktop et mobile
+- [x] Renommer les libellés de l’assistant IA en « Aureol » dans les composants actifs
+- [x] Ajouter un champ de questions IA accessible depuis la page d’accueil et les interfaces pertinentes
+- [x] Créer une page ou un lien partageable regroupant les procédures et ressources PDF existantes
+- [x] Ajouter la page partageable à la navigation et proposer un bouton de copie/partage du lien
+- [x] Tester la responsivité, les interactions et la compilation de production
+- [x] Créer un checkpoint final
+
+## Statistiques par pays, filtres documents IA et export CSV — suivi
+- [x] Créer une procédure tRPC pour agréger les statistiques par pays des candidats et évaluations
+- [x] Intégrer un widget graphique / tableau interactif de répartition par pays dans le dashboard administrateur
+- [x] Ajouter la recherche, les filtres et le tri par classification IA sur la page de gestion des documents admin
+- [x] Implémenter une procédure tRPC et un bouton d’export CSV pour les rapports d’activité administrateur
+- [x] Tester les nouvelles fonctionnalités, vérifier la compilation de production et créer un checkpoint final

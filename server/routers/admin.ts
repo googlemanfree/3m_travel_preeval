@@ -8,10 +8,10 @@ import { requireValidAdminSession } from "./adminAuth";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, adminActivityLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
-import { eq, desc, like, or, and } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, isNull, isNotNull } from "drizzle-orm";
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -1352,6 +1352,128 @@ export const adminRouter = router({
 
     }),
   /**
+   * Répartition des candidats par pays de destination.
+   * Les emails sont dédupliqués afin qu'un même candidat ne soit pas compté
+   * plusieurs fois lorsqu'il possède plusieurs demandes dans le système.
+   */
+  getCandidateCountryDistribution: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      limit: z.number().int().min(1).max(30).default(15),
+    }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const [applicationRows, evaluationRows, profileRows, agencyRows] = await Promise.all([
+          db.select({ id: applications.id, email: applications.email, country: applications.destination }).from(applications),
+          db.select({ id: evaluations.id, email: evaluations.email, country: evaluations.destinationCountry }).from(evaluations),
+          db.select({ id: profileEvaluations.id, email: profileEvaluations.email, country: profileEvaluations.destination }).from(profileEvaluations),
+          db.select({ id: agencyDossiers.id, email: agencyDossiers.email, country: agencyDossiers.destination }).from(agencyDossiers),
+        ]);
+
+        const countryCandidates = new Map<string, Set<string>>();
+        const uniqueCandidates = new Set<string>();
+        const addRows = (rows: Array<{ id: number; email: string; country: string | null | undefined }>, source: string) => {
+          rows.forEach((row) => {
+            const country = String(row.country ?? "").trim();
+            if (!country) return;
+            const candidateKey = row.email?.trim().toLowerCase() || `${source}:${row.id}`;
+            uniqueCandidates.add(candidateKey);
+            const bucket = countryCandidates.get(country) ?? new Set<string>();
+            bucket.add(candidateKey);
+            countryCandidates.set(country, bucket);
+          });
+        };
+
+        addRows(applicationRows, "application");
+        addRows(evaluationRows, "evaluation");
+        addRows(profileRows, "profile");
+        addRows(agencyRows, "agency");
+
+        const data = Array.from(countryCandidates.entries())
+          .map(([country, candidateKeys]) => ({ country, count: candidateKeys.size }))
+          .sort((a, b) => b.count - a.count || a.country.localeCompare(b.country, "fr"))
+          .slice(0, input.limit);
+
+        return {
+          success: true,
+          totalCandidates: uniqueCandidates.size,
+          totalCountries: countryCandidates.size,
+          data,
+        };
+      } catch (error) {
+        console.error("[Admin Country Distribution] Error:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors du calcul de la répartition par pays" });
+      }
+    }),
+
+  /**
+   * Export CSV de l'historique des activités administrateur.
+   * Les détails exportés ne contiennent ni mot de passe ni jeton de session.
+   */
+  exportActivityReportCsv: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      limit: z.number().int().min(1).max(5000).default(1000),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const rows = await db
+          .select({
+            id: adminActivityLogs.id,
+            adminEmail: adminActivityLogs.adminEmail,
+            action: adminActivityLogs.action,
+            evaluationType: adminActivityLogs.evaluationType,
+            evaluationId: adminActivityLogs.evaluationId,
+            oldStatus: adminActivityLogs.oldStatus,
+            newStatus: adminActivityLogs.newStatus,
+            resultCount: adminActivityLogs.resultCount,
+            details: adminActivityLogs.details,
+            createdAt: adminActivityLogs.createdAt,
+          })
+          .from(adminActivityLogs)
+          .orderBy(desc(adminActivityLogs.createdAt))
+          .limit(input.limit);
+
+        const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""').replace(/\\r?\\n/g, " ")}"`;
+        const headers = ["ID", "Administrateur", "Action", "Type", "Identifiant", "Ancien statut", "Nouveau statut", "Résultats", "Détails", "Date"];
+        const csvRows = rows.map((row) => [
+          row.id,
+          row.adminEmail,
+          row.action,
+          row.evaluationType,
+          row.evaluationId,
+          row.oldStatus,
+          row.newStatus,
+          row.resultCount,
+          row.details,
+          row.createdAt ? new Date(row.createdAt).toLocaleString("fr-FR") : "",
+        ]);
+        const content = "\\uFEFF" + [headers, ...csvRows].map((row) => row.map(escapeCsv).join(",")).join("\\r\\n");
+        const fileName = `rapport-activite-admin-${new Date().toISOString().slice(0, 10)}.csv`;
+
+        await db.insert(adminActivityLogs).values({
+          adminEmail: admin.email,
+          action: "csv_exported",
+          resultCount: rows.length,
+          details: "Export du rapport d'activité administrateur",
+        });
+
+        return { success: true, fileName, content, rowCount: rows.length };
+      } catch (error) {
+        console.error("[Admin Activity CSV] Error:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la génération du rapport CSV" });
+      }
+    }),
+
+  /**
    * Lister les documents avec filtrage et recherche
    */
   listDocuments: publicProcedure
@@ -1359,6 +1481,9 @@ export const adminRouter = router({
       sessionToken: z.string(),
       search: z.string().optional(),
       verificationStatus: z.enum(["pending", "approved", "rejected"]).optional(),
+      aiClassification: z.string().max(120).optional(),
+      sortBy: z.enum(["uploadedAt", "documentName", "verificationStatus", "aiClassification"]).default("uploadedAt"),
+      sortDirection: z.enum(["asc", "desc"]).default("desc"),
       limit: z.number().int().min(1).max(100).default(50),
       offset: z.number().int().min(0).default(0),
     }))
@@ -1381,20 +1506,34 @@ export const adminRouter = router({
           conditions.push(
             or(
               like(clientDocuments.documentName, searchTerm),
-              like(clientDocuments.candidateEmail, searchTerm)
+              like(clientDocuments.candidateEmail, searchTerm),
+              like(clientDocuments.suggestedFolder, searchTerm),
+              like(clientDocuments.aiClassification as any, searchTerm)
             )
           );
         }
 
-        // Construire la requête avec les conditions
+        if (input.aiClassification) {
+          conditions.push(like(clientDocuments.aiClassification as any, `%${input.aiClassification}%`));
+        }
+
+        // Construire la requête avec les conditions et un tri explicite.
         let query: any = db.select().from(clientDocuments);
         
         if (conditions.length > 0) {
           query = query.where(and(...(conditions as any)));
         }
 
+        const sortColumn = input.sortBy === "documentName"
+          ? clientDocuments.documentName
+          : input.sortBy === "verificationStatus"
+            ? clientDocuments.verificationStatus
+            : input.sortBy === "aiClassification"
+              ? clientDocuments.aiClassification
+              : clientDocuments.uploadedAt;
+        const orderExpression = input.sortDirection === "asc" ? asc(sortColumn) : desc(sortColumn);
         const documents = await query
-          .orderBy(desc(clientDocuments.receiptGeneratedAt))
+          .orderBy(orderExpression)
           .limit(input.limit)
           .offset(input.offset);
 
@@ -1411,6 +1550,11 @@ export const adminRouter = router({
           verifiedAt: doc.verifiedAt,
           verificationComment: doc.verificationComment,
           receiptNumber: doc.receiptNumber,
+          aiClassification: doc.aiClassification ?? null,
+          aiClassificationConfidence: doc.aiClassificationConfidence ?? null,
+          aiClassifiedAt: doc.aiClassifiedAt ?? null,
+          suggestedFolder: doc.suggestedFolder ?? null,
+          extractedData: doc.extractedData ?? null,
         }));
       } catch (err) {
         if (err instanceof TRPCError) throw err;

@@ -44,6 +44,7 @@ import EvisaRequestForm from "./pages/EvisaRequestForm";
 import EvaluationResult from "./pages/EvaluationResult";
 import AdminAIEvaluationDashboard from "./pages/AdminAIEvaluationDashboard";
 import Ressources from "./pages/Ressources";
+import ProcedureResourceGuide from "./pages/ProcedureResourceGuide";
 import Fiches from "./pages/Fiches";
 import Assurance from "./pages/Assurance";
 import TranslationOrder from "./pages/TranslationOrder";
@@ -222,6 +223,7 @@ function Router() {
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"} component={Ressources} />
+      <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}
       <Route path={"/fiches"} component={Fiches} />

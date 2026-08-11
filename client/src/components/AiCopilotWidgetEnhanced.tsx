@@ -32,7 +32,7 @@ const QUICK_ACTIONS = [
 const WELCOME_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Bonjour ! Je suis le Copilote IA 3M Travel 🤖 Je peux répondre à vos questions sur nos évaluations, les visas et les destinations. Comment puis-je vous aider ?",
+    "Bonjour ! Je suis Aureol, l’assistant IA de 3M Travel 🤖 Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
   feedback: null,
   showActions: true,
 };
@@ -141,7 +141,7 @@ export default function AiCopilotWidgetEnhanced() {
   return (
     <>
       {/* Bouton flottant */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-24 right-4 z-40 md:bottom-6 md:right-24">
         <AnimatePresence>
           {!isOpen && (
             <motion.button
@@ -149,7 +149,7 @@ export default function AiCopilotWidgetEnhanced() {
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               onClick={() => setIsOpen(true)}
-              aria-label="Ouvrir le Copilote IA 3M Travel"
+              aria-label="Ouvrir Aureol, l’assistant IA 3M Travel"
               className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110"
             >
               <MessageSquare className="w-6 h-6" />
@@ -165,7 +165,7 @@ export default function AiCopilotWidgetEnhanced() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 w-[90vw] max-w-sm h-[70vh] max-h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200"
+            className="fixed bottom-24 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 md:bottom-6 md:right-24"
           >
             {/* En-tête */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -173,10 +173,10 @@ export default function AiCopilotWidgetEnhanced() {
                 <Sparkles className="w-5 h-5" />
                 <div>
                   <p className="font-bold text-sm leading-tight">
-                    Copilote IA 3M Travel
+                    Aureol
                   </p>
                   <p className="text-xs text-blue-100 leading-tight">
-                    Assistant virtuel
+                    Assistant IA — procédures et visas
                   </p>
                 </div>
               </div>

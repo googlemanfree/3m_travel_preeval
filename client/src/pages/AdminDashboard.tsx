@@ -43,7 +43,18 @@ import {
   Star,
   AlertCircle,
   LogOut,
+  Download,
+  BarChart3,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useLocation } from "wouter";
 import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
@@ -564,6 +575,29 @@ export default function AdminDashboard() {
     { enabled: !!sessionToken }
   );
 
+  const { data: countryDistribution, isLoading: isLoadingCountryDistribution, refetch: refetchCountryDistribution } = trpc.admin.getCandidateCountryDistribution.useQuery(
+    { sessionToken, limit: 12 },
+    { enabled: !!sessionToken }
+  );
+
+  const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
+    onSuccess: (result) => {
+      const blob = new Blob([result.content], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = result.fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast({ title: "Rapport exporté", description: `${result.rowCount} activité(s) exportée(s) en CSV.` });
+    },
+    onError: (error) => {
+      toast({ title: "Export impossible", description: error.message, variant: "destructive" });
+    },
+  });
+
   const logoutMutation = trpc.adminAuth.logout.useMutation({
     onSuccess: () => {
       localStorage.removeItem("adminSessionToken");
@@ -574,9 +608,9 @@ export default function AdminDashboard() {
     },
   });
 
-  const handleRefresh = useCallback(() => {
-    refetch();
-  }, [refetch]);
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([refetch(), refetchCountryDistribution()]);
+  }, [refetch, refetchCountryDistribution]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -623,11 +657,22 @@ export default function AdminDashboard() {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoading}
+              disabled={isLoading || isLoadingCountryDistribution}
               className="gap-1.5 border-white/30 text-white hover:bg-white/10"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${isLoading || isLoadingCountryDistribution ? "animate-spin" : ""}`} />
               Actualiser
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportActivityMutation.mutate({ sessionToken })}
+              disabled={exportActivityMutation.isPending || !sessionToken}
+              className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+              title="Télécharger le rapport d’activité admin au format CSV"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden md:inline">Rapport CSV</span>
             </Button>
             <Button
               size="sm"
@@ -704,6 +749,49 @@ export default function AdminDashboard() {
             <strong>{stats.agency}</strong> dossiers agence
           </span>
         </div>
+
+        {/* Widget : répartition des candidats par pays */}
+        <Card className="border-0 shadow-sm overflow-hidden">
+          <CardContent className="p-5">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-violet-600" />
+                  <h2 className="font-semibold text-gray-900">Répartition des candidats par pays</h2>
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Vue consolidée des candidats issus des dossiers, évaluations et demandes agence.
+                </p>
+              </div>
+              {countryDistribution && (
+                <div className="text-right shrink-0">
+                  <p className="text-2xl font-bold text-violet-700">{countryDistribution.totalCandidates}</p>
+                  <p className="text-xs text-gray-500">candidats suivis</p>
+                </div>
+              )}
+            </div>
+            {isLoadingCountryDistribution ? (
+              <div className="h-56 flex items-center justify-center text-sm text-gray-500">
+                <RefreshCw className="w-5 h-5 mr-2 animate-spin text-violet-600" />
+                Chargement des statistiques...
+              </div>
+            ) : countryDistribution?.data?.length ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={countryDistribution.data} layout="vertical" margin={{ top: 4, right: 20, left: 12, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" allowDecimals={false} />
+                  <YAxis dataKey="country" type="category" width={110} tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(value: number) => [`${value} candidat(s)`, "Répartition"]} />
+                  <Bar dataKey="count" fill="#7c3aed" radius={[0, 5, 5, 0]} name="Candidats" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-56 flex items-center justify-center text-sm text-gray-500 border border-dashed rounded-lg">
+                Aucune destination renseignée pour le moment.
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Onglets : Dossiers, Paiements, Documents */}
         <Tabs defaultValue="candidates" className="w-full">

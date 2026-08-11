@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -21,12 +21,18 @@ interface Document {
   submittedAt: Date;
   verifiedAt?: Date;
   rejectionReason?: string;
+  aiClassification: unknown;
+  aiClassificationConfidence?: number | null;
+  suggestedFolder?: string | null;
 }
 
 export function AdminDocumentsManagement() {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [classificationFilter, setClassificationFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"uploadedAt" | "documentName" | "verificationStatus" | "aiClassification">("uploadedAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
@@ -38,10 +44,13 @@ export function AdminDocumentsManagement() {
       sessionToken,
       search: searchTerm, 
       verificationStatus: filterStatus === "all" ? undefined : (filterStatus as any),
+      aiClassification: classificationFilter === "all" ? undefined : classificationFilter,
+      sortBy,
+      sortDirection,
       limit: 100,
       offset: 0
     },
-    { enabled: true }
+    { enabled: !!sessionToken }
   );
 
   const handleApproveDocument = async (docId: number) => {
@@ -118,17 +127,46 @@ export function AdminDocumentsManagement() {
     submittedAt: new Date(doc.submittedAt),
     verifiedAt: doc.verifiedAt ? new Date(doc.verifiedAt) : undefined,
     rejectionReason: doc.verificationComment,
+    aiClassification: doc.aiClassification ?? null,
+    aiClassificationConfidence: doc.aiClassificationConfidence ?? null,
+    suggestedFolder: doc.suggestedFolder ?? null,
   })) || [];
 
+  const getClassificationLabel = (classification: unknown) => {
+    if (!classification) return "Non classifié";
+    if (typeof classification === "string") {
+      try {
+        const parsed = JSON.parse(classification) as { documentType?: string; suggestedFolder?: string };
+        return parsed.documentType || parsed.suggestedFolder || classification;
+      } catch {
+        return classification;
+      }
+    }
+    if (typeof classification === "object") {
+      const value = classification as { documentType?: string; suggestedFolder?: string };
+      return value.documentType || value.suggestedFolder || "Classifié";
+    }
+    return "Classifié";
+  };
+
+  const classificationOptions = Array.from(new Set(
+    documents.map((document) => getClassificationLabel(document.aiClassification)).filter((value) => value !== "Non classifié")
+  )).sort((a, b) => a.localeCompare(b, "fr"));
+
   const filteredDocuments = documents.filter((d) => {
-    const matchesSearch =
-      d.dossierNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.candidateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.documentName.toLowerCase().includes(searchTerm.toLowerCase());
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    const classificationLabel = getClassificationLabel(d.aiClassification);
+    const matchesSearch = !normalizedSearch ||
+      d.dossierNumber.toLowerCase().includes(normalizedSearch) ||
+      d.candidateName.toLowerCase().includes(normalizedSearch) ||
+      d.documentName.toLowerCase().includes(normalizedSearch) ||
+      classificationLabel.toLowerCase().includes(normalizedSearch) ||
+      (d.suggestedFolder || "").toLowerCase().includes(normalizedSearch);
 
     const matchesStatus = filterStatus === "all" || d.verificationStatus === filterStatus;
+    const matchesClassification = classificationFilter === "all" || classificationLabel === classificationFilter;
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesClassification;
   });
 
   const getStatusColor = (status: string) => {
@@ -314,24 +352,62 @@ export function AdminDocumentsManagement() {
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {/* Filtres */}
-            <div className="flex flex-col md:flex-row gap-3">
+            {/* Filtres et tri */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
               <Input
-                placeholder="Chercher par dossier, candidat ou document..."
+                placeholder="Chercher par dossier, candidat, document ou IA..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1"
+                className="xl:col-span-2"
               />
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="approved">Approuvés</option>
                 <option value="pending">En attente</option>
                 <option value="rejected">Rejetés</option>
               </select>
+              <select
+                value={classificationFilter}
+                onChange={(e) => setClassificationFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                aria-label="Filtrer par classification IA"
+              >
+                <option value="all">Toutes les classifications IA</option>
+                {classificationOptions.map((classification) => (
+                  <option key={classification} value={classification}>{classification}</option>
+                ))}
+              </select>
+              <div className="flex gap-2 md:col-span-2 xl:col-span-4">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  aria-label="Trier les documents par"
+                >
+                  <option value="uploadedAt">Trier par date d’envoi</option>
+                  <option value="documentName">Trier par nom</option>
+                  <option value="verificationStatus">Trier par statut</option>
+                  <option value="aiClassification">Trier par classification IA</option>
+                </select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSortDirection((direction) => direction === "asc" ? "desc" : "asc")}
+                  className="gap-2 whitespace-nowrap"
+                  title={`Ordre ${sortDirection === "asc" ? "croissant" : "décroissant"}`}
+                >
+                  <ArrowUpDown className="w-4 h-4" />
+                  {sortDirection === "asc" ? "Croissant" : "Décroissant"}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Sparkles className="w-3.5 h-3.5 text-violet-500" />
+              <span>{filteredDocuments.length} document(s) affiché(s) avec classification IA recherchable.</span>
             </div>
 
             {/* Tableau */}
@@ -353,6 +429,7 @@ export function AdminDocumentsManagement() {
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidat</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Nom du Document</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Classification IA</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-700">Statut</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
                       <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
@@ -365,6 +442,17 @@ export function AdminDocumentsManagement() {
                         <td className="py-3 px-4 font-medium text-gray-900">{doc.candidateName}</td>
                         <td className="py-3 px-4 text-gray-600">{getDocumentTypeLabel(doc.documentType)}</td>
                         <td className="py-3 px-4 text-gray-600 truncate max-w-xs">{doc.documentName}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col items-start gap-1">
+                            <Badge variant="outline" className="border-violet-200 text-violet-700 bg-violet-50 gap-1">
+                              <Sparkles className="w-3 h-3" />
+                              {getClassificationLabel(doc.aiClassification)}
+                            </Badge>
+                            {doc.aiClassificationConfidence !== null && doc.aiClassificationConfidence !== undefined && (
+                              <span className="text-[11px] text-gray-500">Confiance : {doc.aiClassificationConfidence}%</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="py-3 px-4 text-center">
                           <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(doc.verificationStatus)}`}>
                             {getStatusIcon(doc.verificationStatus)}
