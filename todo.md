@@ -1168,3 +1168,9 @@
 - [x] Implémenter un système de notifications en temps réel pour l'admin
 - [x] Ajouter un système de téléchargement des documents pour l'admin
 - [x] Tester la synchronisation complète entre client et admin
+
+- [x] Ajouter un bouton visible de sélection de CV PDF dans le formulaire d’évaluation primaire, avec validation du format, de la taille et retour visuel
+- [x] Tester le téléchargement du CV et la soumission du formulaire d’évaluation primaire
+- [x] Créer un checkpoint après validation de la correction du champ CV
+
+**Note de suivi — 2026-08-11 :** Demande utilisateur : rendre le bouton CV clairement visible dans l’évaluation primaire.

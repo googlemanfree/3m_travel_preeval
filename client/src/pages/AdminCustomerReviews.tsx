@@ -20,20 +20,19 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminCustomerReviews() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
-  const { data: pendingReviews, isLoading, refetch } = trpc.customerReview.listForAdmin.useQuery(
-    { sessionToken },
-    { refetchInterval: 30000, enabled: !!sessionToken }
+  const { data: pendingReviews, isLoading, refetch } = trpc.customerReview.getPendingReviews.useQuery(
+    undefined,
+    { refetchInterval: 30000 }
   );
 
-  const approveMutation = trpc.customerReview.approve.useMutation({
+  const approveMutation = trpc.customerReview.approveReview.useMutation({
     onSuccess: () => {
       toast.success("Avis publié.");
       refetch();
     },
   });
 
-  const rejectMutation = trpc.customerReview.reject.useMutation({
+  const rejectMutation = trpc.customerReview.rejectReview.useMutation({
     onSuccess: () => {
       toast.success("Avis rejeté.");
       refetch();
@@ -93,7 +92,7 @@ export default function AdminCustomerReviews() {
                 <div className="flex gap-3">
                   <Button
                     onClick={() =>
-                      approveMutation.mutate({ sessionToken, reviewId: review.id })
+                      approveMutation.mutate({ reviewId: review.id })
                     }
                     disabled={approveMutation.isPending}
                     className="flex-1 bg-green-600 hover:bg-green-700"
@@ -103,11 +102,7 @@ export default function AdminCustomerReviews() {
                   <Button
                     variant="outline"
                     onClick={() =>
-                      rejectMutation.mutate({
-                        sessionToken,
-                        reviewId: review.id,
-                        adminNotes: "Contenu non approprié",
-                      })
+                      rejectMutation.mutate({ reviewId: review.id })
                     }
                     disabled={rejectMutation.isPending}
                   >

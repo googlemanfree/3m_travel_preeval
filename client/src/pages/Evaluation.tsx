@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, Loader, AlertCircle, Sparkles } from 'lucide-react';
+import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 
 interface FormState {
@@ -49,6 +49,35 @@ export default function Evaluation() {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+
+  const handleCvChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      setCvFile(null);
+      setFormError('Le CV doit être au format PDF.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setCvFile(null);
+      setFormError('Le CV ne doit pas dépasser 5 Mo.');
+      event.target.value = '';
+      return;
+    }
+
+    setFormError('');
+    setCvFile(file);
+  };
+
+  const removeCv = () => {
+    setCvFile(null);
+    const input = document.getElementById('cv-upload') as HTMLInputElement | null;
+    if (input) input.value = '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,14 +302,51 @@ export default function Evaluation() {
               </label>
             </div>
 
-            <div>
-              <Label>CV (PDF, optionnel mais recommandé)</Label>
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={(e) => setCvFile(e.target.files?.[0] || null)}
-                className="mt-1 w-full text-sm"
-              />
+            <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-white p-2 text-blue-700 shadow-sm" aria-hidden="true">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Label htmlFor="cv-upload" className="text-sm font-semibold text-blue-950">
+                    CV (PDF, optionnel mais recommandé)
+                  </Label>
+                  <p className="mt-1 text-xs text-blue-800/75">
+                    Ajoutez votre CV pour permettre une évaluation plus précise. PDF uniquement, 5 Mo maximum.
+                  </p>
+                  <input
+                    id="cv-upload"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    onChange={handleCvChange}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor="cv-upload"
+                    className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
+                  >
+                    <Upload className="h-4 w-4" aria-hidden="true" />
+                    {cvFile ? 'Remplacer le CV' : 'Choisir mon CV PDF'}
+                  </label>
+
+                  {cvFile && (
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800" role="status" aria-live="polite">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{cvFile.name}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={removeCv}
+                        className="rounded p-1 text-green-700 transition hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        aria-label="Supprimer le CV sélectionné"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div><Label>Message complémentaire</Label><Textarea value={form.message} onChange={(e) => update('message', e.target.value)} rows={3} className="mt-1" /></div>
