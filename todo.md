@@ -1254,3 +1254,12 @@
 - [x] Ajouter la recherche, les filtres et le tri par classification IA sur la page de gestion des documents admin
 - [x] Implémenter une procédure tRPC et un bouton d’export CSV pour les rapports d’activité administrateur
 - [x] Tester les nouvelles fonctionnalités, vérifier la compilation de production et créer un checkpoint final
+
+## Système d'enregistrement et d'analyse des questions fréquentes Aureol
+- [x] Créer la table `aureol_questions` dans Drizzle pour stocker les questions posées, la réponse d'Aureol, l'adresse email optionnelle, le contexte de la page et le timestamp
+- [x] Générer et appliquer la migration SQL pour la table `aureol_questions`
+- [x] Étendre le routeur tRPC `aiCopilot` pour enregistrer automatiquement chaque question et réponse
+- [x] Ajouter une procédure tRPC d'analyse pour regrouper et trier les questions fréquentes par occurrence
+- [x] Créer un widget ou une section d'administration pour consulter les questions posées et les sujets fréquents
+- [x] Tester le stockage et l'agrégation via Vitest et compiler la production
+- [x] Créer le checkpoint final

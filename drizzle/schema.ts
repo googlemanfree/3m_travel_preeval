@@ -1212,3 +1212,21 @@ export const adminActivityLogs = mysqlTable("admin_activity_logs", {
 });
 export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;
 export type InsertAdminActivityLog = typeof adminActivityLogs.$inferInsert;
+
+/**
+ * Enregistrement des questions posées à l'assistant Aureol et des réponses fournies.
+ * Permet d'analyser les questions fréquentes pour enrichir la base de connaissance.
+ */
+export const aureolQuestions = mysqlTable("aureol_questions", {
+  id: int("id").autoincrement().primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  visitorEmail: varchar("visitorEmail", { length: 320 }),
+  sourceWidget: varchar("sourceWidget", { length: 50 }).default("copilot_widget").notNull(),
+  pagePath: varchar("pagePath", { length: 255 }),
+  categoryTag: varchar("categoryTag", { length: 100 }),
+  isHelpful: boolean("isHelpful"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type AureolQuestion = typeof aureolQuestions.$inferSelect;
+export type InsertAureolQuestion = typeof aureolQuestions.$inferInsert;

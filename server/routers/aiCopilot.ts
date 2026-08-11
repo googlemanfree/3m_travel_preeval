@@ -10,6 +10,9 @@ import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { invokeLLM } from "../_core/llm";
+import { getDb } from "../db";
+import { aureolQuestions } from "../../drizzle/schema";
+import { desc, sql, count } from "drizzle-orm";
 
 const SYSTEM_PROMPT = `Tu es le "Copilote IA 3M Travel", l'assistant virtuel de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
@@ -75,6 +78,21 @@ export const aiCopilotRouter = router({
           throw new Error("Réponse vide de l'IA");
         }
 
+        // Enregistrer la dernière question de l'utilisateur et la réponse d'Aureol
+        try {
+          const db = await getDb();
+          const lastUserMsg = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
+          if (db && lastUserMsg) {
+            await db.insert(aureolQuestions).values({
+              question: lastUserMsg,
+              answer: reply,
+              sourceWidget: "copilot_chat",
+            });
+          }
+        } catch (logErr) {
+          console.error("Failed to log aureol question:", logErr);
+        }
+
         return { reply };
       } catch (err) {
         console.error("ai_copilot.chat_failed", err);
@@ -120,5 +138,37 @@ export const aiCopilotRouter = router({
           message: "Erreur lors de la génération de la réponse",
         });
       }
+    }),
+
+  /**
+   * Obtenir la liste des questions fréquentes et les statistiques d'utilisation (Admin)
+   */
+  getFrequentQuestions: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), limit: z.number().default(50) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const rows = await db
+        .select({
+          question: aureolQuestions.question,
+          count: count(),
+          lastAsked: sql<Date>`max(${aureolQuestions.createdAt})`,
+        })
+        .from(aureolQuestions)
+        .groupBy(aureolQuestions.question)
+        .orderBy(desc(count()))
+        .limit(input.limit);
+
+      const recentLogs = await db
+        .select()
+        .from(aureolQuestions)
+        .orderBy(desc(aureolQuestions.createdAt))
+        .limit(20);
+
+      return {
+        frequentQuestions: rows,
+        recentLogs,
+      };
     }),
 });
