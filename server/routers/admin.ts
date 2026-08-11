@@ -8,7 +8,7 @@ import { requireValidAdminSession } from "./adminAuth";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, adminActivityLogs } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { eq, desc, asc, like, or, and, isNull, isNotNull } from "drizzle-orm";
@@ -1690,6 +1690,26 @@ export const adminRouter = router({
           message: "Erreur lors de l'envoi de l'email de test",
         });
       }
+    }),
+
+  /**
+   * Récupérer l'historique de délivrabilité des e-mails
+   */
+  getEmailDeliveryLogs: publicProcedure
+    .input(z.object({ sessionToken: z.string(), limit: z.number().default(50) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const logs = await db
+        .select()
+        .from(emailDeliveryLogs)
+        .orderBy(desc(emailDeliveryLogs.createdAt))
+        .limit(input.limit);
+
+      return logs;
     }),
 });
 

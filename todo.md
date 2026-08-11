@@ -1269,3 +1269,12 @@
 - [x] Mettre à jour les destinataires administratifs des CV, soumissions d'évaluation et formulaires de contact vers hello@3mtravelagency.com
 - [x] Valider l'intégrité des services Resend / SMTP et exécuter les tests ciblés
 - [x] Compiler la production et enregistrer le checkpoint final
+
+## Configuration DNS (SPF, DKIM, DMARC), Alertes de Réception et Historique Admin
+- [x] Documenter les enregistrements DNS exacts (SPF, DKIM, DMARC) pour 3mtravelagency.com
+- [x] Créer la table `email_delivery_logs` dans Drizzle pour tracer chaque envoi (destinataire, sujet, statut, fournisseur, erreur)
+- [x] Étendre le service `sendEmail` pour consigner automatiquement chaque tentative d'envoi et son statut dans `email_delivery_logs`
+- [x] Implémenter un mécanisme d'alerte (WhatsApp / webhook) déclenché lorsqu'un message est reçu sur hello@3mtravelagency.com
+- [x] Créer l'interface administrateur pour l'historique de délivrabilité et les statistiques d'envoi
+- [x] Tester les routeurs et les logs via Vitest, puis compiler la production
+- [x] Créer le checkpoint final

@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { getDb } from "../db";
+import { emailDeliveryLogs } from "../../drizzle/schema";
 
 const resendApiKey = process.env.RESEND_API_KEY;
 
@@ -33,12 +35,52 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     });
 
     if (result.error) {
-      throw new Error(`Resend error: ${result.error.message}`);
+      const errMsg = result.error.message;
+      try {
+        const db = await getDb();
+        if (db) {
+          await db.insert(emailDeliveryLogs).values({
+            recipientEmail: options.to,
+            subject: options.subject,
+            status: "failed",
+            errorDetails: errMsg,
+          });
+        }
+      } catch (logErr) {
+        console.error("Failed to log email failure:", logErr);
+      }
+      throw new Error(`Resend error: ${errMsg}`);
     }
 
     console.log(`[Email] Sent successfully to ${options.to}`, result.data?.id);
-  } catch (error) {
+    try {
+      const db = await getDb();
+      if (db) {
+        await db.insert(emailDeliveryLogs).values({
+          recipientEmail: options.to,
+          subject: options.subject,
+          status: "sent",
+          providerMessageId: result.data?.id || null,
+        });
+      }
+    } catch (logErr) {
+      console.error("Failed to log email success:", logErr);
+    }
+  } catch (error: any) {
     console.error("[Email] Send failed:", error);
+    try {
+      const db = await getDb();
+      if (db) {
+        await db.insert(emailDeliveryLogs).values({
+          recipientEmail: options.to,
+          subject: options.subject,
+          status: "failed",
+          errorDetails: error?.message || String(error),
+        });
+      }
+    } catch (logErr) {
+      console.error("Failed to log email exception:", logErr);
+    }
     throw error;
   }
 }

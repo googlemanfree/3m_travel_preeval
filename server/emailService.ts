@@ -3,8 +3,8 @@ import { sendEmail as sendGenericEmail, SendEmailOptions } from "./_core/email";
 
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.click";
-const SITE_URL = process.env.SITE_URL || "https://3mtravelagency.click";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.com";
+const SITE_URL = process.env.SITE_URL || "https://www.3mtravelagency.com";
 
 export async function sendClientDossierConfirmationEmail(
   to: string,
@@ -16,7 +16,7 @@ export async function sendClientDossierConfirmationEmail(
 ) {
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: `Confirmation de votre demande e-Visa - Dossier #${dossierNumber}`,
       html: `
@@ -59,7 +59,7 @@ export async function sendClientDossierConfirmationEmail(
             </p>
             
             <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, contactez-nous sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.click" style="color: #2563EB;">contact@3mtravelagency.click</a>
+              Si vous avez des questions, contactez-nous sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
@@ -82,7 +82,7 @@ export async function sendAdminNewDossierAlertEmail(
 ) {
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to: ADMIN_EMAIL,
       subject: `🚨 Nouveau dossier e-Visa soumis - #${dossierNumber}`,
       html: `
@@ -129,7 +129,7 @@ export async function sendEvisaStatusUpdateEmail(
 
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: `Mise à jour de votre demande e-Visa - Dossier #${dossierNumber}`,
       html: `
@@ -174,7 +174,7 @@ export async function sendPaymentConfirmationEmail(
 ) {
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: `Confirmation de paiement - Dossier #${dossierNumber}`,
       html: `
@@ -208,11 +208,11 @@ export async function sendPaymentConfirmationEmail(
 }
 
 export async function sendVerificationLink(to: string, fullName: string, verificationToken: string): Promise<void> {
-  const baseUrl = (SITE_URL || "https://3mtravelagency.click").replace(/\/+$/, "");
+  const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: "✓ Confirmez votre email - 3M Travel & Services",
       html: `
@@ -246,7 +246,7 @@ export async function sendVerificationLink(to: string, fullName: string, verific
 export async function sendVerificationOtp(to: string, fullName: string, otp: string): Promise<void> {
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: "🔐 Votre code de vérification 3M Travel",
       html: `
@@ -272,11 +272,11 @@ export async function sendVerificationOtp(to: string, fullName: string, otp: str
 }
 
 export async function sendPasswordResetEmail(to: string, fullName: string, resetToken: string): Promise<void> {
-  const baseUrl = (SITE_URL || "https://3mtravelagency.click").replace(/\/+$/, "");
+  const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: "🔑 Réinitialisation de votre mot de passe 3M Travel",
       html: `
@@ -318,7 +318,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
   const destLabel = destLabels[destination] ?? "International";
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: `Bienvenue chez 3M Travel & Services - Votre voyage vers ${destLabel} commence !`,
       html: `
@@ -337,7 +337,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
             </p>
             
             <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.click" style="color: #2563EB;">contact@3mtravelagency.click</a>
+              Si vous avez des questions, n'hésitez pas à nous contacter sur <a href="https://wa.me/237620996045" style="color: #2563EB;">WhatsApp</a> ou par email à <a href="mailto:contact@3mtravelagency.com" style="color: #2563EB;">contact@3mtravelagency.com</a>
             </p>
           </div>
           <div style="background: #f3f4f6; padding: 20px; text-align: center; font-size: 12px; color: #6b7280;">
@@ -362,7 +362,7 @@ export async function sendDossierConfirmationEmail(
   const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
   try {
     await resend.emails.send({
-      from: "noreply@3mtravelagency.click",
+      from: "noreply@3mtravelagency.com",
       to,
       subject: `✅ Votre dossier ${dossierNumber} est ouvert !`,
       html: `

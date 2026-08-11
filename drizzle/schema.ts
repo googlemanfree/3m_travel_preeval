@@ -1230,3 +1230,18 @@ export const aureolQuestions = mysqlTable("aureol_questions", {
 });
 export type AureolQuestion = typeof aureolQuestions.$inferSelect;
 export type InsertAureolQuestion = typeof aureolQuestions.$inferInsert;
+
+/**
+ * Historique des e-mails envoyés et de leur délivrabilité.
+ */
+export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  recipientEmail: varchar("recipientEmail", { length: 320 }).notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  status: varchar("status", { length: 50 }).default("sent").notNull(),
+  providerMessageId: varchar("providerMessageId", { length: 255 }),
+  errorDetails: text("errorDetails"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
+export type InsertEmailDeliveryLog = typeof emailDeliveryLogs.$inferInsert;
