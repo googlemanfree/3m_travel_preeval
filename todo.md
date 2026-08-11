@@ -1189,3 +1189,10 @@
 - [x] Corriger le routeur customer_reviews et vérifier sa synchronisation avec la base existante
 - [x] Tester les flux candidat/admin et compiler la production
 - [x] Créer un checkpoint après validation
+
+## Correction critique : synchronisation du schéma evaluations
+- [x] Auditer le schéma Drizzle et la structure active de la table evaluations
+- [x] Générer et appliquer la migration SQL pour ajouter les colonnes manquantes
+- [x] Mettre à jour la route de soumission si nécessaire
+- [x] Tester la soumission d'une évaluation complète sans erreur interne
+- [x] Valider la compilation de production et créer un checkpoint de correction
