@@ -1206,18 +1206,18 @@
 - [x] Créer un checkpoint après validation
 
 ## Dashboard admin : pagination, prévisualisation et historique
-- [ ] Auditer les composants et routes d’export existants
-- [ ] Ajouter une pagination robuste des évaluations
-- [ ] Ajouter des actions rapides pour modifier le statut depuis la liste
-- [ ] Ajouter une prévisualisation PDF avant téléchargement
-- [ ] Persister et afficher l’historique des exports et actions admin
-- [ ] Tester les flux et compiler la production
+- [x] Auditer les composants et routes d’export existants
+- [x] Ajouter une pagination robuste des évaluations
+- [x] Ajouter des actions rapides pour modifier le statut depuis la liste
+- [x] Ajouter une prévisualisation PDF avant téléchargement
+- [x] Persister et afficher l’historique des exports et actions admin
+- [x] Tester les flux et compiler la production
 
 ## Compétence réutilisable du processus dashboard admin
-- [ ] Initialiser la compétence avec skill-creator
-- [ ] Rédiger les instructions et ressources réutilisables
-- [ ] Valider la compétence avec quick_validate.py
-- [ ] Livrer le fichier SKILL.md à l’utilisateur
+- [x] Initialiser la compétence avec skill-creator
+- [x] Rédiger les instructions et ressources réutilisables
+- [x] Valider la compétence avec quick_validate.py
+- [x] Livrer le fichier SKILL.md à l’utilisateur
 
 ## Audit des boutons cachés
 - [x] Extraire et auditer audit-boutons-caches.zip
@@ -1225,3 +1225,9 @@
 - [x] Corriger la visibilité, les états et l’accessibilité des boutons concernés
 - [x] Tester les boutons sur les vues desktop et mobile et compiler la production
 - [x] Créer un checkpoint après validation de l’audit
+
+## Correctif avis 7ème fois et traçabilité migration evaluations
+- [x] Extraire et inspecter correctif-avis-7eme-fois.zip
+- [x] Remplacer les 2 fichiers en conservant les chemins et la logique d’authentification correcte
+- [x] Vérifier la table evaluations en production et tracer la migration manquante
+- [x] Compiler la production et sauvegarder le checkpoint final

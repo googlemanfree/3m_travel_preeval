@@ -20,9 +20,10 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminCustomerReviews() {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "" : "";
   const { data: pendingReviews, isLoading, refetch } = trpc.customerReview.getPendingReviews.useQuery(
-    undefined,
-    { refetchInterval: 30000 }
+    { sessionToken },
+    { refetchInterval: 30000, enabled: !!sessionToken }
   );
 
   const approveMutation = trpc.customerReview.approveReview.useMutation({
@@ -47,7 +48,9 @@ export default function AdminCustomerReviews() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">⭐ Modération des avis clients</h1>
 
-        {isLoading ? (
+        {!sessionToken ? (
+          <p className="text-center text-amber-600 py-16">Veuillez vous connecter en tant qu'administrateur pour accéder à la modération.</p>
+        ) : isLoading ? (
           <div className="flex justify-center py-16">
             <Loader className="w-6 h-6 animate-spin text-blue-600" />
           </div>
@@ -92,7 +95,7 @@ export default function AdminCustomerReviews() {
                 <div className="flex gap-3">
                   <Button
                     onClick={() =>
-                      approveMutation.mutate({ reviewId: review.id })
+                      approveMutation.mutate({ sessionToken, reviewId: review.id })
                     }
                     disabled={approveMutation.isPending}
                     className="flex-1 bg-green-600 hover:bg-green-700"
@@ -102,7 +105,7 @@ export default function AdminCustomerReviews() {
                   <Button
                     variant="outline"
                     onClick={() =>
-                      rejectMutation.mutate({ reviewId: review.id })
+                      rejectMutation.mutate({ sessionToken, reviewId: review.id })
                     }
                     disabled={rejectMutation.isPending}
                   >
