@@ -1278,3 +1278,10 @@
 - [x] Créer l'interface administrateur pour l'historique de délivrabilité et les statistiques d'envoi
 - [x] Tester les routeurs et les logs via Vitest, puis compiler la production
 - [x] Créer le checkpoint final
+
+## Intégration de l'API de vols (api-vols-gratuite.zip) dans la page Vols
+- [x] Extraire et inspecter le contenu de api-vols-gratuite.zip dans un dossier temporaire
+- [x] Analyser l'endpoints, le format des données et la configuration d'authentification de l'API
+- [x] Implémenter un routeur tRPC ou un service backend pour interroger l'API de vols de manière sécurisée
+- [x] Mettre à jour la page `client/src/pages/Flights.tsx` pour intégrer le formulaire de recherche et l'affichage des résultats en temps réel
+- [x] Tester les requêtes, valider la compilation de production et enregistrer le checkpoint final
