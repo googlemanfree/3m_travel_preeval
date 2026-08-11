@@ -584,11 +584,16 @@ export default function AdminDashboard() {
     { enabled: !!sessionToken }
   );
 
+  const { data: faqSatisfaction, isLoading: isLoadingFaqSatisfaction, refetch: refetchFaqSatisfaction } = trpc.admin.getFaqSatisfactionStats.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
+
   useEffect(() => {
-    if (!isLoading && !isLoadingCountryDistribution && (data || countryDistribution) && !lastSyncedAt) {
+    if (!isLoading && !isLoadingCountryDistribution && !isLoadingFaqSatisfaction && (data || countryDistribution || faqSatisfaction) && !lastSyncedAt) {
       setLastSyncedAt(new Date());
     }
-  }, [data, countryDistribution, isLoading, isLoadingCountryDistribution, lastSyncedAt]);
+  }, [data, countryDistribution, faqSatisfaction, isLoading, isLoadingCountryDistribution, isLoadingFaqSatisfaction, lastSyncedAt]);
 
   const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
     onSuccess: (result) => {
@@ -621,7 +626,7 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCountryDistribution()]);
+      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction()]);
       const syncedAt = new Date();
       setLastSyncedAt(syncedAt);
       toast({
@@ -637,7 +642,7 @@ export default function AdminDashboard() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchCountryDistribution, toast]);
+  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -830,12 +835,106 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
+            <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="faq" className="space-y-6">
+            <Card className="border-0 shadow-sm overflow-hidden p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                    Statistiques de Satisfaction de la FAQ
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Analyse des votes « Utile / Non utile » exprimés par les visiteurs sur les réponses de la FAQ d'accueil.
+                  </p>
+                </div>
+                {faqSatisfaction?.stats && (
+                  <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border">
+                    <div className="text-center px-3 border-r">
+                      <p className="text-2xl font-black text-blue-600">{faqSatisfaction.stats.satisfactionRate}%</p>
+                      <p className="text-xs text-gray-500">Taux de satisfaction</p>
+                    </div>
+                    <div className="text-center px-3 border-r">
+                      <p className="text-xl font-bold text-emerald-600">{faqSatisfaction.stats.totalHelpful}</p>
+                      <p className="text-xs text-gray-500">Utiles</p>
+                    </div>
+                    <div className="text-center px-3">
+                      <p className="text-xl font-bold text-rose-600">{faqSatisfaction.stats.totalNotHelpful}</p>
+                      <p className="text-xs text-gray-500">Non utiles</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {isLoadingFaqSatisfaction ? (
+                <div className="h-64 flex items-center justify-center text-sm text-gray-500">
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin text-blue-600" />
+                  Chargement des statistiques FAQ...
+                </div>
+              ) : faqSatisfaction?.stats?.questionsBreakdown && faqSatisfaction.stats.questionsBreakdown.length > 0 ? (
+                <div className="space-y-8">
+                  <div className="h-72">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3">Répartition des votes par question</p>
+                    <ResponsiveContainer width="100%\" height="100%">
+                      <BarChart data={faqSatisfaction.stats.questionsBreakdown} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="questionKey" tick={{ fontSize: 11 }} angle={-15} textAnchor="end" interval={0} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip formatter={(val: number, name: string) => [val, name === "helpful" ? "Utile" : "Non utile"]} />
+                        <Bar dataKey="helpful" fill="#10b981" name="Utile" stackId="a" radius={[0, 0, 4, 4]} />
+                        <Bar dataKey="notHelpful" fill="#f43f5e" name="Non utile" stackId="a" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-8 pt-6 border-t">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3">Détail par sujet de FAQ</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b bg-gray-50 text-xs text-gray-500 uppercase">
+                            <th className="text-left px-4 py-2.5">Sujet / Clé FAQ</th>
+                            <th className="text-center px-4 py-2.5">Votes Utiles</th>
+                            <th className="text-center px-4 py-2.5">Votes Non utiles</th>
+                            <th className="text-center px-4 py-2.5">Total votes</th>
+                            <th className="text-right px-4 py-2.5">Satisfaction</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {faqSatisfaction.stats.questionsBreakdown.map((item) => (
+                            <tr key={item.questionKey} className="hover:bg-gray-50/60">
+                              <td className="px-4 py-3 font-medium text-gray-900">{item.questionKey}</td>
+                              <td className="px-4 py-3 text-center text-emerald-600 font-semibold">{item.helpful}</td>
+                              <td className="px-4 py-3 text-center text-rose-600 font-semibold">{item.notHelpful}</td>
+                              <td className="px-4 py-3 text-center text-gray-700">{item.total}</td>
+                              <td className="px-4 py-3 text-right">
+                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-bold ${item.satisfactionRate >= 70 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                                  {item.satisfactionRate}%
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-56 flex flex-col items-center justify-center text-sm text-gray-500 border border-dashed rounded-xl">
+                  <Star className="w-8 h-8 text-gray-300 mb-2" />
+                  <p>Aucun vote FAQ enregistré pour le moment.</p>
+                  <p className="text-xs text-gray-400 mt-1">Les votes exprimés par les visiteurs sur l'accueil s'afficheront ici en temps réel.</p>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
             <Card className="border-0 shadow-sm hover:-translate-y-1">

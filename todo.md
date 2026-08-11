@@ -1360,3 +1360,15 @@
 - [x] Créer la procédure tRPC de vote dans le routeur backend
 - [x] Intégrer les boutons « Utile / Non utile » interactifs et animés dans le composant `FlightBookingFAQ.tsx`
 - [x] Tester les votes via Vitest, valider le build de production et enregistrer le checkpoint final
+
+## Graphique de satisfaction FAQ dans le dashboard administrateur
+- [x] Créer une procédure tRPC admin pour agréger les votes `faq_feedback` (total, utiles, non utiles, taux de satisfaction et par question)
+- [x] Intégrer un graphique de satisfaction (barres/camembert ou indicateurs Recharts) dans le dashboard administrateur
+- [x] Ajouter un tableau récapitulatif par question FAQ avec les scores respectifs
+- [x] Tester les requêtes, valider le build de production et enregistrer le checkpoint final
+
+## Correction de sécurité : authentification admin sur updateCommission (vols)
+- [x] Auditer le routeur `server/routers/flights.ts` pour identifier le comportement d'updateCommission
+- [x] Importer `requireValidAdminSession` depuis `./adminAuth` et l'appliquer à `updateCommission`
+- [x] Tester la compilation et vérifier le build de production
+- [x] Enregistrer le checkpoint final sécurisé

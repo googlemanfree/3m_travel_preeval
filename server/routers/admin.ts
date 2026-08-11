@@ -763,6 +763,83 @@ export const adminRouter = router({
   /**
    * Recuperer les details complets d'une application
    */
+  /**
+   * Récupérer les statistiques de satisfaction de la FAQ (votes Utile / Non utile)
+   */
+  getFaqSatisfactionStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        const rows = await db.execute(`SELECT questionKey, helpful, COUNT(*) as count FROM faq_feedback GROUP BY questionKey, helpful`);
+        const rawResults: any = rows[0] || [];
+
+        let totalHelpful = 0;
+        let totalNotHelpful = 0;
+        const perQuestionMap: Record<string, { helpful: number; notHelpful: number }> = {};
+
+        for (const row of rawResults) {
+          const qKey = row.questionKey || row.question_key;
+          const isHelpful = row.helpful === 1 || row.helpful === true || row.helpful === "1";
+          const cnt = Number(row.count) || 0;
+
+          if (!perQuestionMap[qKey]) {
+            perQuestionMap[qKey] = { helpful: 0, notHelpful: 0 };
+          }
+
+          if (isHelpful) {
+            totalHelpful += cnt;
+            perQuestionMap[qKey].helpful += cnt;
+          } else {
+            totalNotHelpful += cnt;
+            perQuestionMap[qKey].notHelpful += cnt;
+          }
+        }
+
+        const totalVotes = totalHelpful + totalNotHelpful;
+        const satisfactionRate = totalVotes > 0 ? Math.round((totalHelpful / totalVotes) * 100) : 100;
+
+        const questionsBreakdown = Object.entries(perQuestionMap).map(([questionKey, stats]) => {
+          const qTotal = stats.helpful + stats.notHelpful;
+          const qRate = qTotal > 0 ? Math.round((stats.helpful / qTotal) * 100) : 100;
+          return {
+            questionKey,
+            helpful: stats.helpful,
+            notHelpful: stats.notHelpful,
+            total: qTotal,
+            satisfactionRate: qRate,
+          };
+        }).sort((a, b) => b.total - a.total);
+
+        return {
+          success: true,
+          stats: {
+            totalVotes,
+            totalHelpful,
+            totalNotHelpful,
+            satisfactionRate,
+            questionsBreakdown,
+          },
+        };
+      } catch (err) {
+        console.error("[Admin FAQ Satisfaction] Error:", err);
+        return {
+          success: true,
+          stats: {
+            totalVotes: 0,
+            totalHelpful: 0,
+            totalNotHelpful: 0,
+            satisfactionRate: 100,
+            questionsBreakdown: [],
+          },
+        };
+      }
+    }),
+
   getApplicationDetails: publicProcedure
     .input(z.object({ sessionToken: z.string(), applicationId: z.number() }))
     .query(async ({ input }) => {

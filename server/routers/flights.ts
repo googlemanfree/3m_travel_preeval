@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { agencySettings, flightSearchHistory } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
+import { requireValidAdminSession } from "./adminAuth";
 
 // ─── Simple In-Memory Cache for SearchAPI ────────────────────────────────────
 interface CacheEntry {
@@ -355,6 +356,8 @@ export const flightsRouter = router({
   updateCommission: publicProcedure
     .input(z.object({ sessionToken: z.string(), commissionPercent: z.number().min(0).max(50) }))
     .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
       const db = await getDb();
       if (!db) throw new Error("DB non disponible");
       const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
