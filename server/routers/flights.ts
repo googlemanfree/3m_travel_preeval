@@ -5,7 +5,29 @@ import { agencySettings, flightSearchHistory } from "../../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 
-// ─── IATA Airport Database (subset for demo) ─────────────────────────────────
+// ─── Simple In-Memory Cache for SearchAPI ────────────────────────────────────
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+const flightCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedSearch(key: string) {
+  const entry = flightCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    flightCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedSearch(key: string, data: any) {
+  flightCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ─── IATA Airport Database ────────────────────────────────────────────────────
 export const AIRPORTS: Record<string, { name: string; city: string; country: string; iata: string }> = {
   YAO: { iata: "YAO", name: "Yaoundé Nsimalen", city: "Yaoundé", country: "Cameroun" },
   DLA: { iata: "DLA", name: "Douala International", city: "Douala", country: "Cameroun" },
@@ -42,22 +64,21 @@ export const AIRPORTS: Record<string, { name: string; city: string; country: str
   LIS: { iata: "LIS", name: "Humberto Delgado", city: "Lisbonne", country: "Portugal" },
 };
 
-// ─── Airlines ─────────────────────────────────────────────────────────────────
-const AIRLINES: Record<string, { name: string; code: string; logo: string; color: string }> = {
-  AF: { code: "AF", name: "Air France", logo: "https://logo.clearbit.com/airfrance.com", color: "#002157" },
-  ET: { code: "ET", name: "Ethiopian Airlines", logo: "https://logo.clearbit.com/ethiopianairlines.com", color: "#006633" },
-  QR: { code: "QR", name: "Qatar Airways", logo: "https://logo.clearbit.com/qatarairways.com", color: "#5C0632" },
-  TK: { code: "TK", name: "Turkish Airlines", logo: "https://logo.clearbit.com/turkishairlines.com", color: "#C8102E" },
-  AC: { code: "AC", name: "Air Canada", logo: "https://logo.clearbit.com/aircanada.com", color: "#D50032" },
-  EK: { code: "EK", name: "Emirates", logo: "https://logo.clearbit.com/emirates.com", color: "#C8102E" },
-  LH: { code: "LH", name: "Lufthansa", logo: "https://logo.clearbit.com/lufthansa.com", color: "#05164D" },
-  KQ: { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", color: "#CC0000" },
-  AT: { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", color: "#006233" },
-  SN: { code: "SN", name: "Brussels Airlines", logo: "https://logo.clearbit.com/brusselsairlines.com", color: "#003399" },
-  WB: { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", color: "#00A0E3" },
+// ─── Airlines & Alliances ─────────────────────────────────────────────────────
+const AIRLINES: Record<string, { name: string; code: string; logo: string; color: string; alliance: "SkyTeam" | "Star Alliance" | "Oneworld" | "Autre" }> = {
+  AF: { code: "AF", name: "Air France", logo: "https://logo.clearbit.com/airfrance.com", color: "#002157", alliance: "SkyTeam" },
+  ET: { code: "ET", name: "Ethiopian Airlines", logo: "https://logo.clearbit.com/ethiopianairlines.com", color: "#006633", alliance: "Star Alliance" },
+  QR: { code: "QR", name: "Qatar Airways", logo: "https://logo.clearbit.com/qatarairways.com", color: "#5C0632", alliance: "Oneworld" },
+  TK: { code: "TK", name: "Turkish Airlines", logo: "https://logo.clearbit.com/turkishairlines.com", color: "#C8102E", alliance: "Star Alliance" },
+  AC: { code: "AC", name: "Air Canada", logo: "https://logo.clearbit.com/aircanada.com", color: "#D50032", alliance: "Star Alliance" },
+  EK: { code: "EK", name: "Emirates", logo: "https://logo.clearbit.com/emirates.com", color: "#C8102E", alliance: "Autre" },
+  LH: { code: "LH", name: "Lufthansa", logo: "https://logo.clearbit.com/lufthansa.com", color: "#05164D", alliance: "Star Alliance" },
+  KQ: { code: "KQ", name: "Kenya Airways", logo: "https://logo.clearbit.com/kenya-airways.com", color: "#CC0000", alliance: "SkyTeam" },
+  AT: { code: "AT", name: "Royal Air Maroc", logo: "https://logo.clearbit.com/royalairmaroc.com", color: "#006233", alliance: "Oneworld" },
+  SN: { code: "SN", name: "Brussels Airlines", logo: "https://logo.clearbit.com/brusselsairlines.com", color: "#003399", alliance: "Star Alliance" },
+  WB: { code: "WB", name: "RwandAir", logo: "https://logo.clearbit.com/rwandair.com", color: "#00A0E3", alliance: "Autre" },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 function randomBetween(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -76,13 +97,12 @@ function addMinutes(timeStr: string, minutes: number) {
   return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
 }
 
-const AGENCY_MARKUP = 0.08; // 8%
+const AGENCY_MARKUP = 0.08;
 
 function applyMarkup(price: number) {
   return Math.round(price * (1 + AGENCY_MARKUP));
 }
 
-// ─── Mock flight generator ────────────────────────────────────────────────────
 function generateFlights(
   origin: string,
   destination: string,
@@ -124,15 +144,6 @@ function generateFlights(
         duration: `${randomBetween(1, 3)}h${randomBetween(0, 5) * 10}`,
       });
     }
-    if (stops >= 2) {
-      const layoverAirports2 = ["LHR", "FRA", "AMS", "MAD"];
-      const layover2 = layoverAirports2[randomBetween(0, layoverAirports2.length - 1)];
-      stopDetails.push({
-        airport: layover2,
-        airportName: AIRPORTS[layover2]?.name ?? layover2,
-        duration: `${randomBetween(1, 2)}h${randomBetween(0, 5) * 10}`,
-      });
-    }
 
     results.push({
       id: `FL-${i + 1}-${Date.now()}`,
@@ -159,15 +170,14 @@ function generateFlights(
       baggage: cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
       refundable: i % 3 === 0,
       pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      isLiveGoogleFlights: false,
     });
   }
 
   return results.sort((a, b) => a.totalPrice - b.totalPrice);
 }
 
-// ─── Router ───────────────────────────────────────────────────────────────────
 export const flightsRouter = router({
-  // Airport autocomplete
   searchAirports: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
     .query(({ input }) => {
@@ -181,7 +191,6 @@ export const flightsRouter = router({
       ).slice(0, 8);
     }),
 
-  // Search flights (SearchAPI.io Google Flights or Mock Fallback)
   searchFlights: publicProcedure
     .input(
       z.object({
@@ -194,19 +203,27 @@ export const flightsRouter = router({
         children: z.number().min(0).max(8).default(0),
         infants: z.number().min(0).max(4).default(0),
         cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
+        alliance: z.string().optional(),
       })
     )
     .query(async ({ input }) => {
+      const cacheKey = `${input.tripType}-${input.origin}-${input.destination}-${input.departureDate}-${input.returnDate || ""}-${input.adults}-${input.cabinClass}-${input.alliance || "ALL"}`;
+      const cached = getCachedSearch(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const apiKey = process.env.SEARCHAPI_KEY;
 
       if (!apiKey) {
         const totalPax = input.adults + input.children;
-        const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
-        const inbound =
-          input.tripType === "ROUND_TRIP" && input.returnDate
-            ? generateFlights(input.destination, input.origin, input.returnDate, totalPax, input.cabinClass)
-            : [];
-        return { tripType: input.tripType, outbound, inbound, searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        if (input.alliance && input.alliance !== "ALL") {
+          outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
+        }
+        const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        setCachedSearch(cacheKey, result);
+        return result;
       }
 
       try {
@@ -239,10 +256,14 @@ export const flightsRouter = router({
 
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
         if (allResults.length === 0) {
-          // Repli mock si aucun vol retourné par l'API
           const totalPax = input.adults + input.children;
-          const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
-          return { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: false };
+          let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+          if (input.alliance && input.alliance !== "ALL") {
+            outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
+          }
+          const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: false };
+          setCachedSearch(cacheKey, result);
+          return result;
         }
 
         const totalPax = input.adults + input.children;
@@ -260,7 +281,8 @@ export const flightsRouter = router({
           }));
 
           const airlineCode = firstLeg.flight_number?.split(" ")[0] ?? "AF";
-          const airline = AIRLINES[airlineCode] || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A" };
+          const knownAirline = AIRLINES[airlineCode];
+          const airline = knownAirline || { code: airlineCode, name: firstLeg.airline || "Compagnie aérienne", logo: firstLeg.airline_logo || "", color: "#1E3A8A", alliance: "Autre" };
 
           return {
             id: `SA-${index}-${firstLeg.flight_number}`,
@@ -287,13 +309,16 @@ export const flightsRouter = router({
             baggage: input.cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
             refundable: true,
             pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-            bookingUrl: item.booking_token ? `https://www.google.com/travel/flights?q=${input.origin}%20to%20%20${input.destination}` : undefined,
+            isLiveGoogleFlights: true,
           };
         };
 
-        const outbound = allResults.map((item, i) => toFlightResult(item, i)).filter(Boolean);
+        let outbound = allResults.map((item, i) => toFlightResult(item, i)).filter(Boolean);
+        if (input.alliance && input.alliance !== "ALL") {
+          outbound = outbound.filter((f: any) => f.airline.alliance === input.alliance);
+        }
 
-        return {
+        const result = {
           tripType: input.tripType,
           outbound,
           inbound: [],
@@ -302,33 +327,21 @@ export const flightsRouter = router({
           agencyMarkup: AGENCY_MARKUP,
           isDemo: false,
         };
+        setCachedSearch(cacheKey, result);
+        return result;
       } catch (err) {
         console.error("SearchAPI error, falling back to mock:", err);
         const totalPax = input.adults + input.children;
-        const outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
-        const inbound =
-          input.tripType === "ROUND_TRIP" && input.returnDate
-            ? generateFlights(input.destination, input.origin, input.returnDate, totalPax, input.cabinClass)
-            : [];
-        return { tripType: input.tripType, outbound, inbound, searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        if (input.alliance && input.alliance !== "ALL") {
+          outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
+        }
+        const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        setCachedSearch(cacheKey, result);
+        return result;
       }
     }),
 
-  // Get flight details / pricing
-  getFlightPrice: publicProcedure
-    .input(z.object({ flightId: z.string(), pnrRef: z.string() }))
-    .query(({ input }) => {
-      return {
-        flightId: input.flightId,
-        pnrRef: input.pnrRef,
-        priceConfirmed: true,
-        taxes: randomBetween(45000, 120000),
-        fees: randomBetween(15000, 35000),
-        isDemo: false,
-      };
-    }),
-
-  // Get commission
   getCommission: publicProcedure.query(async () => {
     const db = await getDb();
     if (!db) return { commissionPercent: 8 };
@@ -339,13 +352,11 @@ export const flightsRouter = router({
     return { commissionPercent: 8 };
   }),
 
-  // Update commission
   updateCommission: publicProcedure
     .input(z.object({ sessionToken: z.string(), commissionPercent: z.number().min(0).max(50) }))
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new Error("DB non disponible");
-      
       const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
       if (rows.length > 0) {
         await db.update(agencySettings)
@@ -360,7 +371,6 @@ export const flightsRouter = router({
       return { success: true, commissionPercent: input.commissionPercent };
     }),
 
-  // Save search history
   saveSearchHistory: publicProcedure
     .input(
       z.object({
@@ -388,22 +398,19 @@ export const flightsRouter = router({
       return { success: true };
     }),
 
-  // Get search history
   getSearchHistory: publicProcedure
     .input(z.object({ userEmail: z.string().email() }))
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
-      const history = await db
+      return await db
         .select()
         .from(flightSearchHistory)
         .where(eq(flightSearchHistory.userEmail, input.userEmail))
         .orderBy(desc(flightSearchHistory.createdAt))
         .limit(20);
-      return history;
     }),
 
-  // Send flight summary email
   sendFlightSummaryEmail: publicProcedure
     .input(
       z.object({

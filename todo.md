@@ -1300,3 +1300,11 @@
 - [x] Mettre en place le service d'interrogation de l'API Google Flights (SearchAPI.io) dans le serveur
 - [x] Connecter le routeur `flights` à SearchAPI avec repli sur le mock si la clé ou le service est indisponible
 - [x] Tester la recherche réelle, compiler la production et enregistrer le checkpoint final
+
+## Optimisation SearchAPI (Cache mémoire, filtres avancés, badges et compétence)
+- [x] Mettre en place un cache mémoire en-mémoire TTL (5 minutes) pour les requêtes SearchAPI
+- [x] Ajouter les filtres par alliance aérienne (SkyTeam, Star Alliance, Oneworld) dans le routeur et l'UI
+- [x] Intégrer les badges « En direct de Google Flights » et les indicateurs visuels de vols directs
+- [x] Ajouter une animation de chargement fluide et immersive pendant la recherche en temps réel
+- [x] Créer la compétence réutilisable `searchapi-flights-integration` avec skill-creator
+- [x] Valider la compétence, compiler le projet et enregistrer le checkpoint final

@@ -100,7 +100,7 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
 type Airport = { iata: string; name: string; city: string; country: string };
 type Flight = {
   id: string;
-  airline: { code: string; name: string; logo: string; color: string };
+  airline: { code: string; name: string; logo: string; color: string; alliance?: string };
   flightNumber: string;
   origin: string; originCity: string;
   destination: string; destinationCity: string;
@@ -116,6 +116,7 @@ type Flight = {
   baggage: string;
   refundable: boolean;
   pnrRef: string;
+  isLiveGoogleFlights?: boolean;
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -324,8 +325,13 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
       layout
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden"
+      className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg transition-shadow overflow-hidden relative"
     >
+      {flight.isLiveGoogleFlights && (
+        <div className="absolute top-0 right-0 bg-gradient-to-l from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
+          <span>✨ En direct de Google Flights</span>
+        </div>
+      )}
       <div className="p-4 md:p-5">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           {/* Airline */}
@@ -337,7 +343,10 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
             </div>
             <div>
               <div className="text-sm font-bold text-gray-800">{flight.airline.name}</div>
-              <div className="text-xs text-gray-500 font-mono">{flight.flightNumber}</div>
+              <div className="text-xs text-gray-500 font-mono flex items-center gap-1">
+                {flight.flightNumber}
+                <span className="text-[9px] bg-blue-50 text-blue-700 px-1 py-0.2 rounded font-semibold">{flight.airline.alliance || "Autre"}</span>
+              </div>
             </div>
           </div>
 
@@ -474,6 +483,7 @@ export default function Flights() {
   // Filters
   const [maxStops, setMaxStops] = useState<number | null>(null);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
+  const [selectedAlliance, setSelectedAlliance] = useState<string>("ALL");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"price" | "duration" | "stops">("price");
@@ -489,6 +499,7 @@ export default function Flights() {
       children: passengers.children,
       infants: passengers.infants,
       cabinClass: passengers.cabinClass as any,
+      alliance: selectedAlliance !== "ALL" ? selectedAlliance : undefined,
     },
     { enabled: searchEnabled }
   );
@@ -655,10 +666,17 @@ export default function Flights() {
         )}
 
         {isFetching && (
-          <div className="text-center py-20">
-            <RefreshCw className="w-10 h-10 text-[#2563EB] animate-spin mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">Recherche des meilleurs tarifs...</p>
-          </div>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-24 bg-white rounded-3xl border border-blue-100 shadow-xl max-w-xl mx-auto my-12 p-8">
+            <div className="relative w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-blue-50 rounded-full">
+              <div className="absolute inset-0 border-4 border-blue-200 border-t-[#2563EB] rounded-full animate-spin"></div>
+              <Plane className="w-8 h-8 text-[#2563EB] animate-pulse" />
+            </div>
+            <h3 className="text-xl font-black text-[#1E3A8A] mb-2">Recherche en temps réel...</h3>
+            <p className="text-gray-500 text-sm max-w-sm mx-auto mb-4">Interrogation des compagnies aériennes et agrégation des grilles tarifaires officielles.</p>
+            <div className="w-48 h-1.5 bg-gray-100 rounded-full mx-auto overflow-hidden">
+              <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 animate-[pulse_1s_infinite]"></div>
+            </div>
+          </motion.div>
         )}
 
         {searchEnabled && !isFetching && outbound.length > 0 && (
@@ -672,6 +690,22 @@ export default function Flights() {
                   </h3>
                   <button onClick={() => { setMaxStops(null); setSelectedAirlines([]); setPriceRange([minPrice, maxPrice]); }}
                     className="text-xs text-[#2563EB] font-semibold hover:underline">Réinitialiser</button>
+                </div>
+
+                {/* Alliance */}
+                <div className="mb-5">
+                  <div className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Alliance aérienne</div>
+                  <select
+                    value={selectedAlliance}
+                    onChange={(e) => setSelectedAlliance(e.target.value)}
+                    className="w-full bg-slate-50 border border-gray-200 rounded-xl p-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+                  >
+                    <option value="ALL">Toutes les alliances</option>
+                    <option value="SkyTeam">SkyTeam (Air France, Kenya...)</option>
+                    <option value="Star Alliance">Star Alliance (Ethiopian, Lufthansa...)</option>
+                    <option value="Oneworld">Oneworld (Qatar, RAM...)</option>
+                    <option value="Autre">Autres compagnies</option>
+                  </select>
                 </div>
 
                 {/* Stops */}
