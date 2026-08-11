@@ -59,14 +59,14 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="border-blue-200 text-[#1E3A8A] hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
+        className="ease-pill border-blue-200 text-[#1E3A8A] hover:bg-blue-50 dark:text-blue-200 dark:hover:bg-blue-400/15 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
       >
         <Mail className="w-3.5 h-3.5 mr-1" /> Recevoir par e-mail
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-slate-950/55 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div initial={{ opacity: 0, y: 12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.2 }} className="glass-dialog bg-white/85 dark:bg-slate-950/85 rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 dark:border-white/10 backdrop-blur-2xl">
             <h3 className="font-bold text-slate-800 text-base mb-2">Recevoir le récapitulatif par e-mail</h3>
             <p className="text-xs text-slate-500 mb-4">Entrez votre adresse e-mail pour recevoir les détails de ce vol (PNR #{flight.pnrRef}).</p>
             
@@ -89,8 +89,8 @@ function EmailSummaryButton({ flight }: { flight: Flight }) {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </>
   );

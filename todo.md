@@ -1322,3 +1322,10 @@
 - [x] Intégrer des transitions de page fluides basées sur Framer Motion respectant `prefers-reduced-motion`
 - [x] Créer la compétence réutilisable `glass-theme-transitions` avec `init_skill.py` et `quick_validate.py`
 - [x] Compiler la production et enregistrer le checkpoint final
+
+## Modales Glassmorphism, Thème Système et Micro-interactions Vols
+- [x] Mettre à jour `ThemeContext.tsx` pour supporter le mode `"system"` avec écouteur `prefers-color-scheme`
+- [x] Mettre à jour `ThemeToggle.tsx` pour permettre de basculer entre Clair, Sombre et Système avec un menu déroulant ou des icônes cycliques
+- [x] Appliquer les classes `glass-card`, `backdrop-blur-xl` et des animations Framer Motion aux modales et aux composants du dashboard admin
+- [x] Ajouter des animations de survol (hover scale, lueur subtile, transition douce) sur les cartes de vols et les boutons principaux
+- [x] Compiler la production et sauvegarder le checkpoint final

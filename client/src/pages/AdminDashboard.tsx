@@ -629,9 +629,9 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50/70 text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
-      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white fixed top-0 left-0 right-0 z-50 shadow-lg">
+      <div className="glass-admin-header bg-gradient-to-r from-blue-900/95 to-blue-950/95 text-white fixed top-0 left-0 right-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
@@ -752,7 +752,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Widget : répartition des candidats par pays */}
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">
           <CardContent className="p-5">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
@@ -804,7 +804,7 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="flights" className="space-y-6">
-            <Card className="p-6 border-0 shadow-sm">
+            <Card className="border-0 shadow-sm hover:-translate-y-1">
               <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                 <Plane className="w-5 h-5 text-blue-600" />
                 Configuration de la Commission Agence sur les Vols
@@ -847,7 +847,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tableau */}
-        <Card className="border-0 shadow-sm overflow-hidden">
+        <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
