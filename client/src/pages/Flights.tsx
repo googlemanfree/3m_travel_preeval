@@ -12,6 +12,89 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
+import { Mail, Check } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+
+function EmailSummaryButton({ flight }: { flight: Flight }) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const { toast } = useToast();
+
+  const sendEmailMutation = trpc.flights.sendFlightSummaryEmail.useMutation({
+    onSuccess: () => {
+      setSent(true);
+      toast({ title: "E-mail envoyé !", description: "Le récapitulatif du vol a été envoyé à votre adresse." });
+      setTimeout(() => { setOpen(false); setSent(false); }, 2000);
+    },
+    onError: (err) => {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleSend = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    sendEmailMutation.mutate({
+      email,
+      flightDetails: {
+        airlineName: flight.airline.name,
+        flightNumber: flight.flightNumber,
+        origin: flight.originCity || flight.origin,
+        destination: flight.destinationCity || flight.destination,
+        departureDate: flight.departureDate,
+        departureTime: flight.departureTime,
+        arrivalTime: flight.arrivalTime,
+        duration: flight.duration,
+        stops: flight.stops,
+        cabinClass: flight.cabinClass,
+        totalPrice: flight.totalPrice,
+        pnrRef: flight.pnrRef,
+      },
+    });
+  };
+
+  return (
+    <>
+      <Button
+        variant="outline"
+        onClick={() => setOpen(true)}
+        className="border-blue-200 text-[#1E3A8A] hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
+      >
+        <Mail className="w-3.5 h-3.5 mr-1" /> Recevoir par e-mail
+      </Button>
+
+      {open && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <h3 className="font-bold text-slate-800 text-base mb-2">Recevoir le récapitulatif par e-mail</h3>
+            <p className="text-xs text-slate-500 mb-4">Entrez votre adresse e-mail pour recevoir les détails de ce vol (PNR #{flight.pnrRef}).</p>
+            
+            <form onSubmit={handleSend} className="space-y-4">
+              <input
+                type="email"
+                required
+                placeholder="votre.email@exemple.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)} className="rounded-xl text-xs">
+                  Annuler
+                </Button>
+                <Button type="submit" disabled={sendEmailMutation.isPending || sent} className="bg-[#1E3A8A] text-white rounded-xl text-xs font-bold">
+                  {sent ? <Check className="w-4 h-4 mr-1 text-emerald-400" /> : null}
+                  {sent ? "Envoyé !" : sendEmailMutation.isPending ? "Envoi..." : "Envoyer"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Airport = { iata: string; name: string; city: string; country: string };
@@ -298,6 +381,7 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
                   <Plane className="w-4 h-4 mr-1" /> Réserver
                 </Button>
               </a>
+              <EmailSummaryButton flight={flight} />
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
@@ -408,6 +492,34 @@ export default function Flights() {
     },
     { enabled: searchEnabled }
   );
+
+  const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
+
+  useEffect(() => {
+    if (searchEnabled) {
+      try {
+        let email = undefined;
+        const userStr = localStorage.getItem("manus_user") || sessionStorage.getItem("manus_user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          if (u?.email) email = u.email;
+        }
+        saveSearchHistoryMutation({
+          userEmail: email,
+          origin,
+          destination,
+          departureDate,
+          returnDate: tripType === "ROUND_TRIP" ? returnDate : undefined,
+          adults: passengers.adults,
+          cabinClass: passengers.cabinClass,
+        });
+      } catch {
+        // ignore
+      }
+    }
+  }, [searchEnabled, origin, destination, departureDate]);
+
+  const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
 
   function handleSearch() {
     setSearchEnabled(true);

@@ -2,7 +2,7 @@
  * Dashboard Administrateur — 3M Travel & Services
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import {
   Building2,
   Mail,
   Phone,
+  Plane,
   MapPin,
   Calendar,
   Star,
@@ -793,13 +794,27 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Onglets : Dossiers, Paiements, Documents */}
+        {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="flights" className="space-y-6">
+            <Card className="p-6 border-0 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <Plane className="w-5 h-5 text-blue-600" />
+                Configuration de la Commission Agence sur les Vols
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Définissez le pourcentage de commission appliqué automatiquement sur les prix des billets d'avion affichés aux clients.
+              </p>
+              <FlightCommissionSettings />
+            </Card>
+          </TabsContent>
 
           <TabsContent value="candidates" className="space-y-6">
             {/* Filtres & Recherche */}
@@ -973,5 +988,60 @@ export default function AdminDashboard() {
         />
       )}
     </div>
+  );
+}
+
+function FlightCommissionSettings() {
+  const { data, refetch } = trpc.flights.getCommission.useQuery();
+  const [commission, setCommission] = useState<number>(8);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (data?.commissionPercent !== undefined) {
+      setCommission(data.commissionPercent);
+    }
+  }, [data]);
+
+  const updateMutation = trpc.flights.updateCommission.useMutation({
+    onSuccess: () => {
+      toast({ title: "Commission mise à jour", description: `Le taux de commission est désormais de ${commission}%` });
+      refetch();
+    },
+    onError: (err) => {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateMutation.mutate({
+      sessionToken: localStorage.getItem("admin_session") || "active_admin",
+      commissionPercent: Number(commission),
+    });
+  };
+
+  return (
+    <form onSubmit={handleSave} className="max-w-md space-y-4">
+      <div>
+        <label className="block text-xs font-semibold text-gray-700 uppercase mb-2">Taux de commission agence (%)</label>
+        <div className="flex gap-3">
+          <Input
+            type="number"
+            min="0"
+            max="50"
+            step="0.5"
+            value={commission}
+            onChange={(e) => setCommission(Number(e.target.value))}
+            className="font-bold text-lg"
+          />
+          <Button type="submit" disabled={updateMutation.isPending} className="bg-[#1E3A8A] text-white font-bold px-6">
+            {updateMutation.isPending ? "Enregistrement..." : "Enregistrer"}
+          </Button>
+        </div>
+      </div>
+      <p className="text-xs text-gray-400">
+        Cette commission est automatiquement incluse dans les grilles tarifaires de vols présentées aux candidats et sur les récapitulatifs e-mail.
+      </p>
+    </form>
   );
 }

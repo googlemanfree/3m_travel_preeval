@@ -1245,3 +1245,33 @@ export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
 });
 export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
 export type InsertEmailDeliveryLog = typeof emailDeliveryLogs.$inferInsert;
+
+/**
+ * Historique des recherches de vols effectuées par les utilisateurs.
+ */
+export const flightSearchHistory = mysqlTable("flight_search_history", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  userEmail: varchar("userEmail", { length: 320 }),
+  origin: varchar("origin", { length: 10 }).notNull(),
+  destination: varchar("destination", { length: 10 }).notNull(),
+  departureDate: varchar("departureDate", { length: 30 }).notNull(),
+  returnDate: varchar("returnDate", { length: 30 }),
+  adults: int("adults").default(1).notNull(),
+  cabinClass: varchar("cabinClass", { length: 50 }).default("ECONOMY").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FlightSearchHistory = typeof flightSearchHistory.$inferSelect;
+export type InsertFlightSearchHistory = typeof flightSearchHistory.$inferInsert;
+
+/**
+ * Paramètres généraux de l'agence (ex: taux de commission vol).
+ */
+export const agencySettings = mysqlTable("agency_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  settingKey: varchar("settingKey", { length: 100 }).notNull().unique(),
+  settingValue: text("settingValue").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type AgencySetting = typeof agencySettings.$inferSelect;
+export type InsertAgencySetting = typeof agencySettings.$inferInsert;

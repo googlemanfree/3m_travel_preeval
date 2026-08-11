@@ -1,5 +1,9 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
+import { getDb } from "../db";
+import { agencySettings, flightSearchHistory } from "../../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+import { sendEmail } from "../_core/email";
 
 // ─── IATA Airport Database (subset for demo) ─────────────────────────────────
 export const AIRPORTS: Record<string, { name: string; city: string; country: string; iata: string }> = {
@@ -228,5 +232,136 @@ export const flightsRouter = router({
         fees: randomBetween(15000, 35000),
         isDemo: true,
       };
+    }),
+
+  // Récupérer le taux de commission actuel
+  getCommission: publicProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return { commissionPercent: 8 };
+    const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
+    if (rows.length > 0) {
+      return { commissionPercent: parseFloat(rows[0].settingValue) || 8 };
+    }
+    return { commissionPercent: 8 };
+  }),
+
+  // Mettre à jour le taux de commission (admin)
+  updateCommission: publicProcedure
+    .input(z.object({ sessionToken: z.string(), commissionPercent: z.number().min(0).max(50) }))
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB non disponible");
+      
+      const rows = await db.select().from(agencySettings).where(eq(agencySettings.settingKey, "flight_commission_percent"));
+      if (rows.length > 0) {
+        await db.update(agencySettings)
+          .set({ settingValue: input.commissionPercent.toString() })
+          .where(eq(agencySettings.settingKey, "flight_commission_percent"));
+      } else {
+        await db.insert(agencySettings).values({
+          settingKey: "flight_commission_percent",
+          settingValue: input.commissionPercent.toString(),
+        });
+      }
+      return { success: true, commissionPercent: input.commissionPercent };
+    }),
+
+  // Enregistrer une recherche de vol dans l'historique
+  saveSearchHistory: publicProcedure
+    .input(
+      z.object({
+        userEmail: z.string().email().optional(),
+        origin: z.string(),
+        destination: z.string(),
+        departureDate: z.string(),
+        returnDate: z.string().optional(),
+        adults: z.number().default(1),
+        cabinClass: z.string().default("ECONOMY"),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { success: false };
+      await db.insert(flightSearchHistory).values({
+        userEmail: input.userEmail || null,
+        origin: input.origin,
+        destination: input.destination,
+        departureDate: input.departureDate,
+        returnDate: input.returnDate || null,
+        adults: input.adults,
+        cabinClass: input.cabinClass,
+      });
+      return { success: true };
+    }),
+
+  // Récupérer l'historique des recherches d'un utilisateur
+  getSearchHistory: publicProcedure
+    .input(z.object({ userEmail: z.string().email() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const history = await db
+        .select()
+        .from(flightSearchHistory)
+        .where(eq(flightSearchHistory.userEmail, input.userEmail))
+        .orderBy(desc(flightSearchHistory.createdAt))
+        .limit(20);
+      return history;
+    }),
+
+  // Envoyer le récapitulatif du vol par e-mail
+  sendFlightSummaryEmail: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email("Adresse email invalide"),
+        flightDetails: z.object({
+          airlineName: z.string(),
+          flightNumber: z.string(),
+          origin: z.string(),
+          destination: z.string(),
+          departureDate: z.string(),
+          departureTime: z.string(),
+          arrivalTime: z.string(),
+          duration: z.string(),
+          stops: z.number(),
+          cabinClass: z.string(),
+          totalPrice: z.number(),
+          pnrRef: z.string(),
+        }),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { email, flightDetails } = input;
+      const subject = `✈️ Récapitulatif de votre vol — Réf PNR #${flightDetails.pnrRef}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f9fafb; padding: 20px; border-radius: 16px;">
+          <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 30px; text-align: center; color: white; border-radius: 12px 12px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">3M Travel & Services</h1>
+            <p style="margin: 8px 0 0; font-size: 14px; opacity: 0.9;">Récapitulatif de votre sélection de vol</p>
+          </div>
+          <div style="background: white; padding: 30px; border-radius: 0 0 12px 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <p style="font-size: 16px; color: #1f2937;">Bonjour,</p>
+            <p style="color: #4b5563; font-size: 14px; line-height: 1.5;">Voici le récapitulatif du vol que vous avez sélectionné sur notre plateforme. Vous pouvez le présenter à notre agence ou finaliser votre réservation via WhatsApp.</p>
+            
+            <div style="background: #eff6ff; border: 2px dashed #2563EB; border-radius: 12px; padding: 20px; margin: 20px 0;">
+              <div style="font-size: 12px; font-weight: bold; color: #2563EB; text-transform: uppercase; margin-bottom: 8px;">Référence PNR : ${flightDetails.pnrRef}</div>
+              <div style="font-size: 18px; font-weight: bold; color: #1E3A8A; margin-bottom: 4px;">${flightDetails.airlineName} (${flightDetails.flightNumber})</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Itinéraire :</strong> ${flightDetails.origin} ➔ ${flightDetails.destination}</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Départ :</strong> ${flightDetails.departureDate} à ${flightDetails.departureTime} (Arrivée: ${flightDetails.arrivalTime})</div>
+              <div style="font-size: 14px; color: #374151; margin-bottom: 12px;"><strong>Durée :</strong> ${flightDetails.duration} | <strong>Escale(s) :</strong> ${flightDetails.stops === 0 ? "Direct" : flightDetails.stops + " escale(s)"}</div>
+              <div style="font-size: 16px; font-weight: bold; color: #15803d; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">Prix total estimé : ${flightDetails.totalPrice.toLocaleString("fr-FR")} XAF</div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="https://wa.me/237620996045?text=Bonjour,%20je%20confirme%20la%20réservation%20du%20vol%20PNR%20${flightDetails.pnrRef}" style="background: #16a34a; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block;">Contacter l'agence sur WhatsApp</a>
+            </div>
+
+            <p style="font-size: 12px; color: #9ca3af; text-align: center; margin-top: 30px;">© 2024 3M Travel & Services • hello@3mtravelagency.com</p>
+          </div>
+        </div>
+      `;
+
+      await sendEmail({ to: email, subject, html });
+      return { success: true };
     }),
 });

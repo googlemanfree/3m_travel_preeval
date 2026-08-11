@@ -1285,3 +1285,11 @@
 - [x] Implémenter un routeur tRPC ou un service backend pour interroger l'API de vols de manière sécurisée
 - [x] Mettre à jour la page `client/src/pages/Flights.tsx` pour intégrer le formulaire de recherche et l'affichage des résultats en temps réel
 - [x] Tester les requêtes, valider la compilation de production et enregistrer le checkpoint final
+
+## Nouvelles fonctionnalités Vols (Email récapitulatif, Historique & Commission Admin)
+- [x] Créer la table `flight_search_history` pour stocker les recherches de vols des utilisateurs
+- [x] Créer la table `agency_settings` pour stocker le taux de commission dynamique de l'agence
+- [x] Ajouter la procédure tRPC pour envoyer le récapitulatif du vol par e-mail via hello@3mtravelagency.com
+- [x] Ajouter l'historique des recherches dans le profil / espace candidat
+- [x] Ajouter le module de configuration de la commission dans le dashboard administrateur
+- [x] Tester les procédures, valider la compilation de production et enregistrer le checkpoint final
