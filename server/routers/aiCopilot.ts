@@ -14,6 +14,7 @@ import { getDb } from "../db";
 import { aureolQuestions, faqFeedback } from "../../drizzle/schema";
 import { desc, sql, count } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
+import { queryDestinationKnowledge } from "../destinationKnowledge";
 
 const SYSTEM_PROMPT = `Tu es le "Copilote IA 3M Travel", l'assistant virtuel de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
@@ -57,10 +58,20 @@ export const aiCopilotRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
+        // Récupérer la dernière question utilisateur pour enrichir le contexte via le RAG des 107 destinations
+        const lastUserMsg = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
+        const destinationContext = queryDestinationKnowledge(lastUserMsg);
+
+        const dynamicSystemPrompt = `${SYSTEM_PROMPT}
+
+=== EXTRAITS OFFICIELS DES GUIDES DE DESTINATION (RAG 107 PAYS) ===
+${destinationContext}
+==================================================================`;
+
         // Utiliser l'API LLM Manus
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: dynamicSystemPrompt },
             ...input.messages.map((m) => ({
               role: m.role as "user" | "assistant",
               content: m.content,
@@ -114,9 +125,16 @@ export const aiCopilotRouter = router({
     )
     .query(async ({ input }) => {
       try {
+        const destinationContext = queryDestinationKnowledge(input.question);
+        const dynamicSystemPrompt = `${SYSTEM_PROMPT}
+
+=== EXTRAITS OFFICIELS DES GUIDES DE DESTINATION (RAG 107 PAYS) ===
+${destinationContext}
+==================================================================`;
+
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: dynamicSystemPrompt },
             {
               role: "user",
               content: input.question,

@@ -1383,3 +1383,10 @@
 - [x] Ajouter une procédure tRPC admin `generateAiFrequentAnswers` dans `server/routers/aiCopilot.ts` protégée par `requireValidAdminSession` pour analyser les questions fréquentes et générer des suggestions structurées
 - [x] Créer un composant ou un onglet dédié dans le dashboard administrateur pour déclencher la génération IA, prévisualiser et copier les suggestions de réponses
 - [x] Valider le build de production, tester les flux et enregistrer le checkpoint final
+
+## Amélioration des connaissances d'Aureol avec les 107 PDF de destination (RAG)
+- [x] Inventorier et structurer les guides PDF des 107 destinations pour l'IA
+- [x] Créer un index de connaissances vectoriel / textuel unifié pour les procédures de visa et d'études
+- [x] Mettre à jour le routeur `aiCopilot.ts` pour injecter automatiquement les extraits pertinents des PDF dans le prompt d'Aureol
+- [x] Tester les réponses d'Aureol sur plusieurs destinations clés (Canada, France, Belgique, Luxembourg, etc.)
+- [x] Valider le build de production et enregistrer le checkpoint final
