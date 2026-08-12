@@ -8,11 +8,11 @@ import { requireValidAdminSession } from "./adminAuth";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
-import { eq, desc, asc, like, or, and, isNull, isNotNull } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
@@ -1686,8 +1686,47 @@ export const adminRouter = router({
       }
     }),
 
+  /** Valider un document du flux candidat authentifié. */
+  approveCandidateFile: publicProcedure
+    .input(z.object({ sessionToken: z.string(), fileId: z.number().int().positive(), comment: z.string().max(2000).optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [file] = await db.select({ id: candidateFiles.id }).from(candidateFiles).where(eq(candidateFiles.id, input.fileId)).limit(1);
+      if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "Document candidat introuvable" });
+      await db.update(candidateFiles).set({ status: "verified", rejectionReason: input.comment?.trim() || null }).where(eq(candidateFiles.id, input.fileId));
+      return { success: true, verifiedBy: admin.email };
+    }),
+
+  /** Rejeter un document du flux candidat authentifié et conserver le motif. */
+  rejectCandidateFile: publicProcedure
+    .input(z.object({ sessionToken: z.string(), fileId: z.number().int().positive(), comment: z.string().min(3).max(2000), notifyCandidate: z.boolean().default(true) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [file] = await db.select({ id: candidateFiles.id, fileName: candidateFiles.fileName, candidateEmail: candidates.email }).from(candidateFiles).leftJoin(candidates, eq(candidateFiles.candidateId, candidates.id)).where(eq(candidateFiles.id, input.fileId)).limit(1);
+      if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "Document candidat introuvable" });
+      await db.update(candidateFiles).set({ status: "rejected", rejectionReason: input.comment.trim() }).where(eq(candidateFiles.id, input.fileId));
+      let notificationSent = false;
+      if (input.notifyCandidate && file.candidateEmail) {
+        try {
+          await sendGenericEmail({
+            to: file.candidateEmail,
+            subject: "Action requise : document à remplacer — 3M Travel & Services",
+            html: "<div><h1>3M Travel & Services</h1><p>Bonjour,</p><p>Votre document <strong>" + file.fileName + "</strong> doit être remplacé.</p><p><strong>Motif :</strong> " + input.comment.trim() + "</p><p>Connectez-vous à votre espace candidat pour déposer une nouvelle version.</p></div>",
+          });
+          notificationSent = true;
+        } catch (error) {
+          console.error("[Admin Reject Candidate File] Notification failed:", error);
+        }
+      }
+      return { success: true, rejectedBy: admin.email, notificationSent };
+    }),
+
   /**
-   * Lister les documents avec filtrage et recherche
+   * Lister les documents issus des deux flux persistés : client_documents et candidate_files.
    */
   listDocuments: publicProcedure
     .input(z.object({
@@ -1701,83 +1740,58 @@ export const adminRouter = router({
       offset: z.number().int().min(0).default(0),
     }))
     .query(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-
+      await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
       try {
-        // Construire les conditions de filtrage
-        const conditions: any[] = [];
+        const [clientRows, candidateRows] = await Promise.all([
+          db.select().from(clientDocuments).orderBy(desc(clientDocuments.receiptGeneratedAt)).limit(1000),
+          db.select({
+            id: candidateFiles.id,
+            candidateId: candidateFiles.candidateId,
+            candidateName: candidates.fullName,
+            candidateEmail: candidates.email,
+            fileType: candidateFiles.fileType,
+            fileName: candidateFiles.fileName,
+            fileUrl: candidateFiles.fileUrl,
+            status: candidateFiles.status,
+            rejectionReason: candidateFiles.rejectionReason,
+            uploadedAt: candidateFiles.uploadedAt,
+          }).from(candidateFiles).leftJoin(candidates, eq(candidateFiles.candidateId, candidates.id)).orderBy(desc(candidateFiles.uploadedAt)).limit(1000),
+        ]);
+        const candidateIds = Array.from(new Set(candidateRows.map((row) => row.candidateId).filter((id): id is number => typeof id === "number")));
+        const applicationRows = candidateIds.length
+          ? await db.select({ candidateId: applications.candidateId, dossierNumber: applications.dossierNumber, createdAt: applications.createdAt }).from(applications).where(inArray(applications.candidateId, candidateIds)).orderBy(desc(applications.createdAt)).limit(2000)
+          : [];
+        const dossierByCandidate = new Map<number, string>();
+        for (const row of applicationRows) if (row.candidateId && !dossierByCandidate.has(row.candidateId)) dossierByCandidate.set(row.candidateId, row.dossierNumber);
 
-        if (input.verificationStatus) {
-          conditions.push(eq(clientDocuments.verificationStatus, input.verificationStatus as any));
-        }
-
-        if (input.search) {
-          const searchTerm = `%${input.search}%`;
-          conditions.push(
-            or(
-              like(clientDocuments.documentName, searchTerm),
-              like(clientDocuments.candidateEmail, searchTerm),
-              like(clientDocuments.suggestedFolder, searchTerm),
-              like(clientDocuments.aiClassification as any, searchTerm)
-            )
-          );
-        }
-
-        if (input.aiClassification) {
-          conditions.push(like(clientDocuments.aiClassification as any, `%${input.aiClassification}%`));
-        }
-
-        // Construire la requête avec les conditions et un tri explicite.
-        let query: any = db.select().from(clientDocuments);
-        
-        if (conditions.length > 0) {
-          query = query.where(and(...(conditions as any)));
-        }
-
-        const sortColumn = input.sortBy === "documentName"
-          ? clientDocuments.documentName
-          : input.sortBy === "verificationStatus"
-            ? clientDocuments.verificationStatus
-            : input.sortBy === "aiClassification"
-              ? clientDocuments.aiClassification
-              : clientDocuments.uploadedAt;
-        const orderExpression = input.sortDirection === "asc" ? asc(sortColumn) : desc(sortColumn);
-        const documents = await query
-          .orderBy(orderExpression)
-          .limit(input.limit)
-          .offset(input.offset);
-
-        return documents.map((doc: any) => ({
-          id: doc.id,
-          dossierNumber: "N/A",
-          candidateName: "N/A",
-          documentType: doc.documentType,
-          documentName: doc.documentName,
-          documentUrl: doc.documentUrl,
-          status: doc.status,
-          verificationStatus: doc.verificationStatus,
-          submittedAt: doc.receiptGeneratedAt,
-          verifiedAt: doc.verifiedAt,
-          verificationComment: doc.verificationComment,
-          receiptNumber: doc.receiptNumber,
-          aiClassification: doc.aiClassification ?? null,
-          aiClassificationConfidence: doc.aiClassificationConfidence ?? null,
-          aiClassifiedAt: doc.aiClassifiedAt ?? null,
-          suggestedFolder: doc.suggestedFolder ?? null,
-          extractedData: doc.extractedData ?? null,
-          readabilityScore: doc.readabilityScore ?? null,
-          readabilityIssues: doc.readabilityIssues ?? null,
-        }));
+        const documents = [
+          ...clientRows.map((doc: any) => ({
+            id: doc.id, source: "client" as const, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+          })),
+          ...candidateRows.map((doc) => ({
+            id: doc.id, source: "candidate" as const, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verificationComment: doc.rejectionReason, receiptNumber: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
+          })),
+        ];
+        const normalizedSearch = input.search?.trim().toLowerCase();
+        let filtered = documents.filter((doc) => {
+          if (input.verificationStatus && doc.verificationStatus !== input.verificationStatus) return false;
+          if (input.aiClassification && !String(doc.aiClassification ?? "").toLowerCase().includes(input.aiClassification.toLowerCase())) return false;
+          if (!normalizedSearch) return true;
+          return [doc.dossierNumber, doc.candidateName, doc.documentType, doc.documentName, doc.verificationStatus].some((value) => String(value ?? "").toLowerCase().includes(normalizedSearch));
+        });
+        filtered.sort((a, b) => {
+          const left = input.sortBy === "documentName" ? a.documentName : input.sortBy === "verificationStatus" ? a.verificationStatus : input.sortBy === "aiClassification" ? String(a.aiClassification ?? "") : new Date(a.submittedAt || 0).getTime();
+          const right = input.sortBy === "documentName" ? b.documentName : input.sortBy === "verificationStatus" ? b.verificationStatus : input.sortBy === "aiClassification" ? String(b.aiClassification ?? "") : new Date(b.submittedAt || 0).getTime();
+          const comparison = typeof left === "number" && typeof right === "number" ? left - right : String(left).localeCompare(String(right), "fr");
+          return input.sortDirection === "asc" ? comparison : -comparison;
+        });
+        return filtered.slice(input.offset, input.offset + input.limit);
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         console.error("[Admin List Documents] Error:", err);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de la récupération des documents",
-        });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la récupération des documents" });
       }
     }),
 

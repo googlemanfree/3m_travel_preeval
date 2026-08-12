@@ -76,6 +76,7 @@ interface Candidate {
   createdAt: string;
   adminNotes?: string;
   documentsCount?: number;
+  source?: "web" | "agence";
 }
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
@@ -167,8 +168,28 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 }) => {
   const [adminNotes, setAdminNotes] = useState(candidate?.adminNotes || "");
   const [status, setStatus] = useState(candidate?.status || "nouveau");
+  const utils = trpc.useUtils();
+  const updateCandidateMutation = trpc.adminCandidateManagement.updateCandidate.useMutation({
+    onSuccess: () => {
+      utils.adminCandidateManagement.list.invalidate();
+      toast.success("Modifications enregistrées dans le dossier.");
+      onClose();
+    },
+    onError: (error) => toast.error(error.message || "Impossible d’enregistrer les modifications."),
+  });
 
   if (!candidate) return null;
+
+  const handleSave = () => {
+    const persistedStatus = candidate.source === "agence"
+      ? status === "en_evaluation" || status === "en_attente" ? "en_cours" : status === "documents_requis" ? "documents_requis" : status
+      : status === "documents_requis" ? "en_attente_documents" : status === "en_attente" ? "en_attente_paiement" : status;
+    updateCandidateMutation.mutate({
+      candidateId: String(candidate.id),
+      status: persistedStatus,
+      adminNotes,
+    });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -330,8 +351,8 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
                 <Button variant="outline" onClick={onClose}>
                   Fermer
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Sauvegarder les modifications
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave} disabled={updateCandidateMutation.isPending}>
+                  {updateCandidateMutation.isPending ? "Enregistrement..." : "Sauvegarder les modifications"}
                 </Button>
               </div>
             </TabsContent>

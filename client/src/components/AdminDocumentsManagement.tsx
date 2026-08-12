@@ -11,6 +11,7 @@ import { trpc } from "@/lib/trpc";
 
 interface Document {
   id: number;
+  source: "client" | "candidate";
   dossierNumber: string;
   candidateName: string;
   documentType: string;
@@ -36,6 +37,7 @@ export function AdminDocumentsManagement() {
   const [sortBy, setSortBy] = useState<"uploadedAt" | "documentName" | "verificationStatus" | "aiClassification">("uploadedAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [rejectingDocId, setRejectingDocId] = useState<number | null>(null);
+  const [rejectingDocSource, setRejectingDocSource] = useState<"client" | "candidate">("client");
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +46,8 @@ export function AdminDocumentsManagement() {
 
   const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
   const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
+  const approveCandidateFileMutation = trpc.admin.approveCandidateFile.useMutation();
+  const rejectCandidateFileMutation = trpc.admin.rejectCandidateFile.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
 
   // Récupérer les documents via tRPC
@@ -61,10 +65,14 @@ export function AdminDocumentsManagement() {
     { enabled: !!sessionToken }
   );
 
-  const handleApproveDocument = async (docId: number) => {
+  const handleApproveDocument = async (doc: Document) => {
     setIsLoading(true);
     try {
-      await approveDocumentMutation.mutateAsync({ sessionToken, documentId: docId });
+      if (doc.source === "candidate") {
+        await approveCandidateFileMutation.mutateAsync({ sessionToken, fileId: doc.id });
+      } else {
+        await approveDocumentMutation.mutateAsync({ sessionToken, documentId: doc.id });
+      }
       toast.success("✓ Document approuvé", {
         description: "La décision est enregistrée dans le dossier candidat.",
         duration: 4000,
@@ -83,8 +91,9 @@ export function AdminDocumentsManagement() {
     }
   };
 
-  const handleRejectDocument = (docId: number) => {
-    setRejectingDocId(docId);
+  const handleRejectDocument = (doc: Document) => {
+    setRejectingDocId(doc.id);
+    setRejectingDocSource(doc.source);
     setRejectionReason("");
   };
 
@@ -99,13 +108,9 @@ export function AdminDocumentsManagement() {
 
     setIsLoading(true);
     try {
-      const result = await rejectDocumentMutation.mutateAsync({
-        sessionToken,
-        documentId: rejectingDocId,
-        comment: rejectionReason,
-        markerAnnotations,
-        notifyCandidate: true,
-      });
+      const result = rejectingDocSource === "candidate"
+        ? await rejectCandidateFileMutation.mutateAsync({ sessionToken, fileId: rejectingDocId, comment: rejectionReason, notifyCandidate: true })
+        : await rejectDocumentMutation.mutateAsync({ sessionToken, documentId: rejectingDocId, comment: rejectionReason, markerAnnotations, notifyCandidate: true });
       toast.success("✓ Document rejeté", {
         description: result.notificationSent
           ? "Le candidat a reçu les annotations et la raison du rejet par e-mail."
@@ -131,6 +136,7 @@ export function AdminDocumentsManagement() {
   // Utiliser les documents récupérés via tRPC
   const documents: Document[] = documentsData?.map((doc: any) => ({
     id: doc.id,
+    source: doc.source === "candidate" ? "candidate" : "client",
     dossierNumber: doc.dossierNumber || "N/A",
     candidateName: doc.candidateName || "N/A",
     documentType: doc.documentType || "unknown",
@@ -524,7 +530,7 @@ export function AdminDocumentsManagement() {
                             {doc.verificationStatus === "pending" && (
                               <>
                                 <Button
-                                  onClick={() => handleApproveDocument(doc.id)}
+                                  onClick={() => handleApproveDocument(doc)}
                                   variant="ghost"
                                   size="sm"
                                   title="Approuver"
@@ -534,7 +540,7 @@ export function AdminDocumentsManagement() {
                                   <CheckCircle2 className="w-4 h-4" />
                                 </Button>
                                 <Button
-                                  onClick={() => handleRejectDocument(doc.id)}
+                                  onClick={() => handleRejectDocument(doc)}
                                   variant="ghost"
                                   size="sm"
                                   title="Rejeter"
@@ -672,7 +678,7 @@ export function AdminDocumentsManagement() {
                 <>
                   <Button
                     onClick={() => {
-                      if (previewingDoc) handleApproveDocument(previewingDoc.id);
+                      if (previewingDoc) handleApproveDocument(previewingDoc);
                       setPreviewingDoc(null);
                     }}
                     disabled={isLoading}
@@ -682,7 +688,7 @@ export function AdminDocumentsManagement() {
                   </Button>
                   <Button
                     onClick={() => {
-                      if (previewingDoc) handleRejectDocument(previewingDoc.id);
+                      if (previewingDoc) handleRejectDocument(previewingDoc);
                       setPreviewingDoc(null);
                     }}
                     disabled={isLoading}

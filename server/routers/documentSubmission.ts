@@ -1,11 +1,12 @@
 import { router, publicProcedure, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
 import { classifyDocument, classifyMultipleDocuments } from "../documentClassificationService";
+import { candidateProcedure } from "./candidate";
 
 export const documentSubmissionRouter = router({
   analyzeDocumentReadability: publicProcedure
@@ -71,7 +72,7 @@ export const documentSubmissionRouter = router({
         });
       }
     }),
-  submitDocuments: publicProcedure
+  submitDocuments: candidateProcedure
     .input(z.object({
       dossierNumber: z.string(),
       submissionMethod: z.enum(["en_ligne", "agence_physique"]),
@@ -82,14 +83,18 @@ export const documentSubmissionRouter = router({
       })).optional(),
       notes: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
+      const ownership = or(
+        eq(applications.candidateId, ctx.candidate.id),
+        eq(applications.email, ctx.candidate.email),
+      );
       const [app] = await db
         .select()
         .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .where(and(eq(applications.dossierNumber, input.dossierNumber), ownership))
         .limit(1);
 
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
@@ -118,16 +123,19 @@ export const documentSubmissionRouter = router({
       };
     }),
 
-  getDocumentSubmissionStatus: publicProcedure
+  getDocumentSubmissionStatus: candidateProcedure
     .input(z.object({ dossierNumber: z.string() }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
       const [app] = await db
         .select()
         .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .where(and(
+          eq(applications.dossierNumber, input.dossierNumber),
+          or(eq(applications.candidateId, ctx.candidate.id), eq(applications.email, ctx.candidate.email)),
+        ))
         .limit(1);
 
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });

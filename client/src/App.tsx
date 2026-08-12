@@ -230,7 +230,11 @@ function Router() {
       <Route path={"/procedures-advanced"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/evaluation-rapide"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/evaluation" />}</Route>
-      <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
+      <Route path={"/admin/dossiers"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDashboard />
+        </AdminGuard>
+      </Route>
       <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
       <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
@@ -350,7 +354,7 @@ function Router() {
       </Route>
       <Route path={"/admin/payment-validation"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminPaymentValidation />
+          <AdminDashboard />
         </AdminGuard>
       </Route>
       <Route path={"/admin/customer-reviews"}>

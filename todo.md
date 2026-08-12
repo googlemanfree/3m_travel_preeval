@@ -1687,3 +1687,12 @@
 - [x] Corriger leurs destinations vers les pages de contenu officielles
 - [x] Tester les clics desktop/mobile et les pages cibles
 - [x] Valider TypeScript, tests et build puis publier
+
+## Audit complet dossiers candidats et administration (v68)
+- [x] Cartographier les pages, routes, rôles et étapes du dossier candidat
+- [x] Vérifier le dépôt réel, la persistance et l’accès aux documents côté candidat et administrateur
+- [x] Vérifier la visualisation, le téléchargement, les annotations et les statuts documentaires côté admin
+- [x] Vérifier la gestion administrative des étapes, paiements, statuts et synchronisation avec l’espace candidat
+- [x] Vérifier que les administrateurs peuvent modifier les données et l’avancement autorisés du candidat
+- [x] Rechercher et corriger les pages blanches, erreurs console, routes mortes et boutons inactifs
+- [x] Tester desktop/mobile, TypeScript, tests et build puis publier le correctif

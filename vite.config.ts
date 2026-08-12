@@ -169,6 +169,7 @@ export default defineConfig({
     emptyOutDir: true,
     minify: "esbuild",
     rollupOptions: {
+      maxParallelFileOps: 1,
       output: {
         manualChunks: {
           recharts: ["recharts"],
