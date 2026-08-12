@@ -44,6 +44,18 @@ export default function CountryComparisonPage() {
     }
   };
 
+  // Calcul simulé mais cohérent de compatibilité basé sur l'ID du pays et le niveau de difficulté
+  const getCompatibility = (countryId: string, diff: string) => {
+    let base = 75;
+    if (diff === 'facile') base = 90;
+    else if (diff === 'moyen') base = 82;
+    else if (diff === 'difficile') base = 68;
+    // Variation stable par pays
+    const hash = countryId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const score = Math.min(98, Math.max(60, (base + (hash % 15) - 7)));
+    return score;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -120,6 +132,24 @@ export default function CountryComparisonPage() {
                       <Badge className={`text-[10px] font-bold ${getDifficultyColor(country.difficulty)}`}>
                         {country.difficulty}
                       </Badge>
+                    </div>
+
+                    {/* Indicateur de compatibilité profil */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3.5 rounded-2xl">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-bold text-blue-900 flex items-center gap-1">
+                          <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Compatibilité Profil
+                        </span>
+                        <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                          {getCompatibility(country.id, country.difficulty)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500"
+                          style={{ width: `${getCompatibility(country.id, country.difficulty)}%` }}
+                        />
+                      </div>
                     </div>
 
                     {/* Critères comparatifs */}

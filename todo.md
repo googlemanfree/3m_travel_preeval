@@ -1507,3 +1507,8 @@
 ## Bouton Lancer la procédure dans le comparateur (v41)
 - [x] Vérifier CountryComparisonPage.tsx et s'assurer que chaque carte dispose d'un bouton bien visible "🚀 Lancer la procédure" pointant vers `/evaluation-primaire?destination={country.id}`
 - [x] Valider le build de production et publier la version optimisée du comparateur
+
+## Indicateur de compatibilité du profil dans le comparateur (v42)
+- [x] Mettre à jour CountryComparisonPage.tsx pour calculer ou afficher un score de compatibilité estimé (ou basé sur le dernier score d'évaluation stocké) pour chaque pays
+- [x] Intégrer un badge de compatibilité visuel et progressif sous chaque pays dans le tableau comparatif
+- [x] Valider le build de production et publier la version avec indicateur de compatibilité
