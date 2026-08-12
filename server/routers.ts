@@ -54,6 +54,7 @@ import { cvAnalysisRouter } from "./routers/cvAnalysis";
 import { aiCopilotRouter } from "./routers/aiCopilot";
 import { evaluationEngineRouter } from "./routers/evaluationEngine";
 import { visaStatusTrackerRouter } from "./routers/visaStatusTracker";
+import { flightPlannerAIRouter } from "./routers/flightPlannerAI";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -139,6 +140,7 @@ export const appRouter = router({
   procedures: proceduresRouter,
   evaluationEngine: router(evaluationEngineRouter),
   visaStatusTracker: visaStatusTrackerRouter,
+  flightPlannerAI: flightPlannerAIRouter,
 });
 
 export type AppRouter = typeof appRouter;

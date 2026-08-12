@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
 
 interface DossierStatus {
   id: string;
@@ -461,12 +462,59 @@ export default function ClientDashboard() {
           {/* Itinéraires favoris */}
           <TabsContent value="favorites" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-rose-500" />
-                  Mes itinéraires favoris
-                </CardTitle>
-                <CardDescription>Retrouvez les vols sauvegardés depuis la recherche et reprenez contact avec l’agence.</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-rose-500" />
+                    Mes itinéraires favoris
+                  </CardTitle>
+                  <CardDescription>Retrouvez les vols sauvegardés depuis la recherche et reprenez contact avec l’agence.</CardDescription>
+                </div>
+                {favoriteFlights?.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl gap-2 text-xs font-bold"
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      doc.setFont("helvetica", "bold");
+                      doc.setFontSize(18);
+                      doc.setTextColor(30, 58, 138);
+                      doc.text("3M Travel & Services - Mes Itinéraires Favoris", 14, 20);
+                      
+                      doc.setFontSize(10);
+                      doc.setTextColor(100, 100, 100);
+                      doc.text(`Généré le ${new Date().toLocaleDateString("fr-FR")} | Total : ${favoriteFlights.length} vol(s) sauvegardé(s)`, 14, 28);
+                      
+                      let y = 38;
+                      favoriteFlights.forEach((item: any, idx: number) => {
+                        const flight = item.flight || {};
+                        if (y > 270) {
+                          doc.addPage();
+                          y = 20;
+                        }
+                        doc.setFont("helvetica", "bold");
+                        doc.setFontSize(12);
+                        doc.setTextColor(30, 41, 59);
+                        doc.text(`${idx + 1}. ${flight.originCity || flight.origin || "Départ"} → ${flight.destinationCity || flight.destination || "Arrivée"}`, 14, y);
+                        
+                        doc.setFont("helvetica", "normal");
+                        doc.setFontSize(10);
+                        doc.setTextColor(71, 85, 105);
+                        doc.text(`Compagnie : ${flight.airline?.name || "Compagnie aérienne"} | Vol : ${flight.flightNumber || "N/A"}`, 14, y + 6);
+                        doc.text(`Date : ${flight.departureDate || "N/A"} (${flight.departureTime || ""} - ${flight.arrivalTime || ""}) | Durée : ${flight.duration || "N/A"}`, 14, y + 12);
+                        doc.text(`Prix : ${flight.totalPrice || "Sur devis"} | Ref PNR : ${flight.pnrRef || "N/A"}`, 14, y + 18);
+                        
+                        y += 26;
+                      });
+                      
+                      doc.save("mes_itineraires_favoris_3mtravel.pdf");
+                      toast.success("Rapport PDF des favoris téléchargé avec succès !");
+                    }}
+                  >
+                    <Download className="w-4 h-4" /> Exporter en PDF
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {favoritesLoading ? (
