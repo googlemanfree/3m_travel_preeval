@@ -1671,6 +1671,8 @@ export const adminRouter = router({
           aiClassifiedAt: doc.aiClassifiedAt ?? null,
           suggestedFolder: doc.suggestedFolder ?? null,
           extractedData: doc.extractedData ?? null,
+          readabilityScore: doc.readabilityScore ?? null,
+          readabilityIssues: doc.readabilityIssues ?? null,
         }));
       } catch (err) {
         if (err instanceof TRPCError) throw err;

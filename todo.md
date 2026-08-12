@@ -1560,3 +1560,9 @@
 - [x] Mettre à jour DocumentUploadPage.tsx pour afficher l'image du document avec des cadres colorés interactifs sur les zones problématiques
 - [x] Ajouter une légende détaillée expliquant chaque marqueur visuel pour guider le candidat
 - [x] Valider le build de production et publier la version avec marqueurs visuels sur les scans
+
+## Transmission du rapport annoté au dashboard admin (v51)
+- [x] Étendre la table clientDocuments ou stocker les métadonnées d'analyse de passeport (zones annotées et score)
+- [x] Mettre à jour la procédure de soumission de document pour enregistrer le résultat de l'analyse automatique
+- [x] Intégrer l'affichage du rapport annoté et des marqueurs visuels dans l'interface de vérification des documents de l'administrateur
+- [x] Valider le build de production et publier la version avec synchronisation admin du rapport de passeport

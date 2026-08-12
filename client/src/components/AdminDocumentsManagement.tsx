@@ -24,6 +24,8 @@ interface Document {
   aiClassification: unknown;
   aiClassificationConfidence?: number | null;
   suggestedFolder?: string | null;
+  readabilityScore?: number | null;
+  readabilityIssues?: any | null;
 }
 
 export function AdminDocumentsManagement() {
@@ -519,6 +521,40 @@ export function AdminDocumentsManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-auto">
+              {previewingDoc?.readabilityScore !== null && previewingDoc?.readabilityScore !== undefined && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-blue-950 text-sm">Rapport d'analyse automatique de lisibilité</span>
+                    <span className="px-2.5 py-1 bg-emerald-600 text-white rounded-full text-xs font-black">
+                      Score : {previewingDoc.readabilityScore}%
+                    </span>
+                  </div>
+                  {previewingDoc.readabilityIssues && (
+                    <div className="relative w-full h-44 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
+                      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:14px_14px]"></div>
+                      <div className="absolute text-center text-gray-400 text-xs px-4">
+                        📄 Analyse radiographique des zones (Transmission sécurisée)
+                      </div>
+                      {(typeof previewingDoc.readabilityIssues === 'string' ? JSON.parse(previewingDoc.readabilityIssues) : previewingDoc.readabilityIssues).annotatedZones?.map((zone: any) => {
+                        const borderColor = zone.severity === 'success' ? 'border-emerald-400 bg-emerald-500/10 text-emerald-200' : zone.severity === 'warning' ? 'border-amber-400 bg-amber-500/10 text-amber-200' : 'border-rose-400 bg-rose-500/10 text-rose-200';
+                        return (
+                          <div
+                            key={zone.id}
+                            style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
+                            className={`absolute border-2 rounded-md p-1 flex flex-col justify-between backdrop-blur-[1px] ${borderColor}`}
+                            title={zone.description}
+                          >
+                            <span className="text-[9px] font-bold px-1 bg-black/70 rounded text-white truncate inline-block">
+                              {zone.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {previewingDoc?.documentUrl && (
                 <>
                   {previewingDoc.documentUrl.toLowerCase().endsWith(".pdf") ? (

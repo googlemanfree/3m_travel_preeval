@@ -52,6 +52,8 @@ export const clientDocumentsRouter = router({
       documentName: z.string(),
       documentUrl: z.string().url(),
       fileSize: z.number().int().optional(),
+      readabilityScore: z.number().int().optional(),
+      readabilityIssues: z.any().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = await getDb();
@@ -78,6 +80,8 @@ export const clientDocumentsRouter = router({
           documentName: input.documentName,
           documentUrl: input.documentUrl,
           fileSize: input.fileSize,
+          readabilityScore: input.readabilityScore,
+          readabilityIssues: input.readabilityIssues ? JSON.stringify(input.readabilityIssues) : null,
           status: "pending",
           receiptNumber,
           receiptGeneratedAt: new Date(),
