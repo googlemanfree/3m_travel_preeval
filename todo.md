@@ -1726,11 +1726,11 @@
 - [x] Vérifier autorisations, responsive, TypeScript, tests, build et publier
 
 ## Suivi renforcé de vérification humaine des passeports (v73)
-- [ ] Auditer les tables, routes et composants actuels de vérification documentaire
-- [ ] Ajouter un journal d’audit des validations et rejets manuels de documents
-- [ ] Afficher un indicateur visuel de vérification humaine dans l’administration
-- [ ] Configurer une alerte hebdomadaire sécurisée des documents en attente
-- [ ] Tester permissions, responsive, migrations, TypeScript, tests, build et publier
+- [x] Auditer les tables, routes et composants actuels de vérification documentaire
+- [x] Ajouter un journal d’audit des validations et rejets manuels de documents
+- [x] Afficher un indicateur visuel de vérification humaine dans l’administration
+- [x] Configurer une alerte hebdomadaire sécurisée des documents en attente
+- [x] Tester permissions, responsive, migrations, TypeScript, tests, build et publier
 
 ## Navigation robuste depuis Navbar.tsx (v74)
 - [x] Comparer l’archive navigation-robuste.zip avec le Navbar actuel et cartographier les routes

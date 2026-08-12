@@ -1254,6 +1254,26 @@ export type AdminActivityLog = typeof adminActivityLogs.$inferSelect;
 export type InsertAdminActivityLog = typeof adminActivityLogs.$inferInsert;
 
 /**
+ * Audit immuable des décisions humaines prises sur les passeports.
+ * La prévalidation automatique est désactivée : chaque décision doit être
+ * rattachée à un administrateur identifié et à un document précis.
+ */
+export const passportVerificationAudits = mysqlTable("passport_verification_audits", {
+  id: int("id").autoincrement().primaryKey(),
+  documentId: int("documentId").notNull(),
+  applicationId: int("applicationId"),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  decision: mysqlEnum("decision", ["approved", "rejected"]).notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_passport_audit_document_created").on(table.documentId, table.createdAt),
+  index("idx_passport_audit_admin_created").on(table.adminEmail, table.createdAt),
+]);
+export type PassportVerificationAudit = typeof passportVerificationAudits.$inferSelect;
+export type InsertPassportVerificationAudit = typeof passportVerificationAudits.$inferInsert;
+
+/**
  * Enregistrement des questions posées à l'assistant Aureol et des réponses fournies.
  * Permet d'analyser les questions fréquentes pour enrichir la base de connaissance.
  */

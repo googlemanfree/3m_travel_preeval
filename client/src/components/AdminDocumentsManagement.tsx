@@ -21,6 +21,8 @@ interface Document {
   verificationStatus: "pending" | "approved" | "rejected";
   submittedAt: Date;
   verifiedAt?: Date;
+  verifiedByAdmin?: string | null;
+  humanVerified?: boolean;
   rejectionReason?: string;
   aiClassification: unknown;
   aiClassificationConfidence?: number | null;
@@ -507,12 +509,23 @@ export function AdminDocumentsManagement() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-center">
-                          <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(doc.verificationStatus)}`}>
-                            {getStatusIcon(doc.verificationStatus)}
-                            {doc.verificationStatus === "approved" && "Approuvé"}
-                            {doc.verificationStatus === "pending" && "En attente"}
-                            {doc.verificationStatus === "rejected" && "Rejeté"}
-                          </Badge>
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge className={`flex items-center gap-1 w-fit mx-auto ${getStatusColor(doc.verificationStatus)}`}>
+                              {getStatusIcon(doc.verificationStatus)}
+                              {doc.verificationStatus === "approved" && "Approuvé"}
+                              {doc.verificationStatus === "pending" && "En attente"}
+                              {doc.verificationStatus === "rejected" && "Rejeté"}
+                            </Badge>
+                            {doc.humanVerified ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700" title={`Vérifié par ${doc.verifiedByAdmin || "un administrateur"}`}>
+                                <CheckCircle2 className="w-3 h-3" /> Vérification humaine
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700" title="Ce document doit être vérifié manuellement par un administrateur">
+                                <Clock className="w-3 h-3" /> Contrôle humain requis
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-gray-600">
                           {new Date(doc.submittedAt).toLocaleDateString("fr-FR")}
@@ -572,7 +585,13 @@ export function AdminDocumentsManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-auto">
-              {previewingDoc?.readabilityScore !== null && previewingDoc?.readabilityScore !== undefined && (
+                {previewingDoc && (
+                  <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${previewingDoc.humanVerified ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                    {previewingDoc.humanVerified ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                    <span>{previewingDoc.humanVerified ? `Vérification humaine effectuée${previewingDoc.verifiedByAdmin ? ` par ${previewingDoc.verifiedByAdmin}` : ""}.` : "Vérification humaine obligatoire avant toute approbation."}</span>
+                  </div>
+                )}
+                {previewingDoc?.readabilityScore !== null && previewingDoc?.readabilityScore !== undefined && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-blue-950 text-sm">Rapport d'analyse automatique de lisibilité</span>

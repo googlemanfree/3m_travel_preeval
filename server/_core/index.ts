@@ -11,6 +11,7 @@ import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
+import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
@@ -60,6 +61,10 @@ async function startServer() {
   app.post("/api/scheduled/compliance-monthly-report", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleComplianceMonthlyReportJob(req, res);
+  });
+  app.post("/api/scheduled/passport-pending-weekly-alert", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handlePassportPendingWeeklyAlertJob(req, res);
   });
   // Initialize Cron Jobs
   try {

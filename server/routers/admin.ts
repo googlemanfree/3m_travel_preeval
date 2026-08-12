@@ -9,7 +9,7 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
@@ -401,17 +401,32 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        const verifiedAt = new Date();
         await db
           .update(clientDocuments)
           .set({
             verificationStatus: "approved",
             verificationComment: input.comment || null,
             verifiedByAdmin: admin.email,
-            verifiedAt: new Date(),
+            verifiedAt,
           })
           .where(eq(clientDocuments.id, input.documentId));
 
-        return { success: true, message: "Document approuvé" };
+        const [document] = await db
+          .select({ evaluationId: clientDocuments.evaluationId })
+          .from(clientDocuments)
+          .where(eq(clientDocuments.id, input.documentId))
+          .limit(1);
+        await db.insert(passportVerificationAudits).values({
+          documentId: input.documentId,
+          applicationId: document?.evaluationId ?? null,
+          adminEmail: admin.email,
+          decision: "approved",
+          comment: input.comment || null,
+          createdAt: verifiedAt,
+        });
+
+        return { success: true, message: "Document approuvé", humanVerified: true, verifiedBy: admin.email, verifiedAt };
       } catch (err) {
         console.error("[Admin Approve Document] Error:", err);
         throw new TRPCError({
@@ -459,6 +474,7 @@ export const adminRouter = router({
           returnedByAdmin: admin.email,
         };
 
+        const verifiedAt = new Date();
         await db
           .update(clientDocuments)
           .set({
@@ -466,10 +482,19 @@ export const adminRouter = router({
             status: "rejected",
             verificationComment: input.comment,
             verifiedByAdmin: admin.email,
-            verifiedAt: new Date(),
+            verifiedAt,
             readabilityIssues,
           })
           .where(eq(clientDocuments.id, input.documentId));
+
+        await db.insert(passportVerificationAudits).values({
+          documentId: input.documentId,
+          applicationId: document.evaluationId,
+          adminEmail: admin.email,
+          decision: "rejected",
+          comment: input.comment,
+          createdAt: verifiedAt,
+        });
 
         let notificationSent = false;
         if (input.notifyCandidate) {
@@ -496,7 +521,7 @@ export const adminRouter = router({
           }
         }
 
-        return { success: true, message: "Document rejeté", notificationSent };
+        return { success: true, message: "Document rejeté", notificationSent, humanVerified: true, verifiedBy: admin.email, verifiedAt };
       } catch (err) {
         console.error("[Admin Reject Document] Error:", err);
         throw new TRPCError({
@@ -1769,10 +1794,10 @@ export const adminRouter = router({
 
         const documents = [
           ...clientRows.map((doc: any) => ({
-            id: doc.id, source: "client" as const, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+            id: doc.id, source: "client" as const, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
           })),
           ...candidateRows.map((doc) => ({
-            id: doc.id, source: "candidate" as const, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verificationComment: doc.rejectionReason, receiptNumber: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
+            id: doc.id, source: "candidate" as const, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: null, readabilityScore: null, readabilityIssues: null,
           })),
         ];
         const normalizedSearch = input.search?.trim().toLowerCase();
