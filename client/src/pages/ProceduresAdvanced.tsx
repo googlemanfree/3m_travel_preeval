@@ -445,12 +445,12 @@ export default function ProceduresAdvanced() {
                     {/* Card Header */}
                     <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3 flex-1" onClick={() => setExpandedCountry(isExpanded ? null : country.id)}>
+                        <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => window.location.href = `/procedures/${country.id}`}>
                           <span className="text-4xl">{country.flag}</span>
                           <div>
-                            <h3 className="text-xl font-bold">{country.name}</h3>
+                            <h3 className="text-xl font-bold hover:underline flex items-center gap-1.5">{country.name} ↗</h3>
                             <p className="text-blue-100 text-sm flex items-center gap-1">
-                              <MapPin className="w-3 h-3" /> {country.region}
+                              <MapPin className="w-3 h-3" /> {country.region} • Voir la page complète
                             </p>
                           </div>
                         </div>

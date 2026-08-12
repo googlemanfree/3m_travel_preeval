@@ -1481,3 +1481,9 @@
 - [x] Auditer ProceduresAdvanced.tsx et l'intégration des 107 destinations
 - [x] Refondre l'interface visuelle avec des cartes glassmorphism modernes, des badges de délai/coût et un accès direct "Lancer ma procédure"
 - [x] Valider le build de production et publier la version améliorée de la page procédures
+
+## Pages de Destination Individuelles pour les 107 Pays (v37)
+- [x] Créer un composant dynamique de page pays (`CountryDetailPage.tsx`) affichant la culture, le travail, les emblèmes, les photos emblématiques, les informations administratives et la procédure complète
+- [x] Configurer la route dynamique `/procedures/:countryId` dans `App.tsx`
+- [x] Mettre à jour les liens des cartes de pays dans `ProceduresAdvanced.tsx` pour pointer vers `/procedures/:countryId`
+- [x] Valider le build de production et publier le répertoire complet des 107 destinations
