@@ -72,6 +72,7 @@ import ProceduresComplete from "./pages/ProceduresComplete";
 import ProceduresEnhanced from "./pages/ProceduresEnhanced";
 import ProceduresAdvanced from "./pages/ProceduresAdvanced";
 import CountryDetailPage from "./pages/CountryDetailPage";
+import CountryComparisonPage from "./pages/CountryComparisonPage";
 import AIEvaluation from "./pages/AIEvaluation";
 import EvaluationRapideEnhanced from "./pages/EvaluationRapideEnhanced";
 import ClientSpace from "./pages/ClientSpace";
@@ -211,6 +212,7 @@ function Router() {
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/visa-etudes"} component={VisaEtudes} />
       <Route path="/procedures" component={ProceduresAdvanced} />
+      <Route path="/procedures/comparaison" component={CountryComparisonPage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />

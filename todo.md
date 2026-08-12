@@ -1498,3 +1498,8 @@
 - [x] Intégrer un bouton "Ajouter aux favoris / Retirer des favoris" avec icône cœur sur chaque page pays (`CountryDetailPage.tsx`)
 - [x] Afficher la liste des destinations favorites dans le tableau de bord candidat
 - [x] Valider le build de production et publier la version avec gestion des destinations favorites
+
+## Comparaison côte à côte des destinations favorites (v40)
+- [x] Créer la page de comparaison `CountryComparisonPage.tsx` pour lister et comparer les pays favoris enregistrés dans localStorage
+- [x] Ajouter la route `/procedures/comparaison` dans `App.tsx` et un lien d'accès rapide depuis la page Procédures et le tableau de bord
+- [x] Valider le build de production et publier la version avec comparateur de favoris

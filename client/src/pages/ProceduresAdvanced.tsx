@@ -150,15 +150,22 @@ export default function ProceduresAdvanced() {
               />
             </div>
 
-            {/* Type de Visa Tabs */}
-            <Tabs value={visaType} onValueChange={(v) => setVisaType(v as any)} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 bg-slate-100">
-                <TabsTrigger value="tous">Tous (107)</TabsTrigger>
-                <TabsTrigger value="travail">Travail (34)</TabsTrigger>
-                <TabsTrigger value="etudes">Études (22)</TabsTrigger>
-                <TabsTrigger value="visiteur">Visiteur (27)</TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* Type de Visa Tabs & Comparateur */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <Tabs value={visaType} onValueChange={(v) => setVisaType(v as any)} className="w-full sm:w-auto flex-1">
+                <TabsList className="grid w-full grid-cols-4 bg-slate-100">
+                  <TabsTrigger value="tous">Tous (107)</TabsTrigger>
+                  <TabsTrigger value="travail">Travail (34)</TabsTrigger>
+                  <TabsTrigger value="etudes">Études (22)</TabsTrigger>
+                  <TabsTrigger value="visiteur">Visiteur (27)</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0">
+                <Button className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-bold px-5 py-2.5 rounded-xl shadow flex items-center justify-center gap-2">
+                  ⭐ Comparer mes favoris
+                </Button>
+              </a>
+            </div>
 
             {/* Region Filter */}
             <div className="flex flex-wrap gap-2">
