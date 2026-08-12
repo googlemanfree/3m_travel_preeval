@@ -1724,3 +1724,15 @@
 - [x] Ajouter le renvoi manuel sécurisé après correction de l’adresse
 - [x] Journaliser la correction et le nouvel envoi sans exposer de secret
 - [x] Vérifier autorisations, responsive, TypeScript, tests, build et publier
+
+## Suivi renforcé de vérification humaine des passeports (v73)
+- [ ] Auditer les tables, routes et composants actuels de vérification documentaire
+- [ ] Ajouter un journal d’audit des validations et rejets manuels de documents
+- [ ] Afficher un indicateur visuel de vérification humaine dans l’administration
+- [ ] Configurer une alerte hebdomadaire sécurisée des documents en attente
+- [ ] Tester permissions, responsive, migrations, TypeScript, tests, build et publier
+
+## Navigation robuste depuis Navbar.tsx (v74)
+- [x] Comparer l’archive navigation-robuste.zip avec le Navbar actuel et cartographier les routes
+- [x] Remplacer la navigation JavaScript par de vrais liens avec repli automatique
+- [x] Vérifier les clics, routes, mobile, TypeScript, tests et build puis publier
