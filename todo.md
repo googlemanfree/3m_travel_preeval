@@ -1430,8 +1430,8 @@
 - [x] Ajouter les tests unitaires, vérifier les vues desktop/mobile, compiler et publier la version vérifiée
 
 ## Audit et Correction des éléments inactifs (v27)
-- [ ] Auditer les routes principales et liens de navigation dans `App.tsx` et les composants de navigation
-- [ ] Vérifier les formulaires (contact, recherche vols, évaluation rapide, ouverture de dossier) pour éliminer les boutons sans gestionnaire de clic ou formulaires non soumis
-- [ ] Identifier et corriger les pages potentiellement vides ou non routées
-- [ ] Tester les pages clés du site pour garantir une navigation 100% active et fonctionnelle
-- [ ] Valider le build de production et publier la version corrigée
+- [x] Auditer les routes principales et liens de navigation dans `App.tsx` et les composants de navigation
+- [x] Vérifier les formulaires (contact, recherche vols, évaluation rapide, ouverture de dossier) pour éliminer les boutons sans gestionnaire de clic ou formulaires non soumis
+- [x] Identifier et corriger les pages potentiellement vides ou non routées
+- [x] Tester les pages clés du site pour garantir une navigation 100% active et fonctionnelle
+- [x] Valider le build de production et publier la version corrigée
