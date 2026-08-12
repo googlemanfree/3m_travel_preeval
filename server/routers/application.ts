@@ -12,12 +12,13 @@ import { eq, desc, or, like, ilike } from "drizzle-orm";
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { randomBytes, randomInt } from "node:crypto";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateDossierNumber(): string {
   const year = new Date().getFullYear();
-  const rand = Math.floor(1000 + Math.random() * 9000);
+  const rand = randomInt(1000, 10000);
   return `3M-${year}-${rand}`;
 }
 
@@ -155,7 +156,7 @@ export const applicationRouter = router({
       const transactionId = `${dossierNumber.replace(/-/g, "")}${Date.now()}`.slice(0, 50);
 
       // Générer un OTP à 6 chiffres pour la vérification email
-      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailOtp = randomInt(100000, 1000000).toString();
       const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
 
       const [insertResult] = await db.insert(applications).values({
@@ -281,7 +282,7 @@ export const applicationRouter = router({
       if (app.emailVerified) throw new TRPCError({ code: "BAD_REQUEST", message: "Email déjà vérifié" });
 
       // Générer un nouvel OTP
-      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const emailOtp = randomInt(100000, 1000000).toString();
       const emailOtpExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expire dans 15 minutes
 
       await db.update(applications)
@@ -376,7 +377,6 @@ export const applicationRouter = router({
     .input(z.object({
       dossierNumber: z.string(),
       email: z.string().email(),
-      amount: z.number().default(65000),
       paymentMethod: z.enum(["mtn", "orange", "card"]).optional(),
     }))
     .mutation(async ({ input }) => {
@@ -394,21 +394,21 @@ export const applicationRouter = router({
 
       if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
       if (app.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Paiement déjà effectué" });
+      if (app.email.toLowerCase() !== input.email.trim().toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Les informations de dossier ne correspondent pas." });
+      }
 
       // Initialiser le paiement CinetPay
       if (!siteId || !apiKey) {
-        return {
-          dossierNumber: input.dossierNumber,
-          paymentUrl: null as string | null,
-          demoMode: true,
-          message: "Mode démo — CinetPay non configuré",
-        };
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement en ligne est temporairement indisponible." });
       }
 
       try {
+        const transactionId = app.paymentTransactionId ?? `3M-${app.dossierNumber}-${randomBytes(16).toString("hex")}`;
+        const amount = app.paymentAmount ?? 65000;
         const result = await initCinetPayTransaction({
-          transactionId: app.paymentTransactionId ?? `${input.dossierNumber}-${Date.now()}`,
-          amount: input.amount,
+          transactionId,
+          amount,
           currency: "XAF",
           description: `Paiement dossier immigration 3M Travel — ${input.dossierNumber}`,
           customerName: app.fullName,
@@ -420,20 +420,23 @@ export const applicationRouter = router({
           apiKey,
         });
 
+        await db.update(applications).set({
+          paymentStatus: "PENDING",
+          paymentTransactionId: transactionId,
+          paymentAmount: amount,
+          paymentCurrency: "XAF",
+          paymentMethod: null,
+        }).where(eq(applications.id, app.id));
+
         return {
           dossierNumber: input.dossierNumber,
           paymentUrl: result.paymentUrl as string | null,
-          demoMode: false,
           message: "Paiement initié",
         };
       } catch (err) {
         console.error("[CinetPay] Init error:", err);
-        return {
-          dossierNumber: input.dossierNumber,
-          paymentUrl: null as string | null,
-          demoMode: true,
-          message: "Erreur lors de l'initiation du paiement",
-        };
+        if (err instanceof TRPCError) throw err;
+        throw new TRPCError({ code: "BAD_GATEWAY", message: "Impossible d’initialiser le paiement sécurisé." });
       }
     }),
 

@@ -1583,20 +1583,22 @@
 - [ ] Tester les autorisations, les données sensibles, les notifications et publier la version validée
 
 ## Correctifs prioritaires de sécurité, fiabilité et SEO (v54)
-- [ ] Cartographier les accès sensibles, tâches planifiées, paiements CinetPay et téléversements exposés
-- [ ] Retirer les secrets de secours et sécuriser les sessions administratives uniquement côté serveur
-- [ ] Protéger les endpoints planifiés avec une authentification serveur robuste et idempotente
-- [ ] Fiabiliser l’initialisation, la vérification et le traitement unique des paiements CinetPay
-- [ ] Restreindre, valider et sécuriser les dépôts de documents privés
-- [ ] Corriger les routes dupliquées ou ambiguës et définir les redirections canoniques
-- [ ] Corriger l’encodage UTF-8, les métadonnées, le plan de site et les aperçus sociaux
+- [x] Cartographier les accès sensibles, tâches planifiées, paiements CinetPay et téléversements exposés
+- [x] Retirer les secrets de secours et sécuriser les sessions administratives uniquement côté serveur
+- [x] Protéger les endpoints planifiés avec une authentification serveur robuste et idempotente
+- [x] Fiabiliser l’initialisation, la vérification et le traitement unique des paiements CinetPay
+- [x] Restreindre, valider et sécuriser les dépôts de documents privés
+- [x] Corriger les routes dupliquées ou ambiguës et définir les redirections canoniques
+- [x] Corriger l’encodage UTF-8, les métadonnées, le plan de site et les aperçus sociaux
 - [ ] Réduire le chargement initial, optimiser l’interface mobile et masquer les widgets non essentiels sur les parcours critiques
 - [ ] Ajouter les tests automatisés critiques, exécuter les contrôles et publier une version validée
 
 ## Correctifs internes sans modification visuelle (v55)
-- [ ] Sauvegarder la version de référence avant toute remédiation interne
-- [ ] Préserver strictement les pages, contenus, menus, structure et styles pendant les corrections
-- [ ] Corriger les sessions, paiements, téléversements et tâches planifiées exposés
-- [ ] Corriger les routes, l’encodage, les erreurs TypeScript, console et réseau
+- [x] Sauvegarder la version de référence avant toute remédiation interne
+- [x] Préserver strictement les pages, contenus, menus, structure et styles pendant les corrections
+- [x] Corriger les sessions, paiements, téléversements et tâches planifiées exposés
+- [x] Corriger les routes, l’encodage, les erreurs TypeScript, console et réseau
 - [ ] Vérifier les boutons, formulaires, liens et redirections existants sur mobile et bureau
-- [ ] Exécuter les tests et le build, puis documenter les correctifs et prérequis externes
+- [x] Corriger le débordement mobile du badge de niveau sur les fiches pays, sans modifier la charte visuelle
+- [x] Corriger l’unicité et les statistiques du service central de numérotation des dossiers
+- [x] Exécuter les tests et le build, puis documenter les correctifs et prérequis externes

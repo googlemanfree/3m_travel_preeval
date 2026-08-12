@@ -9,6 +9,7 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { applications, clientDocuments } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
 
 const PAYMENT_AMOUNT = 65000; // XAF
 const PAYMENT_CURRENCY = "XAF";
@@ -42,6 +43,10 @@ export const paymentRouter = router({
 
         const application = app[0];
 
+        if (application.email.toLowerCase() !== input.email.trim().toLowerCase()) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Les informations de dossier ne correspondent pas." });
+        }
+
         // Vérifier que le dossier n'est pas déjà payé
         if (application.paymentStatus === "SUCCESS") {
           throw new TRPCError({
@@ -51,7 +56,7 @@ export const paymentRouter = router({
         }
 
         // Générer un ID de transaction unique
-        const transactionId = `TX-3M-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const transactionId = `TX-3M-${Date.now()}-${randomBytes(16).toString("hex")}`;
 
         // Mettre à jour le statut de paiement en attente
         await db
@@ -65,7 +70,7 @@ export const paymentRouter = router({
           })
           .where(eq(applications.id, application.id));
 
-        // Générer l'URL de paiement (simulée pour le moment)
+        // URL interne du tunnel ; le statut final est exclusivement confirmé par CinetPay.
         const paymentUrl = `https://www.3mtravelagency.click/checkout?tx=${transactionId}&dossier=${encodeURIComponent(input.dossierNumber)}`;
 
         return {
@@ -88,7 +93,8 @@ export const paymentRouter = router({
     }),
 
   /**
-   * Confirmer un paiement (appelé par le webhook ou manuellement)
+   * Vérifier le statut affiché au candidat. Cette procédure ne peut jamais
+   * marquer un paiement comme réussi sans confirmation CinetPay côté serveur.
    */
   confirmPayment: publicProcedure
     .input(z.object({
@@ -119,16 +125,40 @@ export const paymentRouter = router({
 
         const application = app[0];
 
-        // Mettre à jour le statut de paiement à SUCCESS
+        const siteId = process.env.CINETPAY_SITE_ID;
+        const apiKey = process.env.CINETPAY_API_KEY;
+        if (!siteId || !apiKey) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le contrôle de paiement n’est pas encore configuré." });
+        }
+
+        const response = await fetch("https://api-checkout.cinetpay.com/v2/payment/check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ apikey: apiKey, site_id: siteId, transaction_id: input.transactionId }),
+        });
+        const verification = await response.json() as { code?: string; data?: { status?: string; payment_method?: string; amount?: number | string } };
+        const isAccepted = verification.code === "00" && verification.data?.status === "ACCEPTED";
+        const expectedAmount = application.paymentAmount ?? PAYMENT_AMOUNT;
+        const receivedAmount = verification.data?.amount === undefined ? expectedAmount : Number(verification.data.amount);
+        if (!isAccepted || receivedAmount !== expectedAmount) {
+          return {
+            success: false,
+            status: "PENDING" as const,
+            message: "Le paiement est en attente de confirmation sécurisée.",
+            dossierNumber: input.dossierNumber,
+          };
+        }
+
+        // Transition atomique vers SUCCESS uniquement après vérification externe.
         await db
           .update(applications)
           .set({
             paymentStatus: "SUCCESS",
             paymentDate: new Date(),
-            paymentMethod: input.paymentMethod || "CARD",
-            dossierStatus: "documents_recus", // Débloquer le dossier
+            paymentMethod: verification.data?.payment_method || input.paymentMethod || "CARD",
+            dossierStatus: "paye",
           })
-          .where(eq(applications.id, application.id));
+          .where(and(eq(applications.id, application.id), eq(applications.paymentStatus, "PENDING")));
 
         return {
           success: true,

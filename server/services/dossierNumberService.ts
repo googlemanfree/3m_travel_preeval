@@ -8,6 +8,10 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { sql } from "drizzle-orm";
 
+// Réservations éphémères du processus : elles évitent qu’un même numéro soit
+// retourné plusieurs fois avant que l’insertion en base ne soit terminée.
+const pendingDossierNumbers = new Set<string>();
+
 /**
  * Génère un numéro de dossier unique au format 3M-YYYY-NNNN
  * YYYY = année actuelle
@@ -33,8 +37,10 @@ export async function generateDossierNumber(): Promise<string> {
       .where(sql`${applications.dossierNumber} = ${dossierNumber}`)
       .limit(1);
 
-    if (existing.length === 0) {
-      // Numéro disponible trouvé
+    if (existing.length === 0 && !pendingDossierNumbers.has(dossierNumber)) {
+      // Numéro disponible trouvé et réservé immédiatement pour éviter un doublon
+      // lors de demandes simultanées dans le même processus.
+      pendingDossierNumbers.add(dossierNumber);
       return dossierNumber;
     }
 
@@ -88,7 +94,9 @@ export async function countDossiersForYear(year: number): Promise<number> {
  */
 export async function getDossierStats() {
   const currentYear = new Date().getFullYear();
-  const count = await countDossiersForYear(currentYear) || 0;
+  const persistedCount = Number(await countDossiersForYear(currentYear)) || 0;
+  const pendingCount = Array.from(pendingDossierNumbers).filter(number => number.startsWith(`3M-${currentYear}-`)).length;
+  const count = persistedCount + pendingCount;
 
   return {
     currentYear,

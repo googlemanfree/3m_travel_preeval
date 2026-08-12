@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
+import { trpc } from "@/lib/trpc";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -12,20 +13,8 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [, navigate] = useLocation();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    // Vérifier si l'utilisateur a un token admin valide
-    const adminToken = localStorage.getItem("adminSessionToken");
-    
-    if (!adminToken) {
-      setIsAuthorized(false);
-      return;
-    }
-
-    // Le token existe, considérer l'utilisateur comme autorisé
-    setIsAuthorized(true);
-  }, [navigate]);
+  const adminSession = trpc.adminAuth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: true });
+  const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
 
   if (isAuthorized === null) {
     return (

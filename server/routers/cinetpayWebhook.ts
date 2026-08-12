@@ -8,7 +8,7 @@
 import type { Express, Request, Response } from "express";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { sendPaymentConfirmationEmail } from "../emailService";
 
 interface CinetPayWebhookBody {
@@ -42,6 +42,7 @@ interface CinetPayWebhookBody {
 async function verifyCinetPayTransaction(transactionId: string, siteId: string, apiKey: string): Promise<{
   status: "ACCEPTED" | "REFUSED" | "PENDING" | "UNKNOWN";
   paymentMethod: string;
+  amount?: number;
 }> {
   try {
     const response = await fetch("https://api-checkout.cinetpay.com/v2/payment/check", {
@@ -60,6 +61,7 @@ async function verifyCinetPayTransaction(transactionId: string, siteId: string, 
       data?: {
         status: string;
         payment_method?: string;
+        amount?: number | string;
       };
     };
 
@@ -67,6 +69,7 @@ async function verifyCinetPayTransaction(transactionId: string, siteId: string, 
       return {
         status: "ACCEPTED",
         paymentMethod: data.data.payment_method ?? "UNKNOWN",
+        amount: data.data.amount === undefined ? undefined : Number(data.data.amount),
       };
     } else if (data.data?.status === "REFUSED") {
       return { status: "REFUSED", paymentMethod: "" };
@@ -114,37 +117,44 @@ export function registerCinetPayWebhook(app: Express): void {
       let paymentStatus: "SUCCESS" | "FAILED" | "PENDING" = "PENDING";
       let paymentMethod = "";
 
-      if (siteId && apiKey) {
-        const verification = await verifyCinetPayTransaction(transactionId, siteId, apiKey);
-        if (verification.status === "ACCEPTED") {
-          paymentStatus = "SUCCESS";
-          paymentMethod = verification.paymentMethod;
-        } else if (verification.status === "REFUSED") {
-          paymentStatus = "FAILED";
-        }
-      } else {
-        // Fallback : utiliser le statut du webhook directement
-        const webhookStatus = body.cpm_trans_status ?? "";
-        if (webhookStatus === "ACCEPTED") {
-          paymentStatus = "SUCCESS";
-          paymentMethod = body.cpm_payment_config ?? "";
-        } else if (webhookStatus === "REFUSED") {
-          paymentStatus = "FAILED";
-        }
+      if (!siteId || !apiKey) {
+        console.error("[CinetPay Webhook] Clés de vérification absentes : transaction laissée en attente.");
+        res.status(202).json({ message: "Verification unavailable; transaction remains pending" });
+        return;
       }
 
-      // Mettre à jour le dossier en base
+      const verification = await verifyCinetPayTransaction(transactionId, siteId, apiKey);
+      if (verification.status === "ACCEPTED") {
+        const expectedAmount = application.paymentAmount ?? 65000;
+        if (verification.amount !== undefined && verification.amount !== expectedAmount) {
+          console.error(`[CinetPay Webhook] Montant incohérent pour ${transactionId}`);
+          res.status(400).json({ error: "Payment amount mismatch" });
+          return;
+        }
+        paymentStatus = "SUCCESS";
+        paymentMethod = verification.paymentMethod;
+      } else if (verification.status === "REFUSED") {
+        paymentStatus = "FAILED";
+      }
+
+      // Aucun statut final ne peut être déduit d'un callback non vérifié.
+      if (paymentStatus === "PENDING") {
+        res.status(202).json({ message: "Transaction pending verification" });
+        return;
+      }
+
+      const isFirstSuccessfulTransition = paymentStatus === "SUCCESS" && application.paymentStatus === "PENDING";
       await db.update(applications)
         .set({
           paymentStatus,
           dossierStatus: paymentStatus === "SUCCESS" ? "paye" : application.dossierStatus,
           paymentMethod: paymentMethod || null,
-          paymentDate: paymentStatus === "SUCCESS" ? new Date() : null,
+          paymentDate: paymentStatus === "SUCCESS" ? new Date() : application.paymentDate,
         })
-        .where(eq(applications.id, application.id));
+        .where(and(eq(applications.id, application.id), eq(applications.paymentTransactionId, transactionId)));
 
-      // Envoyer l'email de confirmation si paiement réussi
-      if (paymentStatus === "SUCCESS") {
+      // Un email est envoyé uniquement à la première transition PENDING → SUCCESS.
+      if (isFirstSuccessfulTransition) {
         try {
           await sendPaymentConfirmationEmail(
             application.email,

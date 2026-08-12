@@ -14,10 +14,13 @@ import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
+import { randomBytes, randomInt } from "node:crypto";
+
+export const ADMIN_SESSION_COOKIE = "admin_session";
 
 // Générer un token de session
 function generateSessionToken(): string {
-  return Array.from({ length: 48 }, () => Math.floor(Math.random() * 36).toString(36)).join("");
+  return randomBytes(48).toString("base64url");
 }
 
 /**
@@ -55,7 +58,7 @@ export const adminAuthRouter = router({
       email: z.string().email(),
       password: z.string().min(1),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -97,6 +100,14 @@ export const adminAuthRouter = router({
         })
         .where(eq(adminAccounts.id, admin.id));
 
+      ctx.res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 12 * 60 * 60 * 1000,
+      });
+
       return {
         success: true,
         sessionToken,
@@ -106,6 +117,25 @@ export const adminAuthRouter = router({
         requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
       };
     }),
+
+  /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */
+  me: publicProcedure.query(async ({ ctx }) => {
+    const sessionCookie = (ctx.req.headers.cookie ?? "")
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(`${ADMIN_SESSION_COOKIE}=`))
+      ?.slice(`${ADMIN_SESSION_COOKIE}=`.length);
+    if (!sessionCookie) return { authenticated: false } as const;
+    try {
+      const admin = await requireValidAdminSession(decodeURIComponent(sessionCookie));
+      return {
+        authenticated: true,
+        admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType },
+      } as const;
+    } catch {
+      return { authenticated: false } as const;
+    }
+  }),
 
   /**
    * Changer son propre mot de passe (admin déjà connecté).
@@ -168,7 +198,7 @@ export const adminAuthRouter = router({
    */
   logout: publicProcedure
     .input(z.object({ sessionToken: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -177,6 +207,13 @@ export const adminAuthRouter = router({
           .update(adminAccounts)
           .set({ sessionToken: null, sessionExpiresAt: null })
           .where(eq(adminAccounts.sessionToken, input.sessionToken));
+
+        ctx.res.clearCookie(ADMIN_SESSION_COOKIE, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+          path: "/",
+        });
 
         return { success: true, message: "Déconnexion réussie" };
       } catch (err) {
@@ -362,13 +399,17 @@ function generateSecurePassword(): string {
   const all = upper + lower + digits;
 
   let pwd = "";
-  pwd += upper[Math.floor(Math.random() * upper.length)];
-  pwd += lower[Math.floor(Math.random() * lower.length)];
-  pwd += digits[Math.floor(Math.random() * digits.length)];
-  pwd += symbols[Math.floor(Math.random() * symbols.length)];
+  pwd += upper[randomInt(upper.length)];
+  pwd += lower[randomInt(lower.length)];
+  pwd += digits[randomInt(digits.length)];
+  pwd += symbols[randomInt(symbols.length)];
   for (let i = 0; i < 8; i++) {
-    pwd += all[Math.floor(Math.random() * all.length)];
+    pwd += all[randomInt(all.length)];
   }
-  // mélange
-  return pwd.split("").sort(() => Math.random() - 0.5).join("");
+  const chars = pwd.split("");
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join("");
 }

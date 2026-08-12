@@ -24,7 +24,7 @@ function timeAgo(date: string | Date): string {
 
 export default function AdminNotificationBell() {
   const [open, setOpen] = useState(false);
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
 
   const { data, refetch } = trpc.adminNotifications.list.useQuery(
     { sessionToken, limit: 20 },

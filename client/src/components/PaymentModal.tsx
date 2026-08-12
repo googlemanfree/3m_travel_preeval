@@ -56,7 +56,6 @@ export function PaymentModal({
       const result = await initiateCinetPayPayment.mutateAsync({
         dossierNumber,
         email,
-        amount,
         paymentMethod,
       });
 
@@ -64,11 +63,8 @@ export function PaymentModal({
         // Rediriger vers CinetPay
         window.location.href = result.paymentUrl;
       } else {
-        setStep("success");
-        toast.success("Paiement initié avec succès!");
-        if (onPaymentSuccess) {
-          setTimeout(onPaymentSuccess, 2000);
-        }
+        setStep("error");
+        setErrorMessage("La passerelle de paiement n’a pas fourni de lien sécurisé. Aucun paiement n’a été validé.");
       }
     } catch (err: any) {
       setStep("error");

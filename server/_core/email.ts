@@ -35,21 +35,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     });
 
     if (result.error) {
-      const errMsg = result.error.message;
-      try {
-        const db = await getDb();
-        if (db) {
-          await db.insert(emailDeliveryLogs).values({
-            recipientEmail: options.to,
-            subject: options.subject,
-            status: "failed",
-            errorDetails: errMsg,
-          });
-        }
-      } catch (logErr) {
-        console.error("Failed to log email failure:", logErr);
-      }
-      throw new Error(`Resend error: ${errMsg}`);
+      throw new Error(`Resend error: ${result.error.message}`);
     }
 
     console.log(`[Email] Sent successfully to ${options.to}`, result.data?.id);

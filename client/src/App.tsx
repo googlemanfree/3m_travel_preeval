@@ -217,19 +217,18 @@ function Router() {
       <Route path="/procedures" component={ProceduresAdvanced} />
       <Route path="/procedures/comparaison" component={CountryComparisonPage} />
       <Route path="/conformite-documents" component={DocumentCompliancePage} />
+      <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
-      <Route path={"/procedures-complete"} component={ProceduresComplete} />
-      <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />
-      <Route path={"/procedures-advanced"} component={ProceduresAdvanced} />
+      <Route path={"/procedures-complete"}>{() => <Redirect to="/procedures" />}</Route>
+      <Route path={"/procedures-enhanced"}>{() => <Redirect to="/procedures" />}</Route>
+      <Route path={"/procedures-advanced"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/evaluation-rapide"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/evaluation" />}</Route>
       <Route path={"/admin/dossiers"} component={AdminDossierManagement} />
       <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
-      <Route path={"/admin/evaluations"} component={AdminEvaluationValidation} />
       <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
       <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
       <Route path={"/document-upload"} component={DocumentUploadPage} />
-      <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
       <Route path={"/ressources"}>{() => <Redirect to="/procedures" />}</Route>
@@ -244,8 +243,8 @@ function Router() {
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasAdvanced} />
       <Route path={"/evisa/:evisaId"} component={EvisaDetailPage} />
-      <Route path={"/evisas-enhanced"} component={EvisasEnhanced} />
-      <Route path={"/evisas-v3"} component={EvisasV3} />
+      <Route path={"/evisas-enhanced"}>{() => <Redirect to="/evisas" />}</Route>
+      <Route path={"/evisas-v3"}>{() => <Redirect to="/evisas" />}</Route>
       <Route path={"/evisas/request"}>
         <EvisaRequestForm />
       </Route>
@@ -259,8 +258,8 @@ function Router() {
       <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin/change-password"}>
         {() => {
-          const sessionToken = typeof window !== 'undefined' ? localStorage.getItem('adminSessionToken') || '' : '';
-          const adminEmail = typeof window !== 'undefined' ? localStorage.getItem('adminEmail') || '' : '';
+          const sessionToken = typeof window !== 'undefined' ? sessionStorage.getItem('adminSessionToken') || '' : '';
+          const adminEmail = typeof window !== 'undefined' ? sessionStorage.getItem('adminEmail') || '' : '';
           return (
             <AdminChangePasswordRequired
               sessionToken={sessionToken}

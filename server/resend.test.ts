@@ -21,7 +21,7 @@ describe("Resend API Key Validation", () => {
     });
     
     // Check if the email was sent successfully
-    expect(response.error).toBeUndefined();
+    expect(response.error).toBeNull();
     expect(response.data?.id).toBeDefined();
     console.log("✅ Resend API key is valid. Email ID:", response.data?.id);
   });

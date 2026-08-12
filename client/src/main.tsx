@@ -76,7 +76,7 @@ const trpcClient = trpc.createClient({
       headers() {
         // 1. Admin session token (takes priority for admin routes)
         try {
-          const adminToken = localStorage.getItem("adminSessionToken");
+          const adminToken = sessionStorage.getItem("adminSessionToken");
           if (adminToken) {
             return { Authorization: `Bearer ${adminToken}`, "X-Admin-Token": adminToken };
           }

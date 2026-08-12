@@ -90,14 +90,14 @@ export default function CountryDetailPage() {
         >
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full">
               <span className="text-6xl sm:text-7xl p-3 bg-white/10 rounded-2xl backdrop-blur-md shadow-inner">{country.flag}</span>
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Badge className="bg-blue-500/30 text-blue-200 border border-blue-400/30 uppercase tracking-wider text-xs">
+              <div className="min-w-0 w-full">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                  <Badge className="bg-blue-500/30 text-blue-200 border border-blue-400/30 uppercase tracking-wider text-xs max-w-full whitespace-normal">
                     {country.region}
                   </Badge>
-                  <Badge className={`text-xs ${getDifficultyColor(country.difficulty)} font-bold`}>
+                  <Badge className={`text-xs ${getDifficultyColor(country.difficulty)} font-bold max-w-full whitespace-normal`}>
                     Niveau : {country.difficulty}
                   </Badge>
                 </div>

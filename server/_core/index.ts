@@ -11,6 +11,7 @@ import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
+import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -47,8 +48,14 @@ async function startServer() {
   registerCinetPayWebhook(app);
   setupDocumentsRoutes(app);
   // Scheduled jobs
-  app.post("/api/scheduled/evaluation-job", handleEvaluationJob);
-  app.post("/api/scheduled/evaluation-bilan-job", handleEvaluationBilanJob);
+  app.post("/api/scheduled/evaluation-job", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleEvaluationJob(req, res);
+  });
+  app.post("/api/scheduled/evaluation-bilan-job", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleEvaluationBilanJob(req, res);
+  });
   // Initialize Cron Jobs
   try {
     await initEvaluationCron();

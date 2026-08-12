@@ -6,8 +6,7 @@
 
 import { Request, Response } from "express";
 import { getDb } from "../db";
-import { clientDocuments, evaluations } from "../../drizzle/schema";
-import { sql } from "drizzle-orm";
+import { clientDocuments } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
 
 export async function handleComplianceMonthlyReportJob(req: Request, res: Response): Promise<void> {
@@ -23,7 +22,7 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
     // Récupérer toutes les statistiques de documents par pays ou globalement
     const documents = await db.select().from(clientDocuments);
     const totalDocs = documents.length;
-    const verifiedDocs = documents.filter((d) => d.verificationStatus === "approved" || d.verificationStatus === "verified").length;
+    const verifiedDocs = documents.filter((d) => d.verificationStatus === "approved").length;
     const pendingDocs = documents.filter((d) => d.verificationStatus === "pending").length;
     const rejectedDocs = documents.filter((d) => d.verificationStatus === "rejected").length;
     const globalComplianceRate = totalDocs > 0 ? Math.round((verifiedDocs / totalDocs) * 100) : 100;
@@ -36,7 +35,7 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
         typeStats[type] = { total: 0, verified: 0 };
       }
       typeStats[type].total++;
-      if (doc.verificationStatus === "approved" || doc.verificationStatus === "verified") {
+      if (doc.verificationStatus === "approved") {
         typeStats[type].verified++;
       }
     }

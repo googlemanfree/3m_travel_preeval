@@ -5,8 +5,15 @@ import type { TrpcContext } from "./_core/context";
 // Mock des modules externes
 vi.mock("./db", () => ({
   getDb: vi.fn().mockResolvedValue({
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    }),
     insert: vi.fn().mockReturnValue({
-      values: vi.fn().mockResolvedValue(undefined),
+      values: vi.fn().mockReturnValue({
+        $returningId: vi.fn().mockResolvedValue([{ id: 1 }]),
+      }),
     }),
   }),
 }));

@@ -12,10 +12,15 @@ import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordResetEmailTemplate, getPasswordResetSuccessEmailTemplate } from "../_core/emailTemplates";
+import { createHash, randomBytes } from "node:crypto";
 
 // Générer un token de réinitialisation sécurisé
 function generateResetToken(): string {
-  return Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+  return randomBytes(32).toString("base64url");
+}
+
+function hashResetToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
 }
 
 export const adminPasswordResetRouter = router({
@@ -59,19 +64,20 @@ export const adminPasswordResetRouter = router({
 
       // Générer un token de réinitialisation
       const resetToken = generateResetToken();
+      const resetTokenHash = hashResetToken(resetToken);
       const resetTokenExpiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 heure
 
       // Mettre à jour le token dans la BD
       await db
         .update(adminAccounts)
         .set({
-          resetToken,
+          resetToken: resetTokenHash,
           resetTokenExpiresAt,
         })
         .where(eq(adminAccounts.id, admin.id));
 
       // Construire le lien de réinitialisation
-      const resetLink = `${process.env.VITE_APP_URL || "https://www.3mtravelagency.click"}/admin/reset-password?token=${resetToken}`;
+      const resetLink = `${process.env.APP_BASE_URL || "https://www.3mtravelagency.com"}/admin/reset-password?token=${encodeURIComponent(resetToken)}`;
 
       // Envoyer l'email
       try {
@@ -116,7 +122,7 @@ export const adminPasswordResetRouter = router({
       const rows = await db
         .select()
         .from(adminAccounts)
-        .where(eq(adminAccounts.resetToken, input.token))
+        .where(eq(adminAccounts.resetToken, hashResetToken(input.token)))
         .limit(1);
 
       if (rows.length === 0) {
@@ -159,7 +165,7 @@ export const adminPasswordResetRouter = router({
       const rows = await db
         .select()
         .from(adminAccounts)
-        .where(eq(adminAccounts.resetToken, input.token))
+        .where(eq(adminAccounts.resetToken, hashResetToken(input.token)))
         .limit(1);
 
       if (rows.length === 0) {

@@ -7,7 +7,9 @@ import bcrypt from "bcryptjs";
 import { and, desc, eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
+import { randomInt } from "node:crypto";
 import {
+  Candidate,
   CandidateFile,
   CandidateMessage,
   candidateFiles,
@@ -20,7 +22,10 @@ import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
-const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
+}
 const JWT_EXPIRES = "30d";
 
 function signCandidateToken(candidateId: number): string {
@@ -642,7 +647,7 @@ export const candidateRouter = router({
       if (!rows.length) throw new TRPCError({ code: "NOT_FOUND", message: "Compte introuvable." });
       const candidate = rows[0];
       if (candidate.emailVerified) return { success: true };
-      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otp = String(randomInt(100000, 1000000));
       const otpExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
       await db.update(candidates).set({ emailOtp: otp, emailOtpExpiresAt: otpExpiresAt }).where(eq(candidates.id, input.candidateId));
       try { await sendVerificationOtp(candidate.email, candidate.fullName, otp); } catch {}

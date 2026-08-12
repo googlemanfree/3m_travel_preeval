@@ -19,7 +19,10 @@ import { sendVerificationOtp, sendPasswordResetEmail } from "../emailService";
 import { generateOTP, getOTPExpirationTime, validateOTP, isOTPExpired } from "../otpService";
 import { checkLoginAttempts, recordFailedAttempt, resetLoginAttempts, getRemainingAttempts } from "../loginAttemptsService";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
+}
 const JWT_EXPIRES = "30d";
 
 function signCandidateToken(candidateId: number): string {

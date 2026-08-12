@@ -1,6 +1,7 @@
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
+import { COOKIE_NAME } from "../shared/const";
 
 // Import des routeurs existants
 import { evaluationRouter } from "./routers/evaluation";
@@ -60,8 +61,6 @@ import { flightPlannerAIRouter } from "./routers/flightPlannerAI";
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
 import { applicationRouter as applicationRouterNew } from "./routers/applicationRouter";
 import { evaluationRouter as evaluationRouterNew } from "./routers/evaluationRouter";
-
-const COOKIE_NAME = "manus_session";
 
 export const appRouter = router({
   // Système et authentification

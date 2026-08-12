@@ -18,10 +18,12 @@ export default function AdminLogin() {
 
   const loginMutation = trpc.adminAuth.login.useMutation({
     onSuccess: (data) => {
-      localStorage.setItem('adminSessionToken', data.sessionToken);
-      localStorage.setItem('adminType', data.adminType);
-      localStorage.setItem('adminName', data.fullName);
-      localStorage.setItem('adminEmail', data.email);
+      // Le cookie HttpOnly est créé par le serveur. Ce stockage par onglet ne
+      // sert qu'à conserver la compatibilité des appels admin existants.
+      sessionStorage.setItem('adminSessionToken', data.sessionToken);
+      sessionStorage.setItem('adminType', data.adminType);
+      sessionStorage.setItem('adminName', data.fullName);
+      sessionStorage.setItem('adminEmail', data.email);
       toast.success(`Bienvenue, ${data.fullName} !`);
       
       // Vérifier si le changement de mot de passe est obligatoire

@@ -9,7 +9,7 @@ describe("Email Service", () => {
     }
   });
 
-  it("should send an email successfully", async () => {
+  it.runIf(process.env.RUN_EXTERNAL_EMAIL_TESTS === "true")("should send an email successfully", async () => {
     try {
       await sendEmail({
         to: "test@resend.dev",
