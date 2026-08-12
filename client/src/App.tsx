@@ -219,6 +219,8 @@ function Router() {
       <Route path={"/how-it-works"} component={HowItWorks} />
       <Route path={"/visa-etudes"} component={VisaEtudes} />
       <Route path="/procedures" component={ProceduresAdvanced} />
+      {/* Aliases legacy : certains anciens CTA utilisaient le singulier. */}
+      <Route path="/procedure">{() => <Redirect to="/procedures" />}</Route>
       <Route path="/procedures/comparaison" component={CountryComparisonPage} />
       <Route path="/conformite-documents" component={DocumentCompliancePage} />
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
@@ -246,6 +248,8 @@ function Router() {
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/evisas"} component={EvisasAdvanced} />
+      {/* Alias legacy e-design/e-visa : conserve les anciens liens sans dupliquer la page. */}
+      <Route path={"/e-design"}>{() => <Redirect to="/evisas" />}</Route>
       <Route path={"/evisa/:evisaId"} component={EvisaDetailPage} />
       <Route path={"/evisas-enhanced"}>{() => <Redirect to="/evisas" />}</Route>
       <Route path={"/evisas-v3"}>{() => <Redirect to="/evisas" />}</Route>

@@ -1681,3 +1681,9 @@
 - [x] Restaurer le contenu existant attendu et reconnecter les routes sans modifier le design
 - [x] Vérifier les CTA sur desktop et mobile avec états de chargement et pages de retour utilisables
 - [x] Exécuter TypeScript, tests et build puis publier la restauration
+
+## Correctif ciblé des CTA héros Procédure et e‑design (v67)
+- [x] Identifier les éléments exacts « Procédure » et « e‑design » du héros et leurs routes actuelles
+- [x] Corriger leurs destinations vers les pages de contenu officielles
+- [x] Tester les clics desktop/mobile et les pages cibles
+- [x] Valider TypeScript, tests et build puis publier
