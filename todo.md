@@ -1523,3 +1523,8 @@
 - [x] Enrichir CountryComparisonPage.tsx pour générer un détail textuel des critères (type de visa, niveau d'études, expérience, difficulté pays)
 - [x] Intégrer une infobulle (Tooltip ou popover au survol) affichant les points forts et points d'attention du profil par pays
 - [x] Valider le build de production et publier la version avec infobulle de compatibilité explicable
+
+## Recommandations personnalisées dans l'infobulle (v45)
+- [x] Mettre à jour getCompatibilityDetails dans CountryComparisonPage.tsx pour ajouter des conseils d'amélioration ciblés (langue, diplôme, budget, expérience)
+- [x] Adapter la structure de l'infobulle au survol pour inclure une section "Actions recommandées"
+- [x] Valider le build de production et publier la version avec recommandations personnalisées

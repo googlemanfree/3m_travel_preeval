@@ -103,23 +103,27 @@ export default function CountryComparisonPage() {
   const getCompatibilityDetails = (country: CountryProcedureComplete) => {
     const score = getDynamicCompatibility(country);
     const reasons: { text: string; positive: boolean }[] = [];
+    const recommendations: string[] = [];
 
     if (userProfile.targetVisa === 'tous' || userProfile.targetVisa === country.visaType) {
       reasons.push({ text: `Type de visa (${country.visaType}) parfaitement aligné`, positive: true });
     } else {
       reasons.push({ text: `Visa demandé (${country.visaType}) différent de votre préférence`, positive: false });
+      recommendations.push(`Vérifiez si une transition vers le visa ${country.visaType} correspond à vos objectifs.`);
     }
 
     if (userProfile.education === 'master_phd' || userProfile.education === 'bac_plus_3') {
       reasons.push({ text: `Niveau d'études supérieur validé pour ce programme`, positive: true });
     } else {
       reasons.push({ text: `Niveau d'études standard acceptant des compléments de formation`, positive: true });
+      recommendations.push(`Envisagez une équivalence de diplôme ou une formation certifiante complémentaire.`);
     }
 
     if (userProfile.experience === 'plus_5_ans' || userProfile.experience === '3_5_ans') {
       reasons.push({ text: `Expérience professionnelle solide valorisée`, positive: true });
     } else {
       reasons.push({ text: `Expérience débutante nécessitant un accompagnement renforcé`, positive: false });
+      recommendations.push(`Documentez vos stages, projets associatifs ou réalisations pour compenser.`);
     }
 
     if (country.difficulty === 'facile') {
@@ -128,9 +132,14 @@ export default function CountryComparisonPage() {
       reasons.push({ text: `Procédure standard avec exigences réglementaires modérées`, positive: true });
     } else {
       reasons.push({ text: `Procédure sélective exigeant un dossier d'excellence`, positive: false });
+      recommendations.push(`Préparez un CV aux normes internationales et des lettres de motivation percutantes.`);
     }
 
-    return { score, reasons };
+    if (userProfile.budget === 'faible' && country.cost.includes('Élevé')) {
+      recommendations.push(`Prévoyez un cofinancement ou une bourse d'études pour couvrir le budget.`);
+    }
+
+    return { score, reasons, recommendations };
   };
 
   return (
@@ -305,20 +314,40 @@ export default function CountryComparisonPage() {
                               />
                             </div>
 
-                            {/* Infobulle au survol */}
-                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3.5 bg-slate-900 text-white text-xs rounded-2xl shadow-2xl z-50 pointer-events-none space-y-2 border border-slate-700">
-                              <p className="font-bold text-amber-400 border-b border-slate-700 pb-1">Détail des critères pour {country.name}</p>
-                              <ul className="space-y-1.5">
-                                {reasons.map((r, idx) => (
-                                  <li key={idx} className="flex items-start gap-1.5">
-                                    <span className={r.positive ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
-                                      {r.positive ? '✓' : '•'}
-                                    </span>
-                                    <span className="text-slate-200">{r.text}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
+                            {/* Infobulle au survol avec recommandations */}
+                            {(() => {
+                              const { reasons, recommendations } = getCompatibilityDetails(country);
+                              return (
+                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-80 p-4 bg-slate-900 text-white text-xs rounded-2xl shadow-2xl z-50 pointer-events-none space-y-3 border border-slate-700">
+                                  <p className="font-bold text-amber-400 border-b border-slate-700 pb-1.5 flex items-center justify-between">
+                                    <span>Analyse & Conseils : {country.name}</span>
+                                  </p>
+                                  <ul className="space-y-1.5">
+                                    {reasons.map((r, idx) => (
+                                      <li key={idx} className="flex items-start gap-1.5">
+                                        <span className={r.positive ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                                          {r.positive ? '✓' : '•'}
+                                        </span>
+                                        <span className="text-slate-200">{r.text}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                  {recommendations.length > 0 && (
+                                    <div className="pt-2 border-t border-slate-700 space-y-1">
+                                      <p className="font-bold text-blue-300">💡 Actions recommandées :</p>
+                                      <ul className="space-y-1 text-slate-300">
+                                        {recommendations.map((rec, i) => (
+                                          <li key={i} className="flex items-start gap-1">
+                                            <span className="text-blue-400">→</span>
+                                            <span>{rec}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
