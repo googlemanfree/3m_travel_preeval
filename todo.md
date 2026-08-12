@@ -1503,3 +1503,7 @@
 - [x] Créer la page de comparaison `CountryComparisonPage.tsx` pour lister et comparer les pays favoris enregistrés dans localStorage
 - [x] Ajouter la route `/procedures/comparaison` dans `App.tsx` et un lien d'accès rapide depuis la page Procédures et le tableau de bord
 - [x] Valider le build de production et publier la version avec comparateur de favoris
+
+## Bouton Lancer la procédure dans le comparateur (v41)
+- [x] Vérifier CountryComparisonPage.tsx et s'assurer que chaque carte dispose d'un bouton bien visible "🚀 Lancer la procédure" pointant vers `/evaluation-primaire?destination={country.id}`
+- [x] Valider le build de production et publier la version optimisée du comparateur
