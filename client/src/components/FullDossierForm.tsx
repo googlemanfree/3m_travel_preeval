@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -164,11 +164,47 @@ interface FullDossierFormProps {
 
 export default function FullDossierForm({ initialVisaType, initialDestination, procedureId, procedureTitle, onClose }: FullDossierFormProps) {
   const [, navigate] = useLocation();
-  const [form, setForm] = useState<FormData>({
-    ...INITIAL_FORM,
-    visaType: initialVisaType ?? "",
-    destination: initialDestination ?? "",
+  const [form, setForm] = useState<FormData>(() => {
+    try {
+      const saved = localStorage.getItem("3m_dossier_draft");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_FORM,
+          ...parsed,
+          visaType: initialVisaType ?? parsed.visaType ?? "",
+          destination: initialDestination ?? parsed.destination ?? "",
+        };
+      }
+    } catch (e) {
+      // Ignore parse error
+    }
+    return {
+      ...INITIAL_FORM,
+      visaType: initialVisaType ?? "",
+      destination: initialDestination ?? "",
+    };
   });
+  const [hasRestored, setHasRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("3m_dossier_draft");
+      if (saved && !hasRestored) {
+        setHasRestored(true);
+        toast.info("Brouillon de dossier restauré automatiquement", {
+          description: "Vous pouvez continuer votre saisie là où vous l'aviez laissée.",
+          duration: 4000,
+        });
+      }
+    } catch (e) {}
+  }, [hasRestored]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("3m_dossier_draft", JSON.stringify(form));
+    } catch (e) {}
+  }, [form]);
   const [currentStep, setCurrentStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
@@ -348,6 +384,9 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         visaType={form.visaType || "travail"}
         formulaChosen={form.formulaChosen}
         onSigned={() => {
+          try {
+            localStorage.removeItem("3m_dossier_draft");
+          } catch (e) {}
           localStorage.setItem('dossierConfirmation', JSON.stringify({
             dossierNumber: applicationResult.dossierNumber,
             candidateName: form.fullName,

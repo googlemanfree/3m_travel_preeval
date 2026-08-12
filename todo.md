@@ -1445,3 +1445,9 @@
 - [x] Créer un composant de barre de progression visuelle globale et par étapes pour les formulaires longs (FullDossierForm, PremiumEvaluationForm)
 - [x] Vérifier la mise à jour dynamique du pourcentage d'avancement lors de la saisie
 - [x] Valider le build de production et publier la version avec barre de progression enrichie
+
+## Sauvegarde automatique locale des formulaires (v30)
+- [x] Implémenter la sauvegarde automatique dans le localStorage pour FullDossierForm avec notification discrète
+- [x] Ajouter une invite de restauration de brouillon lors de l'ouverture du formulaire
+- [x] Effacer le brouillon automatiquement après soumission réussie
+- [x] Valider le build de production et publier la version avec sauvegarde locale
