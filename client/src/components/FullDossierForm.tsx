@@ -379,10 +379,14 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
           )}
         </div>
 
-        {/* Barre de progression */}
-        <div className="w-full bg-blue-800 rounded-full h-2 mb-3">
+        {/* Barre de progression avec pourcentage */}
+        <div className="flex items-center justify-between text-xs text-blue-200 mb-1.5 font-medium">
+          <span>Progression globale</span>
+          <span className="bg-blue-800/80 px-2 py-0.5 rounded-full text-amber-300 font-bold">{Math.round(progress)}% complété</span>
+        </div>
+        <div className="w-full bg-blue-950/60 rounded-full h-2.5 mb-3 p-0.5 border border-blue-600/30">
           <motion.div
-            className="bg-amber-400 h-2 rounded-full"
+            className="bg-gradient-to-r from-amber-400 to-amber-300 h-1.5 rounded-full shadow-sm"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.4, ease: "easeOut" }}

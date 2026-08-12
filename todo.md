@@ -1440,3 +1440,8 @@
 - [x] Créer ou intégrer des infobulles (Tooltip / Popover) sur les champs complexes des formulaires (FullDossierForm, FlightSearch, Evaluation)
 - [x] Tester les infobulles au survol et au clic pour garantir l'accessibilité mobile et desktop
 - [x] Valider le build de production et publier la version avec infobulles
+
+## Barre de progression dans les formulaires longs (v29)
+- [x] Créer un composant de barre de progression visuelle globale et par étapes pour les formulaires longs (FullDossierForm, PremiumEvaluationForm)
+- [x] Vérifier la mise à jour dynamique du pourcentage d'avancement lors de la saisie
+- [x] Valider le build de production et publier la version avec barre de progression enrichie
