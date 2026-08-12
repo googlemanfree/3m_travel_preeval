@@ -1640,3 +1640,9 @@
 - [x] Ajouter la copie de l’URL des filtres actifs pour le partage entre administrateurs
 - [x] Afficher un compteur dynamique des dossiers correspondant aux filtres appliqués
 - [x] Tester les vues, le partage, les autorisations et publier la version validée
+
+## Demande d’assurance voyage (v61)
+- [x] Créer un formulaire complet de demande d’assurance voyage depuis le point d’entrée existant
+- [x] Enregistrer la demande de manière sécurisée et la rendre visible aux administrateurs
+- [x] Notifier l’administration et préparer un message WhatsApp récapitulatif pour l’agence
+- [x] Tester les validations, la soumission et le parcours de consultation admin

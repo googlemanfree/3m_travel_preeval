@@ -103,6 +103,7 @@ import PaymentMethodSelection from "./pages/PaymentMethodSelection";
 import PaymentAgencyConfirmation from "./pages/PaymentAgencyConfirmation";
 import AdminPaymentValidation from "./pages/AdminPaymentValidation";
 import AdminCustomerReviews from "./pages/AdminCustomerReviews";
+import AdminInsuranceRequests from "./pages/AdminInsuranceRequests";
 import SubmitReview from "./pages/SubmitReview";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
@@ -149,7 +150,7 @@ function Router() {
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/vols"}>{() => <Redirect to="/flights" />}</Route>
-      <Route path={"/assurance"} component={Assurance} />
+      <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
       <Route path={"/evisa-demande"} component={EvisaDemande} />
@@ -278,6 +279,11 @@ function Router() {
       <Route path={"/admin/consultation-requests"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminConsultationRequests />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/insurance-requests"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminInsuranceRequests />
         </AdminGuard>
       </Route>
       <Route path={"/admin/ai-evaluations"}>

@@ -1,4 +1,4 @@
-import { boolean, decimal, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, date, decimal, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -525,6 +525,33 @@ export const adminSavedViews = mysqlTable("admin_saved_views", {
   adminAccountId: int("adminAccountId").notNull(),
   name: varchar("name", { length: 80 }).notNull(),
   stateJson: text("stateJson").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/** Demandes d’assurance voyage transmises par les voyageurs à l’administration. */
+export const insuranceRequests = mysqlTable("insurance_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  reference: varchar("reference", { length: 32 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  dateOfBirth: date("dateOfBirth").notNull(),
+  nationality: varchar("nationality", { length: 100 }).notNull(),
+  passportNumber: varchar("passportNumber", { length: 64 }).notNull(),
+  residenceCountry: varchar("residenceCountry", { length: 100 }).notNull(),
+  destinationCountry: varchar("destinationCountry", { length: 100 }).notNull(),
+  departureDate: date("departureDate").notNull(),
+  returnDate: date("returnDate").notNull(),
+  tripPurpose: varchar("tripPurpose", { length: 80 }).notNull(),
+  coveragePlan: varchar("coveragePlan", { length: 80 }).notNull(),
+  travelersCount: int("travelersCount").notNull(),
+  travelersJson: text("travelersJson").notNull(),
+  emergencyContactName: varchar("emergencyContactName", { length: 255 }).notNull(),
+  emergencyContactPhone: varchar("emergencyContactPhone", { length: 50 }).notNull(),
+  notes: text("notes"),
+  consentAt: timestamp("consentAt").notNull(),
+  status: mysqlEnum("status", ["new", "contacted", "quote_sent", "completed", "cancelled"]).default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
