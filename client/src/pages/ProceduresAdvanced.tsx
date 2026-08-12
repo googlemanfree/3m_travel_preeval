@@ -515,11 +515,11 @@ export default function ProceduresAdvanced() {
                       </div>
 
                       {/* Buttons Container */}
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 pt-2">
                         {/* Launch Procedure Button */}
-                        <a href="/evaluation-primaire" className="flex-1">
+                        <a href={`/evaluation-primaire?destination=${country.id}`} className="flex-1">
                           <Button
-                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                            className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg text-xs"
                           >
                             🚀 Lancer ma Procédure
                           </Button>
@@ -535,20 +535,20 @@ export default function ProceduresAdvanced() {
                             className="flex-1"
                           >
                             <Button
-                              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg text-xs"
                             >
                               <Download className="w-4 h-4" />
-                              PDF
+                              Guide PDF
                             </Button>
                           </a>
                         ) : (
                           <Button
                             disabled
                             title="Document en cours de préparation — contactez-nous pour l'obtenir directement"
-                            className="flex-1 bg-gray-100 text-gray-400 font-semibold py-2 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
+                            className="flex-1 bg-slate-100 text-slate-400 font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs"
                           >
                             <Download className="w-4 h-4" />
-                            Bientôt disponible
+                            Bientôt dispo
                           </Button>
                         )}
                       </div>

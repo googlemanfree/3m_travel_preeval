@@ -210,6 +210,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showAgreement, setShowAgreement] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [applicationResult, setApplicationResult] = useState<{ id: number; dossierNumber: string } | null>(null);
 
   const createApplication = trpc.application.createApplication.useMutation();
@@ -493,7 +494,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
   };
 
   const handlePrintDraft = () => {
-    window.print();
+    setShowPrintPreview(true);
   };
 
   // Si le Protocole d'Accord doit être affiché

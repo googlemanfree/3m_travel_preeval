@@ -1470,3 +1470,14 @@
 - [x] Ajouter une fonction handlePrintDraft dans FullDossierForm pour ouvrir la boîte de dialogue d'impression
 - [x] Ajouter le bouton d'impression à côté du bouton de téléchargement PDF dans l'en-tête du formulaire
 - [x] Valider le build de production et publier la version avec impression directe
+
+## Fenêtre modale d'aperçu avant impression (v35)
+- [ ] Créer un état d'affichage de la modale d'aperçu dans FullDossierForm
+- [ ] Concevoir la boîte modale affichant le récapitulatif stylisé aux couleurs de l'agence avec QR code
+- [ ] Ajouter les boutons "Fermer" et "Lancer l'impression" directement dans l'aperçu
+- [ ] Valider le build de production et publier la version avec aperçu avant impression
+
+## Amélioration de la page Procédures (v36)
+- [x] Auditer ProceduresAdvanced.tsx et l'intégration des 107 destinations
+- [x] Refondre l'interface visuelle avec des cartes glassmorphism modernes, des badges de délai/coût et un accès direct "Lancer ma procédure"
+- [x] Valider le build de production et publier la version améliorée de la page procédures
