@@ -1472,10 +1472,10 @@
 - [x] Valider le build de production et publier la version avec impression directe
 
 ## Fenêtre modale d'aperçu avant impression (v35)
-- [ ] Créer un état d'affichage de la modale d'aperçu dans FullDossierForm
-- [ ] Concevoir la boîte modale affichant le récapitulatif stylisé aux couleurs de l'agence avec QR code
-- [ ] Ajouter les boutons "Fermer" et "Lancer l'impression" directement dans l'aperçu
-- [ ] Valider le build de production et publier la version avec aperçu avant impression
+- [x] Créer un état d'affichage de la modale d'aperçu dans FullDossierForm
+- [x] Concevoir la boîte modale affichant le récapitulatif stylisé aux couleurs de l'agence avec QR code
+- [x] Ajouter les boutons "Fermer" et "Lancer l'impression" directement dans l'aperçu
+- [x] Valider le build de production et publier la version avec aperçu avant impression
 
 ## Amélioration de la page Procédures (v36)
 - [x] Auditer ProceduresAdvanced.tsx et l'intégration des 107 destinations

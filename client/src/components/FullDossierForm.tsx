@@ -623,6 +623,98 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         </AnimatePresence>
       </div>
 
+      {/* ── Modale d'Aperçu avant Impression ── */}
+      {showPrintPreview && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+          >
+            <div className="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg">Aperçu du Récapitulatif de Brouillon</h3>
+                <p className="text-blue-200 text-xs">Vérifiez les informations avant impression ou soumission</p>
+              </div>
+              <button onClick={() => setShowPrintPreview(false)} className="text-blue-200 hover:text-white p-1 rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 bg-slate-50">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 flex items-center gap-3">
+                <span className="text-xl">⚠️</span>
+                <span><strong>Document de travail non officiel :</strong> Ce récapitulatif est généré à partir de votre saisie locale. Il n'a pas encore été validé par un conseiller.</span>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                <div className="flex justify-between items-start border-b pb-4">
+                  <div>
+                    <h4 className="font-black text-blue-900 text-xl tracking-wide">3M TRAVEL & SERVICES</h4>
+                    <p className="text-xs text-slate-500">Mobilité Internationale & Visa</p>
+                  </div>
+                  <div className="text-right text-xs text-slate-500">
+                    <p>Date : {new Date().toLocaleDateString()}</p>
+                    <p className="font-semibold text-amber-600">Statut : Brouillon</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Nom du candidat</p>
+                    <p className="font-bold text-slate-900">{form.fullName || "Non renseigné"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Email & Contact</p>
+                    <p className="font-semibold text-slate-900">{form.email || "Non renseigné"} ({form.whatsappNumber || "N/A"})</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Destination</p>
+                    <p className="font-semibold text-slate-900">{form.destination || "Non définie"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Type de Visa</p>
+                    <p className="font-semibold text-slate-900">{form.visaType || "Non spécifié"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Formule choisie</p>
+                    <p className="font-semibold text-slate-900">{form.formulaChosen || "Standard"}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 font-semibold uppercase">Niveau d'études</p>
+                    <p className="font-semibold text-slate-900">{form.academicLevel || "Non renseigné"}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t flex items-center justify-between">
+                  <div className="text-xs text-slate-500">
+                    <p className="font-semibold text-slate-700">Portail Agence 3M Travel</p>
+                    <p>hello@3mtravelagency.com • +237 698 104 832</p>
+                  </div>
+                  <div className="w-16 h-16 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center text-xs font-bold text-blue-900 text-center p-1">
+                    QR CODE AGENCE
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white px-6 py-4 border-t flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowPrintPreview(false)}>
+                Fermer
+              </Button>
+              <Button
+                onClick={() => {
+                  window.print();
+                }}
+                className="bg-blue-700 hover:bg-blue-800 text-white font-bold flex items-center gap-2"
+              >
+                🖨️ Lancer l'impression
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* ── Navigation ── */}
       <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
         <Button
