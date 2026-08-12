@@ -1435,3 +1435,8 @@
 - [x] Identifier et corriger les pages potentiellement vides ou non routées
 - [x] Tester les pages clés du site pour garantir une navigation 100% active et fonctionnelle
 - [x] Valider le build de production et publier la version corrigée
+
+## Infobulles explicatives sur les formulaires (v28)
+- [x] Créer ou intégrer des infobulles (Tooltip / Popover) sur les champs complexes des formulaires (FullDossierForm, FlightSearch, Evaluation)
+- [x] Tester les infobulles au survol et au clic pour garantir l'accessibilité mobile et desktop
+- [x] Valider le build de production et publier la version avec infobulles
