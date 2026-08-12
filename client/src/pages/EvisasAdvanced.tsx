@@ -10,8 +10,10 @@ import { motion } from 'framer-motion';
 export default function EvisasAdvanced() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
+  const [selectedDelay, setSelectedDelay] = useState('Tous');
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
+  const delays = ['Tous', '24h', '24h-48h', '2-5 jours', '3-7 jours'];
 
   const filteredEvisas = useMemo(() => {
     return evisasDatabaseComplete.filter(evisa => {
@@ -22,9 +24,11 @@ export default function EvisasAdvanced() {
       
       const matchesRegion = selectedRegion === 'Tous' || evisa.region === selectedRegion;
       
-      return matchesSearch && matchesRegion;
+      const matchesDelay = selectedDelay === 'Tous' || evisa.delay.toLowerCase().includes(selectedDelay.toLowerCase());
+      
+      return matchesSearch && matchesRegion && matchesDelay;
     });
-  }, [searchQuery, selectedRegion]);
+  }, [searchQuery, selectedRegion, selectedDelay]);
 
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -56,23 +60,44 @@ export default function EvisasAdvanced() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-            <span className="text-xs font-bold text-slate-500 uppercase mr-2 flex items-center gap-1">
-              <Globe className="w-4 h-4 text-blue-600" /> Régions :
-            </span>
-            {regions.map(region => (
-              <button
-                key={region}
-                onClick={() => setSelectedRegion(region)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  selectedRegion === region
-                    ? 'bg-blue-700 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {region}
-              </button>
-            ))}
+          <div className="space-y-4 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 uppercase mr-2 flex items-center gap-1">
+                <Globe className="w-4 h-4 text-blue-600" /> Régions :
+              </span>
+              {regions.map(region => (
+                <button
+                  key={region}
+                  onClick={() => setSelectedRegion(region)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    selectedRegion === region
+                      ? 'bg-blue-700 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {region}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 uppercase mr-2 flex items-center gap-1">
+                <Clock className="w-4 h-4 text-emerald-600" /> Délai :
+              </span>
+              {delays.map(delay => (
+                <button
+                  key={delay}
+                  onClick={() => setSelectedDelay(delay)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    selectedDelay === delay
+                      ? 'bg-emerald-700 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {delay}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

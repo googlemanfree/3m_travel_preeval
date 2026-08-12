@@ -1534,3 +1534,9 @@
 - [x] Créer un composant dédié `EvisaDetailPage.tsx` ou adapter CountryDetailPage pour les procédures e-Visa avec drapeau, culture, emblèmes et procédure e-Visa complète
 - [x] Configurer la route dynamique `/evisa/:countryId` dans `App.tsx`
 - [x] Valider le build de production et publier la version e-Visa enrichie
+
+## Améliorations e-Visa avancées (v47)
+- [x] Ajouter un filtre par délai d'obtention (24h, 48h, 3-5 jours, autres) dans l'annuaire e-Visa (EvisasAdvanced.tsx)
+- [x] Intégrer un parcours de paiement direct des frais consulaires e-Visa depuis la fiche pays (EvisaDetailPage.tsx)
+- [x] Créer une vue de suivi et validation administrative des demandes e-Visa dans le dashboard admin
+- [x] Valider le build de production et publier la version avec e-Visa avancé
