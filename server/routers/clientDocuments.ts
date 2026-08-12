@@ -10,8 +10,21 @@ import { z } from "zod";
 import { getDb } from "../db";
 import { evaluations, clientDocuments, clientPayments, paymentAuditLogs } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
+import { analyzePassportDocument } from "../services/passportAnalyzer";
 
 export const clientDocumentsRouter = router({
+  /**
+   * Analyser automatiquement un scan de passeport
+   */
+  analyzePassport: publicProcedure
+    .input(z.object({
+      fileName: z.string().optional(),
+      fileUrl: z.string().url().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const result = await analyzePassportDocument(undefined, input.fileName);
+      return result;
+    }),
   // ─────────────────────────────────────────────────────────────────────────
   // DOCUMENTS CLIENTS
   // ─────────────────────────────────────────────────────────────────────────

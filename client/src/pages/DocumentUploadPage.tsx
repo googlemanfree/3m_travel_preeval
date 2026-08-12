@@ -42,6 +42,8 @@ export default function DocumentUploadPage() {
   const [globalError, setGlobalError] = useState('');
 
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const analyzePassportMutation = trpc.clientDocuments.analyzePassport.useMutation();
+  const [passportAnalysis, setPassportAnalysis] = useState<any>(null);
 
   if (!isAuthenticated) {
     return (
@@ -91,6 +93,19 @@ export default function DocumentUploadPage() {
       });
 
       setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'completed', progress: 100, fileUrl: data.fileUrl } : d)));
+
+      // Si c'est un passeport, lancer l'analyse automatique de lisibilité
+      if (doc.type === 'passport') {
+        try {
+          const analysis = await analyzePassportMutation.mutateAsync({
+            fileName: doc.file.name,
+            fileUrl: data.fileUrl,
+          });
+          setPassportAnalysis(analysis);
+        } catch (e) {
+          console.error("Erreur analyse passeport", e);
+        }
+      }
     } catch (err: any) {
       setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'error', error: err.message || 'Échec de l\'envoi' } : d)));
     }
@@ -197,6 +212,43 @@ export default function DocumentUploadPage() {
             </Card>
           ))}
         </div>
+
+        {/* Résultat de l'analyse automatique du passeport */}
+        {passportAnalysis && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <Card className="p-6 bg-blue-50 border-2 border-blue-200 rounded-2xl shadow-sm space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold">
+                  🛂
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-blue-950">Rapport d'analyse automatique du Passeport</h3>
+                  <p className="text-xs text-blue-700">Vérification instantanée de lisibilité et de conformité</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                <div className="bg-white p-3 rounded-xl border border-blue-100">
+                  <p className="text-xs text-gray-500 font-medium">Score de lisibilité</p>
+                  <p className="text-xl font-black text-emerald-600 mt-1">{passportAnalysis.readabilityScore}%</p>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-blue-100">
+                  <p className="text-xs text-gray-500 font-medium">Zone biographique</p>
+                  <p className="text-sm font-bold text-gray-800 mt-1">{passportAnalysis.checks.hasBiographicZone ? 'Détectée ✓' : 'Non détectée ⚠'}</p>
+                </div>
+                <div className="bg-white p-3 rounded-xl border border-blue-100">
+                  <p className="text-xs text-gray-500 font-medium">Statut de validité</p>
+                  <p className="text-sm font-bold text-emerald-700 mt-1">{passportAnalysis.extractedInfo?.estimatedValidityStatus || 'Conforme'}</p>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-blue-100 text-xs text-gray-700 space-y-1">
+                <p className="font-bold text-blue-900">Recommandation du système :</p>
+                <p>{passportAnalysis.recommendation}</p>
+              </div>
+            </Card>
+          </motion.div>
+        )}
 
         {uploadedDocs.length > 0 && (
           <div className="mb-8 space-y-3">

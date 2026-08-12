@@ -1547,3 +1547,10 @@
 - [x] Configurer l'envoi d'e-mails automatiques de confirmation et de mise à jour de statut via hello@3mtravelagency.com
 - [x] Synchroniser les demandes e-Visa entre l'espace candidat et le tableau de bord administrateur
 - [x] Valider le build de production et publier la version e-Visa 100% opérationnelle
+
+## Analyse automatique des scans de passeport (v49)
+- [x] Concevoir le module d'analyse de documents (vérification de format, contrôle de netteté/lisibilité, détection des zones biographiques et vérification de validité)
+- [x] Intégrer l'analyse automatique lors du téléversement de passeport dans l'espace client (DocumentUploadPage.tsx / SubmitDocuments.tsx)
+- [x] Afficher un retour instantané au candidat (score de lisibilité, avertissement d'expiration éventuelle)
+- [x] Transmettre le rapport d'analyse dans le tableau de bord administrateur pour validation finale
+- [x] Valider le build de production et publier la version avec analyse de passeport
