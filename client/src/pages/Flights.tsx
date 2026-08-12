@@ -882,11 +882,17 @@ export default function Flights() {
                 )}
               </div>
 
-              {/* Demo notice */}
+              {/* Demo notice / Daily limit explanation */}
               <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800">
-                  <strong>Mode Démo actif</strong> — Les tarifs et disponibilités affichés sont simulés à des fins de démonstration. Pour des prix réels en temps réel, la connexion à l'API Travelport sera activée dès réception de vos credentials GDS.
+                <div className="text-sm text-amber-900 space-y-1">
+                  <div><strong>Limite journalière SearchAPI / Tarifs indicatifs (Mode Simulation) :</strong></div>
+                  <p className="text-xs text-amber-800">
+                    Lorsque la clé SearchAPI.io atteint sa <strong>limite journalière</strong> ou que l'API est en dépassement de quota, le système bascule automatiquement sur des tarifs indicatifs et des simulations de l'agence pour éviter de bloquer votre recherche.
+                  </p>
+                  <p className="text-xs font-semibold text-amber-900 pt-1">
+                    💡 <strong>Comment résoudre ?</strong> Mettez à jour ou rechargez votre clé API <code>SEARCHAPI_KEY</code> valide avec un quota suffisant dans les secrets du serveur, ou contactez l'agence pour valider les tarifs en direct.
+                  </p>
                 </div>
               </div>
             </div>
