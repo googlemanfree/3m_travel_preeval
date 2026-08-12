@@ -39,6 +39,12 @@ export function AdminDocumentsManagement() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [previewingDoc, setPreviewingDoc] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [markerAnnotations, setMarkerAnnotations] = useState<Record<string, string>>({});
+  const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+
+  const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
+  const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
+  const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
 
   // Récupérer les documents via tRPC
   const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
@@ -58,10 +64,9 @@ export function AdminDocumentsManagement() {
   const handleApproveDocument = async (docId: number) => {
     setIsLoading(true);
     try {
-      // TODO: Appeler la procédure tRPC pour approuver le document
-      // await trpc.admin.approveDocument.mutate({ documentId: docId });
+      await approveDocumentMutation.mutateAsync({ sessionToken, documentId: docId });
       toast.success("✓ Document approuvé", {
-        description: "Le candidat a été notifié de l'approbation",
+        description: "La décision est enregistrée dans le dossier candidat.",
         duration: 4000,
       });
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -94,10 +99,17 @@ export function AdminDocumentsManagement() {
 
     setIsLoading(true);
     try {
-      // TODO: Appeler la procédure tRPC pour rejeter le document
-      // await trpc.admin.rejectDocument.mutate({ documentId: rejectingDocId, reason: rejectionReason });
+      const result = await rejectDocumentMutation.mutateAsync({
+        sessionToken,
+        documentId: rejectingDocId,
+        comment: rejectionReason,
+        markerAnnotations,
+        notifyCandidate: true,
+      });
       toast.success("✓ Document rejeté", {
-        description: "Le candidat a reçu la raison du rejet par email",
+        description: result.notificationSent
+          ? "Le candidat a reçu les annotations et la raison du rejet par e-mail."
+          : "Le rejet est enregistré. La notification e-mail n’a pas pu être confirmée.",
         duration: 4000,
       });
       setRejectingDocId(null);
@@ -132,6 +144,8 @@ export function AdminDocumentsManagement() {
     aiClassification: doc.aiClassification ?? null,
     aiClassificationConfidence: doc.aiClassificationConfidence ?? null,
     suggestedFolder: doc.suggestedFolder ?? null,
+    readabilityScore: doc.readabilityScore ?? null,
+    readabilityIssues: doc.readabilityIssues ?? null,
   })) || [];
 
   const getClassificationLabel = (classification: unknown) => {
@@ -210,7 +224,38 @@ export function AdminDocumentsManagement() {
   };
 
   const handleViewDocument = (doc: Document) => {
+    try {
+      const analysis = typeof doc.readabilityIssues === "string"
+        ? JSON.parse(doc.readabilityIssues)
+        : doc.readabilityIssues;
+      setMarkerAnnotations(analysis?.adminAnnotations ?? {});
+    } catch {
+      setMarkerAnnotations({});
+    }
+    setActiveMarkerId(null);
     setPreviewingDoc(doc);
+  };
+
+  const handleSaveMarkerAnnotations = async () => {
+    if (!previewingDoc) return;
+    setIsLoading(true);
+    try {
+      await saveMarkerAnnotationsMutation.mutateAsync({
+        sessionToken,
+        documentId: previewingDoc.id,
+        annotations: markerAnnotations,
+      });
+      toast.success("Annotations enregistrées", {
+        description: "Elles seront jointes au document si celui-ci doit être renvoyé au candidat.",
+      });
+      await refetch();
+    } catch (error) {
+      toast.error("Impossible d’enregistrer les annotations", {
+        description: error instanceof Error ? error.message : "Veuillez réessayer.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDownloadPreviewedDocument = () => {
@@ -541,7 +586,8 @@ export function AdminDocumentsManagement() {
                           <div
                             key={zone.id}
                             style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
-                            className={`absolute border-2 rounded-md p-1 flex flex-col justify-between backdrop-blur-[1px] ${borderColor}`}
+                            onClick={() => setActiveMarkerId(zone.id)}
+                            className={`absolute border-2 rounded-md p-1 flex flex-col justify-between backdrop-blur-[1px] cursor-pointer transition-transform hover:scale-[1.02] ${borderColor}`}
                             title={zone.description}
                           >
                             <span className="text-[9px] font-bold px-1 bg-black/70 rounded text-white truncate inline-block">
@@ -550,6 +596,39 @@ export function AdminDocumentsManagement() {
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                  {previewingDoc.readabilityIssues && (
+                    <div className="space-y-2 pt-1">
+                      <p className="text-xs font-bold text-blue-950">Commentaires sur les marqueurs</p>
+                      {(typeof previewingDoc.readabilityIssues === 'string' ? JSON.parse(previewingDoc.readabilityIssues) : previewingDoc.readabilityIssues).annotatedZones?.map((zone: any) => (
+                        <button
+                          type="button"
+                          key={`marker-comment-${zone.id}`}
+                          onClick={() => setActiveMarkerId(zone.id)}
+                          className={`w-full text-left rounded-lg border p-2 text-xs transition-colors ${activeMarkerId === zone.id ? 'border-blue-500 bg-blue-100' : 'border-blue-100 bg-white hover:bg-blue-50'}`}
+                        >
+                          <strong className="text-gray-900">{zone.label}</strong>
+                          <span className="ml-1 text-gray-500">— {markerAnnotations[zone.id] ? 'Commentaire ajouté' : 'Ajouter un commentaire'}</span>
+                        </button>
+                      ))}
+                      {activeMarkerId && (
+                        <div className="rounded-lg border border-blue-200 bg-white p-3 space-y-2">
+                          <label className="text-xs font-semibold text-blue-950" htmlFor="marker-annotation">
+                            Commentaire destiné au candidat
+                          </label>
+                          <Textarea
+                            id="marker-annotation"
+                            value={markerAnnotations[activeMarkerId] ?? ""}
+                            onChange={(event) => setMarkerAnnotations((current) => ({ ...current, [activeMarkerId]: event.target.value }))}
+                            placeholder="Expliquez précisément ce qui doit être corrigé sur cette zone…"
+                            className="min-h-20 text-sm"
+                          />
+                          <Button size="sm" type="button" onClick={handleSaveMarkerAnnotations} disabled={isLoading}>
+                            Enregistrer ce commentaire
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -609,7 +688,7 @@ export function AdminDocumentsManagement() {
                     disabled={isLoading}
                     className="bg-red-600 hover:bg-red-700"
                   >
-                    Rejeter
+                    Renvoyer avec annotations
                   </Button>
                 </>
               )}
@@ -621,9 +700,9 @@ export function AdminDocumentsManagement() {
         <Dialog open={rejectingDocId !== null} onOpenChange={(open) => !open && setRejectingDocId(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rejeter le document</DialogTitle>
+              <DialogTitle>Renvoyer le document avec annotations</DialogTitle>
               <DialogDescription>
-                Veuillez fournir une raison pour le rejet de ce document. Le candidat recevra cette raison par email.
+                Le candidat recevra immédiatement par e-mail votre commentaire ainsi que les annotations enregistrées sur les marqueurs visuels.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -639,7 +718,7 @@ export function AdminDocumentsManagement() {
                 Annuler
               </Button>
               <Button onClick={submitRejection} disabled={isLoading || !rejectionReason.trim()} className="bg-red-600 hover:bg-red-700">
-                {isLoading ? "Rejet en cours..." : "Confirmer le rejet"}
+                {isLoading ? "Envoi en cours..." : "Renvoyer au candidat"}
               </Button>
             </DialogFooter>
           </DialogContent>

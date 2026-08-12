@@ -424,7 +424,13 @@ export const adminRouter = router({
    * Rejeter un document
    */
   rejectDocument: publicProcedure
-    .input(z.object({ sessionToken: z.string(), documentId: z.number(), comment: z.string() }))
+    .input(z.object({
+      sessionToken: z.string(),
+      documentId: z.number(),
+      comment: z.string().min(3),
+      markerAnnotations: z.record(z.string(), z.string()).optional(),
+      notifyCandidate: z.boolean().default(true),
+    }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
 
@@ -432,17 +438,64 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        const [document] = await db
+          .select()
+          .from(clientDocuments)
+          .where(eq(clientDocuments.id, input.documentId))
+          .limit(1);
+
+        if (!document) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable" });
+        }
+
+        const existingIssues = document.readabilityIssues && typeof document.readabilityIssues === "object"
+          ? document.readabilityIssues as Record<string, unknown>
+          : {};
+        const readabilityIssues = {
+          ...existingIssues,
+          adminAnnotations: input.markerAnnotations ?? (existingIssues as any).adminAnnotations ?? {},
+          returnedToCandidateAt: new Date().toISOString(),
+          returnedByAdmin: admin.email,
+        };
+
         await db
           .update(clientDocuments)
           .set({
             verificationStatus: "rejected",
+            status: "rejected",
             verificationComment: input.comment,
             verifiedByAdmin: admin.email,
             verifiedAt: new Date(),
+            readabilityIssues,
           })
           .where(eq(clientDocuments.id, input.documentId));
 
-        return { success: true, message: "Document rejeté" };
+        let notificationSent = false;
+        if (input.notifyCandidate) {
+          try {
+            const annotationItems = Object.entries(input.markerAnnotations ?? {})
+              .filter(([, value]) => value.trim().length > 0)
+              .map(([markerId, value]) => `<li><strong>${markerId}</strong> : ${value}</li>`)
+              .join("");
+            await sendGenericEmail({
+              to: document.candidateEmail,
+              subject: "Action requise : votre document doit être corrigé — 3M Travel & Services",
+              html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1f2937">
+                <div style="background:#1E3A8A;padding:24px;text-align:center;color:#fff"><h1 style="margin:0;font-size:22px">3M Travel & Services</h1></div>
+                <div style="padding:28px"><p>Bonjour,</p><p>Votre document <strong>${document.documentName}</strong> nécessite une nouvelle version avant validation.</p>
+                <div style="background:#fff7ed;border-left:4px solid #f97316;padding:14px;margin:18px 0"><strong>Commentaire du conseiller :</strong><br/>${input.comment}</div>
+                ${annotationItems ? `<p><strong>Zones à corriger :</strong></p><ul>${annotationItems}</ul>` : ""}
+                <p>Connectez-vous à votre espace pour consulter les annotations visuelles et remplacer le document.</p>
+                <a href="https://www.3mtravelagency.com/documents" style="display:inline-block;background:#1E3A8A;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700">Accéder à mes documents</a>
+                </div></div>`,
+            });
+            notificationSent = true;
+          } catch (emailError) {
+            console.error("[Admin Reject Document] Notification failed:", emailError);
+          }
+        }
+
+        return { success: true, message: "Document rejeté", notificationSent };
       } catch (err) {
         console.error("[Admin Reject Document] Error:", err);
         throw new TRPCError({
@@ -450,6 +503,36 @@ export const adminRouter = router({
           message: "Erreur lors du rejet du document",
         });
       }
+    }),
+
+  /** Enregistrer les commentaires d’un administrateur sur les marqueurs de lisibilité. */
+  savePassportMarkerAnnotations: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      documentId: z.number(),
+      annotations: z.record(z.string(), z.string().max(600)),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [document] = await db.select().from(clientDocuments).where(eq(clientDocuments.id, input.documentId)).limit(1);
+      if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable" });
+
+      const current = document.readabilityIssues && typeof document.readabilityIssues === "object"
+        ? document.readabilityIssues as Record<string, unknown>
+        : {};
+      await db.update(clientDocuments).set({
+        readabilityIssues: {
+          ...current,
+          adminAnnotations: input.annotations,
+          annotationUpdatedAt: new Date().toISOString(),
+          annotationUpdatedBy: admin.email,
+        },
+      }).where(eq(clientDocuments.id, input.documentId));
+
+      return { success: true, message: "Annotations enregistrées" };
     }),
 
   /**

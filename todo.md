@@ -1566,3 +1566,9 @@
 - [x] Mettre à jour la procédure de soumission de document pour enregistrer le résultat de l'analyse automatique
 - [x] Intégrer l'affichage du rapport annoté et des marqueurs visuels dans l'interface de vérification des documents de l'administrateur
 - [x] Valider le build de production et publier la version avec synchronisation admin du rapport de passeport
+
+## Commentaires et prévalidation des passeports (v52)
+- [x] Permettre aux administrateurs d’ajouter un commentaire textuel ciblé à chaque marqueur visuel de passeport
+- [x] Mettre en place une prévalidation automatique traçable des scans dont le score dépasse 95 %, sans remplacer la décision finale du dossier
+- [x] Ajouter un bouton de renvoi immédiat du document refusé avec ses annotations et sa notification au candidat
+- [x] Tester les droits, les statuts et la notification, puis publier la version validée

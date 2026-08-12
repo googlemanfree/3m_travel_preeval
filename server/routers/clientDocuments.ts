@@ -67,31 +67,42 @@ export const clientDocumentsRouter = router({
           .where(eq(evaluations.id, input.evaluationId))
           .limit(1);
 
-        if (evals.length === 0) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
-        }
+	      if (evals.length === 0) {
+	        throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
+	      }
 
-        const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	      const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	      const isPassportPrevalidated = input.documentType === "passport" && (input.readabilityScore ?? 0) >= 95;
+	      const analysisPayload = input.readabilityIssues && typeof input.readabilityIssues === "object"
+	        ? { ...input.readabilityIssues, prevalidated: isPassportPrevalidated }
+	        : input.readabilityIssues ?? null;
 
-        await db.insert(clientDocuments).values({
+	      await db.insert(clientDocuments).values({
           evaluationId: input.evaluationId,
           candidateEmail: input.candidateEmail,
           documentType: input.documentType as any,
           documentName: input.documentName,
-          documentUrl: input.documentUrl,
-          fileSize: input.fileSize,
-          readabilityScore: input.readabilityScore,
-          readabilityIssues: input.readabilityIssues ? JSON.stringify(input.readabilityIssues) : null,
-          status: "pending",
-          receiptNumber,
-          receiptGeneratedAt: new Date(),
-        });
+	        documentUrl: input.documentUrl,
+	        fileSize: input.fileSize,
+	        readabilityScore: input.readabilityScore,
+	        readabilityIssues: analysisPayload,
+	        status: isPassportPrevalidated ? "verified" : "pending",
+	        verificationStatus: isPassportPrevalidated ? "approved" : "pending",
+	        verificationComment: isPassportPrevalidated
+	          ? `Prévalidation automatique du contrôle de lisibilité (${input.readabilityScore} %). Une révision humaine reste possible.`
+	          : null,
+	        verifiedByAdmin: isPassportPrevalidated ? "Système — contrôle de lisibilité" : null,
+	        verifiedAt: isPassportPrevalidated ? new Date() : null,
+	        receiptNumber,
+	        receiptGeneratedAt: new Date(),
+	      });
 
         return {
-          success: true,
-          message: "Document soumis avec succès",
-          receiptNumber,
-        };
+	        success: true,
+	        message: "Document soumis avec succès",
+	        receiptNumber,
+	        prevalidated: isPassportPrevalidated,
+	      };
       } catch (err) {
         console.error("[Submit Document] Error:", err);
         throw new TRPCError({
