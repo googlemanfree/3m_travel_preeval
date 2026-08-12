@@ -1653,3 +1653,10 @@
 - [x] Ajouter une progression visuelle par étapes au formulaire d’assurance
 - [x] Unifier progressivement coordonnées, preuves sociales, services, formulaire principal, bloc légal, footer et demande de vol sans refonte
 - [x] Tester les flux d’assurance, l’affichage mobile et publier la version validée
+
+## Audit métier et architecture dossiers (v63)
+- [x] Inventorier le schéma, les migrations, les relations et les index existants sans modifier les données
+- [x] Vérifier les tables réelles de la base et leur utilisation par les routeurs et interfaces
+- [x] Cartographier les parcours client, admin, documents, paiements, messages, notifications et création en agence
+- [x] Comparer l’existant au modèle métier cible et identifier les écarts, doublons et risques de migration
+- [x] Produire un rapport d’audit détaillé avec priorités, SQL de migration proposé et plan de tests, sans l’appliquer
