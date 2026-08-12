@@ -1660,3 +1660,10 @@
 - [x] Cartographier les parcours client, admin, documents, paiements, messages, notifications et création en agence
 - [x] Comparer l’existant au modèle métier cible et identifier les écarts, doublons et risques de migration
 - [x] Produire un rapport d’audit détaillé avec priorités, SQL de migration proposé et plan de tests, sans l’appliquer
+
+## Dossier canonique et suivi client sécurisé (v64)
+- [x] Créer et appliquer les migrations additives pour les dossiers, historiques, notifications et exigences documentaires
+- [x] Mettre en place les index et relations nécessaires sans supprimer les tables historiques
+- [x] Contrôler la propriété serveur de chaque lecture de dossier, document et attestation client
+- [x] Créer l’espace client de suivi fondé sur les structures canoniques, avec actualisation manuelle
+- [x] Tester les migrations, les accès isolés, les documents et les parcours mobile/bureau avant publication

@@ -9,10 +9,16 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { evaluations, clientDocuments, clientPayments, paymentAuditLogs } from "../../drizzle/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, or } from "drizzle-orm";
 import { analyzePassportDocument } from "../services/passportAnalyzer";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 import { randomBytes } from "node:crypto";
+import { candidateProcedure } from "./candidate";
+
+async function assertOwnedEvaluation(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, evaluationId: number, candidateId: number, candidateEmail: string) {
+  const owned = await db.select({ id: evaluations.id }).from(evaluations).where(and(eq(evaluations.id, evaluationId), or(eq(evaluations.candidateId, candidateId), eq(evaluations.email, candidateEmail)))).limit(1);
+  if (!owned.length) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable ou non autorisée" });
+}
 
 export const clientDocumentsRouter = router({
   /**
@@ -34,10 +40,10 @@ export const clientDocumentsRouter = router({
   /**
    * Soumettre un document (côté client)
    */
-  submitDocument: publicProcedure
+  submitDocument: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().optional(),
       documentType: z.enum([
         "passport",
         "cv",
@@ -57,9 +63,10 @@ export const clientDocumentsRouter = router({
       readabilityScore: z.number().int().optional(),
       readabilityIssues: z.any().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await assertOwnedEvaluation(db, input.evaluationId, ctx.candidate.id, ctx.candidate.email);
 
       try {
         // Vérifier que l'évaluation existe
@@ -91,7 +98,7 @@ export const clientDocumentsRouter = router({
 
 	      await db.insert(clientDocuments).values({
           evaluationId: input.evaluationId,
-          candidateEmail: input.candidateEmail,
+          candidateEmail: ctx.candidate.email,
           documentType: input.documentType as any,
           documentName: input.documentName,
 	        documentUrl: input.documentUrl,
@@ -110,7 +117,7 @@ export const clientDocumentsRouter = router({
 	      });
 
 	      void notifyDocumentSubmission({
-	        candidateEmail: input.candidateEmail,
+        candidateEmail: ctx.candidate.email,
 	        documentType: input.documentType,
 	        documentName: input.documentName,
 	        receiptNumber,
@@ -134,23 +141,24 @@ export const clientDocumentsRouter = router({
   /**
    * Récupérer les documents d'une évaluation
    */
-  getDocuments: publicProcedure
+  getDocuments: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        await assertOwnedEvaluation(db, input.evaluationId, ctx.candidate.id, ctx.candidate.email);
         const docs = await db
           .select()
           .from(clientDocuments)
           .where(
             and(
               eq(clientDocuments.evaluationId, input.evaluationId),
-              eq(clientDocuments.candidateEmail, input.candidateEmail)
+              eq(clientDocuments.candidateEmail, ctx.candidate.email)
             )
           )
           .orderBy(desc(clientDocuments.createdAt));
@@ -223,23 +231,24 @@ export const clientDocumentsRouter = router({
   /**
    * Récupérer les paiements d'une évaluation
    */
-  getPayments: publicProcedure
+  getPayments: candidateProcedure
     .input(z.object({
       evaluationId: z.number().int(),
-      candidateEmail: z.string().email(),
+      candidateEmail: z.string().email().optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        await assertOwnedEvaluation(db, input.evaluationId, ctx.candidate.id, ctx.candidate.email);
         const payments = await db
           .select()
           .from(clientPayments)
           .where(
             and(
               eq(clientPayments.evaluationId, input.evaluationId),
-              eq(clientPayments.candidateEmail, input.candidateEmail)
+              eq(clientPayments.candidateEmail, ctx.candidate.email)
             )
           )
           .orderBy(desc(clientPayments.createdAt));

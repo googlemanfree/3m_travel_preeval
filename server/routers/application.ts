@@ -13,6 +13,8 @@ import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, send
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { randomBytes, randomInt } from "node:crypto";
+import { candidateProcedure } from "./candidate";
+import { caseApplicants, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -81,7 +83,7 @@ async function initCinetPayTransaction(params: {
 export const applicationRouter = router({
 
   /** Créer un dossier et initialiser le paiement CinetPay */
-  createApplication: publicProcedure
+  createApplication: candidateProcedure
     .input(z.object({
       fullName: z.string().min(2),
       email: z.string().email(),
@@ -138,9 +140,12 @@ export const applicationRouter = router({
       // Type de visa
       visaType: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      if (input.email.trim().toLowerCase() !== ctx.candidate.email.trim().toLowerCase()) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Le dossier doit être créé avec l’adresse e-mail de votre compte." });
+      }
       const siteId = process.env.CINETPAY_SITE_ID ?? "";
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
       const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
@@ -161,7 +166,7 @@ export const applicationRouter = router({
 
       const [insertResult] = await db.insert(applications).values({
         dossierNumber,
-        candidateId: input.candidateId ?? null,
+        candidateId: ctx.candidate.id,
         fullName: input.fullName,
         email: input.email,
         whatsappNumber: input.whatsappNumber,
@@ -252,6 +257,26 @@ export const applicationRouter = router({
         .from(applications)
         .where(eq(applications.dossierNumber, dossierNumber))
         .limit(1);
+
+      if (newApp) {
+        const [caseInsert] = await db.insert(cases).values({
+          caseNumber: dossierNumber,
+          candidateId: ctx.candidate.id,
+          legacyApplicationId: newApp.id,
+          sourceChannel: "online",
+          countryTarget: input.destination,
+          caseType: input.formulaChosen,
+          visaType: input.visaType ?? null,
+          currentStatus: "nouveau",
+          openedAt: new Date(),
+        });
+        const caseId = Number(caseInsert.insertId);
+        await Promise.all([
+          db.insert(caseApplicants).values({ caseId, relationshipType: "principal", fullName: input.fullName, nationality: input.nationality ?? null }),
+          db.insert(caseStatusHistory).values({ caseId, newStatus: "nouveau", changedByRole: "candidate", changedById: ctx.candidate.id, comment: "Dossier créé depuis l’espace candidat." }),
+          db.insert(clientNotifications).values({ candidateId: ctx.candidate.id, caseId, type: "case_created", title: "Votre dossier est ouvert", body: `Votre dossier ${dossierNumber} a été créé. La vérification de votre e-mail est la prochaine étape.`, actionUrl: "/suivi-client" }),
+        ]);
+      }
 
       return {
         applicationId: newApp?.id ?? 0,

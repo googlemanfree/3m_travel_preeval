@@ -104,6 +104,7 @@ import PaymentAgencyConfirmation from "./pages/PaymentAgencyConfirmation";
 import AdminPaymentValidation from "./pages/AdminPaymentValidation";
 import AdminCustomerReviews from "./pages/AdminCustomerReviews";
 import AdminInsuranceRequests from "./pages/AdminInsuranceRequests";
+import ClientCaseTracking from "./pages/ClientCaseTracking";
 import SubmitReview from "./pages/SubmitReview";
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
@@ -182,6 +183,7 @@ function Router() {
           <MonDossier />
         </AuthGuard>
       </Route>
+      <Route path={"/suivi-client"} component={ClientCaseTracking} />
 
       {/* Mon Espace Candidat */}
       <Route path={"/mon-espace-candidat"}>
