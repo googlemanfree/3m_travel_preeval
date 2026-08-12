@@ -1456,3 +1456,7 @@
 - [x] Ajouter une fonction d'export PDF dans FullDossierForm pour télécharger le brouillon en cours
 - [x] Inclure les informations saisies et un bandeau "Brouillon inachevé - Non soumis" dans le PDF généré via jsPDF
 - [x] Valider le build de production et publier la version avec export PDF du brouillon
+
+## Amélioration du design du PDF de brouillon (v32)
+- [x] Refondre la fonction handleExportDraftPdf dans FullDossierForm avec un design professionnel, des tableaux structurés et le logo officiel
+- [x] Valider le build de production et publier la version avec PDF amélioré

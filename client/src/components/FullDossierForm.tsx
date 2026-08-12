@@ -378,54 +378,103 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
       const { jsPDF } = await import("jspdf");
       const pdf = new jsPDF();
       
-      // En-tête
-      pdf.setFillColor(30, 58, 138); // Bleu institutionnel
-      pdf.rect(0, 0, 210, 35, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFontSize(18);
-      pdf.text("3M TRAVEL & SERVICES", 15, 15);
-      pdf.setFontSize(10);
-      pdf.text("Brouillon de Dossier Inachevé — Non Soumis", 15, 24);
-
-      // Bandeau d'avertissement
-      pdf.setFillColor(254, 243, 199); // Ambre clair
-      pdf.rect(15, 42, 180, 15, "F");
-      pdf.setTextColor(180, 83, 9);
-      pdf.setFontSize(9);
-      pdf.text("Ceci est un brouillon conservé localement. Il n'a pas encore été transmis à l'agence.", 20, 51);
-
-      // Données saisies
-      pdf.setTextColor(30, 30, 30);
-      pdf.setFontSize(12);
-      pdf.text("Informations Générales", 15, 70);
+      // En-tête professionnel aux couleurs de la marque (Bleu institutionnel #1E3A8A)
+      pdf.setFillColor(30, 58, 138);
+      pdf.rect(0, 0, 210, 40, "F");
       
+      // Logo textuel stylisé ou icône
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(20);
+      pdf.text("3M TRAVEL & SERVICES", 15, 20);
+      
+      pdf.setFont("helvetica", "normal");
       pdf.setFontSize(10);
-      let y = 78;
-      const addLine = (label: string, val: string) => {
-        pdf.text(`${label}: ${val || "Non renseigné"}`, 15, y);
-        y += 7;
+      pdf.text("Plateforme Officielle de Mobilité Internationale — Brouillon de Dossier", 15, 28);
+
+      // Bandeau d'avertissement statut brouillon
+      pdf.setFillColor(254, 243, 199);
+      pdf.setDrawColor(245, 158, 11);
+      pdf.roundedRect(15, 46, 180, 14, 2, 2, "FD");
+      pdf.setTextColor(180, 83, 9);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9);
+      pdf.text("AVIS : Ce document est un brouillon local non soumis à l'agence.", 20, 54);
+
+      // Section 1 : Projet de Voyage
+      let y = 72;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(15, y, 180, 8, "F");
+      pdf.setTextColor(30, 58, 138);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.text("1. Projet de Mobilité & Destination", 18, y + 6);
+
+      y += 14;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(10);
+      const addField = (lbl: string, val: string, xPos: number, yPos: number) => {
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(`${lbl}:`, xPos, yPos);
+        pdf.setTextColor(30, 30, 30);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(val || "Non renseigné", xPos + 32, yPos);
+        pdf.setFont("helvetica", "normal");
       };
 
-      addLine("Nom complet", form.fullName);
-      addLine("Email", form.email);
-      addLine("WhatsApp", form.whatsappNumber);
-      addLine("Destination", form.destination);
-      addLine("Type de Visa", form.visaType);
-      addLine("Formule choisie", form.formulaChosen);
-      addLine("Nationalité", form.nationality);
-      addLine("Niveau d'études", form.academicLevel);
-      addLine("Situation pro", form.employmentStatus);
-      addLine("Revenu mensuel", form.monthlyIncome);
+      addField("Destination", form.destination || "Non définie", 18, y);
+      addField("Type de Visa", form.visaType || "Non défini", 110, y);
+      y += 8;
+      addField("Formule", form.formulaChosen || "Standard", 18, y);
+      
+      // Section 2 : Identité & Contact
+      y += 14;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(15, y, 180, 8, "F");
+      pdf.setTextColor(30, 58, 138);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.text("2. État Civil & Coordonnées", 18, y + 6);
 
-      y += 10;
-      pdf.setTextColor(100, 100, 100);
+      y += 14;
+      addField("Nom complet", form.fullName || "Non renseigné", 18, y);
+      y += 8;
+      addField("Email", form.email || "Non renseigné", 18, y);
+      y += 8;
+      addField("WhatsApp", form.whatsappNumber || "Non renseigné", 18, y);
+      y += 8;
+      addField("Nationalité", form.nationality || "Non renseignée", 18, y);
+      y += 8;
+      addField("Date de naissance", form.dateOfBirth || "Non renseignée", 18, y);
+
+      // Section 3 : Situation Académique & Professionnelle
+      y += 14;
+      pdf.setFillColor(241, 245, 249);
+      pdf.rect(15, y, 180, 8, "F");
+      pdf.setTextColor(30, 58, 138);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(11);
+      pdf.text("3. Profil Académique & Professionnel", 18, y + 6);
+
+      y += 14;
+      addField("Niveau d'études", form.academicLevel || "Non renseigné", 18, y);
+      y += 8;
+      addField("Situation pro", form.employmentStatus || "Non renseignée", 18, y);
+      y += 8;
+      addField("Revenu net", form.monthlyIncome ? `${form.monthlyIncome} FCFA` : "Non renseigné", 18, y);
+
+      // Pied de page élégant
+      pdf.setDrawColor(203, 213, 225);
+      pdf.line(15, 275, 195, 275);
+      pdf.setTextColor(100, 116, 139);
       pdf.setFontSize(8);
-      pdf.text(`Généré le ${new Date().toLocaleString()} — 3M Travel & Services SARL`, 15, y);
+      pdf.text("3M Travel & Services SARL — Contact : hello@3mtravelagency.com / +237 698 104 832", 15, 282);
+      pdf.text(`Généré le ${new Date().toLocaleString()}`, 155, 282);
 
-      pdf.save(`Brouillon_Dossier_${form.fullName ? form.fullName.replace(/\s+/g, "_") : "Client"}.pdf`);
-      toast.success("Brouillon exporté en PDF avec succès !");
+      pdf.save(`Brouillon_Officiel_${form.fullName ? form.fullName.replace(/\s+/g, "_") : "Client"}.pdf`);
+      toast.success("Brouillon PDF professionnel généré avec succès !");
     } catch (err) {
-      toast.error("Erreur lors de la génération du PDF du brouillon");
+      toast.error("Erreur lors de la génération du PDF professionnel");
     }
   };
 
