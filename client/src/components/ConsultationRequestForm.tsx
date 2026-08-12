@@ -92,6 +92,17 @@ export default function ConsultationRequestForm({ defaultCountry }: Props) {
             ? "Votre CV est en cours d'analyse. Notre équipe examinera le résultat et vous recontactera par email très prochainement."
             : "Notre équipe examinera votre demande et vous recontactera par email très prochainement."}
         </p>
+        {submitMutation.data?.emailSent ? (
+          <div role="status" className="mt-5 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-left text-sm text-green-800">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+            <span><strong>Confirmation envoyée.</strong> Un e-mail de réception a été envoyé à {email}.</span>
+          </div>
+        ) : (
+          <div role="status" className="mt-5 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-left text-sm text-amber-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>La demande est enregistrée, mais l’e-mail de confirmation n’a pas pu être envoyé. Notre équipe peut toujours traiter votre demande.</span>
+          </div>
+        )}
       </motion.div>
     );
   }

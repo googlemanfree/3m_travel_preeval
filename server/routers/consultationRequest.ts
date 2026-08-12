@@ -63,6 +63,18 @@ export const consultationRequestRouter = router({
         logger.error("consultation_request.team_notification_failed", { requestId }, err);
       }
 
+      let emailSent = false;
+      try {
+        await sendEmail({
+          to: input.email,
+          subject: "Confirmation de votre demande — 3M Travel & Services",
+          html: `<p>Bonjour <strong>${input.fullName}</strong>,</p><p>Nous avons bien reçu votre demande de consultation${input.targetCountry ? ` pour ${input.targetCountry}` : ""}.</p><p>Notre équipe va l’examiner et vous recontactera à l’adresse <strong>${input.email}</strong>. Vous pouvez conserver cet e-mail comme confirmation de réception.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>`,
+        });
+        emailSent = true;
+      } catch (err) {
+        logger.error("consultation_request.candidate_confirmation_failed", { requestId }, err);
+      }
+
       // Analyse automatique par IA en arrière-plan, si un CV a été fourni
       if (requestId && input.cvFileUrl) {
         (async () => {
@@ -92,7 +104,7 @@ export const consultationRequestRouter = router({
         })();
       }
 
-      return { success: true, requestId };
+      return { success: true, requestId, emailSent };
     }),
 
   /**

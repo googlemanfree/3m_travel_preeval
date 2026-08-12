@@ -63,6 +63,7 @@ import {
 import { useLocation } from "wouter";
 import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
+import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
@@ -875,10 +876,11 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="emails">E-mails</TabsTrigger>
             <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
             <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
             <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
@@ -1314,6 +1316,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="documents" className="space-y-6">
             <AdminDocumentsManagement />
+          </TabsContent>
+
+          <TabsContent value="emails" className="space-y-6">
+            <AdminEmailDeliveryManagement />
           </TabsContent>
         </Tabs>
       </div>

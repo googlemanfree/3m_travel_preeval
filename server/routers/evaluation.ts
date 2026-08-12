@@ -368,7 +368,19 @@ export const evaluationRouter = router({
         console.warn("[Evaluation] Notification failed:", notifErr);
       }
 
-      return { success: true, message: "Votre demande a été soumise avec succès." };
+      let emailSent = false;
+      try {
+        await sendEmail({
+          to: input.email,
+          subject: "Confirmation de réception de votre évaluation — 3M Travel & Services",
+          html: `<p>Bonjour <strong>${input.fullName}</strong>,</p><p>Nous avons bien reçu votre évaluation de profil${input.destinationCountry ? ` pour ${input.destinationCountry}` : ""}.</p><p>Votre demande est enregistrée. Le résultat sera disponible dans votre espace candidat et notre équipe vous recontactera si nécessaire.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>`,
+        });
+        emailSent = true;
+      } catch (emailErr) {
+        logger.error("evaluation.candidate_confirmation_failed", { email: input.email }, emailErr);
+      }
+
+      return { success: true, message: "Votre demande a été soumise avec succès.", emailSent };
     }),
 
   /**

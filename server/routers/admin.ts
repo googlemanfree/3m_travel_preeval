@@ -5,6 +5,7 @@
 
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
+import { summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
@@ -1925,20 +1926,37 @@ export const adminRouter = router({
    * Récupérer l'historique de délivrabilité des e-mails
    */
   getEmailDeliveryLogs: publicProcedure
-    .input(z.object({ sessionToken: z.string(), limit: z.number().default(50) }))
+    .input(z.object({
+      sessionToken: z.string(),
+      limit: z.number().int().min(1).max(200).default(100),
+      status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
+      search: z.string().trim().max(120).optional(),
+    }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
+      const conditions = [];
+      if (input.status !== "all") conditions.push(eq(emailDeliveryLogs.status, input.status));
+      if (input.search) {
+        conditions.push(or(
+          like(emailDeliveryLogs.recipientEmail, `%${input.search}%`),
+          like(emailDeliveryLogs.subject, `%${input.search}%`),
+        ));
+      }
       const logs = await db
         .select()
         .from(emailDeliveryLogs)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(emailDeliveryLogs.createdAt))
         .limit(input.limit);
 
-      return logs;
+      return {
+        logs,
+        summary: summarizeEmailDeliveryLogs(logs),
+      };
     }),
 });
 

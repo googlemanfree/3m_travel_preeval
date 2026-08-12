@@ -1702,3 +1702,11 @@
 - [x] Remplacer les adresses de test par `hello@3mtravelagency.com` sans exposer de secret
 - [x] Adapter les tests e-mail pour utiliser l’adresse de test officielle autorisée
 - [x] Valider tests, TypeScript, build et état du déploiement
+
+## Suivi des e-mails et renvoi de confirmations (v70)
+- [x] Auditer les journaux e-mail, les procédures d’envoi et les pages admin/candidat concernées
+- [x] Ajouter le widget administrateur de statut, erreurs et historique des e-mails
+- [x] Ajouter une procédure admin sécurisée pour renvoyer l’e-mail de confirmation
+- [x] Afficher une confirmation visuelle côté candidat après l’envoi réussi ou échoué
+- [x] Ajouter les tests de sécurité et de fiabilité des notifications
+- [x] Vérifier responsive, TypeScript, tests, build et publier

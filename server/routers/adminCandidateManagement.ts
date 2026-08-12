@@ -5,6 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
+import { sendDossierConfirmationEmail } from "../emailService";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -156,7 +157,7 @@ export const adminCandidateManagementRouter = router({
 
   updateCandidate: publicProcedure
     .input(z.object({
-      candidateId: z.string().regex(/^(online|agency)_\\d+$/),
+      candidateId: z.string().regex(/^(online|agency)_\d+$/),
       status: z.string().min(1).max(50),
       adminNotes: z.string().max(5000).optional(),
     }))
@@ -181,5 +182,45 @@ export const adminCandidateManagementRouter = router({
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
       }
       return { success: true };
+    }),
+
+  resendConfirmation: publicProcedure
+    .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+      let recipientEmail: string;
+      let fullName: string;
+      let dossierNumber: string;
+      let destination: string;
+      let amount: number;
+      if (reference.source === "online") {
+        const record = (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0];
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        recipientEmail = record.email;
+        fullName = record.fullName;
+        dossierNumber = record.dossierNumber;
+        destination = record.destination || "International";
+        amount = record.paymentAmount ?? 65000;
+      } else {
+        const record = (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        recipientEmail = record.email;
+        fullName = record.fullName;
+        dossierNumber = `3M-AGN-${reference.id.toString().padStart(4, "0")}`;
+        destination = record.destination || "International";
+        amount = 0;
+      }
+      if (!recipientEmail || !fullName) throw new TRPCError({ code: "BAD_REQUEST", message: "Le dossier ne contient pas d’adresse e-mail exploitable." });
+      const sent = await sendDossierConfirmationEmail(recipientEmail, fullName, dossierNumber, destination, amount);
+      if (!sent) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "L’envoi a échoué. Consultez le journal de délivrabilité." });
+      }
+      console.info(`[Admin Email] Confirmation renvoyée par ${admin.email} pour ${input.candidateId}`);
+      return { success: true, recipientEmail, dossierNumber };
     }),
 });

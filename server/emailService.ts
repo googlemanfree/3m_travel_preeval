@@ -1,8 +1,5 @@
-import { Resend } from "resend";
-import { sendEmail as sendGenericEmail, SendEmailOptions } from "./_core/email";
+import { sendEmail as sendGenericEmail } from "./_core/email";
 
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.com";
 const SITE_URL = process.env.SITE_URL || "https://www.3mtravelagency.com";
 
@@ -15,8 +12,7 @@ export async function sendClientDossierConfirmationEmail(
   currency: string
 ) {
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: `Confirmation de votre demande e-Visa - Dossier #${dossierNumber}`,
       html: `
@@ -81,8 +77,7 @@ export async function sendAdminNewDossierAlertEmail(
   currency: string
 ) {
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to: ADMIN_EMAIL,
       subject: `🚨 Nouveau dossier e-Visa soumis - #${dossierNumber}`,
       html: `
@@ -128,8 +123,7 @@ export async function sendEvisaStatusUpdateEmail(
   const statusLabel = statusLabels[newStatus] || newStatus;
 
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: `Mise à jour de votre demande e-Visa - Dossier #${dossierNumber}`,
       html: `
@@ -173,8 +167,7 @@ export async function sendPaymentConfirmationEmail(
   currency: string
 ) {
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: `Confirmation de paiement - Dossier #${dossierNumber}`,
       html: `
@@ -211,8 +204,7 @@ export async function sendVerificationLink(to: string, fullName: string, verific
   const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: "✓ Confirmez votre email - 3M Travel & Services",
       html: `
@@ -245,8 +237,7 @@ export async function sendVerificationLink(to: string, fullName: string, verific
 
 export async function sendVerificationOtp(to: string, fullName: string, otp: string): Promise<void> {
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: "🔐 Votre code de vérification 3M Travel",
       html: `
@@ -275,8 +266,7 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
   const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(resetToken)}`;
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: "🔑 Réinitialisation de votre mot de passe 3M Travel",
       html: `
@@ -317,8 +307,7 @@ export async function sendWelcomeEmail(to: string, fullName: string, destination
   };
   const destLabel = destLabels[destination] ?? "International";
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: `Bienvenue chez 3M Travel & Services - Votre voyage vers ${destLabel} commence !`,
       html: `
@@ -357,12 +346,11 @@ export async function sendDossierConfirmationEmail(
   dossierNumber: string,
   destination: string,
   amount: number
-): Promise<void> {
+): Promise<boolean> {
   const dashboardUrl = `${SITE_URL}/dashboard`;
   const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
   try {
-    await resend.emails.send({
-      from: "noreply@3mtravelagency.com",
+    await sendGenericEmail({
       to,
       subject: `✅ Votre dossier ${dossierNumber} est ouvert !`,
       html: `
@@ -408,17 +396,14 @@ export async function sendDossierConfirmationEmail(
             </p>
           </div>
         </div>
-      `,
+            `,
     });
+    return true;
   } catch (error) {
     console.error("Failed to send dossier confirmation email:", error);
+    return false;
   }
 }
-
-
-
-
-
 // sendAdminNewDossierAlert to match existing calls (alias for sendAdminNewDossierAlertEmail)
 export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: string, email: string, whatsappNumber: string, destination: string, status: string): Promise<void> {
   const subject = `🚨 Nouvelle alerte dossier - #${dossierNumber}`;

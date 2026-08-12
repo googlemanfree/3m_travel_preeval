@@ -162,6 +162,17 @@ export default function Evaluation() {
             <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm text-blue-900" role="status" aria-live="polite">
               <strong>Prochaine étape :</strong> surveillez votre boîte email et votre espace candidat pour consulter votre rapport.
             </div>
+            {submitMutation.data?.emailSent ? (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-left text-sm text-green-800" role="status">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span><strong>Confirmation envoyée.</strong> Un e-mail de réception a été envoyé à {form.email}.</span>
+              </div>
+            ) : (
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-800" role="status">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>Votre évaluation est enregistrée, mais l’e-mail de confirmation n’a pas pu être envoyé. Consultez votre espace candidat.</span>
+              </div>
+            )}
           </Card>
         </motion.div>
       </div>

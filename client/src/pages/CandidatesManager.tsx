@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Plus,
   MoreVertical,
+  RefreshCw,
   Bookmark,
   Copy,
 } from "lucide-react";
@@ -410,6 +411,10 @@ export default function CandidatesManager() {
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
   const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
   const utils = trpc.useUtils();
+  const resendConfirmationMutation = trpc.adminCandidateManagement.resendConfirmation.useMutation({
+    onSuccess: ({ recipientEmail }) => toast.success(`E-mail de confirmation renvoyé à ${recipientEmail}.`),
+    onError: error => toast.error(error.message || "Impossible de renvoyer l’e-mail de confirmation."),
+  });
   const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
     onSuccess: ({ csv, count }) => {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -789,8 +794,15 @@ export default function CandidatesManager() {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button size="sm" variant="ghost">
-                          <Mail className="w-4 h-4" />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          title="Renvoyer l’e-mail de confirmation"
+                          aria-label={`Renvoyer l’e-mail de confirmation à ${candidate.fullName}`}
+                          onClick={() => resendConfirmationMutation.mutate({ candidateId: String(candidate.id) })}
+                          disabled={resendConfirmationMutation.isPending || !candidate.email}
+                        >
+                          {resendConfirmationMutation.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Mail className="w-4 h-4" />}
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
