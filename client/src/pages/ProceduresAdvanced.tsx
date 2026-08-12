@@ -526,20 +526,31 @@ export default function ProceduresAdvanced() {
                         </a>
 
                         {/* Download Button */}
-                        <a
-                          href={country.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="flex-1"
-                        >
+                        {country.pdfUrl ? (
+                          <a
+                            href={country.pdfUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-1"
+                          >
+                            <Button
+                              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                            >
+                              <Download className="w-4 h-4" />
+                              PDF
+                            </Button>
+                          </a>
+                        ) : (
                           <Button
-                            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 transition-all hover:shadow-lg"
+                            disabled
+                            title="Document en cours de préparation — contactez-nous pour l'obtenir directement"
+                            className="flex-1 bg-gray-100 text-gray-400 font-semibold py-2 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed"
                           >
                             <Download className="w-4 h-4" />
-                            PDF
+                            Bientôt disponible
                           </Button>
-                        </a>
+                        )}
                       </div>
                     </div>
 

@@ -1324,3 +1324,12 @@ export const paymentAuditLogs = mysqlTable("payment_audit_logs", {
   details: text("details"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+export const savedTravelPlans = mysqlTable("saved_travel_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  origin: varchar("origin", { length: 100 }).notNull(),
+  destination: varchar("destination", { length: 100 }).notNull(),
+  planContent: text("planContent").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});

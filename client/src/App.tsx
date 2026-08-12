@@ -142,7 +142,7 @@ function Router() {
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
-      <Route path={"/vols"} component={Vols} />
+      <Route path={"/vols"}>{() => <Redirect to="/flights" />}</Route>
       <Route path={"/assurance"} component={Assurance} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
@@ -224,7 +224,7 @@ function Router() {
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
 
       {/* Bibliothèque de ressources PDF */}
-      <Route path={"/ressources"} component={Ressources} />
+      <Route path={"/ressources"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}

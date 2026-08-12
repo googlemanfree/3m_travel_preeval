@@ -923,9 +923,19 @@ function AIPlannerForm() {
   const [preferences, setPreferences] = useState("Vol direct si possible, bagages inclus");
   const [result, setResult] = useState<string | null>(null);
 
+  const { toast } = useToast();
   const planMutation = trpc.flightPlannerAI.planJourney.useMutation({
     onSuccess: (data) => {
       setResult(typeof data.advice === "string" ? data.advice : JSON.stringify(data.advice));
+    },
+  });
+
+  const savePlanMutation = trpc.flightPlannerAI.savePlan.useMutation({
+    onSuccess: () => {
+      toast({ title: "Plan sauvegardé !", description: "Retrouvez votre plan de voyage dans votre espace client." });
+    },
+    onError: (err) => {
+      toast({ title: "Erreur", description: err.message || "Veuillez vous connecter pour sauvegarder votre plan.", variant: "destructive" });
     },
   });
 
@@ -966,9 +976,18 @@ function AIPlannerForm() {
           <div className="p-4 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900 rounded-2xl text-slate-800 dark:text-blue-100 text-xs leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">
             {result}
           </div>
-          <button onClick={() => setResult(null)} className="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold py-2.5 rounded-xl text-xs">
-            Nouvelle recherche
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => savePlanMutation.mutate({ origin, destination, planContent: result })}
+              disabled={savePlanMutation.isPending}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2"
+            >
+              <Heart className="w-4 h-4" /> {savePlanMutation.isPending ? "Sauvegarde..." : "Sauvegarder dans mon espace"}
+            </button>
+            <button onClick={() => setResult(null)} className="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold py-2.5 px-4 rounded-xl text-xs">
+              Nouveau
+            </button>
+          </div>
         </div>
       )}
     </div>

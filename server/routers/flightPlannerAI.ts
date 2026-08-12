@@ -2,6 +2,11 @@ import { router, publicProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { invokeLLM } from "../_core/llm";
 
+import { protectedProcedure } from "../_core/trpc";
+import { getDb } from "../db";
+import { savedTravelPlans } from "../../drizzle/schema";
+import { eq, desc } from "drizzle-orm";
+
 export const flightPlannerAIRouter = router({
   planJourney: publicProcedure
     .input(z.object({
@@ -39,4 +44,28 @@ Préférences : ${input.preferences || "Aucune"};`;
         };
       }
     }),
+
+  savePlan: protectedProcedure
+    .input(z.object({
+      origin: z.string(),
+      destination: z.string(),
+      planContent: z.string(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("Base de données indisponible");
+      await db.insert(savedTravelPlans).values({
+        userId: ctx.user.id,
+        origin: input.origin,
+        destination: input.destination,
+        planContent: input.planContent,
+      });
+      return { success: true };
+    }),
+
+  getSavedPlans: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    return db.select().from(savedTravelPlans).where(eq(savedTravelPlans.userId, ctx.user.id)).orderBy(desc(savedTravelPlans.createdAt));
+  }),
 });
