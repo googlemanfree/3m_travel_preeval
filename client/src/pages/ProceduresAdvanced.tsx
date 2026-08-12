@@ -515,42 +515,50 @@ export default function ProceduresAdvanced() {
                       </div>
 
                       {/* Buttons Container */}
-                      <div className="flex gap-3 pt-2">
-                        {/* Launch Procedure Button */}
-                        <a href={`/evaluation-primaire?destination=${country.id}`} className="flex-1">
+                      <div className="space-y-2 pt-2">
+                        <a href={`/procedures/${country.id}`} className="block">
                           <Button
-                            className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg text-xs"
+                            variant="outline"
+                            className="w-full border-blue-600 text-blue-700 hover:bg-blue-50 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all text-xs"
                           >
-                            🚀 Lancer ma Procédure
+                            👁️ Détails de la procédure & Culture
                           </Button>
                         </a>
-
-                        {/* Download Button */}
-                        {country.pdfUrl ? (
-                          <a
-                            href={country.pdfUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex-1"
-                          >
+                        <div className="flex gap-2">
+                          {/* Launch Procedure Button */}
+                          <a href={`/evaluation-primaire?destination=${country.id}`} className="flex-1">
                             <Button
-                              className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg text-xs"
+                              className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg text-xs"
                             >
-                              <Download className="w-4 h-4" />
-                              Guide PDF
+                              🚀 Lancer
                             </Button>
                           </a>
-                        ) : (
-                          <Button
-                            disabled
-                            title="Document en cours de préparation — contactez-nous pour l'obtenir directement"
-                            className="flex-1 bg-slate-100 text-slate-400 font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed text-xs"
-                          >
-                            <Download className="w-4 h-4" />
-                            Bientôt dispo
-                          </Button>
-                        )}
+
+                          {/* Download Button */}
+                          {country.pdfUrl ? (
+                            <a
+                              href={country.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="flex-1"
+                            >
+                              <Button
+                                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg text-xs"
+                              >
+                                <Download className="w-3.5 h-3.5" /> PDF
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button
+                              disabled
+                              title="Document en cours de préparation"
+                              className="flex-1 bg-slate-100 text-slate-400 font-medium py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed text-xs"
+                            >
+                              <Download className="w-3.5 h-3.5" /> Bientôt
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
 

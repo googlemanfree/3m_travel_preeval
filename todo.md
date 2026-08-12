@@ -1487,3 +1487,8 @@
 - [x] Configurer la route dynamique `/procedures/:countryId` dans `App.tsx`
 - [x] Mettre à jour les liens des cartes de pays dans `ProceduresAdvanced.tsx` pour pointer vers `/procedures/:countryId`
 - [x] Valider le build de production et publier le répertoire complet des 107 destinations
+
+## Vérification du parcours de détail pays (v38)
+- [x] S'assurer que chaque carte de destination dans la page Procédures propose un bouton explicite "Détails de la procédure" pointant vers `/procedures/:countryId`
+- [x] Vérifier que la page pays détaille les atouts, la culture, le travail et un bouton bien visible "Lancer la procédure" en bas de page
+- [x] Valider le build de production et publier la version finale optimisée
