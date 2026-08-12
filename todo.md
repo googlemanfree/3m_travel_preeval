@@ -1667,3 +1667,10 @@
 - [x] Contrôler la propriété serveur de chaque lecture de dossier, document et attestation client
 - [x] Créer l’espace client de suivi fondé sur les structures canoniques, avec actualisation manuelle
 - [x] Tester les migrations, les accès isolés, les documents et les parcours mobile/bureau avant publication
+
+## Audit des interactions et boutons inaccessibles (v65)
+- [ ] Inventorier les boutons, liens, formulaires et routes interactives du site
+- [ ] Identifier les boutons sans action, liens morts, actions bloquées ou modales inaccessibles
+- [ ] Corriger les interactions confirmées sans modifier le design ni les contenus
+- [ ] Ajouter ou mettre à jour les tests de fiabilité des interactions critiques
+- [ ] Vérifier mobile/bureau, TypeScript, build et publier la correction
