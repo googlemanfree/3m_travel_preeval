@@ -6,6 +6,7 @@ import { adminNotifications, insuranceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { notifyInsuranceRequest } from "../services/insuranceRequestNotification";
+import { storageGetSignedUrl, storagePut } from "../storage";
 import { requireAdminSessionFromCookie } from "./adminAuth";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide.");
@@ -101,5 +102,36 @@ export const insuranceRequestsRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(insuranceRequests).set({ status: input.status }).where(eq(insuranceRequests.id, input.id));
     return { success: true };
+  }),
+
+  uploadAttestation: publicProcedure.input(z.object({
+    id: z.number().int().positive(),
+    fileName: z.string().trim().min(5).max(255),
+    mimeType: z.literal("application/pdf"),
+    dataBase64: z.string().min(20).max(7_000_000),
+  })).mutation(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const requests = await db.select().from(insuranceRequests).where(eq(insuranceRequests.id, input.id)).limit(1);
+    const request = requests[0];
+    if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande d’assurance introuvable." });
+    const bytes = Buffer.from(input.dataBase64, "base64");
+    if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "L’attestation PDF doit peser au maximum 5 Mo." });
+    if (!bytes.subarray(0, 4).equals(Buffer.from("%PDF"))) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit être un PDF valide." });
+    const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const stored = await storagePut(`insurance-attestations/${request.reference}/${safeName}`, bytes, input.mimeType);
+    await db.update(insuranceRequests).set({ attestationFileKey: stored.key, attestationFileName: input.fileName, status: "completed" }).where(eq(insuranceRequests.id, request.id));
+    return { success: true, fileName: input.fileName };
+  }),
+
+  downloadAttestation: publicProcedure.input(z.object({ id: z.number().int().positive() })).query(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const requests = await db.select().from(insuranceRequests).where(eq(insuranceRequests.id, input.id)).limit(1);
+    const request = requests[0];
+    if (!request?.attestationFileKey) throw new TRPCError({ code: "NOT_FOUND", message: "Aucune attestation disponible." });
+    return { url: await storageGetSignedUrl(request.attestationFileKey), fileName: request.attestationFileName };
   }),
 });

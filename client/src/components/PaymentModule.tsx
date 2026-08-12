@@ -127,10 +127,10 @@ Mode de paiement: ${receipt.method}
 STATUT: ✓ PAIEMENT CONFIRMÉ
 ───────────────────────────────────────
 
-Merci pour votre confiance!
+Merci pour votre confiance !
 Pour toute question, contactez-nous:
-📧 support@3mtravelagency.click
-📱 WhatsApp: +237 6XX XXX XXX
+📧 hello@3mtravelagency.com
+📱 WhatsApp: +237 698 104 832
 
 ═══════════════════════════════════════
     `;

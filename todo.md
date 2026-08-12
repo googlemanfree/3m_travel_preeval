@@ -1646,3 +1646,10 @@
 - [x] Enregistrer la demande de manière sécurisée et la rendre visible aux administrateurs
 - [x] Notifier l’administration et préparer un message WhatsApp récapitulatif pour l’agence
 - [x] Tester les validations, la soumission et le parcours de consultation admin
+
+## Devis et attestation d’assurance (v62)
+- [x] Générer automatiquement un devis PDF après la soumission d’une demande d’assurance
+- [x] Permettre à l’administration de téléverser une attestation finalisée sécurisée sur la demande client
+- [x] Ajouter une progression visuelle par étapes au formulaire d’assurance
+- [x] Unifier progressivement coordonnées, preuves sociales, services, formulaire principal, bloc légal, footer et demande de vol sans refonte
+- [x] Tester les flux d’assurance, l’affichage mobile et publier la version validée

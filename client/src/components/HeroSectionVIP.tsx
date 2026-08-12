@@ -60,7 +60,7 @@ export default function HeroSectionVIP({
         >
           <img
             src={logoUrl}
-            alt="3M Travel Agency"
+            alt="3M Travel & Services"
             className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/30 mx-auto shadow-lg"
           />
         </motion.div>
@@ -73,7 +73,7 @@ export default function HeroSectionVIP({
           custom={2}
           className="text-4xl md:text-5xl lg:text-6xl font-black mb-3"
         >
-          3M Travel Agency
+          3M Travel & Services
         </motion.h1>
 
         {/* Sous-titre */}

@@ -25,7 +25,7 @@ export function FooterLegal() {
             <div className="space-y-3 text-sm text-blue-100">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Avenue Marché Biyem-Assi, Montée Chapelle Obili, Yaoundé, Cameroun</span>
+                <span>Siège : Yaoundé, Biyem-Assi, Montée chapelle Obili (10 m de EHS), Cameroun. Bureau secondaire : Douala.</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
@@ -35,8 +35,8 @@ export function FooterLegal() {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:hello@3mtravelagency.click" className="hover:text-white transition">
-                  hello@3mtravelagency.click
+                <a href="mailto:hello@3mtravelagency.com" className="hover:text-white transition">
+                  hello@3mtravelagency.com
                 </a>
               </div>
             </div>
@@ -46,10 +46,9 @@ export function FooterLegal() {
           <div>
             <h4 className="font-bold mb-4">Informations Légales</h4>
             <div className="space-y-2 text-sm text-blue-100">
-              <p><strong>RCCM :</strong> CM/CM/2023/XXXX</p>
-              <p><strong>NIU :</strong> 3012345678901</p>
-              <p><strong>Registre du Commerce :</strong> Yaoundé</p>
-              <p><strong>Gérant :</strong> Aureol DONFACK</p>
+              <p><strong>RC :</strong> RC/YAO/2019/A/2567</p>
+              <p><strong>NIU :</strong> M112417203369H</p>
+              <p><strong>Horaires :</strong> Lundi à vendredi, 8h–17h</p>
             </div>
           </div>
 
@@ -73,9 +72,9 @@ export function FooterLegal() {
                 </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition">
+                <Link href="/conditions-utilisation" className="hover:text-white transition">
                   Conditions Générales
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -86,9 +85,10 @@ export function FooterLegal() {
             <ul className="space-y-2 text-sm text-blue-100">
               <li>🛂 Visa & Immigration</li>
               <li>✈️ Billets d'Avion</li>
-              <li>🏨 Hébergement</li>
+              <li>🏨 Hôtels & Tourisme</li>
               <li>🛡️ Assurance Voyage</li>
-              <li>📄 Traduction Certifiée</li>
+              <li>📄 Traduction certifiée</li>
+              <li>📋 Procédures & Guides</li>
             </ul>
           </div>
         </div>
@@ -99,8 +99,7 @@ export function FooterLegal() {
           <div className="bg-blue-900/50 rounded-lg p-4 mb-6">
             <h4 className="font-bold text-sm mb-2">Conformité & Sécurité</h4>
             <p className="text-xs text-blue-100">
-              3M Travel & Services SARL est une agence de voyage agréée opérant en conformité avec la législation camerounaise. 
-              Tous les paiements sont sécurisés via CinetPay. Vos données personnelles sont protégées selon nos politiques de confidentialité.
+              3M Travel & Services SARL accompagne la préparation technique des dossiers et leur suivi administratif. Elle ne délivre pas elle-même de visa ou de permis : ces décisions relèvent exclusivement des autorités compétentes.
             </p>
           </div>
         </div>
@@ -109,15 +108,15 @@ export function FooterLegal() {
         <div className="border-t border-blue-700 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-blue-200">
           <p>&copy; 2026 3M Travel & Services SARL. Tous droits réservés.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition">
+            <Link href="/politique-confidentialite" className="hover:text-white transition">
               Politique de Confidentialité
-            </a>
-            <a href="#" className="hover:text-white transition">
+            </Link>
+            <Link href="/conditions-utilisation" className="hover:text-white transition">
               Conditions d'Utilisation
-            </a>
-            <a href="#" className="hover:text-white transition">
+            </Link>
+            <Link href="/contact" className="hover:text-white transition">
               Contact
-            </a>
+            </Link>
           </div>
         </div>
       </div>

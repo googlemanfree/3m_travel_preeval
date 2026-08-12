@@ -15,6 +15,7 @@ import Footer from "@/components/Footer";
 import { Mail, Check, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -700,6 +701,8 @@ export default function Flights() {
           </motion.div>
         </div>
       </div>
+
+      <FlightQuoteRequest />
 
       {/* AI Flight Planner Assistant Section */}
       <div className="max-w-7xl mx-auto px-4 py-6">

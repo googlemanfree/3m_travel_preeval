@@ -362,7 +362,7 @@ export default function PaymentReceipt({
         <p className="text-amber-900 text-sm">
           Besoin d'aide ? Contactez-nous sur{" "}
           <a
-            href="https://wa.me/237620996045"
+            href="https://wa.me/237698104832"
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold text-amber-700 hover:underline"
@@ -370,8 +370,8 @@ export default function PaymentReceipt({
             WhatsApp
           </a>{" "}
           ou par email à{" "}
-          <a href="mailto:support@3mtravelagency.click" className="font-bold text-amber-700 hover:underline">
-            support@3mtravelagency.click
+          <a href="mailto:hello@3mtravelagency.com" className="font-bold text-amber-700 hover:underline">
+            hello@3mtravelagency.com
           </a>
         </p>
       </div>

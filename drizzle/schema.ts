@@ -550,6 +550,8 @@ export const insuranceRequests = mysqlTable("insurance_requests", {
   emergencyContactName: varchar("emergencyContactName", { length: 255 }).notNull(),
   emergencyContactPhone: varchar("emergencyContactPhone", { length: 50 }).notNull(),
   notes: text("notes"),
+  attestationFileKey: varchar("attestationFileKey", { length: 512 }),
+  attestationFileName: varchar("attestationFileName", { length: 255 }),
   consentAt: timestamp("consentAt").notNull(),
   status: mysqlEnum("status", ["new", "contacted", "quote_sent", "completed", "cancelled"]).default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

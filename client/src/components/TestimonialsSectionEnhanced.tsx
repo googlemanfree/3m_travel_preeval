@@ -16,18 +16,23 @@ export default function TestimonialsSectionEnhanced() {
   const points = [
     {
       icon: ShieldCheck,
-      title: 'Transparence totale',
-      description: "Aucun frais caché : les coûts sont annoncés clairement avant toute signature d'engagement.",
+      title: 'Expertise réglementée',
+      description: "Nous vous aidons à préparer un dossier cohérent avec les exigences communiquées par les autorités compétentes.",
     },
     {
       icon: Users,
-      title: 'Un conseiller dédié',
-      description: 'Un seul interlocuteur suit votre dossier du début à la fin, joignable directement sur WhatsApp.',
+      title: 'Accompagnement personnalisé',
+      description: 'Un conseiller vous oriente selon votre projet, vos documents et les étapes utiles à votre situation.',
     },
     {
       icon: Clock,
-      title: 'Suivi en temps réel',
-      description: "Vous savez à tout moment où en est votre dossier, sans avoir à relancer pour obtenir une réponse.",
+      title: 'Réponse sous 24h',
+      description: 'Après votre pré-évaluation, notre équipe vous apporte un premier retour dans un délai annoncé de 24 heures ouvrées.',
+    },
+    {
+      icon: MessageCircle,
+      title: 'Transparence totale',
+      description: "Les frais, les étapes et le rôle de l’agence sont expliqués clairement avant tout engagement.",
     },
   ];
 
@@ -48,7 +53,7 @@ export default function TestimonialsSectionEnhanced() {
           </p>
         </motion.div>
 
-        <div className="grid sm:grid-cols-3 gap-6 mb-12">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {points.map((point, index) => {
             const Icon = point.icon;
             return (

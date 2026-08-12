@@ -158,23 +158,23 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                <span>Yaoundé Biyem-Assi, Montée chapelle Obili (10m de EHS)</span>
+                <span>Siège : Yaoundé, Biyem-Assi, Montée chapelle Obili (10 m de EHS)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <span>Bureau secondaire : Douala, Cameroun</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp : +237 698 104 832</a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">+237 620-996-045</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href="tel:+237698104832" className="hover:text-blue-300 transition-colors">+237 698-104-832</a>
+                <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">Téléphone : +237 620 996 045</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <a href="mailto:hello@3mtravelagency.com" className="hover:text-blue-300 transition-colors">hello@3mtravelagency.com</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp</a>
               </div>
             </div>
           </div>
@@ -216,44 +216,6 @@ export default function Footer() {
             );
           })}
         </div>
-
-        {/* Contact Info Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="bg-gradient-to-r from-blue-900/50 to-blue-800/50 rounded-lg p-6 my-8 border border-blue-700/50"
-        >
-          <h3 className="text-white font-bold text-lg mb-4 text-center">Nous Contacter</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <a href="https://maps.google.com/?q=Yaound%C3%A9+Biyem-Assi+Mont%C3%A9e+chapelle+Obili" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
-              <MapPin className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Adresse</p>
-                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">Yaoundé Biyem-Assi<br />Montée chapelle Obili</p>
-              </div>
-            </a>
-            <a href="tel:+237620996045" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
-              <Phone className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Téléphone</p>
-                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">
-                  <span>+237 620-996-045</span><br />
-                  <span className="text-xs text-gray-300">ou +237 698-104-832</span>
-                </p>
-              </div>
-            </a>
-            <a href="mailto:hello@3mtravelagency.com" className="flex items-center justify-center gap-3 text-center hover:opacity-80 transition-opacity cursor-pointer">
-              <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400 mb-1">Email</p>
-                <p className="text-sm text-white font-medium hover:text-blue-300 transition-colors">
-                  hello@3mtravelagency.com
-                </p>
-              </div>
-            </a>
-          </div>
-        </motion.div>
 
         {/* Barre légale */}
         <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">

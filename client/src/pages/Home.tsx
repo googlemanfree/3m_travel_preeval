@@ -572,41 +572,6 @@ export default function Home() {
       {/* ─── QUESTIONS À AUREOL ───────────────────────────────────────────── */}
       <AureolQuestionField />
 
-      {/* ─── SERVICES ────────────────────────────────────────────────────── */}
-      <section id="services" className="py-12 md:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8 md:mb-12">
-            <p className="text-xs md:text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nos Services</p>
-            <h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3 md:mb-4">Tout ce dont vous avez besoin</h2>
-            <p className="text-sm md:text-base text-gray-500 max-w-2xl mx-auto">3M Travel & Services vous accompagne dans toutes vos démarches de voyage et d'immigration.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {[
-              { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
-              { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "/hotels" },
-              { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/assurance" },
-            ].map((s, i) => (
-              <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
-                <a href={s.href} className="block h-full group">
-                  <Card className="p-4 md:p-6 hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-blue-200 h-full cursor-pointer">
-                    <div className={`w-12 h-12 rounded-xl ${s.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                      <s.icon className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{s.title}</h3>
-                    <p className="text-sm text-gray-500 leading-relaxed group-hover:text-gray-700 transition-colors">{s.desc}</p>
-                    <div className="mt-4 flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-sm font-semibold">En savoir plus</span>
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </Card>
-                </a>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ─── SECTION NOS DOMAINES D'EXPERTISE ──────────────────────────── */}
       <ServicesSection />
 
@@ -618,6 +583,9 @@ export default function Home() {
             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Pré-Évaluation Gratuite</h2>
             <p className="text-gray-500 max-w-2xl mx-auto">
               Suivez les 3 étapes ci-dessous. Nos experts vous répondent sous 24h.
+            </p>
+            <p className="mt-3 text-sm font-medium text-blue-800">
+              Vos informations restent confidentielles. Nos experts analysent votre profil et vous répondent sous 24h.
             </p>
           </motion.div>
 
