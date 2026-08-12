@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, Mail, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, RefreshCw, Search } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
 import {
   Select,
   SelectContent,
@@ -37,8 +39,9 @@ export default function AdminEmailDeliveryManagement() {
   const logs = data?.logs ?? [];
 
   return (
-    <Card className="border-0 shadow-sm overflow-hidden">
-      <CardContent className="p-0">
+    <TooltipProvider delayDuration={150}>
+      <Card className="border-0 shadow-sm overflow-hidden">
+        <CardContent className="p-0">
         <div className="flex flex-col gap-4 border-b bg-slate-50/80 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
@@ -107,7 +110,30 @@ export default function AdminEmailDeliveryManagement() {
                         <td className="max-w-[260px] px-5 py-3 text-slate-600">{log.subject}</td>
                         <td className="px-5 py-3"><Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "secondary"}>{statusLabel[log.status] ?? log.status}</Badge></td>
                         <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">{new Date(log.createdAt).toLocaleString("fr-FR")}</td>
-                        <td className="max-w-[280px] px-5 py-3 text-xs text-red-600">{log.errorDetails || (log.providerMessageId ? `ID Resend : ${log.providerMessageId}` : "—")}</td>
+                        <td className="max-w-[280px] px-5 py-3 text-xs text-red-600">
+                          {log.errorDetails ? (
+                            <div className="flex items-start gap-1.5">
+                              <span className="line-clamp-3 break-words">{log.errorDetails}</span>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                                    aria-label={`Comprendre l’erreur d’envoi pour ${log.recipientEmail}`}
+                                  >
+                                    <HelpCircle className="h-4 w-4" aria-hidden="true" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-xs text-sm">
+                                  <p className="font-semibold text-slate-900">{getEmailErrorTitle(log.errorDetails)}</p>
+                                  <p className="mt-1 text-slate-600">{getEmailErrorGuidance(log.errorDetails)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          ) : log.providerMessageId ? (
+                            <span className="text-slate-500">ID Resend : {log.providerMessageId}</span>
+                          ) : "—"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -116,8 +142,9 @@ export default function AdminEmailDeliveryManagement() {
             )}
           </>
         )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
 

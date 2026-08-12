@@ -1710,3 +1710,9 @@
 - [x] Afficher une confirmation visuelle côté candidat après l’envoi réussi ou échoué
 - [x] Ajouter les tests de sécurité et de fiabilité des notifications
 - [x] Vérifier responsive, TypeScript, tests, build et publier
+
+## Infobulle des erreurs d’envoi e-mail (v71)
+- [x] Auditer l’affichage actuel des erreurs dans le widget e-mail admin
+- [x] Ajouter une infobulle accessible expliquant les erreurs d’adresse invalide
+- [x] Afficher une recommandation de correction adaptée au type d’erreur
+- [x] Vérifier responsive, TypeScript, tests et build puis publier
