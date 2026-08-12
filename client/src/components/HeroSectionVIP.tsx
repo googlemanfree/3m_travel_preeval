@@ -106,25 +106,25 @@ export default function HeroSectionVIP({
           custom={5}
           className="flex flex-col sm:flex-row gap-4 justify-center mb-10"
         >
-          <Link href="/evaluation-primaire">
-            <Button
-              className="bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-bold px-8 py-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-            >
-              🚀 Démarrer mon Évaluation
-            </Button>
-          </Link>
-          <a
-            href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel.")}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Button
+            asChild
+            className="bg-gradient-to-r from-orange-400 to-orange-600 hover:from-orange-500 hover:to-orange-700 text-white font-bold px-8 py-6 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
           >
-            <Button
-              variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-lg"
+            <Link href="/evaluation-primaire">🚀 Démarrer mon Évaluation</Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-lg"
+          >
+            <a
+              href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel.")}`}
+              target="_blank"
+              rel="noopener noreferrer"
             >
               💬 Discuter avec un Expert (WhatsApp)
-            </Button>
-          </a>
+            </a>
+          </Button>
         </motion.div>
 
         {/* Boutons Connexion/Inscription */}
@@ -135,21 +135,19 @@ export default function HeroSectionVIP({
           custom={5.5}
           className="flex flex-col sm:flex-row gap-3 justify-center mb-8"
         >
-          <a href="/login">
-            <Button
-              variant="outline"
-              className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
-            >
-              🔑 Accès Client
-            </Button>
-          </a>
-          <a href="/register">
-            <Button
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
-            >
-              ✨ Créez votre Compte Gratuit
-            </Button>
-          </a>
+          <Button
+            asChild
+            variant="outline"
+            className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
+          >
+            <a href="/login">🔑 Accès Client</a>
+          </Button>
+          <Button
+            asChild
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
+          >
+            <a href="/register">✨ Créez votre Compte Gratuit</a>
+          </Button>
         </motion.div>
 
         {/* Statistiques */}

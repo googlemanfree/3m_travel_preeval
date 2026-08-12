@@ -1674,3 +1674,10 @@
 - [x] Corriger les interactions confirmées sans modifier le design ni les contenus
 - [x] Ajouter ou mettre à jour les tests de fiabilité des interactions critiques
 - [x] Vérifier mobile/bureau, TypeScript, build et publier la correction
+
+## Restauration des CTA du héros et des pages cibles (v66)
+- [x] Cartographier tous les boutons et liens présents dans le héros avec leurs routes cibles
+- [x] Identifier les pages presque vides ou incorrectement associées aux CTA Procédures, E‑Visa et services associés
+- [x] Restaurer le contenu existant attendu et reconnecter les routes sans modifier le design
+- [x] Vérifier les CTA sur desktop et mobile avec états de chargement et pages de retour utilisables
+- [x] Exécuter TypeScript, tests et build puis publier la restauration

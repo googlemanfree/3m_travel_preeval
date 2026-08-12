@@ -235,7 +235,7 @@ function Router() {
       <Route path={"/document-upload"} component={DocumentUploadPage} />
 
       {/* Bibliothèque de ressources PDF */}
-      <Route path={"/ressources"}>{() => <Redirect to="/procedures" />}</Route>
+      <Route path={"/ressources"} component={Ressources} />
       <Route path={"/guide-procedures"} component={ProcedureResourceGuide} />
 
       {/* Fiches détaillées par pays */}
