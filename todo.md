@@ -1736,3 +1736,10 @@
 - [x] Comparer l’archive navigation-robuste.zip avec le Navbar actuel et cartographier les routes
 - [x] Remplacer la navigation JavaScript par de vrais liens avec repli automatique
 - [x] Vérifier les clics, routes, mobile, TypeScript, tests et build puis publier
+
+## Correction des écrans blancs après navigation publique (v75)
+- [x] Reproduire le blanc sur `/procedures` et les principales routes publiques après retour arrière ou retour
+- [x] Relever les erreurs console, réseau, routes et états React responsables
+- [x] Corriger la cause commune sans modifier les contenus ni le design
+- [x] Tester tous les liens publics, les retours arrière et le responsive desktop/mobile
+- [x] Valider TypeScript, tests, build et publier le correctif

@@ -110,6 +110,7 @@ import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
 import PageTransition from "./components/PageTransition";
+import PageLoadingFallback from "./components/PageLoadingFallback";
 
 const ClientDashboard = React.lazy(() => import("./pages/ClientDashboard"));
 const AdminAIEvaluationDashboard = React.lazy(() => import("./pages/AdminAIEvaluationDashboard"));
@@ -413,7 +414,7 @@ function App() {
               <Navbar />
               {/* Contenu des pages avec transition douce entre les routes */}
               <PageTransition>
-                <React.Suspense fallback={null}>
+                <React.Suspense fallback={<PageLoadingFallback />}>
                   <Router />
                 </React.Suspense>
               </PageTransition>
