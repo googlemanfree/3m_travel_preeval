@@ -73,6 +73,8 @@ import ProceduresEnhanced from "./pages/ProceduresEnhanced";
 import ProceduresAdvanced from "./pages/ProceduresAdvanced";
 import CountryDetailPage from "./pages/CountryDetailPage";
 import CountryComparisonPage from "./pages/CountryComparisonPage";
+import EvisasAdvanced from "./pages/EvisasAdvanced";
+import EvisaDetailPage from "./pages/EvisaDetailPage";
 import AIEvaluation from "./pages/AIEvaluation";
 import EvaluationRapideEnhanced from "./pages/EvaluationRapideEnhanced";
 import ClientSpace from "./pages/ClientSpace";
@@ -238,7 +240,8 @@ function Router() {
       <Route path={"/tarifs"} component={Tarifs} />
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
-      <Route path={"/evisas"} component={EvisasPage} />
+      <Route path={"/evisas"} component={EvisasAdvanced} />
+      <Route path={"/evisa/:evisaId"} component={EvisaDetailPage} />
       <Route path={"/evisas-enhanced"} component={EvisasEnhanced} />
       <Route path={"/evisas-v3"} component={EvisasV3} />
       <Route path={"/evisas/request"}>

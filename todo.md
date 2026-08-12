@@ -1528,3 +1528,9 @@
 - [x] Mettre à jour getCompatibilityDetails dans CountryComparisonPage.tsx pour ajouter des conseils d'amélioration ciblés (langue, diplôme, budget, expérience)
 - [x] Adapter la structure de l'infobulle au survol pour inclure une section "Actions recommandées"
 - [x] Valider le build de production et publier la version avec recommandations personnalisées
+
+## Parcours e-Visa filtré et pages détaillées par destination (v46)
+- [x] Créer ou auditer la page e-Visa pour ne conserver que les pays éligibles à l'e-Visa (exclure l'ambassade directe)
+- [x] Créer un composant dédié `EvisaDetailPage.tsx` ou adapter CountryDetailPage pour les procédures e-Visa avec drapeau, culture, emblèmes et procédure e-Visa complète
+- [x] Configurer la route dynamique `/evisa/:countryId` dans `App.tsx`
+- [x] Valider le build de production et publier la version e-Visa enrichie
