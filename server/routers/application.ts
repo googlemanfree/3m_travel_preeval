@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, aiReportHistory } from "../../drizzle/schema";
+import { applications, aiReportHistory, paymentAuditLogs } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -500,6 +500,47 @@ export const applicationRouter = router({
         );
       }
       return filtered;
+    }),
+
+  /** Valider ou annuler un paiement depuis le tableau de bord administrateur. */
+  adminUpdatePaymentStatus: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      paymentStatus: z.enum(["SUCCESS", "FAILED", "CANCELLED"]),
+      adminNotes: z.string().max(2000).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+
+      const isValidated = input.paymentStatus === "SUCCESS";
+      await db.update(applications)
+        .set({
+          paymentStatus: input.paymentStatus,
+          paymentDate: isValidated ? new Date() : application.paymentDate,
+          paymentMethod: isValidated ? (application.paymentMethod || "VALIDATION_AGENCE") : application.paymentMethod,
+          dossierStatus: isValidated ? "paye" : application.dossierStatus,
+          ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
+        })
+        .where(eq(applications.id, input.id));
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: ctx.user.name || "Administrateur",
+        adminEmail: ctx.user.email || "",
+        action: input.paymentStatus === "SUCCESS" ? "confirmed" : input.paymentStatus.toLowerCase(),
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+        details: input.adminNotes || `Statut de paiement défini sur ${input.paymentStatus} pour le dossier ${application.dossierNumber}`,
+      });
+
+      return { success: true, dossierNumber: application.dossierNumber, paymentStatus: input.paymentStatus };
     }),
 
   /** Changer le statut d'un dossier (admin) */

@@ -40,6 +40,7 @@ export function AdminPaymentManagement() {
     offset: 0,
   });
   const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
+  const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -118,8 +119,10 @@ export function AdminPaymentManagement() {
     
     setIsProcessing(true);
     try {
-      // Simuler l'appel API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await updatePaymentMutation.mutateAsync({
+        id: selectedPayment.id,
+        paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
+      });
       
       if (actionType === 'confirm') {
         toast.success("✓ Paiement confirmé avec succès", {
