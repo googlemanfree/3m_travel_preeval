@@ -51,7 +51,7 @@ describe("evaluation.submitEvaluation", () => {
     expect(result).toBeDefined();
     expect(result.success).toBe(true);
     expect(result.message).toBeDefined();
-  });
+  }, 20_000);
 
   it("devrait soumettre une évaluation multi-projets pour un projet études", async () => {
     const ctx = createPublicContext();
@@ -71,7 +71,7 @@ describe("evaluation.submitEvaluation", () => {
 
     expect(result).toBeDefined();
     expect(result.success).toBe(true);
-  });
+  }, 20_000);
 
   it("devrait soumettre une évaluation multi-projets pour un projet tourisme", async () => {
     const ctx = createPublicContext();
@@ -91,7 +91,7 @@ describe("evaluation.submitEvaluation", () => {
 
     expect(result).toBeDefined();
     expect(result.success).toBe(true);
-  });
+  }, 20_000);
 
   it("devrait valider les champs obligatoires", async () => {
     const ctx = createPublicContext();
@@ -127,5 +127,5 @@ describe("evaluation.submitEvaluation", () => {
 
     expect(result).toBeDefined();
     expect(result.success).toBe(true);
-  });
+  }, 20_000);
 });

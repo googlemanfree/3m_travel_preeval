@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import { Resend } from "resend";
 
 describe("Resend API Key Validation", () => {
-  it("should validate the Resend API key by checking account status", async () => {
+  const runExternal = process.env.RUN_EXTERNAL_EMAIL_TESTS === "true";
+
+  it.skipIf(!runExternal)("should validate the Resend API key by checking account status", async () => {
     const apiKey = process.env.RESEND_API_KEY;
     
     // Check if API key is set

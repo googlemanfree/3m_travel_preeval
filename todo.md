@@ -1616,3 +1616,8 @@
 - [x] Ajouter un export CSV sécurisé des données candidats depuis le tableau de bord administrateur
 - [x] Ajouter recherche, filtres et tri avancés dans la liste administrative des candidats
 - [x] Tester les alertes, l’export, les autorisations et publier la version validée
+
+## Pagination serveur des candidats (v57)
+- [x] Ajouter une pagination serveur sécurisée qui conserve les filtres et le tri
+- [x] Ajouter les contrôles de navigation et le total de résultats au tableau candidats existant
+- [x] Tester la pagination, l’export filtré, les autorisations et publier la version validée

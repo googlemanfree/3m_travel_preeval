@@ -14,7 +14,8 @@ const candidateFilterSchema = z.object({
   destination: z.string().trim().max(100).optional().default("all"),
   sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
-  limit: z.number().int().min(1).max(500).default(200),
+  page: z.number().int().min(1).default(1),
+  pageSize: z.number().int().min(10).max(100).default(25),
 });
 
 type CandidateFilter = z.infer<typeof candidateFilterSchema>;
@@ -48,14 +49,22 @@ export function escapeCsvCell(value: unknown): string {
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
-async function loadCandidates(filter: CandidateFilter) {
+export function paginateCandidates<T>(records: T[], requestedPage: number, pageSize: number) {
+  const total = records.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const page = Math.min(requestedPage, totalPages);
+  const start = (page - 1) * pageSize;
+  return { records: records.slice(start, start + pageSize), total, page, pageSize, totalPages };
+}
+
+async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
   const [online, agency, documents] = await Promise.all([
-    db.select().from(applications).orderBy(desc(applications.createdAt)).limit(filter.limit),
-    db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(filter.limit),
-    db.select().from(clientDocuments).limit(2000),
+    db.select().from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
+    db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
+    db.select().from(clientDocuments).limit(Math.min(sourceLimit * 2, 10000)),
   ]);
   const documentCounts = new Map<string, number>();
   documents.forEach(document => documentCounts.set(document.candidateEmail.toLowerCase(), (documentCounts.get(document.candidateEmail.toLowerCase()) ?? 0) + 1));
@@ -115,12 +124,19 @@ export const adminCandidateManagementRouter = router({
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const candidates = await loadCandidates(input);
-    return { candidates, total: candidates.length };
+    const pagination = paginateCandidates(candidates, input.page, input.pageSize);
+    return {
+      candidates: pagination.records,
+      total: pagination.total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+      totalPages: pagination.totalPages,
+    };
   }),
 
   exportCsv: publicProcedure.input(candidateFilterSchema).mutation(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const candidates = await loadCandidates(input);
+    const candidates = await loadCandidates(input, 10000);
     const headers = ["Référence", "Nom", "E-mail", "Téléphone", "Destination", "Visa", "Score", "Statut", "Paiement", "Documents", "Source", "Créé le"];
     const rows = candidates.map(candidate => [
       candidate.applicationNumber, candidate.fullName, candidate.email, candidate.phone,

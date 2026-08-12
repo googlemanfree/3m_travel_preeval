@@ -349,6 +349,8 @@ export default function CandidatesManager() {
   const [scoreFilter, setScoreFilter] = useState("tous");
   const [destinationFilter, setDestinationFilter] = useState("tous");
   const [sortBy, setSortBy] = useState("createdAt");
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
   );
@@ -366,9 +368,10 @@ export default function CandidatesManager() {
       destination: destinationFilter === "tous" ? "all" : destinationFilter,
       sortBy: sortBy as "createdAt" | "fullName" | "score",
       sortDirection: "desc" as const,
-      limit: 500,
+      page,
+      pageSize,
     };
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy]);
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page]);
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
   const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
     onSuccess: ({ csv, count }) => {
@@ -389,6 +392,11 @@ export default function CandidatesManager() {
   })) as Candidate[];
   const filteredCandidates = candidates;
   const destinations = React.useMemo(() => Array.from(new Set(candidates.map(candidate => candidate.destination))).sort((a, b) => a.localeCompare(b, "fr")), [candidates]);
+  const totalPages = data?.totalPages ?? 1;
+  const totalCandidates = data?.total ?? 0;
+  React.useEffect(() => {
+    setPage(1);
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy]);
 
   const handleViewDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
@@ -427,7 +435,7 @@ export default function CandidatesManager() {
           >
             <p className="text-gray-600 text-sm">Total candidatures</p>
             <p className="text-3xl font-bold text-gray-900 mt-2">
-              {candidates.length}
+              {totalCandidates}
             </p>
           </motion.div>
           <motion.div
@@ -541,7 +549,7 @@ export default function CandidatesManager() {
           </div>
           <div className="flex items-center justify-between mt-4 text-sm">
             <p className="text-gray-600">
-              {isLoading ? "Chargement des candidatures..." : `${filteredCandidates.length} candidature(s) trouvée(s)`}
+              {isLoading ? "Chargement des candidatures..." : `${totalCandidates} candidature(s) trouvée(s)`}
             </p>
             <Button variant="outline" size="sm" onClick={() => exportMutation.mutate(filterInput)} disabled={exportMutation.isPending || isLoading}>
               <Download className="w-4 h-4 mr-2" />
@@ -680,6 +688,15 @@ export default function CandidatesManager() {
             <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600">Aucune candidature trouvée</p>
+            </div>
+          )}
+          {totalCandidates > 0 && (
+            <div className="flex flex-col gap-3 border-t px-6 py-4 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+              <span>Page {page} sur {totalPages} · {pageSize} dossiers par page</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page <= 1 || isLoading}>Précédent</Button>
+                <Button variant="outline" size="sm" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={page >= totalPages || isLoading}>Suivant</Button>
+              </div>
             </div>
           )}
         </motion.div>
