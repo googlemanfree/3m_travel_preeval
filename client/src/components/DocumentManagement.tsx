@@ -41,6 +41,8 @@ export function DocumentManagement({
   documents = [],
 }: DocumentManagementProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [localDocuments, setLocalDocuments] = useState<Document[]>(documents);
+  const submitDocumentsMutation = trpc.documentSubmission.submitDocuments.useMutation();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -48,10 +50,38 @@ export function DocumentManagement({
 
     setIsUploading(true);
     try {
-      // TODO: Implémenter l'upload de fichiers
-      toast.success('Document uploadé avec succès');
+      const documentsUrls: Array<{ type: string; url: string; name: string }> = [];
+      const uploaded: Document[] = [];
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('fileType', 'other');
+        const response = await fetch('/api/candidate/upload-public', { method: 'POST', body: formData });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || !payload.fileUrl) throw new Error(payload.error || `Impossible d'envoyer ${file.name}`);
+        const fileName = payload.fileName || file.name;
+        documentsUrls.push({ type: file.type || 'other', url: payload.fileUrl, name: fileName });
+        uploaded.push({
+          id: Date.now() + uploaded.length,
+          name: fileName,
+          type: 'other',
+          size: payload.fileSizeBytes ?? file.size,
+          uploadedAt: new Date(),
+          status: 'pending',
+          source: 'online',
+          url: payload.fileUrl,
+        });
+      }
+      await submitDocumentsMutation.mutateAsync({
+        dossierNumber,
+        submissionMethod: 'en_ligne',
+        documentsUrls,
+        notes: 'Dépôt depuis la gestion documentaire.',
+      });
+      setLocalDocuments((previous) => [...uploaded, ...previous]);
+      toast.success(`${uploaded.length} document(s) uploadé(s) avec succès`);
     } catch (error) {
-      toast.error('Erreur lors de l\'upload du document');
+      toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'upload du document');
     } finally {
       setIsUploading(false);
     }
@@ -142,10 +172,10 @@ export function DocumentManagement({
         </Alert>
 
         {/* Liste des documents */}
-        {documents.length > 0 ? (
+        {localDocuments.length > 0 ? (
           <div className="space-y-3">
             <h3 className="font-semibold text-gray-700">Documents uploadés</h3>
-            {documents.map((doc) => (
+            {localDocuments.map((doc) => (
               <div
                 key={doc.id}
                 className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"

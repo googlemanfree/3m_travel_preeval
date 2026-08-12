@@ -4,12 +4,14 @@
  */
 
 import { getDb } from "../db";
-import { applications } from "../../drizzle/schema";
+import { applications, candidateFiles } from "../../drizzle/schema";
 // import { clientDocuments } from "../../drizzle/schema"; // Table supprimée
 import { publicProcedure, router } from "../_core/trpc";
+import { candidateProcedure } from "./candidate";
+import { getDocumentStatusCounts, toDisplayDocumentStatus } from "../services/documentStatus";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, or, desc } from "drizzle-orm";
 
 export const userDashboardRouter = router({
   /**
@@ -58,50 +60,45 @@ export const userDashboardRouter = router({
   /**
    * Récupérer le statut des documents soumis
    */
-  getDocumentsStatus: publicProcedure
+  getDocumentsStatus: candidateProcedure
     .input(z.object({
       dossierNumber: z.string(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
       const [app] = await db
-        .select()
+        .select({ id: applications.id })
         .from(applications)
-        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .where(and(
+          eq(applications.dossierNumber, input.dossierNumber),
+          or(eq(applications.candidateId, ctx.candidate.id), eq(applications.email, ctx.candidate.email)),
+        ))
         .limit(1);
 
-      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable ou non autorisé" });
 
-      // Récupérer les documents soumis (stub pour maintenant)
-      const documents: any[] = [];
+      const documents = await db
+        .select()
+        .from(candidateFiles)
+        .where(eq(candidateFiles.candidateId, ctx.candidate.id))
+        .orderBy(desc(candidateFiles.uploadedAt));
 
-      // Compter les statuts
-      const totalDocuments = documents.length;
-      const verifiedCount = documents.filter(d => d.status === "verified").length;
-      const pendingCount = documents.filter(d => d.status === "pending").length;
-      const rejectedCount = documents.filter(d => d.status === "rejected").length;
-
-      // Calculer le pourcentage de complétion
-      const completionPercentage = totalDocuments > 0 ? Math.round((verifiedCount / totalDocuments) * 100) : 0;
+      const statusCounts = getDocumentStatusCounts(documents);
 
       return {
         dossierNumber: input.dossierNumber,
-        totalDocuments,
-        verifiedCount,
-        pendingCount,
-        rejectedCount,
-        completionPercentage,
+        ...statusCounts,
         documents: documents.map(d => ({
           id: d.id,
-          type: d.documentType,
-          name: d.documentName,
-          status: d.status,
-          submittedAt: d.submittedAt,
-          verifiedAt: d.verifiedAt,
+          type: d.fileType,
+          name: d.fileName,
+          status: toDisplayDocumentStatus(d.status),
+          submittedAt: d.uploadedAt,
+          verifiedAt: d.status === "verified" ? d.uploadedAt : null,
           rejectionReason: d.rejectionReason || null,
-          url: d.documentUrl,
+          url: d.fileUrl,
         })),
       };
     }),

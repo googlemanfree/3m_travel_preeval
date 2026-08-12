@@ -3,6 +3,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { startLogin } from '@/const';
+import { trpc } from '@/lib/trpc';
 
 interface EvaluationFormData {
   fullName: string;
@@ -81,6 +82,7 @@ export default function PrimaryEvaluationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const submitMutation = trpc.evaluation.submit.useMutation();
 
   if (authLoading) {
     return (
@@ -180,33 +182,55 @@ export default function PrimaryEvaluationForm() {
     }
 
     setIsSubmitting(true);
-    try {
-      // Simulate API call to submit evaluation
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    setErrors((previous) => {
+      const next = { ...previous };
+      delete next.submit;
+      return next;
+    });
 
-      // In a real app, this would upload the CV and submit the evaluation
-      console.log('Form submitted:', formData);
+    try {
+      const destinationCategory = formData.destination === "Canada"
+        ? "canada"
+        : ["Luxembourg", "France", "Allemagne", "Suisse", "Belgique", "Pays-Bas"].includes(formData.destination)
+          ? "schengen"
+          : "autre";
+      const visaType = destinationCategory === "canada"
+        ? formData.visaType === "Études" ? "canada_etude" : formData.visaType === "Visiteur" ? "canada_tourisme" : "canada_rp"
+        : destinationCategory === "schengen"
+          ? formData.visaType === "Études" ? "schengen_etude" : formData.visaType === "Visiteur" ? "schengen_tourisme" : "schengen_travail"
+          : "autre";
+
+      let cvBase64: string | undefined;
+      if (formData.cvFile) {
+        cvBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error("Impossible de lire le CV"));
+          reader.readAsDataURL(formData.cvFile as File);
+        });
+      }
+
+      await submitMutation.mutateAsync({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        destinationCategory,
+        destinationCountry: formData.destination,
+        visaType,
+        educationLevel: formData.education,
+        yearsOfExperience: String(formData.experience),
+        englishLevel: formData.englishLevel,
+        industrySector: formData.sector,
+        currentJobTitle: formData.currentJob,
+        cvBase64,
+        cvFileName: formData.cvFile?.name,
+        cvMimeType: formData.cvFile?.type,
+      });
 
       setSubmitSuccess(true);
-      setTimeout(() => {
-        setSubmitSuccess(false);
-        setFormData({
-          fullName: user?.name || '',
-          email: user?.email || '',
-          phone: '',
-          destination: '',
-          visaType: '',
-          education: '',
-          experience: 0,
-          englishLevel: '',
-          currentJob: '',
-          sector: '',
-          cvFile: null,
-        });
-      }, 3000);
     } catch (error) {
       console.error('Erreur lors de la soumission:', error);
-      setErrors({ submit: 'Une erreur est survenue lors de la soumission' });
+      setErrors({ submit: error instanceof Error ? error.message : 'Une erreur est survenue lors de la soumission' });
     } finally {
       setIsSubmitting(false);
     }
@@ -242,9 +266,10 @@ export default function PrimaryEvaluationForm() {
               dans les 24 heures. Vous pouvez également consulter votre espace pour
               voir l'état de votre évaluation.
             </p>
+            {errors.submit && <p className="text-sm text-red-600">{errors.submit}</p>}
             <div className="space-y-3">
               <p className="text-sm text-gray-500">
-                Numéro de suivi : <span className="font-bold">3M-2026-{Math.floor(Math.random() * 10000).toString().padStart(4, '0')}</span>
+                Votre demande est enregistrée. Consultez votre espace candidat pour suivre son traitement.
               </p>
             </div>
           </Card>
@@ -265,6 +290,7 @@ export default function PrimaryEvaluationForm() {
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {errors.submit && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{errors.submit}</p>}
             {/* Informations personnelles */}
             <div className="border-b border-gray-200 pb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">

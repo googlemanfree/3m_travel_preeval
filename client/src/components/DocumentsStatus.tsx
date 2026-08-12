@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { getCandidateToken } from "@/hooks/useCandidateAuth";
 
 interface DocumentsStatusProps {
   dossierNumber: string;
@@ -23,6 +24,8 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [reuploadComment, setReuploadComment] = useState("");
+  const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const trpcUtils = trpc.useUtils();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -241,20 +244,35 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                   }
                   setIsUploading(true);
                   try {
-                    // TODO: Implémenter l'upload via tRPC avec le commentaire
+                    const token = getCandidateToken();
+                    if (!token) throw new Error("Votre session candidat a expiré.");
+                    const allowedTypes = new Set(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre"]);
+                    const fileType = allowedTypes.has(reuploadDoc.type) ? reuploadDoc.type : "autre";
                     const formData = new FormData();
-                    formData.append('file', selectedFile);
-                    formData.append('dossierNumber', dossierNumber);
-                    formData.append('documentId', reuploadDoc.id);
-                    formData.append('comment', reuploadComment);
-                    
-                    // Appel tRPC : await trpc.documents.reuploadDocument.mutate(formData)
+                    formData.append("file", selectedFile);
+                    formData.append("fileType", fileType);
+                    const response = await fetch("/api/candidate/upload", {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${token}` },
+                      body: formData,
+                    });
+                    const payload = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(payload.error || "Erreur lors du réupload");
+                    await saveDocumentMutation.mutateAsync({
+                      fileType,
+                      fileName: payload.fileName || selectedFile.name,
+                      fileUrl: payload.fileUrl,
+                      fileKey: payload.fileKey,
+                      fileSizeBytes: payload.fileSizeBytes ?? selectedFile.size,
+                      mimeType: payload.mimeType || selectedFile.type,
+                    });
+                    await trpcUtils.userDashboard.getDocumentsStatus.invalidate({ dossierNumber });
                     toast.success("Document réuploadé avec succès!");
                     setReuploadDoc(null);
                     setSelectedFile(null);
                     setReuploadComment("");
                   } catch (error) {
-                    toast.error("Erreur lors du réupload");
+                    toast.error(error instanceof Error ? error.message : "Erreur lors du réupload");
                   } finally {
                     setIsUploading(false);
                   }

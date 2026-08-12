@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { getCandidateToken, useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,7 @@ interface DocumentItem {
   uploadedAt: Date;
   status: "pending" | "verified" | "rejected";
   notes?: string;
+  fileUrl?: string;
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
@@ -68,7 +69,7 @@ const PROGRESS_STEPS = [
 ];
 
 export default function ClientDashboard() {
-  const { candidate, isAuthenticated } = useCandidateAuth();
+  const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [dossier, setDossier] = useState<DossierStatus | null>(null);
@@ -100,16 +101,7 @@ export default function ClientDashboard() {
     },
   });
 
-  // Mutation pour uploader les documents (placeholder)
-  // const uploadMutation = trpc.candidate.uploadDocuments.useMutation({
-  //   onSuccess: () => {
-  //     toast.success("Documents téléversés avec succès!");
-  //     setUploadedFiles([]);
-  //   },
-  //   onError: (error: any) => {
-  //     toast.error("Erreur lors du téléversement: " + error.message);
-  //   },
-  // });
+  const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -147,6 +139,7 @@ export default function ClientDashboard() {
           uploadedAt: new Date(doc.uploadedAt),
           status: doc.status || "pending",
           notes: "",
+          fileUrl: doc.fileUrl,
         }))
       );
     }
@@ -161,20 +154,49 @@ export default function ClientDashboard() {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
-  const handleUpload = async () => {
+    const handleUpload = async () => {
     if (uploadedFiles.length === 0) {
       toast.error("Veuillez sélectionner au moins un fichier");
       return;
     }
 
+    const token = getCandidateToken();
+    if (!token) {
+      toast.error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+      setLocation("/login");
+      return;
+    }
+
     setUploading(true);
     try {
-      // Simuler l'upload pour le moment
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      for (const file of uploadedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("fileType", "autre");
+        const response = await fetch("/api/candidate/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement");
+        await saveDocumentMutation.mutateAsync({
+          fileType: "autre",
+          fileName: payload.fileName || file.name,
+          fileUrl: payload.fileUrl,
+          fileKey: payload.fileKey,
+          fileSizeBytes: payload.fileSizeBytes ?? file.size,
+          mimeType: payload.mimeType || file.type,
+        });
+      }
+      await Promise.all([
+        trpcUtils.candidate.getMyDocuments.invalidate(),
+        trpcUtils.candidate.getMyDossierData.invalidate(),
+      ]);
       toast.success("Documents téléversés avec succès!");
       setUploadedFiles([]);
     } catch (error) {
-      toast.error("Erreur lors du téléversement");
+      toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement");
     } finally {
       setUploading(false);
     }
@@ -223,7 +245,7 @@ export default function ClientDashboard() {
               <h1 className="text-4xl font-bold text-gray-900">Mon Espace Client</h1>
               <p className="text-gray-600 mt-2">Dossier: <span className="font-semibold">{dossier.numero}</span></p>
             </div>
-            <Button variant="outline" onClick={() => setLocation("/")}>
+            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>
               <LogOut className="w-4 h-4 mr-2" />
               Déconnexion
             </Button>
@@ -444,12 +466,29 @@ export default function ClientDashboard() {
                           </Badge>
                         </div>
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          {doc.fileUrl ? (
+                            <>
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" aria-label={`Voir ${doc.name}`}>
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                              </Button>
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={doc.fileUrl} download={doc.name} aria-label={`Télécharger ${doc.name}`}>
+                                  <Download className="w-4 h-4" />
+                                </a>
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button variant="ghost" size="sm" disabled aria-label="Aperçu indisponible">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" disabled aria-label="Téléchargement indisponible">
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -595,7 +634,7 @@ export default function ClientDashboard() {
                   <p className="text-sm text-gray-600">Email</p>
                   <p className="font-semibold">{candidate?.email}</p>
                 </div>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={() => setLocation("/forgot-password")}>
                   Modifier le Mot de Passe
                 </Button>
               </CardContent>

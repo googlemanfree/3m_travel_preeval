@@ -10,12 +10,11 @@ export function AdminDocumentVerification() {
   const [verificationNotes, setVerificationNotes] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // Pour l'instant, on utilise une liste vide - à intégrer avec l'admin dashboard
-  const applicationsQuery = {
-    data: [],
-    isLoading: false,
-    refetch: () => {},
-  };
+  const applicationsQuery = trpc.application.listApplications.useQuery({
+    paymentStatus: "ALL",
+    limit: 100,
+    offset: 0,
+  });
 
   const verifyMutation = trpc.documentSubmission.verifyDocuments.useMutation({
     onSuccess: () => {
@@ -38,7 +37,7 @@ export function AdminDocumentVerification() {
     }
   };
 
-  if (false) {
+  if (applicationsQuery.isLoading) {
     return (
       <div className="p-6">
         <Card className="p-8 text-center">
@@ -49,9 +48,20 @@ export function AdminDocumentVerification() {
     );
   }
 
-  const applications = applicationsQuery.data || [];
-  
-  // TODO: Intégrer avec le dashboard admin pour afficher les dossiers en attente de verification
+  if (applicationsQuery.error) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{applicationsQuery.error.message}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const applications = (applicationsQuery.data || []).filter((application: any) =>
+    application.dossierStatus === "documents_recus" && !application.documentsVerifiedAt
+  );
 
   return (
     <div className="p-6">

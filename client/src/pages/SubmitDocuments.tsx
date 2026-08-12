@@ -52,11 +52,27 @@ export default function SubmitDocuments() {
     setErrorMessage("");
 
     try {
-      const documentsUrls = uploadedFiles.map((file) => ({
-        type: file.type,
-        url: URL.createObjectURL(file),
-        name: file.name,
-      }));
+      let documentsUrls: Array<{ type: string; url: string; name: string }> = [];
+      if (submissionMethod === "en_ligne") {
+        for (const file of uploadedFiles) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("fileType", "other");
+          const uploadResponse = await fetch("/api/candidate/upload-public", {
+            method: "POST",
+            body: formData,
+          });
+          const payload = await uploadResponse.json().catch(() => ({}));
+          if (!uploadResponse.ok || !payload.fileUrl) {
+            throw new Error(payload.error || `Impossible d'envoyer ${file.name}`);
+          }
+          documentsUrls.push({
+            type: file.type || "other",
+            url: payload.fileUrl,
+            name: payload.fileName || file.name,
+          });
+        }
+      }
 
       await submitMutation.mutateAsync({
         dossierNumber,
@@ -111,7 +127,7 @@ export default function SubmitDocuments() {
             <p className="text-gray-600 mb-6">
               Vos documents ont deja ete soumis. Nous les verifierons et vous contacterons sous peu.
             </p>
-            <Button onClick={() => (window.location.href = "/candidate/dashboard")} className="w-full">
+            <Button onClick={() => (window.location.href = "/client-dashboard")} className="w-full">
               Retour au tableau de bord
             </Button>
           </Card>

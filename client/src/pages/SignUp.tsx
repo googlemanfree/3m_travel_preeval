@@ -275,13 +275,13 @@ export default function SignUp() {
                 />
                 <label htmlFor="terms" className="text-xs text-gray-600 cursor-pointer">
                   J'accepte les{" "}
-                  <a href="#" className="text-[#2563EB] hover:underline font-semibold">
+                  <Link href="/conditions-utilisation" className="text-[#2563EB] hover:underline font-semibold">
                     conditions d'utilisation
-                  </a>{" "}
+                  </Link>{" "}
                   et la{" "}
-                  <a href="#" className="text-[#2563EB] hover:underline font-semibold">
+                  <Link href="/politique-confidentialite" className="text-[#2563EB] hover:underline font-semibold">
                     politique de confidentialité
-                  </a>
+                  </Link>
                 </label>
               </div>
 

@@ -414,14 +414,20 @@ export function DossierProgressBar({
           </button>
         )}
         {status === "en_attente_documents" && (
-          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+          <button
+            onClick={() => window.location.assign(`/document-upload?dossier=${encodeURIComponent(dossierNumber)}`)}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+          >
             Déposer mes Documents
           </button>
         )}
         {(status === "refuse" || status === "visa_approuve") && (
-          <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+          <a
+            href="mailto:hello@3mtravelagency.com?subject=Demande%20d%27accompagnement%20dossier"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-center"
+          >
             Contacter un Conseiller
-          </button>
+          </a>
         )}
       </motion.div>
 

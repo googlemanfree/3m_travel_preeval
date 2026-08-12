@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { getCandidateToken, useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -126,6 +126,8 @@ export default function MySpace() {
     undefined,
     { enabled: isAuthenticated }
   );
+  const trpcUtils = trpc.useUtils();
+  const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
 
   // Rediriger si non authentifié
   useEffect(() => {
@@ -216,10 +218,52 @@ export default function MySpace() {
     setUploadModalOpen(true);
   };
 
-  // Gestionnaire pour le téléversement
+  // Gestionnaire pour le téléversement — stockage réel, puis enregistrement lié au candidat.
   const handleUploadFile = async (file: File, documentType: string) => {
-    // TODO: Implémenter l'upload via tRPC
-    console.log(`Uploading ${file.name} for ${documentType}`);
+    const token = getCandidateToken();
+    if (!token) {
+      throw new Error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+    }
+
+    const typeAliases: Record<string, "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "autre"> = {
+      cv: "cv",
+      passeport: "passeport",
+      passport: "passeport",
+      diplome: "diplome",
+      diplôme: "diplome",
+      releve: "releve_notes",
+      "relevé": "releve_notes",
+      photo: "photo",
+      domicile: "justificatif_domicile",
+      naissance: "extrait_naissance",
+      casier: "casier_judiciaire",
+    };
+    const fileType = typeAliases[documentType.trim().toLowerCase()] || "autre";
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
+
+    const response = await fetch("/api/candidate/upload", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement");
+
+    await saveDocumentMutation.mutateAsync({
+      fileType,
+      fileName: payload.fileName || file.name,
+      fileUrl: payload.fileUrl,
+      fileKey: payload.fileKey,
+      fileSizeBytes: payload.fileSizeBytes ?? file.size,
+      mimeType: payload.mimeType || file.type,
+    });
+    await Promise.all([
+      trpcUtils.candidate.getMyDossierData.invalidate(),
+      trpcUtils.candidate.getMyDocuments.invalidate(),
+    ]);
+    toast.success("Document téléversé et enregistré.");
   };
 
   // Afficher la notification si des documents manquent
@@ -520,7 +564,7 @@ export default function MySpace() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Mes documents</CardTitle>
-                <Button onClick={() => handleQuickUpload("")}>
+                <Button onClick={() => handleQuickUpload("autre")}>
                   <FileText className="w-4 h-4 mr-2" />
                   Ajouter un document
                 </Button>

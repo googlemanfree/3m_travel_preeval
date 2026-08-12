@@ -1669,8 +1669,8 @@
 - [x] Tester les migrations, les accès isolés, les documents et les parcours mobile/bureau avant publication
 
 ## Audit des interactions et boutons inaccessibles (v65)
-- [ ] Inventorier les boutons, liens, formulaires et routes interactives du site
-- [ ] Identifier les boutons sans action, liens morts, actions bloquées ou modales inaccessibles
-- [ ] Corriger les interactions confirmées sans modifier le design ni les contenus
-- [ ] Ajouter ou mettre à jour les tests de fiabilité des interactions critiques
-- [ ] Vérifier mobile/bureau, TypeScript, build et publier la correction
+- [x] Inventorier les boutons, liens, formulaires et routes interactives du site
+- [x] Identifier les boutons sans action, liens morts, actions bloquées ou modales inaccessibles
+- [x] Corriger les interactions confirmées sans modifier le design ni les contenus
+- [x] Ajouter ou mettre à jour les tests de fiabilité des interactions critiques
+- [x] Vérifier mobile/bureau, TypeScript, build et publier la correction

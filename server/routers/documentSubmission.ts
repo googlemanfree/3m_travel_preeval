@@ -105,6 +105,7 @@ export const documentSubmissionRouter = router({
         .set({
           documentsSubmissionMethod: input.submissionMethod,
           documentsReceivedAt: new Date(),
+          documentsUrls: input.documentsUrls?.length ? JSON.stringify(input.documentsUrls) : null,
           dossierStatus: "documents_recus",
           adminNote: input.notes ? `[Documents reçus] ${input.notes}` : "[Documents reçus]",
         })

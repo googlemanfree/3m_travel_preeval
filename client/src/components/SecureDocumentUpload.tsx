@@ -59,6 +59,7 @@ export function SecureDocumentUpload({
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submitDocumentsMutation = trpc.documentSubmission.submitDocuments.useMutation();
 
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <ImageIcon className="w-5 h-5" />;
@@ -131,42 +132,29 @@ export function SecureDocumentUpload({
     setIsUploading(true);
 
     try {
-      // Simuler le téléchargement avec progression
+      const documentsUrls: Array<{ type: string; url: string; name: string }> = [];
       for (const doc of validDocuments) {
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "uploading", progress: 0 } : d
-          )
-        );
-
-        // Simuler la progression du téléchargement
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-          setDocuments((prev) =>
-            prev.map((d) =>
-              d.id === doc.id ? { ...d, progress: i } : d
-            )
-          );
-        }
-
-        // Marquer comme succès
-        setDocuments((prev) =>
-          prev.map((d) =>
-            d.id === doc.id ? { ...d, status: "success", progress: 100 } : d
-          )
-        );
+        setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, status: "uploading", progress: 20 } : d));
+        const formData = new FormData();
+        formData.append("file", doc.file);
+        formData.append("fileType", "other");
+        const uploadResponse = await fetch("/api/candidate/upload-public", { method: "POST", body: formData });
+        const payload = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok || !payload.fileUrl) throw new Error(payload.error || `Impossible d'envoyer ${doc.name}`);
+        documentsUrls.push({ type: doc.type || "other", url: payload.fileUrl, name: payload.fileName || doc.name });
+        setDocuments((prev) => prev.map((d) => d.id === doc.id ? { ...d, status: "success", progress: 100 } : d));
       }
+
+      await submitDocumentsMutation.mutateAsync({
+        dossierNumber,
+        submissionMethod: "en_ligne",
+        documentsUrls,
+        notes: "Dépôt effectué depuis l'espace de suivi.",
+      });
 
       toast.success(`${validDocuments.length} document(s) téléchargé(s) avec succès`);
-
-      if (onUploadComplete) {
-        onUploadComplete(validDocuments);
-      }
-
-      // Réinitialiser après 2 secondes
-      setTimeout(() => {
-        setDocuments([]);
-      }, 2000);
+      onUploadComplete?.(validDocuments);
+      setTimeout(() => setDocuments([]), 2000);
     } catch (error) {
       toast.error("Erreur lors du téléchargement");
       setDocuments((prev) =>

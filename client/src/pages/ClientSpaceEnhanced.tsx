@@ -3,6 +3,8 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { startLogin } from '@/const';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 
 interface Evaluation {
   id: number;
@@ -60,6 +62,7 @@ export default function ClientSpaceEnhanced() {
   const [payment, setPayment] = useState<Payment>(mockPayment);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string>('');
+  const submitPaymentMutation = trpc.clientDocuments.submitPayment.useMutation();
 
   if (authLoading) {
     return (
@@ -85,28 +88,33 @@ export default function ClientSpaceEnhanced() {
     );
   }
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!paymentMethod) {
-      alert('Veuillez sélectionner une méthode de paiement');
+      toast.error('Veuillez sélectionner une méthode de paiement');
       return;
     }
-    
-    // Simuler le paiement CinetPay
-    alert(`Redirection vers CinetPay pour ${paymentMethod}...`);
-    setPayment({ ...payment, status: 'processing', method: paymentMethod });
-    
-    // Simuler la complétion du paiement après 2 secondes
-    setTimeout(() => {
-      setPayment({
-        ...payment,
-        status: 'completed',
-        method: paymentMethod,
-        transactionId: `TXN-${Date.now()}`,
-        completedAt: new Date().toISOString(),
+    if (!user?.email) {
+      toast.error('Votre session ne contient pas d’adresse e-mail exploitable.');
+      return;
+    }
+
+    const method = paymentMethod === 'Carte Bancaire' ? 'card' : paymentMethod === 'MTN Mobile Money' || paymentMethod === 'Orange Money' ? 'mobile_money' : 'other';
+    try {
+      await submitPaymentMutation.mutateAsync({
+        evaluationId: evaluation.id,
+        candidateEmail: user.email,
+        amount: payment.amount,
+        currency: payment.currency,
+        paymentMethod: method,
+        paymentDescription: `Frais de traitement — ${evaluation.destination} — ${evaluation.visaType}`,
       });
+      setPayment((previous) => ({ ...previous, status: 'processing', method: paymentMethod }));
       setShowPaymentModal(false);
-      alert('Paiement réussi ! Vous pouvez maintenant soumettre vos documents.');
-    }, 2000);
+      toast.success('Demande de paiement enregistrée. La confirmation sera affichée après vérification serveur.');
+    } catch (error) {
+      setPayment((previous) => ({ ...previous, status: 'failed', method: paymentMethod }));
+      toast.error(error instanceof Error ? error.message : 'Impossible d’enregistrer le paiement');
+    }
   };
 
   const getStatusColor = (status: string) => {
