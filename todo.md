@@ -1518,3 +1518,8 @@
 - [x] Créer un panneau de configuration de profil au-dessus du tableau comparatif pour ajuster les critères en temps réel
 - [x] Mettre à jour dynamiquement la formule de compatibilité pour refléter les choix du candidat
 - [x] Valider le build de production et publier la version avec profil interactif
+
+## Infobulle détaillée sur le score de compatibilité (v44)
+- [x] Enrichir CountryComparisonPage.tsx pour générer un détail textuel des critères (type de visa, niveau d'études, expérience, difficulté pays)
+- [x] Intégrer une infobulle (Tooltip ou popover au survol) affichant les points forts et points d'attention du profil par pays
+- [x] Valider le build de production et publier la version avec infobulle de compatibilité explicable

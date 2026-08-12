@@ -100,6 +100,39 @@ export default function CountryComparisonPage() {
     return Math.min(99, Math.max(50, score));
   };
 
+  const getCompatibilityDetails = (country: CountryProcedureComplete) => {
+    const score = getDynamicCompatibility(country);
+    const reasons: { text: string; positive: boolean }[] = [];
+
+    if (userProfile.targetVisa === 'tous' || userProfile.targetVisa === country.visaType) {
+      reasons.push({ text: `Type de visa (${country.visaType}) parfaitement aligné`, positive: true });
+    } else {
+      reasons.push({ text: `Visa demandé (${country.visaType}) différent de votre préférence`, positive: false });
+    }
+
+    if (userProfile.education === 'master_phd' || userProfile.education === 'bac_plus_3') {
+      reasons.push({ text: `Niveau d'études supérieur validé pour ce programme`, positive: true });
+    } else {
+      reasons.push({ text: `Niveau d'études standard acceptant des compléments de formation`, positive: true });
+    }
+
+    if (userProfile.experience === 'plus_5_ans' || userProfile.experience === '3_5_ans') {
+      reasons.push({ text: `Expérience professionnelle solide valorisée`, positive: true });
+    } else {
+      reasons.push({ text: `Expérience débutante nécessitant un accompagnement renforcé`, positive: false });
+    }
+
+    if (country.difficulty === 'facile') {
+      reasons.push({ text: `Démarches administratives fluidifiées et rapides`, positive: true });
+    } else if (country.difficulty === 'moyen') {
+      reasons.push({ text: `Procédure standard avec exigences réglementaires modérées`, positive: true });
+    } else {
+      reasons.push({ text: `Procédure sélective exigeant un dossier d'excellence`, positive: false });
+    }
+
+    return { score, reasons };
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -252,23 +285,43 @@ export default function CountryComparisonPage() {
                         </Badge>
                       </div>
 
-                      {/* Indicateur de compatibilité profil dynamique */}
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3.5 rounded-2xl">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-bold text-blue-900 flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Compatibilité Profil
-                          </span>
-                          <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">
-                            {compatibility}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                          <div 
-                            className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500"
-                            style={{ width: `${compatibility}%` }}
-                          />
-                        </div>
-                      </div>
+                      {/* Indicateur de compatibilité profil avec infobulle détaillée */}
+                      {(() => {
+                        const { score, reasons } = getCompatibilityDetails(country);
+                        return (
+                          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3.5 rounded-2xl relative group cursor-help">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-bold text-blue-900 flex items-center gap-1">
+                                <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Compatibilité Profil (i)
+                              </span>
+                              <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                                {score}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500"
+                                style={{ width: `${score}%` }}
+                              />
+                            </div>
+
+                            {/* Infobulle au survol */}
+                            <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 p-3.5 bg-slate-900 text-white text-xs rounded-2xl shadow-2xl z-50 pointer-events-none space-y-2 border border-slate-700">
+                              <p className="font-bold text-amber-400 border-b border-slate-700 pb-1">Détail des critères pour {country.name}</p>
+                              <ul className="space-y-1.5">
+                                {reasons.map((r, idx) => (
+                                  <li key={idx} className="flex items-start gap-1.5">
+                                    <span className={r.positive ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                                      {r.positive ? '✓' : '•'}
+                                    </span>
+                                    <span className="text-slate-200">{r.text}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* Critères comparatifs */}
                       <div className="space-y-3 pt-1 border-t border-slate-100 text-sm">
