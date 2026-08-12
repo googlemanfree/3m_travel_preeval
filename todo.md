@@ -1621,3 +1621,15 @@
 - [x] Ajouter une pagination serveur sécurisée qui conserve les filtres et le tri
 - [x] Ajouter les contrôles de navigation et le total de résultats au tableau candidats existant
 - [x] Tester la pagination, l’export filtré, les autorisations et publier la version validée
+
+## Pagination persistante des candidats (v58)
+- [x] Créer et valider une compétence réutilisable de pagination administrative persistante
+- [x] Ajouter les tailles de page 10, 25, 50 et 100 à la liste candidats
+- [x] Remplacer la navigation simple par une numérotation de pages cliquable
+- [x] Synchroniser filtres, tri, taille de page et page courante dans l’URL
+- [x] Tester les paramètres URL, la pagination et publier la version validée
+
+## Intégration sélective de l’archive fonctions complétées (v59)
+- [x] Comparer les fichiers fournis avec les versions actives et repérer les améliorations compatibles
+- [x] Intégrer uniquement les correctifs qui préservent les protections de session, paiement et documents
+- [x] Tester les intégrations retenues avec la pagination persistante et publier la version validée

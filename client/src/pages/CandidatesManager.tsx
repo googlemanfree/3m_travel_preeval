@@ -49,6 +49,13 @@ import { PDFExporter } from "@/components/PDFExporter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import {
+  CANDIDATE_PAGE_SIZES,
+  type CandidatePageSize,
+  getPageTokens,
+  parseCandidateListUrl,
+  serializeCandidateListUrl,
+} from "@/lib/adminCandidatePagination";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -343,14 +350,18 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function CandidatesManager() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("tous");
-  const [paymentFilter, setPaymentFilter] = useState("tous");
-  const [scoreFilter, setScoreFilter] = useState("tous");
-  const [destinationFilter, setDestinationFilter] = useState("tous");
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const initialUrlState = React.useMemo(
+    () => parseCandidateListUrl(typeof window === "undefined" ? "" : window.location.search),
+    []
+  );
+  const [searchQuery, setSearchQuery] = useState(initialUrlState.searchQuery);
+  const [statusFilter, setStatusFilter] = useState(initialUrlState.statusFilter);
+  const [paymentFilter, setPaymentFilter] = useState(initialUrlState.paymentFilter);
+  const [scoreFilter, setScoreFilter] = useState(initialUrlState.scoreFilter);
+  const [destinationFilter, setDestinationFilter] = useState(initialUrlState.destinationFilter);
+  const [sortBy, setSortBy] = useState(initialUrlState.sortBy);
+  const [page, setPage] = useState(initialUrlState.page);
+  const [pageSize, setPageSize] = useState<CandidatePageSize>(initialUrlState.pageSize);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
   );
@@ -394,9 +405,36 @@ export default function CandidatesManager() {
   const destinations = React.useMemo(() => Array.from(new Set(candidates.map(candidate => candidate.destination))).sort((a, b) => a.localeCompare(b, "fr")), [candidates]);
   const totalPages = data?.totalPages ?? 1;
   const totalCandidates = data?.total ?? 0;
+  const updateFromUrl = React.useCallback(() => {
+    const next = parseCandidateListUrl(window.location.search);
+    setSearchQuery(next.searchQuery);
+    setStatusFilter(next.statusFilter);
+    setPaymentFilter(next.paymentFilter);
+    setScoreFilter(next.scoreFilter);
+    setDestinationFilter(next.destinationFilter);
+    setSortBy(next.sortBy);
+    setPage(next.page);
+    setPageSize(next.pageSize);
+  }, []);
+
   React.useEffect(() => {
-    setPage(1);
-  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy]);
+    const urlState = { searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy: sortBy as "createdAt" | "fullName" | "score", page, pageSize };
+    const nextUrl = `${window.location.pathname}${serializeCandidateListUrl(urlState)}${window.location.hash}`;
+    if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
+
+  React.useEffect(() => {
+    window.addEventListener("popstate", updateFromUrl);
+    return () => window.removeEventListener("popstate", updateFromUrl);
+  }, [updateFromUrl]);
+
+  React.useEffect(() => {
+    if (data?.page && data.page !== page) setPage(data.page);
+  }, [data?.page, page]);
+
+  const resetToFirstPage = () => setPage(1);
 
   const handleViewDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
@@ -485,12 +523,12 @@ export default function CandidatesManager() {
               <Input
                 placeholder="Rechercher par nom, email..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); resetToFirstPage(); }}
                 className="pl-10"
               />
             </div>
 
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); resetToFirstPage(); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
@@ -505,7 +543,7 @@ export default function CandidatesManager() {
               </SelectContent>
             </Select>
 
-            <Select value={paymentFilter} onValueChange={setPaymentFilter}>
+            <Select value={paymentFilter} onValueChange={(value) => { setPaymentFilter(value); resetToFirstPage(); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Paiement" />
               </SelectTrigger>
@@ -517,7 +555,7 @@ export default function CandidatesManager() {
               </SelectContent>
             </Select>
 
-            <Select value={scoreFilter} onValueChange={setScoreFilter}>
+            <Select value={scoreFilter} onValueChange={(value) => { setScoreFilter(value); resetToFirstPage(); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Score" />
               </SelectTrigger>
@@ -530,15 +568,16 @@ export default function CandidatesManager() {
               </SelectContent>
             </Select>
 
-            <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+            <Select value={destinationFilter} onValueChange={(value) => { setDestinationFilter(value); resetToFirstPage(); }}>
               <SelectTrigger><SelectValue placeholder="Destination" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="tous">Toutes destinations</SelectItem>
+                {destinationFilter !== "tous" && !destinations.includes(destinationFilter) && <SelectItem value={destinationFilter}>{destinationFilter}</SelectItem>}
                 {destinations.map(destination => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}
               </SelectContent>
             </Select>
 
-            <Select value={sortBy} onValueChange={setSortBy}>
+            <Select value={sortBy} onValueChange={(value) => { setSortBy(value as "createdAt" | "fullName" | "score"); resetToFirstPage(); }}>
               <SelectTrigger><SelectValue placeholder="Trier" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="createdAt">Plus récents</SelectItem>
@@ -691,10 +730,23 @@ export default function CandidatesManager() {
             </div>
           )}
           {totalCandidates > 0 && (
-            <div className="flex flex-col gap-3 border-t px-6 py-4 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
-              <span>Page {page} sur {totalPages} · {pageSize} dossiers par page</span>
-              <div className="flex gap-2">
+            <div className="flex flex-col gap-3 border-t px-6 py-4 text-sm text-gray-600 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex items-center gap-2">
+                <span>Page {page} sur {totalPages}</span>
+                <Select value={String(pageSize)} onValueChange={(value) => { setPageSize(Number(value) as CandidatePageSize); resetToFirstPage(); }}>
+                  <SelectTrigger className="h-8 w-[148px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {CANDIDATE_PAGE_SIZES.map(size => <SelectItem key={size} value={String(size)}>{size} dossiers / page</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
                 <Button variant="outline" size="sm" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page <= 1 || isLoading}>Précédent</Button>
+                {getPageTokens(page, totalPages).map((token, index) => token === "ellipsis" ? (
+                  <span key={`ellipsis-${index}`} className="px-1 text-gray-400">…</span>
+                ) : (
+                  <Button key={token} size="sm" variant={token === page ? "default" : "outline"} onClick={() => setPage(token)} disabled={token === page || isLoading}>{token}</Button>
+                ))}
                 <Button variant="outline" size="sm" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={page >= totalPages || isLoading}>Suivant</Button>
               </div>
             </div>
