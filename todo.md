@@ -1512,3 +1512,9 @@
 - [x] Mettre à jour CountryComparisonPage.tsx pour calculer ou afficher un score de compatibilité estimé (ou basé sur le dernier score d'évaluation stocké) pour chaque pays
 - [x] Intégrer un badge de compatibilité visuel et progressif sous chaque pays dans le tableau comparatif
 - [x] Valider le build de production et publier la version avec indicateur de compatibilité
+
+## Formulaire de profil interactif dans le comparateur (v43)
+- [x] Ajouter des états de profil utilisateur (niveau d'études, expérience, budget) dans CountryComparisonPage.tsx avec stockage localStorage
+- [x] Créer un panneau de configuration de profil au-dessus du tableau comparatif pour ajuster les critères en temps réel
+- [x] Mettre à jour dynamiquement la formule de compatibilité pour refléter les choix du candidat
+- [x] Valider le build de production et publier la version avec profil interactif

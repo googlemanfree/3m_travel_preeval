@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckCircle2, XCircle, Trash2, ExternalLink, Sparkles, Scale } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Trash2, ExternalLink, Sparkles, Scale, UserCheck, Sliders, Briefcase, GraduationCap, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,17 +11,38 @@ export default function CountryComparisonPage() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [favoriteCountries, setFavoriteCountries] = useState<CountryProcedureComplete[]>([]);
 
+  // Profil candidat interactif
+  const [userProfile, setUserProfile] = useState({
+    education: 'bac_plus_3', // bac, bac_plus_2, bac_plus_3, master_phd
+    experience: '3_5_ans',   // 0_1_ans, 1_3_ans, 3_5_ans, plus_5_ans
+    budget: 'moyen',          // faible, moyen, eleve
+    targetVisa: 'tous'        // tous, travail, etudes, visiteur
+  });
+
   useEffect(() => {
     try {
       const favs = JSON.parse(localStorage.getItem('3m_favorite_countries') || '[]');
       setFavoriteIds(favs);
       const matched = procedures107Complete.filter(c => favs.includes(c.id));
       setFavoriteCountries(matched);
+
+      const savedProfile = localStorage.getItem('3m_candidate_profile');
+      if (savedProfile) {
+        setUserProfile(JSON.parse(savedProfile));
+      }
     } catch (e) {
       setFavoriteIds([]);
       setFavoriteCountries([]);
     }
   }, []);
+
+  const handleProfileChange = (key: string, value: string) => {
+    const updated = { ...userProfile, [key]: value };
+    setUserProfile(updated);
+    try {
+      localStorage.setItem('3m_candidate_profile', JSON.stringify(updated));
+    } catch (e) {}
+  };
 
   const removeFavorite = (id: string) => {
     try {
@@ -44,16 +65,39 @@ export default function CountryComparisonPage() {
     }
   };
 
-  // Calcul simulé mais cohérent de compatibilité basé sur l'ID du pays et le niveau de difficulté
-  const getCompatibility = (countryId: string, diff: string) => {
-    let base = 75;
-    if (diff === 'facile') base = 90;
-    else if (diff === 'moyen') base = 82;
-    else if (diff === 'difficile') base = 68;
+  // Calcul dynamique de compatibilité en fonction du profil candidat et du pays
+  const getDynamicCompatibility = (country: CountryProcedureComplete) => {
+    let score = 70;
+
+    // Type de visa
+    if (userProfile.targetVisa === 'tous' || userProfile.targetVisa === country.visaType) {
+      score += 10;
+    } else {
+      score -= 15;
+    }
+
+    // Niveau d'études
+    if (userProfile.education === 'master_phd') score += 12;
+    else if (userProfile.education === 'bac_plus_3') score += 8;
+    else if (userProfile.education === 'bac_plus_2') score += 4;
+    else score -= 5;
+
+    // Expérience
+    if (userProfile.experience === 'plus_5_ans') score += 10;
+    else if (userProfile.experience === '3_5_ans') score += 8;
+    else if (userProfile.experience === '1_3_ans') score += 4;
+    else score -= 5;
+
+    // Difficulté pays
+    if (country.difficulty === 'facile') score += 8;
+    else if (country.difficulty === 'moyen') score += 3;
+    else score -= 5;
+
     // Variation stable par pays
-    const hash = countryId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const score = Math.min(98, Math.max(60, (base + (hash % 15) - 7)));
-    return score;
+    const hash = country.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    score += (hash % 7) - 3;
+
+    return Math.min(99, Math.max(50, score));
   };
 
   return (
@@ -70,7 +114,7 @@ export default function CountryComparisonPage() {
               <Scale className="w-8 h-8 text-blue-600" /> Comparateur de Destinations Favorites
             </h1>
             <p className="text-slate-600 text-sm mt-1">
-              Comparez côte à côte les critères clés de vos pays favoris pour choisir votre prochaine destination en toute sérénité.
+              Ajustez votre profil ci-dessous pour voir les scores de compatibilité se mettre à jour en temps réel.
             </p>
           </div>
           <a href="/procedures">
@@ -79,6 +123,78 @@ export default function CountryComparisonPage() {
             </Button>
           </a>
         </div>
+
+        {/* Panneau de profil interactif */}
+        <Card className="p-6 bg-white border-slate-200 shadow-sm rounded-3xl space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+            <Sliders className="w-5 h-5 text-blue-600" />
+            <h3 className="font-bold text-slate-900 text-base">Ajuster mon profil pour affirmer les scores de compatibilité</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-blue-600" /> Niveau d'Études
+              </label>
+              <select
+                value={userProfile.education}
+                onChange={(e) => handleProfileChange('education', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+                <option value="bac">Baccalauréat</option>
+                <option value="bac_plus_2">Bac +2 / BTS / DUT</option>
+                <option value="bac_plus_3">Bac +3 / Licence</option>
+                <option value="master_phd">Master / Doctorat</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
+                <Briefcase className="w-4 h-4 text-indigo-600" /> Expérience Professionnelle
+              </label>
+              <select
+                value={userProfile.experience}
+                onChange={(e) => handleProfileChange('experience', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+                <option value="0_1_ans">Moins d'un an</option>
+                <option value="1_3_ans">1 à 3 ans</option>
+                <option value="3_5_ans">3 à 5 ans</option>
+                <option value="plus_5_ans">Plus de 5 ans</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
+                <DollarSign className="w-4 h-4 text-emerald-600" /> Budget Envisagé
+              </label>
+              <select
+                value={userProfile.budget}
+                onChange={(e) => handleProfileChange('budget', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+                <option value="faible">Économique (&lt; 2000€)</option>
+                <option value="moyen">Standard (2000€ - 5000€)</option>
+                <option value="eleve">Confort (&gt; 5000€)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1.5 flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4 text-purple-600" /> Type de Visa Souhaité
+              </label>
+              <select
+                value={userProfile.targetVisa}
+                onChange={(e) => handleProfileChange('targetVisa', e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              >
+                <option value="tous">Tous les types</option>
+                <option value="travail">Travail uniquement</option>
+                <option value="etudes">Études uniquement</option>
+                <option value="visiteur">Visiteur / Tourisme</option>
+              </select>
+            </div>
+          </div>
+        </Card>
 
         {favoriteCountries.length === 0 ? (
           <Card className="p-12 text-center bg-white border-slate-200 rounded-3xl shadow-sm space-y-4">
@@ -100,107 +216,106 @@ export default function CountryComparisonPage() {
         ) : (
           <div className="overflow-x-auto pb-6">
             <div className="min-w-[800px] grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {favoriteCountries.map((country) => (
-                <motion.div
-                  key={country.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 flex flex-col justify-between relative group"
-                >
-                  <button
-                    onClick={() => removeFavorite(country.id)}
-                    title="Retirer des favoris"
-                    className="absolute top-4 right-4 w-9 h-9 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors shadow-sm"
+              {favoriteCountries.map((country) => {
+                const compatibility = getDynamicCompatibility(country);
+                return (
+                  <motion.div
+                    key={country.id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 flex flex-col justify-between relative group"
                   >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                    <button
+                      onClick={() => removeFavorite(country.id)}
+                      title="Retirer des favoris"
+                      className="absolute top-4 right-4 w-9 h-9 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition-colors shadow-sm"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
 
-                  <div className="space-y-6">
-                    {/* En-tête carte */}
-                    <div className="flex items-center gap-3 pr-8">
-                      <span className="text-4xl p-2 bg-slate-50 rounded-2xl border border-slate-100">{country.flag}</span>
-                      <div>
-                        <h3 className="text-xl font-black text-slate-900">{country.name}</h3>
-                        <p className="text-xs text-slate-500 font-semibold">{country.region}</p>
+                    <div className="space-y-5">
+                      {/* En-tête carte */}
+                      <div className="flex items-center gap-3 pr-8">
+                        <span className="text-4xl p-2 bg-slate-50 rounded-2xl border border-slate-100">{country.flag}</span>
+                        <div>
+                          <h3 className="text-xl font-black text-slate-900">{country.name}</h3>
+                          <p className="text-xs text-slate-500 font-semibold">{country.region}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-blue-100 text-blue-800 font-bold uppercase text-[10px]">
+                          Visa {country.visaType}
+                        </Badge>
+                        <Badge className={`text-[10px] font-bold ${getDifficultyColor(country.difficulty)}`}>
+                          {country.difficulty}
+                        </Badge>
+                      </div>
+
+                      {/* Indicateur de compatibilité profil dynamique */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3.5 rounded-2xl">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-blue-900 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Compatibilité Profil
+                          </span>
+                          <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                            {compatibility}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${compatibility}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Critères comparatifs */}
+                      <div className="space-y-3 pt-1 border-t border-slate-100 text-sm">
+                        <div>
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Délai de traitement</span>
+                          <span className="font-extrabold text-slate-800">{country.processingTime}</span>
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Coût estimé</span>
+                          <span className="font-extrabold text-slate-800">{country.cost}</span>
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Salaire minimum</span>
+                          <span className="font-extrabold text-slate-800">{country.minSalary || 'Variable'}</span>
+                        </div>
+                      </div>
+
+                      {/* Points forts */}
+                      <div className="space-y-2 pt-2 border-t border-slate-100">
+                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Atouts majeurs</span>
+                        <ul className="space-y-1.5 text-xs text-slate-600">
+                          {country.highlights.slice(0, 2).map((h, i) => (
+                            <li key={i} className="flex items-start gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                              <span>{h}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-100 text-blue-800 font-bold uppercase text-[10px]">
-                        Visa {country.visaType}
-                      </Badge>
-                      <Badge className={`text-[10px] font-bold ${getDifficultyColor(country.difficulty)}`}>
-                        {country.difficulty}
-                      </Badge>
+                    {/* Actions */}
+                    <div className="space-y-2 pt-5 mt-5 border-t border-slate-100">
+                      <a href={`/procedures/${country.id}`} className="block">
+                        <Button variant="outline" className="w-full border-blue-600 text-blue-700 hover:bg-blue-50 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5">
+                          <ExternalLink className="w-3.5 h-3.5" /> Voir la page complète
+                        </Button>
+                      </a>
+                      <a href={`/evaluation-primaire?destination=${country.id}`} className="block">
+                        <Button className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 text-white font-bold py-2.5 rounded-xl text-xs shadow">
+                          🚀 Lancer ma Procédure
+                        </Button>
+                      </a>
                     </div>
-
-                    {/* Indicateur de compatibilité profil */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 p-3.5 rounded-2xl">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs font-bold text-blue-900 flex items-center gap-1">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Compatibilité Profil
-                        </span>
-                        <span className="text-xs font-black text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">
-                          {getCompatibility(country.id, country.difficulty)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500"
-                          style={{ width: `${getCompatibility(country.id, country.difficulty)}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Critères comparatifs */}
-                    <div className="space-y-4 pt-2 border-t border-slate-100 text-sm">
-                      <div>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Délai de traitement</span>
-                        <span className="font-extrabold text-slate-800">{country.processingTime}</span>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Coût estimé de la procédure</span>
-                        <span className="font-extrabold text-slate-800">{country.cost}</span>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Salaire minimum indicatif</span>
-                        <span className="font-extrabold text-slate-800">{country.minSalary || 'Variable'}</span>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Budget global agence</span>
-                        <span className="font-extrabold text-slate-800">{country.totalCost || 'Sur devis'}</span>
-                      </div>
-                    </div>
-
-                    {/* Points forts */}
-                    <div className="space-y-2 pt-2 border-t border-slate-100">
-                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Atouts majeurs</span>
-                      <ul className="space-y-1.5 text-xs text-slate-600">
-                        {country.highlights.slice(0, 3).map((h, i) => (
-                          <li key={i} className="flex items-start gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span>{h}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="space-y-2 pt-6 mt-6 border-t border-slate-100">
-                    <a href={`/procedures/${country.id}`} className="block">
-                      <Button variant="outline" className="w-full border-blue-600 text-blue-700 hover:bg-blue-50 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5">
-                        <ExternalLink className="w-3.5 h-3.5" /> Voir la page complète
-                      </Button>
-                    </a>
-                    <a href={`/evaluation-primaire?destination=${country.id}`} className="block">
-                      <Button className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 text-white font-bold py-2.5 rounded-xl text-xs shadow">
-                        🚀 Lancer ma Procédure
-                      </Button>
-                    </a>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}
