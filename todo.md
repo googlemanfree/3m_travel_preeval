@@ -1716,3 +1716,11 @@
 - [x] Ajouter une infobulle accessible expliquant les erreurs d’adresse invalide
 - [x] Afficher une recommandation de correction adaptée au type d’erreur
 - [x] Vérifier responsive, TypeScript, tests et build puis publier
+
+## Correction et relance des e-mails échoués (v72)
+- [x] Auditer les journaux, identifiants candidats et mutations admin existantes
+- [x] Ajouter l’édition persistante de l’adresse e-mail depuis une ligne d’erreur
+- [x] Ajouter les filtres par statut et type d’erreur
+- [x] Ajouter le renvoi manuel sécurisé après correction de l’adresse
+- [x] Journaliser la correction et le nouvel envoi sans exposer de secret
+- [x] Vérifier autorisations, responsive, TypeScript, tests, build et publier

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, HelpCircle, Mail, RefreshCw, Search } from "lucide-react";
+import { AlertCircle, CheckCircle2, Check, Clock3, HelpCircle, Mail, Pencil, RefreshCw, Search, Send, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -23,16 +24,37 @@ const statusLabel: Record<string, string> = {
 
 export default function AdminEmailDeliveryManagement() {
   const [status, setStatus] = useState<"all" | "sent" | "failed" | "pending">("all");
+  const [errorType, setErrorType] = useState<"all" | "invalid_recipient" | "domain_unverified" | "rate_limit" | "configuration">("all");
   const [search, setSearch] = useState("");
+  const [editingLogId, setEditingLogId] = useState<number | null>(null);
+  const [editingEmail, setEditingEmail] = useState("");
+  const utils = trpc.useUtils();
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
     status,
+    errorType,
     ...(search.trim() ? { search: search.trim() } : {}),
-  }), [sessionToken, status, search]);
+  }), [sessionToken, status, errorType, search]);
   const { data, isLoading, isFetching, error, refetch } = trpc.admin.getEmailDeliveryLogs.useQuery(queryInput, {
     enabled: !!sessionToken,
+  });
+  const updateRecipientMutation = trpc.admin.updateEmailDeliveryRecipient.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Adresse corrigée : ${result.recipientEmail}`);
+      setEditingLogId(null);
+      setEditingEmail("");
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
+  const resendMutation = trpc.admin.resendFailedEmail.useMutation({
+    onSuccess: (result) => {
+      toast.success(`E-mail relancé vers ${result.recipientEmail}`);
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
   });
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
@@ -91,6 +113,16 @@ export default function AdminEmailDeliveryManagement() {
                   <SelectItem value="pending">En attente</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={errorType} onValueChange={(value) => setErrorType(value as typeof errorType)}>
+                <SelectTrigger className="w-full md:w-56"><SelectValue placeholder="Tous les types d’erreur" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types d’erreur</SelectItem>
+                  <SelectItem value="invalid_recipient">Adresse invalide</SelectItem>
+                  <SelectItem value="domain_unverified">Domaine non vérifié</SelectItem>
+                  <SelectItem value="rate_limit">Limite d’envoi</SelectItem>
+                  <SelectItem value="configuration">Configuration Resend</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {isLoading ? (
@@ -101,12 +133,38 @@ export default function AdminEmailDeliveryManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th></tr>
+                    <tr><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th><th className="px-5 py-3">Actions</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {logs.map((log) => (
                       <tr key={log.id} className="align-top hover:bg-slate-50/70">
-                        <td className="px-5 py-3 font-medium text-slate-800">{log.recipientEmail}</td>
+                        <td className="px-5 py-3 font-medium text-slate-800">
+                          {editingLogId === log.id ? (
+                            <div className="flex min-w-[250px] items-center gap-2">
+                              <Input
+                                type="email"
+                                value={editingEmail}
+                                onChange={(event) => setEditingEmail(event.target.value)}
+                                aria-label={`Nouvelle adresse pour ${log.recipientEmail}`}
+                                className="h-8"
+                                autoFocus
+                              />
+                              <Button
+                                type="button"
+                                size="icon"
+                                className="h-8 w-8"
+                                aria-label="Enregistrer l’adresse corrigée"
+                                disabled={updateRecipientMutation.isPending || !editingEmail.trim()}
+                                onClick={() => updateRecipientMutation.mutate({ sessionToken, logId: log.id, recipientEmail: editingEmail.trim() })}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button type="button" size="icon" variant="ghost" className="h-8 w-8" aria-label="Annuler la correction" onClick={() => { setEditingLogId(null); setEditingEmail(""); }}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ) : log.recipientEmail}
+                        </td>
                         <td className="max-w-[260px] px-5 py-3 text-slate-600">{log.subject}</td>
                         <td className="px-5 py-3"><Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "secondary"}>{statusLabel[log.status] ?? log.status}</Badge></td>
                         <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">{new Date(log.createdAt).toLocaleString("fr-FR")}</td>
@@ -133,6 +191,37 @@ export default function AdminEmailDeliveryManagement() {
                           ) : log.providerMessageId ? (
                             <span className="text-slate-500">ID Resend : {log.providerMessageId}</span>
                           ) : "—"}
+                        </td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-1">
+                            {log.errorDetails && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 gap-1 px-2 text-slate-600 hover:text-blue-700"
+                                aria-label={`Modifier l’adresse de ${log.recipientEmail}`}
+                                onClick={() => { setEditingLogId(log.id); setEditingEmail(log.recipientEmail); }}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                                <span className="hidden lg:inline">Modifier</span>
+                              </Button>
+                            )}
+                            {log.status === "failed" && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 gap-1 px-2"
+                                aria-label={`Renvoyer l’e-mail à ${log.recipientEmail}`}
+                                disabled={resendMutation.isPending}
+                                onClick={() => resendMutation.mutate({ sessionToken, logId: log.id })}
+                              >
+                                <Send className={`h-3.5 w-3.5 ${resendMutation.isPending ? "animate-pulse" : ""}`} />
+                                <span className="hidden lg:inline">Renvoyer</span>
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

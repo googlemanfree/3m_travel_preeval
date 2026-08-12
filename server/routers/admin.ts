@@ -5,7 +5,7 @@
 
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
-import { summarizeEmailDeliveryLogs } from "../services/emailDelivery";
+import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
@@ -1930,6 +1930,7 @@ export const adminRouter = router({
       sessionToken: z.string(),
       limit: z.number().int().min(1).max(200).default(100),
       status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
+      errorType: z.enum(["all", "invalid_recipient", "domain_unverified", "rate_limit", "configuration"]).default("all"),
       search: z.string().trim().max(120).optional(),
     }))
     .query(async ({ input }) => {
@@ -1946,6 +1947,10 @@ export const adminRouter = router({
           like(emailDeliveryLogs.subject, `%${input.search}%`),
         ));
       }
+      if (input.errorType !== "all") {
+        const patterns = emailErrorPatterns[input.errorType as keyof typeof emailErrorPatterns] ?? [];
+        conditions.push(or(...patterns.map((pattern) => like(emailDeliveryLogs.errorDetails, `%${pattern}%`))));
+      }
       const logs = await db
         .select()
         .from(emailDeliveryLogs)
@@ -1957,6 +1962,73 @@ export const adminRouter = router({
         logs,
         summary: summarizeEmailDeliveryLogs(logs),
       };
+    }),
+
+  updateEmailDeliveryRecipient: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      logId: z.number().int().positive(),
+      recipientEmail: z.string().trim().email("Adresse e-mail invalide").max(320),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const log = (await db.select().from(emailDeliveryLogs).where(eq(emailDeliveryLogs.id, input.logId)).limit(1))[0];
+      if (!log) throw new TRPCError({ code: "NOT_FOUND", message: "Journal e-mail introuvable." });
+      if (log.recipientEmail === input.recipientEmail) return { success: true, recipientEmail: input.recipientEmail, updatedRecords: 0 };
+
+      try {
+        await db.transaction(async (tx) => {
+          await tx.update(candidates).set({ email: input.recipientEmail }).where(eq(candidates.email, log.recipientEmail));
+          await tx.update(applications).set({ email: input.recipientEmail }).where(eq(applications.email, log.recipientEmail));
+          await tx.update(agencyDossiers).set({ email: input.recipientEmail }).where(eq(agencyDossiers.email, log.recipientEmail));
+          await tx.update(emailDeliveryLogs).set({ recipientEmail: input.recipientEmail }).where(eq(emailDeliveryLogs.id, input.logId));
+          await tx.insert(adminActivityLogs).values({
+            adminEmail: admin.email,
+            action: "status_changed",
+            evaluationType: "email_delivery",
+            evaluationId: String(input.logId),
+            details: JSON.stringify({ action: "recipient_updated", previousEmail: log.recipientEmail, recipientEmail: input.recipientEmail }),
+          });
+        });
+      } catch (error) {
+        throw new TRPCError({ code: "CONFLICT", message: "Cette adresse e-mail est déjà utilisée ou ne peut pas être enregistrée." });
+      }
+
+      return { success: true, recipientEmail: input.recipientEmail, updatedRecords: 1 };
+    }),
+
+  resendFailedEmail: publicProcedure
+    .input(z.object({ sessionToken: z.string(), logId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const log = (await db.select().from(emailDeliveryLogs).where(eq(emailDeliveryLogs.id, input.logId)).limit(1))[0];
+      if (!log) throw new TRPCError({ code: "NOT_FOUND", message: "Journal e-mail introuvable." });
+      if (log.status !== "failed") throw new TRPCError({ code: "BAD_REQUEST", message: "Seuls les e-mails en échec peuvent être relancés." });
+
+      try {
+        await sendGenericEmail({
+          to: log.recipientEmail,
+          subject: log.subject,
+          html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après correction de vos coordonnées.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
+        });
+        await db.insert(adminActivityLogs).values({
+          adminEmail: admin.email,
+          action: "status_changed",
+          evaluationType: "email_delivery",
+          evaluationId: String(input.logId),
+          details: JSON.stringify({ action: "email_resent", recipientEmail: log.recipientEmail, subject: log.subject }),
+        });
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le renvoi a échoué. Consultez le nouveau journal de délivrabilité." });
+      }
+
+      return { success: true, recipientEmail: log.recipientEmail };
     }),
 });
 
