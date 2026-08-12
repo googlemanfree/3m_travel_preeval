@@ -1540,3 +1540,10 @@
 - [x] Intégrer un parcours de paiement direct des frais consulaires e-Visa depuis la fiche pays (EvisaDetailPage.tsx)
 - [x] Créer une vue de suivi et validation administrative des demandes e-Visa dans le dashboard admin
 - [x] Valider le build de production et publier la version avec e-Visa avancé
+
+## Automatisation complète du parcours e-Visa (v48)
+- [x] Auditer les flux de demande, de paiement, de reçu et de notification e-Visa
+- [x] Implémenter la génération automatique de facture/reçu après le paiement des frais consulaires e-Visa
+- [x] Configurer l'envoi d'e-mails automatiques de confirmation et de mise à jour de statut via hello@3mtravelagency.com
+- [x] Synchroniser les demandes e-Visa entre l'espace candidat et le tableau de bord administrateur
+- [x] Valider le build de production et publier la version e-Visa 100% opérationnelle
