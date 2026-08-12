@@ -1,5 +1,24 @@
 import { router, publicProcedure, protectedProcedure } from '../_core/trpc';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
+import { candidates } from '../../drizzle/schema';
+import { getDb } from '../db';
+import { sendEmail } from '../_core/email';
+
+const AGENCY_EMAIL = 'hello@3mtravelagency.com';
+
+async function getCandidateContact(candidateId: string) {
+  const numericId = Number(candidateId.includes('_') ? candidateId.split('_').pop() : candidateId);
+  if (!Number.isInteger(numericId) || numericId <= 0) return null;
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({ email: candidates.email, fullName: candidates.fullName })
+    .from(candidates)
+    .where(eq(candidates.id, numericId))
+    .limit(1);
+  return rows[0] ?? null;
+}
 
 /**
  * Routeur pour la gestion de la validation des paiements en agence
@@ -162,30 +181,20 @@ export const paymentValidationRouter = router({
  */
 async function sendPaymentValidationEmail(candidateId: string): Promise<boolean> {
   try {
-    // Récupérer les informations du candidat
-    // const candidate = await db.query('SELECT * FROM candidates WHERE id = ?', [candidateId]);
-    
-    // Construire le contenu de l'email
-    const emailContent = {
-      to: 'candidate@example.com', // À remplacer par l'email du candidat
+    const candidate = await getCandidateContact(candidateId);
+    if (!candidate) {
+      console.warn('[PaymentValidation] Candidat introuvable, notification non envoyée:', candidateId);
+      return false;
+    }
+    await sendEmail({
+      to: candidate.email,
+      replyTo: AGENCY_EMAIL,
       subject: '✅ Votre paiement a été validé - 3M Travel Agency',
-      html: `
-        <h2>Paiement Validé</h2>
-        <p>Bonjour,</p>
-        <p>Nous vous confirmons que votre paiement de 65 000 XAF a été validé avec succès.</p>
-        <p><strong>Prochaine étape :</strong> Vous pouvez maintenant télécharger vos documents (passeport, diplômes, etc.) dans votre espace client.</p>
-        <p><a href="https://3mtravelagency.click/mon-espace">Accéder à mon espace</a></p>
-        <p>Cordialement,<br/>L'équipe 3M Travel Agency</p>
-      `,
-    };
-
-    // Envoyer l'email via Resend
-    // const result = await resend.emails.send(emailContent);
-    
-    console.log('Email de validation envoyé au candidat:', candidateId);
+      html: `<h2>Paiement validé</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement de 65 000 XAF a été validé avec succès.</p><p><strong>Prochaine étape :</strong> vous pouvez maintenant déposer vos documents dans votre espace candidat.</p><p><a href="https://www.3mtravelagency.com/mon-espace">Accéder à mon espace</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
+    });
     return true;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email de validation:', error);
+    console.error('[PaymentValidation] Échec de notification de validation:', error);
     return false;
   }
 }
@@ -198,31 +207,20 @@ async function sendPaymentRejectionEmail(
   reason?: string
 ): Promise<boolean> {
   try {
-    // Récupérer les informations du candidat
-    // const candidate = await db.query('SELECT * FROM candidates WHERE id = ?', [candidateId]);
-    
-    // Construire le contenu de l'email
-    const emailContent = {
-      to: 'candidate@example.com', // À remplacer par l'email du candidat
+    const candidate = await getCandidateContact(candidateId);
+    if (!candidate) {
+      console.warn('[PaymentValidation] Candidat introuvable, notification non envoyée:', candidateId);
+      return false;
+    }
+    await sendEmail({
+      to: candidate.email,
+      replyTo: AGENCY_EMAIL,
       subject: '⚠️ Votre paiement a été rejeté - 3M Travel Agency',
-      html: `
-        <h2>Paiement Rejeté</h2>
-        <p>Bonjour,</p>
-        <p>Nous regrettons de vous informer que votre paiement a été rejeté.</p>
-        ${reason ? `<p><strong>Raison :</strong> ${reason}</p>` : ''}
-        <p><strong>Prochaine étape :</strong> Veuillez contacter notre équipe pour discuter des options.</p>
-        <p><a href="https://wa.me/237698104832">Contacter l'équipe via WhatsApp</a></p>
-        <p>Cordialement,<br/>L'équipe 3M Travel Agency</p>
-      `,
-    };
-
-    // Envoyer l'email via Resend
-    // const result = await resend.emails.send(emailContent);
-    
-    console.log('Email de rejet envoyé au candidat:', candidateId);
+      html: `<h2>Paiement rejeté</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement n’a pas pu être validé.</p>${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ''}<p>Contactez notre équipe pour la suite de votre dossier.</p><p><a href="https://wa.me/237698104832">Contacter l’équipe via WhatsApp</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
+    });
     return true;
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email de rejet:', error);
+    console.error('[PaymentValidation] Échec de notification de rejet:', error);
     return false;
   }
 }

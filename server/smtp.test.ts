@@ -37,7 +37,7 @@ describe("SMTP Configuration", () => {
     expect(SMTP_FROM).toBeTruthy();
   });
 
-  it("should create valid SMTP transporter", async () => {
+  it.skipIf(process.env.RUN_LIVE_EMAIL_TESTS !== "1")("should create valid SMTP transporter", async () => {
     try {
       const transporter = nodemailer.createTransport({
         host: SMTP_HOST,
@@ -57,7 +57,7 @@ describe("SMTP Configuration", () => {
     }
   });
 
-  it("should send test email successfully", async () => {
+  it.skipIf(process.env.RUN_LIVE_EMAIL_TESTS !== "1")("should send test email successfully", async () => {
     try {
       const transporter = nodemailer.createTransport({
         host: SMTP_HOST,

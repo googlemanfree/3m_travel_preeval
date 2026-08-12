@@ -211,7 +211,7 @@ export function getPasswordChangedEmailTemplate(params: AdminEmailTemplateParams
           <div class="footer">
             <p><strong>3M Travel Agency</strong></p>
             <p>Yaoundé, Biyem-Assi | Cameroun</p>
-            <p>Email : hello@3mtravelagency.click</p>
+            <p>Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; color: #999;">
               Cet email a été envoyé automatiquement. Veuillez ne pas répondre à ce message.
             </p>
@@ -400,7 +400,7 @@ export function getPasswordResetEmailTemplate(params: AdminEmailTemplateParams &
           <div class="footer">
             <p><strong>3M Travel Agency</strong></p>
             <p>Yaoundé, Biyem-Assi | Cameroun</p>
-            <p>Email : hello@3mtravelagency.click</p>
+            <p>Email : hello@3mtravelagency.com</p>
             <p style="margin-top: 15px; color: #999;">
               Cet email a été envoyé automatiquement. Veuillez ne pas répondre à ce message.
             </p>

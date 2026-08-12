@@ -35,7 +35,7 @@ async function notifyAdminNewComment(
           ${content.replace(/\n/g, "<br>")}
         </blockquote>
         <p style="text-align: center; margin: 20px 0;">
-          <a href="https://3mtravelagency.click/admin/evaluations" 
+          <a href="https://www.3mtravelagency.com/admin/evaluations" 
              style="background-color: #0066cc; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
             Consulter le dossier
           </a>
@@ -44,7 +44,7 @@ async function notifyAdminNewComment(
     `;
 
     await sendEmail({
-      to: "hello@3mtravelagency.click",
+      to: "hello@3mtravelagency.com",
       subject,
       html: htmlContent,
     });

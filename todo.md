@@ -1696,3 +1696,9 @@
 - [x] Vérifier que les administrateurs peuvent modifier les données et l’avancement autorisés du candidat
 - [x] Rechercher et corriger les pages blanches, erreurs console, routes mortes et boutons inactifs
 - [x] Tester desktop/mobile, TypeScript, tests et build puis publier le correctif
+
+## Adresse d’envoi Resend officielle (v69)
+- [x] Repérer toutes les adresses de test `example.com` et la configuration d’envoi Resend
+- [x] Remplacer les adresses de test par `hello@3mtravelagency.com` sans exposer de secret
+- [x] Adapter les tests e-mail pour utiliser l’adresse de test officielle autorisée
+- [x] Valider tests, TypeScript, build et état du déploiement

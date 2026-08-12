@@ -199,10 +199,10 @@ export default function PaymentAgencyConfirmation() {
             <div>
               <p className="text-sm text-gray-500 font-semibold mb-1">EMAIL</p>
               <a
-                href="mailto:hello@3mtravelagency.click"
+                href="mailto:hello@3mtravelagency.com"
                 className="text-blue-600 hover:text-blue-700 font-semibold"
               >
-                hello@3mtravelagency.click
+                hello@3mtravelagency.com
               </a>
             </div>
           </div>

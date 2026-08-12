@@ -23,7 +23,7 @@ const adminCredentials = [
     fullName: 'Aureol Donfack'
   },
   {
-    email: 'hello@3mtravelagency.click',
+    email: 'hello@3mtravelagency.com',
     adminType: 'procedures',
     passwordHash: '$2b$10$dGv5RZNphne8iaVBi7afoevwRq.zgPtahgcI4keYob0CGrmGL7j/a',
     fullName: '3M Travel Agency'

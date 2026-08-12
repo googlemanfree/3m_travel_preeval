@@ -5,7 +5,7 @@ import crypto from 'crypto';
 const admins = [
   { email: 'fabienbah203@gmail.com', adminType: 'evaluation' },
   { email: 'aureoldonfack@gmail.com', adminType: 'accompagnement' },
-  { email: 'hello@3mtravelagency.click', adminType: 'procedures' }
+  { email: 'hello@3mtravelagency.com', adminType: 'procedures' }
 ];
 
 console.log('=== MOTS DE PASSE GÉNÉRÉS POUR LES ADMINS ===\n');

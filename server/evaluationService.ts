@@ -307,12 +307,12 @@ export function generateEvaluationReportHTML(app: Application): string {
         <p>Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de <strong>65 000 FCFA</strong> est requis.</p>
       </div>
       
-      <a href="https://3mtravelagency.click/verify-application-email?dossier=${app.dossierNumber}" class="cta">Continuer vers le paiement →</a>
+      <a href="https://www.3mtravelagency.com/verify-application-email?dossier=${app.dossierNumber}" class="cta">Continuer vers le paiement →</a>
     </div>
     
     <div class="footer">
       <p><strong>3M Travel & Services SARL</strong></p>
-      <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.click</p>
+      <p>Yaoundé, Cameroun | +237 698 104 832 | hello@3mtravelagency.com</p>
       <p>RC/YAO/2019/A/2567 | NIU: M112417203369H</p>
       <p style="margin-top: 15px; font-style: italic;">"Votre mobilité, notre expertise. Votre réussite, notre mission."</p>
     </div>
@@ -384,7 +384,7 @@ Nos démarches s'effectuent en stricte conformité avec les lois sur l'immigrati
 
 Pour acter votre choix d'orientation, initier les démarches de prospection et déclencher le montage technique de votre livret d'immigration par nos experts, le règlement des frais d'ouverture obligatoires de 65 000 FCFA est requis.
 
-Lien de paiement : https://3mtravelagency.click/verify-application-email?dossier=${app.dossierNumber}
+Lien de paiement : https://www.3mtravelagency.com/verify-application-email?dossier=${app.dossierNumber}
 
 ---
 
@@ -393,7 +393,7 @@ Cordialement,
 Aureol DONFACK - PDG
 3M Travel & Services SARL
 Yaoundé, Cameroun
-+237 698 104 832 | hello@3mtravelagency.click
++237 698 104 832 | hello@3mtravelagency.com
 RC/YAO/2019/A/2567 | NIU: M112417203369H
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."

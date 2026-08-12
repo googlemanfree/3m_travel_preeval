@@ -29,7 +29,7 @@ const ADMINS = [
     password: "SJRzdmy7T#qj",
   },
   {
-    email: "hello@3mtravelagency.click",
+    email: "hello@3mtravelagency.com",
     fullName: "3M Travel & Services",
     phone: "+237698104832",
     adminType: "procedures" as const,
