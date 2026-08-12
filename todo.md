@@ -1609,3 +1609,10 @@
 - [x] Corriger le débordement mobile du badge de niveau sur les fiches pays, sans modifier la charte visuelle
 - [x] Corriger l’unicité et les statistiques du service central de numérotation des dossiers
 - [x] Exécuter les tests et le build, puis documenter les correctifs et prérequis externes
+
+## Automatisation des documents et gestion candidats (v56)
+- [x] Créer et valider une compétence réutilisable pour les correctifs internes sécurisés et la gestion administrative des candidats
+- [x] Envoyer une alerte e-mail à l’administration lors d’un nouveau dépôt de document candidat
+- [x] Ajouter un export CSV sécurisé des données candidats depuis le tableau de bord administrateur
+- [x] Ajouter recherche, filtres et tri avancés dans la liste administrative des candidats
+- [x] Tester les alertes, l’export, les autorisations et publier la version validée

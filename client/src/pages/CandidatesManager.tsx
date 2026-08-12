@@ -47,11 +47,13 @@ import { AISummary } from "@/components/AISummary";
 import { InterviewQuestions } from "@/components/InterviewQuestions";
 import { PDFExporter } from "@/components/PDFExporter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface Candidate {
-  id: number;
+  id: string | number;
   applicationNumber: string;
   fullName: string;
   email: string;
@@ -341,49 +343,52 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function CandidatesManager() {
-  const [candidates, setCandidates] = useState<Candidate[]>(mockCandidates);
-  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>(
-    mockCandidates
-  );
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("tous");
   const [paymentFilter, setPaymentFilter] = useState("tous");
   const [scoreFilter, setScoreFilter] = useState("tous");
+  const [destinationFilter, setDestinationFilter] = useState("tous");
+  const [sortBy, setSortBy] = useState("createdAt");
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
-  // Appliquer les filtres
-  React.useEffect(() => {
-    let filtered = candidates;
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (c) =>
-          c.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.applicationNumber
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== "tous") {
-      filtered = filtered.filter((c) => c.status === statusFilter);
-    }
-
-    if (paymentFilter !== "tous") {
-      filtered = filtered.filter((c) => c.paymentStatus === paymentFilter);
-    }
-
-    if (scoreFilter !== "tous") {
-      filtered = filtered.filter((c) => c.scoringBadge === scoreFilter);
-    }
-
-    setFilteredCandidates(filtered);
-  }, [candidates, searchQuery, statusFilter, paymentFilter, scoreFilter]);
+  const filterInput = React.useMemo(() => {
+    const paymentStatus: "all" | "paye" | "en_attente" | "non_paye" = paymentFilter === "tous" ? "all" : paymentFilter === "paye" || paymentFilter === "en_attente" ? paymentFilter : "non_paye";
+    const scoreBand: "all" | "excellent" | "bon" | "moyen" | "faible" = scoreFilter === "tous" ? "all" : scoreFilter === "excellent" || scoreFilter === "bon" || scoreFilter === "moyen" ? scoreFilter : "faible";
+    return {
+      search: searchQuery,
+      status: statusFilter === "tous" ? "all" : statusFilter,
+      paymentStatus,
+      scoreBand,
+      destination: destinationFilter === "tous" ? "all" : destinationFilter,
+      sortBy: sortBy as "createdAt" | "fullName" | "score",
+      sortDirection: "desc" as const,
+      limit: 500,
+    };
+  }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy]);
+  const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
+  const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
+    onSuccess: ({ csv, count }) => {
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `candidats-3m-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success(`${count} candidat(s) exporté(s).`);
+    },
+    onError: exportError => toast.error(exportError.message || "Impossible d’exporter les candidats."),
+  });
+  const candidates = (data?.candidates ?? []).map(candidate => ({
+    ...candidate,
+    createdAt: new Date(candidate.createdAt).toISOString(),
+  })) as Candidate[];
+  const filteredCandidates = candidates;
+  const destinations = React.useMemo(() => Array.from(new Set(candidates.map(candidate => candidate.destination))).sort((a, b) => a.localeCompare(b, "fr")), [candidates]);
 
   const handleViewDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
@@ -516,14 +521,31 @@ export default function CandidatesManager() {
                 <SelectItem value="faible">Faible</SelectItem>
               </SelectContent>
             </Select>
+
+            <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+              <SelectTrigger><SelectValue placeholder="Destination" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="tous">Toutes destinations</SelectItem>
+                {destinations.map(destination => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger><SelectValue placeholder="Trier" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt">Plus récents</SelectItem>
+                <SelectItem value="fullName">Nom du candidat</SelectItem>
+                <SelectItem value="score">Score décroissant</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center justify-between mt-4 text-sm">
             <p className="text-gray-600">
-              {filteredCandidates.length} candidature(s) trouvée(s)
+              {isLoading ? "Chargement des candidatures..." : `${filteredCandidates.length} candidature(s) trouvée(s)`}
             </p>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => exportMutation.mutate(filterInput)} disabled={exportMutation.isPending || isLoading}>
               <Download className="w-4 h-4 mr-2" />
-              Exporter
+              {exportMutation.isPending ? "Export en cours..." : "Exporter"}
             </Button>
           </div>
         </motion.div>
@@ -651,6 +673,8 @@ export default function CandidatesManager() {
               </tbody>
             </table>
           </div>
+
+          {error && <div className="px-6 py-4 text-sm text-red-600">Impossible de charger les candidats : {error.message}</div>}
 
           {filteredCandidates.length === 0 && (
             <div className="text-center py-12">

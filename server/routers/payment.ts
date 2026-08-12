@@ -11,6 +11,7 @@ import { applications, clientDocuments } from "../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { storagePut } from "../storage";
+import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 
 const PAYMENT_AMOUNT = 65000; // XAF
 const PAYMENT_CURRENCY = "XAF";
@@ -273,6 +274,7 @@ export const paymentRouter = router({
         const documentName = safeDocumentName(input.documentName);
         const fileKey = `applications/${application.id}/documents/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${documentName}`;
         const { url: documentUrl } = await storagePut(fileKey, fileBuffer, input.mimeType);
+        const receiptNumber = `DOC-${Date.now()}-${randomBytes(6).toString("hex")}`;
 
         await db.insert(clientDocuments).values({
           evaluationId: 0,
@@ -283,9 +285,17 @@ export const paymentRouter = router({
           fileSize: fileBuffer.length,
           status: "pending",
           source: "online",
-          receiptNumber: `DOC-${Date.now()}-${randomBytes(6).toString("hex")}`,
+          receiptNumber,
           receiptGeneratedAt: new Date(),
         });
+
+        void notifyDocumentSubmission({
+          candidateEmail: ctx.user.email,
+          documentType,
+          documentName,
+          receiptNumber,
+          dossierNumber: application.dossierNumber,
+        }).catch(error => console.error("[DocumentAlert] Échec de notification :", error));
 
         return { success: true, message: "Document soumis avec succès", documentType };
       } catch (err) {

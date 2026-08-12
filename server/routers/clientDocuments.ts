@@ -11,6 +11,8 @@ import { getDb } from "../db";
 import { evaluations, clientDocuments, clientPayments, paymentAuditLogs } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { analyzePassportDocument } from "../services/passportAnalyzer";
+import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
+import { randomBytes } from "node:crypto";
 
 export const clientDocumentsRouter = router({
   /**
@@ -71,7 +73,7 @@ export const clientDocumentsRouter = router({
 	        throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation non trouvée" });
 	      }
 
-	      const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+	      const receiptNumber = `REC-${Date.now()}-${randomBytes(6).toString("hex")}`;
 	      const hasValidBiographicZone = input.readabilityIssues?.checks?.hasBiographicZone === true;
 	      const isPassportPrevalidated = input.documentType === "passport" && (input.readabilityScore ?? 0) >= 95 && hasValidBiographicZone;
 	      const analysisPayload = input.readabilityIssues && typeof input.readabilityIssues === "object"
@@ -106,6 +108,13 @@ export const clientDocumentsRouter = router({
 	        receiptNumber,
 	        receiptGeneratedAt: new Date(),
 	      });
+
+	      void notifyDocumentSubmission({
+	        candidateEmail: input.candidateEmail,
+	        documentType: input.documentType,
+	        documentName: input.documentName,
+	        receiptNumber,
+	      }).catch(error => console.error("[DocumentAlert] Échec de notification :", error));
 
         return {
 	        success: true,

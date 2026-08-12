@@ -49,6 +49,17 @@ export async function requireValidAdminSession(sessionToken: string) {
   return admin;
 }
 
+/** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
+export async function requireAdminSessionFromCookie(cookieHeader: string | undefined) {
+  const sessionCookie = (cookieHeader ?? "")
+    .split(";")
+    .map(part => part.trim())
+    .find(part => part.startsWith(`${ADMIN_SESSION_COOKIE}=`))
+    ?.slice(`${ADMIN_SESSION_COOKIE}=`.length);
+  if (!sessionCookie) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
+  return requireValidAdminSession(decodeURIComponent(sessionCookie));
+}
+
 export const adminAuthRouter = router({
   /**
    * Connexion administrateur par email + mot de passe.
@@ -120,14 +131,8 @@ export const adminAuthRouter = router({
 
   /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */
   me: publicProcedure.query(async ({ ctx }) => {
-    const sessionCookie = (ctx.req.headers.cookie ?? "")
-      .split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(`${ADMIN_SESSION_COOKIE}=`))
-      ?.slice(`${ADMIN_SESSION_COOKIE}=`.length);
-    if (!sessionCookie) return { authenticated: false } as const;
     try {
-      const admin = await requireValidAdminSession(decodeURIComponent(sessionCookie));
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
       return {
         authenticated: true,
         admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType },
