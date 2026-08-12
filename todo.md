@@ -1574,13 +1574,14 @@
 - [x] Tester les droits, les statuts et la notification, puis publier la version validée
 
 ## Conformité documentaire avancée et réutilisable (v53)
-- [ ] Créer et valider une compétence réutilisable de conformité documentaire (analyse, annotations, prévalidation, retours candidat et rapports)
-- [ ] Ajouter l’historique horodaté des commentaires échangés pour chaque marqueur visuel
-- [ ] Intégrer un recadrage guidé local avant nouveau téléversement de passeport, avec prévisualisation et contrôles de cadrage
-- [ ] Créer un tableau d’exigences documentaires par pays de destination, exploitable par candidats et administrateurs
-- [ ] Appliquer la prévalidation seulement si le score dépasse 95 % et si la zone biographique est explicitement valide
+- [x] Créer et valider une compétence réutilisable de conformité documentaire (analyse, annotations, prévalidation, retours candidat et rapports)
+- [x] Ajouter l’historique horodaté des commentaires échangés pour chaque marqueur visuel
+- [x] Intégrer un recadrage guidé local avant nouveau téléversement de passeport, avec prévisualisation et contrôles de cadrage
+- [x] Créer un tableau d’exigences documentaires par pays de destination, exploitable par candidats et administrateurs
+- [x] Appliquer la prévalidation seulement si le score dépasse 95 % et si la zone biographique est explicitement valide
 - [ ] Ajouter un rapport mensuel agrégé de conformité documentaire par pays pour les auditeurs, avec envoi planifié et contrôlé
-- [ ] Tester les autorisations, les données sensibles, les notifications et publier la version validée
+- [ ] Fournir les destinataires d’audit autorisés et créer l’exécution mensuelle en production
+- [x] Tester les autorisations, les données sensibles, les notifications et publier la version validée
 
 ## Correctifs prioritaires de sécurité, fiabilité et SEO (v54)
 - [x] Cartographier les accès sensibles, tâches planifiées, paiements CinetPay et téléversements exposés

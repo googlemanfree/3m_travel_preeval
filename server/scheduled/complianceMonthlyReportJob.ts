@@ -6,8 +6,42 @@
 
 import { Request, Response } from "express";
 import { getDb } from "../db";
-import { clientDocuments } from "../../drizzle/schema";
+import { clientDocuments, emailDeliveryLogs, evaluations } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
+import { and, eq, gte, lt } from "drizzle-orm";
+
+type MonthlyDocumentRecord = {
+  destinationCountry: string | null;
+  destinationCategory: string | null;
+  verificationStatus: "approved" | "pending" | "rejected";
+};
+
+export type CountryComplianceStats = {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+};
+
+export function buildCountryComplianceStats(records: MonthlyDocumentRecord[]): Record<string, CountryComplianceStats> {
+  return records.reduce<Record<string, CountryComplianceStats>>((stats, record) => {
+    const country = record.destinationCountry?.trim() || record.destinationCategory || "Non renseignée";
+    const current = stats[country] ?? { total: 0, approved: 0, pending: 0, rejected: 0 };
+    current.total += 1;
+    current[record.verificationStatus] += 1;
+    stats[country] = current;
+    return stats;
+  }, {});
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] ?? character);
+}
+
+function getAuditorRecipients(): string[] {
+  const configuredRecipients = process.env.COMPLIANCE_AUDITOR_EMAILS ?? "";
+  return Array.from(new Set(configuredRecipients.split(",").map(email => email.trim().toLowerCase()).filter(email => /^\S+@\S+\.\S+$/.test(email))));
+}
 
 export async function handleComplianceMonthlyReportJob(req: Request, res: Response): Promise<void> {
   try {
@@ -19,29 +53,26 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
       return;
     }
 
-    // Récupérer toutes les statistiques de documents par pays ou globalement
-    const documents = await db.select().from(clientDocuments);
+    const now = new Date();
+    const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+    const monthName = periodStart.toLocaleString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" });
+    const subject = `[Audit Mensuel] Rapport de conformité documentaire — ${monthName}`;
+
+    const documents = await db.select({
+      destinationCountry: evaluations.destinationCountry,
+      destinationCategory: evaluations.destinationCategory,
+      verificationStatus: clientDocuments.verificationStatus,
+    })
+      .from(clientDocuments)
+      .leftJoin(evaluations, eq(clientDocuments.evaluationId, evaluations.id))
+      .where(and(gte(clientDocuments.uploadedAt, periodStart), lt(clientDocuments.uploadedAt, periodEnd)));
     const totalDocs = documents.length;
     const verifiedDocs = documents.filter((d) => d.verificationStatus === "approved").length;
     const pendingDocs = documents.filter((d) => d.verificationStatus === "pending").length;
     const rejectedDocs = documents.filter((d) => d.verificationStatus === "rejected").length;
     const globalComplianceRate = totalDocs > 0 ? Math.round((verifiedDocs / totalDocs) * 100) : 100;
-
-    // Regrouper par type de document ou par évaluation / destination
-    const typeStats: Record<string, { total: number; verified: number }> = {};
-    for (const doc of documents) {
-      const type = doc.documentType || "other";
-      if (!typeStats[type]) {
-        typeStats[type] = { total: 0, verified: 0 };
-      }
-      typeStats[type].total++;
-      if (doc.verificationStatus === "approved") {
-        typeStats[type].verified++;
-      }
-    }
-
-    const now = new Date();
-    const monthName = now.toLocaleString("fr-FR", { month: "long", year: "numeric" });
+    const countryStats = buildCountryComplianceStats(documents);
 
     // Construire le contenu HTML du rapport d'audit mensuel
     const reportHtml = `
@@ -62,25 +93,26 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
           </ul>
         </div>
 
-        <h3 style="color: #0f172a;">Détail par type de document</h3>
+        <h3 style="color: #0f172a;">Détail par pays de destination</h3>
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
           <thead>
             <tr style="background-color: #f1f5f9; text-align: left;">
-              <th style="padding: 10px; border: 1px solid #e2e8f0;">Type de document</th>
+              <th style="padding: 10px; border: 1px solid #e2e8f0;">Pays de destination</th>
               <th style="padding: 10px; border: 1px solid #e2e8f0;">Total soumis</th>
               <th style="padding: 10px; border: 1px solid #e2e8f0;">Conformes</th>
               <th style="padding: 10px; border: 1px solid #e2e8f0;">Taux</th>
             </tr>
           </thead>
           <tbody>
-            ${Object.entries(typeStats)
-              .map(([type, stats]) => {
-                const rate = stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0;
+            ${Object.entries(countryStats)
+              .sort(([left], [right]) => left.localeCompare(right, "fr"))
+              .map(([country, stats]) => {
+                const rate = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
                 return `
                   <tr>
-                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-transform: capitalize;">${type.replace('_', ' ')}</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0;">${escapeHtml(country)}</td>
                     <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${stats.total}</td>
-                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${stats.verified}</td>
+                    <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center;">${stats.approved}</td>
                     <td style="padding: 8px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; color: ${rate >= 80 ? '#16a34a' : '#ca8a04'};">${rate} %</td>
                   </tr>
                 `;
@@ -95,15 +127,28 @@ export async function handleComplianceMonthlyReportJob(req: Request, res: Respon
       </div>
     `;
 
-    // Destinataires par défaut (auditeurs et administration)
-    const auditors = ["hello@3mtravelagency.com", "aureoldonfack@gmail.com", "3mtravelandservices@gmail.com"];
+    const auditors = getAuditorRecipients();
+    if (auditors.length === 0) {
+      res.status(503).json({ error: "COMPLIANCE_AUDITOR_EMAILS doit contenir au moins un auditeur autorisé." });
+      return;
+    }
 
     let sentCount = 0;
     for (const auditorEmail of auditors) {
       try {
+        const alreadySent = await db.select({ id: emailDeliveryLogs.id })
+          .from(emailDeliveryLogs)
+          .where(and(
+            eq(emailDeliveryLogs.recipientEmail, auditorEmail),
+            eq(emailDeliveryLogs.subject, subject),
+            eq(emailDeliveryLogs.status, "sent"),
+          ))
+          .limit(1);
+        if (alreadySent.length > 0) continue;
+
         await sendEmail({
           to: auditorEmail,
-          subject: `[Audit Mensuel] Rapport de conformité documentaire — ${monthName}`,
+          subject,
           html: reportHtml,
         });
         sentCount++;

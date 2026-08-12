@@ -10,6 +10,7 @@ import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
 import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
+import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
@@ -55,6 +56,10 @@ async function startServer() {
   app.post("/api/scheduled/evaluation-bilan-job", (req, res) => {
     if (!requireCronSecret(req, res)) return;
     void handleEvaluationBilanJob(req, res);
+  });
+  app.post("/api/scheduled/compliance-monthly-report", (req, res) => {
+    if (!requireCronSecret(req, res)) return;
+    void handleComplianceMonthlyReportJob(req, res);
   });
   // Initialize Cron Jobs
   try {
