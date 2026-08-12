@@ -1492,3 +1492,9 @@
 - [x] S'assurer que chaque carte de destination dans la page Procédures propose un bouton explicite "Détails de la procédure" pointant vers `/procedures/:countryId`
 - [x] Vérifier que la page pays détaille les atouts, la culture, le travail et un bouton bien visible "Lancer la procédure" en bas de page
 - [x] Valider le build de production et publier la version finale optimisée
+
+## Sauvegarde des destinations favorites (v39)
+- [x] Ajouter une table ou persistance pour les destinations favorites des utilisateurs dans la base de données ou le localStorage
+- [x] Intégrer un bouton "Ajouter aux favoris / Retirer des favoris" avec icône cœur sur chaque page pays (`CountryDetailPage.tsx`)
+- [x] Afficher la liste des destinations favorites dans le tableau de bord candidat
+- [x] Valider le build de production et publier la version avec gestion des destinations favorites

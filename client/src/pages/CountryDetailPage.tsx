@@ -7,11 +7,46 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { procedures107Complete } from '@/data/procedures107Complete';
 
+import { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
+import { toast } from 'sonner';
+
 export default function CountryDetailPage() {
   const [, params] = useRoute<{ countryId: string }>('/procedures/:countryId');
   const countryId = params?.countryId;
 
   const country = procedures107Complete.find(c => c.id === countryId);
+
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    if (countryId) {
+      try {
+        const favs = JSON.parse(localStorage.getItem('3m_favorite_countries') || '[]');
+        setIsFavorite(favs.includes(countryId));
+      } catch (e) {}
+    }
+  }, [countryId]);
+
+  const toggleFavorite = () => {
+    if (!countryId) return;
+    try {
+      const favs = JSON.parse(localStorage.getItem('3m_favorite_countries') || '[]');
+      let updated = [];
+      if (isFavorite) {
+        updated = favs.filter((id: string) => id !== countryId);
+        setIsFavorite(false);
+        toast.success("Destination retirée de vos favoris");
+      } else {
+        updated = [...favs, countryId];
+        setIsFavorite(true);
+        toast.success("Destination enregistrée dans vos favoris !");
+      }
+      localStorage.setItem('3m_favorite_countries', JSON.stringify(updated));
+    } catch (e) {
+      toast.error("Erreur lors de la mise à jour des favoris");
+    }
+  };
 
   if (!country) {
     return (
@@ -73,14 +108,27 @@ export default function CountryDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <a href={`/evaluation-primaire?destination=${country.id}`} className="flex-1 md:flex-initial">
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+              <Button
+                onClick={toggleFavorite}
+                variant="outline"
+                className={`w-full sm:w-auto font-bold px-4 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${
+                  isFavorite 
+                    ? 'bg-rose-500 text-white border-rose-500 hover:bg-rose-600' 
+                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current text-white' : ''}`} />
+                {isFavorite ? 'Dans vos favoris' : 'Favori'}
+              </Button>
+
+              <a href={`/evaluation-primaire?destination=${country.id}`} className="w-full sm:w-auto flex-1 md:flex-initial">
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105">
                   🚀 Lancer ma Procédure
                 </Button>
               </a>
               {country.pdfUrl && (
-                <a href={country.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex-1 md:flex-initial">
+                <a href={country.pdfUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex-1 md:flex-initial">
                   <Button variant="outline" className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold px-6 py-3 rounded-xl">
                     <Download className="w-4 h-4 mr-2" /> Guide PDF
                   </Button>
