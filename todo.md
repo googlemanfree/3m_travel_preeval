@@ -1460,3 +1460,8 @@
 ## Amélioration du design du PDF de brouillon (v32)
 - [x] Refondre la fonction handleExportDraftPdf dans FullDossierForm avec un design professionnel, des tableaux structurés et le logo officiel
 - [x] Valider le build de production et publier la version avec PDF amélioré
+
+## Intégration d'un QR code dans le PDF de brouillon (v33)
+- [x] Installer ou utiliser une bibliothèque de génération de QR code (comme qrcode) dans FullDossierForm
+- [x] Ajouter le QR code pointant vers l'URL de l'agence ou la page de suivi dans le PDF professionnel
+- [x] Valider le build de production et publier la version avec QR code

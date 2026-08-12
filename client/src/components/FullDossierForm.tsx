@@ -463,13 +463,30 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
       y += 8;
       addField("Revenu net", form.monthlyIncome ? `${form.monthlyIncome} FCFA` : "Non renseigné", 18, y);
 
+      // Intégration du QR code d'accès agence
+      try {
+        const QRCode = await import("qrcode");
+        const qrDataUrl = await QRCode.toDataURL(window.location.origin + "/dossier-confirmation", {
+          width: 150,
+          margin: 1,
+          color: { dark: "#1E3A8A", light: "#FFFFFF" }
+        });
+        pdf.addImage(qrDataUrl, "PNG", 160, 225, 30, 30);
+        pdf.setTextColor(100, 116, 139);
+        pdf.setFontSize(7);
+        pdf.text("Scannez pour accéder", 160, 258);
+        pdf.text("au portail agence", 162, 262);
+      } catch (e) {
+        // Ignorer si la génération du QR code échoue
+      }
+
       // Pied de page élégant
       pdf.setDrawColor(203, 213, 225);
       pdf.line(15, 275, 195, 275);
       pdf.setTextColor(100, 116, 139);
       pdf.setFontSize(8);
       pdf.text("3M Travel & Services SARL — Contact : hello@3mtravelagency.com / +237 698 104 832", 15, 282);
-      pdf.text(`Généré le ${new Date().toLocaleString()}`, 155, 282);
+      pdf.text(`Généré le ${new Date().toLocaleString()}`, 135, 282);
 
       pdf.save(`Brouillon_Officiel_${form.fullName ? form.fullName.replace(/\s+/g, "_") : "Client"}.pdf`);
       toast.success("Brouillon PDF professionnel généré avec succès !");
