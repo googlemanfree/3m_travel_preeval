@@ -38,7 +38,7 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[character] ?? character);
 }
 
-function getAuditorRecipients(): string[] {
+export function getAuditorRecipients(): string[] {
   const configuredRecipients = process.env.COMPLIANCE_AUDITOR_EMAILS ?? "";
   return Array.from(new Set(configuredRecipients.split(",").map(email => email.trim().toLowerCase()).filter(email => /^\S+@\S+\.\S+$/.test(email))));
 }
