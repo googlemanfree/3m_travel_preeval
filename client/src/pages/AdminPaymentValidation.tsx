@@ -22,8 +22,8 @@ interface PendingPayment {
 const mockPendingPayments: PendingPayment[] = [
   {
     id: 'PAY001',
-    candidateName: 'Aurèol Donfack',
-    email: 'aureoldonfack@gmail.com',
+    candidateName: 'Exemple Candidat',
+    email: 'exemple@email.com',
     phone: '+237698104832',
     amount: 65000,
     currency: 'XAF',

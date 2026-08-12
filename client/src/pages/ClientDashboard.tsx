@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,7 +65,7 @@ const PROGRESS_STEPS = [
 ];
 
 export default function ClientDashboard() {
-  const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const { candidate, isAuthenticated } = useCandidateAuth();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
   const [dossier, setDossier] = useState<DossierStatus | null>(null);
@@ -76,13 +76,13 @@ export default function ClientDashboard() {
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
     undefined,
-    { enabled: isAuthenticated && !authLoading }
+    { enabled: isAuthenticated }
   );
 
   // Récupérer les documents
   const { data: documentsData } = trpc.candidate.getMyDocuments.useQuery(
     undefined,
-    { enabled: isAuthenticated && !authLoading }
+    { enabled: isAuthenticated }
   );
 
   // Mutation pour uploader les documents (placeholder)
@@ -97,10 +97,10 @@ export default function ClientDashboard() {
   // });
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (!isAuthenticated) {
       setLocation("/login");
     }
-  }, [authLoading, isAuthenticated, setLocation]);
+  }, [isAuthenticated, setLocation]);
 
   useEffect(() => {
     if (dossierData && dossierData.data) {
@@ -165,7 +165,7 @@ export default function ClientDashboard() {
     }
   };
 
-  if (authLoading || dossierLoading) {
+  if (dossierLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -470,7 +470,7 @@ export default function ClientDashboard() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-semibold">{user?.email}</p>
+                  <p className="font-semibold">{candidate?.email}</p>
                 </div>
                 <Button variant="outline" className="w-full">
                   Modifier le Mot de Passe

@@ -1406,3 +1406,10 @@
 - [x] Enrichir le widget de vol (aller-retour, voyageurs, classe, moyens de paiement) et transmettre tous les paramètres vers `/flights`
 - [x] Implémenter le lancement automatique de la recherche sur la page `/flights` à la réception des paramètres de l'URL ou du state
 - [x] Tester la compilation de production, vérifier le rendu responsif et enregistrer le checkpoint final
+
+## Intégration de verification-complete-v2.zip (Analyse et Correctifs)
+- [ ] Extraire et inspecter l'archive `verification-complete-v2.zip` dans un dossier temporaire
+- [ ] Auditer les fichiers extraits pour identifier les correctifs d'authentification et de sécurité
+- [ ] Intégrer les fichiers dans le projet en conservant leurs chemins d'origine sans régression
+- [ ] Lancer les tests unitaires et la compilation de production
+- [ ] Enregistrer le checkpoint final

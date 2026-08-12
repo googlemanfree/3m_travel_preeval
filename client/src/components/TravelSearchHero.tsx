@@ -1,124 +1,224 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowRightLeft,
-  ClipboardCheck,
-  Globe2,
-  Plane,
-  Search,
-  Shield,
-  Users,
-} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plane, Shield, ClipboardCheck, Globe2, Search, ArrowRightLeft, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+/**
+ * Barre de recherche multi-services façon ease.travel — un point d'entrée
+ * unique avec des onglets par service. Contrairement à ease.travel (qui
+ * vend aussi hôtels, appartements et voitures), les onglets reflètent
+ * uniquement les vrais services de 3M Travel — pas de service fictif
+ * affiché juste pour "faire pareil".
+ */
+
 type ServiceTab = "vols" | "assurance" | "evaluation" | "evisa";
-type PaymentMethod = "ORANGE_MONEY" | "MTN_MOMO" | "VISA" | "MASTERCARD";
 
 const TABS: { id: ServiceTab; label: string; icon: typeof Plane }[] = [
   { id: "vols", label: "Vols", icon: Plane },
-  { id: "assurance", label: "Assurance voyage", icon: Shield },
-  { id: "evaluation", label: "Évaluation immigration", icon: ClipboardCheck },
+  { id: "assurance", label: "Assurance Voyage", icon: Shield },
+  { id: "evaluation", label: "Évaluation Immigration", icon: ClipboardCheck },
   { id: "evisa", label: "e-Visa", icon: Globe2 },
 ];
 
-const PAYMENT_METHODS: { id: PaymentMethod; label: string; short: string }[] = [
-  { id: "ORANGE_MONEY", label: "Orange Money", short: "OM" },
-  { id: "MTN_MOMO", label: "MTN Mobile Money", short: "MoMo" },
-  { id: "VISA", label: "Visa", short: "Visa" },
-  { id: "MASTERCARD", label: "Mastercard", short: "MC" },
+const PAYMENT_METHODS = [
+  { name: "Orange Money", short: "OM" },
+  { name: "MTN Mobile Money", short: "MoMo" },
+  { name: "Visa", short: "Visa" },
+  { name: "Mastercard", short: "MC" },
 ];
-
-function setIfPresent(params: URLSearchParams, key: string, value: string) {
-  if (value.trim()) params.set(key, value.trim());
-}
 
 export default function TravelSearchHero() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<ServiceTab>("vols");
+
   const [tripType, setTripType] = useState<"ROUND_TRIP" | "ONE_WAY">("ROUND_TRIP");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [departureDate, setDepartureDate] = useState("");
   const [returnDate, setReturnDate] = useState("");
   const [adults, setAdults] = useState(1);
-  const [children, setChildren] = useState(0);
-  const [infants, setInfants] = useState(0);
   const [cabinClass, setCabinClass] = useState("ECONOMY");
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
-  const togglePaymentMethod = (method: PaymentMethod) => {
-    setPaymentMethods((current) => current.includes(method)
-      ? current.filter((item) => item !== method)
-      : [...current, method]);
-  };
-
-  const handleFlightSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleFlightSearch = (e: React.FormEvent) => {
+    e.preventDefault();
     const params = new URLSearchParams();
-    setIfPresent(params, "origin", origin.toUpperCase());
-    setIfPresent(params, "destination", destination.toUpperCase());
-    setIfPresent(params, "departureDate", departureDate);
-    setIfPresent(params, "returnDate", tripType === "ROUND_TRIP" ? returnDate : "");
+    if (origin) params.set("origin", origin);
+    if (destination) params.set("destination", destination);
+    if (departureDate) params.set("date", departureDate);
+    if (returnDate) params.set("returnDate", returnDate);
     params.set("tripType", tripType);
     params.set("adults", String(adults));
-    params.set("children", String(children));
-    params.set("infants", String(infants));
     params.set("cabinClass", cabinClass);
-    if (paymentMethods.length > 0) params.set("paymentMethods", paymentMethods.join(","));
     setLocation(`/flights?${params.toString()}`);
   };
 
   return (
-    <section className="relative z-20 -mt-16 px-4 md:-mt-20" aria-label="Recherche de services 3M Travel">
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-white/70 bg-white/90 shadow-2xl backdrop-blur-2xl dark:border-white/10 dark:bg-slate-950/85">
-        <div className="flex overflow-x-auto border-b border-slate-200/80 dark:border-white/10" role="tablist" aria-label="Services de voyage">
+    <div className="relative -mt-16 md:-mt-20 z-20 max-w-4xl mx-auto px-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+        {/* Onglets */}
+        <div className="flex overflow-x-auto scrollbar-hide border-b border-gray-100">
           {TABS.map((tab) => {
             const Icon = tab.icon;
-            const active = activeTab === tab.id;
+            const isActive = activeTab === tab.id;
             return (
-              <button key={tab.id} type="button" role="tab" aria-selected={active} onClick={() => setActiveTab(tab.id)} className={`flex shrink-0 items-center gap-2 border-b-2 px-4 py-4 text-sm font-semibold transition-colors md:px-6 ${active ? "border-blue-600 bg-blue-50/70 text-blue-700 dark:bg-blue-400/10 dark:text-blue-200" : "border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white"}`}>
-                <Icon className="h-4 w-4" aria-hidden="true" />
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-5 py-4 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 ${
+                  isActive
+                    ? "border-[#2563eb] text-[#2563eb] bg-blue-50/50"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
                 {tab.label}
               </button>
             );
           })}
         </div>
 
-        <div className="p-5 md:p-7">
-          <AnimatePresence mode="wait" initial={false}>
+        {/* Contenu de l'onglet actif */}
+        <div className="p-5 md:p-6">
+          <AnimatePresence mode="wait">
             {activeTab === "vols" && (
-              <motion.form key="vols" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} onSubmit={handleFlightSearch} className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setTripType("ROUND_TRIP")} className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${tripType === "ROUND_TRIP" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300"}`}>
-                    <ArrowRightLeft className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" /> Aller-retour
+              <motion.form
+                key="vols"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                onSubmit={handleFlightSearch}
+                className="space-y-3"
+              >
+                {/* Aller-retour / Aller simple */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTripType("ROUND_TRIP")}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      tripType === "ROUND_TRIP" ? "bg-[#2563eb] text-white" : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    <ArrowRightLeft className="w-3 h-3" /> Aller-Retour
                   </button>
-                  <button type="button" onClick={() => setTripType("ONE_WAY")} className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${tripType === "ONE_WAY" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300"}`}>Aller simple</button>
+                  <button
+                    type="button"
+                    onClick={() => setTripType("ONE_WAY")}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                      tripType === "ONE_WAY" ? "bg-[#2563eb] text-white" : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    Aller simple
+                  </button>
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Départ<input required value={origin} onChange={(event) => setOrigin(event.target.value.toUpperCase())} placeholder="Ex. YAO" maxLength={3} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/10 dark:text-white" /></label>
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Destination<input required value={destination} onChange={(event) => setDestination(event.target.value.toUpperCase())} placeholder="Ex. CDG" maxLength={3} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/10 dark:text-white" /></label>
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Départ<input required type="date" value={departureDate} onChange={(event) => setDepartureDate(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/10 dark:text-white" /></label>
-                  {tripType === "ROUND_TRIP" ? <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Retour<input required type="date" value={returnDate} min={departureDate || undefined} onChange={(event) => setReturnDate(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-white/10 dark:bg-white/10 dark:text-white" /></label> : null}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">D'où partez-vous ?</label>
+                    <input
+                      value={origin}
+                      onChange={(e) => setOrigin(e.target.value.toUpperCase())}
+                      placeholder="Ville de départ"
+                      maxLength={3}
+                      className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Où allez-vous ?</label>
+                    <input
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value.toUpperCase())}
+                      placeholder="Ville d'arrivée"
+                      maxLength={3}
+                      className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Départ</label>
+                    <input
+                      type="date"
+                      value={departureDate}
+                      onChange={(e) => setDepartureDate(e.target.value)}
+                      className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  {tripType === "ROUND_TRIP" && (
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 mb-1 block">Retour</label>
+                      <input
+                        type="date"
+                        value={returnDate}
+                        onChange={(e) => setReturnDate(e.target.value)}
+                        className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid gap-3 md:grid-cols-3">
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400"><span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" aria-hidden="true" /> Voyageurs</span><select value={adults} onChange={(event) => setAdults(Number(event.target.value))} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/10 dark:text-white">{[1, 2, 3, 4, 5, 6].map((value) => <option key={value} value={value}>{value} adulte{value > 1 ? "s" : ""}</option>)}</select></label>
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Classe<select value={cabinClass} onChange={(event) => setCabinClass(event.target.value)} className="mt-1 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-white/10 dark:text-white"><option value="ECONOMY">Économique</option><option value="PREMIUM_ECONOMY">Éco premium</option><option value="BUSINESS">Affaires</option><option value="FIRST">Première</option></select></label>
-                  <div className="flex items-end"><Button type="submit" className="h-11 w-full rounded-xl bg-gradient-to-r from-blue-700 to-blue-500 font-black shadow-lg shadow-blue-900/20 hover:from-blue-600 hover:to-blue-700"><Search className="mr-2 h-4 w-4" aria-hidden="true" /> Rechercher les vols</Button></div>
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
+                  <div className="flex-1">
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block flex items-center gap-1"><Users className="w-3 h-3" /> Voyageur(s)</label>
+                    <div className="flex gap-2">
+                      <select value={adults} onChange={(e) => setAdults(Number(e.target.value))} className="flex-1 h-11 px-3 border border-gray-200 rounded-lg text-sm">
+                        {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n} Adulte{n > 1 ? "s" : ""}</option>)}
+                      </select>
+                      <select value={cabinClass} onChange={(e) => setCabinClass(e.target.value)} className="flex-1 h-11 px-3 border border-gray-200 rounded-lg text-sm">
+                        <option value="ECONOMY">Économique</option>
+                        <option value="PREMIUM_ECONOMY">Éco Premium</option>
+                        <option value="BUSINESS">Affaires</option>
+                        <option value="FIRST">Première</option>
+                      </select>
+                    </div>
+                  </div>
+                  <Button type="submit" className="h-11 bg-[#2563eb] hover:bg-[#1e3a8a] font-bold px-6">
+                    <Search className="w-4 h-4 mr-2" /> Rechercher
+                  </Button>
                 </div>
-
-                <fieldset><legend className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Moyens de paiement préférés</legend><div className="flex flex-wrap gap-2">{PAYMENT_METHODS.map((method) => { const selected = paymentMethods.includes(method.id); return <button key={method.id} type="button" onClick={() => togglePaymentMethod(method.id)} aria-pressed={selected} className={`rounded-lg border px-3 py-2 text-xs font-bold transition ${selected ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 dark:border-white/10 dark:bg-white/5 dark:text-slate-300"}`}>{method.short} · {method.label}</button>; })}</div></fieldset>
               </motion.form>
             )}
-            {activeTab === "assurance" && <motion.div key="assurance" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="py-4 text-center"><Shield className="mx-auto mb-3 h-9 w-9 text-blue-600" aria-hidden="true" /><p className="mx-auto mb-4 max-w-xl text-sm text-slate-600 dark:text-slate-300">Trouvez votre couverture voyage selon votre destination et la durée de votre séjour.</p><Button type="button" onClick={() => setLocation("/assurance-inscription")} className="bg-blue-600 font-bold hover:bg-blue-700">Voir les tarifs d’assurance</Button></motion.div>}
-            {activeTab === "evaluation" && <motion.div key="evaluation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="py-4 text-center"><ClipboardCheck className="mx-auto mb-3 h-9 w-9 text-blue-600" aria-hidden="true" /><p className="mx-auto mb-4 max-w-xl text-sm text-slate-600 dark:text-slate-300">Évaluez gratuitement votre profil d’immigration avec une première analyse assistée par Aureol.</p><Button type="button" onClick={() => setLocation("/evaluation")} className="bg-blue-600 font-bold hover:bg-blue-700">Démarrer mon évaluation</Button></motion.div>}
-            {activeTab === "evisa" && <motion.div key="evisa" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="py-4 text-center"><Globe2 className="mx-auto mb-3 h-9 w-9 text-blue-600" aria-hidden="true" /><p className="mx-auto mb-4 max-w-xl text-sm text-slate-600 dark:text-slate-300">Consultez les conditions d’e-Visa et les documents requis pour les destinations disponibles.</p><Button type="button" onClick={() => setLocation("/evisas")} className="bg-blue-600 font-bold hover:bg-blue-700">Consulter les e-Visas</Button></motion.div>}
+
+            {activeTab === "assurance" && (
+              <motion.div key="assurance" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-center py-4">
+                <Shield className="w-8 h-8 text-[#2563eb] mx-auto mb-3" />
+                <p className="text-gray-600 mb-4 text-sm">Trouvez votre couverture voyage selon votre destination et la durée de votre séjour.</p>
+                <Button onClick={() => setLocation("/assurance-inscription")} className="bg-[#2563eb] hover:bg-[#1e3a8a] font-bold">
+                  Voir les tarifs d'assurance
+                </Button>
+              </motion.div>
+            )}
+
+            {activeTab === "evaluation" && (
+              <motion.div key="evaluation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-center py-4">
+                <ClipboardCheck className="w-8 h-8 text-[#2563eb] mx-auto mb-3" />
+                <p className="text-gray-600 mb-4 text-sm">Évaluez gratuitement votre profil pour l'immigration, analysé par notre IA — résultat par email et dans votre espace.</p>
+                <Button onClick={() => setLocation("/evaluation")} className="bg-[#2563eb] hover:bg-[#1e3a8a] font-bold">
+                  Démarrer mon évaluation gratuite
+                </Button>
+              </motion.div>
+            )}
+
+            {activeTab === "evisa" && (
+              <motion.div key="evisa" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-center py-4">
+                <Globe2 className="w-8 h-8 text-[#2563eb] mx-auto mb-3" />
+                <p className="text-gray-600 mb-4 text-sm">Consultez les conditions d'e-Visa pour plus de 60 destinations, avec les pièces requises.</p>
+                <Button onClick={() => setLocation("/evisas")} className="bg-[#2563eb] hover:bg-[#1e3a8a] font-bold">
+                  Consulter les destinations e-Visa
+                </Button>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
-        <div className="flex flex-wrap items-center justify-center gap-2 border-t border-slate-200/80 bg-slate-50/80 px-5 py-3 text-xs dark:border-white/10 dark:bg-white/5"><span className="font-medium text-slate-400">Paiements acceptés :</span>{PAYMENT_METHODS.map((method) => <span key={method.id} className="rounded-md border border-slate-200 bg-white px-2 py-1 font-bold text-slate-500 dark:border-white/10 dark:bg-white/10 dark:text-slate-300">{method.short}</span>)}</div>
+
+        {/* Barre de confiance — moyens de paiement */}
+        <div className="border-t border-gray-100 bg-gray-50 px-5 md:px-6 py-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <span className="text-xs text-gray-400 font-medium">Paiement accepté :</span>
+          {PAYMENT_METHODS.map((m) => (
+            <span key={m.short} className="text-xs font-semibold text-gray-500 bg-white border border-gray-200 rounded px-2 py-1">
+              {m.short}
+            </span>
+          ))}
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

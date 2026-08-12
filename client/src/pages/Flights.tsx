@@ -10,7 +10,7 @@ import {
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
   Luggage, RefreshCw, SlidersHorizontal,
 } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import Footer from "@/components/Footer";
 import { Mail, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -472,41 +472,21 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Flights() {
-  const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">("ROUND_TRIP");
-  const [origin, setOrigin] = useState("YAO");
-  const [destination, setDestination] = useState("CDG");
-  const [departureDate, setDepartureDate] = useState(minDate(7));
-  const [returnDate, setReturnDate] = useState(minDate(14));
-  const [passengers, setPassengers] = useState({ adults: 1, children: 0, infants: 0, cabinClass: "ECONOMY" });
-  const [paymentMethods, setPaymentMethods] = useState<string[]>([]);
-  const [searchEnabled, setSearchEnabled] = useState(false);
-  const [location] = useLocation();
-
-  // Hydrate the search form from the multi-service home widget and launch it once.
-  useEffect(() => {
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-    if (!params.has("origin") && !params.has("destination") && !params.has("departureDate")) return;
-
-    const nextTripType = params.get("tripType") === "ONE_WAY" ? "ONE_WAY" : "ROUND_TRIP";
-    const nextOrigin = params.get("origin")?.trim().toUpperCase();
-    const nextDestination = params.get("destination")?.trim().toUpperCase();
-    const nextDepartureDate = params.get("departureDate")?.trim();
-    const nextReturnDate = params.get("returnDate")?.trim();
-
-    if (nextOrigin) setOrigin(nextOrigin);
-    if (nextDestination) setDestination(nextDestination);
-    if (nextDepartureDate) setDepartureDate(nextDepartureDate);
-    if (nextReturnDate) setReturnDate(nextReturnDate);
-    setTripType(nextTripType);
-    setPassengers({
-      adults: Math.min(9, Math.max(1, Number(params.get("adults") || 1))),
-      children: Math.min(8, Math.max(0, Number(params.get("children") || 0))),
-      infants: Math.min(4, Math.max(0, Number(params.get("infants") || 0))),
-      cabinClass: params.get("cabinClass") || "ECONOMY",
-    });
-    setPaymentMethods((params.get("paymentMethods") || "").split(",").filter(Boolean));
-    setSearchEnabled(Boolean(nextOrigin && nextDestination && nextDepartureDate));
-  }, [location]);
+  const initialParams = new URLSearchParams(window.location.search);
+  const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">(
+    (initialParams.get("tripType") as "ONE_WAY" | "ROUND_TRIP") || "ROUND_TRIP"
+  );
+  const [origin, setOrigin] = useState(initialParams.get("origin") || "YAO");
+  const [destination, setDestination] = useState(initialParams.get("destination") || "CDG");
+  const [departureDate, setDepartureDate] = useState(initialParams.get("date") || minDate(7));
+  const [returnDate, setReturnDate] = useState(initialParams.get("returnDate") || minDate(14));
+  const [passengers, setPassengers] = useState({
+    adults: Number(initialParams.get("adults")) || 1,
+    children: 0,
+    infants: 0,
+    cabinClass: initialParams.get("cabinClass") || "ECONOMY",
+  });
+  const [searchEnabled, setSearchEnabled] = useState(initialParams.has("origin") && initialParams.has("destination"));
 
   // Filters
   const [maxStops, setMaxStops] = useState<number | null>(null);
@@ -665,12 +645,6 @@ export default function Flights() {
               {/* Passengers */}
               <PassengerSelector {...passengers} onChange={setPassengers} />
             </div>
-
-            {paymentMethods.length > 0 && (
-              <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
-                Préférences transmises : {paymentMethods.join(" · ")}
-              </p>
-            )}
 
             <div className="mt-5 flex justify-center">
               <Button

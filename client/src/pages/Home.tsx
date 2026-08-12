@@ -546,8 +546,9 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
-      {/* ─── RECHERCHE MULTI-SERVICES ─────────────────────────────────────── */}
+      {/* ─── RECHERCHE MULTI-SERVICES (façon ease.travel) ──────────────────── */}
       <TravelSearchHero />
+      <div className="h-8 md:h-12" />
 
       {/* ─── QUESTIONS À AUREOL ───────────────────────────────────────────── */}
       <AureolQuestionField />
