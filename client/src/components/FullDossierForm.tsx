@@ -373,6 +373,62 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
   const inputClass = (field: string) =>
     `border ${errors[field] ? "border-red-400 focus:ring-red-300" : "border-gray-200 focus:ring-blue-300"} rounded-lg focus:outline-none focus:ring-2 transition-all`;
 
+  const handleExportDraftPdf = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF();
+      
+      // En-tête
+      pdf.setFillColor(30, 58, 138); // Bleu institutionnel
+      pdf.rect(0, 0, 210, 35, "F");
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(18);
+      pdf.text("3M TRAVEL & SERVICES", 15, 15);
+      pdf.setFontSize(10);
+      pdf.text("Brouillon de Dossier Inachevé — Non Soumis", 15, 24);
+
+      // Bandeau d'avertissement
+      pdf.setFillColor(254, 243, 199); // Ambre clair
+      pdf.rect(15, 42, 180, 15, "F");
+      pdf.setTextColor(180, 83, 9);
+      pdf.setFontSize(9);
+      pdf.text("Ceci est un brouillon conservé localement. Il n'a pas encore été transmis à l'agence.", 20, 51);
+
+      // Données saisies
+      pdf.setTextColor(30, 30, 30);
+      pdf.setFontSize(12);
+      pdf.text("Informations Générales", 15, 70);
+      
+      pdf.setFontSize(10);
+      let y = 78;
+      const addLine = (label: string, val: string) => {
+        pdf.text(`${label}: ${val || "Non renseigné"}`, 15, y);
+        y += 7;
+      };
+
+      addLine("Nom complet", form.fullName);
+      addLine("Email", form.email);
+      addLine("WhatsApp", form.whatsappNumber);
+      addLine("Destination", form.destination);
+      addLine("Type de Visa", form.visaType);
+      addLine("Formule choisie", form.formulaChosen);
+      addLine("Nationalité", form.nationality);
+      addLine("Niveau d'études", form.academicLevel);
+      addLine("Situation pro", form.employmentStatus);
+      addLine("Revenu mensuel", form.monthlyIncome);
+
+      y += 10;
+      pdf.setTextColor(100, 100, 100);
+      pdf.setFontSize(8);
+      pdf.text(`Généré le ${new Date().toLocaleString()} — 3M Travel & Services SARL`, 15, y);
+
+      pdf.save(`Brouillon_Dossier_${form.fullName ? form.fullName.replace(/\s+/g, "_") : "Client"}.pdf`);
+      toast.success("Brouillon exporté en PDF avec succès !");
+    } catch (err) {
+      toast.error("Erreur lors de la génération du PDF du brouillon");
+    }
+  };
+
   // Si le Protocole d'Accord doit être affiché
   if (showAgreement && applicationResult) {
     return (
@@ -411,11 +467,20 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
             <h2 className="text-white font-bold text-lg">Constitution de Dossier</h2>
             <p className="text-blue-200 text-sm">Étape {currentStepIndex + 1} sur {totalSteps} — {activeSteps[currentStepIndex]?.title}</p>
           </div>
-          {onClose && (
-            <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-600">
-              <X className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportDraftPdf}
+              title="Télécharger mon brouillon en PDF"
+              className="text-xs bg-amber-400 hover:bg-amber-300 text-blue-950 font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+            >
+              📄 Télécharger Brouillon PDF
             </button>
-          )}
+            {onClose && (
+              <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-600">
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Barre de progression avec pourcentage */}

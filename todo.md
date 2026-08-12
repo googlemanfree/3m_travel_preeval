@@ -1451,3 +1451,8 @@
 - [x] Ajouter une invite de restauration de brouillon lors de l'ouverture du formulaire
 - [x] Effacer le brouillon automatiquement après soumission réussie
 - [x] Valider le build de production et publier la version avec sauvegarde locale
+
+## Export PDF du brouillon inachevé (v31)
+- [x] Ajouter une fonction d'export PDF dans FullDossierForm pour télécharger le brouillon en cours
+- [x] Inclure les informations saisies et un bandeau "Brouillon inachevé - Non soumis" dans le PDF généré via jsPDF
+- [x] Valider le build de production et publier la version avec export PDF du brouillon
