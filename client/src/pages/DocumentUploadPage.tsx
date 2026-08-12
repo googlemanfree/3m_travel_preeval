@@ -246,6 +246,44 @@ export default function DocumentUploadPage() {
                 <p className="font-bold text-blue-900">Recommandation du système :</p>
                 <p>{passportAnalysis.recommendation}</p>
               </div>
+
+              {/* Aperçu visuel annoté du passeport */}
+              {passportAnalysis.annotatedZones && passportAnalysis.annotatedZones.length > 0 && (
+                <div className="bg-white p-4 rounded-xl border border-blue-100 space-y-3">
+                  <p className="font-bold text-blue-950 text-sm">Marqueurs visuels de lisibilité sur le document :</p>
+                  <div className="relative w-full h-48 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center border border-gray-200">
+                    <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                    <div className="absolute text-center text-gray-400 text-xs px-4">
+                      📄 Aperçu radiographique du scan analysé (Zone d'identification)
+                    </div>
+                    {passportAnalysis.annotatedZones.map((zone: any) => {
+                      const borderColor = zone.severity === 'success' ? 'border-emerald-400 bg-emerald-500/10 text-emerald-200' : zone.severity === 'warning' ? 'border-amber-400 bg-amber-500/10 text-amber-200' : 'border-rose-400 bg-rose-500/10 text-rose-200';
+                      return (
+                        <div
+                          key={zone.id}
+                          style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
+                          className={`absolute border-2 rounded-md p-1 flex flex-col justify-between backdrop-blur-[1px] transition-all hover:scale-[1.02] cursor-pointer ${borderColor}`}
+                          title={zone.description}
+                        >
+                          <span className="text-[10px] font-bold px-1 bg-black/60 rounded text-white truncate inline-block">
+                            {zone.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {passportAnalysis.annotatedZones.map((zone: any) => (
+                      <div key={`legend-${zone.id}`} className="flex items-start gap-2 text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                        <span className={`w-2.5 h-2.5 rounded-full mt-0.5 shrink-0 ${zone.severity === 'success' ? 'bg-emerald-500' : zone.severity === 'warning' ? 'bg-amber-500' : 'bg-rose-500'}`} />
+                        <div>
+                          <strong className="text-gray-900">{zone.label} :</strong> {zone.description}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Card>
           </motion.div>
         )}

@@ -1554,3 +1554,9 @@
 - [x] Afficher un retour instantané au candidat (score de lisibilité, avertissement d'expiration éventuelle)
 - [x] Transmettre le rapport d'analyse dans le tableau de bord administrateur pour validation finale
 - [x] Valider le build de production et publier la version avec analyse de passeport
+
+## Marqueurs visuels et aperçu annoté des passeports (v50)
+- [x] Enrichir passportAnalyzer.ts pour générer des coordonnées de zones annotées (reflets, zones floues, marges coupées)
+- [x] Mettre à jour DocumentUploadPage.tsx pour afficher l'image du document avec des cadres colorés interactifs sur les zones problématiques
+- [x] Ajouter une légende détaillée expliquant chaque marqueur visuel pour guider le candidat
+- [x] Valider le build de production et publier la version avec marqueurs visuels sur les scans
