@@ -311,7 +311,7 @@ function PassengerSelector({
 }
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
-function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: any }) {
+function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { flight: Flight; searchParams: any; isSimulated: boolean; servedFromCache: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const { isAuthenticated } = useCandidateAuth();
   const { toast } = useToast();
@@ -346,6 +346,16 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
       {flight.isLiveGoogleFlights && (
         <div className="absolute top-0 right-0 bg-gradient-to-l from-blue-600 to-indigo-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
           <span>✨ En direct de Google Flights</span>
+        </div>
+      )}
+      {isSimulated && (
+        <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" /> Tarif indicatif — Simulation
+        </div>
+      )}
+      {!isSimulated && servedFromCache && (
+        <div className="absolute top-6 right-0 bg-gradient-to-l from-slate-600 to-slate-500 text-white text-[10px] font-bold px-3 py-0.5 rounded-bl-xl shadow-sm flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" /> Résultat en cache
         </div>
       )}
       <div className="p-4 md:p-5">
@@ -502,7 +512,7 @@ export default function Flights() {
   const [tripType, setTripType] = useState<"ONE_WAY" | "ROUND_TRIP" | "MULTI">(
     (initialParams.get("tripType") as "ONE_WAY" | "ROUND_TRIP") || "ROUND_TRIP"
   );
-  const [origin, setOrigin] = useState(initialParams.get("origin") || "YAO");
+  const [origin, setOrigin] = useState(initialParams.get("origin") || "NSI");
   const [destination, setDestination] = useState(initialParams.get("destination") || "CDG");
   const [departureDate, setDepartureDate] = useState(initialParams.get("date") || minDate(7));
   const [returnDate, setReturnDate] = useState(initialParams.get("returnDate") || minDate(14));
@@ -572,6 +582,8 @@ export default function Flights() {
 
   // Derived filtered/sorted results
   const outbound: Flight[] = data?.outbound ?? [];
+  const isSimulated = Boolean(data?.isDemo);
+  const servedFromCache = Boolean(data?.cache?.servedFromCache);
   const filtered = outbound
     .filter((f) => maxStops === null || f.stops <= maxStops)
     .filter((f) => selectedAirlines.length === 0 || selectedAirlines.includes(f.airline.code))
@@ -870,7 +882,7 @@ export default function Flights() {
               {/* Flight cards */}
               <div className="space-y-4">
                 {filtered.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} />
+                  <FlightCard key={flight.id} flight={flight} searchParams={passengers} isSimulated={isSimulated} servedFromCache={servedFromCache} />
                 ))}
                 {filtered.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-gray-200">
@@ -882,19 +894,28 @@ export default function Flights() {
                 )}
               </div>
 
-              {/* Demo notice / Daily limit explanation */}
-              <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-900 space-y-1">
-                  <div><strong>Limite journalière SearchAPI / Tarifs indicatifs (Mode Simulation) :</strong></div>
-                  <p className="text-xs text-amber-800">
-                    Lorsque la clé SearchAPI.io atteint sa <strong>limite journalière</strong> ou que l'API est en dépassement de quota, le système bascule automatiquement sur des tarifs indicatifs et des simulations de l'agence pour éviter de bloquer votre recherche.
-                  </p>
-                  <p className="text-xs font-semibold text-amber-900 pt-1">
-                    💡 <strong>Comment résoudre ?</strong> Mettez à jour ou rechargez votre clé API <code>SEARCHAPI_KEY</code> valide avec un quota suffisant dans les secrets du serveur, ou contactez l'agence pour valider les tarifs en direct.
-                  </p>
+              {isSimulated ? (
+                <div className="mt-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-amber-900 space-y-1">
+                    <div><strong>Tarifs indicatifs — mode simulation :</strong></div>
+                    <p className="text-xs text-amber-800">
+                      La source Google Flights est actuellement indisponible ou a atteint son quota. Les tarifs marqués « Simulation » sont indicatifs et doivent être confirmés par l’agence avant toute réservation.
+                    </p>
+                    <p className="text-xs font-semibold text-amber-900 pt-1">
+                      L’administration peut contrôler l’état de SearchAPI et mettre à jour la clé sécurisée <code>SEARCHAPI_KEY</code> dans les Paramètres du projet.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mt-8 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-3">
+                  <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-emerald-900">
+                    <strong>{servedFromCache ? "Résultat mémorisé pour préserver le quota" : "Tarifs issus de Google Flights"}</strong>
+                    <p className="text-xs text-emerald-800 mt-1">Les disponibilités et tarifs restent à confirmer par l’agence au moment de l’émission du billet.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

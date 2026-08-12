@@ -1149,6 +1149,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="flights" className="space-y-6">
+            <SearchApiMonitoring />
             <Card className="border-0 shadow-sm hover:-translate-y-1">
               <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                 <Plane className="w-5 h-5 text-blue-600" />
@@ -1359,8 +1360,13 @@ function FlightCommissionSettings() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    const sessionToken = localStorage.getItem("adminSessionToken");
+    if (!sessionToken) {
+      toast({ title: "Session administrateur requise", description: "Reconnectez-vous avant de modifier la commission.", variant: "destructive" });
+      return;
+    }
     updateMutation.mutate({
-      sessionToken: localStorage.getItem("admin_session") || "active_admin",
+      sessionToken,
       commissionPercent: Number(commission),
     });
   };
@@ -1388,5 +1394,99 @@ function FlightCommissionSettings() {
         Cette commission est automatiquement incluse dans les grilles tarifaires de vols présentées aux candidats et sur les récapitulatifs e-mail.
       </p>
     </form>
+  );
+}
+
+function SearchApiMonitoring() {
+  const { toast } = useToast();
+  const sessionToken = localStorage.getItem("adminSessionToken");
+  const { data: status, isLoading, refetch } = trpc.flights.getSearchApiStatus.useQuery(
+    { sessionToken: sessionToken || "missing" },
+    { enabled: Boolean(sessionToken), refetchOnWindowFocus: false }
+  );
+  const clearCacheMutation = trpc.flights.clearSearchApiCache.useMutation({
+    onSuccess: () => {
+      toast({ title: "Cache vidé", description: "La prochaine recherche sollicitera SearchAPI si le quota le permet." });
+      refetch();
+    },
+    onError: (err) => toast({ title: "Action non effectuée", description: err.message, variant: "destructive" }),
+  });
+
+  const statusPresentation = {
+    live: { label: "Connecté — données en direct", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    live_no_results: { label: "Connecté — aucun résultat", className: "bg-sky-50 text-sky-700 border-sky-200" },
+    quota_limited: { label: "Quota quotidien atteint", className: "bg-amber-50 text-amber-700 border-amber-200" },
+    not_configured: { label: "Clé non configurée", className: "bg-rose-50 text-rose-700 border-rose-200" },
+    error: { label: "Incident API à vérifier", className: "bg-rose-50 text-rose-700 border-rose-200" },
+    simulation: { label: "Mode simulation", className: "bg-amber-50 text-amber-700 border-amber-200" },
+  } as const;
+  const state = status ? statusPresentation[status.apiStatus] ?? statusPresentation.error : null;
+
+  const copySecretName = async () => {
+    try {
+      await navigator.clipboard.writeText("SEARCHAPI_KEY");
+      toast({ title: "Nom de variable copié", description: "Ouvrez Paramètres > Secrets dans l’interface de gestion et remplacez la valeur de SEARCHAPI_KEY." });
+    } catch {
+      toast({ title: "Mise à jour sécurisée", description: "Ouvrez Paramètres > Secrets dans l’interface de gestion puis remplacez SEARCHAPI_KEY." });
+    }
+  };
+
+  return (
+    <Card className="border border-blue-100 bg-gradient-to-br from-white via-blue-50/60 to-slate-50 shadow-sm p-5 md:p-6 glass-card">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <Plane className="w-5 h-5 text-[#1E3A8A]" /> Supervision SearchAPI / Google Flights
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">Suivez la disponibilité de la source tarifaire sans exposer la clé secrète.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading || !sessionToken} className="gap-2">
+            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} /> Actualiser
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => clearCacheMutation.mutate({ sessionToken: sessionToken || "missing" })} disabled={clearCacheMutation.isPending || !sessionToken} className="gap-2">
+            <RefreshCw className="w-4 h-4" /> Vider le cache
+          </Button>
+        </div>
+      </div>
+
+      {!sessionToken ? (
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 flex gap-2">
+          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> Votre session admin est absente ou expirée. Reconnectez-vous pour consulter l’état de l’API.
+        </div>
+      ) : isLoading ? (
+        <div className="mt-5 h-24 rounded-xl bg-slate-100 animate-pulse" />
+      ) : status && state ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">État fournisseur</p>
+            <Badge className={`mt-2 border ${state.className}`}>{state.label}</Badge>
+            <p className="mt-2 text-xs text-slate-500">Clé serveur : {status.keyConfigured ? "configurée" : "absente"}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Cache recherches</p>
+            <p className="mt-1 text-2xl font-black text-[#1E3A8A]">{status.hitRate}%</p>
+            <p className="text-xs text-slate-500">{status.hits} hits · {status.misses} requêtes API · {status.entries} entrées</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Conservation</p>
+            <p className="mt-1 text-2xl font-black text-[#1E3A8A]">{Math.round(status.ttlSeconds / 60)} min</p>
+            <p className="text-xs text-slate-500">Dernier résultat live : {status.lastLiveResultAt ? new Date(status.lastLiveResultAt).toLocaleString("fr-FR") : "aucun"}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-white/80 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Dernier incident</p>
+            <p className="mt-1 text-sm font-bold text-slate-800">{status.lastError || "Aucun incident"}</p>
+            <p className="text-xs text-slate-500">{status.lastErrorAt ? new Date(status.lastErrorAt).toLocaleString("fr-FR") : ""}</p>
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-col gap-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-900 md:flex-row md:items-center md:justify-between">
+        <p><strong>Mettre à jour la clé :</strong> utilisez les <strong>Paramètres &gt; Secrets</strong> du projet. La valeur n’est jamais affichée ni enregistrée dans le navigateur.</p>
+        <Button type="button" size="sm" variant="outline" onClick={copySecretName} className="shrink-0 border-blue-200 text-[#1E3A8A]">
+          Copier SEARCHAPI_KEY
+        </Button>
+      </div>
+    </Card>
   );
 }

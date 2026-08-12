@@ -6,32 +6,24 @@ import { and, eq, desc } from "drizzle-orm";
 import { candidateProcedure } from "./candidate";
 import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
+import { flightSearchCache } from "../services/flightSearchCache";
 
-// ─── Simple In-Memory Cache for SearchAPI ────────────────────────────────────
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-}
-const flightCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-function getCachedSearch(key: string) {
-  const entry = flightCache.get(key);
+function getCachedSearch(key: string): any | null {
+  const entry = flightSearchCache.get(key);
   if (!entry) return null;
-  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
-    flightCache.delete(key);
-    return null;
-  }
-  return entry.data;
+  return {
+    ...(entry.data as Record<string, unknown>),
+    cache: { servedFromCache: true, expiresAt: entry.expiresAt },
+  };
 }
 
 function setCachedSearch(key: string, data: any) {
-  flightCache.set(key, { data, timestamp: Date.now() });
+  flightSearchCache.set(key, data);
 }
 
 // ─── IATA Airport Database ────────────────────────────────────────────────────
 export const AIRPORTS: Record<string, { name: string; city: string; country: string; iata: string }> = {
-  YAO: { iata: "YAO", name: "Yaoundé Nsimalen", city: "Yaoundé", country: "Cameroun" },
+  NSI: { iata: "NSI", name: "Yaoundé Nsimalen", city: "Yaoundé", country: "Cameroun" },
   DLA: { iata: "DLA", name: "Douala International", city: "Douala", country: "Cameroun" },
   CDG: { iata: "CDG", name: "Charles de Gaulle", city: "Paris", country: "France" },
   ORY: { iata: "ORY", name: "Paris Orly", city: "Paris", country: "France" },
@@ -99,7 +91,18 @@ function addMinutes(timeStr: string, minutes: number) {
   return `${newH.toString().padStart(2, "0")}:${newM.toString().padStart(2, "0")}`;
 }
 
+function parseSearchApiPrice(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const digits = value.replace(/[^\d]/g, "");
+  const parsed = Number(digits);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
 const AGENCY_MARKUP = 0.08;
+// SearchAPI ne prend pas XAF en charge. Le franc CFA est rattaché à l'euro
+// par une parité fixe : les tarifs live peuvent donc être présentés en FCFA.
+const XAF_PER_EUR = 655.957;
 
 function applyMarkup(price: number) {
   return Math.round(price * (1 + AGENCY_MARKUP));
@@ -218,17 +221,32 @@ export const flightsRouter = router({
       const apiKey = process.env.SEARCHAPI_KEY;
 
       if (!apiKey) {
+        flightSearchCache.markNotConfigured();
         const totalPax = input.adults + input.children;
         let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
         if (input.alliance && input.alliance !== "ALL") {
           outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
         }
-        const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        const result = {
+          tripType: input.tripType,
+          outbound,
+          inbound: [],
+          searchParams: input,
+          currency: "XAF",
+          agencyMarkup: AGENCY_MARKUP,
+          isDemo: true,
+          providerStatus: "not_configured",
+          cache: { servedFromCache: false },
+        };
         setCachedSearch(cacheKey, result);
         return result;
       }
 
       try {
+        // YAO a été historiquement utilisé dans l'interface, mais NSI est le code IATA
+        // reconnu par Google Flights pour Yaoundé-Nsimalen.
+        const searchOrigin = input.origin === "YAO" ? "NSI" : input.origin;
+        const searchDestination = input.destination === "YAO" ? "NSI" : input.destination;
         const travelClassMap: Record<string, string> = {
           ECONOMY: "economy",
           PREMIUM_ECONOMY: "premium_economy",
@@ -239,31 +257,42 @@ export const flightsRouter = router({
         const params = new URLSearchParams({
           engine: "google_flights",
           api_key: apiKey,
-          departure_id: input.origin,
-          arrival_id: input.destination,
+          departure_id: searchOrigin,
+          arrival_id: searchDestination,
           outbound_date: input.departureDate,
           flight_type: input.tripType === "ROUND_TRIP" ? "round_trip" : "one_way",
           travel_class: travelClassMap[input.cabinClass] ?? "economy",
           adults: String(input.adults),
           children: String(input.children),
-          currency: "XAF",
+          currency: "EUR",
         });
         if (input.tripType === "ROUND_TRIP" && input.returnDate) {
           params.set("return_date", input.returnDate);
         }
 
         const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`);
-        if (!res.ok) throw new Error(`SearchAPI.io a répondu ${res.status}`);
+        if (!res.ok) {
+          const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
+          const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
+          flightSearchCache.recordUnavailable(res.status === 429 ? "quota_limited" : "error", message);
+          throw new Error(message);
+        }
         const json = await res.json();
 
         const allResults = [...(json.best_flights || []), ...(json.other_flights || [])];
         if (allResults.length === 0) {
-          const totalPax = input.adults + input.children;
-          let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
-          if (input.alliance && input.alliance !== "ALL") {
-            outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
-          }
-          const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: false };
+          flightSearchCache.recordLiveResult();
+          const result = {
+            tripType: input.tripType,
+            outbound: [],
+            inbound: [],
+            searchParams: input,
+            currency: "XAF",
+            agencyMarkup: AGENCY_MARKUP,
+            isDemo: false,
+            providerStatus: "live_no_results",
+            cache: { servedFromCache: false },
+          };
           setCachedSearch(cacheKey, result);
           return result;
         }
@@ -273,7 +302,8 @@ export const flightsRouter = router({
         const toFlightResult = (item: any, index: number) => {
           const firstLeg = item.flights?.[0];
           const lastLeg = item.flights?.[item.flights.length - 1];
-          if (!firstLeg || !lastLeg) return null;
+          const sourcePrice = parseSearchApiPrice(item.price);
+          if (!firstLeg || !lastLeg || sourcePrice === null) return null;
 
           const stops = (item.flights?.length ?? 1) - 1;
           const stopDetails = (item.layovers || []).map((l: any) => ({
@@ -304,9 +334,11 @@ export const flightsRouter = router({
             stops,
             stopDetails,
             cabinClass: input.cabinClass,
-            pricePerPax: Math.round(item.price),
-            totalPrice: Math.round(item.price) * totalPax,
+            pricePerPax: Math.round(sourcePrice * XAF_PER_EUR),
+            totalPrice: Math.round(sourcePrice * XAF_PER_EUR) * totalPax,
             currency: "XAF",
+            sourceCurrency: "EUR",
+            sourcePrice,
             seatsLeft: randomBetween(2, 9),
             baggage: input.cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
             refundable: true,
@@ -320,6 +352,7 @@ export const flightsRouter = router({
           outbound = outbound.filter((f: any) => f.airline.alliance === input.alliance);
         }
 
+        flightSearchCache.recordLiveResult();
         const result = {
           tripType: input.tripType,
           outbound,
@@ -328,17 +361,32 @@ export const flightsRouter = router({
           currency: "XAF",
           agencyMarkup: AGENCY_MARKUP,
           isDemo: false,
+          providerStatus: "live",
+          cache: { servedFromCache: false },
         };
         setCachedSearch(cacheKey, result);
         return result;
       } catch (err) {
         console.error("SearchAPI error, falling back to mock:", err);
+        if (!flightSearchCache.getStatus().lastError) {
+          flightSearchCache.recordUnavailable("error", err instanceof Error ? err.message : "Erreur SearchAPI inconnue");
+        }
         const totalPax = input.adults + input.children;
         let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
         if (input.alliance && input.alliance !== "ALL") {
           outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
         }
-        const result = { tripType: input.tripType, outbound, inbound: [], searchParams: input, currency: "XAF", agencyMarkup: AGENCY_MARKUP, isDemo: true };
+        const result = {
+          tripType: input.tripType,
+          outbound,
+          inbound: [],
+          searchParams: input,
+          currency: "XAF",
+          agencyMarkup: AGENCY_MARKUP,
+          isDemo: true,
+          providerStatus: flightSearchCache.getStatus().apiStatus,
+          cache: { servedFromCache: false },
+        };
         setCachedSearch(cacheKey, result);
         return result;
       }
@@ -353,6 +401,24 @@ export const flightsRouter = router({
     }
     return { commissionPercent: 8 };
   }),
+
+  getSearchApiStatus: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      return {
+        keyConfigured: Boolean(process.env.SEARCHAPI_KEY),
+        ...flightSearchCache.getStatus(),
+      };
+    }),
+
+  clearSearchApiCache: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      flightSearchCache.clear();
+      return { success: true, ...flightSearchCache.getStatus() };
+    }),
 
   updateCommission: publicProcedure
     .input(z.object({ sessionToken: z.string(), commissionPercent: z.number().min(0).max(50) }))

@@ -1421,3 +1421,10 @@
 - [ ] Intégrer l'affichage et l'export CSV du journal d'audit dans le tableau de bord administrateur
 - [ ] Intégrer la liste des favoris de vols dans le tableau de bord candidat / profil
 - [ ] Tester les flux, valider le build de production et enregistrer le checkpoint final
+
+## Fiabilité des tarifs vols et supervision SearchAPI
+- [x] Ajouter un badge explicite sur chaque carte lorsque le tarif affiché est simulé ou issu du cache
+- [x] Renforcer le cache SearchAPI avec métriques de hit/miss, durée de conservation et nettoyage maîtrisé
+- [x] Créer une procédure d’état SearchAPI protégée pour le tableau de bord administrateur, sans jamais exposer la clé API
+- [x] Ajouter un panneau de supervision vols dans l’administration avec état, dernier incident, cache et accès sécurisé à la mise à jour de la clé
+- [x] Ajouter les tests unitaires, vérifier les vues desktop/mobile, compiler et publier la version vérifiée
