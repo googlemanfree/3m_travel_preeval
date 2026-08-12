@@ -14,7 +14,7 @@ import { getDb } from "../db";
 import { aureolQuestions, faqFeedback } from "../../drizzle/schema";
 import { desc, sql, count } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
-import { queryDestinationKnowledge } from "../destinationKnowledge";
+import { searchDestinationKnowledge } from "../destinationDocumentService";
 
 const SYSTEM_PROMPT = `Tu es le "Copilote IA 3M Travel", l'assistant virtuel de 3M Travel & Services, agence d'accompagnement en mobilité internationale basée à Yaoundé, Cameroun.
 
@@ -58,9 +58,11 @@ export const aiCopilotRouter = router({
     )
     .mutation(async ({ input }) => {
       try {
-        // Récupérer la dernière question utilisateur pour enrichir le contexte via le RAG des 107 destinations
+        // Récupérer la dernière question utilisateur pour enrichir le contexte via le RAG dynamique des destinations
         const lastUserMsg = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
-        const destinationContext = queryDestinationKnowledge(lastUserMsg);
+        const sources = await searchDestinationKnowledge(lastUserMsg);
+
+        const destinationContext = sources.map(s => `[Source: ${s.sourceTitle} - ${s.country}]\n${s.text}`).join("\n\n");
 
         const dynamicSystemPrompt = `${SYSTEM_PROMPT}
 
@@ -93,10 +95,10 @@ ${destinationContext}
         // Enregistrer la dernière question de l'utilisateur et la réponse d'Aureol
         try {
           const db = await getDb();
-          const lastUserMsg = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
-          if (db && lastUserMsg) {
+          const lastUserMessage = [...input.messages].reverse().find(m => m.role === "user")?.content || "";
+          if (db && lastUserMessage) {
             await db.insert(aureolQuestions).values({
-              question: lastUserMsg,
+              question: lastUserMessage,
               answer: reply,
               sourceWidget: "copilot_chat",
             });
@@ -105,7 +107,14 @@ ${destinationContext}
           console.error("Failed to log aureol question:", logErr);
         }
 
-        return { reply };
+        return {
+          reply,
+          sources: sources.map(s => ({
+            title: s.sourceTitle,
+            url: s.sourceUrl,
+            country: s.country,
+          })),
+        };
       } catch (err) {
         console.error("ai_copilot.chat_failed", err);
         return {
@@ -125,7 +134,8 @@ ${destinationContext}
     )
     .query(async ({ input }) => {
       try {
-        const destinationContext = queryDestinationKnowledge(input.question);
+        const sources = await searchDestinationKnowledge(input.question);
+        const destinationContext = sources.map(s => `[Source: ${s.sourceTitle} - ${s.country}]\n${s.text}`).join("\n\n");
         const dynamicSystemPrompt = `${SYSTEM_PROMPT}
 
 === EXTRAITS OFFICIELS DES GUIDES DE DESTINATION (RAG 107 PAYS) ===

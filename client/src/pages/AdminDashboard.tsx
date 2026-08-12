@@ -47,6 +47,9 @@ import {
   Download,
   BarChart3,
   Sparkles,
+  FileText,
+  Upload,
+  ExternalLink,
 } from "lucide-react";
 import {
   BarChart,
@@ -554,6 +557,9 @@ function ImportAgencyModal({
 
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
+  const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
@@ -561,10 +567,25 @@ export default function AdminDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const { toast } = useToast();
+  const trpcUtils = trpc.useUtils();
 
-  const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
-  
+  const addRagDocMutation = trpc.admin.addDestinationDocumentAdmin.useMutation({
+    onSuccess: () => {
+      toast({ title: "Guide PDF ajouté", description: "Le guide a été indexé et ajouté avec succès dans la base RAG d'Aureol." });
+      trpcUtils.admin.listDestinationDocumentsAdmin.invalidate();
+    },
+    onError: (err) => {
+      toast({ title: "Erreur", description: err.message || "Impossible d'ajouter le guide.", variant: "destructive" });
+    }
+  });
+
+  const { data: destinationDocs, refetch: refetchRagDocs } = trpc.admin.listDestinationDocumentsAdmin.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken }
+  );
+
+  // Admin auth géré en haut du composant
+
   // Générer les initiales pour l'avatar
   const getInitials = (name: string) => {
     return name
@@ -854,13 +875,115 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
             <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
+            <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="rag" className="space-y-6">
+            <Card className="border-0 shadow-sm overflow-hidden p-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Gestion Documentaire RAG (107 Destinations)
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Téléchargez et mettez à jour les guides PDF officiels de chaque pays pour enrichir instantanément les connaissances d’Aureol.
+                  </p>
+                </div>
+              </div>
+
+              {/* Formulaire d'ajout rapide de guide */}
+              <div className="p-4 bg-slate-50 rounded-xl border mb-6 space-y-4">
+                <h4 className="font-bold text-sm text-gray-800 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-blue-600" /> Ajouter / Mettre à jour un guide PDF pays
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <input
+                    type="text"
+                    placeholder="Titre (ex: Guide Visa Canada 2026)"
+                    id="rag-doc-title"
+                    className="px-3 py-2 text-sm rounded-lg border bg-white"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Pays (ex: Canada)"
+                    id="rag-doc-country"
+                    className="px-3 py-2 text-sm rounded-lg border bg-white"
+                  />
+                  <select id="rag-doc-category" className="px-3 py-2 text-sm rounded-lg border bg-white">
+                    <option value="Travail">Travail / Emploi</option>
+                    <option value="Études">Études / Campus</option>
+                    <option value="Visiteur">Visiteur / Tourisme</option>
+                    <option value="Immigration">Immigration permanente</option>
+                  </select>
+                  <input
+                    type="url"
+                    placeholder="URL publique du PDF (Stockage ou S3)"
+                    id="rag-doc-url"
+                    className="px-3 py-2 text-sm rounded-lg border bg-white"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => {
+                      const title = (document.getElementById("rag-doc-title") as HTMLInputElement)?.value;
+                      const country = (document.getElementById("rag-doc-country") as HTMLInputElement)?.value;
+                      const category = (document.getElementById("rag-doc-category") as HTMLSelectElement)?.value;
+                      const fileUrl = (document.getElementById("rag-doc-url") as HTMLInputElement)?.value;
+                      if (!title || !country || !fileUrl) {
+                        alert("Veuillez renseigner le titre, le pays et l'URL du fichier PDF.");
+                        return;
+                      }
+                      addRagDocMutation.mutate({
+                        sessionToken,
+                        title,
+                        country,
+                        category,
+                        fileUrl,
+                        fileKey: fileUrl,
+                      });
+                    }}
+                    disabled={addRagDocMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs gap-2"
+                  >
+                    <Upload className={`w-3.5 h-3.5 ${addRagDocMutation.isPending ? "animate-spin" : ""}`} />
+                    {addRagDocMutation.isPending ? "Indexation en cours..." : "Enregistrer et indexer pour Aureol"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-bold text-sm text-gray-800">Guides PDF actuellement indexés dans le RAG</h4>
+                {destinationDocs && destinationDocs.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-1">
+                    {destinationDocs.map((doc) => (
+                      <div key={doc.id} className="p-3 bg-white border rounded-xl shadow-sm flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="text-[10px] uppercase font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                            {doc.country} • {doc.category}
+                          </span>
+                          <p className="text-sm font-semibold text-gray-900 truncate mt-1">{doc.title}</p>
+                          <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-0.5">
+                            <ExternalLink className="w-3 h-3" /> Voir le PDF officiel
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 text-sm border border-dashed rounded-xl bg-white">
+                    📚 107 guides pays indexés par défaut dans le moteur RAG d’Aureol.
+                  </div>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="faq" className="space-y-6">
             <Card className="border-0 shadow-sm overflow-hidden p-6">

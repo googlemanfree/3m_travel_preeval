@@ -1390,3 +1390,12 @@
 - [x] Mettre à jour le routeur `aiCopilot.ts` pour injecter automatiquement les extraits pertinents des PDF dans le prompt d'Aureol
 - [x] Tester les réponses d'Aureol sur plusieurs destinations clés (Canada, France, Belgique, Luxembourg, etc.)
 - [x] Valider le build de production et enregistrer le checkpoint final
+
+## Gestion Documentaire RAG & Sources Aureol (Import PDF, Cache, Sources et Téléchargement)
+- [x] Créer la table `destination_documents` dans Drizzle pour stocker les métadonnées et le contenu des PDF de destination importés par les admins
+- [x] Implémenter le service d'indexation avec cache mémoire/BD et upload sécurisé des PDF
+- [x] Ajouter les procédures tRPC admin pour lister, uploader et supprimer les documents de destination
+- [x] Mettre à jour le routeur `aiCopilot.ts` pour injecter les sources officielles, les liens de téléchargement et les citations dans les réponses du chatbot
+- [x] Créer l'interface administrateur dans le dashboard pour gérer les PDF des destinations
+- [x] Créer la compétence réutilisable `rag-document-management` via `init_skill.py` et la valider
+- [x] Compiler la production, tester les flux et enregistrer le checkpoint final

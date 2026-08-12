@@ -1288,3 +1288,20 @@ export const faqFeedback = mysqlTable("faq_feedback", {
 });
 export type FaqFeedback = typeof faqFeedback.$inferSelect;
 export type InsertFaqFeedback = typeof faqFeedback.$inferInsert;
+
+
+export const destinationDocuments = mysqlTable("destination_documents", {
+  id: int("id").primaryKey().autoincrement(),
+  title: varchar("title", { length: 255 }).notNull(),
+  country: varchar("country", { length: 100 }).notNull(),
+  category: varchar("category", { length: 100 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  extractedText: text("extracted_text"),
+  fileSize: int("fileSize"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DestinationDocument = typeof destinationDocuments.$inferSelect;
+export type NewDestinationDocument = typeof destinationDocuments.$inferInsert;

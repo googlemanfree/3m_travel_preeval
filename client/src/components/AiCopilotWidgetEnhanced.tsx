@@ -1,12 +1,19 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, X, Send, Loader, Sparkles, ThumbsUp, ThumbsDown, Zap, FileText, Phone } from "lucide-react";
+import { MessageSquare, X, Send, Loader, Sparkles, ThumbsUp, ThumbsDown, Zap, FileText, Phone, Download, ExternalLink } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
+
+interface SourceItem {
+  title: string;
+  url: string;
+  country: string;
+}
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  sources?: SourceItem[];
   feedback?: "up" | "down" | null;
   showActions?: boolean;
 }
@@ -57,6 +64,7 @@ export default function AiCopilotWidgetEnhanced() {
         { 
           role: "assistant", 
           content: data.reply,
+          sources: data.sources || [],
           feedback: null,
           showActions: true
         },
@@ -210,6 +218,29 @@ export default function AiCopilotWidgetEnhanced() {
                       }`}
                     >
                       {m.content}
+
+                      {/* Sources officielles et téléchargement des guides PDF */}
+                      {m.sources && m.sources.length > 0 && (
+                        <div className="mt-2.5 pt-2 border-t border-gray-100 flex flex-col gap-1.5">
+                          <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1">
+                            <FileText className="w-3 h-3 text-blue-600" /> Sources et guides officiels :
+                          </p>
+                          {m.sources.map((src, sIdx) => (
+                            <a
+                              key={sIdx}
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-2.5 py-1.5 rounded-md flex items-center justify-between transition-colors font-medium shadow-sm"
+                            >
+                              <span className="truncate max-w-[190px]">📖 {src.title}</span>
+                              <span className="flex items-center gap-1 text-[11px] text-blue-600 font-semibold flex-shrink-0">
+                                <Download className="w-3 h-3" /> Télécharger PDF
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Feedback buttons pour les messages de l'assistant */}

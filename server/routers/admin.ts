@@ -11,6 +11,7 @@ import { getDb } from "../db";
 import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { eq, desc, asc, like, or, and, isNull, isNotNull } from "drizzle-orm";
 
 export const adminRouter = router({
@@ -1213,6 +1214,44 @@ export const adminRouter = router({
   /**
    * Importer un dossier physique d'agence
    */
+  listDestinationDocumentsAdmin: publicProcedure
+    .input(z.object({ sessionToken: z.string(), search: z.string().optional() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      return await listDestinationDocuments(input.search);
+    }),
+
+  addDestinationDocumentAdmin: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      title: z.string().min(2),
+      country: z.string().min(2),
+      category: z.string().min(2),
+      fileUrl: z.string().url(),
+      fileKey: z.string().min(2),
+      extractedText: z.string().optional(),
+      fileSize: z.number().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      return await addDestinationDocument({
+        title: input.title,
+        country: input.country,
+        category: input.category,
+        fileUrl: input.fileUrl,
+        fileKey: input.fileKey,
+        extractedText: input.extractedText,
+        fileSize: input.fileSize,
+      });
+    }),
+
+  deleteDestinationDocumentAdmin: publicProcedure
+    .input(z.object({ sessionToken: z.string(), id: z.number() }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      return await deleteDestinationDocument(input.id);
+    }),
+
   importAgencyDossier: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
