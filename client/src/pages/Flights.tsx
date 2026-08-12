@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
-import { Mail, Check } from "lucide-react";
+import { Mail, Check, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -312,6 +313,21 @@ function PassengerSelector({
 // ─── Flight Card ──────────────────────────────────────────────────────────────
 function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: any }) {
   const [expanded, setExpanded] = useState(false);
+  const { isAuthenticated } = useCandidateAuth();
+  const { toast } = useToast();
+  const saveFavoriteMutation = trpc.flights.saveFavoriteFlight.useMutation({
+    onSuccess: () => toast({ title: "Itinéraire enregistré", description: "Retrouvez ce vol dans votre espace client." }),
+    onError: (error) => toast({ title: "Connexion requise", description: error.message, variant: "destructive" }),
+  });
+
+  const handleSaveFavorite = () => {
+    if (!isAuthenticated) {
+      toast({ title: "Connectez-vous pour sauvegarder", description: "Créez un compte ou connectez-vous pour retrouver vos itinéraires favoris." });
+      window.location.href = "/login";
+      return;
+    }
+    saveFavoriteMutation.mutate({ flight: flight as unknown as Record<string, unknown> });
+  };
 
   function buildWhatsAppMsg() {
     const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Prix total : ${formatXAF(flight.totalPrice)}\n📋 Réf. : ${flight.pnrRef}\n\nMerci de me contacter pour finaliser la réservation.`;
@@ -396,6 +412,16 @@ function FlightCard({ flight, searchParams }: { flight: Flight; searchParams: an
                   <MessageCircle className="w-3.5 h-3.5 mr-1" /> Conseiller
                 </Button>
               </a>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveFavorite}
+                disabled={saveFavoriteMutation.isPending}
+                className="border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full"
+              >
+                <Heart className={`w-3.5 h-3.5 mr-1 ${saveFavoriteMutation.isPending ? "animate-pulse" : ""}`} />
+                {saveFavoriteMutation.isPending ? "Enregistrement..." : "Sauvegarder"}
+              </Button>
             </div>
           </div>
         </div>
@@ -687,7 +713,7 @@ export default function Flights() {
           </motion.div>
         )}
 
-        {searchEnabled && !isFetching && outbound.length > 0 && (
+        {searchEnabled && !isFetching && !error && outbound.length > 0 && (
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar Filters */}
             <div className={`lg:w-72 flex-shrink-0 ${showFilters ? "block" : "hidden lg:block"}`}>
@@ -811,11 +837,21 @@ export default function Flights() {
           </div>
         )}
 
-        {searchEnabled && !isFetching && outbound.length === 0 && (
-          <div className="text-center py-20">
+        {searchEnabled && !isFetching && error && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16 bg-rose-50 border border-rose-200 rounded-3xl max-w-2xl mx-auto my-8 p-8">
+            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4" />
+            <h3 className="text-lg font-black text-rose-800 mb-2">La recherche n’a pas abouti</h3>
+            <p className="text-sm text-rose-700 mb-5">Vérifiez les dates et les aéroports, puis relancez la recherche. Si le problème persiste, contactez notre agence.</p>
+            <Button onClick={handleSearch} className="bg-[#1E3A8A] text-white rounded-xl">Réessayer</Button>
+          </motion.div>
+        )}
+
+        {searchEnabled && !isFetching && !error && outbound.length === 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
             <Plane className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 font-semibold">Aucun vol trouvé pour cette recherche.</p>
-          </div>
+            <p className="text-gray-400 text-sm mt-2">Essayez d’autres dates ou élargissez votre destination.</p>
+          </motion.div>
         )}
       </div>
       <Footer />

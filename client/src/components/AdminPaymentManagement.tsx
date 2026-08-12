@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail, Loader2, AlertCircle } from "lucide-react";
+import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail, Loader2, AlertCircle, History, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
 
 interface Payment {
   id: number;
@@ -38,6 +39,7 @@ export function AdminPaymentManagement() {
     limit: 100,
     offset: 0,
   });
+  const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -135,6 +137,7 @@ export function AdminPaymentManagement() {
       setSelectedPayment(null);
       setActionType(null);
       refetch();
+      refetchAuditLogs();
     } catch (error) {
       toast.error("Une erreur s'est produite lors du traitement du paiement");
     } finally {
@@ -163,6 +166,21 @@ export function AdminPaymentManagement() {
     link.download = `paiements_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     toast.success("Export CSV téléchargé");
+  };
+
+  const handleExportAuditLogs = () => {
+    if (!auditLogs.length) {
+      toast.error("Aucune validation de paiement à exporter");
+      return;
+    }
+    const csv = paymentAuditLogsToCsv(auditLogs as any[]);
+    const blob = new Blob(["\\ufeff", csv], { type: "text/csv;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `journal_validations_paiement_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    toast.success("Journal d’audit exporté");
   };
 
   // Statistiques
@@ -342,6 +360,61 @@ export function AdminPaymentManagement() {
                           )}
                         </div>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Journal d’audit des validations */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <History className="w-5 h-5 text-indigo-600" />
+                Journal des validations de paiement
+              </CardTitle>
+              <CardDescription>Historique détaillé des confirmations, vérifications et annulations effectuées par les administrateurs.</CardDescription>
+            </div>
+            <Button onClick={handleExportAuditLogs} variant="outline" size="sm" disabled={auditLoading || !auditLogs.length}>
+              <FileSpreadsheet className="w-4 h-4 mr-2" />
+              Exporter le journal CSV
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {auditLoading ? (
+            <div className="flex items-center justify-center gap-3 py-8 text-gray-500">
+              <Loader2 className="w-5 h-5 animate-spin" /> Chargement du journal...
+            </div>
+          ) : !auditLogs.length ? (
+            <p className="text-center py-8 text-gray-500">Aucune validation enregistrée pour le moment.</p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-indigo-100">
+              <table className="w-full text-sm">
+                <thead className="bg-indigo-50/70">
+                  <tr>
+                    <th className="text-left py-3 px-4">Date</th>
+                    <th className="text-left py-3 px-4">Administrateur</th>
+                    <th className="text-left py-3 px-4">Action</th>
+                    <th className="text-left py-3 px-4">Candidat</th>
+                    <th className="text-left py-3 px-4">Montant</th>
+                    <th className="text-left py-3 px-4">Détails</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(auditLogs as any[]).map((log) => (
+                    <tr key={log.id} className="border-t border-indigo-50 hover:bg-indigo-50/30 transition-colors">
+                      <td className="py-3 px-4 whitespace-nowrap">{log.createdAt ? new Date(log.createdAt).toLocaleString("fr-FR") : "—"}</td>
+                      <td className="py-3 px-4">{log.adminName || log.adminEmail || "—"}</td>
+                      <td className="py-3 px-4"><Badge className="bg-indigo-100 text-indigo-800">{log.action || "—"}</Badge></td>
+                      <td className="py-3 px-4">{log.candidateEmail || "—"}</td>
+                      <td className="py-3 px-4">{log.amount || "—"}</td>
+                      <td className="py-3 px-4 max-w-xs truncate" title={log.details || ""}>{log.details || "—"}</td>
                     </tr>
                   ))}
                 </tbody>

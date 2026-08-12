@@ -19,6 +19,8 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  Heart,
+  Plane,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -84,6 +86,18 @@ export default function ClientDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
+
+  const trpcUtils = trpc.useUtils();
+  const { data: favoriteFlights, isLoading: favoritesLoading } = trpc.flights.getFavoriteFlights.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+  const deleteFavoriteMutation = trpc.flights.deleteFavoriteFlight.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.flights.getFavoriteFlights.invalidate();
+      toast.success("Itinéraire supprimé");
+    },
+  });
 
   // Mutation pour uploader les documents (placeholder)
   // const uploadMutation = trpc.candidate.uploadDocuments.useMutation({
@@ -283,9 +297,10 @@ export default function ClientDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="favorites">Favoris</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
             <TabsTrigger value="settings">Paramètres</TabsTrigger>
           </TabsList>
@@ -437,6 +452,66 @@ export default function ClientDashboard() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Itinéraires favoris */}
+          <TabsContent value="favorites" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Heart className="w-5 h-5 text-rose-500" />
+                  Mes itinéraires favoris
+                </CardTitle>
+                <CardDescription>Retrouvez les vols sauvegardés depuis la recherche et reprenez contact avec l’agence.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {favoritesLoading ? (
+                  <div className="flex items-center justify-center gap-3 py-10 text-gray-500">
+                    <div className="w-5 h-5 border-2 border-rose-200 border-t-rose-500 rounded-full animate-spin" />
+                    Chargement de vos favoris...
+                  </div>
+                ) : !favoriteFlights?.length ? (
+                  <div className="text-center py-10 text-gray-500">
+                    <Plane className="w-10 h-10 text-blue-200 mx-auto mb-3" />
+                    <p className="font-semibold">Aucun itinéraire enregistré</p>
+                    <p className="text-sm mt-1">Utilisez « Sauvegarder » sur une carte de vol pour le retrouver ici.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {favoriteFlights.map((item: any) => {
+                      const flight = item.flight || {};
+                      return (
+                        <div key={item.id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-rose-100 bg-rose-50/40 p-4 hover:bg-rose-50 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="rounded-xl bg-white p-2 shadow-sm"><Plane className="w-5 h-5 text-[#2563EB]" /></div>
+                            <div>
+                              <p className="font-bold text-gray-900">{flight.originCity || flight.origin || "Départ"} → {flight.destinationCity || flight.destination || "Arrivée"}</p>
+                              <p className="text-sm text-gray-600">{flight.airline?.name || "Compagnie aérienne"} · {flight.flightNumber || "Vol"}</p>
+                              <p className="text-xs text-gray-500 mt-1">Enregistré le {new Date(item.createdAt).toLocaleDateString("fr-FR")}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 md:justify-end">
+                            <Button variant="outline" size="sm" onClick={() => setLocation(`/flights?origin=${encodeURIComponent(flight.origin || "")}&destination=${encodeURIComponent(flight.destination || "")}&date=${encodeURIComponent(flight.departureDate || "")}`)}>
+                              Rechercher à nouveau
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label="Supprimer cet itinéraire favori"
+                              disabled={deleteFavoriteMutation.isPending}
+                              onClick={() => deleteFavoriteMutation.mutate({ id: item.id })}
+                              className="text-rose-600 hover:bg-rose-100"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

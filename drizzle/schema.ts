@@ -1305,3 +1305,22 @@ export const destinationDocuments = mysqlTable("destination_documents", {
 
 export type DestinationDocument = typeof destinationDocuments.$inferSelect;
 export type NewDestinationDocument = typeof destinationDocuments.$inferInsert;
+
+export const favoriteFlights = mysqlTable("favorite_flights", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  flightData: text("flightData").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const paymentAuditLogs = mysqlTable("payment_audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminName: varchar("adminName", { length: 255 }).notNull(),
+  adminEmail: varchar("adminEmail", { length: 255 }).notNull(),
+  action: varchar("action", { length: 100 }).notNull(),
+  paymentId: int("paymentId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 255 }).notNull(),
+  amount: varchar("amount", { length: 50 }).notNull(),
+  details: text("details"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});

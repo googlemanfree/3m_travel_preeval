@@ -8,7 +8,7 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, clientDocuments, clientPayments } from "../../drizzle/schema";
+import { evaluations, clientDocuments, clientPayments, paymentAuditLogs } from "../../drizzle/schema";
 import { eq, desc, and } from "drizzle-orm";
 
 export const clientDocumentsRouter = router({
@@ -226,6 +226,16 @@ export const clientDocumentsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        const paymentRows = await db
+          .select()
+          .from(clientPayments)
+          .where(eq(clientPayments.id, input.paymentId))
+          .limit(1);
+        const payment = paymentRows[0];
+        if (!payment) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Paiement introuvable" });
+        }
+
         // Générer un numéro de facture unique si confirmé
         const invoiceNumber = input.invoiceNumber || `INV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -240,6 +250,16 @@ export const clientDocumentsRouter = router({
           })
           .where(eq(clientPayments.id, input.paymentId));
 
+        await db.insert(paymentAuditLogs).values({
+          adminName: ctx.user.name || "Administrateur",
+          adminEmail: ctx.user.email || "",
+          action: input.status,
+          paymentId: payment.id,
+          candidateEmail: payment.candidateEmail,
+          amount: `${payment.amount} ${payment.currency}`,
+          details: input.adminNotes || `Validation du paiement avec le statut ${input.status}`,
+        });
+
         return {
           success: true,
           message: `Paiement ${input.status === "confirmed" ? "confirmé" : input.status === "verified" ? "vérifié" : "annulé"} avec succès`,
@@ -252,6 +272,17 @@ export const clientDocumentsRouter = router({
           message: "Erreur lors de la confirmation du paiement",
         });
       }
+    }),
+
+  getPaymentAuditLogs: protectedProcedure
+    .input(z.object({ limit: z.number().int().min(1).max(500).default(200) }))
+    .query(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db.select().from(paymentAuditLogs).orderBy(desc(paymentAuditLogs.createdAt)).limit(input.limit);
     }),
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -345,6 +376,30 @@ export const clientDocumentsRouter = router({
           invoiceNumber,
           invoiceGeneratedAt: new Date(),
         });
+
+        const createdPayment = await db
+          .select({ id: clientPayments.id })
+          .from(clientPayments)
+          .where(
+            and(
+              eq(clientPayments.candidateEmail, input.candidateEmail),
+              eq(clientPayments.invoiceNumber, invoiceNumber)
+            )
+          )
+          .orderBy(desc(clientPayments.createdAt))
+          .limit(1);
+
+        if (createdPayment[0]) {
+          await db.insert(paymentAuditLogs).values({
+            adminName: ctx.user.name || "Administrateur",
+            adminEmail: ctx.user.email || "",
+            action: "confirmed",
+            paymentId: createdPayment[0].id,
+            candidateEmail: input.candidateEmail,
+            amount: `${input.amount} ${input.currency}`,
+            details: input.adminNotes || `Paiement en ${input.paymentMethod} enregistré en agence`,
+          });
+        }
 
         return {
           success: true,

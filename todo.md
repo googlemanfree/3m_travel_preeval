@@ -1413,3 +1413,11 @@
 - [x] Intégrer les fichiers dans le projet en conservant leurs chemins d'origine sans régression
 - [x] Lancer les tests unitaires et la compilation de production
 - [x] Enregistrer le checkpoint final
+
+## Favoris de vols, États de recherche et Journal d'audit de paiement
+- [ ] Créer les tables `favorite_flights` et `payment_audit_logs` dans `drizzle/schema.ts`
+- [ ] Mettre en place les procédures tRPC pour sauvegarder/consulter les favoris de vols et enregistrer/exporter le journal d'audit de paiement
+- [ ] Intégrer le bouton de favoris et les états de recherche fluides dans `/flights`
+- [ ] Intégrer l'affichage et l'export CSV du journal d'audit dans le tableau de bord administrateur
+- [ ] Intégrer la liste des favoris de vols dans le tableau de bord candidat / profil
+- [ ] Tester les flux, valider le build de production et enregistrer le checkpoint final

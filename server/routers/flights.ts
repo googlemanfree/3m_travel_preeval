@@ -1,8 +1,9 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { agencySettings, flightSearchHistory } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { agencySettings, favoriteFlights, flightSearchHistory } from "../../drizzle/schema";
+import { and, eq, desc } from "drizzle-orm";
+import { candidateProcedure } from "./candidate";
 import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
 
@@ -412,6 +413,50 @@ export const flightsRouter = router({
         .where(eq(flightSearchHistory.userEmail, input.userEmail))
         .orderBy(desc(flightSearchHistory.createdAt))
         .limit(20);
+    }),
+
+  saveFavoriteFlight: candidateProcedure
+    .input(z.object({ flight: z.record(z.string(), z.any()) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB non disponible");
+
+      await db.insert(favoriteFlights).values({
+        userId: ctx.candidate.id,
+        flightData: JSON.stringify(input.flight),
+      });
+      return { success: true };
+    }),
+
+  getFavoriteFlights: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+
+    const rows = await db
+      .select()
+      .from(favoriteFlights)
+      .where(eq(favoriteFlights.userId, ctx.candidate.id))
+      .orderBy(desc(favoriteFlights.createdAt));
+
+    return rows.map((row) => {
+      try {
+        return { ...row, flight: JSON.parse(row.flightData) as Record<string, unknown> };
+      } catch {
+        return { ...row, flight: {} };
+      }
+    });
+  }),
+
+  deleteFavoriteFlight: candidateProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new Error("DB non disponible");
+
+      await db
+        .delete(favoriteFlights)
+        .where(and(eq(favoriteFlights.id, input.id), eq(favoriteFlights.userId, ctx.candidate.id)));
+      return { success: true };
     }),
 
   sendFlightSummaryEmail: publicProcedure
