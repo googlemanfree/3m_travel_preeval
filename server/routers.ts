@@ -57,6 +57,7 @@ import { evaluationEngineRouter } from "./routers/evaluationEngine";
 import { visaStatusTrackerRouter } from "./routers/visaStatusTracker";
 import { flightPlannerAIRouter } from "./routers/flightPlannerAI";
 import { adminCandidateManagementRouter } from "./routers/adminCandidateManagement";
+import { adminSavedViewsRouter } from "./routers/adminSavedViews";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -96,6 +97,7 @@ export const appRouter = router({
   contact: contactRouter,
   admin: adminRouter,
   adminCandidateManagement: adminCandidateManagementRouter,
+  adminSavedViews: adminSavedViewsRouter,
   adminAuth: adminAuthRouter,
   adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,

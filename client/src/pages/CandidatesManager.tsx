@@ -18,6 +18,8 @@ import {
   MessageSquare,
   Plus,
   MoreVertical,
+  Bookmark,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -367,6 +369,7 @@ export default function CandidatesManager() {
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [activeSavedViewId, setActiveSavedViewId] = useState<number | null>(null);
 
   const filterInput = React.useMemo(() => {
     const paymentStatus: "all" | "paye" | "en_attente" | "non_paye" = paymentFilter === "tous" ? "all" : paymentFilter === "paye" || paymentFilter === "en_attente" ? paymentFilter : "non_paye";
@@ -384,6 +387,8 @@ export default function CandidatesManager() {
     };
   }, [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page]);
   const { data, isLoading, error } = trpc.adminCandidateManagement.list.useQuery(filterInput);
+  const savedViewsQuery = trpc.adminSavedViews.list.useQuery();
+  const utils = trpc.useUtils();
   const exportMutation = trpc.adminCandidateManagement.exportCsv.useMutation({
     onSuccess: ({ csv, count }) => {
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -405,6 +410,25 @@ export default function CandidatesManager() {
   const destinations = React.useMemo(() => Array.from(new Set(candidates.map(candidate => candidate.destination))).sort((a, b) => a.localeCompare(b, "fr")), [candidates]);
   const totalPages = data?.totalPages ?? 1;
   const totalCandidates = data?.total ?? 0;
+  const currentViewState = React.useMemo(() => ({
+    searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter,
+    sortBy: sortBy as "createdAt" | "fullName" | "score", page, pageSize,
+  }), [searchQuery, statusFilter, paymentFilter, scoreFilter, destinationFilter, sortBy, page, pageSize]);
+  const saveViewMutation = trpc.adminSavedViews.save.useMutation({
+    onSuccess: () => {
+      utils.adminSavedViews.list.invalidate();
+      toast.success("Vue favorite enregistrée.");
+    },
+    onError: saveError => toast.error(saveError.message || "Impossible d’enregistrer cette vue."),
+  });
+  const removeViewMutation = trpc.adminSavedViews.remove.useMutation({
+    onSuccess: () => {
+      setActiveSavedViewId(null);
+      utils.adminSavedViews.list.invalidate();
+      toast.success("Vue favorite supprimée.");
+    },
+    onError: removeError => toast.error(removeError.message || "Impossible de supprimer cette vue."),
+  });
   const updateFromUrl = React.useCallback(() => {
     const next = parseCandidateListUrl(window.location.search);
     setSearchQuery(next.searchQuery);
@@ -435,6 +459,46 @@ export default function CandidatesManager() {
   }, [data?.page, page]);
 
   const resetToFirstPage = () => setPage(1);
+
+  const applySavedView = (viewId: string) => {
+    if (viewId === "none") return;
+    const selected = savedViewsQuery.data?.find(view => String(view.id) === viewId);
+    if (!selected) return;
+    const next = selected.state;
+    setSearchQuery(next.searchQuery);
+    setStatusFilter(next.statusFilter);
+    setPaymentFilter(next.paymentFilter);
+    setScoreFilter(next.scoreFilter);
+    setDestinationFilter(next.destinationFilter);
+    setSortBy(next.sortBy);
+    setPage(next.page);
+    setPageSize(next.pageSize as CandidatePageSize);
+    setActiveSavedViewId(selected.id);
+  };
+
+  const saveCurrentView = () => {
+    const name = window.prompt("Nom de cette vue favorite :");
+    if (!name?.trim()) return;
+    saveViewMutation.mutate({ name: name.trim(), state: currentViewState });
+  };
+
+  const copyCurrentUrl = async () => {
+    const url = `${window.location.origin}${window.location.pathname}${serializeCandidateListUrl(currentViewState)}`;
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
+      else {
+        const input = document.createElement("textarea");
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        input.remove();
+      }
+      toast.success("Lien des filtres copié.");
+    } catch {
+      toast.error("Impossible de copier le lien.");
+    }
+  };
 
   const handleViewDetails = (candidate: Candidate) => {
     setSelectedCandidate(candidate);
@@ -587,13 +651,28 @@ export default function CandidatesManager() {
             </Select>
           </div>
           <div className="flex items-center justify-between mt-4 text-sm">
-            <p className="text-gray-600">
-              {isLoading ? "Chargement des candidatures..." : `${totalCandidates} candidature(s) trouvée(s)`}
+            <p className="font-medium text-gray-700">
+              {isLoading ? "Mise à jour du compteur..." : `${totalCandidates} dossier(s) correspondant aux filtres`}
             </p>
-            <Button variant="outline" size="sm" onClick={() => exportMutation.mutate(filterInput)} disabled={exportMutation.isPending || isLoading}>
-              <Download className="w-4 h-4 mr-2" />
-              {exportMutation.isPending ? "Export en cours..." : "Exporter"}
-            </Button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Select value={activeSavedViewId ? String(activeSavedViewId) : "none"} onValueChange={applySavedView}>
+                <SelectTrigger className="h-8 w-[160px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Vues favorites</SelectItem>
+                  {(savedViewsQuery.data ?? []).map(view => <SelectItem key={view.id} value={String(view.id)}>{view.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button variant="outline" size="sm" onClick={saveCurrentView} disabled={saveViewMutation.isPending}>
+                <Bookmark className="w-4 h-4 mr-2" />Enregistrer
+              </Button>
+              {activeSavedViewId && <Button variant="ghost" size="sm" onClick={() => removeViewMutation.mutate({ id: activeSavedViewId })} disabled={removeViewMutation.isPending}>Supprimer la vue</Button>}
+              <Button variant="outline" size="sm" onClick={copyCurrentUrl}>
+                <Copy className="w-4 h-4 mr-2" />Copier le lien
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => exportMutation.mutate(filterInput)} disabled={exportMutation.isPending || isLoading}>
+                <Download className="w-4 h-4 mr-2" />{exportMutation.isPending ? "Export en cours..." : "Exporter"}
+              </Button>
+            </div>
           </div>
         </motion.div>
 

@@ -519,6 +519,16 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Vues de filtres candidates enregistrées par un administrateur authentifié. */
+export const adminSavedViews = mysqlTable("admin_saved_views", {
+  id: int("id").autoincrement().primaryKey(),
+  adminAccountId: int("adminAccountId").notNull(),
+  name: varchar("name", { length: 80 }).notNull(),
+  stateJson: text("stateJson").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 /**
  * Notifications internes du tableau de bord admin
  * Système par sondage (polling) pour les événements importants

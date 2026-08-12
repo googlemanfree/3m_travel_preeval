@@ -1633,3 +1633,10 @@
 - [x] Comparer les fichiers fournis avec les versions actives et repérer les améliorations compatibles
 - [x] Intégrer uniquement les correctifs qui préservent les protections de session, paiement et documents
 - [x] Tester les intégrations retenues avec la pagination persistante et publier la version validée
+
+## Vues administratives sauvegardées (v60)
+- [x] Créer et valider une compétence réutilisable de vues administratives persistantes
+- [x] Permettre la sauvegarde sécurisée de vues favorites de filtres candidats par compte administrateur
+- [x] Ajouter la copie de l’URL des filtres actifs pour le partage entre administrateurs
+- [x] Afficher un compteur dynamique des dossiers correspondant aux filtres appliqués
+- [x] Tester les vues, le partage, les autorisations et publier la version validée
