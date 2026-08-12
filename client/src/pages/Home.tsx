@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import ServicesSection from "@/components/ServicesSection";
 import HeroSectionVIP from "@/components/HeroSectionVIP";
+import TravelSearchHero from "@/components/TravelSearchHero";
 import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhanced";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
@@ -544,6 +545,9 @@ export default function Home() {
         logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      {/* ─── RECHERCHE MULTI-SERVICES ─────────────────────────────────────── */}
+      <TravelSearchHero />
 
       {/* ─── QUESTIONS À AUREOL ───────────────────────────────────────────── */}
       <AureolQuestionField />

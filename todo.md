@@ -1399,3 +1399,10 @@
 - [x] Créer l'interface administrateur dans le dashboard pour gérer les PDF des destinations
 - [x] Créer la compétence réutilisable `rag-document-management` via `init_skill.py` et la valider
 - [x] Compiler la production, tester les flux et enregistrer le checkpoint final
+
+## Widget de recherche multi-services style Ease.travel & Transmission automatique
+- [x] Extraire et analyser les archives `api-vols-searchapi.zip`, `audit-boutons-caches.zip`, `api-vols-gratuite.zip`, `pasted_file_eEimmG_ease-style-v2.zip` et `pasted_file_HoWvyt_widget-recherche-ease-style.zip`
+- [x] Intégrer le widget multi-services sur la page d'accueil façon Ease.travel
+- [x] Enrichir le widget de vol (aller-retour, voyageurs, classe, moyens de paiement) et transmettre tous les paramètres vers `/flights`
+- [x] Implémenter le lancement automatique de la recherche sur la page `/flights` à la réception des paramètres de l'URL ou du state
+- [x] Tester la compilation de production, vérifier le rendu responsif et enregistrer le checkpoint final
