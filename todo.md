@@ -1465,3 +1465,8 @@
 - [x] Installer ou utiliser une bibliothèque de génération de QR code (comme qrcode) dans FullDossierForm
 - [x] Ajouter le QR code pointant vers l'URL de l'agence ou la page de suivi dans le PDF professionnel
 - [x] Valider le build de production et publier la version avec QR code
+
+## Bouton d'impression directe du récapitulatif (v34)
+- [x] Ajouter une fonction handlePrintDraft dans FullDossierForm pour ouvrir la boîte de dialogue d'impression
+- [x] Ajouter le bouton d'impression à côté du bouton de téléchargement PDF dans l'en-tête du formulaire
+- [x] Valider le build de production et publier la version avec impression directe

@@ -382,7 +382,6 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
       pdf.setFillColor(30, 58, 138);
       pdf.rect(0, 0, 210, 40, "F");
       
-      // Logo textuel stylisé ou icône
       pdf.setTextColor(255, 255, 255);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(20);
@@ -476,9 +475,7 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
         pdf.setFontSize(7);
         pdf.text("Scannez pour accéder", 160, 258);
         pdf.text("au portail agence", 162, 262);
-      } catch (e) {
-        // Ignorer si la génération du QR code échoue
-      }
+      } catch (e) {}
 
       // Pied de page élégant
       pdf.setDrawColor(203, 213, 225);
@@ -493,6 +490,10 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
     } catch (err) {
       toast.error("Erreur lors de la génération du PDF professionnel");
     }
+  };
+
+  const handlePrintDraft = () => {
+    window.print();
   };
 
   // Si le Protocole d'Accord doit être affiché
@@ -535,11 +536,18 @@ export default function FullDossierForm({ initialVisaType, initialDestination, p
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={handlePrintDraft}
+              title="Imprimer le récapitulatif"
+              className="text-xs bg-blue-600 hover:bg-blue-500 text-white font-bold px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+            >
+              🖨️ Imprimer
+            </button>
+            <button
               onClick={handleExportDraftPdf}
               title="Télécharger mon brouillon en PDF"
               className="text-xs bg-amber-400 hover:bg-amber-300 text-blue-950 font-bold px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
             >
-              📄 Télécharger Brouillon PDF
+              📄 PDF
             </button>
             {onClose && (
               <button onClick={onClose} className="text-blue-200 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-600">
