@@ -81,16 +81,16 @@ export const clientDocumentsRouter = router({
 	      }
 
 	      const receiptNumber = `REC-${Date.now()}-${randomBytes(6).toString("hex")}`;
-	      const hasValidBiographicZone = input.readabilityIssues?.checks?.hasBiographicZone === true;
-	      const isPassportPrevalidated = input.documentType === "passport" && (input.readabilityScore ?? 0) >= 95 && hasValidBiographicZone;
+	      // ⚠️ La prévalidation automatique reste désactivée tant que
+	      // l'analyse de lisibilité n'examine pas réellement le contenu du fichier
+	      // (vérification humaine obligatoire pour tous les documents).
+	      const isPassportPrevalidated = false;
 	      const analysisPayload = input.readabilityIssues && typeof input.readabilityIssues === "object"
 	        ? {
 	          ...input.readabilityIssues,
 	          prevalidated: {
-	            eligible: isPassportPrevalidated,
-	            reason: isPassportPrevalidated
-	              ? "Score de lisibilité supérieur ou égal à 95 % et zone biographique détectée."
-	              : "Prévalidation non accordée : score inférieur à 95 % ou zone biographique non confirmée.",
+	            eligible: false,
+	            reason: "Prévalidation automatique désactivée — vérification humaine requise pour tous les documents.",
 	            at: new Date().toISOString(),
 	          },
 	        }
