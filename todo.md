@@ -1572,3 +1572,12 @@
 - [x] Mettre en place une prévalidation automatique traçable des scans dont le score dépasse 95 %, sans remplacer la décision finale du dossier
 - [x] Ajouter un bouton de renvoi immédiat du document refusé avec ses annotations et sa notification au candidat
 - [x] Tester les droits, les statuts et la notification, puis publier la version validée
+
+## Conformité documentaire avancée et réutilisable (v53)
+- [ ] Créer et valider une compétence réutilisable de conformité documentaire (analyse, annotations, prévalidation, retours candidat et rapports)
+- [ ] Ajouter l’historique horodaté des commentaires échangés pour chaque marqueur visuel
+- [ ] Intégrer un recadrage guidé local avant nouveau téléversement de passeport, avec prévisualisation et contrôles de cadrage
+- [ ] Créer un tableau d’exigences documentaires par pays de destination, exploitable par candidats et administrateurs
+- [ ] Appliquer la prévalidation seulement si le score dépasse 95 % et si la zone biographique est explicitement valide
+- [ ] Ajouter un rapport mensuel agrégé de conformité documentaire par pays pour les auditeurs, avec envoi planifié et contrôlé
+- [ ] Tester les autorisations, les données sensibles, les notifications et publier la version validée

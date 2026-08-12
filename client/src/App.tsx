@@ -84,6 +84,7 @@ import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 import ClientSpaceEnhanced from "./pages/ClientSpaceEnhanced";
 import ClientSpaceEnhancedV2 from "./pages/ClientSpaceEnhancedV2";
 import DocumentUploadPage from "./pages/DocumentUploadPage";
+import DocumentCompliancePage from "./pages/DocumentCompliancePage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentErrorPage from "./pages/PaymentErrorPage";
 import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
@@ -215,6 +216,7 @@ function Router() {
       <Route path={"/visa-etudes"} component={VisaEtudes} />
       <Route path="/procedures" component={ProceduresAdvanced} />
       <Route path="/procedures/comparaison" component={CountryComparisonPage} />
+      <Route path="/conformite-documents" component={DocumentCompliancePage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path={"/procedures-complete"} component={ProceduresComplete} />
       <Route path={"/procedures-enhanced"} component={ProceduresEnhanced} />

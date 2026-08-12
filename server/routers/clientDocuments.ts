@@ -72,9 +72,19 @@ export const clientDocumentsRouter = router({
 	      }
 
 	      const receiptNumber = `REC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-	      const isPassportPrevalidated = input.documentType === "passport" && (input.readabilityScore ?? 0) >= 95;
+	      const hasValidBiographicZone = input.readabilityIssues?.checks?.hasBiographicZone === true;
+	      const isPassportPrevalidated = input.documentType === "passport" && (input.readabilityScore ?? 0) >= 95 && hasValidBiographicZone;
 	      const analysisPayload = input.readabilityIssues && typeof input.readabilityIssues === "object"
-	        ? { ...input.readabilityIssues, prevalidated: isPassportPrevalidated }
+	        ? {
+	          ...input.readabilityIssues,
+	          prevalidated: {
+	            eligible: isPassportPrevalidated,
+	            reason: isPassportPrevalidated
+	              ? "Score de lisibilité supérieur ou égal à 95 % et zone biographique détectée."
+	              : "Prévalidation non accordée : score inférieur à 95 % ou zone biographique non confirmée.",
+	            at: new Date().toISOString(),
+	          },
+	        }
 	        : input.readabilityIssues ?? null;
 
 	      await db.insert(clientDocuments).values({

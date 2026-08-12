@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCandidateAuth } from '@/hooks/useCandidateAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { Upload, FileText, CheckCircle2, AlertCircle, X, Loader } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
+import { PassportCropDialog } from '@/components/PassportCropDialog';
 
 interface UploadedDocument {
   id: string;
@@ -40,10 +42,14 @@ export default function DocumentUploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [globalError, setGlobalError] = useState('');
+  const [passportToCrop, setPassportToCrop] = useState<File | null>(null);
+  const [markerReply, setMarkerReply] = useState<Record<string, string>>({});
 
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
   const analyzePassportMutation = trpc.clientDocuments.analyzePassport.useMutation();
   const [passportAnalysis, setPassportAnalysis] = useState<any>(null);
+  const passportReviewsQuery = trpc.candidate.getPassportAnnotationHistory.useQuery(undefined, { enabled: isAuthenticated });
+  const replyToMarkerMutation = trpc.candidate.replyToPassportMarker.useMutation();
 
   if (!isAuthenticated) {
     return (
@@ -125,6 +131,33 @@ export default function DocumentUploadPage() {
     newDocs.forEach((doc) => uploadFileToServer(doc));
   };
 
+  const handleCroppedPassport = (file: File) => {
+    const passportDocument: UploadedDocument = {
+      id: `${Date.now()}-${Math.random()}`,
+      name: file.name,
+      type: 'passport',
+      file,
+      progress: 0,
+      status: 'pending',
+    };
+    setUploadedDocs((previous) => [...previous, passportDocument]);
+    uploadFileToServer(passportDocument);
+    setPassportToCrop(null);
+  };
+
+  const handleMarkerReply = async (documentId: number, markerId: string) => {
+    const key = `${documentId}:${markerId}`;
+    const message = markerReply[key]?.trim();
+    if (!message) return;
+    try {
+      await replyToMarkerMutation.mutateAsync({ documentId, markerId, message });
+      setMarkerReply((current) => ({ ...current, [key]: '' }));
+      await passportReviewsQuery.refetch();
+    } catch (error) {
+      setGlobalError(error instanceof Error ? error.message : "Impossible d'envoyer votre commentaire.");
+    }
+  };
+
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) handleFiles(Array.from(e.target.files));
     e.target.value = '';
@@ -203,6 +236,30 @@ export default function DocumentUploadPage() {
           </label>
           <p className="text-xs text-gray-500 mt-4">Formats acceptés : PDF, DOC, DOCX, JPG, PNG (Max 10 Mo par fichier)</p>
         </motion.div>
+
+        <Card className="mb-8 border border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-bold text-blue-950">Passeport mal cadré ou avec un bord coupé ?</p>
+              <p className="mt-1 text-sm text-blue-800">Recadrez localement l’image avant son envoi pour garder la page biographique et la zone MRZ entièrement visibles.</p>
+            </div>
+            <label className="shrink-0 cursor-pointer">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) setPassportToCrop(file);
+                  event.target.value = '';
+                }}
+              />
+              <span className="inline-flex h-10 items-center justify-center rounded-md bg-blue-700 px-4 text-sm font-semibold text-white hover:bg-blue-800">
+                Recadrer mon passeport
+              </span>
+            </label>
+          </div>
+        </Card>
 
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           {DOCUMENT_TYPES.map((docType) => (
@@ -330,6 +387,29 @@ export default function DocumentUploadPage() {
           </div>
         )}
 
+        {passportReviewsQuery.data && passportReviewsQuery.data.length > 0 && (
+          <Card className="mb-6 border border-indigo-200 bg-indigo-50/60 p-5">
+            <div className="mb-4"><p className="font-bold text-indigo-950">Historique de vérification de passeport</p><p className="text-sm text-indigo-800">Consultez les commentaires de l’équipe et répondez à une zone signalée si nécessaire.</p></div>
+            <div className="space-y-4">
+              {passportReviewsQuery.data.map((review: any) => (
+                <div key={review.id} className="rounded-xl border border-indigo-100 bg-white p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold text-slate-900">{review.documentName}</p><span className="rounded-full bg-indigo-100 px-2 py-1 text-xs font-bold text-indigo-800">Score {review.score ?? '—'} %</span></div>
+                  {review.comment && <p className="mt-2 text-sm text-rose-700">{review.comment}</p>}
+                  {(review.history ?? []).map((entry: any, index: number) => (
+                    <div key={`${entry.createdAt}-${index}`} className={`mt-3 rounded-lg p-3 text-sm ${entry.role === 'candidate' ? 'bg-blue-50 text-blue-950' : 'bg-slate-50 text-slate-700'}`}>
+                      <p className="text-xs font-bold uppercase tracking-wide opacity-70">{entry.markerId} · {entry.role === 'candidate' ? 'Votre réponse' : 'Équipe 3M'}</p><p className="mt-1">{entry.message}</p>
+                    </div>
+                  ))}
+                  {Object.entries(review.annotations ?? {}).map(([markerId, comment]: [string, any]) => {
+                    const key = `${review.id}:${markerId}`;
+                    return <div key={markerId} className="mt-3 border-t border-slate-100 pt-3"><p className="text-xs font-bold text-slate-500">{markerId}</p><p className="text-sm text-slate-700">{comment}</p><div className="mt-2 flex gap-2"><Textarea value={markerReply[key] ?? ''} onChange={(event) => setMarkerReply((current) => ({ ...current, [key]: event.target.value }))} placeholder="Répondre à ce commentaire…" className="min-h-16 text-sm" /><Button type="button" size="sm" disabled={replyToMarkerMutation.isPending || !(markerReply[key] ?? '').trim()} onClick={() => handleMarkerReply(review.id, markerId)}>Répondre</Button></div></div>;
+                  })}
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
         {globalError && (
           <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 mb-4">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /> {globalError}
@@ -344,6 +424,12 @@ export default function DocumentUploadPage() {
           {hasUploading ? 'Envoi en cours...' : 'Terminer et voir mon espace'}
         </Button>
       </div>
+      <PassportCropDialog
+        file={passportToCrop}
+        open={passportToCrop !== null}
+        onOpenChange={(open) => !open && setPassportToCrop(null)}
+        onConfirm={handleCroppedPassport}
+      />
     </div>
   );
 }

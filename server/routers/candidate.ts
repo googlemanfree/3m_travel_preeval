@@ -13,6 +13,7 @@ import {
   candidateFiles,
   candidateMessages,
   candidates,
+  clientDocuments,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
@@ -376,6 +377,61 @@ export const candidateRouter = router({
           .where(eq(candidates.id, ctx.candidate.id));
       }
 
+      return { success: true };
+    }),
+
+  // ── Commentaires et historique de révision de passeport ───────────────────
+  getPassportAnnotationHistory: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const candidate = ctx.candidate as Candidate;
+    const documents = await db.select().from(clientDocuments)
+      .where(and(eq(clientDocuments.candidateEmail, candidate.email), eq(clientDocuments.documentType, "passport")))
+      .orderBy(desc(clientDocuments.updatedAt));
+
+    return documents.map((document) => {
+      const analysis = document.readabilityIssues && typeof document.readabilityIssues === "object"
+        ? document.readabilityIssues as Record<string, unknown>
+        : {};
+      return {
+        id: document.id,
+        documentName: document.documentName,
+        status: document.verificationStatus,
+        score: document.readabilityScore,
+        annotations: analysis.adminAnnotations ?? {},
+        history: Array.isArray(analysis.annotationHistory) ? analysis.annotationHistory : [],
+        comment: document.verificationComment,
+      };
+    });
+  }),
+
+  replyToPassportMarker: candidateProcedure
+    .input(z.object({ documentId: z.number().int(), markerId: z.string().min(1).max(120), message: z.string().min(3).max(600) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const candidate = ctx.candidate as Candidate;
+      const [document] = await db.select().from(clientDocuments)
+        .where(and(eq(clientDocuments.id, input.documentId), eq(clientDocuments.candidateEmail, candidate.email)))
+        .limit(1);
+      if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable" });
+
+      const analysis = document.readabilityIssues && typeof document.readabilityIssues === "object"
+        ? document.readabilityIssues as Record<string, unknown>
+        : {};
+      const history = Array.isArray(analysis.annotationHistory) ? analysis.annotationHistory : [];
+      await db.update(clientDocuments).set({
+        readabilityIssues: {
+          ...analysis,
+          annotationHistory: [...history, {
+            markerId: input.markerId,
+            message: input.message.trim(),
+            author: candidate.fullName || candidate.email,
+            role: "candidate",
+            createdAt: new Date().toISOString(),
+          }],
+        },
+      }).where(eq(clientDocuments.id, input.documentId));
       return { success: true };
     }),
 

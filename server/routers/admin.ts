@@ -523,10 +523,24 @@ export const adminRouter = router({
       const current = document.readabilityIssues && typeof document.readabilityIssues === "object"
         ? document.readabilityIssues as Record<string, unknown>
         : {};
+      const previousAnnotations = (current.adminAnnotations && typeof current.adminAnnotations === "object")
+        ? current.adminAnnotations as Record<string, string>
+        : {};
+      const existingHistory = Array.isArray(current.annotationHistory) ? current.annotationHistory : [];
+      const changes = Object.entries(input.annotations)
+        .filter(([markerId, message]) => message.trim().length > 0 && previousAnnotations[markerId] !== message)
+        .map(([markerId, message]) => ({
+          markerId,
+          message: message.trim(),
+          author: admin.email,
+          role: "admin",
+          createdAt: new Date().toISOString(),
+        }));
       await db.update(clientDocuments).set({
         readabilityIssues: {
           ...current,
           adminAnnotations: input.annotations,
+          annotationHistory: [...existingHistory, ...changes],
           annotationUpdatedAt: new Date().toISOString(),
           annotationUpdatedBy: admin.email,
         },
