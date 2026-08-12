@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -93,9 +94,39 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({
     refetchHistory();
   };
 
-  const handleDownloadReceipt = (transaction: any) => {
-    // TODO: Implémenter le téléchargement du reçu PDF
-    console.log('Télécharger le reçu pour:', transaction.transactionId);
+  const handleDownloadReceipt = async (transaction: any) => {
+    try {
+      const { default: JsPDF } = await import('jspdf');
+      const pdf = new JsPDF({ unit: 'mm', format: 'a4' });
+      const paymentDate = transaction.completedAt ?? transaction.createdAt;
+
+      pdf.setFontSize(18);
+      pdf.text('3M Travel & Services', 20, 24);
+      pdf.setFontSize(14);
+      pdf.text('Reçu de paiement', 20, 36);
+      pdf.setFontSize(11);
+      const fields = [
+        ['Dossier', transaction.dossierNumber || 'Non renseigné'],
+        ['Transaction', transaction.transactionId || 'Non renseignée'],
+        ['Statut', 'Paiement confirmé'],
+        ['Montant', `${Number(transaction.amount || 0).toLocaleString('fr-FR')} ${transaction.currency || 'XAF'}`],
+        ['Date', formatDate(paymentDate)],
+        ['Description', transaction.description || 'Frais de dossier'],
+      ];
+      fields.forEach(([label, value], index) => {
+        const y = 55 + index * 14;
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`${label} :`, 20, y);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(String(value), 62, y, { maxWidth: 120 });
+      });
+      pdf.setFontSize(9);
+      pdf.text('Document généré depuis votre espace 3M Travel & Services.', 20, 155);
+      pdf.save(`Recu_Paiement_${transaction.dossierNumber || transaction.transactionId}.pdf`);
+      toast.success('Le reçu de paiement a été téléchargé.');
+    } catch {
+      toast.error('Impossible de générer le reçu. Veuillez réessayer.');
+    }
   };
 
   const formatDate = (date: string | Date) => {

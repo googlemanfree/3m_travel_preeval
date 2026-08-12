@@ -425,6 +425,7 @@ export default function Home() {
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvBase64, setCvBase64] = useState<string>("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
@@ -478,6 +479,24 @@ export default function Home() {
       toast.error("Erreur lors de la soumission : " + err.message);
     },
   });
+
+  const contactMutation = trpc.contact.sendContactEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Votre message a bien été envoyé.");
+      setContactForm({ name: "", email: "", message: "" });
+    },
+    onError: error => toast.error(error.message || "Impossible d’envoyer votre message."),
+  });
+
+  const handleContactSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    contactMutation.mutate({
+      name: contactForm.name,
+      email: contactForm.email,
+      subject: "Demande depuis la page d’accueil",
+      message: contactForm.message,
+    });
+  };
 
   const goTo = (next: number) => {
     setDirection(next > step ? 1 : -1);
@@ -565,7 +584,7 @@ export default function Home() {
             {[
               { icon: Plane,    title: "Billets d'avion",    desc: "Meilleurs tarifs sur tous vols internationaux et domestiques",      color: "bg-[#dbeafe] text-[#1e3a8a]", href: "/flights" },
               { icon: FileText, title: "Assistance Visa",    desc: "Accompagnement complet pour vos demandes de visa vers 8 pays",      color: "bg-[#eff6ff] text-[#2563eb]", href: "/procedures" },
-              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "#" },
+              { icon: Globe,    title: "Tourisme & Hôtels",  desc: "Packages touristiques et réservations d'hôtels personnalisés",      color: "bg-[#e0f2fe] text-[#0369a1]", href: "/hotels" },
               { icon: Shield,   title: "Assurance Voyage",   desc: "Protection complète pour voyager l'esprit tranquille",              color: "bg-[#f0f9ff] text-[#7cb9e8]", href: "/assurance" },
             ].map((s, i) => (
               <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i} variants={fadeUp}>
@@ -1275,7 +1294,7 @@ export default function Home() {
               {/* Formulaire de contact simple */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
                 <h4 className="font-semibold text-gray-900 mb-4">Envoyez-nous un message</h4>
-                <form className="space-y-4">
+                <form className="space-y-4" onSubmit={handleContactSubmit}>
                   <div>
                     <Label htmlFor="contact-name" className="text-sm font-medium text-gray-700 mb-1 block">
                       Votre nom
@@ -1283,6 +1302,9 @@ export default function Home() {
                     <Input
                       id="contact-name"
                       placeholder="Jean Dupont"
+                      value={contactForm.name}
+                      onChange={event => setContactForm(current => ({ ...current, name: event.target.value }))}
+                      required
                       className="bg-white border-gray-300"
                     />
                   </div>
@@ -1294,6 +1316,9 @@ export default function Home() {
                       id="contact-email"
                       type="email"
                       placeholder="jean@example.com"
+                      value={contactForm.email}
+                      onChange={event => setContactForm(current => ({ ...current, email: event.target.value }))}
+                      required
                       className="bg-white border-gray-300"
                     />
                   </div>
@@ -1304,12 +1329,15 @@ export default function Home() {
                     <Textarea
                       id="contact-message"
                       placeholder="Votre message..."
+                      value={contactForm.message}
+                      onChange={event => setContactForm(current => ({ ...current, message: event.target.value }))}
+                      required
                       className="bg-white border-gray-300 resize-none"
                       rows={3}
                     />
                   </div>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
-                    Envoyer
+                  <Button type="submit" disabled={contactMutation.isPending} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold">
+                    {contactMutation.isPending ? "Envoi en cours..." : "Envoyer"}
                   </Button>
                 </form>
               </div>

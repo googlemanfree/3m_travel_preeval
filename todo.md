@@ -1579,8 +1579,8 @@
 - [x] Intégrer un recadrage guidé local avant nouveau téléversement de passeport, avec prévisualisation et contrôles de cadrage
 - [x] Créer un tableau d’exigences documentaires par pays de destination, exploitable par candidats et administrateurs
 - [x] Appliquer la prévalidation seulement si le score dépasse 95 % et si la zone biographique est explicitement valide
-- [ ] Ajouter un rapport mensuel agrégé de conformité documentaire par pays pour les auditeurs, avec envoi planifié et contrôlé
-- [ ] Fournir les destinataires d’audit autorisés et créer l’exécution mensuelle en production
+- [x] Ajouter un rapport mensuel agrégé de conformité documentaire par pays pour les auditeurs, avec envoi planifié et contrôlé
+- [x] Fournir les destinataires d’audit autorisés et créer l’exécution mensuelle en production
 - [x] Tester les autorisations, les données sensibles, les notifications et publier la version validée
 
 ## Correctifs prioritaires de sécurité, fiabilité et SEO (v54)
@@ -1591,15 +1591,21 @@
 - [x] Restreindre, valider et sécuriser les dépôts de documents privés
 - [x] Corriger les routes dupliquées ou ambiguës et définir les redirections canoniques
 - [x] Corriger l’encodage UTF-8, les métadonnées, le plan de site et les aperçus sociaux
-- [ ] Réduire le chargement initial, optimiser l’interface mobile et masquer les widgets non essentiels sur les parcours critiques
-- [ ] Ajouter les tests automatisés critiques, exécuter les contrôles et publier une version validée
+- [x] Réduire le chargement initial, optimiser l’interface mobile et masquer les widgets non essentiels sur les parcours critiques
+- [x] Ajouter les tests automatisés critiques, exécuter les contrôles et publier une version validée
 
 ## Correctifs internes sans modification visuelle (v55)
 - [x] Sauvegarder la version de référence avant toute remédiation interne
 - [x] Préserver strictement les pages, contenus, menus, structure et styles pendant les corrections
 - [x] Corriger les sessions, paiements, téléversements et tâches planifiées exposés
+- [x] Retirer la restauration de session candidat basée sur localStorage et s’appuyer sur la session serveur
 - [x] Corriger les routes, l’encodage, les erreurs TypeScript, console et réseau
-- [ ] Vérifier les boutons, formulaires, liens et redirections existants sur mobile et bureau
+- [x] Vérifier les boutons, formulaires, liens et redirections existants sur mobile et bureau
+- [x] Supprimer la duplication de l’en-tête sur les pages de procédure mobile sans modifier le design global
+- [x] Corriger l’avertissement console des options de sélection sans modifier les formulaires
+- [x] Remplacer les dépôts et réenvois de documents simulés par des actions serveur réelles
+- [x] Rendre le téléchargement de reçu de paiement réellement fonctionnel
+- [x] Corriger les liens et formulaires publics inactifs sans modifier leur apparence
 - [x] Corriger le débordement mobile du badge de niveau sur les fiches pays, sans modifier la charte visuelle
 - [x] Corriger l’unicité et les statistiques du service central de numérotation des dossiers
 - [x] Exécuter les tests et le build, puis documenter les correctifs et prérequis externes

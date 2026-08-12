@@ -310,9 +310,9 @@ export default function Hotels() {
               <div className="hbw-row">
                 <div className="hbw-field">
                   <label htmlFor="hbw-guests">Voyageurs</label>
-                  <select id="hbw-guests">
+                  <select id="hbw-guests" defaultValue="2 personnes">
                     <option>1 personne</option>
-                    <option selected>2 personnes</option>
+                    <option>2 personnes</option>
                     <option>3 personnes</option>
                     <option>4 personnes</option>
                     <option>5+ personnes</option>
@@ -320,8 +320,8 @@ export default function Hotels() {
                 </div>
                 <div className="hbw-field">
                   <label htmlFor="hbw-rooms">Chambres</label>
-                  <select id="hbw-rooms">
-                    <option selected>1 chambre</option>
+                  <select id="hbw-rooms" defaultValue="1 chambre">
+                    <option>1 chambre</option>
                     <option>2 chambres</option>
                     <option>3 chambres</option>
                     <option>4+ chambres</option>

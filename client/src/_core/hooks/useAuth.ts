@@ -15,26 +15,7 @@ export function useAuth(options?: UseAuthOptions) {
   // desync it from an in-flight login's `state`.
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
   const utils = trpc.useUtils();
-  const [sessionRestored, setSessionRestored] = useState(false);
-
-  // Restauration de la session depuis localStorage au chargement
-  useEffect(() => {
-    const savedToken = localStorage.getItem('3m_auth_token');
-    const savedUser = localStorage.getItem('3m_user');
-
-    if (savedToken && savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        // Restaurer les données utilisateur dans le cache tRPC
-        utils.auth.me.setData(undefined, userData);
-      } catch (error) {
-        console.error('Erreur lors de la restauration de la session:', error);
-        localStorage.removeItem('3m_auth_token');
-        localStorage.removeItem('3m_user');
-      }
-    }
-    setSessionRestored(true);
-  }, [utils]);
+  const [sessionRestored] = useState(true);
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -66,25 +47,12 @@ export function useAuth(options?: UseAuthOptions) {
       try {
         sessionStorage.removeItem("manus-cookie");
       } catch {}
-      // Effacer le localStorage
-      localStorage.removeItem('3m_auth_token');
-      localStorage.removeItem('3m_user');
-      localStorage.removeItem('manus-runtime-user-info');
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    // Sauvegarder les données utilisateur dans localStorage
-    if (meQuery.data) {
-      localStorage.setItem('3m_auth_token', 'token_present');
-      localStorage.setItem('3m_user', JSON.stringify(meQuery.data));
-      localStorage.setItem(
-        "manus-runtime-user-info",
-        JSON.stringify(meQuery.data)
-      );
-    }
     return {
       user: meQuery.data ?? null,
       loading: !sessionRestored || meQuery.isLoading || logoutMutation.isPending,

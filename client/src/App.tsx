@@ -27,7 +27,6 @@ import Admin from "./pages/Admin";
 import AdminConsultationRequests from "./pages/AdminConsultationRequests";
 import AdminsList from "./pages/AdminsList";
 import CandidatesManager from "./pages/CandidatesManager";
-import ClientDashboard from "./pages/ClientDashboard";
 import AdminAccompagnement from "./pages/AdminAccompagnement";
 import ResetPasswordSimple from "./pages/ResetPasswordSimple";
 import SimpleSignUp from "./pages/SimpleSignUp";
@@ -43,7 +42,6 @@ import ProcedureLuxembourg from "./pages/ProcedureLuxembourg";
 import MonDossier from "./pages/MonDossier";
 import EvisaRequestForm from "./pages/EvisaRequestForm";
 import EvaluationResult from "./pages/EvaluationResult";
-import AdminAIEvaluationDashboard from "./pages/AdminAIEvaluationDashboard";
 import Ressources from "./pages/Ressources";
 import ProcedureResourceGuide from "./pages/ProcedureResourceGuide";
 import Fiches from "./pages/Fiches";
@@ -97,7 +95,6 @@ import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import AdminDashboard from "./pages/AdminDashboard";
 import AmbassadorProgram from "./pages/AmbassadorProgram";
-import CVGenerator from "./pages/CVGenerator";
 import CinetPayPayment from "./pages/CinetPayPayment";
 import EvisasPage from "./pages/Evisas";
 import EvisasEnhanced from "./pages/EvisasEnhanced";
@@ -111,6 +108,10 @@ import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import React from "react";
 import Navbar from "./components/Navbar";
 import PageTransition from "./components/PageTransition";
+
+const ClientDashboard = React.lazy(() => import("./pages/ClientDashboard"));
+const AdminAIEvaluationDashboard = React.lazy(() => import("./pages/AdminAIEvaluationDashboard"));
+const CVGenerator = React.lazy(() => import("./pages/CVGenerator"));
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -379,27 +380,9 @@ function Router() {
 }
 
 function App() {
-  // État pour gérer la restauration de la session
-  const [sessionRestored, setSessionRestored] = React.useState(false);
-
-  React.useEffect(() => {
-    // Vérifier si une session est présente dans localStorage
-    const savedToken = localStorage.getItem('3m_auth_token');
-    const savedUser = localStorage.getItem('3m_user');
-
-    if (savedToken && savedUser) {
-      // Attendre un peu pour montrer le loader
-      const timer = setTimeout(() => {
-        localStorage.setItem('3m_session_restored', 'true');
-        setSessionRestored(true);
-      }, 800);
-      return () => clearTimeout(timer);
-    } else {
-      // Pas de session, marquer comme restauré immédiatement
-      localStorage.setItem('3m_session_restored', 'true');
-      setSessionRestored(true);
-    }
-  }, []);
+  // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
+  // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
+  const sessionRestored = true;
 
   return (
     <ErrorBoundary>
@@ -414,7 +397,9 @@ function App() {
               <Navbar />
               {/* Contenu des pages avec transition douce entre les routes */}
               <PageTransition>
-                <Router />
+                <React.Suspense fallback={null}>
+                  <Router />
+                </React.Suspense>
               </PageTransition>
               {/* Menu d'actions flottantes unifié */}
               <FloatingActionMenu />

@@ -19,3 +19,5 @@ Le callback CinetPay doit cibler l’URL HTTPS publique `/api/cinetpay/webhook`.
 ## Documents et tâches planifiées
 
 Le stockage privé s’appuie sur les identifiants S3 déjà injectés par la plateforme ; aucun secret ne doit être ajouté au code source. Le secret `CRON_SECRET` a été enregistré pour protéger les déclencheurs planifiés. Tout ordonnanceur externe doit l’envoyer uniquement côté serveur dans l’en-tête `Authorization: Bearer <CRON_SECRET>`.
+
+Le rapport mensuel de conformité est activé sous l’identifiant de tâche `Z4qm8uHwqSCzUY2vngb6te`. Il s’exécute le premier jour de chaque mois à 08:00 UTC et appelle `/api/scheduled/compliance-monthly-report`.

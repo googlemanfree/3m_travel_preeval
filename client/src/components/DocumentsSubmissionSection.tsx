@@ -71,18 +71,27 @@ export function DocumentsSubmissionSection({
     }
 
     setIsUploading(true);
-    // TODO: Uploader le fichier vers S3 d'abord, puis soumettre l'URL
-    // Pour le moment, on simule avec une URL
-    const documentUrl = `https://example.com/documents/${selectedFile.name}`;
-
-    submitDocMutation.mutate({
-      dossierNumber,
-      email,
-      documentType: selectedDocType as any,
-      documentName: selectedFile.name,
-      documentUrl,
-      fileSize: selectedFile.size,
-    });
+    try {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const fileBase64 = typeof reader.result === "string" ? reader.result : "";
+        submitDocMutation.mutate({
+          dossierNumber,
+          documentType: selectedDocType as "passport" | "diplomas" | "birth_certificate" | "cv",
+          documentName: selectedFile.name,
+          fileBase64,
+          mimeType: selectedFile.type as "application/pdf" | "image/jpeg" | "image/png",
+        });
+      };
+      reader.onerror = () => {
+        setIsUploading(false);
+        toast.error("Impossible de lire ce fichier. Veuillez réessayer.");
+      };
+      reader.readAsDataURL(selectedFile);
+    } catch {
+      setIsUploading(false);
+      toast.error("Impossible de préparer ce fichier. Veuillez réessayer.");
+    }
   };
 
   if (!isPaid) {
