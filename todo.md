@@ -2058,7 +2058,7 @@
 - [x] Validé avec TypeScript, 127 tests unitaires, build de production et capture mobile
 
 ## Dates de Séjour, Validation E-mail et Filtres Rapides (v132)
-- [ ] Ajouter les sélecteurs de dates de séjour (Check-in / Check-out) pour les suggestions d'hôtels
-- [ ] Mettre en place une validation en temps réel de l'e-mail du proche avec badge de confirmation visuelle
-- [ ] Intégrer des filtres rapides par gamme de prix et note pour affiner les suggestions dynamiques
-- [ ] Valider avec TypeScript, tests unitaires, build de production et publication
+- [x] Ajouter les sélecteurs de dates de séjour (Check-in / Check-out) pour les suggestions d'hôtels
+- [x] Mettre en place une validation en temps réel de l'e-mail du proche avec badge de confirmation visuelle
+- [x] Intégrer des filtres rapides par gamme de prix et note pour affiner les suggestions dynamiques
+- [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
