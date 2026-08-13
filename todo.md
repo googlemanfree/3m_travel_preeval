@@ -2034,3 +2034,8 @@
 - [x] Créer le composant de jauge d’étapes dans `FlightBookingCheckout.tsx`
 - [x] Diviser le parcours en 4 étapes claires : Sélection, Passeport, Confirmation Finale, Réservation confirmée
 - [x] Validé avec TypeScript, 127 tests unitaires, build de production et captures desktop/mobile
+
+## Téléchargement PDF du Billet Électronique (v128)
+- [x] Créer le générateur de PDF client pour la confirmation de vol dans `FlightBookingCheckout.tsx`
+- [x] Ajouter le bouton « Télécharger mon billet (PDF) » sur la vue de confirmation finale
+- [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé

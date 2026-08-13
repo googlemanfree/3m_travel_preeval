@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check } from "lucide-react";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,6 +66,64 @@ export default function FlightBookingCheckout() {
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M Travel, je souhaite finaliser ma réservation de vol (Réf: ${dossierRef || 'Nouveau'}). Nom: ${formData.fullName}, Passeport: ${formData.passportNumber}`)}`;
   const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef || 'En attente'}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite confirmer mon vol.\n\nNom: ${formData.fullName}\nTéléphone: ${formData.phone}\nE-mail: ${formData.email}\nPasseport: ${formData.passportNumber}\n\nMerci de me contacter.`)}`;
   const telUrl = `tel:${whatsappNumber}`;
+
+  const handleDownloadTicketPdf = () => {
+    const content = `
+==================================================
+        3M TRAVEL AND SERVICES
+       BILLET ÉLECTRONIQUE PROVISOIRE
+==================================================
+
+Référence de dossier : ${dossierRef}
+Date d'émission : ${new Date().toLocaleDateString("fr-FR")}
+
+--------------------------------------------------
+INFORMATIONS DU PASSAGER
+--------------------------------------------------
+Nom complet : ${formData.fullName}
+E-mail : ${formData.email}
+Téléphone : ${formData.phone}
+Numéro de Passeport : ${formData.passportNumber}
+Nationalité : ${formData.nationality}
+Date de Naissance : ${formData.dateOfBirth || "Non renseignée"}
+
+--------------------------------------------------
+DÉTAILS DU VOL ET DE LA PRESTATION
+--------------------------------------------------
+ID Vol : 3M-FL-${params && params.flightId ? params.flightId : "REF"}
+Classe de cabine : Économique GDS
+Bagages inclus : 23 kg
+Montant estimé : 450 000 FCFA
+
+--------------------------------------------------
+INSTRUCTIONS DE VALIDATION
+--------------------------------------------------
+Ce document atteste de l'enregistrement de votre demande
+auprès de 3M Travel Agency. Le tarif et les sièges
+sont soumis à revalidation GDS par nos conseillers
+avant l'émission définitive.
+
+Contact agence :
+- WhatsApp : +237 698 10 48 32
+- E-mail : hello@3mtravelagency.com
+- Site web : https://www.3mtravelagency.com
+
+==================================================
+    3M Travel and Services — Votre Avenir Commence Ici
+==================================================
+    `.trim();
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Billet_3M_Travel_${dossierRef}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "Téléchargement réussi", description: "Votre récapitulatif de billet a été téléchargé." });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -198,8 +256,13 @@ export default function FlightBookingCheckout() {
                 </a>
               </div>
 
-              <div className="mt-8">
-                <a href="/" className="text-sm font-bold text-blue-600 hover:underline">← Retour à l'accueil</a>
+              <div className="mt-6 space-y-3">
+                <Button onClick={handleDownloadTicketPdf} className="h-12 w-full rounded-2xl bg-slate-900 font-black text-white hover:bg-slate-800 shadow-md">
+                  <Download className="mr-2 h-4 w-4" /> Télécharger mon billet électronique (PDF)
+                </Button>
+                <div>
+                  <a href="/" className="text-sm font-bold text-blue-600 hover:underline">← Retour à l'accueil</a>
+                </div>
               </div>
             </motion.div>
           )}
