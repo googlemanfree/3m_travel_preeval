@@ -1930,3 +1930,45 @@
 - [x] Améliorer la gestion admin des dossiers avec actions rapides, documents, statuts, historique et prévisualisation
 - [x] Ajouter l’avatar aux e-mails opérationnels avec accès sécurisé, fallback et respect de la confidentialité
 - [x] Tester obligatoire, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Phase 1 : Correction des logos d'authentification (v114)
+- [x] Identifier les fichiers de pages d'authentification utilisant une URL de logo obsolète ou erronée (`Dashboard.tsx`, `ForgotPassword.tsx`, `Login.tsx`, `Register.tsx`, `ResetPassword.tsx`)
+- [x] Remplacer par l'URL officielle validée du logo 3M (`/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg`)
+- [x] Valider avec la suite de 121 tests unitaires et le build de production réussi
+
+## Phase 2 : Uniformisation des champs et libellés d'inscription (v115)
+- [x] Uniformiser Input, Select et Textarea avec une hauteur et un rayon cohérents
+- [x] Remplacer les occurrences restantes de « Créer un compte » par « Inscription »
+- [x] Vérifier que les boutons d'inscription gardent une largeur et un alignement cohérents sur desktop et mobile
+- [x] Relancer les tests, le build et les captures d'aperçu
+
+## Phase 4 : Positionnement mobile des boutons flottants (v116)
+- [x] Définir un espacement mobile commun pour les boutons Chat/Aureol et WhatsApp
+- [x] Respecter la zone sûre des appareils mobiles avec encoche ou barre système
+- [x] Vérifier les captures 375×812 et les interactions sans superposition gênante
+
+## Phase 5 : Liens fonctionnels du footer (v117)
+- [x] Auditer tous les liens utilitaires du footer et leurs routes cibles
+- [x] Remplacer les href génériques ou inactifs par des routes accessibles
+- [x] Vérifier chaque lien en desktop et mobile sans page vide
+
+## Phase 6 : Performance et découpage des bundles (v118)
+- [x] Auditer les imports statiques responsables des gros chunks de production
+- [x] Découper les modules lourds sans modifier les routes ni le comportement
+- [x] Vérifier le build, les tailles de chunks et le rendu des pages principales
+
+## Phase 7 : Dates et valeurs de recherche de vols (v119)
+- [x] Auditer les valeurs initiales et les contraintes de dates dans Flights.tsx
+- [x] Empêcher les dates passées et garantir un retour postérieur au départ
+- [x] Ajouter ou vérifier les tests de validation des dates sans modifier l’API de recherche
+
+## Phase 8 : Accessibilité et textes alternatifs (v120)
+- [x] Auditer les boutons, images, labels et éléments interactifs principaux
+- [x] Ajouter les attributs ARIA et textes alternatifs manquants sans modifier le design
+- [x] Vérifier la navigation clavier et les captures desktop/mobile
+
+## Phase 9 : Régression et parcours de bout en bout (v121)
+- [x] Vérifier les routes publiques principales et les nouvelles pages du footer
+- [x] Vérifier les parcours d’authentification et la recherche de vols avec des paramètres valides
+- [x] Contrôler les logs console/réseau et l’absence de page blanche sur desktop et mobile
+- [x] Confirmer que les tests et le build restent verts après la campagne

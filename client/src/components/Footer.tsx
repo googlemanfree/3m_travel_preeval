@@ -16,10 +16,10 @@ const SOCIAL_LINKS = [
 const USEFUL_LINKS = [
   { label: 'Destinations populaires', href: '/procedures' },
   { label: 'Contact', href: '/contact' },
-  { label: 'Mentions legales', href: '#' },
-  { label: 'Plan du site', href: '#' },
-  { label: 'Accessibilite', href: '#' },
-  { label: 'Sitemap', href: '#' },
+  { label: 'Mentions légales', href: '/conditions-utilisation' },
+  { label: 'Plan du site', href: '/plan-du-site' },
+  { label: 'Accessibilité', href: '/accessibilite' },
+  { label: 'Sitemap', href: '/plan-du-site' },
 ];
 
 export default function Footer() {
@@ -119,7 +119,7 @@ export default function Footer() {
             <div className="flex items-center gap-2 mb-3">
               <img
                 src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
-                alt="3M Travel & Services"
+                alt="Logo 3M Travel Agency"
                 className="h-10 w-auto object-contain"
               />
             </div>
@@ -135,7 +135,7 @@ export default function Footer() {
               <li><Link href="/" className="hover:text-blue-300 transition-colors">Accueil</Link></li>
               <li><Link href="/flights" className="hover:text-blue-300 transition-colors">Recherche de vols</Link></li>
               <li><Link href="/procedures" className="hover:text-blue-300 transition-colors">Procédures & Destinations</Link></li>
-              <li><Link href="/register" className="hover:text-blue-300 transition-colors">Créer un compte</Link></li>
+              <li><Link href="/register" className="hover:text-blue-300 transition-colors">Inscription</Link></li>
               <li><Link href="/login" className="hover:text-blue-300 transition-colors">Mon Espace Candidat</Link></li>
             </ul>
           </div>
@@ -210,6 +210,7 @@ export default function Footer() {
                 whileTap={{ scale: 0.95 }}
                 className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center transition duration-200 ${social.color}`}
                 title={social.label}
+                aria-label={`Ouvrir la page ${social.label} de 3M Travel Agency`}
               >
                 <Icon className="w-5 h-5" />
               </motion.a>
@@ -220,12 +221,12 @@ export default function Footer() {
         {/* Barre légale */}
         <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">
           <p>
-            <span className="text-gray-400 font-medium">3M Travel & Services SARL</span> — RC/YAO/2019/A/2567 | NIU : M112417203369H
+            <span className="text-gray-400 font-medium">3M Travel Agency SARL</span> — RC/YAO/2019/A/2567 | NIU : M112417203369H
           </p>
           <p>
             Rôle de conseil et d'accompagnement. Les décisions d'octroi de visa appartiennent exclusivement aux autorités consulaires.
           </p>
-          <p className="mt-2">© {new Date().getFullYear()} 3M Travel & Services. Tous droits réservés.</p>
+          <p className="mt-2">© {new Date().getFullYear()} 3M Travel Agency. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

@@ -11,7 +11,7 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
 const DESTINATIONS = [
   { value: "canada",     label: "🇨🇦 Canada — Résidence Permanente" },
@@ -167,7 +167,7 @@ export default function Register() {
             <div className="w-14 h-14 bg-gradient-to-br from-[#1E3A8A] to-[#2563EB] rounded-2xl flex items-center justify-center mx-auto mb-4">
               <UserPlus className="w-7 h-7 text-white" />
             </div>
-            <h2 className="text-2xl font-black text-gray-900">Créer mon compte</h2>
+            <h2 className="text-2xl font-black text-gray-900">Inscription</h2>
             <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M Travel</p>
           </div>
 
@@ -335,7 +335,7 @@ export default function Register() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    <UserPlus className="w-4 h-4" /> Créer mon compte <ArrowRight className="w-4 h-4" />
+                    <UserPlus className="w-4 h-4" /> Inscription <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
               </Button>

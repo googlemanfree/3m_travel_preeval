@@ -153,7 +153,7 @@ export default function SimpleSignUp() {
           {/* En-tête */}
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Créer un compte
+              Inscription
             </h1>
             <p className="text-gray-600">
               Rejoignez 3M Travel & Services

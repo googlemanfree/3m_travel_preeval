@@ -7,6 +7,7 @@ import { candidateProcedure } from "./candidate";
 import { sendEmail } from "../_core/email";
 import { requireValidAdminSession } from "./adminAuth";
 import { flightSearchCache } from "../services/flightSearchCache";
+import { validateFlightDates } from "../services/flightDateValidation";
 
 function getCachedSearch(key: string): any | null {
   const entry = flightSearchCache.get(key);
@@ -209,6 +210,9 @@ export const flightsRouter = router({
         infants: z.number().min(0).max(4).default(0),
         cabinClass: z.enum(["ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST"]).default("ECONOMY"),
         alliance: z.string().optional(),
+      }).superRefine((input, ctx) => {
+        const error = validateFlightDates(input);
+        if (error) ctx.addIssue({ code: z.ZodIssueCode.custom, message: error, path: ["departureDate"] });
       })
     )
     .query(async ({ input }) => {

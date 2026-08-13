@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
 type SignUpStep = "form" | "verification" | "error";
 
@@ -135,7 +135,7 @@ export default function SignUp() {
             alt="3M Travel"
             className="w-16 h-16 rounded-xl mx-auto mb-4 shadow-lg object-cover"
           />
-          <h1 className="text-2xl font-black">Créer mon compte</h1>
+          <h1 className="text-2xl font-black">Inscription</h1>
           <p className="text-blue-200 text-sm mt-1">Rejoignez 3M Travel & Services</p>
         </div>
 
@@ -298,7 +298,7 @@ export default function SignUp() {
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
-                    Créer mon compte <ArrowRight className="w-4 h-4" />
+                    Inscription <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
               </Button>

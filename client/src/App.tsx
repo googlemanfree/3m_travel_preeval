@@ -12,7 +12,6 @@ import Flights from "./pages/Flights";
 import Vols from "./pages/Vols";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
 import VerifyEmail from "@/pages/VerifyEmail";
 import VerifyEmailLink from "@/pages/VerifyEmailLink";
 import VerifyEmailSent from "@/pages/VerifyEmailSent";
@@ -23,7 +22,6 @@ import OpenDossier from "./pages/OpenDossier";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
 import VerifyApplicationEmail from "./pages/VerifyApplicationEmail";
-import Admin from "./pages/Admin";
 import AdminConsultationRequests from "./pages/AdminConsultationRequests";
 import AdminsList from "./pages/AdminsList";
 import CandidatesManager from "./pages/CandidatesManager";
@@ -57,6 +55,8 @@ import Contact from "./pages/Contact";
 import PolitiqueConfidentialite from "./pages/PolitiqueConfidentialite";
 import DossierConfirmation from "./pages/DossierConfirmation";
 import ConditionsUtilisation from "./pages/ConditionsUtilisation";
+import Accessibility from "./pages/Accessibility";
+import Sitemap from "./pages/Sitemap";
 import AdminEvaluation from "./pages/AdminEvaluation";
 import AdminLogin from "./pages/AdminLogin";
 import AdminChangePasswordRequired from "./pages/AdminChangePasswordRequired";
@@ -70,10 +70,6 @@ import HowItWorks from "./pages/HowItWorks";
 import Procedures from "./pages/Procedures";
 import ProceduresComplete from "./pages/ProceduresComplete";
 import ProceduresEnhanced from "./pages/ProceduresEnhanced";
-import ProceduresAdvanced from "./pages/ProceduresAdvanced";
-import CountryDetailPage from "./pages/CountryDetailPage";
-import CountryComparisonPage from "./pages/CountryComparisonPage";
-import EvisasAdvanced from "./pages/EvisasAdvanced";
 import EvisaDetailPage from "./pages/EvisaDetailPage";
 import AIEvaluation from "./pages/AIEvaluation";
 import EvaluationRapideEnhanced from "./pages/EvaluationRapideEnhanced";
@@ -82,7 +78,6 @@ import AdminDossierManagement from "./pages/AdminDossierManagement";
 import PrimaryEvaluationForm from "./pages/PrimaryEvaluationForm";
 import AdminEvaluationValidation from "./pages/AdminEvaluationValidation";
 import ClientSpaceEnhanced from "./pages/ClientSpaceEnhanced";
-import ClientSpaceEnhancedV2 from "./pages/ClientSpaceEnhancedV2";
 import DocumentUploadPage from "./pages/DocumentUploadPage";
 import DocumentCompliancePage from "./pages/DocumentCompliancePage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
@@ -93,7 +88,6 @@ import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
 import Avis from "./pages/Avis";
 import Blog from "./pages/Blog";
-import Evaluation from "./pages/Evaluation";
 import EvaluationSpace from "./pages/EvaluationSpace";
 import AdminDashboard from "./pages/AdminDashboard";
 import AmbassadorProgram from "./pages/AmbassadorProgram";
@@ -118,6 +112,14 @@ import NavigationProgress from "./components/NavigationProgress";
 const ClientDashboard = React.lazy(() => import("./pages/ClientDashboard"));
 const AdminAIEvaluationDashboard = React.lazy(() => import("./pages/AdminAIEvaluationDashboard"));
 const CVGenerator = React.lazy(() => import("./pages/CVGenerator"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Admin = React.lazy(() => import("./pages/Admin"));
+const ProceduresAdvanced = React.lazy(() => import("./pages/ProceduresAdvanced"));
+const CountryDetailPage = React.lazy(() => import("./pages/CountryDetailPage"));
+const CountryComparisonPage = React.lazy(() => import("./pages/CountryComparisonPage"));
+const EvisasAdvanced = React.lazy(() => import("./pages/EvisasAdvanced"));
+const Evaluation = React.lazy(() => import("./pages/Evaluation"));
+const ClientSpaceEnhancedV2 = React.lazy(() => import("./pages/ClientSpaceEnhancedV2"));
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -163,6 +165,8 @@ function Router() {
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
+      <Route path={"/accessibilite"} component={Accessibility} />
+      <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
       <Route path={"/dashboard"}>
         <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>

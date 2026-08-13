@@ -17,7 +17,7 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth, getCandidateToken } from "@/hooks/useCandidateAuth";
 import { toast } from "sonner";
 
-const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
+const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
 // ─── Statuts du dossier ───────────────────────────────────────────────────────
 const STEP_TOOLTIPS: Record<string, { description: string; actions: string }> = {

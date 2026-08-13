@@ -21,7 +21,7 @@ interface AuthGuardProps {
 
 export default function AuthGuard({
   children,
-  message = "Vous devez créer un compte ou vous connecter pour accéder aux outils de 3M Travel.",
+  message = "Vous devez disposer d’un compte ou vous connecter pour accéder aux outils de 3M Travel.",
   autoRedirect = false,
 }: AuthGuardProps) {
   const { isAuthenticated } = useCandidateAuth();
@@ -64,7 +64,7 @@ export default function AuthGuard({
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] px-8 py-6 text-center text-white">
-            <img src={LOGO_URL} alt="3M Travel" className="w-14 h-14 rounded-xl mx-auto mb-3 object-contain" />
+            <img src={LOGO_URL} alt="Logo 3M Travel Agency" className="w-14 h-14 rounded-xl mx-auto mb-3 object-contain" />
             <h1 className="text-xl font-black">Accès Réservé aux Membres</h1>
           </div>
 
@@ -94,7 +94,7 @@ export default function AuthGuard({
                 className="h-12 font-semibold border-2 border-[#1E3A8A] text-[#1E3A8A] hover:bg-blue-50"
               >
                 <UserPlus className="w-4 h-4 mr-2" />
-                Créer mon compte
+                Inscription
               </Button>
             </div>
 

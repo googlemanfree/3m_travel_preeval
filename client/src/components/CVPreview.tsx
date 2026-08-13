@@ -56,7 +56,7 @@ export default function CVPreview({ data, template = 'modern', theme = 'blue' }:
       <div style={{ borderBottomColor: colors.primary }} className="border-b-4 pb-8">
         <div className="flex gap-6 items-start mb-4">
           {data.profilePhoto && (
-            <img src={data.profilePhoto} alt="Profile" className="w-24 h-24 rounded-full object-cover" />
+            <img src={data.profilePhoto} alt={`Photo de profil de ${data.fullName || "candidat"}`} className="w-24 h-24 rounded-full object-cover" />
           )}
           <div className="flex-1">
             <h1 style={{ color: colors.primary }} className="text-4xl font-black mb-2">{data.fullName || 'Nom Complet'}</h1>

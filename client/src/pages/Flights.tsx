@@ -149,6 +149,18 @@ function minDate(days = 0) {
   return d.toISOString().split("T")[0];
 }
 
+function isValidIsoDate(value: string | null | undefined): value is string {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
+function addDaysToIsoDate(value: string, days: number) {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
+
 // ─── Airport Autocomplete Input ───────────────────────────────────────────────
 function AirportInput({
   label, value, onChange, placeholder, icon,
@@ -515,8 +527,15 @@ export default function Flights() {
   );
   const [origin, setOrigin] = useState(initialParams.get("origin") || "NSI");
   const [destination, setDestination] = useState(initialParams.get("destination") || "CDG");
-  const [departureDate, setDepartureDate] = useState(initialParams.get("date") || minDate(7));
-  const [returnDate, setReturnDate] = useState(initialParams.get("returnDate") || minDate(14));
+  const initialDepartureDate = isValidIsoDate(initialParams.get("date")) && initialParams.get("date")! >= today()
+    ? initialParams.get("date")!
+    : minDate(7);
+  const initialReturnParam = initialParams.get("returnDate");
+  const initialReturnDate = isValidIsoDate(initialReturnParam) && initialReturnParam >= initialDepartureDate
+    ? initialReturnParam
+    : addDaysToIsoDate(initialDepartureDate, 7);
+  const [departureDate, setDepartureDate] = useState(initialDepartureDate);
+  const [returnDate, setReturnDate] = useState(initialReturnDate);
   const [passengers, setPassengers] = useState({
     adults: Number(initialParams.get("adults")) || 1,
     children: 0,
@@ -577,7 +596,31 @@ export default function Flights() {
 
   const { mutate: saveSearchHistoryMutation } = saveSearchMutation;
 
+  function handleDepartureDateChange(value: string) {
+    const nextDeparture = isValidIsoDate(value) && value >= today() ? value : minDate(7);
+    setDepartureDate(nextDeparture);
+    if (tripType === "ROUND_TRIP" && (!isValidIsoDate(returnDate) || returnDate < nextDeparture)) {
+      setReturnDate(addDaysToIsoDate(nextDeparture, 7));
+    }
+  }
+
+  function handleReturnDateChange(value: string) {
+    if (!isValidIsoDate(value) || value < departureDate) {
+      setReturnDate(addDaysToIsoDate(departureDate, 7));
+      return;
+    }
+    setReturnDate(value);
+  }
+
   function handleSearch() {
+    if (!isValidIsoDate(departureDate) || departureDate < today()) {
+      setDepartureDate(minDate(7));
+      return;
+    }
+    if (tripType === "ROUND_TRIP" && (!isValidIsoDate(returnDate) || returnDate < departureDate)) {
+      setReturnDate(addDaysToIsoDate(departureDate, 7));
+      return;
+    }
     setSearchEnabled(true);
   }
 
@@ -649,7 +692,7 @@ export default function Flights() {
 
               {/* Swap button */}
               <div className="relative">
-                <button onClick={swapAirports}
+                <button type="button" onClick={swapAirports} aria-label="Inverser les aéroports de départ et d’arrivée"
                   className="absolute left-0 top-7 -translate-x-3 z-10 w-7 h-7 rounded-full bg-[#2563EB] text-white flex items-center justify-center shadow-md hover:bg-[#1E3A8A] transition-colors hidden md:flex">
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                 </button>
@@ -664,7 +707,7 @@ export default function Flights() {
                   <div className="relative">
                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
                     <input type="date" value={departureDate} min={today()}
-                      onChange={(e) => setDepartureDate(e.target.value)}
+                      onChange={(e) => handleDepartureDateChange(e.target.value)}
                       className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-sm font-medium bg-white transition-colors" />
                   </div>
                 </div>
@@ -674,7 +717,7 @@ export default function Flights() {
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#2563EB]" />
                       <input type="date" value={returnDate} min={departureDate}
-                        onChange={(e) => setReturnDate(e.target.value)}
+                        onChange={(e) => handleReturnDateChange(e.target.value)}
                         className="w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:border-[#2563EB] focus:outline-none text-sm font-medium bg-white transition-colors" />
                     </div>
                   </div>

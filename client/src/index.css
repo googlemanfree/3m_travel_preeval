@@ -451,3 +451,12 @@ html.motion-disabled .ease-pill:hover,
 html.motion-disabled .admin-glass-table tbody tr:hover {
   transform: none !important;
 }
+
+/* Actions flottantes : préserver la zone sûre des téléphones et la lisibilité du contenu. */
+.safe-bottom-floating {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-bottom-floating-panel {
+  bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}

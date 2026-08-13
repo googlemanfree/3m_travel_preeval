@@ -78,7 +78,7 @@ export default function Navbar() {
           >
             <img
               src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
-              alt="3M Travel & Services"
+              alt="Logo 3M Travel Agency"
               className="h-12 w-auto object-contain"
             />
           </a>
@@ -204,7 +204,7 @@ export default function Navbar() {
                   onClick={handleNavigationClick}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 shadow-sm"
                 >
-                  ✍️ Créer un compte
+                  ✍️ Inscription
                 </a>
               </>
             )}
@@ -338,7 +338,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl font-bold transition-all mt-2"
                 >
-                  ✍️ Créer un compte
+                  ✍️ Inscription
                 </a>
               </motion.div>
             )}

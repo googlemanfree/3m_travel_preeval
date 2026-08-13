@@ -21,6 +21,22 @@ const TABS: { id: ServiceTab; label: string; icon: typeof Plane }[] = [
   { id: "evisa", label: "e-Visa", icon: Globe2 },
 ];
 
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysToIsoDate(value: string, days: number) {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  parsed.setUTCDate(parsed.getUTCDate() + days);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function isValidIsoDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}
+
 const PAYMENT_METHODS = [
   { name: "Orange Money", short: "OM" },
   { name: "MTN Mobile Money", short: "MoMo" },
@@ -35,18 +51,47 @@ export default function TravelSearchHero() {
   const [tripType, setTripType] = useState<"ROUND_TRIP" | "ONE_WAY">("ROUND_TRIP");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [departureDate, setDepartureDate] = useState(() => addDaysToIsoDate(todayIso(), 7));
+  const [returnDate, setReturnDate] = useState(() => addDaysToIsoDate(todayIso(), 14));
+  const [dateError, setDateError] = useState("");
   const [adults, setAdults] = useState(1);
   const [cabinClass, setCabinClass] = useState("ECONOMY");
 
+  const handleDepartureDateChange = (value: string) => {
+    const nextDeparture = isValidIsoDate(value) && value >= todayIso() ? value : addDaysToIsoDate(todayIso(), 7);
+    setDepartureDate(nextDeparture);
+    setDateError("");
+    if (tripType === "ROUND_TRIP" && (!isValidIsoDate(returnDate) || returnDate < nextDeparture)) {
+      setReturnDate(addDaysToIsoDate(nextDeparture, 7));
+    }
+  };
+
+  const handleReturnDateChange = (value: string) => {
+    if (!isValidIsoDate(value) || value < departureDate) {
+      setReturnDate(addDaysToIsoDate(departureDate, 7));
+      setDateError("La date de retour doit être postérieure ou égale au départ.");
+      return;
+    }
+    setReturnDate(value);
+    setDateError("");
+  };
+
   const handleFlightSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidIsoDate(departureDate) || departureDate < todayIso()) {
+      setDateError("Choisissez une date de départ actuelle ou future.");
+      return;
+    }
+    if (tripType === "ROUND_TRIP" && (!isValidIsoDate(returnDate) || returnDate < departureDate)) {
+      setDateError("La date de retour doit être postérieure ou égale au départ.");
+      return;
+    }
+    setDateError("");
     const params = new URLSearchParams();
     if (origin) params.set("origin", origin);
     if (destination) params.set("destination", destination);
-    if (departureDate) params.set("date", departureDate);
-    if (returnDate) params.set("returnDate", returnDate);
+    params.set("date", departureDate);
+    if (tripType === "ROUND_TRIP") params.set("returnDate", returnDate);
     params.set("tripType", tripType);
     params.set("adults", String(adults));
     params.set("cabinClass", cabinClass);
@@ -65,6 +110,7 @@ export default function TravelSearchHero() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                aria-pressed={isActive}
                 className={`flex items-center gap-2 px-5 py-4 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 ${
                   isActive
                     ? "border-[#2563eb] text-[#2563eb] bg-blue-50/50"
@@ -138,7 +184,8 @@ export default function TravelSearchHero() {
                     <input
                       type="date"
                       value={departureDate}
-                      onChange={(e) => setDepartureDate(e.target.value)}
+                      min={todayIso()}
+                      onChange={(e) => handleDepartureDateChange(e.target.value)}
                       className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
@@ -148,12 +195,14 @@ export default function TravelSearchHero() {
                       <input
                         type="date"
                         value={returnDate}
-                        onChange={(e) => setReturnDate(e.target.value)}
+                        min={departureDate}
+                        onChange={(e) => handleReturnDateChange(e.target.value)}
                         className="w-full h-11 px-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
                       />
                     </div>
                   )}
                 </div>
+                {dateError && <p role="alert" className="text-xs font-semibold text-red-600">{dateError}</p>}
 
                 <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end">
                   <div className="flex-1">
