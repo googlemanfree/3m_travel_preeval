@@ -1,5 +1,4 @@
-import { cn } from "@/lib/utils";
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle } from "lucide-react";
 import { Component, ReactNode } from "react";
 
 interface Props {
@@ -11,12 +10,6 @@ interface State {
   error: Error | null;
 }
 
-// Repère les erreurs de chargement de "chunk" — quand le navigateur essaie
-// de récupérer un fichier JavaScript qui n'existe plus car le site a été
-// redéployé depuis le dernier chargement de la page (les noms de fichiers
-// changent à chaque build). Très fréquent avec le découpage de code
-// (React.lazy) : sans ce filet, l'utilisateur se retrouve avec une page
-// blanche silencieuse au lieu d'un simple rechargement.
 function isChunkLoadError(error: Error): boolean {
   const message = error.message || "";
   return (
@@ -41,17 +34,12 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error) {
     if (isChunkLoadError(error)) {
-      // On ne retente qu'une seule fois par session, pour ne jamais
-      // tomber dans une boucle de rechargement infinie si le problème
-      // persiste pour une autre raison.
       const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
       if (!alreadyAttempted) {
         sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
         window.location.reload();
       }
     } else {
-      // Une navigation réussie sans nouvelle erreur de chunk réinitialise
-      // le compteur, pour permettre une future récupération automatique.
       sessionStorage.removeItem(RELOAD_FLAG_KEY);
     }
   }
@@ -59,32 +47,40 @@ class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex items-center justify-center min-h-screen p-8 bg-background">
-          <div className="flex flex-col items-center w-full max-w-2xl p-8">
-            <AlertTriangle
-              size={48}
-              className="text-destructive mb-6 flex-shrink-0"
-            />
-
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
-
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
+        <div className="flex items-center justify-center min-h-screen p-6 bg-background text-foreground">
+          <div className="flex flex-col items-center w-full max-w-lg p-8 rounded-2xl bg-card border border-border shadow-xl text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-6">
+              <AlertTriangle size={32} />
             </div>
 
-            <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
-            >
-              <RotateCcw size={16} />
-              Reload Page
-            </button>
+            <h2 className="text-2xl font-bold mb-2">Oups, une mise à jour est requise</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Le site a été mis à jour et votre navigateur conservait une ancienne version en cache. Veuillez actualiser la page pour profiter de la dernière version.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
+              <button
+                onClick={() => window.location.reload()}
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition shadow-lg cursor-pointer"
+              >
+                <RotateCcw size={18} />
+                Actualiser la page
+              </button>
+              <a
+                href="https://wa.me/237600000000?text=Bonjour,%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site%203M%20Travel"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-lg cursor-pointer"
+              >
+                <MessageCircle size={18} />
+                WhatsApp Support
+              </a>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <PhoneCall size={14} />
+              <span>Assistance téléphonique : +237 6 00 00 00 00</span>
+            </div>
           </div>
         </div>
       );
