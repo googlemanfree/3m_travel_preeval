@@ -113,9 +113,11 @@ export default function EvisasAdvanced() {
               <div>
                 {/* Image d'en-tête */}
                 <div className="relative h-48 overflow-hidden bg-slate-900">
-                  <img 
-                    src={destination.image} 
+                  <img
+                    src={destination.image}
                     alt={destination.country}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />

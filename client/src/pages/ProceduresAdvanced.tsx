@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
-import { getProcedureVisual } from '@/data/procedureVisuals';
+import { getProcedureVisualSources } from '@/data/procedureVisuals';
 import { trpc } from '@/lib/trpc';
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
@@ -451,7 +451,9 @@ export default function ProceduresAdvanced() {
               const isExpanded = expandedCountry === country.id;
               const isSelected = selectedForComparison.includes(country.id);
               const destinationMedia = mediaByDestination.get(country.id);
-              const procedureImage = destinationMedia?.imageUrl ?? getProcedureVisual(country);
+              const procedureVisual = getProcedureVisualSources(country);
+              const procedureImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
+              const procedureMobileImage = destinationMedia?.imageUrl ? undefined : procedureVisual.mobile;
 
               return (
                 <motion.div
@@ -469,18 +471,24 @@ export default function ProceduresAdvanced() {
                   >
                     {/* Card Header */}
                     <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
-                      <img
-                        src={procedureImage}
-                        alt=""
-                        aria-hidden="true"
-                        loading="lazy"
-                        className="absolute inset-0 h-full w-full object-cover opacity-25"
-                      />
+                      <picture className="absolute inset-0 block" aria-hidden="true">
+                        {procedureMobileImage && (
+                          <source media="(max-width: 767px)" srcSet={procedureMobileImage} type="image/webp" />
+                        )}
+                        <img
+                          src={procedureImage}
+                          alt=""
+                          aria-hidden="true"
+                          loading="lazy"
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-cover opacity-25"
+                        />
+                      </picture>
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-800/90 via-blue-700/75 to-blue-600/50" />
                       <div className="relative z-10 flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => window.location.href = `/procedures/${country.id}`}>
                           <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-4xl">
-                            {destinationMedia?.flagUrl ? <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} className="h-full w-full object-contain" /> : country.flag}
+                            {destinationMedia?.flagUrl ? <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} loading="lazy" decoding="async" className="h-full w-full object-contain" /> : country.flag}
                           </span>
                           <div>
                             <h3 className="text-xl font-bold hover:underline flex items-center gap-1.5">{country.name} ↗</h3>

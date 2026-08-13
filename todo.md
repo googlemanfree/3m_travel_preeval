@@ -1900,3 +1900,9 @@
 - [x] Auditer le composant de témoignages et définir les champs de recherche
 - [x] Intégrer la barre de recherche avec filtrage combiné et états bilingues
 - [x] Vérifier accessibilité, responsive, résultats approuvés, TypeScript, les tests, le build et publier
+
+## Optimisation des images pour le mobile (v102)
+- [x] Auditer les assets, références d’images, dimensions et points de chargement critiques
+- [x] Préparer les variantes WebP/AVIF et la stratégie de chargement priorisé du héros et des pages
+- [x] Intégrer lazy loading, sources responsives, préchargement critique et fallbacks fiables
+- [x] Mesurer le rendu mobile, la visibilité, la performance, l’accessibilité, TypeScript, les tests, le build et publier

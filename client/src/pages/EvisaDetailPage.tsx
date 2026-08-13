@@ -87,9 +87,12 @@ export default function EvisaDetailPage() {
           className="relative rounded-3xl overflow-hidden shadow-2xl border border-slate-200 bg-slate-900 text-white"
         >
           <div className="absolute inset-0 z-0">
-            <img 
-              src={destination.image} 
-              alt={destination.country} 
+            <img
+              src={destination.image}
+              alt={destination.country}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
               className="w-full h-full object-cover opacity-35 filter brightness-90"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent" />

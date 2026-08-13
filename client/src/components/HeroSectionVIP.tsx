@@ -87,14 +87,27 @@ export default function HeroSectionVIP({
     >
         {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <img
-          src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
-          alt="3M Travel Agency - Spécialiste de la mobilité internationale vers le Canada et l'Europe"
-          aria-hidden="true"
-          ref={backgroundRef}
-          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-85 filter brightness-105 saturate-105 will-change-transform"
-          style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
-        />
+        <picture className="absolute inset-0 block" aria-hidden="true">
+          <source
+            media="(max-width: 767px)"
+            srcSet="/manus-storage/3m-hero-real-woman-man-mobile_335e606e.webp"
+            type="image/webp"
+          />
+          <source
+            srcSet="/manus-storage/3m-hero-real-woman-man_f9790b0e.webp"
+            type="image/webp"
+          />
+          <img
+            src="/manus-storage/agency_hero_real_woman_man_88aca943.png"
+            alt=""
+            ref={backgroundRef}
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-85 filter brightness-105 saturate-105 will-change-transform"
+            style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
+          />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/65 via-[#0a1d3a]/45 to-[#07162c]/80" />
         <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
         <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>

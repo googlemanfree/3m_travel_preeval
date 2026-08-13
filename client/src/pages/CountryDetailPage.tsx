@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
-import { getProcedureRegionBadges, getProcedureVisual } from '@/data/procedureVisuals';
+import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
 import { trpc } from '@/lib/trpc';
 
 import { useState, useEffect } from 'react';
@@ -80,7 +80,9 @@ export default function CountryDetailPage() {
     }
   };
 
-  const procedureImage = destinationMedia?.imageUrl ?? getProcedureVisual(country);
+  const procedureVisual = getProcedureVisualSources(country);
+  const procedureImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
+  const procedureMobileImage = destinationMedia?.imageUrl ? undefined : procedureVisual.mobile;
   const [regionBadge, regionLabel] = getProcedureRegionBadges(country);
 
   return (
@@ -100,11 +102,19 @@ export default function CountryDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-800 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden"
         >
-          <img
-            src={procedureImage}
-            alt={`Illustration mobilité internationale pour ${country.name}`}
-            className="absolute inset-0 h-full w-full object-cover object-center opacity-25"
-          />
+          <picture className="absolute inset-0 block">
+            {procedureMobileImage && (
+              <source media="(max-width: 767px)" srcSet={procedureMobileImage} type="image/webp" />
+            )}
+            <img
+              src={procedureImage}
+              alt={`Illustration mobilité internationale pour ${country.name}`}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              className="absolute inset-0 h-full w-full object-cover object-center opacity-25"
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-950/95 via-indigo-950/80 to-blue-900/55" />
           <div className="absolute -right-10 -top-8 text-[9rem] leading-none opacity-[0.08] grayscale pointer-events-none">{regionBadge}</div>
           <div className="absolute right-8 bottom-5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-md">{regionLabel}</div>
@@ -113,7 +123,7 @@ export default function CountryDetailPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full">
               <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-3 text-6xl shadow-inner backdrop-blur-md sm:h-28 sm:w-28 sm:text-7xl">
                 {destinationMedia?.flagUrl ? (
-                  <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} className="h-full w-full object-contain" />
+                  <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} loading="lazy" decoding="async" className="h-full w-full object-contain" />
                 ) : country.flag}
               </span>
               <div className="min-w-0 w-full">
