@@ -1842,3 +1842,8 @@
 - [x] Auditer la référence d’image, le stockage, le composant héros et les logs réseau
 - [x] Corriger la source ou les styles de l’image sans altérer la structure visuelle
 - [x] Vérifier le chargement réel, le responsive, TypeScript, les tests et le build puis publier
+
+## Animation d’apparition du héros (v92)
+- [x] Auditer les animations existantes et définir une séquence d’apparition accessible
+- [x] Implémenter le fondu progressif du texte principal et du CTA avec respect du mouvement réduit
+- [x] Vérifier le rendu initial desktop/mobile, l’accessibilité, TypeScript, les tests et le build puis publier

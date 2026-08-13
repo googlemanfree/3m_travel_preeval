@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Star } from "lucide-react";
 import { Link } from "wouter";
@@ -18,6 +18,7 @@ export default function HeroSectionVIP({
 }: HeroSectionVIPProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -59,11 +60,20 @@ export default function HeroSectionVIP({
   }, []);
 
   const fadeUp = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: {
+      opacity: prefersReducedMotion ? 1 : 0,
+      y: prefersReducedMotion ? 0 : 18,
+    },
     visible: (i = 0) => ({
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, delay: i * 0.1, ease: "easeOut" as const },
+      transition: prefersReducedMotion
+        ? { duration: 0 }
+        : {
+            duration: 0.65,
+            delay: i * 0.12,
+            ease: [0.22, 1, 0.36, 1] as const,
+          },
     }),
   };
 
@@ -131,7 +141,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md"
+          className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
           3M Travel Agency
         </motion.h1>
@@ -168,7 +178,7 @@ export default function HeroSectionVIP({
         >
           <Button
             asChild
-            className="group relative overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-8 py-6 font-bold text-white rounded-xl shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c]"
+            className="group relative overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-8 py-6 font-bold text-white rounded-xl shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] will-change-[opacity,transform]"
           >
             <Link href="/evaluation-primaire" aria-label="Commencer mon évaluation gratuite">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
