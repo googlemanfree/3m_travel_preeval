@@ -1,5 +1,9 @@
 import { sendEmail as sendGenericEmail } from "./_core/email";
 
+import { getDb } from "./db";
+import { candidates } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
+
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@3mtravelagency.com";
 const SITE_URL = process.env.SITE_URL || "https://www.3mtravelagency.com";
 
@@ -349,6 +353,18 @@ export async function sendDossierConfirmationEmail(
 ): Promise<boolean> {
   const dashboardUrl = `${SITE_URL}/dashboard`;
   const whatsappUrl = `https://wa.me/237620996045?text=${encodeURIComponent(`Bonjour 3M Travel, je confirme l'ouverture de mon dossier ${dossierNumber}.`)}`;
+  
+  let avatarHtml = "";
+  try {
+    const db = await getDb();
+    if (db) {
+      const [cand] = await db.select().from(candidates).where(eq(candidates.email, to)).limit(1);
+      if (cand?.avatarUrl) {
+        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${fullName}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #16a34a; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
+      }
+    }
+  } catch {}
+
   try {
     await sendGenericEmail({
       to,
@@ -359,6 +375,7 @@ export async function sendDossierConfirmationEmail(
             <h1 style="margin: 0;">✅ Dossier Créé</h1>
           </div>
           <div style="padding: 40px; background: #f9fafb;">
+            ${avatarHtml}
             <p>Bonjour <strong>${fullName}</strong>,</p>
             <p>✅ Votre dossier d'immigration a été <strong>créé avec succès</strong> !</p>
             
@@ -407,12 +424,25 @@ export async function sendDossierConfirmationEmail(
 // sendAdminNewDossierAlert to match existing calls (alias for sendAdminNewDossierAlertEmail)
 export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: string, email: string, whatsappNumber: string, destination: string, status: string): Promise<void> {
   const subject = `🚨 Nouvelle alerte dossier - #${dossierNumber}`;
+  
+  let avatarHtml = "";
+  try {
+    const db = await getDb();
+    if (db) {
+      const [cand] = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
+      if (cand?.avatarUrl) {
+        avatarHtml = `<div style="text-align: center; margin-bottom: 20px;"><img src="${cand.avatarUrl}" alt="${fullName}" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid #DC2626; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" /></div>`;
+      }
+    }
+  } catch {}
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%); padding: 40px; text-align: center; color: white;">
         <h1 style="margin: 0;">🚨 Nouvelle Alerte Dossier</h1>
       </div>
       <div style="padding: 40px; background: #f9fafb;">
+        ${avatarHtml}
         <p>Un nouveau dossier a été créé :</p>
         <ul>
           <li><strong>Numéro de Dossier :</strong> #${dossierNumber}</li>

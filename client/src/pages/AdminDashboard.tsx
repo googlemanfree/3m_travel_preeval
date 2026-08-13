@@ -245,13 +245,44 @@ function CandidateDetailModal({
           </div>
         ) : candidate ? (
           <div className="space-y-5">
-            {/* En-tête candidat */}
-            <div className="flex items-start justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
-              <div>
-                <h3 className="text-lg font-bold text-blue-900">{candidate.fullName}</h3>
-                <p className="text-sm text-blue-600 font-mono">{candidate.folderCode}</p>
+            {/* En-tête candidat avec avatar et actions */}
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-4">
+                {candidate.avatarUrl ? (
+                  <img
+                    src={candidate.avatarUrl}
+                    alt={candidate.fullName}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-600 shadow-md"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                    {candidate.fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-lg font-bold text-blue-900">{candidate.fullName}</h3>
+                  <p className="text-sm text-blue-600 font-mono font-semibold">{candidate.folderCode}</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    {candidate.whatsapp && (
+                      <a
+                        href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 bg-green-600 text-white text-xs px-2.5 py-1 rounded-md hover:bg-green-700 transition"
+                      >
+                        💬 WhatsApp
+                      </a>
+                    )}
+                    <a
+                      href={`mailto:${candidate.email}`}
+                      className="inline-flex items-center gap-1 bg-blue-600 text-white text-xs px-2.5 py-1 rounded-md hover:bg-blue-700 transition"
+                    >
+                      ✉️ Email
+                    </a>
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-end gap-1.5">
                 <StatusBadge status={candidate.status} />
                 <SourceBadge source={candidate.source} />
               </div>

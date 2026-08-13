@@ -1488,6 +1488,9 @@ export const adminRouter = router({
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);
           if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
 
+          const [candRec] = await db.select().from(candidates).where(eq(candidates.email, app.email)).limit(1);
+          const avatarUrl = candRec?.avatarUrl || null;
+
           const docs = await db.select().from(clientDocuments)
             .where(eq(clientDocuments.candidateEmail, app.email))
             .limit(50);
@@ -1533,6 +1536,7 @@ export const adminRouter = router({
               scoringTotal: app.scoringTotal,
               scoringBadge: app.scoringBadge,
               scoringData,
+              avatarUrl,
               createdAt: app.createdAt,
               updatedAt: app.updatedAt,
             },
@@ -1541,6 +1545,12 @@ export const adminRouter = router({
         } else if (source === "agency") {
           const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
           if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable" });
+
+          let avatarUrl = null;
+          if (dossier.email) {
+            const [candRec] = await db.select().from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+            avatarUrl = candRec?.avatarUrl || null;
+          }
 
           const mapStatus = (status: string): string => {
             const mapping: Record<string, string> = {
@@ -1572,6 +1582,7 @@ export const adminRouter = router({
               scoringTotal: null,
               scoringBadge: null,
               scoringData: null,
+              avatarUrl,
               createdAt: dossier.createdAt,
               updatedAt: dossier.updatedAt,
             },

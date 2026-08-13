@@ -1923,3 +1923,10 @@
 - [x] Auditer les boutons actuels du héros et leurs actions
 - [x] Appliquer une base visuelle et dimensionnelle commune aux boutons du héros
 - [x] Vérifier clics, lisibilité, mobile, accessibilité, TypeScript, tests, build et publier
+
+## Amélioration espace admin et affichage obligatoire photo de profil (v106)
+- [x] Auditer le dashboard admin, les fiches dossier, les documents, le profil candidat et les modèles e-mail
+- [x] Renforcer l’affichage candidat et avatar dans les espaces admin/client avec contrôle de propriété
+- [x] Améliorer la gestion admin des dossiers avec actions rapides, documents, statuts, historique et prévisualisation
+- [x] Ajouter l’avatar aux e-mails opérationnels avec accès sécurisé, fallback et respect de la confidentialité
+- [x] Tester obligatoire, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
