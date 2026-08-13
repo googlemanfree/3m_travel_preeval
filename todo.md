@@ -1794,3 +1794,12 @@
 - [x] Préparer des visuels cohérents de mobilité internationale pour l’accueil et Canada/Schengen
 - [x] Intégrer les images et drapeaux dans l’accueil et les fiches procédures
 - [x] Vérifier rendu, performance, responsive, accessibilité, TypeScript, tests et build puis publier
+
+## Gestion admin des images et drapeaux par destination (v84)
+- [x] Auditer les modèles, routes et écrans existants pour les destinations et les médias
+- [x] Ajouter une structure persistante et sécurisée pour les médias de chaque destination
+- [x] Créer l’interface admin de recherche, prévisualisation, import, remplacement et suppression contrôlée
+- [x] Synchroniser les images et drapeaux des fiches publiques avec les médias administrés
+- [x] Ajouter validations de type, taille, accès privé et états d’erreur/chargement
+- [x] Écrire et exécuter les tests, valider TypeScript, responsive et build de production
+- [x] Sauvegarder et publier la version après vérification finale

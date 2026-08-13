@@ -36,6 +36,7 @@ import AdminUsersManagement from "./pages/AdminUsersManagement";
 import AdminAddDossier from "./pages/AdminAddDossier";
 import { AdminDocumentVerification } from "./pages/AdminDocumentVerification";
 import AdminProcedures from "./pages/AdminProcedures";
+import AdminDestinationMedia from "./pages/AdminDestinationMedia";
 import AdminUserDetails from "./pages/AdminUserDetails";
 import VisaEtudes from "./pages/VisaEtudes";
 import ProcedureLuxembourg from "./pages/ProcedureLuxembourg";
@@ -332,6 +333,11 @@ function Router() {
       <Route path={"/admin/procedures"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminProcedures />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/destination-media"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDestinationMedia />
         </AdminGuard>
       </Route>
       <Route path={"/admin/evaluations"}>

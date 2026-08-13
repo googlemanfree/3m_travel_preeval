@@ -60,6 +60,7 @@ import { adminCandidateManagementRouter } from "./routers/adminCandidateManageme
 import { adminSavedViewsRouter } from "./routers/adminSavedViews";
 import { insuranceRequestsRouter } from "./routers/insuranceRequests";
 import { caseTrackingRouter } from "./routers/caseTracking";
+import { destinationMediaRouter } from "./routers/destinationMedia";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -102,6 +103,7 @@ export const appRouter = router({
   adminSavedViews: adminSavedViewsRouter,
   insuranceRequests: insuranceRequestsRouter,
   caseTracking: caseTrackingRouter,
+  destinationMedia: destinationMediaRouter,
   adminAuth: adminAuthRouter,
   adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,

@@ -10,11 +10,23 @@ import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisual } from '@/data/procedureVisuals';
+import { trpc } from '@/lib/trpc';
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
 export default function ProceduresAdvanced() {
   const { language } = useLanguage();
+  const { data: destinationMediaOverrides } = trpc.destinationMedia.listPublic.useQuery(undefined, {
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const mediaByDestination = useMemo(() => {
+    const map = new Map<string, { imageUrl?: string | null; flagUrl?: string | null }>();
+    for (const media of destinationMediaOverrides ?? []) {
+      if (media.destinationId) map.set(media.destinationId, media);
+    }
+    return map;
+  }, [destinationMediaOverrides]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
   const [visaType, setVisaType] = useState<'travail' | 'etudes' | 'visiteur' | 'tous'>('tous');
@@ -438,6 +450,8 @@ export default function ProceduresAdvanced() {
             {filteredCountries.map((country) => {
               const isExpanded = expandedCountry === country.id;
               const isSelected = selectedForComparison.includes(country.id);
+              const destinationMedia = mediaByDestination.get(country.id);
+              const procedureImage = destinationMedia?.imageUrl ?? getProcedureVisual(country);
 
               return (
                 <motion.div
@@ -456,7 +470,7 @@ export default function ProceduresAdvanced() {
                     {/* Card Header */}
                     <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
                       <img
-                        src={getProcedureVisual(country)}
+                        src={procedureImage}
                         alt=""
                         aria-hidden="true"
                         loading="lazy"
@@ -465,7 +479,9 @@ export default function ProceduresAdvanced() {
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-800/90 via-blue-700/75 to-blue-600/50" />
                       <div className="relative z-10 flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => window.location.href = `/procedures/${country.id}`}>
-                          <span className="text-4xl">{country.flag}</span>
+                          <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-white/10 text-4xl">
+                            {destinationMedia?.flagUrl ? <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} className="h-full w-full object-contain" /> : country.flag}
+                          </span>
                           <div>
                             <h3 className="text-xl font-bold hover:underline flex items-center gap-1.5">{country.name} ↗</h3>
                             <p className="text-blue-100 text-sm flex items-center gap-1">

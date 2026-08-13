@@ -9,6 +9,7 @@ import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureRegionBadges, getProcedureVisual } from '@/data/procedureVisuals';
+import { trpc } from '@/lib/trpc';
 
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
@@ -20,6 +21,10 @@ export default function CountryDetailPage() {
 
   const country = procedures107Complete.find(c => c.id === countryId);
   const { language } = useLanguage();
+  const { data: destinationMedia } = trpc.destinationMedia.getByDestination.useQuery(
+    { destinationId: countryId ?? "unknown" },
+    { enabled: Boolean(countryId), staleTime: 5 * 60 * 1000 }
+  );
 
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -75,7 +80,7 @@ export default function CountryDetailPage() {
     }
   };
 
-  const procedureImage = getProcedureVisual(country);
+  const procedureImage = destinationMedia?.imageUrl ?? getProcedureVisual(country);
   const [regionBadge, regionLabel] = getProcedureRegionBadges(country);
 
   return (
@@ -106,7 +111,11 @@ export default function CountryDetailPage() {
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full">
-              <span className="text-6xl sm:text-7xl p-3 bg-white/10 rounded-2xl backdrop-blur-md shadow-inner">{country.flag}</span>
+              <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white/10 p-3 text-6xl shadow-inner backdrop-blur-md sm:h-28 sm:w-28 sm:text-7xl">
+                {destinationMedia?.flagUrl ? (
+                  <img src={destinationMedia.flagUrl} alt={`Drapeau de ${country.name}`} className="h-full w-full object-contain" />
+                ) : country.flag}
+              </span>
               <div className="min-w-0 w-full">
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                   <Badge className="bg-blue-500/30 text-blue-200 border border-blue-400/30 uppercase tracking-wider text-xs max-w-full whitespace-normal">

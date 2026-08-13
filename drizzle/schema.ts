@@ -1367,6 +1367,31 @@ export const destinationDocuments = mysqlTable("destination_documents", {
 export type DestinationDocument = typeof destinationDocuments.$inferSelect;
 export type NewDestinationDocument = typeof destinationDocuments.$inferInsert;
 
+/**
+ * Overrides médias administrables pour les fiches de destination.
+ * Les fichiers restent dans S3/Manus Storage ; cette table ne conserve que
+ * les références et la traçabilité de la dernière modification.
+ */
+export const destinationMedia = mysqlTable("destination_media", {
+  id: int("id").primaryKey().autoincrement(),
+  destinationId: varchar("destinationId", { length: 160 }).notNull().unique(),
+  imageUrl: text("imageUrl"),
+  imageKey: varchar("imageKey", { length: 512 }),
+  flagUrl: text("flagUrl"),
+  flagKey: varchar("flagKey", { length: 512 }),
+  imageAlt: varchar("imageAlt", { length: 255 }),
+  flagAlt: varchar("flagAlt", { length: 255 }),
+  updatedByAdminId: int("updatedByAdminId"),
+  updatedByAdminEmail: varchar("updatedByAdminEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_destination_media_updated_at").on(table.updatedAt),
+]);
+
+export type DestinationMedia = typeof destinationMedia.$inferSelect;
+export type InsertDestinationMedia = typeof destinationMedia.$inferInsert;
+
 export const favoriteFlights = mysqlTable("favorite_flights", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

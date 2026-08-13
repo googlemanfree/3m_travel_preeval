@@ -50,6 +50,7 @@ import {
   FileText,
   Upload,
   ExternalLink,
+  ImagePlus,
 } from "lucide-react";
 import {
   BarChart,
@@ -743,6 +744,14 @@ export default function AdminDashboard() {
                   ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
                   : formatAdminSyncTime(null)}
               </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/destination-media")}
+                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+              >
+                <ImagePlus className="w-4 h-4" /> Visuels destinations
+              </Button>
             </div>
             <Button
               variant="outline"
