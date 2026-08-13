@@ -103,28 +103,35 @@ export default function ServicesSection() {
   );
 }
 
-function ServiceCardContent({ item }: { item: typeof services[number] }) {
+function ServiceCardContent({ item }: { item: typeof services[number] & { tag?: string } }) {
   return (
     <>
       <div>
-        {/* Icône */}
-        <div className="w-14 h-14 rounded-2xl bg-blue-50/80 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-inner">
-          {item.icon}
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50/80 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
+            {item.icon}
+          </div>
+          {item.tag && (
+            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${item.badgeColor}`}>
+              {item.tag}
+            </span>
+          )}
         </div>
 
-        {/* Titre & sous-titre */}
         <h3 className="text-lg font-bold text-[#0a2540] group-hover:text-blue-600 transition-colors">
           {item.title}
         </h3>
-        <p className="text-sm font-medium text-gray-500 mt-1">
+        <p className="text-sm font-medium text-gray-500 mt-1 leading-relaxed">
           {item.subtitle}
         </p>
       </div>
 
-      {/* Flèche accès */}
       <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs font-bold text-blue-600">
-        <span>Découvrir le service</span>
-        <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+        <span className="group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+          <span>Lancer la démarche</span>
+          <span>→</span>
+        </span>
+        <span className="text-[11px] font-semibold text-slate-400">3M Travel</span>
       </div>
     </>
   );

@@ -88,11 +88,11 @@ export default function HeroSectionVIP({
         {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
-          src="/manus-storage/agency_hero_pro_hd_3m_7d4b4c20.png"
-          alt="3M Travel Agency - Voyage et Mobilité Internationale réussie avec des voyageurs épanouis"
+          src="/manus-storage/agency_hero_soft_two_persons_8ed4a223.png"
+          alt="3M Travel Agency - Spécialiste de la mobilité internationale vers le Canada et l'Europe"
           aria-hidden="true"
           ref={backgroundRef}
-          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-80 filter brightness-110 saturate-110 will-change-transform"
+          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-85 filter brightness-105 saturate-105 will-change-transform"
           style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/65 via-[#0a1d3a]/45 to-[#07162c]/80" />

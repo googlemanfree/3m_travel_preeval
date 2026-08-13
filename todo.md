@@ -1864,3 +1864,10 @@
 - [x] Définir les critères de priorité et le modèle de données des annonces majeures
 - [x] Intégrer le badge important ou urgent avec animation accessible dans les cartes d’actualités
 - [x] Vérifier le rendu, les états bilingues, le mouvement réduit, TypeScript, les tests, le build et publier
+
+## Refonte visuelle Canada/Schengen et services (v96)
+- [x] Auditer les pages, services, images, emblèmes, routes et bugs visuels prioritaires
+- [x] Produire une image de héros douce et des visuels éditoriaux pour les services clés (assurance, e-visa)
+- [x] Intégrer le nouveau héros à deux personnes, les emblèmes et les images par service
+- [x] Corriger les bugs prioritaires et vérifier navigation, états, responsive et accessibilité
+- [x] Valider visuellement, TypeScript, tests, build et publier la refonte
