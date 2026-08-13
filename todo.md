@@ -1820,3 +1820,9 @@
 - [x] Auditer le CTA existant et confirmer la route du formulaire d’évaluation gratuite
 - [x] Ajouter le bouton CTA avec effet de survol élégant et navigation robuste
 - [x] Vérifier le clic, le responsive, l’accessibilité, TypeScript, les tests et le build puis publier
+
+## Correction bilingue globale et héros amélioré 3M Travel Agency (v88)
+- [x] Auditer le sélecteur de langue, les textes non traduits et la structure du héros
+- [x] Produire et intégrer le nouveau visuel d’accueil inclusif représentant la réussite de voyageurs diversifiés
+- [x] Corriger l’application globale FR/EN, centrer le logo et harmoniser le héros
+- [x] Vérifier le changement de langue, le responsive, l’accessibilité, TypeScript, la suite de tests et le build puis publier

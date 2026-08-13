@@ -31,15 +31,15 @@ export default function HeroSectionVIP({
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
     >
-        {/* Visuel éditorial et filigranes de mobilité internationale */}
+        {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
-          src="/manus-storage/agency_hero_multicultural_ad8d81b1.png"
-          alt="3M Travel Agency - Voyage et Mobilité Internationale"
+          src="/manus-storage/agency_hero_success_diverse_93e808a0.png"
+          alt="3M Travel Agency - Voyage et Mobilité Internationale réussie"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-40 mix-blend-overlay filter brightness-95"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-45 mix-blend-overlay filter brightness-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/90 via-[#0a1d3a]/80 to-[#07162c]/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/90 via-[#0a1d3a]/75 to-[#07162c]/95" />
         <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
         <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>
         <div className="absolute right-1/4 bottom-10 text-[7rem] leading-none opacity-[0.12] select-none">🇺🇸</div>
@@ -61,20 +61,22 @@ export default function HeroSectionVIP({
           ⭐ Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
         </motion.div>
 
-        {/* Logo agrandi avec effet lumineux professionnel */}
+        {/* Logo parfaitement centré avec effet lumineux professionnel */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mb-6 relative inline-block"
+          className="mb-6 flex justify-center items-center"
         >
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-75 blur-md animate-pulse" />
-          <img
-            src={logoUrl}
-            alt="3M Travel Agency"
-            className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white/40 mx-auto shadow-2xl object-cover bg-white"
-          />
+          <div className="relative inline-block">
+            <div className="absolute -inset-3 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-75 blur-md animate-pulse" />
+            <img
+              src={logoUrl}
+              alt="3M Travel Agency"
+              className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white/40 shadow-2xl object-cover bg-white"
+            />
+          </div>
         </motion.div>
 
         {/* Titre principal avec typographie moderne */}

@@ -128,6 +128,11 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     if (canSyncProfile) {
       updateProfile.mutate({ preferredLanguage: normalized });
     }
+
+    // Déclencher un événement global pour forcer le rafraîchissement des composants ancrés
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("language-changed", { detail: normalized }));
+    }
   };
 
   const t = (frText: string, enText: string) => (language === "en" ? enText : frText);
