@@ -50,6 +50,7 @@ export function AdminDocumentsManagement() {
   const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
   const approveCandidateFileMutation = trpc.admin.approveCandidateFile.useMutation();
   const rejectCandidateFileMutation = trpc.admin.rejectCandidateFile.useMutation();
+  const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
 
   // Récupérer les documents via tRPC
@@ -70,13 +71,14 @@ export function AdminDocumentsManagement() {
   const handleApproveDocument = async (doc: Document) => {
     setIsLoading(true);
     try {
-      if (doc.source === "candidate") {
-        await approveCandidateFileMutation.mutateAsync({ sessionToken, fileId: doc.id });
-      } else {
-        await approveDocumentMutation.mutateAsync({ sessionToken, documentId: doc.id });
-      }
+      await updateDocumentStatusMutation.mutateAsync({
+        sessionToken,
+        documentId: doc.id,
+        source: doc.source === "candidate" ? "candidate" : "client",
+        status: "approved",
+      });
       toast.success("✓ Document approuvé", {
-        description: "La décision est enregistrée dans le dossier candidat.",
+        description: "Le statut a été mis à jour et une notification a été envoyée au candidat.",
         duration: 4000,
       });
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -88,6 +90,30 @@ export function AdminDocumentsManagement() {
         duration: 4000,
       });
       console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetPendingDocument = async (doc: Document) => {
+    setIsLoading(true);
+    try {
+      await updateDocumentStatusMutation.mutateAsync({
+        sessionToken,
+        documentId: doc.id,
+        source: doc.source === "candidate" ? "candidate" : "client",
+        status: "pending",
+        comment: "Document replacé en attente de vérification par l'administration.",
+      });
+      toast.success("⏳ Document remis en attente", {
+        description: "Le statut a été mis à jour.",
+        duration: 4000,
+      });
+      await new Promise(resolve => setTimeout(resolve, 500));
+      refetch();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Une erreur est survenue";
+      toast.error("✗ Erreur", { description: errorMessage, duration: 4000 });
     } finally {
       setIsLoading(false);
     }
@@ -110,13 +136,15 @@ export function AdminDocumentsManagement() {
 
     setIsLoading(true);
     try {
-      const result = rejectingDocSource === "candidate"
-        ? await rejectCandidateFileMutation.mutateAsync({ sessionToken, fileId: rejectingDocId, comment: rejectionReason, notifyCandidate: true })
-        : await rejectDocumentMutation.mutateAsync({ sessionToken, documentId: rejectingDocId, comment: rejectionReason, markerAnnotations, notifyCandidate: true });
+      await updateDocumentStatusMutation.mutateAsync({
+        sessionToken,
+        documentId: rejectingDocId,
+        source: rejectingDocSource === "candidate" ? "candidate" : "client",
+        status: "rejected",
+        comment: rejectionReason,
+      });
       toast.success("✓ Document rejeté", {
-        description: result.notificationSent
-          ? "Le candidat a reçu les annotations et la raison du rejet par e-mail."
-          : "Le rejet est enregistré. La notification e-mail n’a pas pu être confirmée.",
+        description: "Le candidat a été notifié par e-mail de la décision de rejet.",
         duration: 4000,
       });
       setRejectingDocId(null);
@@ -540,18 +568,32 @@ export function AdminDocumentsManagement() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {doc.verificationStatus === "pending" && (
-                              <>
+                            <div className="flex items-center gap-1">
+                              {doc.verificationStatus !== "approved" && (
                                 <Button
                                   onClick={() => handleApproveDocument(doc)}
                                   variant="ghost"
                                   size="sm"
-                                  title="Approuver"
+                                  title="Valider / Approuver"
                                   className="text-green-600 hover:text-green-700"
                                   disabled={isLoading}
                                 >
                                   <CheckCircle2 className="w-4 h-4" />
                                 </Button>
+                              )}
+                              {doc.verificationStatus !== "pending" && (
+                                <Button
+                                  onClick={() => handleSetPendingDocument(doc)}
+                                  variant="ghost"
+                                  size="sm"
+                                  title="Remettre en attente"
+                                  className="text-amber-600 hover:text-amber-700"
+                                  disabled={isLoading}
+                                >
+                                  <Clock className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {doc.verificationStatus !== "rejected" && (
                                 <Button
                                   onClick={() => handleRejectDocument(doc)}
                                   variant="ghost"
@@ -562,8 +604,8 @@ export function AdminDocumentsManagement() {
                                 >
                                   <XCircle className="w-4 h-4" />
                                 </Button>
-                              </>
-                            )}
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>

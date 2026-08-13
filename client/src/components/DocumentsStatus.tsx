@@ -1,7 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Clock, XCircle, Download, Eye, Upload } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, XCircle, Download, Eye, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
+import { getRejectedDocumentCount } from "@shared/documentStatus";
 
 interface DocumentsStatusProps {
   dossierNumber: string;
@@ -57,8 +58,33 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
   if (error) return <div className="text-red-500 py-8">Erreur: {error.message}</div>;
   if (!data) return null;
 
+  const rejectedDocuments = data.documents.filter((document) => document.status === "rejected");
+  const rejectedDocumentCount = getRejectedDocumentCount(data.documents);
+
   return (
     <div className="space-y-6">
+      {rejectedDocuments.length > 0 && (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-semibold text-red-900">
+                {rejectedDocumentCount === 1
+                  ? "Un document nécessite votre correction"
+                  : `${rejectedDocumentCount} documents nécessitent votre correction`}
+              </p>
+              <p className="mt-1 text-sm text-red-800">
+                Consultez le motif du rejet, téléchargez le document concerné si nécessaire, puis envoyez une version corrigée avec le bouton « Réupload ».
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Résumé */}
       <Card>
         <CardHeader>
@@ -99,7 +125,14 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
           <CardContent>
             <div className="space-y-3">
               {data.documents.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div
+                  key={doc.id}
+                  className={`flex flex-col gap-3 rounded-lg border p-3 transition-colors sm:flex-row sm:items-center sm:justify-between ${
+                    doc.status === "rejected"
+                      ? "border-red-200 bg-red-50/70 hover:bg-red-50"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
                   <div className="flex items-center gap-3 flex-1">
                     <div>{getStatusIcon(doc.status)}</div>
                     <div className="flex-1">
@@ -110,15 +143,23 @@ export function DocumentsStatus({ dossierNumber }: DocumentsStatusProps) {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-end gap-2 sm:shrink-0">
                     {getStatusBadge(doc.status)}
                     {doc.url && (
-                      <Button size="sm" variant="ghost" onClick={() => setSelectedDoc(doc)}>
+                      <Button size="sm" variant="ghost" onClick={() => setSelectedDoc(doc)} aria-label={`Prévisualiser ${doc.name}`}>
                         <Eye className="w-4 h-4" />
                       </Button>
                     )}
+                    {doc.status === "rejected" && doc.url && (
+                      <a href={doc.url} download={doc.name} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-100">
+                          <Download className="w-4 h-4 mr-1" />
+                          Télécharger
+                        </Button>
+                      </a>
+                    )}
                     {doc.status === "rejected" && (
-                      <Button size="sm" variant="outline" onClick={() => setReuploadDoc(doc)}>
+                      <Button size="sm" onClick={() => setReuploadDoc(doc)}>
                         <Upload className="w-4 h-4 mr-1" />
                         Réupload
                       </Button>

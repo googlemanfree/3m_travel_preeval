@@ -1931,16 +1931,38 @@
 - [x] Ajouter l’avatar aux e-mails opérationnels avec accès sécurisé, fallback et respect de la confidentialité
 - [x] Tester obligatoire, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
 
+## Outil de recadrage et prévisualisation d’avatar (v107)
+- [x] Auditer l’étape avatar obligatoire, les validations et le flux de stockage
+- [x] Construire l’interface de prévisualisation et de recadrage avec zoom et déplacement accessibles
+- [x] Envoyer le portrait recadré, conserver les validations serveur et afficher le résultat dans les espaces autorisés
+- [x] Vérifier qualité du rendu, confidentialité, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Gestion des statuts de documents par l’administrateur (v108)
+- [x] Auditer les documents candidats, les statuts existants, les droits admin et les modèles d’e-mail
+- [x] Ajouter la mutation serveur de changement de statut avec validation, note et journal d’audit
+- [x] Intégrer les actions Validé, Rejeté et En attente dans la fiche admin et l’espace client
+- [x] Ajouter les e-mails bilingues, tester les erreurs, les droits, le responsive, TypeScript, Vitest, build et publier
+
+## Alerte de rejet de document côté candidat (v109)
+- [x] Auditer l’affichage des statuts documents et le flux de réimport candidat
+- [x] Intégrer l’alerte de rejet, le motif administrateur et le bouton d’action rapide côté candidat
+- [x] Vérifier propriété, téléchargement, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Libellé Inscription et dimensions uniformes des boutons (v110)
+- [x] Auditer les boutons de navigation, du héros et d’inscription ainsi que leurs variantes responsive
+- [x] Remplacer le libellé par « Inscription » et appliquer une base de dimensions uniformes
+- [x] Vérifier alignement, textes longs, mobile, accessibilité, TypeScript, tests, build et publier
+
 ## Phase 1 : Correction des logos d'authentification (v114)
 - [x] Identifier les fichiers de pages d'authentification utilisant une URL de logo obsolète ou erronée (`Dashboard.tsx`, `ForgotPassword.tsx`, `Login.tsx`, `Register.tsx`, `ResetPassword.tsx`)
-- [x] Remplacer par l'URL officielle validée du logo 3M (`/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg`)
+- [x] Remplacer par l’URL officielle validée du logo 3M (`/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg`)
 - [x] Valider avec la suite de 121 tests unitaires et le build de production réussi
 
 ## Phase 2 : Uniformisation des champs et libellés d'inscription (v115)
 - [x] Uniformiser Input, Select et Textarea avec une hauteur et un rayon cohérents
 - [x] Remplacer les occurrences restantes de « Créer un compte » par « Inscription »
 - [x] Vérifier que les boutons d'inscription gardent une largeur et un alignement cohérents sur desktop et mobile
-- [x] Relancer les tests, le build et les captures d'aperçu
+- [x] Relancer les tests, le build et les captures d’aperçu
 
 ## Phase 4 : Positionnement mobile des boutons flottants (v116)
 - [x] Définir un espacement mobile commun pour les boutons Chat/Aureol et WhatsApp

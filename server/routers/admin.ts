@@ -1344,6 +1344,128 @@ export const adminRouter = router({
       return await listDestinationDocuments(input.search);
     }),
 
+  /**
+   * Modifier directement le statut d'un document (validé, rejeté, en attente) avec notification e-mail automatique au candidat
+   */
+  updateDocumentStatus: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      documentId: z.number().int(),
+      source: z.enum(["client", "candidate"]).default("client"),
+      status: z.enum(["pending", "approved", "rejected"]),
+      comment: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      try {
+        let candidateEmail = "";
+        let candidateName = "";
+        let documentName = "";
+
+        if (input.source === "client") {
+          const [doc] = await db.select().from(clientDocuments).where(eq(clientDocuments.id, input.documentId)).limit(1);
+          if (!doc) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable" });
+
+          await db.update(clientDocuments)
+            .set({
+              verificationStatus: input.status as any,
+              status: input.status === "approved" ? "verified" : input.status === "rejected" ? "rejected" : "pending",
+              verificationComment: input.comment || null,
+              verifiedByAdmin: admin.email || "Admin",
+              verifiedAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(clientDocuments.id, input.documentId));
+
+          candidateEmail = doc.candidateEmail;
+          documentName = doc.documentName;
+
+          // Récupérer le nom du candidat
+          const [app] = await db.select().from(applications).where(eq(applications.email, doc.candidateEmail)).limit(1);
+          candidateName = app?.fullName || doc.candidateEmail.split("@")[0];
+        } else {
+          const [fileRec] = await db.select().from(candidateFiles).where(eq(candidateFiles.id, input.documentId)).limit(1);
+          if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Fichier candidat introuvable" });
+
+          const newFileStatus = input.status === "approved" ? "verified" : input.status === "rejected" ? "rejected" : "uploaded";
+
+          await db.update(candidateFiles)
+            .set({
+              status: newFileStatus as any,
+              rejectionReason: input.comment || null,
+            })
+            .where(eq(candidateFiles.id, input.documentId));
+
+          documentName = fileRec.fileName;
+          const [cand] = await db.select().from(candidates).where(eq(candidates.id, fileRec.candidateId)).limit(1);
+          candidateEmail = cand?.email || "";
+          candidateName = cand?.fullName || "Candidat";
+        }
+
+        // Envoyer la notification e-mail automatique au candidat
+        if (candidateEmail) {
+          try {
+            const statusLabels: Record<string, { label: string; color: string; badge: string }> = {
+              approved: { label: "Validé & Approuvé", color: "#16a34a", badge: "✓ VALIDÉ" },
+              rejected: { label: "Refusé / À corriger", color: "#dc2626", badge: "✗ REJETÉ" },
+              pending: { label: "Remis en attente", color: "#d97706", badge: "⏳ EN ATTENTE" },
+            };
+
+            const info = statusLabels[input.status] || statusLabels.pending;
+
+            const htmlContent = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+                <div style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); padding: 32px 24px; text-align: center;">
+                  <h1 style="color: #fff; font-size: 22px; margin: 0;">3M Travel Agency</h1>
+                  <p style="color: #bfdbfe; font-size: 13px; margin: 6px 0 0;">Mise à jour du statut de votre document</p>
+                </div>
+                <div style="padding: 32px 28px;">
+                  <p style="color: #374151;">Bonjour <strong>${candidateName}</strong>,</p>
+                  <p style="color: #374151;">Le statut de vérification de votre document <strong>${documentName}</strong> a été mis à jour par l'administration :</p>
+                  
+                  <div style="background: #f8fafc; border-left: 4px solid ${info.color}; padding: 16px 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0 0 6px 0; font-size: 16px; font-weight: 700; color: ${info.color};">${info.badge}</p>
+                    ${input.comment ? `<p style="margin: 8px 0 0 0; font-size: 14px; color: #4b5563;"><strong>Note de l'agence :</strong> ${input.comment}</p>` : ""}
+                  </div>
+
+                  <p style="color: #374151; font-size: 14px;">Vous pouvez consulter votre espace candidat pour suivre l'évolution complète de vos démarches :</p>
+                  <a href="https://3mtravelagency.click/mon-espace" style="display: inline-block; background: #1E3A8A; color: #fff; text-decoration: none; padding: 14px 32px; border-radius: 10px; font-weight: 700; font-size: 15px; margin: 16px 0;">Accéder à mon espace</a>
+                </div>
+                <div style="background: #f8faff; padding: 20px 28px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+                  <p>3M Travel Agency — RC/YAO/2019/A/2567 | NIU : M112417203369H</p>
+                  <p>Yaoundé, Cameroun | +237 620-996-045 | hello@3mtravelagency.com</p>
+                </div>
+              </div>
+            `;
+
+            await sendGenericEmail({
+              to: candidateEmail,
+              subject: `📄 Document ${documentName} : ${info.badge} - 3M Travel Agency`,
+              html: htmlContent,
+            });
+          } catch (emailErr) {
+            console.error("[Admin Update Document Status] Email notification failed:", emailErr);
+          }
+        }
+
+        return {
+          success: true,
+          message: "Statut du document mis à jour avec succès",
+        };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        console.error("[Admin Update Document Status] Error:", err);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Erreur lors de la mise à jour du statut du document",
+        });
+      }
+    }),
+
   addDestinationDocumentAdmin: publicProcedure
     .input(z.object({
       sessionToken: z.string(),

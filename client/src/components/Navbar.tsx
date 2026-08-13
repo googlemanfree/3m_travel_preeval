@@ -22,6 +22,9 @@ const nativeLinkClass = (highlight?: boolean) =>
     ? "px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-1"
     : "px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
 
+const authButtonClass = "inline-flex h-12 w-[148px] items-center justify-center rounded-xl px-4 text-center text-sm font-bold transition-all duration-200 active:scale-95";
+const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
+
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
@@ -193,7 +196,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/login")}
                   onFocus={() => handleNavigationIntent("/login")}
                   onClick={handleNavigationClick}
-                  className="bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95"
+                  className={`${authButtonClass} bg-blue-50/80 text-blue-700 border border-blue-100 hover:bg-blue-100/80`}
                 >
                   👤 Accès Client
                 </a>
@@ -202,7 +205,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/register")}
                   onFocus={() => handleNavigationIntent("/register")}
                   onClick={handleNavigationClick}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 shadow-sm"
+                  className={`${authButtonClass} bg-blue-600 text-white shadow-sm hover:bg-blue-700`}
                 >
                   ✍️ Inscription
                 </a>
@@ -318,7 +321,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/evaluation")}
                   onFocus={() => handleNavigationIntent("/evaluation")}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
-                  className="block w-full text-center bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+                  className={`${mobileAuthButtonClass} bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30`}
                 >
                   ⭐ Évaluer mon profil
                 </a>
@@ -327,7 +330,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/login")}
                   onFocus={() => handleNavigationIntent("/login")}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
-                  className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold border border-blue-100 transition-all"
+                  className={`${mobileAuthButtonClass} bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100`}
                 >
                   👤 Accès Client
                 </a>
@@ -336,7 +339,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/register")}
                   onFocus={() => handleNavigationIntent("/register")}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
-                  className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl font-bold transition-all mt-2"
+                  className={`${mobileAuthButtonClass} mt-2 bg-blue-600 text-white hover:bg-blue-700`}
                 >
                   ✍️ Inscription
                 </a>
