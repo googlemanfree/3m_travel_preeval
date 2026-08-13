@@ -342,6 +342,19 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
     onError: (error) => toast({ title: "Connexion requise", description: error.message, variant: "destructive" }),
   });
 
+  const handleOpenCheckout = () => {
+    try {
+      sessionStorage.setItem("3m-selected-flight", JSON.stringify({
+        flight,
+        searchParams,
+        isSimulated,
+        selectedAt: Date.now(),
+      }));
+    } catch {
+      toast({ title: "Sélection non conservée", description: "Veuillez rester sur cet appareil pendant la réservation.", variant: "destructive" });
+    }
+  };
+
   const handleAddToCart = () => {
     addItem({
       id: `flight-${flight.id}-${searchParams.adults}-${searchParams.children}-${searchParams.infants}`,
@@ -458,7 +471,7 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <a href={`/flight-booking/${flight.id}`}>
+              <a href={`/flight-booking/${flight.id}`} onClick={handleOpenCheckout}>
                 <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
                   <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
                 </Button>

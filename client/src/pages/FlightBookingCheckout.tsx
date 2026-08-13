@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Share2, CalendarPlus, Copy, Link2, Hotel, Car } from "lucide-react";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Loader, Share2, CalendarPlus, Copy, Link2, Hotel, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,22 +13,70 @@ function formatXaf(amount: number) {
   return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`;
 }
 
+function toCalendarStamp(date: string, time: string) {
+  const safeDate = date.replace(/-/g, "");
+  const safeTime = time.replace(/:/g, "").slice(0, 4).padEnd(4, "0");
+  return `${safeDate}T${safeTime}00`;
+}
+
 const bookingSteps = [
   { label: "Vol sélectionné", shortLabel: "Vol" },
   { label: "Informations passager", shortLabel: "Passager" },
   { label: "Confirmation finale", shortLabel: "Confirmation" },
-  { label: "Réservation confirmée", shortLabel: "Confirmée" },
+  { label: "Demande préparée", shortLabel: "Préparée" },
 ] as const;
+
+type CheckoutFlight = {
+  id: string;
+  airline: { name: string; code: string };
+  flightNumber: string;
+  origin: string;
+  originCity: string;
+  destination: string;
+  destinationCity: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  stops: number;
+  cabinClass: string;
+  totalPrice: number;
+  currency: string;
+  baggage: string;
+  pnrRef: string;
+};
+
+type CheckoutSelection = {
+  flight: CheckoutFlight;
+  searchParams: { adults: number; children: number; infants: number };
+  isSimulated: boolean;
+  selectedAt: number;
+};
 
 export default function FlightBookingCheckout() {
   const [, params] = useRoute<{ flightId: string }>("/flight-booking/:flightId");
   const { toast } = useToast();
   const { addItem } = useMultiServiceCart();
+  const [selection] = useState<CheckoutSelection | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = sessionStorage.getItem("3m-selected-flight");
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as CheckoutSelection;
+      const isRecent = Number.isFinite(parsed.selectedAt) && Date.now() - parsed.selectedAt < 30 * 60 * 1000;
+      return parsed.flight?.id === params?.flightId && isRecent ? parsed : null;
+    } catch {
+      return null;
+    }
+  });
+  const selectedFlight = selection?.flight;
+  const hasSelectedFlight = Boolean(selectedFlight);
   const [submitted, setSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dossierRef, setDossierRef] = useState("");
   const [friendEmail, setFriendEmail] = useState("");
   const [isLinkCopied, setIsLinkCopied] = useState(false);
+  const [isTicketExporting, setIsTicketExporting] = useState(false);
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
   const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
 
@@ -48,6 +96,10 @@ export default function FlightBookingCheckout() {
 
   const handleOpenConfirm = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasSelectedFlight) {
+      toast({ title: "Vol introuvable", description: "Retournez aux résultats et sélectionnez un vol avant de continuer.", variant: "destructive" });
+      return;
+    }
     if (!formData.fullName || !formData.email || !formData.passportNumber) {
       toast({ title: "Informations incomplètes", description: "Veuillez renseigner votre nom, e-mail et numéro de passeport.", variant: "destructive" });
       return;
@@ -60,19 +112,19 @@ export default function FlightBookingCheckout() {
     const ref = `3M-FL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     setDossierRef(ref);
     setSubmitted(true);
-    toast({ title: "Réservation confirmée", description: `Dossier ${ref} créé et transmis à l'agence.` });
+    toast({ title: "Demande préparée", description: `Référence provisoire ${ref}. Contactez l'agence pour la revalidation et l'émission.` });
   };
 
   const whatsappNumber = "237698104832";
   const agencyEmail = "hello@3mtravelagency.com";
   const agencyPhone = "+237 698 10 48 32";
-  const destinationLabel = typeof window !== "undefined"
+  const destinationLabel = selectedFlight?.destinationCity || (typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("destination") || "votre destination"
-    : "votre destination";
+    : "votre destination");
   const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
   const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
-  const shareText = `✈️ Ma Réservation 3M Travel Agency\nRef Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: 3M-FL-${params && params.flightId ? params.flightId : "REF"}\nContact Agence: +237 698 10 48 32`;
+  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nPrix indicatif: ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nContact Agence: +237 698 10 48 32`;
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
@@ -112,24 +164,33 @@ export default function FlightBookingCheckout() {
   };
 
   const handleAddToGoogleCalendar = () => {
-    const title = encodeURIComponent("Vol 3M Travel - Réservation " + dossierRef);
-    const details = encodeURIComponent("Vol réservé via 3M Travel Agency.\nPassager: " + formData.fullName + "\nPasseport: " + formData.passportNumber);
-    const location = encodeURIComponent("Aéroport International (GDS 3M Travel)");
-    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=20260901T100000Z/20260901T180000Z`;
+    if (!selectedFlight) {
+      toast({ title: "Vol introuvable", description: "Sélectionnez un vol avant d’ajouter un événement au calendrier.", variant: "destructive" });
+      return;
+    }
+    const title = encodeURIComponent(`Vol ${selectedFlight.airline.name} — ${selectedFlight.flightNumber}`);
+    const details = encodeURIComponent(`Demande de réservation 3M Travel Agency.\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nRéférence: ${dossierRef}`);
+    const location = encodeURIComponent(`${selectedFlight.originCity} → ${selectedFlight.destinationCity}`);
+    const dates = `${toCalendarStamp(selectedFlight.departureDate, selectedFlight.departureTime)}/${toCalendarStamp(selectedFlight.departureDate, selectedFlight.arrivalTime)}`;
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${dates}`;
     window.open(googleUrl, "_blank");
   };
 
   const handleDownloadIcs = () => {
+    if (!selectedFlight) {
+      toast({ title: "Vol introuvable", description: "Sélectionnez un vol avant de télécharger l’événement calendrier.", variant: "destructive" });
+      return;
+    }
     const icsContent = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
       "PRODID:-//3M Travel Agency//Vol Confirme//FR",
       "BEGIN:VEVENT",
-      `SUMMARY:Vol 3M Travel - Réf ${dossierRef}`,
-      `DESCRIPTION:Réservation de vol confirmée pour ${formData.fullName} (Passeport: ${formData.passportNumber}).`,
-      "LOCATION:3M Travel Agency - Agence Centrale",
-      "DTSTART:20260901T100000Z",
-      "DTEND:20260901T180000Z",
+      `SUMMARY:Vol ${selectedFlight.airline.name} - ${selectedFlight.flightNumber}`,
+      `DESCRIPTION:Demande de réservation pour ${formData.fullName} (Passeport: ${formData.passportNumber}, Réf: ${dossierRef}).`,
+      `LOCATION:${selectedFlight.originCity} → ${selectedFlight.destinationCity}`,
+      `DTSTART:${toCalendarStamp(selectedFlight.departureDate, selectedFlight.departureTime)}`,
+      `DTEND:${toCalendarStamp(selectedFlight.departureDate, selectedFlight.arrivalTime)}`,
       "END:VEVENT",
       "END:VCALENDAR",
     ].join("\r\n");
@@ -154,62 +215,60 @@ export default function FlightBookingCheckout() {
     setShowWalletModal(true);
   };
 
-  const handleDownloadTicketPdf = () => {
-    const content = `
-==================================================
-        3M TRAVEL AND SERVICES
-       BILLET ÉLECTRONIQUE PROVISOIRE
-==================================================
+  const handleDownloadTicketPdf = async () => {
+    if (!selectedFlight || isTicketExporting) return;
+    setIsTicketExporting(true);
+    try {
+      const { default: JsPDF } = await import("jspdf");
+      const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const lines = [
+        "3M TRAVEL AGENCY",
+        "RÉCAPITULATIF PROVISOIRE DE DEMANDE DE VOL",
+        `Référence : ${dossierRef}`,
+        `Émis le : ${new Date().toLocaleDateString("fr-FR")}`,
+        "",
+        "PASSAGER",
+        `Nom complet : ${formData.fullName}`,
+        `E-mail : ${formData.email}`,
+        `Téléphone : ${formData.phone}`,
+        `Passeport : ${formData.passportNumber}`,
+        `Nationalité : ${formData.nationality}`,
+        `Date de naissance : ${formData.dateOfBirth || "Non renseignée"}`,
+        "",
+        "VOL SÉLECTIONNÉ",
+        `Compagnie / vol : ${selectedFlight.airline.name} — ${selectedFlight.flightNumber}`,
+        `Itinéraire : ${selectedFlight.originCity} (${selectedFlight.origin}) → ${selectedFlight.destinationCity} (${selectedFlight.destination})`,
+        `Départ : ${selectedFlight.departureDate} à ${selectedFlight.departureTime}`,
+        `Arrivée : ${selectedFlight.arrivalTime} · Durée : ${selectedFlight.duration}`,
+        `Escales : ${selectedFlight.stops === 0 ? "Vol direct" : `${selectedFlight.stops} escale(s)`}`,
+        `Classe : ${selectedFlight.cabinClass}`,
+        `Bagages : ${selectedFlight.baggage}`,
+        `Prix ${selection?.isSimulated ? "indicatif" : "estimé"} : ${formatXaf(selectedFlight.totalPrice)}`,
+        "",
+        "VALIDATION",
+        "Le tarif, les places et l’émission doivent être revalidés par 3M Travel Agency avant tout paiement ou émission définitive.",
+        "Contact : hello@3mtravelagency.com · +237 698 10 48 32",
+      ];
 
-Référence de dossier : ${dossierRef}
-Date d'émission : ${new Date().toLocaleDateString("fr-FR")}
-
---------------------------------------------------
-INFORMATIONS DU PASSAGER
---------------------------------------------------
-Nom complet : ${formData.fullName}
-E-mail : ${formData.email}
-Téléphone : ${formData.phone}
-Numéro de Passeport : ${formData.passportNumber}
-Nationalité : ${formData.nationality}
-Date de Naissance : ${formData.dateOfBirth || "Non renseignée"}
-
---------------------------------------------------
-DÉTAILS DU VOL ET DE LA PRESTATION
---------------------------------------------------
-ID Vol : 3M-FL-${params && params.flightId ? params.flightId : "REF"}
-Classe de cabine : Économique GDS
-Bagages inclus : 23 kg
-Montant estimé : 450 000 FCFA
-
---------------------------------------------------
-INSTRUCTIONS DE VALIDATION
---------------------------------------------------
-Ce document atteste de l'enregistrement de votre demande
-auprès de 3M Travel Agency. Le tarif et les sièges
-sont soumis à revalidation GDS par nos conseillers
-avant l'émission définitive.
-
-Contact agence :
-- WhatsApp : +237 698 10 48 32
-- E-mail : hello@3mtravelagency.com
-- Site web : https://www.3mtravelagency.com
-
-==================================================
-    3M Travel and Services — Votre Avenir Commence Ici
-==================================================
-    `.trim();
-
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Billet_3M_Travel_${dossierRef}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast({ title: "Téléchargement réussi", description: "Votre récapitulatif de billet a été téléchargé." });
+      pdf.setTextColor(25, 55, 109);
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(lines[0], 15, 20);
+      pdf.setFontSize(11);
+      pdf.text(lines[1], 15, 28);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(35, 45, 60);
+      pdf.setFontSize(10);
+      const body = pdf.splitTextToSize(lines.slice(2).join("\n"), 180);
+      pdf.text(body, 15, 40);
+      pdf.save(`Billet_3M_Travel_${dossierRef}.pdf`);
+      toast({ title: "PDF téléchargé", description: "Votre récapitulatif provisoire a été généré avec succès." });
+    } catch (error) {
+      console.error("Erreur lors du téléchargement du billet PDF", error);
+      toast({ title: "Téléchargement impossible", description: "Veuillez réessayer ou contacter l’agence.", variant: "destructive" });
+    } finally {
+      setIsTicketExporting(false);
+    }
   };
 
   return (
@@ -221,7 +280,12 @@ Contact agence :
               <ShieldCheck className="h-4 w-4" /> Réservation Sécurisée GDS & Passeport
             </span>
             <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Finalisation de votre vol</h1>
-            <p className="mt-2 text-sm text-slate-600">Renseignez les informations officielles de votre passeport et validez votre réservation en ligne.</p>
+              <p className="mt-2 text-sm text-slate-600">Renseignez les informations officielles de votre passeport et préparez votre demande de réservation.</p>
+              {!hasSelectedFlight && (
+                <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900" role="alert">
+                  Aucun vol sélectionné n’a été retrouvé sur cet appareil. <a href="/flights" className="underline">Retourner aux résultats</a> pour choisir un vol.
+                </div>
+              )}
           </div>
 
           <section aria-label="Progression de la réservation" className="mb-8 rounded-3xl border border-blue-100 bg-white p-4 shadow-sm md:p-5">
@@ -261,7 +325,7 @@ Contact agence :
 
           {!submitted ? (
             <form onSubmit={handleOpenConfirm} className="grid gap-8 lg:grid-cols-[1fr_360px]">
-              <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
+              <div className={`space-y-6 rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm ${!hasSelectedFlight ? "opacity-70" : ""}`}>
                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <User className="h-5 w-5 text-blue-600" /> Informations du Passager & Passeport
                 </h2>
@@ -303,7 +367,7 @@ Contact agence :
                   </div>
                 </div>
 
-                <Button type="submit" className="h-12 w-full rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md">
+                <Button type="submit" disabled={!hasSelectedFlight} className="h-12 w-full rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md disabled:cursor-not-allowed disabled:opacity-50">
                   Vérifier et confirmer la réservation <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
@@ -311,24 +375,25 @@ Contact agence :
               <div className="h-fit space-y-4 rounded-3xl border border-blue-100 bg-white p-6 shadow-lg lg:sticky lg:top-24">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Récapitulatif Vol</p>
                 <div className="space-y-3 text-sm text-slate-600">
-                  <div className="flex justify-between"><span>Référence vol :</span><span className="font-mono font-bold text-slate-900">3M-FL-{params && params.flightId ? params.flightId : "REF"}</span></div>
-                  <div className="flex justify-between"><span>Classe :</span><span className="font-semibold text-blue-700">Économique GDS</span></div>
-                  <div className="flex justify-between"><span>Bagages :</span><span className="font-semibold text-slate-900">23kg inclus</span></div>
+                  <div className="flex justify-between gap-3"><span>Vol :</span><span className="font-mono text-right font-bold text-slate-900">{selectedFlight?.flightNumber || "Non sélectionné"}</span></div>
+                  <div className="flex justify-between gap-3"><span>Itinéraire :</span><span className="text-right font-semibold text-slate-900">{selectedFlight ? `${selectedFlight.origin} → ${selectedFlight.destination}` : "À sélectionner"}</span></div>
+                  <div className="flex justify-between gap-3"><span>Classe :</span><span className="font-semibold text-blue-700">{selectedFlight?.cabinClass || "À confirmer"}</span></div>
+                  <div className="flex justify-between gap-3"><span>Bagages :</span><span className="text-right font-semibold text-slate-900">{selectedFlight?.baggage || "À confirmer"}</span></div>
                 </div>
                 <div className="my-4 border-t border-slate-100" />
-                <div className="flex items-end justify-between"><span className="text-sm font-semibold text-slate-600">Total estimé</span><span className="text-2xl font-black text-blue-950">450 000 FCFA</span></div>
-                <p className="text-[11px] leading-5 text-slate-400">Tarif revalidé en direct par l'agence avant l'émission du billet électronique.</p>
+                <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Total {selection?.isSimulated ? "indicatif" : "estimé"}</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                <p className="text-[11px] leading-5 text-slate-400">Le tarif affiché doit être revalidé par l’agence avant l’émission du billet électronique.</p>
               </div>
             </form>
           ) : (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-xl rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl">
               <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-emerald-600" />
-              <h2 className="text-2xl font-black text-slate-900">Réservation confirmée avec succès !</h2>
-              <p className="mt-2 text-sm text-slate-600">Votre numéro de dossier est le <span className="font-mono font-bold text-blue-700">{dossierRef}</span>. Vos informations de passeport ont été transmises à l'équipe de 3M Travel Agency.</p>
+              <h2 className="text-2xl font-black text-slate-900">Demande de réservation préparée</h2>
+              <p className="mt-2 text-sm text-slate-600">Votre référence provisoire est <span className="font-mono font-bold text-blue-700">{dossierRef}</span>. Contactez l’agence pour revalider le tarif, les places et finaliser l’émission.</p>
 
               <div className="my-6 rounded-2xl bg-blue-50 p-4 text-left text-xs leading-6 text-blue-900">
-                <p className="font-black mb-1">Contactez directement notre agence par le canal de votre choix :</p>
-                <p>Nos conseillers sont disponibles pour valider votre PNR, appliquer le meilleur tarif et procéder à l'émission immédiate.</p>
+                <p className="font-black mb-1">Dernière étape : validation par l’agence</p>
+                <p>Les coordonnées du vol sélectionné et vos informations de passeport sont prêtes à être vérifiées par nos conseillers avant toute émission.</p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
@@ -344,8 +409,9 @@ Contact agence :
               </div>
 
               <div className="mt-6 space-y-3">
-                <Button onClick={handleDownloadTicketPdf} className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md">
-                  <Download className="mr-2 h-4 w-4" /> Télécharger mon billet électronique (PDF)
+                <Button onClick={handleDownloadTicketPdf} disabled={isTicketExporting} className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md disabled:cursor-not-allowed disabled:opacity-60" aria-busy={isTicketExporting}>
+                  {isTicketExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Download className="mr-2 h-4 w-4" aria-hidden="true" />}
+                  {isTicketExporting ? "Génération du PDF…" : "Télécharger mon billet électronique (PDF)"}
                 </Button>
 
                 {/* Boutons Wallet alignés et optimisés mobile */}
@@ -495,9 +561,9 @@ Contact agence :
                     </div>
                     <div className="rounded-2xl border border-slate-200 p-4">
                       <div className="flex justify-between text-xs text-slate-500"><span>Prestation :</span><span className="font-bold text-slate-800">Vol GDS international</span></div>
-                      <div className="mt-2 flex justify-between text-base font-black text-blue-900"><span>Montant estimé :</span><span>450 000 FCFA</span></div>
-                    </div>
-                    <p className="text-xs text-slate-500">En confirmant, vous autorisez 3M Travel Agency à enregistrer votre dossier et à vous contacter par WhatsApp, e-mail ou téléphone.</p>
+                       <div className="mt-2 flex justify-between gap-3 text-base font-black text-blue-900"><span>Montant {selection?.isSimulated ? "indicatif" : "estimé"} :</span><span className="text-right">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                     </div>
+                     <p className="text-xs text-slate-500">En confirmant, vous préparez votre demande. L’agence doit revalider le tarif et les disponibilités avant toute émission.</p>
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-12 rounded-xl border-slate-200">Modifier</Button>

@@ -2091,3 +2091,8 @@
 
 - [x] Afficher une progression visuelle pendant le chargement différé et la génération de l’export PDF
 - [x] Afficher un toast de confirmation après la réussite du téléchargement PDF et couvrir le parcours par un test
+
+- [x] Tester le parcours de réservation de vols : recherche, sélection et ouverture du checkout
+- [x] Vérifier les catégories de passagers, les champs passeport, la validation et le récapitulatif
+- [x] Vérifier la confirmation, les contacts agence, les exports et les états d’erreur desktop/mobile
+- [x] Corriger les anomalies découvertes, ajouter les tests nécessaires et valider le build
