@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { PROCEDURE_VISUALS } from "@/data/procedureVisuals";
 
 interface HeroSectionVIPProps {
   onEvalClick?: () => void;
@@ -30,10 +31,19 @@ export default function HeroSectionVIP({
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
     >
-      {/* Blobs décoratifs */}
-      <div className="absolute inset-0 opacity-10 pointer-events-none">
-        <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl" />
+      {/* Visuel éditorial et filigranes de mobilité internationale */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <img
+          src={PROCEDURE_VISUALS.home}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-35 mix-blend-screen"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#07162c]/95 via-[#07162c]/75 to-[#07162c]/35" />
+        <div className="absolute -right-24 top-10 text-[10rem] leading-none opacity-[0.08] grayscale">🇨🇦</div>
+        <div className="absolute -left-16 bottom-0 text-[9rem] leading-none opacity-[0.07] grayscale">🇪🇺</div>
+        <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl opacity-10" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl opacity-10" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 relative z-10">
@@ -148,6 +158,20 @@ export default function HeroSectionVIP({
           >
             <a href="/register">✨ Créez votre Compte Gratuit</a>
           </Button>
+        </motion.div>
+
+        {/* Repères destinations */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          custom={5.8}
+          className="flex flex-wrap justify-center gap-2 mb-7"
+          aria-label="Destinations principales"
+        >
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🇨🇦 Canada</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🇪🇺 Schengen</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🌍 Mobilité internationale</span>
         </motion.div>
 
         {/* Statistiques */}

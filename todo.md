@@ -1788,3 +1788,9 @@
 - [x] Créer le catalogue de traduction et le normalisateur d’erreurs API bilingue
 - [x] Brancher la traduction dans le client tRPC et les notifications d’erreur
 - [x] Valider avec des tests unitaires, TypeScript, tests globaux et build de production
+
+## Visuels professionnels accueil et procédures (v83)
+- [x] Auditer les emplacements d’images, le design actuel et les assets existants
+- [x] Préparer des visuels cohérents de mobilité internationale pour l’accueil et Canada/Schengen
+- [x] Intégrer les images et drapeaux dans l’accueil et les fiches procédures
+- [x] Vérifier rendu, performance, responsive, accessibilité, TypeScript, tests et build puis publier

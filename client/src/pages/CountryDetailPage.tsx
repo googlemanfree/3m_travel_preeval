@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
+import { getProcedureRegionBadges, getProcedureVisual } from '@/data/procedureVisuals';
 
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
@@ -74,6 +75,9 @@ export default function CountryDetailPage() {
     }
   };
 
+  const procedureImage = getProcedureVisual(country);
+  const [regionBadge, regionLabel] = getProcedureRegionBadges(country);
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-8">
@@ -91,6 +95,14 @@ export default function CountryDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-800 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden"
         >
+          <img
+            src={procedureImage}
+            alt={`Illustration mobilité internationale pour ${country.name}`}
+            className="absolute inset-0 h-full w-full object-cover object-center opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/95 via-indigo-950/80 to-blue-900/55" />
+          <div className="absolute -right-10 -top-8 text-[9rem] leading-none opacity-[0.08] grayscale pointer-events-none">{regionBadge}</div>
+          <div className="absolute right-8 bottom-5 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold text-white/80 backdrop-blur-md">{regionLabel}</div>
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 min-w-0 w-full">
@@ -102,6 +114,9 @@ export default function CountryDetailPage() {
                   </Badge>
                   <Badge className={`text-xs ${getDifficultyColor(country.difficulty)} font-bold max-w-full whitespace-normal`}>
                     Niveau : {country.difficulty}
+                  </Badge>
+                  <Badge className="bg-white/10 text-white border border-white/20 text-xs font-semibold">
+                    {regionBadge} {regionLabel}
                   </Badge>
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{country.name}</h1>

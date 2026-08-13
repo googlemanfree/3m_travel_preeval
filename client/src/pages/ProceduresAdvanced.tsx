@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
+import { getProcedureVisual } from '@/data/procedureVisuals';
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
@@ -453,8 +454,16 @@ export default function ProceduresAdvanced() {
                     } ${isSelected ? 'ring-2 ring-green-500' : ''}`}
                   >
                     {/* Card Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
-                      <div className="flex items-center justify-between mb-3">
+                    <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+                      <img
+                        src={getProcedureVisual(country)}
+                        alt=""
+                        aria-hidden="true"
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover opacity-25"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-800/90 via-blue-700/75 to-blue-600/50" />
+                      <div className="relative z-10 flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => window.location.href = `/procedures/${country.id}`}>
                           <span className="text-4xl">{country.flag}</span>
                           <div>
