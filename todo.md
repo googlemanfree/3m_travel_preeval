@@ -2088,3 +2088,6 @@
 - [x] Phase 3 : vérifier et rendre fonctionnels les liens du footer (Mentions légales, Plan du site, Accessibilité)
 - [x] Phase 4 : réduire les bundles lourds sur mobile et valider l’accessibilité clavier/ARIA
 - [x] Phase 4 : exécuter les tests de régression, vérifier le build et contrôler l’aperçu desktop/mobile
+
+- [x] Afficher une progression visuelle pendant le chargement différé et la génération de l’export PDF
+- [x] Afficher un toast de confirmation après la réussite du téléchargement PDF et couvrir le parcours par un test

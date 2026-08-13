@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Download, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
 interface PDFExporterProps {
   candidate: {
@@ -32,12 +34,20 @@ interface PDFExporterProps {
 
 export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExporterProps) {
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportStatus, setExportStatus] = useState("");
 
   const exportToPDF = async () => {
     setIsExporting(true);
+    setExportProgress(15);
+    setExportStatus("Préparation de l’export PDF…");
 
     try {
+      setExportProgress(35);
+      setExportStatus("Chargement des dépendances PDF…");
       const { default: JsPDF } = await import("jspdf");
+      setExportProgress(60);
+      setExportStatus("Génération du document PDF…");
       // Create a new PDF document only when the user requests an export.
       const pdf = new JsPDF({
         orientation: "portrait",
@@ -171,35 +181,61 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       pdf.text(`© 2026 3M Travel Agency | Candidat: ${candidate.fullName}`, margin, yPosition);
 
       // Save the PDF
+      setExportProgress(85);
+      setExportStatus("Téléchargement du document PDF…");
       pdf.save(`Profil_${candidate.fullName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`);
+      setExportProgress(100);
+      setExportStatus("Export PDF terminé");
+      toast.success("Export PDF réussi", {
+        description: "Votre document a été généré et téléchargé avec succès.",
+      });
     } catch (error) {
       console.error("Erreur lors de l'export PDF", error);
+      setExportStatus("L’export PDF a échoué");
+      toast.error("Échec de l’export PDF", {
+        description: "Veuillez réessayer ou contacter le support si le problème persiste.",
+      });
     } finally {
       setIsExporting(false);
+      window.setTimeout(() => {
+        setExportProgress(0);
+        setExportStatus("");
+      }, 800);
     }
   };
 
   return (
-    <Button
-      onClick={exportToPDF}
-      disabled={isExporting}
-      variant="outline"
-      size="sm"
-      className="h-12 rounded-xl gap-2"
-      aria-busy={isExporting}
-      aria-label={isExporting ? "Export PDF en cours" : "Exporter le profil en PDF"}
-    >
-      {isExporting ? (
-        <>
-          <Loader className="w-4 h-4 animate-spin" />
-          Export en cours...
-        </>
-      ) : (
-        <>
-          <Download className="w-4 h-4" />
-          Exporter en PDF
-        </>
+    <div className="w-full space-y-2" aria-live="polite">
+      <Button
+        onClick={exportToPDF}
+        disabled={isExporting}
+        variant="outline"
+        size="sm"
+        className="h-12 w-full rounded-xl gap-2"
+        aria-busy={isExporting}
+        aria-label={isExporting ? "Export PDF en cours" : "Exporter le profil en PDF"}
+      >
+        {isExporting ? (
+          <>
+            <Loader className="w-4 h-4 animate-spin" aria-hidden="true" />
+            Export en cours…
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4" aria-hidden="true" />
+            Exporter en PDF
+          </>
+        )}
+      </Button>
+      {isExporting && (
+        <div className="space-y-1" role="status" aria-label={exportStatus}>
+          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+            <span>{exportStatus}</span>
+            <span>{exportProgress}%</span>
+          </div>
+          <Progress value={exportProgress} className="h-2" aria-label={`Progression de l’export PDF : ${exportProgress}%`} />
+        </div>
       )}
-    </Button>
+    </div>
   );
 }

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader, Download, MessageCircle, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
@@ -64,6 +66,9 @@ export default function LuxembourgEvaluationForm() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [formError, setFormError] = useState("");
   const [hasTrackedStart, setHasTrackedStart] = useState(false);
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
+  const [pdfExportProgress, setPdfExportProgress] = useState(0);
+  const [pdfExportStatus, setPdfExportStatus] = useState("");
 
   const submitMutation = trpc.luxembourgEvaluation.submit.useMutation();
 
@@ -122,10 +127,19 @@ export default function LuxembourgEvaluationForm() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!submitMutation.data) return;
-    const { result } = submitMutation.data;
-    const { default: JsPDF } = await import("jspdf");
-    const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    if (!submitMutation.data || isPdfExporting) return;
+    setIsPdfExporting(true);
+    setPdfExportProgress(15);
+    setPdfExportStatus("Préparation de l’export PDF…");
+
+    try {
+      const { result } = submitMutation.data;
+      setPdfExportProgress(35);
+      setPdfExportStatus("Chargement des dépendances PDF…");
+      const { default: JsPDF } = await import("jspdf");
+      setPdfExportProgress(60);
+      setPdfExportStatus("Génération du document PDF…");
+      const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     let y = 20;
     pdf.setFontSize(18);
@@ -170,7 +184,27 @@ export default function LuxembourgEvaluationForm() {
     pdf.setTextColor(120, 120, 120);
     pdf.text("3M Travel Agency SARL — +237 698 104 832 — hello@3mtravelagency.com", 15, 280);
 
-    pdf.save(`3M_Evaluation_${form.fullName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setPdfExportProgress(85);
+      setPdfExportStatus("Téléchargement du document PDF…");
+      pdf.save(`3M_Evaluation_${form.fullName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setPdfExportProgress(100);
+      setPdfExportStatus("Export PDF terminé");
+      toast.success("Export PDF réussi", {
+        description: "Votre évaluation a été générée et téléchargée avec succès.",
+      });
+    } catch (error) {
+      console.error("Erreur lors de l’export PDF Luxembourg", error);
+      setPdfExportStatus("L’export PDF a échoué");
+      toast.error("Échec de l’export PDF", {
+        description: "Veuillez réessayer ou contacter le support si le problème persiste.",
+      });
+    } finally {
+      setIsPdfExporting(false);
+      window.setTimeout(() => {
+        setPdfExportProgress(0);
+        setPdfExportStatus("");
+      }, 800);
+    }
   };
 
   const handleReset = () => {
@@ -249,9 +283,31 @@ export default function LuxembourgEvaluationForm() {
               <MessageCircle className="w-4 h-4 mr-2" /> Discuter sur WhatsApp
             </Button>
           </a>
-          <Button variant="outline" onClick={handleDownloadPdf} className="flex-1">
-            <Download className="w-4 h-4 mr-2" /> Télécharger le PDF
-          </Button>
+          <div className="flex-1 space-y-2" aria-live="polite">
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+              disabled={isPdfExporting}
+              className="w-full"
+              aria-busy={isPdfExporting}
+              aria-label={isPdfExporting ? "Export PDF en cours" : "Télécharger l’évaluation en PDF"}
+            >
+              {isPdfExporting ? (
+                <><Loader className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" /> Export en cours…</>
+              ) : (
+                <><Download className="w-4 h-4 mr-2" aria-hidden="true" /> Télécharger le PDF</>
+              )}
+            </Button>
+            {isPdfExporting && (
+              <div className="space-y-1" role="status" aria-label={pdfExportStatus}>
+                <div className="flex items-center justify-between gap-3 text-xs text-gray-500">
+                  <span>{pdfExportStatus}</span>
+                  <span>{pdfExportProgress}%</span>
+                </div>
+                <Progress value={pdfExportProgress} className="h-2" aria-label={`Progression de l’export PDF : ${pdfExportProgress}%`} />
+              </div>
+            )}
+          </div>
         </div>
         <button onClick={handleReset} className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-4">
           Faire une nouvelle évaluation

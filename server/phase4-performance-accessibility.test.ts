@@ -13,8 +13,16 @@ describe("phase 4 performance and accessibility contracts", () => {
 
     expect(pdfExporter).not.toMatch(/import\s+[^;]*from\s+["']jspdf["']/);
     expect(pdfExporter).toContain('await import("jspdf")');
+    expect(pdfExporter).toContain("exportProgress");
+    expect(pdfExporter).toContain("Chargement des dépendances PDF");
+    expect(pdfExporter).toContain('toast.success("Export PDF réussi"');
+    expect(pdfExporter).toContain('toast.error("Échec de l’export PDF"');
     expect(luxembourgForm).not.toMatch(/import\s+[^;]*from\s+["']jspdf["']/);
     expect(luxembourgForm).toContain('await import("jspdf")');
+    expect(luxembourgForm).toContain("pdfExportProgress");
+    expect(luxembourgForm).toContain("Chargement des dépendances PDF");
+    expect(luxembourgForm).toContain('toast.success("Export PDF réussi"');
+    expect(luxembourgForm).toContain('toast.error("Échec de l’export PDF"');
   });
 
   it("keeps route-level vendor chunks explicit for mobile caching", () => {
