@@ -1770,3 +1770,10 @@
 - [x] Détecter la langue du navigateur uniquement lors de la première visite
 - [x] Préserver toute préférence mémorisée et mettre à jour l’attribut lang
 - [x] Tester clavier, mobile, persistance, TypeScript, tests et build puis publier
+
+## Persistance de préférence de langue (v80)
+- [x] Auditer le contexte de langue, l’authentification et le profil utilisateur
+- [x] Persister le choix manuel dans un cookie sécurisé pour les visiteurs
+- [x] Synchroniser la langue avec le profil serveur des utilisateurs connectés
+- [x] Respecter la priorité du choix manuel sur la détection navigateur
+- [x] Tester reconnexion, responsive, TypeScript, tests et build puis publier

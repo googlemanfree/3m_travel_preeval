@@ -39,6 +39,7 @@ export const oauthUserDashboardRouter = router({
       educationLevel: c.educationLevel,
       employmentStatus: c.employmentStatus,
       languageLevel: c.languageLevel,
+      preferredLanguage: c.preferredLanguage,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -57,6 +58,7 @@ export const oauthUserDashboardRouter = router({
         educationLevel: z.string().optional(),
         employmentStatus: z.string().optional(),
         languageLevel: z.string().optional(),
+        preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().optional(),
       })
     )

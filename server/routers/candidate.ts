@@ -261,6 +261,7 @@ export const candidateRouter = router({
   // ── Profil candidat (lecture) ──────────────────────────────────────────────
   getProfile: candidateProcedure.query(async ({ ctx }) => {
     if ((ctx as any).isManuUser && ctx.user) {
+      const linkedCandidate = (ctx as any).candidate as Candidate;
       return {
         id: ctx.user.id,
         fullName: ctx.user.name || '',
@@ -277,6 +278,7 @@ export const candidateRouter = router({
         educationLevel: null,
         employmentStatus: null,
         languageLevel: null,
+        preferredLanguage: linkedCandidate.preferredLanguage,
         createdAt: ctx.user.createdAt,
         lastLoginAt: ctx.user.lastSignedIn,
       };
@@ -298,6 +300,7 @@ export const candidateRouter = router({
       educationLevel: c.educationLevel,
       employmentStatus: c.employmentStatus,
       languageLevel: c.languageLevel,
+      preferredLanguage: c.preferredLanguage,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -316,6 +319,7 @@ export const candidateRouter = router({
         educationLevel: z.string().optional(),
         employmentStatus: z.string().optional(),
         languageLevel: z.string().optional(),
+        preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().optional(),
       })
     )
