@@ -1936,3 +1936,9 @@
 - [x] Construire l’interface de prévisualisation et de recadrage avec zoom et déplacement accessibles
 - [x] Envoyer le portrait recadré, conserver les validations serveur et afficher le résultat dans les espaces autorisés
 - [x] Vérifier qualité du rendu, confidentialité, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Gestion des statuts de documents par l’administrateur (v108)
+- [x] Auditer les documents candidats, les statuts existants, les droits admin et les modèles d’e-mail
+- [x] Ajouter la mutation serveur de changement de statut avec validation, note et journal d’audit
+- [x] Intégrer les actions Validé, Rejeté et En attente dans la fiche admin et l’espace client
+- [x] Ajouter les e-mails bilingues, tester les erreurs, les droits, le responsive, TypeScript, Vitest, build et publier
