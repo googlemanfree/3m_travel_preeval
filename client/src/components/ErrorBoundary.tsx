@@ -11,6 +11,24 @@ interface State {
   error: Error | null;
 }
 
+// Repère les erreurs de chargement de "chunk" — quand le navigateur essaie
+// de récupérer un fichier JavaScript qui n'existe plus car le site a été
+// redéployé depuis le dernier chargement de la page (les noms de fichiers
+// changent à chaque build). Très fréquent avec le découpage de code
+// (React.lazy) : sans ce filet, l'utilisateur se retrouve avec une page
+// blanche silencieuse au lieu d'un simple rechargement.
+function isChunkLoadError(error: Error): boolean {
+  const message = error.message || "";
+  return (
+    /Failed to fetch dynamically imported module/i.test(message) ||
+    /Loading chunk .* failed/i.test(message) ||
+    /Importing a module script failed/i.test(message) ||
+    /dynamically imported module/i.test(message)
+  );
+}
+
+const RELOAD_FLAG_KEY = "3m_chunk_error_reload_attempted";
+
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -19,6 +37,23 @@ class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    if (isChunkLoadError(error)) {
+      // On ne retente qu'une seule fois par session, pour ne jamais
+      // tomber dans une boucle de rechargement infinie si le problème
+      // persiste pour une autre raison.
+      const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
+      if (!alreadyAttempted) {
+        sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
+        window.location.reload();
+      }
+    } else {
+      // Une navigation réussie sans nouvelle erreur de chunk réinitialise
+      // le compteur, pour permettre une future récupération automatique.
+      sessionStorage.removeItem(RELOAD_FLAG_KEY);
+    }
   }
 
   render() {

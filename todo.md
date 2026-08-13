@@ -2062,3 +2062,9 @@
 - [x] Mettre en place une validation en temps réel de l'e-mail du proche avec badge de confirmation visuelle
 - [x] Intégrer des filtres rapides par gamme de prix et note pour affiner les suggestions dynamiques
 - [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
+
+## Correctif Anti-Page-Blanche et Récupération de Chunk (v133)
+- [x] Extraire et inspecter l'archive `fix-page-blanche-chunk.zip` pour identifier les 2 fichiers exacts
+- [x] Remplacer les 2 fichiers aux chemins requis sans altérer le reste de l'application
+- [x] Intégrer le gestionnaire de rechargement automatique en cas d’échec de chargement de chunk différé
+- [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication

@@ -13,6 +13,28 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+// Filet de sécurité global : un échec de chargement de "chunk" (fichier
+// JavaScript différé, ex: React.lazy) après un redéploiement du site
+// remonte souvent comme un rejet de promesse non géré plutôt qu'une
+// erreur de rendu React — donc invisible pour ErrorBoundary. On le
+// rattrape ici et on recharge la page une seule fois par session.
+window.addEventListener("unhandledrejection", (event) => {
+  const message = event.reason?.message || String(event.reason || "");
+  const isChunkError =
+    /Failed to fetch dynamically imported module/i.test(message) ||
+    /Loading chunk .* failed/i.test(message) ||
+    /Importing a module script failed/i.test(message) ||
+    /dynamically imported module/i.test(message);
+
+  if (isChunkError) {
+    const alreadyAttempted = sessionStorage.getItem("3m_chunk_error_reload_attempted");
+    if (!alreadyAttempted) {
+      sessionStorage.setItem("3m_chunk_error_reload_attempted", "1");
+      window.location.reload();
+    }
+  }
+});
+
 const getCurrentLanguage = (): "fr" | "en" => {
   if (typeof document === "undefined") return "fr";
   const cookie = document.cookie
