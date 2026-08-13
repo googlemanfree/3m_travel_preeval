@@ -1,5 +1,6 @@
 import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle } from "lucide-react";
 import { Component, ReactNode } from "react";
+import { CHUNK_RELOAD_NOTICE_KEY } from "@/lib/lazyWithTimeout";
 
 interface Props {
   children: ReactNode;
@@ -22,6 +23,15 @@ function isChunkLoadError(error: Error): boolean {
 
 const RELOAD_FLAG_KEY = "3m_chunk_error_reload_attempted";
 
+function reloadPageAfterChunkFailure() {
+  try {
+    sessionStorage.setItem(CHUNK_RELOAD_NOTICE_KEY, "network");
+  } catch {
+    // Le rechargement reste possible si le stockage est indisponible.
+  }
+  window.location.reload();
+}
+
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -37,12 +47,23 @@ class ErrorBoundary extends Component<Props, State> {
       const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
       if (!alreadyAttempted) {
         sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
-        window.location.reload();
+        reloadPageAfterChunkFailure();
       }
     } else {
       sessionStorage.removeItem(RELOAD_FLAG_KEY);
     }
   }
+
+  private handleManualRetry = () => {
+    try {
+      // Autorise une nouvelle tentative manuelle tout en conservant la limite
+      // d’un seul rechargement automatique par session.
+      sessionStorage.removeItem(RELOAD_FLAG_KEY);
+    } catch {
+      // Le navigateur peut bloquer le stockage en mode privé.
+    }
+    reloadPageAfterChunkFailure();
+  };
 
   render() {
     if (this.state.hasError) {
@@ -60,11 +81,12 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">
               <button
-                onClick={() => window.location.reload()}
-                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 transition shadow-lg cursor-pointer"
+                type="button"
+                onClick={this.handleManualRetry}
+                className="h-12 flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary px-5 text-primary-foreground font-medium hover:opacity-90 transition shadow-lg cursor-pointer"
               >
                 <RotateCcw size={18} />
-                Actualiser la page
+                Réessayer maintenant
               </button>
               <a
                 href="https://wa.me/237600000000?text=Bonjour,%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site%203M%20Travel"

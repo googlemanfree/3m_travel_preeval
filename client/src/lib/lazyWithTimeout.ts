@@ -1,6 +1,7 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 export const LAZY_PAGE_TIMEOUT_MS = 15_000;
+export const CHUNK_RELOAD_NOTICE_KEY = "3m_chunk_reload_notice";
 const LAZY_PAGE_TIMEOUT_MESSAGE =
   "Failed to fetch dynamically imported module: page load timed out after 15000ms";
 

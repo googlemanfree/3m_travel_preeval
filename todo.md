@@ -2100,3 +2100,7 @@
 - [x] Intégrer `client/src/lib/lazyWithTimeout.ts` et remplacer `client/src/App.tsx` avec le délai maximal de 15 secondes pour les pages différées
 - [x] Vérifier que la récupération automatique des erreurs de chunk se déclenche après expiration sans rester sur l’écran de chargement
 - [x] Exécuter TypeScript, les tests, le build et les contrôles desktop/mobile avant publication
+
+- [x] Afficher un compte à rebours visuel pendant les 15 secondes du chargement différé
+- [x] Ajouter un bouton de réessai manuel sur l’écran d’erreur après expiration du délai
+- [x] Afficher un toast réseau lors d’un rechargement automatique déclenché par un problème de chunk

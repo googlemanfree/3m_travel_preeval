@@ -111,6 +111,7 @@ import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import Navbar from "./components/Navbar";
 import PageTransition from "./components/PageTransition";
 import PageLoadingFallback from "./components/PageLoadingFallback";
+import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 
 const ClientDashboard = lazyWithTimeout(() => import("./pages/ClientDashboard"));
@@ -436,6 +437,7 @@ function App() {
           <MultiServiceCartProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
+          <ChunkReloadNotice />
           {sessionRestored && (
             <>
               {/* Header global visible sur toutes les pages */}
