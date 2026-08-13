@@ -2076,10 +2076,10 @@
 - [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
 
 ## Résilience Avancée, Support, Mode Hors-Ligne et Préchargement (v135)
-- [ ] Ajouter un bouton de contact support direct (WhatsApp / Téléphone) dans l'écran de secours d'ErrorBoundary
-- [ ] Implémenter un mécanisme de réessai automatique (retry) avec backoff exponentiel pour l'envoi de la télémétrie des chunks
-- [ ] Enrichir le toast de rechargement avec une barre de progression visuelle du compte à rebours
-- [ ] Créer un tableau de bord administrateur pour consulter les incidents de chargement de chunks et les stats réseau
-- [ ] Intégrer un mode hors-ligne de secours avec bannière d'alerte et accès aux pages en cache
-- [ ] Mettre en place un système de préchargement prédictif au survol des liens principaux pour accélérer la navigation
-- [ ] Valider avec TypeScript, tests unitaires, build de production et publication
+- [x] Ajouter un bouton de contact support direct (WhatsApp / Téléphone) dans l'écran de secours d'ErrorBoundary
+- [x] Implémenter un mécanisme de réessai automatique (retry) avec backoff exponentiel pour l'envoi de la télémétrie des chunks
+- [x] Enrichir le toast de rechargement avec une barre de progression visuelle du compte à rebours
+- [x] Créer un tableau de bord administrateur pour consulter les incidents de chargement de chunks et les stats réseau
+- [x] Intégrer un mode hors-ligne de secours avec bannière d'alerte et accès aux pages en cache
+- [x] Intégrer un mode hors-ligne de secours avec bannière d'alerte et accès aux pages en cache
+- [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
