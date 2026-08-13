@@ -8,9 +8,23 @@ import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
 import "./index.css";
 
 const queryClient = new QueryClient();
+
+const getCurrentLanguage = (): "fr" | "en" => {
+  if (typeof document === "undefined") return "fr";
+  const cookie = document.cookie
+    .split(";")
+    .map(p => p.trim())
+    .find(p => p.startsWith("3m_travel_lang="));
+  if (cookie) {
+    const val = decodeURIComponent(cookie.split("=")[1]);
+    if (val === "en" || val === "fr") return val;
+  }
+  return document.documentElement.lang === "en" ? "en" : "fr";
+};
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -47,6 +61,9 @@ queryClient.getQueryCache().subscribe(event => {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
     handleResponseError(error);
+    if (error instanceof TRPCClientError) {
+      error.message = translateApiErrorMessage(error.message, getCurrentLanguage());
+    }
     console.error("[API Query Error]", error);
   }
 });
@@ -56,6 +73,9 @@ queryClient.getMutationCache().subscribe(event => {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
     handleResponseError(error);
+    if (error instanceof TRPCClientError) {
+      error.message = translateApiErrorMessage(error.message, getCurrentLanguage());
+    }
     console.error("[API Mutation Error]", error);
   }
 });

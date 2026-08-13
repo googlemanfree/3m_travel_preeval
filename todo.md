@@ -1782,3 +1782,9 @@
 - [x] Auditer les systèmes de toast, erreurs, dialogues et dictionnaire bilingue
 - [x] Centraliser les messages FR/EN et adapter les composants globaux et locaux
 - [x] Tester les deux langues, erreurs, toasts, confirmations, responsive, TypeScript, tests et build puis publier
+
+## Traduction automatique des erreurs API (v82)
+- [x] Auditer le transport tRPC, les erreurs backend et le dictionnaire bilingue existant
+- [x] Créer le catalogue de traduction et le normalisateur d’erreurs API bilingue
+- [x] Brancher la traduction dans le client tRPC et les notifications d’erreur
+- [x] Valider avec des tests unitaires, TypeScript, tests globaux et build de production
