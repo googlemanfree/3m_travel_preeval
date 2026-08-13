@@ -18,7 +18,15 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem('3m_travel_lang');
-      return (saved === 'en' || saved === 'fr') ? saved : 'fr';
+      if (saved === 'en' || saved === 'fr') return saved;
+
+      const browserLanguages = typeof navigator !== 'undefined'
+        ? [navigator.language, ...(navigator.languages ?? [])]
+        : [];
+      const prefersEnglish = browserLanguages.some((value) => value?.toLowerCase().startsWith('en'));
+      const detected: Language = prefersEnglish ? 'en' : 'fr';
+      localStorage.setItem('3m_travel_lang', detected);
+      return detected;
     } catch (e) {
       return 'fr';
     }

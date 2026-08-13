@@ -102,13 +102,26 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
-            <button
-              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-              className="px-3 py-2 rounded-xl text-xs font-black tracking-wider uppercase bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 transition flex items-center gap-1.5 border border-blue-200/60 dark:border-blue-900/40"
-              title="Changer de langue / Switch Language"
-            >
-              🌐 {language === 'fr' ? 'EN' : 'FR'}
-            </button>
+            <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label="Sélection de langue / Language selector">
+              <button
+                type="button"
+                onClick={() => setLanguage('fr')}
+                aria-label="Français"
+                aria-pressed={language === 'fr'}
+                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
+              >
+                <span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('en')}
+                aria-label="English"
+                aria-pressed={language === 'en'}
+                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
+              >
+                <span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span>
+              </button>
+            </div>
             <ThemeToggle />
             {candidate ? (
               <div className="relative">
@@ -198,12 +211,10 @@ export default function Navbar() {
           </div>
 
           <div className="flex lg:hidden items-center gap-2">
-            <button
-              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
-              className="px-2.5 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase bg-blue-50 text-blue-700 dark:bg-slate-800 dark:text-blue-400 transition flex items-center gap-1 border border-blue-200/60"
-            >
-              🌐 {language === 'fr' ? 'EN' : 'FR'}
-            </button>
+            <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label="Sélection de langue / Language selector">
+              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span></button>
+              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span></button>
+            </div>
             <ThemeToggle compact />
             <motion.button
               type="button"
