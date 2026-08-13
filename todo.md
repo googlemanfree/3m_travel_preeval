@@ -1947,3 +1947,8 @@
 - [x] Auditer l’affichage des statuts documents et le flux de réimport candidat
 - [x] Intégrer l’alerte de rejet, le motif administrateur et le bouton d’action rapide côté candidat
 - [x] Vérifier propriété, téléchargement, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Libellé Inscription et dimensions uniformes des boutons (v110)
+- [x] Auditer les boutons de navigation, du héros et d’inscription ainsi que leurs variantes responsive
+- [x] Remplacer le libellé par « Inscription » et appliquer une base de dimensions uniformes
+- [x] Vérifier alignement, textes longs, mobile, accessibilité, TypeScript, tests, build et publier
