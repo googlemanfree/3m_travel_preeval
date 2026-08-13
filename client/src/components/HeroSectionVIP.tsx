@@ -82,10 +82,10 @@ export default function HeroSectionVIP({
           alt="3M Travel Agency - Voyage et Mobilité Internationale réussie"
           aria-hidden="true"
           ref={backgroundRef}
-          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-45 mix-blend-overlay filter brightness-105 will-change-transform"
+          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-80 filter brightness-110 saturate-110 will-change-transform"
           style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/90 via-[#0a1d3a]/75 to-[#07162c]/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/65 via-[#0a1d3a]/45 to-[#07162c]/80" />
         <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
         <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>
         <div className="absolute right-1/4 bottom-10 text-[7rem] leading-none opacity-[0.12] select-none">🇺🇸</div>

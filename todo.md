@@ -1837,3 +1837,8 @@
 - [x] Ajouter la colonne avatar_url avec migration additive et endpoint de mise à jour sécurisée
 - [x] Intégrer l’étape obligatoire d’upload d’avatar lors de l’inscription et l’affichage dans l’espace client
 - [x] Vérifier les restrictions de type/taille, la sécurité, TypeScript, la suite de tests et le build puis publier
+
+## Correction image d’arrière-plan invisible du héros (v91)
+- [x] Auditer la référence d’image, le stockage, le composant héros et les logs réseau
+- [x] Corriger la source ou les styles de l’image sans altérer la structure visuelle
+- [x] Vérifier le chargement réel, le responsive, TypeScript, les tests et le build puis publier
