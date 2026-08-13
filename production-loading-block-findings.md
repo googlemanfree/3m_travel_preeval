@@ -7,3 +7,17 @@ Le contenu et l’apparence de cet écran ne correspondent pas au `PageLoadingFa
 ## Inspection du navigateur
 
 Le navigateur indique `document.readyState = complete` et charge le module principal `/assets/index-B-VzcgiM.js` ainsi que les vendors React, Radix, data, PDF, motion, icônes et formulaires. Malgré cela, `#root` conserve exactement le HTML statique `boot-fallback`, sans erreur console visible. Le problème se situe donc avant le montage React ou dans l’initialisation du module principal, et le fallback HTML n’a actuellement aucun délai ni bouton de récupération.
+
+## Reproduction après la version 32def9b5
+
+Le 13 août 2026, ouverture de `https://www.3mtravelagency.com/?probe=1786661920` : le HTML reçu contient bien `BOOT_TIMEOUT_MS = 15000` et `3m_boot_timeout_reload_attempted`. Pendant les 15 premières secondes, l’écran reste volontairement identique au loader simple, car l’archive fournie ne contient pas de compte à rebours visuel. Après expiration, le script autonome s’exécute bien et affiche « Le chargement rencontre un problème persistant », avec « Réessayer » et le lien WhatsApp. Le problème n’est donc pas le cache HTML : le module React ne remplace pas le fallback et échoue à démarrer, ce qui nécessite maintenant l’inspection des ressources et de l’erreur de bootstrap.
+
+## Inspection complémentaire
+
+Après une attente supérieure à 15 secondes sur `www.3mtravelagency.com`, le filet de sécurité affiche correctement l’écran « Le chargement rencontre un problème persistant » avec les actions « Réessayer » et WhatsApp. Le HTML et le script autonome sont donc bien servis et exécutés. Le navigateur charge `/assets/index-6IE05yMO.js` et les vendors, mais `#root` reste le fallback : la cause restante est l’échec ou le blocage du démarrage du bundle principal React, pas l’absence du mécanisme HTML.
+
+## Cause confirmée et correction
+
+L’évaluation directe du bundle public a reproduit l’erreur suivante : `TypeError: Cannot read properties of undefined (reading 'forwardRef')` dans `radix-vendor-OfaGa3fY.js`, lors de `createSlot`. Le découpage Vite séparait React et Radix dans deux chunks initialisés avec une dépendance circulaire ; Radix pouvait donc s’évaluer avant que l’espace de noms React soit initialisé.
+
+Correction appliquée dans `vite.config.ts` : React, React DOM, scheduler et les paquets `@radix-ui` sont désormais regroupés dans `react-ui-vendor`. Le build produit bien ce chunk unifié. TypeScript et la suite complète passent : 46 fichiers de test, 142 tests réussis et 4 ignorés.

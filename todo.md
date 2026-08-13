@@ -2116,3 +2116,10 @@
 - [x] Inspecter et intégrer le `client/index.html` fourni dans l’archive de correction
 - [x] Vérifier le filet de sécurité JavaScript autonome avec délai maximal de 15 secondes
 - [x] Valider TypeScript, tests, build et affichage des routes avant publication
+
+- [x] Identifier pourquoi l’écran de chargement reste identique après la publication 32def9b5
+- [x] Reproduire le blocage sur le domaine réellement utilisé et corriger sa cause effective
+- [x] Revalider le bootstrap, le timeout de 15 secondes et le démarrage des routes publiques
+
+- [x] Corriger le cycle d’import production entre `react-vendor` et `radix-vendor` qui provoque `forwardRef` undefined
+- [x] Rebuild et tester le bundle principal après regroupement sûr des dépendances UI

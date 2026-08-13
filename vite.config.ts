@@ -182,11 +182,17 @@ export default defineConfig({
             if (id.includes("framer-motion")) {
               return "motion-vendor";
             }
-            if (id.includes("react-dom") || id.includes("/react/") || id.includes("scheduler")) {
-              return "react-vendor";
-            }
-            if (id.includes("@radix-ui")) {
-              return "radix-vendor";
+            // React and Radix share initialization-time references. Keeping them
+            // in separate manual chunks can make Radix evaluate before React's
+            // namespace is initialized in production, causing forwardRef to be
+            // undefined and leaving the static boot fallback on screen.
+            if (
+              id.includes("react-dom") ||
+              id.includes("/react/") ||
+              id.includes("scheduler") ||
+              id.includes("@radix-ui")
+            ) {
+              return "react-ui-vendor";
             }
             if (id.includes("@tanstack") || id.includes("@trpc") || id.includes("superjson")) {
               return "data-vendor";

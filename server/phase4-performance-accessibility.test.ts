@@ -29,7 +29,9 @@ describe("phase 4 performance and accessibility contracts", () => {
     const viteConfig = readProjectFile("vite.config.ts");
 
     expect(viteConfig).toContain('return "pdf-vendor"');
-    expect(viteConfig).toContain('return "react-vendor"');
+    expect(viteConfig).toContain('return "react-ui-vendor"');
+    expect(viteConfig).toContain('id.includes("@radix-ui")');
+    expect(viteConfig).not.toContain('return "radix-vendor"');
     expect(viteConfig).toContain('return "data-vendor"');
     expect(viteConfig).toContain('return "icons-vendor"');
   });
