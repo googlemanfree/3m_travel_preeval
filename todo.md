@@ -1930,3 +1930,9 @@
 - [x] Améliorer la gestion admin des dossiers avec actions rapides, documents, statuts, historique et prévisualisation
 - [x] Ajouter l’avatar aux e-mails opérationnels avec accès sécurisé, fallback et respect de la confidentialité
 - [x] Tester obligatoire, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Outil de recadrage et prévisualisation d’avatar (v107)
+- [x] Auditer l’étape avatar obligatoire, les validations et le flux de stockage
+- [x] Construire l’interface de prévisualisation et de recadrage avec zoom et déplacement accessibles
+- [x] Envoyer le portrait recadré, conserver les validations serveur et afficher le résultat dans les espaces autorisés
+- [x] Vérifier qualité du rendu, confidentialité, responsive, accessibilité, TypeScript, tests, build et publier

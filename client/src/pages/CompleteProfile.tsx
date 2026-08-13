@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 
 const DESTINATIONS = [
   { value: "canada", label: "🇨🇦 Canada" },
@@ -33,6 +34,8 @@ export default function CompleteProfile() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [isCropperOpen, setIsCropperOpen] = useState(false);
   const [formData, setFormData] = useState({
     destination: "",
     visaType: "",
@@ -93,12 +96,22 @@ export default function CompleteProfile() {
       toast.error("Format non supporté. Veuillez choisir une image JPG, PNG ou WebP.");
       return;
     }
-    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRawImageSrc(reader.result as string);
+      setIsCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setAvatarFile(croppedFile);
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
+      toast.success("Portrait ajusté avec succès !");
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(croppedFile);
   };
 
   const handleComplete = async () => {
@@ -407,6 +420,15 @@ export default function CompleteProfile() {
           </p>
         </div>
       </motion.div>
+
+      {rawImageSrc && (
+        <AvatarCropperModal
+          isOpen={isCropperOpen}
+          imageSrc={rawImageSrc}
+          onClose={() => setIsCropperOpen(false)}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }
