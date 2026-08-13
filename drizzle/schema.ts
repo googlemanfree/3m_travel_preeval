@@ -580,6 +580,21 @@ export const adminNotifications = mysqlTable("admin_notifications", {
 export type AdminNotification = typeof adminNotifications.$inferSelect;
 export type InsertAdminNotification = typeof adminNotifications.$inferInsert;
 
+export const mediaLibrary = mysqlTable("media_library", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  category: mysqlEnum("category", ["hero", "procedure", "service", "flag", "testimonial", "other"]).default("procedure").notNull(),
+  url: text("url").notNull(),
+  storageKey: varchar("storageKey", { length: 512 }).notNull(),
+  fileSize: int("fileSize"),
+  mimeType: varchar("mimeType", { length: 100 }).default("image/webp").notNull(),
+  uploadedByAdminEmail: varchar("uploadedByAdminEmail", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MediaLibraryItem = typeof mediaLibrary.$inferSelect;
+export type InsertMediaLibraryItem = typeof mediaLibrary.$inferInsert;
+
 export const clientDocuments = mysqlTable("client_documents", {
   id: int("id").autoincrement().primaryKey(),
   evaluationId: int("evaluationId").notNull(),

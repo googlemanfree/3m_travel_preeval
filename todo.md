@@ -1912,3 +1912,9 @@
 - [x] Implémenter l’optimisation serveur des images avec redimensionnement, WebP et limites de poids
 - [x] Brancher les uploads simples et en masse sur le pipeline optimisé avec métadonnées et fallback
 - [x] Tester sécurité, qualité visuelle, stockage, responsive, TypeScript, suite Vitest, build et publier
+
+## Bibliothèque de médias admin (v104)
+- [x] Auditer le schéma, le stockage, les références existantes et l’écran admin des médias
+- [x] Ajouter le modèle persistant et les procédures admin de bibliothèque avec protection contre la suppression utilisée
+- [x] Construire l’interface de bibliothèque avec recherche, filtres, aperçu, sélection et suppression confirmée
+- [x] Brancher la réutilisation dans l’éditeur destination/service et valider sécurité, responsive, TypeScript, tests, build et publication

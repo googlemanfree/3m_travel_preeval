@@ -62,6 +62,7 @@ import { insuranceRequestsRouter } from "./routers/insuranceRequests";
 import { caseTrackingRouter } from "./routers/caseTracking";
 import { destinationMediaRouter } from "./routers/destinationMedia";
 import { embassyNewsRouter } from "./routers/embassyNews";
+import { mediaLibraryRouter } from "./routers/mediaLibrary";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -106,6 +107,7 @@ export const appRouter = router({
   caseTracking: caseTrackingRouter,
   destinationMedia: destinationMediaRouter,
   embassyNews: embassyNewsRouter,
+  mediaLibrary: mediaLibraryRouter,
   adminAuth: adminAuthRouter,
   adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,

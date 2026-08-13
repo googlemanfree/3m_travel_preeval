@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
 import { Link } from "wouter";
-import { ImagePlus, Flag, Search, Trash2, Upload, ArrowLeft, CheckCircle2, ShieldCheck, RefreshCw } from "lucide-react";
+import { ImagePlus, Flag, Search, Trash2, Upload, ArrowLeft, CheckCircle2, ShieldCheck, RefreshCw, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -203,9 +203,16 @@ export default function AdminDestinationMedia() {
               Remplacez l’image éditoriale et le drapeau d’une destination sans modifier son contenu de procédure. Les fichiers sont validés puis stockés de façon persistante.
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-blue-50 backdrop-blur-md">
-            <ShieldCheck className="h-5 w-5 text-emerald-300" />
-            <span>Accès administrateur vérifié</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href="/admin/media-library">
+              <Button className="bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md">
+                <FolderOpen className="w-4 h-4 mr-2" /> Bibliothèque de Médias
+              </Button>
+            </Link>
+            <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-blue-50 backdrop-blur-md">
+              <ShieldCheck className="h-5 w-5 text-emerald-300" />
+              <span>Accès administrateur vérifié</span>
+            </div>
           </div>
         </div>
 
