@@ -171,7 +171,7 @@ export default function Register() {
             <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M Travel</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" aria-busy={registerMutation.isPending || showSuccessAnimation}>
             {/* Nom complet */}
             <div>
               <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700">Nom complet *</Label>
@@ -184,6 +184,7 @@ export default function Register() {
                   onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
                   className="pl-10"
                   required
+                  disabled={registerMutation.isPending || showSuccessAnimation}
                 />
               </div>
             </div>
@@ -201,6 +202,7 @@ export default function Register() {
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   className="pl-10"
                   required
+                  disabled={registerMutation.isPending || showSuccessAnimation}
                 />
               </div>
               {/* Indicateur de validation email */}
@@ -234,9 +236,11 @@ export default function Register() {
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   className="pl-10 pr-10"
                   required
+                  disabled={registerMutation.isPending || showSuccessAnimation}
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
@@ -285,9 +289,11 @@ export default function Register() {
                   onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
                   className="pl-10 pr-10"
                   required
+                  disabled={registerMutation.isPending || showSuccessAnimation}
                 />
                 <button
                   type="button"
+                  aria-label={showConfirmPassword ? "Masquer la confirmation du mot de passe" : "Afficher la confirmation du mot de passe"}
                   onClick={() => setShowConfirmPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
@@ -324,14 +330,18 @@ export default function Register() {
                 className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending ? (
-                  <span className="flex items-center justify-center gap-2">
+                  <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
                     <motion.span
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      aria-hidden="true"
                     >
                       <Loader className="w-4 h-4" />
                     </motion.span>
-                    Création en cours...
+                    <motion.span
+                      animate={{ opacity: [0.55, 1, 0.55] }}
+                      transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                    >Création en cours...</motion.span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
@@ -339,6 +349,25 @@ export default function Register() {
                   </span>
                 )}
               </Button>
+              <AnimatePresence initial={false}>
+                {registerMutation.isPending && (
+                  <motion.div
+                    initial={{ opacity: 0, scaleX: 0.7 }}
+                    animate={{ opacity: 1, scaleX: 1 }}
+                    exit={{ opacity: 0, scaleX: 0.7 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-2 h-1 origin-left overflow-hidden rounded-full bg-blue-100"
+                    role="progressbar"
+                    aria-label="Création du compte en cours"
+                  >
+                    <motion.div
+                      className="h-full w-2/5 rounded-full bg-gradient-to-r from-[#7CB9E8] via-[#2563EB] to-[#1E3A8A]"
+                      animate={{ x: ["-120%", "280%"] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Séparateur */}

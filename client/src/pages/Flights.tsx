@@ -543,6 +543,8 @@ export default function Flights() {
     cabinClass: initialParams.get("cabinClass") || "ECONOMY",
   });
   const [searchEnabled, setSearchEnabled] = useState(initialParams.has("origin") && initialParams.has("destination"));
+  const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
+  const searchStartedAtRef = useRef<number | null>(null);
 
   // Filters
   const [maxStops, setMaxStops] = useState<number | null>(null);
@@ -567,6 +569,19 @@ export default function Flights() {
     },
     { enabled: searchEnabled }
   );
+
+  const isSearchBusy = isFetching || isSearchSubmitting;
+
+  useEffect(() => {
+    if (!isSearchSubmitting || isFetching) return;
+    const startedAt = searchStartedAtRef.current ?? Date.now();
+    const remaining = Math.max(0, 350 - (Date.now() - startedAt));
+    const timeoutId = window.setTimeout(() => {
+      setIsSearchSubmitting(false);
+      searchStartedAtRef.current = null;
+    }, remaining);
+    return () => window.clearTimeout(timeoutId);
+  }, [isFetching, isSearchSubmitting]);
 
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
 
@@ -621,6 +636,8 @@ export default function Flights() {
       setReturnDate(addDaysToIsoDate(departureDate, 7));
       return;
     }
+    searchStartedAtRef.current = Date.now();
+    setIsSearchSubmitting(true);
     setSearchEnabled(true);
   }
 
@@ -682,6 +699,7 @@ export default function Flights() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="bg-white rounded-3xl shadow-2xl p-5 md:p-6"
+            aria-busy={isSearchBusy}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Origin */}
@@ -731,15 +749,47 @@ export default function Flights() {
             <div className="mt-5 flex justify-center">
               <Button
                 onClick={handleSearch}
-                disabled={isFetching}
-                className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-black text-base px-12 py-4 rounded-2xl shadow-xl transition-all active:scale-[0.97] gap-3"
+                disabled={isSearchBusy}
+                aria-busy={isSearchBusy}
+                className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-black text-base px-12 py-4 rounded-2xl shadow-xl transition-all active:scale-[0.97] gap-3 disabled:cursor-wait"
               >
-                {isFetching ? (
-                  <><RefreshCw className="w-5 h-5 animate-spin" /> Recherche en cours...</>
+                {isSearchBusy ? (
+                  <span className="flex items-center gap-3" role="status" aria-live="polite">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
+                      aria-hidden="true"
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                    </motion.span>
+                    <motion.span
+                      animate={{ opacity: [0.55, 1, 0.55] }}
+                      transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                    >Recherche en cours...</motion.span>
+                  </span>
                 ) : (
                   <><Search className="w-5 h-5" /> Rechercher les vols</>
                 )}
               </Button>
+              <AnimatePresence initial={false}>
+                {isSearchBusy && (
+                  <motion.div
+                    initial={{ opacity: 0, scaleX: 0.7 }}
+                    animate={{ opacity: 1, scaleX: 1 }}
+                    exit={{ opacity: 0, scaleX: 0.7 }}
+                    transition={{ duration: 0.2 }}
+                    className="mt-3 h-1 w-full max-w-xs origin-left overflow-hidden rounded-full bg-blue-100"
+                    role="progressbar"
+                    aria-label="Recherche de vols en cours"
+                  >
+                    <motion.div
+                      className="h-full w-2/5 rounded-full bg-gradient-to-r from-[#7CB9E8] via-[#2563EB] to-[#1E3A8A]"
+                      animate={{ x: ["-120%", "280%"] }}
+                      transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>

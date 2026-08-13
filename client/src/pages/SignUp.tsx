@@ -147,6 +147,7 @@ export default function SignUp() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.3 }}
               onSubmit={handleSubmit}
+              aria-busy={signUpMutation.isPending}
               className="space-y-5"
             >
               {/* Nom complet */}
@@ -292,9 +293,18 @@ export default function SignUp() {
                 className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
               >
                 {signUpMutation.isPending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader className="w-4 h-4 animate-spin" />
-                    Inscription en cours...
+                  <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      aria-hidden="true"
+                    >
+                      <Loader className="w-4 h-4" />
+                    </motion.span>
+                    <motion.span
+                      animate={{ opacity: [0.55, 1, 0.55] }}
+                      transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                    >Inscription en cours...</motion.span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
@@ -302,6 +312,22 @@ export default function SignUp() {
                   </span>
                 )}
               </Button>
+              {signUpMutation.isPending && (
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0.7 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="h-1 origin-left overflow-hidden rounded-full bg-blue-100"
+                  role="progressbar"
+                  aria-label="Inscription en cours"
+                >
+                  <motion.div
+                    className="h-full w-2/5 rounded-full bg-gradient-to-r from-[#7CB9E8] via-[#2563EB] to-[#1E3A8A]"
+                    animate={{ x: ["-120%", "280%"] }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </motion.div>
+              )}
 
               {/* Lien vers connexion */}
               <div className="text-center">

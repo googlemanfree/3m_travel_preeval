@@ -54,6 +54,7 @@ export default function TravelSearchHero() {
   const [departureDate, setDepartureDate] = useState(() => addDaysToIsoDate(todayIso(), 7));
   const [returnDate, setReturnDate] = useState(() => addDaysToIsoDate(todayIso(), 14));
   const [dateError, setDateError] = useState("");
+  const [isFlightSearchSubmitting, setIsFlightSearchSubmitting] = useState(false);
   const [adults, setAdults] = useState(1);
   const [cabinClass, setCabinClass] = useState("ECONOMY");
 
@@ -95,7 +96,9 @@ export default function TravelSearchHero() {
     params.set("tripType", tripType);
     params.set("adults", String(adults));
     params.set("cabinClass", cabinClass);
+    setIsFlightSearchSubmitting(true);
     setLocation(`/flights?${params.toString()}`);
+    window.setTimeout(() => setIsFlightSearchSubmitting(false), 1200);
   };
 
   return (
@@ -134,6 +137,7 @@ export default function TravelSearchHero() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 onSubmit={handleFlightSearch}
+                aria-busy={isFlightSearchSubmitting}
                 className="space-y-3"
               >
                 {/* Aller-retour / Aller simple */}
@@ -219,9 +223,51 @@ export default function TravelSearchHero() {
                       </select>
                     </div>
                   </div>
-                  <Button type="submit" className="h-11 bg-[#2563eb] hover:bg-[#1e3a8a] font-bold px-6">
-                    <Search className="w-4 h-4 mr-2" /> Rechercher
-                  </Button>
+                  <div className="flex flex-col items-stretch gap-2">
+                    <Button
+                      type="submit"
+                      disabled={isFlightSearchSubmitting}
+                      aria-busy={isFlightSearchSubmitting}
+                      className="h-11 bg-[#2563eb] hover:bg-[#1e3a8a] font-bold px-6 disabled:cursor-wait"
+                    >
+                      {isFlightSearchSubmitting ? (
+                        <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
+                            aria-hidden="true"
+                          >
+                            <Search className="w-4 h-4" />
+                          </motion.span>
+                          <motion.span
+                            animate={{ opacity: [0.55, 1, 0.55] }}
+                            transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                          >Préparation...</motion.span>
+                        </span>
+                      ) : (
+                        <><Search className="w-4 h-4 mr-2" /> Rechercher</>
+                      )}
+                    </Button>
+                    <AnimatePresence initial={false}>
+                      {isFlightSearchSubmitting && (
+                        <motion.div
+                          initial={{ opacity: 0, scaleX: 0.7 }}
+                          animate={{ opacity: 1, scaleX: 1 }}
+                          exit={{ opacity: 0, scaleX: 0.7 }}
+                          transition={{ duration: 0.2 }}
+                          className="h-1 origin-left overflow-hidden rounded-full bg-blue-100"
+                          role="progressbar"
+                          aria-label="Préparation de la recherche de vols"
+                        >
+                          <motion.div
+                            className="h-full w-2/5 rounded-full bg-gradient-to-r from-[#7CB9E8] via-[#2563EB] to-[#1E3A8A]"
+                            animate={{ x: ["-120%", "280%"] }}
+                            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </motion.form>
             )}

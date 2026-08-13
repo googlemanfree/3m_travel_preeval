@@ -1994,3 +1994,9 @@
 - [x] Vérifier les parcours d’authentification et la recherche de vols avec des paramètres valides
 - [x] Contrôler les logs console/réseau et l’absence de page blanche sur desktop et mobile
 - [x] Confirmer que les tests et le build restent verts après la campagne
+
+## Amélioration des retours visuels de chargement (v122)
+- [x] Auditer les formulaires d'inscription et de recherche de vols
+- [x] Intégrer les indicateurs de chargement animés et anti-double-soumission sur Register.tsx, SignUp.tsx et Flights.tsx
+- [x] Valider la fluidité, les tests unitaires et le build de production
+- [x] Publier la version optimisée avec animations de chargement
