@@ -1878,3 +1878,8 @@
 - [x] Ajouter le filtre de témoignages et le widget de conversion monétaire robuste
 - [x] Intégrer les trois modules à l’accueil avec états de chargement, erreurs et responsive
 - [x] Valider calculs, confidentialité, accessibilité, TypeScript, tests, build et publier
+
+## Suppression de l’identité tierce du visuel héros (v98)
+- [x] Auditer la source du visuel actuel et confirmer les calques d’identité à retirer
+- [x] Générer un nouveau visuel de héros sans logos ni textes de marques tierces
+- [x] Remplacer l’asset et vérifier contraste, parallaxe, responsive, TypeScript, tests, build et publier

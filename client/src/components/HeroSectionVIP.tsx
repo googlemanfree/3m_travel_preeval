@@ -88,7 +88,7 @@ export default function HeroSectionVIP({
         {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
-          src="/manus-storage/agency_hero_soft_two_persons_8ed4a223.png"
+          src="/manus-storage/agency_hero_clean_3m_705f0259.png"
           alt="3M Travel Agency - Spécialiste de la mobilité internationale vers le Canada et l'Europe"
           aria-hidden="true"
           ref={backgroundRef}
