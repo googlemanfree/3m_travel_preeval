@@ -8,18 +8,19 @@ const indexHtml = readFileSync(
 );
 
 describe("static bootstrap recovery contract", () => {
-  it("does not leave the initial boot fallback without a deadline", () => {
-    expect(indexHtml).toContain('id="boot-countdown"');
-    expect(indexHtml).toContain('id="boot-progress-bar"');
-    expect(indexHtml).toContain('id="boot-retry"');
-    expect(indexHtml).toContain("const timeoutMs = 15000");
-    expect(indexHtml).toContain("3m_boot_reload_attempted");
+  it("keeps a React-independent 15-second recovery deadline", () => {
+    expect(indexHtml).toContain("Filet de sécurité indépendant de React");
+    expect(indexHtml).toContain("var BOOT_TIMEOUT_MS = 15000");
+    expect(indexHtml).toContain("window.setTimeout");
+    expect(indexHtml).toContain("3m_boot_timeout_reload_attempted");
+    expect(indexHtml).toContain('root.querySelector(".boot-fallback")');
   });
 
-  it("detects a failed module script and explains the automatic recovery", () => {
-    expect(indexHtml).toContain("target instanceof HTMLScriptElement");
-    expect(indexHtml).toContain('target.type === "module"');
-    expect(indexHtml).toContain("Problème réseau détecté");
-    expect(indexHtml).toContain("Rechargement automatique en cours");
+  it("reloads once and then exposes a manual retry instead of looping forever", () => {
+    expect(indexHtml).toContain("window.location.reload()");
+    expect(indexHtml).toContain("sessionStorage.setItem(RELOAD_FLAG_KEY, \"1\")");
+    expect(indexHtml).toContain("Le chargement rencontre un problème persistant.");
+    expect(indexHtml).toContain("Réessayer");
+    expect(indexHtml).toContain("Contacter l\\'agence sur WhatsApp");
   });
 });

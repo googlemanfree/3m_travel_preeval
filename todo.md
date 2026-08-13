@@ -2112,3 +2112,7 @@
 - [x] Vérifier la date et le contenu du dernier déploiement réellement servis par les domaines publics
 - [x] Forcer une nouvelle publication du correctif de chargement et invalider le cache si nécessaire
 - [x] Recontrôler le bundle, le loader et les en-têtes du domaine public après publication
+
+- [x] Inspecter et intégrer le `client/index.html` fourni dans l’archive de correction
+- [x] Vérifier le filet de sécurité JavaScript autonome avec délai maximal de 15 secondes
+- [x] Valider TypeScript, tests, build et affichage des routes avant publication
