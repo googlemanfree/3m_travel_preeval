@@ -24,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 import ServicesSection from "@/components/ServicesSection";
 import HeroSectionVIP from "@/components/HeroSectionVIP";
+import EmbassyNewsWidget from "@/components/EmbassyNewsWidget";
 import TravelSearchHero from "@/components/TravelSearchHero";
 import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhanced";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
@@ -564,6 +565,9 @@ export default function Home() {
         logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      {/* ─── ACTUALITÉS OFFICIELLES DES AMBASSADES (CANADA / EUROPE) ──────── */}
+      <EmbassyNewsWidget />
 
       {/* ─── RECHERCHE MULTI-SERVICES (façon ease.travel) ──────────────────── */}
       <TravelSearchHero />

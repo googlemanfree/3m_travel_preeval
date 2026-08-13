@@ -1853,3 +1853,9 @@
 - [x] Générer un nouveau visuel éditorial HD avec visages différenciés, identité 3M et repères Canada/Europe
 - [x] Intégrer le nouveau visuel et ajuster les calques pour préserver contraste et parallaxe
 - [x] Vérifier rendu HD, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Widget d’actualités officielles des ambassades Canada et Europe (v94)
+- [x] Définir les sources officielles, le périmètre éditorial et la stratégie de récupération des actualités
+- [x] Mettre en place la récupération sécurisée, le cache et la traduction FR/EN des actualités
+- [x] Construire et intégrer le widget sous l’accueil avec sources, filtres et états de chargement
+- [x] Vérifier exactitude, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
