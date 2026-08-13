@@ -1803,3 +1803,9 @@
 - [x] Ajouter validations de type, taille, accès privé et états d’erreur/chargement
 - [x] Écrire et exécuter les tests, valider TypeScript, responsive et build de production
 - [x] Sauvegarder et publier la version après vérification finale
+
+## Import en masse par glisser-déposer des visuels de destination (v85)
+- [x] Définir le flux d’import en masse et les règles d’association aux destinations
+- [x] Étendre l’API sécurisée pour traiter plusieurs médias administrés avec protection contre les doublons
+- [x] Construire l’interface glisser-déposer, file d’attente, prévisualisation et progression
+- [x] Tester les validations, erreurs, responsive, sécurité, TypeScript, suite Vitest et build puis publier

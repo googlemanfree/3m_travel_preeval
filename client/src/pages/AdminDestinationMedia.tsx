@@ -69,6 +69,81 @@ export default function AdminDestinationMedia() {
     onError: error => toast.error(error.message || "La suppression du média a échoué."),
   });
 
+  const [isBulkDragging, setIsBulkDragging] = useState(false);
+  const [bulkType, setBulkType] = useState<MediaKind>("image");
+  const [isBulkBusy, setIsBulkBusy] = useState(false);
+
+  const bulkSaveMutation = trpc.destinationMedia.bulkSave.useMutation({
+    onSuccess: async (res) => {
+      await Promise.all([
+        utils.destinationMedia.listAdmin.invalidate(),
+        utils.destinationMedia.listPublic.invalidate(),
+      ]);
+      setIsBulkBusy(false);
+      if (res.errors.length > 0) {
+        toast.warning(`Import terminé : ${res.successCount} succès, ${res.errors.length} échec(s).`);
+      } else {
+        toast.success(`Import en masse réussi : ${res.successCount} fichier(s) mis à jour.`);
+      }
+    },
+    onError: (err) => {
+      setIsBulkBusy(false);
+      toast.error(err.message || "L’import en masse a échoué.");
+    },
+  });
+
+  const handleBulkFiles = async (files: FileList | File[]) => {
+    if (!files || files.length === 0) return;
+    const fileList = Array.from(files).slice(0, 20);
+    setIsBulkBusy(true);
+
+    const items: Array<{
+      destinationId: string;
+      destinationName: string;
+      mediaType: MediaKind;
+      dataUrl: string;
+      mimeType: string;
+      altText?: string;
+    }> = [];
+
+    for (const file of fileList) {
+      if (!ACCEPTED_TYPES.includes(file.type)) continue;
+      if (file.size > MAX_FILE_SIZE) continue;
+
+      const rawName = file.name.replace(/\.[^/.]+$/, "").toLowerCase().trim();
+      const matchedCountry = procedures107Complete.find(c =>
+        c.id === rawName ||
+        c.name.toLowerCase() === rawName ||
+        rawName.includes(c.id) ||
+        c.name.toLowerCase().includes(rawName)
+      );
+
+      if (matchedCountry) {
+        try {
+          const dataUrl = await readFileAsDataUrl(file);
+          items.push({
+            destinationId: matchedCountry.id,
+            destinationName: matchedCountry.name,
+            mediaType: bulkType,
+            dataUrl,
+            mimeType: file.type,
+            altText: `${matchedCountry.name} — ${bulkType === "flag" ? "drapeau officiel" : "visuel de mobilité internationale"}`,
+          });
+        } catch {
+          // Ignorer les fichiers non lisibles
+        }
+      }
+    }
+
+    if (items.length === 0) {
+      setIsBulkBusy(false);
+      toast.error("Aucun fichier valide n'a pu être associé automatiquement à un pays. Nommez vos fichiers avec l'ID exact ou le nom du pays (ex: 'allemagne.jpg').");
+      return;
+    }
+
+    bulkSaveMutation.mutate({ items });
+  };
+
   const mediaByDestination = useMemo(() => {
     const map = new Map<string, MediaRecord>();
     for (const item of mediaQuery.data?.media ?? []) {
@@ -173,6 +248,73 @@ export default function AdminDestinationMedia() {
           </Card>
 
           {selectedCountry ? (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-lg dark:bg-slate-900/80">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Upload className="h-5 w-5 text-blue-600" />
+                        Importation en masse par Glisser-Déposer
+                      </CardTitle>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Glissez plusieurs fichiers image nommés d’après le pays (ex: <span className="font-mono text-blue-600">canada.jpg</span>, <span className="font-mono text-blue-600">france.png</span>) pour les affecter en un clic.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={bulkType}
+                        onChange={(e) => setBulkType(e.target.value as MediaKind)}
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold shadow-sm dark:border-slate-700 dark:bg-slate-800"
+                        aria-label="Type de média pour l'import en masse"
+                      >
+                        <option value="image">Type : Image destination</option>
+                        <option value="flag">Type : Drapeau officiel</option>
+                      </select>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsBulkDragging(true); }}
+                    onDragLeave={() => setIsBulkDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsBulkDragging(false);
+                      handleBulkFiles(e.dataTransfer.files);
+                    }}
+                    className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${isBulkDragging ? "border-blue-600 bg-blue-50/80 dark:bg-blue-950/40" : "border-slate-200 bg-slate-50/50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/30"}`}
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600 shadow-inner dark:bg-blue-900/50 dark:text-blue-300">
+                      <Upload className={`h-6 w-6 ${isBulkBusy ? "animate-bounce" : ""}`} />
+                    </div>
+                    <p className="mt-3 text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {isBulkBusy ? "Traitement et téléversement en cours..." : "Glissez-déposez vos images ici (jusqu'à 20 fichiers)"}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Les fichiers sont automatiquement reliés au pays correspondant selon leur nom de fichier.
+                    </p>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      id="bulk-file-input"
+                      onChange={(e) => {
+                        handleBulkFiles(e.target.files);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                    <label
+                      htmlFor="bulk-file-input"
+                      className="mt-4 inline-flex cursor-pointer items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-xs font-semibold text-white shadow transition hover:bg-blue-800"
+                    >
+                      Sélectionner des fichiers
+                    </label>
+                  </div>
+                </CardContent>
+              </Card>
+
             <Card className="border-0 shadow-lg dark:bg-slate-900/80">
               <CardHeader className="border-b border-slate-100 dark:border-slate-800">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -227,6 +369,7 @@ export default function AdminDestinationMedia() {
                 </div>
               </CardContent>
             </Card>
+            </div>
           ) : (
             <Card className="flex min-h-[420px] items-center justify-center border-0 shadow-lg dark:bg-slate-900/80">
               <p className="text-sm text-slate-500">Aucune destination trouvée.</p>

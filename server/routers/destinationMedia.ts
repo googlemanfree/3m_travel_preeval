@@ -117,6 +117,61 @@ export const destinationMediaRouter = router({
       return { success: true, media: rows[0] ?? null };
     }),
 
+  bulkSave: publicProcedure
+    .input(z.object({
+      items: z.array(z.object({
+        destinationId: destinationIdSchema,
+        destinationName: z.string().trim().min(1).max(160),
+        mediaType: z.enum(["image", "flag"]),
+        dataUrl: z.string().min(32).max(10_000_000),
+        mimeType: z.string().trim().min(1).max(80),
+        altText: z.string().trim().max(255).optional(),
+      })).min(1).max(20),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const item of input.items) {
+        try {
+          const { buffer, mimeType } = parseImageData(item.dataUrl, item.mimeType);
+          const extension = extensionForMimeType(mimeType);
+          const key = `destination-media/${item.destinationId}/${item.mediaType}-${Date.now()}-${randomUUID()}.${extension}`;
+          const stored = await storagePut(key, buffer, mimeType);
+          const existingRows = await db.select().from(destinationMedia).where(eq(destinationMedia.destinationId, item.destinationId)).limit(1);
+          const existing = existingRows[0];
+          const altText = item.altText || `${item.destinationName} — ${item.mediaType === "flag" ? "drapeau" : "image de destination"}`;
+          const mediaValues = item.mediaType === "image"
+            ? { imageUrl: stored.url, imageKey: stored.key, imageAlt: altText }
+            : { flagUrl: stored.url, flagKey: stored.key, flagAlt: altText };
+
+          if (existing) {
+            await db.update(destinationMedia).set({
+              ...mediaValues,
+              updatedByAdminId: admin.id,
+              updatedByAdminEmail: admin.email,
+            }).where(eq(destinationMedia.id, existing.id));
+          } else {
+            await db.insert(destinationMedia).values({
+              destinationId: item.destinationId,
+              ...mediaValues,
+              updatedByAdminId: admin.id,
+              updatedByAdminEmail: admin.email,
+            });
+          }
+          successCount++;
+        } catch (err) {
+          errors.push(`${item.destinationId}: ${err instanceof Error ? err.message : "Erreur inconnue"}`);
+        }
+      }
+
+      return { success: true, successCount, total: input.items.length, errors };
+    }),
+
   remove: publicProcedure
     .input(z.object({ destinationId: destinationIdSchema, mediaType: z.enum(["image", "flag"]) }))
     .mutation(async ({ input, ctx }) => {
