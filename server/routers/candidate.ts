@@ -279,6 +279,7 @@ export const candidateRouter = router({
         employmentStatus: null,
         languageLevel: null,
         preferredLanguage: linkedCandidate.preferredLanguage,
+        avatarUrl: linkedCandidate.avatarUrl,
         createdAt: ctx.user.createdAt,
         lastLoginAt: ctx.user.lastSignedIn,
       };
@@ -301,6 +302,7 @@ export const candidateRouter = router({
       employmentStatus: c.employmentStatus,
       languageLevel: c.languageLevel,
       preferredLanguage: c.preferredLanguage,
+      avatarUrl: c.avatarUrl,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -321,6 +323,7 @@ export const candidateRouter = router({
         languageLevel: z.string().optional(),
         preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().optional(),
+        avatarUrl: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {

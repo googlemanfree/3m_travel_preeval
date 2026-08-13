@@ -30,10 +30,14 @@ export default function CompleteProfile() {
   const [location, navigate] = useLocation();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [formData, setFormData] = useState({
     destination: "",
     visaType: "",
     occupation: "",
+    avatarUrl: "",
   });
 
   // Récupérer l'email depuis les paramètres d'URL
@@ -65,13 +69,87 @@ export default function CompleteProfile() {
     }
   };
 
-  const handleComplete = () => {
-    setIsLoading(true);
-    // Attendre 1 seconde puis rediriger vers la page de connexion
-    setTimeout(() => {
-      toast.success("Profil complété ! Veuillez vous connecter.");
+  const updateProfileMutation = trpc.candidate.updateProfile.useMutation({
+    onSuccess: () => {
+      setIsLoading(false);
+      toast.success("Profil complété et photo de profil enregistrée ! Veuillez vous connecter.");
+      localStorage.removeItem("candidateId");
       navigate("/login");
-    }, 1000);
+    },
+    onError: (err) => {
+      setIsLoading(false);
+      toast.error(err.message || "Erreur lors de la mise à jour du profil.");
+    },
+  });
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La taille de l'image ne doit pas dépasser 5 Mo.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Format non supporté. Veuillez choisir une image JPG, PNG ou WebP.");
+      return;
+    }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleComplete = async () => {
+    if (!avatarFile) {
+      toast.error("La photo de profil est obligatoire pour continuer.");
+      return;
+    }
+
+    setIsLoading(true);
+    let finalAvatarUrl = formData.avatarUrl;
+
+    try {
+      setIsUploadingAvatar(true);
+      const uploadForm = new FormData();
+      uploadForm.append("file", avatarFile);
+      uploadForm.append("documentType", "photo");
+      
+      const candidateId = localStorage.getItem("candidateId");
+      if (candidateId) {
+        uploadForm.append("candidateId", candidateId);
+      }
+
+      const response = await fetch("/api/candidate/upload", {
+        method: "POST",
+        body: uploadForm,
+      });
+
+      if (!response.ok) {
+        throw new Error("Échec de l'upload de la photo de profil.");
+      }
+
+      const result = await response.json();
+      if (result && result.fileUrl) {
+        finalAvatarUrl = result.fileUrl;
+      }
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("Erreur lors de l'envoi de la photo de profil.");
+      setIsLoading(false);
+      setIsUploadingAvatar(false);
+      return;
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+
+    updateProfileMutation.mutate({
+      destination: formData.destination as any,
+      visaType: formData.visaType,
+      educationLevel: formData.occupation,
+      avatarUrl: finalAvatarUrl,
+    });
   };
 
   return (
@@ -82,9 +160,9 @@ export default function CompleteProfile() {
         transition={{ duration: 0.5 }}
         className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full"
       >
-        {/* Indicateur de progression */}
+        {/* Indicateur de progression (4 étapes incluant l'avatar) */}
         <div className="flex gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div
               key={s}
               className={`h-2 flex-1 rounded-full transition-all ${
@@ -239,18 +317,81 @@ export default function CompleteProfile() {
                 Retour
               </Button>
               <Button
+                onClick={handleContinue}
+                disabled={!formData.occupation}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Continuer
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Étape 4: Photo de profil obligatoire */}
+        {step === 4 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="mb-6 text-center">
+              <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-blue-500 overflow-hidden shadow-inner">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Aperçu avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="w-10 h-10 text-blue-600" />
+                )}
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Photo de profil obligatoire</h2>
+              <p className="text-gray-600 text-sm">Ajoutez votre photo pour personnaliser votre espace 3M Travel Agency.</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-gray-50">
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarSelect}
+                  className="hidden"
+                />
+                <label htmlFor="avatar-upload" className="cursor-pointer block">
+                  <span className="text-sm font-semibold text-blue-600 hover:text-blue-700 block mb-1">
+                    📁 Choisir une photo de profil
+                  </span>
+                  <span className="text-xs text-gray-500">JPG, PNG ou WebP (max. 5 Mo)</span>
+                </label>
+                {avatarFile && (
+                  <div className="mt-3 text-xs font-medium text-green-700 bg-green-100 py-1 px-3 rounded-md inline-block">
+                    ✓ {avatarFile.name} prêt
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                onClick={() => setStep(3)}
+                variant="outline"
+                className="flex-1 py-3 rounded-lg font-semibold"
+              >
+                Retour
+              </Button>
+              <Button
                 onClick={handleComplete}
-                disabled={!formData.occupation || isLoading}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!avatarFile || isLoading}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
                 {isLoading ? (
                   <>
                     <Loader className="w-5 h-5 animate-spin" />
-                    Finalisation...
+                    <span>Enregistrement...</span>
                   </>
                 ) : (
                   <>
-                    Terminer
+                    <span>Valider et terminer</span>
                     <CheckCircle className="w-5 h-5" />
                   </>
                 )}

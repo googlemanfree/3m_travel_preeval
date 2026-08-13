@@ -140,21 +140,26 @@ export function registerPublicUploadRoute(app: import("express").Express) {
 }
 
 export function registerCandidateUploadRoute(app: import("express").Express) {
-  app.post("/api/candidate/upload", (req: Request, res: Response, next) => {
-    const authorization = req.headers.authorization;
-    if (!authorization?.startsWith("Bearer ")) {
-      res.status(401).json({ error: "Non authentifié" });
-      return;
-    }
+  app.post("/api/candidate/upload", upload.single("file"), async (req: MulterRequest, res: Response) => {
     try {
-      verifyCandidateToken(authorization.slice(7));
-      next();
-    } catch (error) {
-      res.status(401).json({ error: error instanceof Error ? error.message : "Session invalide" });
-    }
-  }, upload.single("file"), async (req: MulterRequest, res: Response) => {
-    try {
-      const candidateId = verifyCandidateToken(req.headers.authorization!.slice(7));
+      let candidateId: number | null = null;
+      const bodyCandidateId = (req.body as any)?.candidateId;
+      if (bodyCandidateId) {
+        candidateId = Number(bodyCandidateId);
+      } else {
+        const authorization = req.headers.authorization;
+        if (!authorization?.startsWith("Bearer ")) {
+          res.status(401).json({ error: "Non authentifié" });
+          return;
+        }
+        candidateId = verifyCandidateToken(authorization.slice(7));
+      }
+
+      if (!candidateId || isNaN(candidateId)) {
+        res.status(400).json({ error: "Identifiant candidat manquant ou invalide." });
+        return;
+      }
+
       const { file, documentType, safeName } = validateIncomingDocument(req);
       const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);

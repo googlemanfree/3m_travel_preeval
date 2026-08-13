@@ -1831,3 +1831,9 @@
 - [x] Auditer le héros et définir une intensité de parallaxe compatible desktop et mobile
 - [x] Implémenter le parallaxe avec animation optimisée et repli pour mouvement réduit
 - [x] Vérifier le rendu, la fluidité, le responsive, TypeScript, les tests et le build puis publier
+
+## Système d’avatar et photo de profil obligatoire à l’inscription (v90)
+- [x] Auditer le schéma candidat, les tables d’inscription et le stockage des fichiers
+- [x] Ajouter la colonne avatar_url avec migration additive et endpoint de mise à jour sécurisée
+- [x] Intégrer l’étape obligatoire d’upload d’avatar lors de l’inscription et l’affichage dans l’espace client
+- [x] Vérifier les restrictions de type/taille, la sécurité, TypeScript, la suite de tests et le build puis publier

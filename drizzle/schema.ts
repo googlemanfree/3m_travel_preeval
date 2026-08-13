@@ -151,11 +151,12 @@ export const candidates = mysqlTable("candidates", {
   // Scoring
   scoreResult: varchar("scoreResult", { length: 50 }),
   scoreDetails: text("scoreDetails"),       // JSON des détails du scoring
-  // Profil
+  // Profil & Avatar
   educationLevel: varchar("educationLevel", { length: 100 }),
   employmentStatus: varchar("employmentStatus", { length: 100 }),
   languageLevel: varchar("languageLevel", { length: 100 }),
   preferredLanguage: mysqlEnum("preferredLanguage", ["fr", "en"]),
+  avatarUrl: text("avatarUrl"),
   // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
