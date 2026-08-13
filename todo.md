@@ -2068,3 +2068,9 @@
 - [x] Remplacer les 2 fichiers aux chemins requis sans altérer le reste de l'application
 - [x] Intégrer le gestionnaire de rechargement automatique en cas d’échec de chargement de chunk différé
 - [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
+
+## Notification de Rechargement et Écran de Secours (v134)
+- [x] Ajouter un toast temporaire informant l'utilisateur du rechargement automatique suite à une mise à jour
+- [x] Créer une interface de secours conviviale dans ErrorBoundary avec bouton de rafraîchissement manuel
+- [x] Implémenter un endpoint ou signal léger de télémétrie des erreurs de chunk vers le backend
+- [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
