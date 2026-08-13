@@ -2096,3 +2096,7 @@
 - [x] Vérifier les catégories de passagers, les champs passeport, la validation et le récapitulatif
 - [x] Vérifier la confirmation, les contacts agence, les exports et les états d’erreur desktop/mobile
 - [x] Corriger les anomalies découvertes, ajouter les tests nécessaires et valider le build
+
+- [x] Intégrer `client/src/lib/lazyWithTimeout.ts` et remplacer `client/src/App.tsx` avec le délai maximal de 15 secondes pour les pages différées
+- [x] Vérifier que la récupération automatique des erreurs de chunk se déclenche après expiration sans rester sur l’écran de chargement
+- [x] Exécuter TypeScript, les tests, le build et les contrôles desktop/mobile avant publication
