@@ -1826,3 +1826,8 @@
 - [x] Produire et intégrer le nouveau visuel d’accueil inclusif représentant la réussite de voyageurs diversifiés
 - [x] Corriger l’application globale FR/EN, centrer le logo et harmoniser le héros
 - [x] Vérifier le changement de langue, le responsive, l’accessibilité, TypeScript, la suite de tests et le build puis publier
+
+## Parallaxe de l’image du héros (v89)
+- [x] Auditer le héros et définir une intensité de parallaxe compatible desktop et mobile
+- [x] Implémenter le parallaxe avec animation optimisée et repli pour mouvement réduit
+- [x] Vérifier le rendu, la fluidité, le responsive, TypeScript, les tests et le build puis publier

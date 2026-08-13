@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 import { Star } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,48 @@ export default function HeroSectionVIP({
   logoUrl = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg",
   whatsappNumber = "237698104832"
 }: HeroSectionVIPProps) {
+  const heroRef = useRef<HTMLElement | null>(null);
+  const backgroundRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    const background = backgroundRef.current;
+    if (!hero || !background || typeof window === "undefined") return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+
+    const updateParallax = () => {
+      frame = 0;
+      const rect = hero.getBoundingClientRect();
+      const viewportCenter = window.innerHeight / 2;
+      const heroCenter = rect.top + rect.height / 2;
+      const progress = Math.max(-1, Math.min(1, (viewportCenter - heroCenter) / (window.innerHeight + rect.height)));
+      const strength = window.innerWidth < 768 ? 10 : 24;
+
+      background.style.transform = reduceMotion.matches
+        ? "scale(1.04)"
+        : `translate3d(0, ${progress * strength}px, 0) scale(1.08)`;
+    };
+
+    const requestUpdate = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(updateParallax);
+    };
+
+    const handleMotionPreference = () => requestUpdate();
+    reduceMotion.addEventListener?.("change", handleMotionPreference);
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate, { passive: true });
+    requestUpdate();
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      reduceMotion.removeEventListener?.("change", handleMotionPreference);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, []);
+
   const fadeUp = {
     hidden: { opacity: 0, y: 20 },
     visible: (i = 0) => ({
@@ -26,6 +69,7 @@ export default function HeroSectionVIP({
 
   return (
     <section
+      ref={heroRef}
       className="relative py-16 md:py-24 overflow-hidden text-center text-white"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
@@ -37,7 +81,9 @@ export default function HeroSectionVIP({
           src="/manus-storage/agency_hero_success_diverse_93e808a0.png"
           alt="3M Travel Agency - Voyage et Mobilité Internationale réussie"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-45 mix-blend-overlay filter brightness-105"
+          ref={backgroundRef}
+          className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-45 mix-blend-overlay filter brightness-105 will-change-transform"
+          style={{ transform: "translate3d(0, 0, 0) scale(1.08)" }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/90 via-[#0a1d3a]/75 to-[#07162c]/95" />
         <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
