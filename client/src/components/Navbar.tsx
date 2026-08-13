@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
 import { prefetchNavigation } from "@/lib/navigationCache";
 import { notifyNavigationStart } from "./NavigationProgress";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const menuItems = [
   { href: "/", label: "Accueil", icon: "🏠" },
@@ -23,6 +24,7 @@ const nativeLinkClass = (highlight?: boolean) =>
 
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
+  const { language, setLanguage } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -99,7 +101,14 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="hidden lg:flex items-center space-x-3">
+          <div className="hidden lg:flex items-center gap-3">
+            <button
+              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+              className="px-3 py-2 rounded-xl text-xs font-black tracking-wider uppercase bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 transition flex items-center gap-1.5 border border-blue-200/60 dark:border-blue-900/40"
+              title="Changer de langue / Switch Language"
+            >
+              🌐 {language === 'fr' ? 'EN' : 'FR'}
+            </button>
             <ThemeToggle />
             {candidate ? (
               <div className="relative">
@@ -189,6 +198,12 @@ export default function Navbar() {
           </div>
 
           <div className="flex lg:hidden items-center gap-2">
+            <button
+              onClick={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-black tracking-wider uppercase bg-blue-50 text-blue-700 dark:bg-slate-800 dark:text-blue-400 transition flex items-center gap-1 border border-blue-200/60"
+            >
+              🌐 {language === 'fr' ? 'EN' : 'FR'}
+            </button>
             <ThemeToggle compact />
             <motion.button
               type="button"

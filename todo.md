@@ -1756,3 +1756,10 @@
 - [x] Constituer un catalogue rigoureux de 35+ destinations nécessitant un e-Visa pour les Camerounais/Africains
 - [x] Implémenter les fiches de détail e-Visa individuelles avec visuels de capitale, formalités, documents et CTA « Lancer ma procédure e-visa »
 - [x] Tester les filtres, la recherche, les liens, le responsive, TypeScript, tests et build puis publier
+
+## Version bilingue Français / Anglais (v78)
+- [x] Auditer l’architecture linguistique actuelle, les composants d’interface et les guides PDF
+- [x] Implémenter le contexte et le sélecteur de langue persistants (FR/EN)
+- [x] Traduire et adapter le Navbar, l’accueil, l’annuaire des procédures, les e-Visas et le suivi client en anglais
+- [x] Générer et relier les guides PDF en anglais pour chaque destination et procédure
+- [x] Tester les changements de langue, la persistance, le responsive, TypeScript, tests et build puis publier

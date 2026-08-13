@@ -7,7 +7,9 @@
 export interface PdfResource {
   id: string;
   title: string;
+  titleEn?: string;
   country: string;
+  countryEn?: string;
   flag: string;
   type: "pdf" | "docx";
   url: string;
@@ -29,8 +31,8 @@ export const PDF_CATEGORIES: PdfCategory[] = [
     icon: "Briefcase",
     color: "blue",
     resources: [
-      { id: "vt-allemagne", title: "Visa Travail — Allemagne 2026", country: "Allemagne", flag: "🇩🇪", type: "docx", url: "/manus-storage/3MTravel_VisaTravail_Allemagne_2026_64549fc5.docx", category: "travail" },
-      { id: "vt-australie", title: "Visa Travail — Australie 2026", country: "Australie", flag: "🇦🇺", type: "pdf", url: "/manus-storage/3MTravel_VisaTravail_Australie_2026_916008e9.pdf", category: "travail" },
+      { id: "vt-allemagne", title: "Visa Travail — Allemagne 2026", titleEn: "Work Visa — Germany 2026", country: "Allemagne", countryEn: "Germany", flag: "🇩🇪", type: "docx", url: "/manus-storage/3MTravel_VisaTravail_Allemagne_2026_64549fc5.docx", category: "travail" },
+      { id: "vt-australie", title: "Visa Travail — Australie 2026", titleEn: "Work Visa — Australia 2026", country: "Australie", countryEn: "Australia", flag: "🇦🇺", type: "pdf", url: "/manus-storage/3MTravel_VisaTravail_Australie_2026_916008e9.pdf", category: "travail" },
       { id: "vt-bulgarie", title: "Visa Travail — Bulgarie 2026", country: "Bulgarie", flag: "🇧🇬", type: "pdf", url: "/manus-storage/3MTravel_VisaTravail_Bulgarie_2026_75c99ff8.pdf", category: "travail" },
       { id: "vt-canada", title: "Visa Travail — Canada Complet 2026", country: "Canada", flag: "🍁", type: "pdf", url: "/manus-storage/3MTravel_VisaTravail_Canada_Complet_2026_6ddf7e2c.pdf", category: "travail" },
       { id: "vt-chypre", title: "Visa Travail — Chypre 2026", country: "Chypre", flag: "🇨🇾", type: "pdf", url: "/manus-storage/3MTravel_VisaTravail_Chypre_2026_ac29e62b.pdf", category: "travail" },

@@ -9,6 +9,7 @@ import {
   Globe, BookOpen, X, ExternalLink, Filter,
 } from "lucide-react";
 import { PDF_CATEGORIES, type PdfResource, type PdfCategory } from "@shared/pdfResources";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Icônes par catégorie ─────────────────────────────────────────────────────
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -27,6 +28,9 @@ const COLOR_MAP: Record<string, { bg: string; text: string; border: string; badg
 // ─── Composant carte ressource ────────────────────────────────────────────────
 function ResourceCard({ resource, color }: { resource: PdfResource; color: string }) {
   const c = COLOR_MAP[color] ?? COLOR_MAP.blue;
+  const { language } = useLanguage();
+  const displayTitle = language === 'en' && resource.titleEn ? resource.titleEn : resource.title;
+  const displayCountry = language === 'en' && resource.countryEn ? resource.countryEn : resource.country;
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -38,12 +42,12 @@ function ResourceCard({ resource, color }: { resource: PdfResource; color: strin
       <div className="flex items-center gap-3 min-w-0">
         <span className="text-2xl flex-shrink-0">{resource.flag}</span>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-800 truncate">{resource.title}</p>
+          <p className="text-sm font-semibold text-gray-800 truncate">{displayTitle}</p>
           <div className="flex items-center gap-2 mt-0.5">
             <span className={`text-xs px-1.5 py-0.5 rounded font-medium uppercase ${c.badge}`}>
               {resource.type}
             </span>
-            <span className="text-xs text-gray-500">{resource.country}</span>
+            <span className="text-xs text-gray-500">{displayCountry}</span>
           </div>
         </div>
       </div>
@@ -53,10 +57,10 @@ function ResourceCard({ resource, color }: { resource: PdfResource; color: strin
         rel="noopener noreferrer"
         download
         className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all duration-150 active:scale-95 ${c.btn}`}
-        title={`Télécharger ${resource.title}`}
+        title={language === 'en' ? `Download ${displayTitle}` : `Télécharger ${displayTitle}`}
       >
         <Download className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Télécharger</span>
+        <span className="hidden sm:inline">{language === 'en' ? 'Download' : 'Télécharger'}</span>
       </a>
     </motion.div>
   );
@@ -119,6 +123,7 @@ function CategorySection({ category, filteredResources }: { category: PdfCategor
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function Ressources() {
+  const { language } = useLanguage();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -155,14 +160,15 @@ export default function Ressources() {
           >
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-medium mb-4">
               <Download className="w-4 h-4" />
-              Bibliothèque de ressources
+              {language === 'en' ? 'Resource Library' : 'Bibliothèque de ressources'}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              Guides & Procédures 3M Travel
+              {language === 'en' ? '3M Travel Guides & Procedures' : 'Guides & Procédures 3M Travel'}
             </h1>
             <p className="text-blue-100 text-base md:text-lg max-w-2xl mx-auto">
-              Téléchargez nos fiches de procédures officielles pour{" "}
-              <strong>{totalAll} destinations</strong> — Visa Travail, Études, Visiteur et guides spécialisés.
+              {language === 'en'
+                ? `Download our official procedure sheets for ${totalAll} destinations — Work, Study, Visitor Visas and specialized guides.`
+                : `Téléchargez nos fiches de procédures officielles pour ${totalAll} destinations — Visa Travail, Études, Visiteur et guides spécialisés.`}
             </p>
           </motion.div>
         </div>
@@ -174,12 +180,12 @@ export default function Ressources() {
           {/* Recherche */}
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un pays, un type de visa…"
-              className="pl-9 pr-9 h-10 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
-            />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={language === 'en' ? 'Search country, visa type...' : 'Rechercher un pays, un type de visa…'}
+                className="pl-9 pr-9 h-10 rounded-xl border-gray-200 bg-gray-50 focus:bg-white"
+              />
             {search && (
               <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 <X className="w-4 h-4" />
