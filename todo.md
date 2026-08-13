@@ -1871,3 +1871,10 @@
 - [x] Intégrer le nouveau héros à deux personnes, les emblèmes et les images par service
 - [x] Corriger les bugs prioritaires et vérifier navigation, états, responsive et accessibilité
 - [x] Valider visuellement, TypeScript, tests, build et publier la refonte
+
+## Nouvelles fonctionnalités d’accueil (v97)
+- [x] Auditer les composants d’accueil, les témoignages, les données de score et les options de taux de change
+- [x] Construire le simulateur Canada avec calcul transparent, limites et avertissement non officiel
+- [x] Ajouter le filtre de témoignages et le widget de conversion monétaire robuste
+- [x] Intégrer les trois modules à l’accueil avec états de chargement, erreurs et responsive
+- [x] Valider calculs, confidentialité, accessibilité, TypeScript, tests, build et publier

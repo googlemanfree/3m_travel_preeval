@@ -25,6 +25,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import ServicesSection from "@/components/ServicesSection";
 import HeroSectionVIP from "@/components/HeroSectionVIP";
 import EmbassyNewsWidget from "@/components/EmbassyNewsWidget";
+import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
+import CurrencyConverterWidget from "@/components/CurrencyConverterWidget";
 import TravelSearchHero from "@/components/TravelSearchHero";
 import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhanced";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
@@ -568,6 +570,12 @@ export default function Home() {
 
       {/* ─── ACTUALITÉS OFFICIELLES DES AMBASSADES (CANADA / EUROPE) ──────── */}
       <EmbassyNewsWidget />
+
+      {/* ─── SIMULATEUR DE SCORE CANADA (CRS) ─────────────────────────────── */}
+      <CanadaScoreSimulator />
+
+      {/* ─── CONVERTISSEUR DE DEVISES & FRAIS CONSULAIRES ────────────────── */}
+      <CurrencyConverterWidget />
 
       {/* ─── RECHERCHE MULTI-SERVICES (façon ease.travel) ──────────────────── */}
       <TravelSearchHero />

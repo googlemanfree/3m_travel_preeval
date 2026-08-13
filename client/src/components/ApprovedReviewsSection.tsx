@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, Quote } from "lucide-react";
+import { Star, Quote, Filter } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
 interface Review {
@@ -16,17 +16,28 @@ interface Review {
 export default function ApprovedReviewsSection() {
   const { data: reviews, isLoading } = trpc.customerReview.listApproved.useQuery();
   const { data: stats } = trpc.customerReview.getStats.useQuery();
+  const [destinationFilter, setDestinationFilter] = useState<string>("all");
   const [displayedReviews, setDisplayedReviews] = useState<Review[]>([]);
 
   useEffect(() => {
     if (reviews) {
-      // Afficher les 3 meilleurs avis (5 étoiles en priorité)
-      const sorted = [...reviews]
-        .sort((a, b) => b.rating - a.rating)
-        .slice(0, 3);
+      let filtered = [...reviews];
+      if (destinationFilter === "canada") {
+        filtered = filtered.filter((r) => r.destinationCountry?.toLowerCase().includes("canada"));
+      } else if (destinationFilter === "schengen") {
+        filtered = filtered.filter((r) => 
+          r.destinationCountry?.toLowerCase().includes("france") || 
+          r.destinationCountry?.toLowerCase().includes("allemagne") ||
+          r.destinationCountry?.toLowerCase().includes("belgique") ||
+          r.destinationCountry?.toLowerCase().includes("schengen")
+        );
+      }
+      const sorted = filtered
+        .sort((a, b) => (b.rating || 5) - (a.rating || 5))
+        .slice(0, 6);
       setDisplayedReviews(sorted);
     }
-  }, [reviews]);
+  }, [reviews, destinationFilter]);
 
   if (isLoading) {
     return (
@@ -61,7 +72,7 @@ export default function ApprovedReviewsSection() {
 
           {/* Stats */}
           {stats && (
-            <div className="flex justify-center gap-8 mb-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-8">
               <div className="text-center">
                 <p className="text-3xl font-bold text-orange-500">{stats.averageRating}</p>
                 <div className="flex justify-center gap-1 mt-2">
@@ -84,6 +95,42 @@ export default function ApprovedReviewsSection() {
               </div>
             </div>
           )}
+
+          {/* Filtre de destination Canada / Schengen */}
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            <button
+              onClick={() => setDestinationFilter("all")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
+                destinationFilter === "all"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-500/25"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              Tous les pays
+            </button>
+            <button
+              onClick={() => setDestinationFilter("canada")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                destinationFilter === "canada"
+                  ? "bg-red-600 text-white shadow-md shadow-red-500/25"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span>🇨🇦</span>
+              <span>Canada (Spécialité)</span>
+            </button>
+            <button
+              onClick={() => setDestinationFilter("schengen")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                destinationFilter === "schengen"
+                  ? "bg-blue-800 text-white shadow-md shadow-blue-900/25"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              <span>🇪🇺</span>
+              <span>Europe / Schengen</span>
+            </button>
+          </div>
         </motion.div>
 
         {/* Reviews Grid */}
