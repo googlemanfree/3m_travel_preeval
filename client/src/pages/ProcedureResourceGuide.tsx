@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import { BookOpen, Check, Copy, Download, ExternalLink, FileText, Search, Share2, Sparkles } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getLocalizedPdfUrl } from "@shared/pdfResources";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PDF_CATEGORIES } from "@shared/pdfResources";
 import { filterProcedureResources, getAllProcedureResources, getProcedureGuideUrl } from "@shared/procedureGuide";
 
 export default function ProcedureResourceGuide() {
-  const [search, setSearch] = useState("");
+  const { language } = useLanguage();
+  const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
-  const query = search.trim().toLowerCase();
+  const query = searchQuery.trim().toLowerCase();
   const shareUrl = typeof window !== "undefined" ? getProcedureGuideUrl(window.location.origin) : "/guide-procedures";
 
   const filteredResourceIds = useMemo(() => new Set(filterProcedureResources(query).map((resource) => resource.id)), [query]);
@@ -76,7 +79,7 @@ export default function ProcedureResourceGuide() {
           <label htmlFor="guide-search" className="sr-only">Rechercher une procédure ou une ressource</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input id="guide-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher un pays, un visa ou un guide PDF…" className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10" />
+            <Input id="guide-search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Rechercher un pays, un visa ou un guide PDF…" className="h-11 rounded-xl border-slate-200 bg-slate-50 pl-10" />
           </div>
           <p className="mt-2 px-1 text-xs text-slate-500">{totalResources} ressource(s) affichée(s) sur {allResources}.</p>
         </div>
@@ -104,7 +107,7 @@ export default function ProcedureResourceGuide() {
                         <p className="mt-1 text-xs text-slate-500">{resource.flag} {resource.country} · {resource.type.toUpperCase()}</p>
                       </div>
                     </div>
-                    <a href={resource.url} target="_blank" rel="noopener noreferrer" download className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-blue-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-800">
+                    <a href={getLocalizedPdfUrl(resource, language)} target="_blank" rel="noopener noreferrer" download className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-blue-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-800">
                       <Download className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Ouvrir</span>
                     </a>
@@ -119,7 +122,7 @@ export default function ProcedureResourceGuide() {
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
             <FileText className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-3 font-semibold text-slate-700">Aucune ressource ne correspond à votre recherche.</p>
-            <button type="button" onClick={() => setSearch("")} className="mt-3 text-sm font-semibold text-blue-700 underline underline-offset-4">Réinitialiser la recherche</button>
+            <button type="button" onClick={() => setSearchQuery("")} className="mt-3 text-sm font-semibold text-blue-700 underline underline-offset-4">Réinitialiser la recherche</button>
           </div>
         )}
 

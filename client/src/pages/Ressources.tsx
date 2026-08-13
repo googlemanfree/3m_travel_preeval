@@ -8,7 +8,7 @@ import {
   Search, Download, FileText, Briefcase, GraduationCap,
   Globe, BookOpen, X, ExternalLink, Filter,
 } from "lucide-react";
-import { PDF_CATEGORIES, type PdfResource, type PdfCategory } from "@shared/pdfResources";
+import { PDF_CATEGORIES, type PdfResource, type PdfCategory, getLocalizedPdfUrl } from "@shared/pdfResources";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Icônes par catégorie ─────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function ResourceCard({ resource, color }: { resource: PdfResource; color: strin
         </div>
       </div>
       <a
-        href={resource.url}
+        href={getLocalizedPdfUrl(resource, language)}
         target="_blank"
         rel="noopener noreferrer"
         download

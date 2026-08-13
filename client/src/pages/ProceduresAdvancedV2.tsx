@@ -7,10 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { procedures107Complete } from '@/data/procedures107Complete';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLocalizedPdfUrl } from '@shared/pdfResources';
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
 export default function ProceduresAdvanced() {
+  const { language } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
   const [visaType, setVisaType] = useState<'travail' | 'etudes' | 'visiteur' | 'tous'>('tous');
@@ -554,7 +557,7 @@ export default function ProceduresAdvanced() {
 
                       {/* Download Button */}
                       <a
-                        href={country.pdfUrl}
+                        href={getLocalizedPdfUrl(country, language)}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}

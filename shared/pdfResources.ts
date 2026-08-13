@@ -187,3 +187,16 @@ export const searchResources = (query: string): PdfResource[] => {
       r.country.toLowerCase().includes(q)
   );
 };
+
+export function getLocalizedPdfUrl(item: { url?: string; pdfUrl?: string; urlEn?: string; pdfUrlEn?: string }, language: 'fr' | 'en'): string {
+  const urlFr = item.url || item.pdfUrl || '#';
+  let urlEn = item.urlEn || item.pdfUrlEn;
+  if (!urlEn) {
+    if (urlFr.includes('_FR')) {
+      urlEn = urlFr.replace('_FR', '_EN');
+    } else {
+      urlEn = urlFr;
+    }
+  }
+  return language === 'en' ? urlEn : urlFr;
+}

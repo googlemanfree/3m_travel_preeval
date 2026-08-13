@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { procedures107Complete } from '@/data/procedures107Complete';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getLocalizedPdfUrl } from '@shared/pdfResources';
 
 import { useState, useEffect } from 'react';
 import { Heart } from 'lucide-react';
@@ -16,6 +18,7 @@ export default function CountryDetailPage() {
   const countryId = params?.countryId;
 
   const country = procedures107Complete.find(c => c.id === countryId);
+  const { language } = useLanguage();
 
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -128,9 +131,9 @@ export default function CountryDetailPage() {
                 </Button>
               </a>
               {country.pdfUrl && (
-                <a href={country.pdfUrl} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex-1 md:flex-initial">
+                <a href={getLocalizedPdfUrl(country, language)} target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto flex-1 md:flex-initial">
                   <Button variant="outline" className="w-full bg-white/10 hover:bg-white/20 text-white border-white/20 font-bold px-6 py-3 rounded-xl">
-                    <Download className="w-4 h-4 mr-2" /> Guide PDF
+                    <Download className="w-4 h-4 mr-2" /> {language === 'en' ? 'PDF Guide' : 'Guide PDF'}
                   </Button>
                 </a>
               )}
