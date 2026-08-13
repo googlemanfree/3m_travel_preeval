@@ -118,6 +118,9 @@ type Flight = {
   baggage: string;
   refundable: boolean;
   pnrRef: string;
+  gdsFareBasis?: string;
+  gdsBookingClass?: string;
+  gdsTaxesAndFees?: number;
   isLiveGoogleFlights?: boolean;
 };
 
@@ -281,9 +284,13 @@ function PassengerSelector({
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-[#2563EB] bg-white transition-colors text-sm font-medium"
       >
-        <span className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-[#2563EB]" />
-          {total} passager{total > 1 ? "s" : ""} · {CABIN_LABELS[cabinClass]}
+        <span className="flex items-center gap-2 truncate text-xs sm:text-sm">
+          <Users className="w-4 h-4 text-[#2563EB] flex-shrink-0" />
+          <span className="font-semibold text-gray-800">
+            {adults} Ad.{children > 0 ? ` · ${children} Enf.` : ""}{infants > 0 ? ` · ${infants} Béb.` : ""}
+          </span>
+          <span className="text-gray-400">|</span>
+          <span className="text-blue-700 font-bold">{CABIN_LABELS[cabinClass]}</span>
         </span>
         <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -472,31 +479,31 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
               <div className="flex items-center gap-2">
                 <Luggage className="w-4 h-4 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Bagages</div>
+                  <div className="text-xs text-gray-500">Bagages autorisés</div>
                   <div className="font-semibold text-gray-800">{flight.baggage}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <RefreshCw className="w-4 h-4 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Remboursable</div>
-                  <div className={`font-semibold ${flight.refundable ? "text-green-600" : "text-red-500"}`}>
-                    {flight.refundable ? "Oui" : "Non"}
+                  <div className="text-xs text-gray-500">Conditions tarifaires</div>
+                  <div className={`font-semibold ${flight.refundable ? "text-green-600" : "text-amber-600"}`}>
+                    {flight.refundable ? "Modifiable / Remboursable" : "Non remboursable / Frais de mod."}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Classe</div>
-                  <div className="font-semibold text-gray-800">{CABIN_LABELS[flight.cabinClass]}</div>
+                  <div className="text-xs text-gray-500">Classe & Fare Basis (GDS)</div>
+                  <div className="font-mono font-semibold text-gray-800">{CABIN_LABELS[flight.cabinClass]} ({flight.gdsBookingClass || 'Y'} · {flight.gdsFareBasis || 'YFLEX'})</div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Star className="w-4 h-4 text-[#2563EB]" />
                 <div>
-                  <div className="text-xs text-gray-500">Réf. PNR</div>
-                  <div className="font-mono font-bold text-[#1E3A8A]">{flight.pnrRef}</div>
+                  <div className="text-xs text-gray-500">Taxes aéroport & PNR</div>
+                  <div className="font-semibold text-gray-800">Taxes incl. (~{formatXAF(flight.gdsTaxesAndFees || Math.round(flight.pricePerPax * 0.18))}) · PNR: <span className="font-mono font-bold text-[#1E3A8A]">{flight.pnrRef}</span></div>
                 </div>
               </div>
               {flight.stopDetails.length > 0 && (

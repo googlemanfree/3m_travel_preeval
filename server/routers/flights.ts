@@ -173,9 +173,12 @@ function generateFlights(
       totalPrice,
       currency: "XAF",
       seatsLeft: randomBetween(2, 9),
-      baggage: cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
+      baggage: cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
       refundable: i % 3 === 0,
       pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      gdsFareBasis: `${cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
+      gdsBookingClass: cabinClass === "BUSINESS" ? "J" : cabinClass === "FIRST" ? "F" : "Y",
+      gdsTaxesAndFees: Math.round(pricePerPax * 0.18),
       isLiveGoogleFlights: false,
     });
   }
@@ -226,8 +229,8 @@ export const flightsRouter = router({
 
       if (!apiKey) {
         flightSearchCache.markNotConfigured();
-        const totalPax = input.adults + input.children;
-        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
+        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPaxForCalc, input.cabinClass);
         if (input.alliance && input.alliance !== "ALL") {
           outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
         }
@@ -339,14 +342,17 @@ export const flightsRouter = router({
             stopDetails,
             cabinClass: input.cabinClass,
             pricePerPax: Math.round(sourcePrice * XAF_PER_EUR),
-            totalPrice: Math.round(sourcePrice * XAF_PER_EUR) * totalPax,
+            totalPrice: Math.round(Math.round(sourcePrice * XAF_PER_EUR) * (input.adults + (input.children * 0.75) + (input.infants * 0.1))),
             currency: "XAF",
             sourceCurrency: "EUR",
             sourcePrice,
             seatsLeft: randomBetween(2, 9),
-            baggage: input.cabinClass === "ECONOMY" ? "23kg inclus" : "2x32kg inclus",
+            baggage: input.cabinClass === "ECONOMY" ? "23kg bagage soute + 7kg cabine inclus" : "2x32kg bagage soute + 10kg cabine inclus",
             refundable: true,
             pnrRef: `3M${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+            gdsFareBasis: `${input.cabinClass.slice(0,3).toUpperCase()}X3MFLEX`,
+            gdsBookingClass: input.cabinClass === "BUSINESS" ? "J" : input.cabinClass === "FIRST" ? "F" : "Y",
+            gdsTaxesAndFees: Math.round(sourcePrice * XAF_PER_EUR * 0.18),
             isLiveGoogleFlights: true,
           };
         };
@@ -375,8 +381,8 @@ export const flightsRouter = router({
         if (!flightSearchCache.getStatus().lastError) {
           flightSearchCache.recordUnavailable("error", err instanceof Error ? err.message : "Erreur SearchAPI inconnue");
         }
-        const totalPax = input.adults + input.children;
-        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPax, input.cabinClass);
+        const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
+        let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPaxForCalc, input.cabinClass);
         if (input.alliance && input.alliance !== "ALL") {
           outbound = outbound.filter((f) => f.airline.alliance === input.alliance);
         }

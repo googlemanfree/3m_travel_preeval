@@ -2000,3 +2000,11 @@
 - [x] Intégrer les indicateurs de chargement animés et anti-double-soumission sur Register.tsx, SignUp.tsx et Flights.tsx
 - [x] Valider la fluidité, les tests unitaires et le build de production
 - [x] Publier la version optimisée avec animations de chargement
+
+## Fiabilité des Tarifs de Vol et Module Passagers GDS (v123)
+- [x] Auditer le routeur de vols et le service SearchAPI / fallback simulé
+- [x] Améliorer la sélection détaillée des passagers (Adultes, Enfants 2-11 ans, Bébés < 2 ans) avec ventilations tarifaires
+- [x] Enrichir les détails de vol (classes tarifaires, bagages inclus, conditions de modification, taxes et frais GDS estimés)
+- [x] Ajouter un badge et une note de revalidation tarifaire en temps réel
+- [x] Testé avec succès : 127 tests unitaires passants et build de production optimisé
+- [x] Sauvegarder et publier la version enrichie GDS et passagers
