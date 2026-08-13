@@ -31,3 +31,11 @@ La version ea7e04cc reste bloquée sur le domaine public : après plus de 15 sec
 ## Décalage de publication confirmé
 
 Après la publication annoncée `ea7e04cc`, le navigateur public reçoit encore `/assets/index-6IE05yMO.js` et `/assets/radix-vendor-OfaGa3fY.js`, puis reproduit exactement `forwardRef undefined`. Le build local corrigé produit pourtant `index-CP6CVA6z.js` et `react-ui-vendor-7L85cNF2.js`. Le code correctif n’est donc pas encore celui réellement servi par le domaine ; le problème actuel est un déploiement/publication non propagé, et non le seul cache du navigateur.
+
+## Contrôle du bundle 6g99
+
+Après la publication 7c9e6154, les domaines publics servent désormais `/assets/index-6g99Fi9J.js`, qui référence `react-ui-vendor-BdfaWPKb.js` et ne référence plus `radix-vendor`. Le navigateur a été ouvert avec `?verify=7c9e6154`; le fallback était encore visible à environ 7 secondes, avant l’expiration complète du délai autonome. Une observation supplémentaire est nécessaire pour distinguer un temps de chargement normal d’une nouvelle erreur d’évaluation.
+
+## Seconde cause confirmée après regroupement
+
+Le nouveau bundle `index-6g99Fi9J.js` référence bien `react-ui-vendor-BdfaWPKb.js`, mais l’évaluation échoue encore avec `TypeError: Cannot set properties of undefined (setting 'Activity')` dans `react-ui-vendor`, appelé depuis `vendor-4V6XU30T.js`. Le regroupement manuel React/Radix a supprimé l’erreur `forwardRef`, mais force toujours une initialisation circulaire de React 19/React DOM. Le correctif final doit retirer le regroupement manuel des dépendances React/Radix et laisser Rollup résoudre leur ordre d’initialisation naturel.
