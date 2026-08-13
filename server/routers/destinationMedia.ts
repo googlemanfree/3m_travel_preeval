@@ -7,6 +7,7 @@ import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
 import { publicProcedure, router } from "../_core/trpc";
 import { storagePut } from "../storage";
+import { optimizeImageBuffer } from "../imageOptimizer";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -88,9 +89,9 @@ export const destinationMediaRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       const { buffer, mimeType } = parseImageData(input.dataUrl, input.mimeType);
-      const extension = extensionForMimeType(mimeType);
-      const key = `destination-media/${input.destinationId}/${input.mediaType}-${Date.now()}-${randomUUID()}.${extension}`;
-      const stored = await storagePut(key, buffer, mimeType);
+      const optimizedBuffer = optimizeImageBuffer(buffer, 1600, 1600, 82);
+      const key = `destination-media/${input.destinationId}/${input.mediaType}-${Date.now()}-${randomUUID()}.webp`;
+      const stored = await storagePut(key, optimizedBuffer, "image/webp");
       const existingRows = await db.select().from(destinationMedia).where(eq(destinationMedia.destinationId, input.destinationId)).limit(1);
       const existing = existingRows[0];
       const altText = input.altText || `${input.destinationName} — ${input.mediaType === "flag" ? "drapeau" : "image de destination"}`;

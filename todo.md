@@ -1906,3 +1906,9 @@
 - [x] Préparer les variantes WebP/AVIF et la stratégie de chargement priorisé du héros et des pages
 - [x] Intégrer lazy loading, sources responsives, préchargement critique et fallbacks fiables
 - [x] Mesurer le rendu mobile, la visibilité, la performance, l’accessibilité, TypeScript, les tests, le build et publier
+
+## Optimisation automatique des uploads admin (v103)
+- [x] Auditer le flux d’upload admin, les validations existantes, le stockage et les dépendances d’image
+- [x] Implémenter l’optimisation serveur des images avec redimensionnement, WebP et limites de poids
+- [x] Brancher les uploads simples et en masse sur le pipeline optimisé avec métadonnées et fallback
+- [x] Tester sécurité, qualité visuelle, stockage, responsive, TypeScript, suite Vitest, build et publier
