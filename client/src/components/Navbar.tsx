@@ -5,6 +5,8 @@ import ThemeToggle from "./ThemeToggle";
 import { prefetchNavigation } from "@/lib/navigationCache";
 import { notifyNavigationStart } from "./NavigationProgress";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ShoppingBag } from "lucide-react";
+import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
 const menuItems = [
   { href: "/", label: "Accueil", icon: "🏠" },
@@ -28,6 +30,7 @@ const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center 
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
+  const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -105,6 +108,17 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
+            <a
+              href="/panier"
+              onMouseEnter={() => handleNavigationIntent("/panier")}
+              onFocus={() => handleNavigationIntent("/panier")}
+              onClick={handleNavigationClick}
+              aria-label={`Panier multi-services${totalItems ? `, ${totalItems} élément${totalItems > 1 ? "s" : ""}` : " vide"}`}
+              className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/80 text-blue-700 transition hover:bg-blue-100"
+            >
+              <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+              {totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{totalItems > 9 ? "9+" : totalItems}</span>}
+            </a>
             <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label="Sélection de langue / Language selector">
               <button
                 type="button"
@@ -268,6 +282,18 @@ export default function Navbar() {
                 </div>
               </motion.div>
             )}
+
+            <a
+              href="/panier"
+              onMouseEnter={() => handleNavigationIntent("/panier")}
+              onFocus={() => handleNavigationIntent("/panier")}
+              onClick={() => { handleNavigationClick(); closeMenu(); }}
+              className="mb-2 flex w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 font-bold text-blue-700"
+              aria-label={`Panier multi-services${totalItems ? `, ${totalItems} élément${totalItems > 1 ? "s" : ""}` : " vide"}`}
+            >
+              <span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden="true" /> Panier multi-services</span>
+              <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-black text-white">{totalItems}</span>
+            </a>
 
             <nav aria-label="Navigation mobile" className="space-y-1 mb-4">
               {menuItems.map((item, index) => (

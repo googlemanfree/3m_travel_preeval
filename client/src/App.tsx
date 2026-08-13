@@ -83,6 +83,8 @@ import DocumentCompliancePage from "./pages/DocumentCompliancePage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentErrorPage from "./pages/PaymentErrorPage";
 import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
+import MultiServiceCart from "./pages/MultiServiceCart";
+import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
 
 import AdminGuard from "./components/AdminGuard";
 import Tarifs from "./pages/Tarifs";
@@ -403,6 +405,9 @@ function Router() {
       <Route path="/hotels">
         <Hotels />
       </Route>
+      <Route path="/panier">
+        <MultiServiceCart />
+      </Route>
 
 
 
@@ -423,6 +428,7 @@ function App() {
       <ThemeProvider defaultTheme="light" switchable>
         <AnimationPreferencesProvider>
           <TooltipProvider>
+          <MultiServiceCartProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
           {sessionRestored && (
@@ -442,6 +448,7 @@ function App() {
               <AiCopilotWidgetEnhanced />
             </>
           )}
+          </MultiServiceCartProvider>
           </TooltipProvider>
         </AnimationPreferencesProvider>
       </ThemeProvider>

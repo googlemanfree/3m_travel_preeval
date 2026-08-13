@@ -41,3 +41,7 @@ Les routes `/`, `/register`, `/flights`, `/accessibilite` et `/plan-du-site` ont
 La page `/register` affiche le titre et le bouton « Inscription ». La page `/flights` affiche des dates futures cohérentes et un retour postérieur au départ. Les nouvelles pages du footer sont accessibles et conservent le header global. Les boutons flottants restent visibles sur mobile ; WhatsApp respecte la zone basse et le copilote Aureol reste distinct.
 
 Le build et la suite Vitest restent verts après ces vérifications. Les bundles lourds PDF/vendor restent signalés par Vite comme optimisation future, sans erreur bloquante.
+
+## Audit panier multi-services — 13 août 2026
+
+Les captures desktop et mobile de `/panier`, `/flights` et `/hotels` ont été réalisées après l’intégration du contexte de panier, du badge global et de la page de récapitulatif. Le panier vide est lisible, le récapitulatif reste visible sur desktop, et la version mobile conserve une largeur adaptée sans débordement majeur. Les boutons flottants restent présents et accessibles ; ils recouvrent légèrement la zone basse de la page panier sur mobile, point à surveiller dans une passe UI dédiée. La recherche de vols conserve ses champs et son sélecteur de passagers sur mobile. Aucun changement visuel n’a été appliqué à la page hôtels existante, qui reste un formulaire de demande sur WhatsApp ; les services hôtel et véhicule du panier sont explicitement marqués « sur demande » afin de ne pas présenter de faux tarifs fournisseurs.

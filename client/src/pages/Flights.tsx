@@ -8,7 +8,7 @@ import {
   Plane, ArrowLeftRight, Calendar, Users, ChevronDown, Search,
   Filter, X, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
-  Luggage, RefreshCw, SlidersHorizontal, Sparkles,
+  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag,
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
@@ -16,6 +16,7 @@ import { Mail, Check, Heart } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
+import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -334,11 +335,37 @@ function PassengerSelector({
 function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { flight: Flight; searchParams: any; isSimulated: boolean; servedFromCache: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const { isAuthenticated } = useCandidateAuth();
+  const { addItem } = useMultiServiceCart();
   const { toast } = useToast();
   const saveFavoriteMutation = trpc.flights.saveFavoriteFlight.useMutation({
     onSuccess: () => toast({ title: "Itinéraire enregistré", description: "Retrouvez ce vol dans votre espace client." }),
     onError: (error) => toast({ title: "Connexion requise", description: error.message, variant: "destructive" }),
   });
+
+  const handleAddToCart = () => {
+    addItem({
+      id: `flight-${flight.id}-${searchParams.adults}-${searchParams.children}-${searchParams.infants}`,
+      serviceType: "flight",
+      title: `${flight.airline.name} · ${flight.flightNumber}`,
+      subtitle: `${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination}) · ${flight.departureDate}`,
+      price: flight.totalPrice,
+      currency: flight.currency,
+      priceStatus: isSimulated ? "indicative" : "live",
+      metadata: {
+        departureTime: flight.departureTime,
+        arrivalTime: flight.arrivalTime,
+        duration: flight.duration,
+        stops: flight.stops,
+        cabinClass: flight.cabinClass,
+        adults: searchParams.adults,
+        children: searchParams.children,
+        infants: searchParams.infants,
+        pnrRef: flight.pnrRef,
+        gdsFareBasis: flight.gdsFareBasis,
+      },
+    });
+    toast({ title: "Vol ajouté au panier", description: isSimulated ? "Tarif indicatif : revalidation obligatoire avant confirmation." : "Tarif en direct ajouté, revalidation fournisseur avant émission." });
+  };
 
   const handleSaveFavorite = () => {
     if (!isAuthenticated) {
@@ -436,6 +463,9 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
                   <Plane className="w-4 h-4 mr-1" /> Réserver
                 </Button>
               </a>
+              <Button type="button" onClick={handleAddToCart} variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
+                <ShoppingBag className="w-3.5 h-3.5 mr-1" /> Ajouter au panier
+              </Button>
               <EmailSummaryButton flight={flight} />
               <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">

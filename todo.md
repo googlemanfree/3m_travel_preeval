@@ -2008,3 +2008,11 @@
 - [x] Ajouter un badge et une note de revalidation tarifaire en temps réel
 - [x] Testé avec succès : 127 tests unitaires passants et build de production optimisé
 - [x] Sauvegarder et publier la version enrichie GDS et passagers
+
+## Panier Multi-Services Unifié : Vols, Hôtels & Véhicules (v124)
+- [x] Créer le contexte et le store de panier multi-services (`client/src/contexts/MultiServiceCartContext.tsx`)
+- [x] Créer la page dédiée `/panier` pour gérer, modifier et valider les prestations combinées
+- [x] Ajouter les boutons « Ajouter au panier » sur les cartes de vol (`Flights.tsx`)
+- [x] Créer les fiches de simulation d’hôtels et véhicules avec ajout au panier direct
+- [x] Intégrer l’icône de panier avec badge dynamique dans la barre de navigation principale (`Navbar.tsx`)
+- [x] Valider avec TypeScript, 127 tests, le build de production et les aperçus desktop/mobile ; publier la version
