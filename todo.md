@@ -1918,3 +1918,8 @@
 - [x] Ajouter le modèle persistant et les procédures admin de bibliothèque avec protection contre la suppression utilisée
 - [x] Construire l’interface de bibliothèque avec recherche, filtres, aperçu, sélection et suppression confirmée
 - [x] Brancher la réutilisation dans l’éditeur destination/service et valider sécurité, responsive, TypeScript, tests, build et publication
+
+## Boutons du héros uniformisés (v105)
+- [x] Auditer les boutons actuels du héros et leurs actions
+- [x] Appliquer une base visuelle et dimensionnelle commune aux boutons du héros
+- [x] Vérifier clics, lisibilité, mobile, accessibilité, TypeScript, tests, build et publier

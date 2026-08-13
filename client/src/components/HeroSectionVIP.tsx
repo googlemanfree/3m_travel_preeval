@@ -191,7 +191,7 @@ export default function HeroSectionVIP({
         >
           <Button
             asChild
-            className="group relative overflow-hidden bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-8 py-6 font-bold text-white rounded-xl shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.03] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] will-change-[opacity,transform]"
+            className="group relative flex w-full min-h-14 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px] will-change-[opacity,transform]"
           >
             <Link href="/evaluation-primaire" aria-label="Commencer mon évaluation gratuite">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
@@ -204,7 +204,7 @@ export default function HeroSectionVIP({
           <Button
             asChild
             variant="outline"
-            className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-6 rounded-lg"
+            className="flex w-full min-h-14 items-center justify-center rounded-xl border border-white/30 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-white/10 hover:border-white/50 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px]"
           >
             <a
               href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent("Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel.")}`}
@@ -222,18 +222,18 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={5.5}
-          className="flex flex-col sm:flex-row gap-3 justify-center mb-8"
+          className="flex flex-col justify-center gap-4 mb-8 sm:flex-row"
         >
           <Button
             asChild
             variant="outline"
-            className="border-blue-400 text-blue-300 hover:bg-blue-500/20 font-semibold px-6 py-3 rounded-lg"
+            className="flex w-full min-h-14 items-center justify-center rounded-xl border border-blue-300/70 px-6 py-4 text-center font-semibold text-blue-100 shadow-lg shadow-slate-950/10 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-blue-500/20 hover:border-blue-200 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px]"
           >
             <a href="/login">🔑 Accès Client</a>
           </Button>
           <Button
             asChild
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg"
+            className="flex w-full min-h-14 items-center justify-center rounded-xl bg-blue-600 px-6 py-4 text-center font-semibold text-white shadow-lg shadow-blue-950/20 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-blue-500 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] sm:w-[300px]"
           >
             <a href="/register">✨ Créez votre Compte Gratuit</a>
           </Button>
