@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import jsPDF from "jspdf";
 
 // ─── Analytics (dégradé gracieux si Google Analytics n'est pas configuré) ───
 function trackEvent(eventName: string, params?: Record<string, unknown>) {
@@ -122,15 +121,16 @@ export default function LuxembourgEvaluationForm() {
     );
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!submitMutation.data) return;
     const { result } = submitMutation.data;
-    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const { default: JsPDF } = await import("jspdf");
+    const pdf = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
     let y = 20;
     pdf.setFontSize(18);
     pdf.setTextColor(102, 126, 234);
-    pdf.text("3M Travel & Services — Évaluation Luxembourg", 15, y);
+    pdf.text("3M Travel Agency — Évaluation Luxembourg", 15, y);
     y += 10;
     pdf.setFontSize(11);
     pdf.setTextColor(10, 37, 64);
@@ -168,7 +168,7 @@ export default function LuxembourgEvaluationForm() {
 
     pdf.setFontSize(9);
     pdf.setTextColor(120, 120, 120);
-    pdf.text("3M Travel & Services SARL — +237 698 104 832 — hello@3mtravelagency.com", 15, 280);
+    pdf.text("3M Travel Agency SARL — +237 698 104 832 — hello@3mtravelagency.com", 15, 280);
 
     pdf.save(`3M_Evaluation_${form.fullName.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`);
   };

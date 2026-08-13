@@ -182,6 +182,21 @@ export default defineConfig({
             if (id.includes("framer-motion")) {
               return "motion-vendor";
             }
+            if (id.includes("react-dom") || id.includes("/react/") || id.includes("scheduler")) {
+              return "react-vendor";
+            }
+            if (id.includes("@radix-ui")) {
+              return "radix-vendor";
+            }
+            if (id.includes("@tanstack") || id.includes("@trpc") || id.includes("superjson")) {
+              return "data-vendor";
+            }
+            if (id.includes("react-hook-form") || id.includes("@hookform") || id.includes("/zod/")) {
+              return "forms-vendor";
+            }
+            if (id.includes("lucide-react")) {
+              return "icons-vendor";
+            }
             return "vendor";
           }
         },

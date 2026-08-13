@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { Download, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 
 interface PDFExporterProps {
   candidate: {
@@ -39,8 +37,9 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
     setIsExporting(true);
 
     try {
-      // Create a new PDF document
-      const pdf = new jsPDF({
+      const { default: JsPDF } = await import("jspdf");
+      // Create a new PDF document only when the user requests an export.
+      const pdf = new JsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4",
@@ -85,7 +84,7 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       };
 
       // Header
-      addText("3M TRAVEL & SERVICES", 16, true, [25, 55, 109]);
+      addText("3M TRAVEL AGENCY", 16, true, [25, 55, 109]);
       addText("Profil Candidat Complet", 12, true);
       addText(`Généré le ${new Date().toLocaleDateString("fr-FR")}`, 9, false, [100, 100, 100]);
       yPosition += 5;
@@ -169,7 +168,7 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       yPosition = pageHeight - 15;
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
-      pdf.text(`© 2026 3M Travel & Services | Candidat: ${candidate.fullName}`, margin, yPosition);
+      pdf.text(`© 2026 3M Travel Agency | Candidat: ${candidate.fullName}`, margin, yPosition);
 
       // Save the PDF
       pdf.save(`Profil_${candidate.fullName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`);
@@ -186,7 +185,9 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       disabled={isExporting}
       variant="outline"
       size="sm"
-      className="gap-2"
+      className="h-12 rounded-xl gap-2"
+      aria-busy={isExporting}
+      aria-label={isExporting ? "Export PDF en cours" : "Exporter le profil en PDF"}
     >
       {isExporting ? (
         <>
