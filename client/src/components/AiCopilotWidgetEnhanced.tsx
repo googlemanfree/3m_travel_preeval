@@ -149,7 +149,7 @@ export default function AiCopilotWidgetEnhanced() {
   return (
     <>
       {/* Bouton flottant */}
-      <div className="safe-bottom-floating-panel fixed right-4 z-40 md:bottom-6 md:right-24">
+      <div className="safe-bottom-floating-panel safe-bottom-floating-chat fixed right-4 z-40 md:bottom-6 md:right-24">
         <AnimatePresence>
           {!isOpen && (
             <motion.button
@@ -158,7 +158,7 @@ export default function AiCopilotWidgetEnhanced() {
               exit={{ scale: 0 }}
               onClick={() => setIsOpen(true)}
               aria-label="Ouvrir Aureol, l’assistant IA 3M Travel"
-              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110"
+              className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
             >
               <MessageSquare className="w-6 h-6" />
             </motion.button>
@@ -173,7 +173,7 @@ export default function AiCopilotWidgetEnhanced() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="safe-bottom-floating-panel fixed right-4 z-50 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 md:bottom-6 md:right-24"
+            className="safe-bottom-floating-panel safe-bottom-floating-chat fixed right-4 z-50 w-[calc(100vw-2rem)] max-w-sm h-[70vh] max-h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 md:bottom-6 md:right-24"
           >
             {/* En-tête */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-3 flex items-center justify-between flex-shrink-0">

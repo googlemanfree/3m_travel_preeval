@@ -14,7 +14,7 @@ export function FloatingActionMenu() {
   )}`;
 
   return (
-    <div className="safe-bottom-floating fixed right-4 z-40 md:right-6">
+    <div className="safe-bottom-floating safe-bottom-floating-whatsapp fixed right-4 z-40 md:right-6">
       <motion.a
         href={whatsappUrl}
         target="_blank"
@@ -24,7 +24,7 @@ export function FloatingActionMenu() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Contacter 3M Travel sur WhatsApp"
-        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-green-900/25 ring-4 ring-white/80 transition-shadow hover:shadow-2xl"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl shadow-green-900/25 ring-4 ring-white/80 transition-shadow hover:shadow-2xl focus-visible:ring-4 focus-visible:ring-emerald-200 focus-visible:ring-offset-2"
       >
         <MessageCircle className="relative z-10 h-6 w-6" />
         <motion.span

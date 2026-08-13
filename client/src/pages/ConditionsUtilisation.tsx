@@ -20,7 +20,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Présentation</h2>
             <p className="text-gray-700 leading-relaxed">
-              Le site 3mtravelagency.click est édité par 3M Travel & Services SARL, agence agréée sous le numéro RC/YAO/2019/A/2567 (NIU : M112417203369H), spécialisée dans l'accompagnement à la mobilité internationale et à l'immigration.
+              Le site www.3mtravelagency.com est édité par 3M Travel Agency SARL, agence agréée sous le numéro RC/YAO/2019/A/2567 (NIU : M112417203369H), spécialisée dans l'accompagnement à la mobilité internationale et à l'immigration.
             </p>
           </div>
 
@@ -28,11 +28,11 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Nature de nos services</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              3M Travel & Services SARL propose des services de conseil, d'accompagnement et de préparation de dossiers de visa, d'immigration, de billetterie, d'assurance voyage et de traduction assermentée.
+              3M Travel Agency SARL propose des services de conseil, d'accompagnement et de préparation de dossiers de visa, d'immigration, de billetterie, d'assurance voyage et de traduction assermentée.
             </p>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4">
               <p className="text-red-900 font-semibold">
-                ⚠️ 3M Travel & Services ne délivre aucun visa ni permis de travail. La décision finale d'octroi appartient exclusivement aux autorités consulaires et administratives compétentes de chaque pays.
+                ⚠️ 3M Travel Agency ne délivre aucun visa ni permis de travail. La décision finale d'octroi appartient exclusivement aux autorités consulaires et administratives compétentes de chaque pays.
               </p>
             </div>
           </div>
@@ -57,7 +57,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Obligations du client</h2>
             <p className="text-gray-700 leading-relaxed">
-              Le client s'engage à fournir des informations et documents exacts, complets et authentiques. 3M Travel & Services ne saurait être tenue responsable des conséquences liées à des informations erronées ou falsifiées fournies par le client.
+              Le client s'engage à fournir des informations et documents exacts, complets et authentiques. 3M Travel Agency ne saurait être tenue responsable des conséquences liées à des informations erronées ou falsifiées fournies par le client.
             </p>
           </div>
 
@@ -65,7 +65,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Responsabilité</h2>
             <p className="text-gray-700 leading-relaxed">
-              3M Travel & Services SARL met tout en œuvre pour accompagner au mieux chaque dossier, sans pouvoir garantir l'issue d'une procédure qui relève de la seule compétence des autorités du pays de destination.
+              3M Travel Agency SARL met tout en œuvre pour accompagner au mieux chaque dossier, sans pouvoir garantir l'issue d'une procédure qui relève de la seule compétence des autorités du pays de destination.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Propriété intellectuelle</h2>
             <p className="text-gray-700 leading-relaxed">
-              L'ensemble des contenus du site (textes, guides, logo) est la propriété de 3M Travel & Services SARL et ne peut être reproduit sans autorisation.
+              L'ensemble des contenus du site (textes, guides, logo) est la propriété de 3M Travel Agency SARL et ne peut être reproduit sans autorisation.
             </p>
           </div>
 
@@ -89,7 +89,7 @@ export default function ConditionsUtilisation() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Contact</h2>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-gray-700 space-y-2">
-              <p><strong>3M Travel & Services SARL</strong></p>
+              <p><strong>3M Travel Agency SARL</strong></p>
               <p>Yaoundé, Biyem-Assi, Montée Chapelle Obili</p>
               <p>
                 <a href="mailto:hello@3mtravelagency.com" className="text-blue-600 hover:underline">

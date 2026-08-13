@@ -26,49 +26,52 @@ export default function CurrencyConverterWidget() {
   const finalValue = valueInXaf / (RATES_TO_XAF[toCurrency] || 1);
 
   return (
-    <section className="py-12 bg-white">
+    <section className="py-12 bg-slate-50/50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Card className="bg-gradient-to-r from-slate-900 via-[#0a2540] to-slate-900 text-white border-blue-900/40 shadow-xl rounded-3xl p-6 md:p-8">
+        <Card className="bg-white text-slate-900 border border-slate-200 shadow-2xl rounded-3xl p-6 md:p-8 relative overflow-hidden">
+          {/* Accent bar top */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500" />
+
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
             <div>
-              <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                 <Coins className="w-3.5 h-3.5" />
                 {language === "en" ? "Live Exchange Rates" : "Taux de Change & Budget"}
               </div>
-              <CardTitle className="text-2xl font-black tracking-tight">
+              <CardTitle className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
                 {language === "en" ? "Consular Budget Estimator" : "Convertisseur de Devises & Frais Consulaires"}
               </CardTitle>
-              <CardDescription className="text-slate-300 text-sm mt-1">
+              <CardDescription className="text-slate-600 text-sm md:text-base font-medium mt-1">
                 {language === "en"
                   ? "Estimate visa fees, flight tickets, and settlement funds in your local currency."
                   : "Estimez rapidement vos frais de visa, billets d'avion et frais de dossier dans votre devise locale."}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
-              <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" style={{ animationDuration: "8s" }} />
+            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700">
+              <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" style={{ animationDuration: "8s" }} />
               <span>{language === "en" ? "Updated: August 2026" : "Mis à jour : Août 2026"}</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end bg-slate-50/80 p-6 rounded-2xl border border-slate-200/80">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-300 uppercase">
+              <Label className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
                 {language === "en" ? "Amount" : "Montant"}
               </Label>
               <Input
                 type="number"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="bg-white/10 border-white/20 text-white text-lg font-bold placeholder:text-slate-500 focus:border-blue-400"
+                className="bg-white border-slate-300 text-slate-900 text-lg font-black h-12 rounded-xl focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-300 uppercase">
+              <Label className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
                 {language === "en" ? "From Currency" : "De la devise"}
               </Label>
               <Select value={fromCurrency} onValueChange={setFromCurrency}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white font-semibold">
+                <SelectTrigger className="bg-white border-slate-300 text-slate-900 font-bold h-12 rounded-xl focus:ring-2 focus:ring-blue-600/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -81,11 +84,11 @@ export default function CurrencyConverterWidget() {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-300 uppercase">
+              <Label className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">
                 {language === "en" ? "To Currency" : "Vers la devise"}
               </Label>
               <Select value={toCurrency} onValueChange={setToCurrency}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white font-semibold">
+                <SelectTrigger className="bg-white border-slate-300 text-slate-900 font-bold h-12 rounded-xl focus:ring-2 focus:ring-blue-600/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -99,17 +102,17 @@ export default function CurrencyConverterWidget() {
           </div>
 
           {/* Résultat conversion */}
-          <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="mt-6 pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
-              <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                 {language === "en" ? "Converted Amount (Indicative)" : "Montant converti (Indicatif)"}
               </p>
-              <p className="text-3xl font-black text-white mt-1">
-                {finalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} {toCurrency}
+              <p className="text-3xl md:text-4xl font-black text-blue-900 mt-1">
+                {finalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-blue-600 text-2xl">{toCurrency}</span>
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 bg-white/5 px-4 py-2.5 rounded-xl border border-white/10">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2.5 text-xs font-bold text-emerald-800 bg-emerald-50 px-4 py-3 rounded-2xl border border-emerald-200 shadow-sm">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{language === "en" ? "Indicative interbank exchange rates" : "Taux indicatifs basés sur les cours officiels"}</span>
             </div>
           </div>

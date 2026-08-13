@@ -19,7 +19,6 @@ const USEFUL_LINKS = [
   { label: 'Mentions légales', href: '/conditions-utilisation' },
   { label: 'Plan du site', href: '/plan-du-site' },
   { label: 'Accessibilité', href: '/accessibilite' },
-  { label: 'Sitemap', href: '/plan-du-site' },
 ];
 
 export default function Footer() {
@@ -71,13 +70,13 @@ export default function Footer() {
               placeholder="Votre adresse email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex-1 bg-white text-gray-900 placeholder-gray-500 text-sm"
+              className="h-12 flex-1 rounded-xl bg-white text-gray-900 placeholder-gray-500 text-sm"
               disabled={isLoading}
             />
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-white text-blue-600 hover:bg-blue-50 font-semibold whitespace-nowrap text-sm"
+              className="h-12 rounded-xl bg-white text-blue-600 hover:bg-blue-50 font-semibold whitespace-nowrap text-sm"
             >
               {isLoading ? 'Inscription...' : <span className="flex items-center gap-1"><Send className="w-4 h-4" />S'inscrire</span>}
             </Button>

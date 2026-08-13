@@ -21,7 +21,7 @@ export function FooterLegal() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-bold mb-4">3M Travel & Services SARL</h3>
+            <h3 className="text-lg font-bold mb-4">3M Travel Agency SARL</h3>
             <div className="space-y-3 text-sm text-blue-100">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -99,14 +99,14 @@ export function FooterLegal() {
           <div className="bg-blue-900/50 rounded-lg p-4 mb-6">
             <h4 className="font-bold text-sm mb-2">Conformité & Sécurité</h4>
             <p className="text-xs text-blue-100">
-              3M Travel & Services SARL accompagne la préparation technique des dossiers et leur suivi administratif. Elle ne délivre pas elle-même de visa ou de permis : ces décisions relèvent exclusivement des autorités compétentes.
+              3M Travel Agency SARL accompagne la préparation technique des dossiers et leur suivi administratif. Elle ne délivre pas elle-même de visa ou de permis : ces décisions relèvent exclusivement des autorités compétentes.
             </p>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="border-t border-blue-700 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-blue-200">
-          <p>&copy; 2026 3M Travel & Services SARL. Tous droits réservés.</p>
+          <p>&copy; 2026 3M Travel Agency SARL. Tous droits réservés.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <Link href="/politique-confidentialite" className="hover:text-white transition">
               Politique de Confidentialité
@@ -116,6 +116,12 @@ export function FooterLegal() {
             </Link>
             <Link href="/contact" className="hover:text-white transition">
               Contact
+            </Link>
+            <Link href="/plan-du-site" className="hover:text-white transition">
+              Plan du site
+            </Link>
+            <Link href="/accessibilite" className="hover:text-white transition">
+              Accessibilité
             </Link>
           </div>
         </div>

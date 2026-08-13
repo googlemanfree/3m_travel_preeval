@@ -2083,3 +2083,8 @@
 - [x] Intégrer un mode hors-ligne de secours avec bannière d'alerte et accès aux pages en cache
 - [x] Intégrer un mode hors-ligne de secours avec bannière d'alerte et accès aux pages en cache
 - [x] Validé avec TypeScript, 127 tests unitaires réussis, build de production et publication
+
+- [x] Phase 3 : repositionner les boutons flottants WhatsApp et chat sur mobile sans recouvrir les CTA ni les contrôles de formulaire
+- [x] Phase 3 : vérifier et rendre fonctionnels les liens du footer (Mentions légales, Plan du site, Accessibilité)
+- [ ] Phase 4 : réduire les bundles lourds sur mobile et valider l’accessibilité clavier/ARIA
+- [ ] Phase 4 : exécuter les tests de régression, vérifier le build et contrôler l’aperçu desktop/mobile
