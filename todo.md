@@ -1809,3 +1809,9 @@
 - [x] Étendre l’API sécurisée pour traiter plusieurs médias administrés avec protection contre les doublons
 - [x] Construire l’interface glisser-déposer, file d’attente, prévisualisation et progression
 - [x] Tester les validations, erreurs, responsive, sécurité, TypeScript, suite Vitest et build puis publier
+
+## Modernisation du héros 3M Travel Agency (v86)
+- [x] Auditer le héros actuel, le logo, les textes et les contraintes d’affichage
+- [x] Concevoir et produire la nouvelle direction visuelle et le visuel héro inclusif avec Canada/Schengen/Amérique
+- [x] Intégrer le nom 3M Travel Agency, le logo agrandi, l’accroche raffinée et le nouveau visuel
+- [x] Vérifier responsive, accessibilité, TypeScript, suite Vitest, build et publier

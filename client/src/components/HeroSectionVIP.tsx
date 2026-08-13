@@ -31,19 +31,20 @@ export default function HeroSectionVIP({
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
     >
-      {/* Visuel éditorial et filigranes de mobilité internationale */}
+        {/* Visuel éditorial et filigranes de mobilité internationale */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
-          src={PROCEDURE_VISUALS.home}
-          alt=""
+          src="/manus-storage/agency_hero_multicultural_ad8d81b1.png"
+          alt="3M Travel Agency - Voyage et Mobilité Internationale"
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-35 mix-blend-screen"
+          className="absolute inset-0 h-full w-full object-cover object-center opacity-40 mix-blend-overlay filter brightness-95"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#07162c]/95 via-[#07162c]/75 to-[#07162c]/35" />
-        <div className="absolute -right-24 top-10 text-[10rem] leading-none opacity-[0.08] grayscale">🇨🇦</div>
-        <div className="absolute -left-16 bottom-0 text-[9rem] leading-none opacity-[0.07] grayscale">🇪🇺</div>
-        <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl opacity-10" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-[#7cb9e8] blur-3xl opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#07162c]/90 via-[#0a1d3a]/80 to-[#07162c]/95" />
+        <div className="absolute -right-12 top-8 text-[8rem] leading-none opacity-[0.12] select-none">🇨🇦</div>
+        <div className="absolute left-6 bottom-4 text-[7rem] leading-none opacity-[0.12] select-none">🇪🇺</div>
+        <div className="absolute right-1/4 bottom-10 text-[7rem] leading-none opacity-[0.12] select-none">🇺🇸</div>
+        <div className="absolute top-10 left-1/3 w-72 h-72 rounded-full bg-blue-500 blur-3xl opacity-15" />
+        <div className="absolute bottom-10 right-1/4 w-96 h-96 rounded-full bg-indigo-500 blur-3xl opacity-15" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 relative z-10">
@@ -60,52 +61,53 @@ export default function HeroSectionVIP({
           ⭐ Évaluation Gratuite en 24h : Votre Passeport pour le Monde !
         </motion.div>
 
-        {/* Logo */}
+        {/* Logo agrandi avec effet lumineux professionnel */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={1}
-          className="mb-6"
+          className="mb-6 relative inline-block"
         >
+          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-400 opacity-75 blur-md animate-pulse" />
           <img
             src={logoUrl}
-            alt="3M Travel & Services"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/30 mx-auto shadow-lg"
+            alt="3M Travel Agency"
+            className="relative w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white/40 mx-auto shadow-2xl object-cover bg-white"
           />
         </motion.div>
 
-        {/* Titre principal */}
+        {/* Titre principal avec typographie moderne */}
         <motion.h1
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-4xl md:text-5xl lg:text-6xl font-black mb-3"
+          className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md"
         >
-          3M Travel & Services
+          3M Travel Agency
         </motion.h1>
 
-        {/* Sous-titre */}
+        {/* Sous-titre percutant */}
         <motion.h2
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={3}
-          className="text-xl md:text-2xl text-slate-300 mb-6"
+          className="text-xl md:text-2xl text-blue-200 font-medium mb-6"
         >
-          Votre Avenir Commence Ici : <span className="text-blue-400 font-bold">Visa & Immigration Simplifiés</span>
+          Votre Avenir Commence Ici — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Voyages & Immigrations d'Exception</span>
         </motion.h2>
 
-        {/* Description */}
+        {/* Description de marque haut de gamme */}
         <motion.p
           initial="hidden"
           animate="visible"
           variants={fadeUp}
           custom={4}
-          className="text-slate-300 text-base md:text-lg max-w-2xl mx-auto mb-8 leading-relaxed"
+          className="text-slate-200 text-base md:text-lg max-w-3xl mx-auto mb-8 leading-relaxed font-light"
         >
-          Découvrez les meilleures opportunités de mobilité internationale. Remplissez notre formulaire gratuit et laissez nos experts vous guider vers votre projet d'études, de travail ou d'immigration, avec un accompagnement personnalisé et des solutions adaptées à votre profil unique.
+          Spécialistes de la mobilité internationale vers le <strong className="text-white font-semibold">Canada</strong>, l'<strong className="text-white font-semibold">Europe Schengen</strong> et les <strong className="text-white font-semibold">États-Unis</strong>. Nous transformons vos projets d'études, de carrière ou d'installation en réalité grâce à un accompagnement sur-mesure et une expertise reconnue.
         </motion.p>
 
         {/* CTAs principales */}
