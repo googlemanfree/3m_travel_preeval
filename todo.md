@@ -1777,3 +1777,8 @@
 - [x] Synchroniser la langue avec le profil serveur des utilisateurs connectés
 - [x] Respecter la priorité du choix manuel sur la détection navigateur
 - [x] Tester reconnexion, responsive, TypeScript, tests et build puis publier
+
+## Internationalisation des erreurs, toasts et pop-ups (v81)
+- [x] Auditer les systèmes de toast, erreurs, dialogues et dictionnaire bilingue
+- [x] Centraliser les messages FR/EN et adapter les composants globaux et locaux
+- [x] Tester les deux langues, erreurs, toasts, confirmations, responsive, TypeScript, tests et build puis publier
