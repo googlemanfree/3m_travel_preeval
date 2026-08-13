@@ -24,8 +24,15 @@
       .boot-fallback { min-height: 100vh; display: grid; place-items: center; padding: 24px; color: #12315d; font-family: Inter, system-ui, sans-serif; }
       .boot-fallback__content { display: grid; justify-items: center; gap: 12px; text-align: center; }
       .boot-fallback__spinner { width: 36px; height: 36px; border: 4px solid rgba(37, 99, 235, .18); border-top-color: #2563eb; border-radius: 999px; animation: boot-spin .8s linear infinite; }
+      .boot-fallback__countdown { color: #526887; font-size: .82rem; }
+      .boot-fallback__progress { width: min(280px, 100%); height: 8px; overflow: hidden; border-radius: 999px; background: rgba(37, 99, 235, .12); }
+      .boot-fallback__progress-bar { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #0ea5e9); transition: width .2s ease-out; }
+      .boot-fallback__retry { display: none; min-height: 48px; align-items: center; justify-content: center; border: 0; border-radius: 12px; padding: 0 20px; background: #2563eb; color: white; font: 600 14px Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, .2); }
+      .boot-fallback__retry:focus-visible { outline: 3px solid rgba(37, 99, 235, .35); outline-offset: 3px; }
+      .boot-fallback--error .boot-fallback__spinner { animation: none; border-top-color: #dc2626; }
+      .boot-fallback--error .boot-fallback__progress-bar { background: #dc2626; }
       @keyframes boot-spin { to { transform: rotate(360deg); } }
-      @media (prefers-reduced-motion: reduce) { .boot-fallback__spinner { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { .boot-fallback__spinner, .boot-fallback__progress-bar { animation: none; transition: none; } }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -39,9 +46,81 @@
           <strong>3M Travel &amp; Services</strong>
           <span class="boot-fallback__spinner" aria-hidden="true"></span>
           <span>Chargement de la page…</span>
+          <span id="boot-countdown" class="boot-fallback__countdown" aria-live="assertive">Nouvelle tentative automatique dans 15 secondes.</span>
+          <div class="boot-fallback__progress" role="progressbar" aria-label="Temps avant récupération automatique" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15">
+            <div id="boot-progress-bar" class="boot-fallback__progress-bar"></div>
+          </div>
+          <button id="boot-retry" class="boot-fallback__retry" type="button">Réessayer maintenant</button>
         </div>
       </div>
     </div>
+    <script>
+      (() => {
+        const timeoutMs = 15000;
+        const startedAt = Date.now();
+        const root = document.getElementById("root");
+        const countdown = document.getElementById("boot-countdown");
+        const progressBar = document.getElementById("boot-progress-bar");
+        const retryButton = document.getElementById("boot-retry");
+        if (!root || !countdown || !progressBar || !retryButton) return;
+
+        const getStorage = (key) => {
+          try { return window.sessionStorage.getItem(key); } catch { return null; }
+        };
+        const setStorage = (key, value) => {
+          try { window.sessionStorage.setItem(key, value); } catch { /* stockage indisponible */ }
+        };
+        const retry = () => {
+          try { window.sessionStorage.removeItem("3m_boot_reload_attempted"); } catch { /* stockage indisponible */ }
+          window.location.reload();
+        };
+        retryButton.addEventListener("click", retry, { once: true });
+        let moduleFailed = false;
+        window.addEventListener("error", (event) => {
+          const target = event.target;
+          if (target instanceof HTMLScriptElement && target.type === "module") {
+            moduleFailed = true;
+            countdown.textContent = "Problème réseau détecté. Préparation de la récupération…";
+          }
+        }, true);
+
+        const intervalId = window.setInterval(() => {
+          if (!root.querySelector(".boot-fallback")) {
+            window.clearInterval(intervalId);
+            return;
+          }
+          const elapsed = Date.now() - startedAt;
+          const remaining = Math.max(0, Math.ceil((timeoutMs - elapsed) / 1000));
+          const progress = Math.min(100, Math.max(0, (elapsed / timeoutMs) * 100));
+          progressBar.style.width = `${progress}%`;
+          progressBar.parentElement?.setAttribute("aria-valuenow", String(remaining));
+
+          if (remaining > 0) {
+            if (!moduleFailed) {
+              countdown.textContent = `Nouvelle tentative automatique dans ${remaining} seconde${remaining > 1 ? "s" : ""}.`;
+            } else {
+              countdown.textContent = `Problème réseau détecté. Rechargement automatique dans ${remaining} seconde${remaining > 1 ? "s" : ""}.`;
+            }
+            return;
+          }
+
+          window.clearInterval(intervalId);
+          const fallback = root.querySelector(".boot-fallback");
+          const hasRetried = getStorage("3m_boot_reload_attempted");
+          if (!hasRetried) {
+            setStorage("3m_boot_reload_attempted", "1");
+            setStorage("3m_chunk_reload_notice", "network");
+            countdown.textContent = "Le réseau ne répond pas. Rechargement automatique en cours…";
+            window.location.reload();
+            return;
+          }
+
+          fallback?.classList.add("boot-fallback--error");
+          countdown.textContent = "Le chargement a échoué après deux tentatives.";
+          retryButton.style.display = "inline-flex";
+        }, 250);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script
       defer

@@ -2104,3 +2104,7 @@
 - [x] Afficher un compte à rebours visuel pendant les 15 secondes du chargement différé
 - [x] Ajouter un bouton de réessai manuel sur l’écran d’erreur après expiration du délai
 - [x] Afficher un toast réseau lors d’un rechargement automatique déclenché par un problème de chunk
+
+- [x] Diagnostiquer le blocage persistant sur « Chargement de la page… » et identifier l’erreur de montage ou de chunk
+- [x] Corriger le mécanisme pour afficher la page ou déclencher une récupération explicite sans attente indéfinie
+- [x] Revalider les routes publiques sur desktop/mobile, les logs console et le build avant publication
