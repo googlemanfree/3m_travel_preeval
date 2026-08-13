@@ -1859,3 +1859,8 @@
 - [x] Mettre en place la récupération sécurisée, le cache et la traduction FR/EN des actualités
 - [x] Construire et intégrer le widget sous l’accueil avec sources, filtres et états de chargement
 - [x] Vérifier exactitude, sécurité, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Badge animé pour annonces urgentes des ambassades (v95)
+- [x] Définir les critères de priorité et le modèle de données des annonces majeures
+- [x] Intégrer le badge important ou urgent avec animation accessible dans les cartes d’actualités
+- [x] Vérifier le rendu, les états bilingues, le mouvement réduit, TypeScript, les tests, le build et publier

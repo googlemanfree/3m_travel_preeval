@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function EmbassyNewsWidget() {
   const { language } = useLanguage();
+  const prefersReducedMotion = useReducedMotion();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSource, setSelectedSource] = useState<string>("all");
 
@@ -133,6 +135,34 @@ export default function EmbassyNewsWidget() {
                       })}
                     </span>
                   </div>
+                  {item.priority !== "normal" && (
+                    <motion.div
+                      role="status"
+                      aria-label={item.priority === "urgent"
+                        ? (language === "en" ? "Urgent embassy announcement" : "Annonce urgente de l’ambassade")
+                        : (language === "en" ? "Major embassy announcement" : "Annonce majeure de l’ambassade")}
+                      initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.94 }}
+                      animate={prefersReducedMotion ? undefined : { opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                        item.priority === "urgent"
+                          ? "border-red-300 bg-red-50 text-red-700 dark:border-red-700/70 dark:bg-red-950/40 dark:text-red-300"
+                          : "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700/70 dark:bg-amber-950/40 dark:text-amber-300"
+                      }`}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          item.priority === "urgent"
+                            ? "bg-red-500"
+                            : "bg-amber-500"
+                        } ${prefersReducedMotion ? "" : "animate-pulse"}`}
+                      />
+                      {item.priority === "urgent"
+                        ? (language === "en" ? "Urgent" : "Urgent")
+                        : (language === "en" ? "Major update" : "Annonce majeure")}
+                    </motion.div>
+                  )}
                   <CardTitle className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug">
                     {item.title[language === "en" ? "en" : "fr"]}
                   </CardTitle>

@@ -10,6 +10,7 @@ export interface EmbassyNewsItem {
   date: string;
   url: string;
   category: "visa" | "immigration" | "etudes" | "alerte";
+  priority: "normal" | "important" | "urgent";
 }
 
 const OFFICIAL_NEWS: EmbassyNewsItem[] = [
@@ -28,6 +29,7 @@ const OFFICIAL_NEWS: EmbassyNewsItem[] = [
   date: "2026-08-10",
   url: "https://www.canada.ca/fr/services/immigration-citoyennete.html",
   category: "etudes",
+  priority: "important",
   },
   {
   id: "ca-2",
@@ -44,6 +46,7 @@ const OFFICIAL_NEWS: EmbassyNewsItem[] = [
   date: "2026-08-05",
   url: "https://www.canada.ca/fr/immigration-refugies-citoyennete/services/immigrer-canada/entree-express.html",
   category: "immigration",
+  priority: "normal",
   },
   {
   id: "eu-1",
@@ -60,6 +63,7 @@ const OFFICIAL_NEWS: EmbassyNewsItem[] = [
   date: "2026-08-08",
   url: "https://home-affairs.ec.europa.eu/policies/schengen-borders-and-visa_en",
   category: "visa",
+  priority: "urgent",
   },
   {
   id: "fr-1",
@@ -76,6 +80,7 @@ const OFFICIAL_NEWS: EmbassyNewsItem[] = [
   date: "2026-08-01",
   url: "https://france-visas.gouv.fr/",
   category: "etudes",
+  priority: "normal",
   },
 ];
 
