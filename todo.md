@@ -1942,3 +1942,8 @@
 - [x] Ajouter la mutation serveur de changement de statut avec validation, note et journal d’audit
 - [x] Intégrer les actions Validé, Rejeté et En attente dans la fiche admin et l’espace client
 - [x] Ajouter les e-mails bilingues, tester les erreurs, les droits, le responsive, TypeScript, Vitest, build et publier
+
+## Alerte de rejet de document côté candidat (v109)
+- [x] Auditer l’affichage des statuts documents et le flux de réimport candidat
+- [x] Intégrer l’alerte de rejet, le motif administrateur et le bouton d’action rapide côté candidat
+- [x] Vérifier propriété, téléchargement, responsive, accessibilité, TypeScript, tests, build et publier

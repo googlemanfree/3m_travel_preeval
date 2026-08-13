@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getDocumentStatusCounts, toDisplayDocumentStatus } from "./services/documentStatus";
+import { getRejectedDocumentCount, hasRejectedDocuments } from "@shared/documentStatus";
 
 describe("document status helpers", () => {
   it("maps uploaded documents to the pending display state", () => {
@@ -31,5 +32,13 @@ describe("document status helpers", () => {
       rejectedCount: 0,
       completionPercentage: 0,
     });
+  });
+
+  it("detects rejected documents for the candidate alert", () => {
+    const documents = [{ status: "verified" }, { status: "rejected" }, { status: "rejected" }];
+
+    expect(getRejectedDocumentCount(documents)).toBe(2);
+    expect(hasRejectedDocuments(documents)).toBe(true);
+    expect(hasRejectedDocuments([{ status: "uploaded" }])).toBe(false);
   });
 });
