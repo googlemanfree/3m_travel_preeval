@@ -171,10 +171,19 @@ export default defineConfig({
     rollupOptions: {
       maxParallelFileOps: 1,
       output: {
-        manualChunks: {
-          recharts: ["recharts"],
-          "ui-components": ["@radix-ui/react-dialog", "@radix-ui/react-select"],
-          vendor: ["react", "react-dom"],
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("jspdf") || id.includes("html2pdf") || id.includes("html2canvas")) {
+              return "pdf-vendor";
+            }
+            if (id.includes("recharts")) {
+              return "recharts-vendor";
+            }
+            if (id.includes("framer-motion")) {
+              return "motion-vendor";
+            }
+            return "vendor";
+          }
         },
       },
     },

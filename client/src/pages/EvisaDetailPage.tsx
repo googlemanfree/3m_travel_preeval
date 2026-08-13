@@ -100,14 +100,17 @@ export default function EvisaDetailPage() {
               <span className="text-5xl sm:text-6xl p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
                 {destination.flag}
               </span>
-              <div className="space-y-1">
-                <Badge className="bg-blue-600 text-white font-bold px-3 py-1 text-xs uppercase tracking-wider rounded-full">
-                  {destination.region} • {destination.type}
-                </Badge>
-                <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-                  {destination.country}
-                </h1>
-              </div>
+                <div className="space-y-1">
+                  <Badge className="bg-blue-600 text-white font-bold px-3 py-1 text-xs uppercase tracking-wider rounded-full">
+                    {destination.region} • {destination.type}
+                  </Badge>
+                  <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+                    {destination.country}
+                  </h1>
+                  <p className="text-sm font-semibold text-blue-200 flex items-center gap-1.5 pt-1">
+                    <MapPin className="w-4 h-4 text-amber-400" /> Capitale / Pôle : <span className="text-white font-bold">{destination.capital}</span>
+                  </p>
+                </div>
             </div>
 
             <p className="text-slate-200 text-base sm:text-lg max-w-3xl leading-relaxed font-light">

@@ -1750,3 +1750,9 @@
 - [x] Ajouter un cache mémoire limité aux routes publiques fréquentes, sans données sensibles
 - [x] Ajouter une barre de progression subtile lors des changements de route
 - [x] Tester accessibilité, allers-retours, responsive, TypeScript, tests et build puis publier
+
+## Refonte complète du catalogue e-Visa et fiches détaillées pays (v77)
+- [x] Auditer la page e-Visa actuelle et les composants de la page Procédures à réutiliser
+- [x] Constituer un catalogue rigoureux de 35+ destinations nécessitant un e-Visa pour les Camerounais/Africains
+- [x] Implémenter les fiches de détail e-Visa individuelles avec visuels de capitale, formalités, documents et CTA « Lancer ma procédure e-visa »
+- [x] Tester les filtres, la recherche, les liens, le responsive, TypeScript, tests et build puis publier
