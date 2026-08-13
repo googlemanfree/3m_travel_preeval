@@ -12,12 +12,21 @@ function formatXaf(amount: number) {
   return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`;
 }
 
+const bookingSteps = [
+  { label: "Vol sélectionné", shortLabel: "Vol" },
+  { label: "Informations passager", shortLabel: "Passager" },
+  { label: "Confirmation finale", shortLabel: "Confirmation" },
+  { label: "Réservation confirmée", shortLabel: "Confirmée" },
+] as const;
+
 export default function FlightBookingCheckout() {
   const [, params] = useRoute<{ flightId: string }>("/flight-booking/:flightId");
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dossierRef, setDossierRef] = useState("");
+  const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
+  const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -69,6 +78,41 @@ export default function FlightBookingCheckout() {
             <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Finalisation de votre vol</h1>
             <p className="mt-2 text-sm text-slate-600">Renseignez les informations officielles de votre passeport et validez votre réservation en ligne.</p>
           </div>
+
+          <section aria-label="Progression de la réservation" className="mb-8 rounded-3xl border border-blue-100 bg-white p-4 shadow-sm md:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">Étape {currentStep} sur {bookingSteps.length}</p>
+                <p className="mt-1 text-sm font-bold text-slate-900">{bookingSteps[currentStep - 1].label}</p>
+              </div>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{Math.round(progressPercent)} %</span>
+            </div>
+            <div
+              role="progressbar"
+              aria-label={`Progression de la réservation : ${bookingSteps[currentStep - 1].label}`}
+              aria-valuemin={1}
+              aria-valuemax={bookingSteps.length}
+              aria-valuenow={currentStep}
+              className="relative h-2 overflow-hidden rounded-full bg-slate-100"
+            >
+              <motion.div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-700 to-sky-400" initial={{ width: 0 }} animate={{ width: `${progressPercent}%` }} transition={{ duration: 0.35, ease: "easeOut" }} />
+            </div>
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {bookingSteps.map((step, index) => {
+                const stepNumber = index + 1;
+                const isCurrent = stepNumber === currentStep;
+                const isComplete = stepNumber < currentStep;
+                return (
+                  <div key={step.label} className={`text-center ${isCurrent ? "text-blue-700" : isComplete ? "text-emerald-700" : "text-slate-400"}`}>
+                    <div className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-black ${isCurrent ? "bg-blue-600 text-white ring-4 ring-blue-100" : isComplete ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                      {isComplete ? <Check className="h-4 w-4" aria-hidden="true" /> : stepNumber}
+                    </div>
+                    <span className="mt-2 block text-[10px] font-bold leading-tight sm:text-xs">{step.shortLabel}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
 
           {!submitted ? (
             <form onSubmit={handleOpenConfirm} className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -163,11 +207,12 @@ export default function FlightBookingCheckout() {
           {/* Fenêtre modale de confirmation */}
           <AnimatePresence>
             {showConfirmModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
-                <motion.div initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }} className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl md:p-8">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="presentation">
+                <motion.div role="dialog" aria-modal="true" aria-labelledby="booking-confirmation-title" className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl md:p-8" initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }}>
+
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                    <h3 className="text-lg font-black text-slate-900">Récapitulatif de votre réservation</h3>
-                    <button type="button" onClick={() => setShowConfirmModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+                    <h3 id="booking-confirmation-title" className="text-lg font-black text-slate-900">Récapitulatif de votre réservation</h3>
+                    <button type="button" aria-label="Fermer le récapitulatif" onClick={() => setShowConfirmModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
                   </div>
                   <div className="my-5 space-y-4 text-sm text-slate-600">
                     <div className="rounded-2xl bg-blue-50/70 p-4">

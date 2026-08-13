@@ -2029,3 +2029,8 @@
 - [x] Afficher les détails complets du passager, du numéro de passeport, des dates et des options de contact
 - [x] Permettre au client de confirmer la réservation ou de revenir modifier ses informations
 - [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
+
+## Barre de Progression du Tunnel de Vol (v127)
+- [x] Créer le composant de jauge d’étapes dans `FlightBookingCheckout.tsx`
+- [x] Diviser le parcours en 4 étapes claires : Sélection, Passeport, Confirmation Finale, Réservation confirmée
+- [x] Validé avec TypeScript, 127 tests unitaires, build de production et captures desktop/mobile
