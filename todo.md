@@ -2016,3 +2016,10 @@
 - [x] Créer les fiches de simulation d’hôtels et véhicules avec ajout au panier direct
 - [x] Intégrer l’icône de panier avec badge dynamique dans la barre de navigation principale (`Navbar.tsx`)
 - [x] Valider avec TypeScript, 127 tests, le build de production et les aperçus desktop/mobile ; publier la version
+
+## Réservation Principale de Vols & Passeport (v125)
+- [x] Créer la page de réservation et de saisie des passeports passagers (`client/src/pages/FlightBookingCheckout.tsx`)
+- [x] Ajouter les options de contact direct par les 3 canaux (WhatsApp, e-mail direct, appel téléphonique) sur la page de vol et de confirmation
+- [x] Relier les cartes de vols au nouveau flux de réservation en ligne
+- [x] Maintenir les hôtels et véhicules en tant que services auxiliaires optionnels dans le panier
+- [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé

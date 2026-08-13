@@ -84,6 +84,7 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentErrorPage from "./pages/PaymentErrorPage";
 import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 import MultiServiceCart from "./pages/MultiServiceCart";
+import FlightBookingCheckout from "./pages/FlightBookingCheckout";
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
 
 import AdminGuard from "./components/AdminGuard";
@@ -407,6 +408,9 @@ function Router() {
       </Route>
       <Route path="/panier">
         <MultiServiceCart />
+      </Route>
+      <Route path="/flight-booking/:flightId">
+        <FlightBookingCheckout />
       </Route>
 
 

@@ -458,9 +458,9 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
               )}
             </div>
             <div className="flex flex-col gap-2">
-              <a href={buildWhatsAppMsg()} target="_blank" rel="noopener noreferrer">
+              <a href={`/flight-booking/${flight.id}`}>
                 <Button className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold text-sm px-5 py-2 rounded-xl shadow-md transition-all active:scale-[0.97] w-full">
-                  <Plane className="w-4 h-4 mr-1" /> Réserver
+                  <Plane className="w-4 h-4 mr-1" /> Réserver en ligne
                 </Button>
               </a>
               <Button type="button" onClick={handleAddToCart} variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50 font-semibold text-xs px-4 py-1.5 rounded-xl w-full">
