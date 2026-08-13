@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Share2, CalendarPlus } from "lucide-react";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Share2, CalendarPlus, Copy, Link2, Hotel, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import Footer from "@/components/Footer";
 
 function formatXaf(amount: number) {
@@ -22,9 +23,12 @@ const bookingSteps = [
 export default function FlightBookingCheckout() {
   const [, params] = useRoute<{ flightId: string }>("/flight-booking/:flightId");
   const { toast } = useToast();
+  const { addItem } = useMultiServiceCart();
   const [submitted, setSubmitted] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dossierRef, setDossierRef] = useState("");
+  const [friendEmail, setFriendEmail] = useState("");
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
   const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
 
@@ -62,6 +66,11 @@ export default function FlightBookingCheckout() {
   const whatsappNumber = "237698104832";
   const agencyEmail = "hello@3mtravelagency.com";
   const agencyPhone = "+237 698 10 48 32";
+  const destinationLabel = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("destination") || "votre destination"
+    : "votre destination";
+  const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
+  const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
   const shareText = `✈️ Ma Réservation 3M Travel Agency\nRef Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: 3M-FL-${params && params.flightId ? params.flightId : "REF"}\nContact Agence: +237 698 10 48 32`;
 
@@ -70,6 +79,37 @@ export default function FlightBookingCheckout() {
   const smsUrl = `sms:?body=${encodeURIComponent(shareText)}`;
   const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef}`)}&body=${encodeURIComponent(shareText)}`;
   const telUrl = `tel:${whatsappNumber}`;
+
+  const handleSendRecapToFriend = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const recipient = friendEmail.trim();
+    if (!recipient) return;
+    const subject = `Récapitulatif de vol 3M Travel - ${dossierRef}`;
+    const body = `${shareText}\n\nLien de l’itinéraire : ${shareLink}`;
+    window.location.href = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    toast({ title: "E-mail préparé", description: "Votre application de messagerie va ouvrir le récapitulatif pour votre proche." });
+  };
+
+  const handleCopyItineraryLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setIsLinkCopied(true);
+      toast({ title: "Lien copié", description: "Le lien de votre itinéraire est prêt à être partagé." });
+      window.setTimeout(() => setIsLinkCopied(false), 2200);
+    } catch {
+      toast({ title: "Copie impossible", description: "Utilisez le partage WhatsApp, Telegram ou SMS pour transmettre l’itinéraire.", variant: "destructive" });
+    }
+  };
+
+  const handleAddHotelSuggestion = () => {
+    addItem({ id: `hotel-${destinationKey}`, serviceType: "hotel", title: `Hôtel à ${destinationLabel}`, subtitle: "Recherche d’hébergement selon vos dates", price: 0, currency: "FCFA", priceStatus: "on_request", metadata: { destination: destinationLabel, dossierRef } });
+    toast({ title: "Hôtel ajouté", description: `La recherche d’un hôtel à ${destinationLabel} a été ajoutée au panier.` });
+  };
+
+  const handleAddVehicleSuggestion = () => {
+    addItem({ id: `vehicle-${destinationKey}`, serviceType: "vehicle", title: `Véhicule à ${destinationLabel}`, subtitle: "Location avec retrait à organiser", price: 0, currency: "FCFA", priceStatus: "on_request", metadata: { destination: destinationLabel, dossierRef } });
+    toast({ title: "Location ajoutée", description: `La recherche d’un véhicule à ${destinationLabel} a été ajoutée au panier.` });
+  };
 
   const handleAddToGoogleCalendar = () => {
     const title = encodeURIComponent("Vol 3M Travel - Réservation " + dossierRef);
@@ -334,6 +374,49 @@ Contact agence :
                       SMS
                     </a>
                   </div>
+                </div>
+
+                {/* Envoi du récapitulatif à un proche */}
+                <form onSubmit={handleSendRecapToFriend} className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-left">
+                  <Label htmlFor="friendEmail" className="mb-2 block text-xs font-black uppercase tracking-wider text-blue-900">Envoyer le récapitulatif à un proche</Label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input id="friendEmail" type="email" value={friendEmail} onChange={(event) => setFriendEmail(event.target.value)} placeholder="proche@exemple.com" required className="h-11 min-w-0 flex-1 rounded-xl border-blue-200 bg-white" />
+                    <Button type="submit" className="h-11 rounded-xl bg-blue-700 px-4 font-bold text-white hover:bg-blue-800 sm:shrink-0">
+                      <Mail className="mr-2 h-4 w-4" /> Envoyer
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-4 text-blue-800">Votre application e-mail s’ouvrira avec le récapitulatif et le lien de l’itinéraire préremplis.</p>
+                </form>
+
+                {/* Suggestions auxiliaires adaptées à la destination */}
+                <section className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4 text-left" aria-labelledby="auxiliary-suggestions-title">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p id="auxiliary-suggestions-title" className="text-xs font-black uppercase tracking-wider text-amber-900">Complétez votre voyage</p>
+                      <p className="mt-1 text-xs text-amber-800">Options auxiliaires pour {destinationLabel}, à confirmer par l’agence.</p>
+                    </div>
+                    <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-bold text-amber-900">Sur demande</span>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button type="button" variant="outline" onClick={handleAddHotelSuggestion} className="h-auto min-h-16 justify-start rounded-xl border-amber-200 bg-white px-3 py-2 text-left text-xs font-bold text-amber-950 hover:bg-amber-100">
+                      <Hotel className="mr-2 h-5 w-5 shrink-0 text-amber-700" />
+                      <span><span className="block">Hôtel à {destinationLabel}</span><span className="mt-0.5 block text-[10px] font-medium text-amber-700">Demander une disponibilité</span></span>
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleAddVehicleSuggestion} className="h-auto min-h-16 justify-start rounded-xl border-amber-200 bg-white px-3 py-2 text-left text-xs font-bold text-amber-950 hover:bg-amber-100">
+                      <Car className="mr-2 h-5 w-5 shrink-0 text-amber-700" />
+                      <span><span className="block">Véhicule à {destinationLabel}</span><span className="mt-0.5 block text-[10px] font-medium text-amber-700">Demander une disponibilité</span></span>
+                    </Button>
+                  </div>
+                </section>
+
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <Button type="button" variant="outline" onClick={handleCopyItineraryLink} className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100">
+                    {isLinkCopied ? <Check className="mr-2 h-4 w-4 text-emerald-600" /> : <Copy className="mr-2 h-4 w-4 text-blue-600" />}
+                    {isLinkCopied ? "Lien copié" : "Copier le lien"}
+                  </Button>
+                  <span className="flex items-center justify-center rounded-xl bg-emerald-50 px-3 text-center text-[11px] font-semibold text-emerald-800" aria-live="polite">
+                    {isLinkCopied ? "Prêt à partager" : "Partage rapide de l’itinéraire"}
+                  </span>
                 </div>
 
                 {/* Section Ajout au calendrier */}

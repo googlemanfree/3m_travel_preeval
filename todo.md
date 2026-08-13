@@ -2050,3 +2050,9 @@
 - [x] Intégrer les options d’export de vol vers Google Agenda (lien URL) et Apple Calendar (fichier `.ics`)
 - [x] Réorganiser la disposition mobile des boutons Wallet, PDF et actions pour une ergonomie parfaite sans défilement excessif
 - [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
+
+## Envoi à un proche, Suggestions Auxiliaires et Copie de Lien (v131)
+- [x] Ajouter un champ de saisie pour envoyer le récapitulatif par e-mail à un tiers sur la page de confirmation
+- [x] Créer une section dynamique de suggestions d'hôtels et de véhicules adaptée à la destination
+- [x] Ajouter un bouton « Copier le lien » avec toast de confirmation visuelle
+- [x] Validé avec TypeScript, 127 tests unitaires, build de production et capture mobile
