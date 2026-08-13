@@ -2123,3 +2123,5 @@
 
 - [x] Corriger le cycle d’import production entre `react-vendor` et `radix-vendor` qui provoque `forwardRef` undefined
 - [x] Rebuild et tester le bundle principal après regroupement sûr des dépendances UI
+
+- [x] Forcer une nouvelle publication observable du build `react-ui-vendor` et vérifier que le domaine ne sert plus `index-6IE05yMO.js`

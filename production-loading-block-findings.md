@@ -21,3 +21,13 @@ Après une attente supérieure à 15 secondes sur `www.3mtravelagency.com`, le f
 L’évaluation directe du bundle public a reproduit l’erreur suivante : `TypeError: Cannot read properties of undefined (reading 'forwardRef')` dans `radix-vendor-OfaGa3fY.js`, lors de `createSlot`. Le découpage Vite séparait React et Radix dans deux chunks initialisés avec une dépendance circulaire ; Radix pouvait donc s’évaluer avant que l’espace de noms React soit initialisé.
 
 Correction appliquée dans `vite.config.ts` : React, React DOM, scheduler et les paquets `@radix-ui` sont désormais regroupés dans `react-ui-vendor`. Le build produit bien ce chunk unifié. TypeScript et la suite complète passent : 46 fichiers de test, 142 tests réussis et 4 ignorés.
+
+## Vérification après ea7e04cc
+
+La production a été ouverte avec `?deploy=ea7e04cc`. Le loader HTML apparaît pendant le démarrage ; le contrôle du bundle public doit maintenant confirmer que le nouveau `react-ui-vendor` est bien servi et que l’erreur `forwardRef` a disparu après évaluation du module.
+
+La version ea7e04cc reste bloquée sur le domaine public : après plus de 15 secondes, le bootstrap HTML affiche son écran persistant de récupération. Cela signifie que le regroupement React/Radix n’a pas suffi à supprimer toutes les erreurs d’évaluation du bundle ; une nouvelle exception de module doit être capturée directement sur la version publiée.
+
+## Décalage de publication confirmé
+
+Après la publication annoncée `ea7e04cc`, le navigateur public reçoit encore `/assets/index-6IE05yMO.js` et `/assets/radix-vendor-OfaGa3fY.js`, puis reproduit exactement `forwardRef undefined`. Le build local corrigé produit pourtant `index-CP6CVA6z.js` et `react-ui-vendor-7L85cNF2.js`. Le code correctif n’est donc pas encore celui réellement servi par le domaine ; le problème actuel est un déploiement/publication non propagé, et non le seul cache du navigateur.
