@@ -1815,3 +1815,8 @@
 - [x] Concevoir et produire la nouvelle direction visuelle et le visuel héro inclusif avec Canada/Schengen/Amérique
 - [x] Intégrer le nom 3M Travel Agency, le logo agrandi, l’accroche raffinée et le nouveau visuel
 - [x] Vérifier responsive, accessibilité, TypeScript, suite Vitest, build et publier
+
+## CTA héros vers l’évaluation gratuite (v87)
+- [x] Auditer le CTA existant et confirmer la route du formulaire d’évaluation gratuite
+- [x] Ajouter le bouton CTA avec effet de survol élégant et navigation robuste
+- [x] Vérifier le clic, le responsive, l’accessibilité, TypeScript, les tests et le build puis publier
