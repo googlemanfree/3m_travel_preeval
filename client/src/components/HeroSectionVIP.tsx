@@ -88,8 +88,8 @@ export default function HeroSectionVIP({
         {/* Visuel éditorial et filigranes de mobilité internationale avec voyageurs réussis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <img
-          src="/manus-storage/agency_hero_success_diverse_93e808a0.png"
-          alt="3M Travel Agency - Voyage et Mobilité Internationale réussie"
+          src="/manus-storage/agency_hero_pro_hd_3m_7d4b4c20.png"
+          alt="3M Travel Agency - Voyage et Mobilité Internationale réussie avec des voyageurs épanouis"
           aria-hidden="true"
           ref={backgroundRef}
           className="absolute -inset-[4%] h-[108%] w-[108%] object-cover object-center opacity-80 filter brightness-110 saturate-110 will-change-transform"

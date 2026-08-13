@@ -1847,3 +1847,9 @@
 - [x] Auditer les animations existantes et définir une séquence d’apparition accessible
 - [x] Implémenter le fondu progressif du texte principal et du CTA avec respect du mouvement réduit
 - [x] Vérifier le rendu initial desktop/mobile, l’accessibilité, TypeScript, les tests et le build puis publier
+
+## Refonte visuel HD professionnel et épuré du héros (v93)
+- [x] Auditer le visuel actuel, son emplacement et les contraintes de lisibilité du héros
+- [x] Générer un nouveau visuel éditorial HD avec visages différenciés, identité 3M et repères Canada/Europe
+- [x] Intégrer le nouveau visuel et ajuster les calques pour préserver contraste et parallaxe
+- [x] Vérifier rendu HD, responsive, accessibilité, TypeScript, tests, build et publier
