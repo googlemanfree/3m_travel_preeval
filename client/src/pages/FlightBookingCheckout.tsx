@@ -67,6 +67,14 @@ export default function FlightBookingCheckout() {
   const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef || 'En attente'}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite confirmer mon vol.\n\nNom: ${formData.fullName}\nTéléphone: ${formData.phone}\nE-mail: ${formData.email}\nPasseport: ${formData.passportNumber}\n\nMerci de me contacter.`)}`;
   const telUrl = `tel:${whatsappNumber}`;
 
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [walletType, setWalletType] = useState<"apple" | "google">("apple");
+
+  const handleWalletAction = (type: "apple" | "google") => {
+    setWalletType(type);
+    setShowWalletModal(true);
+  };
+
   const handleDownloadTicketPdf = () => {
     const content = `
 ==================================================
@@ -260,12 +268,53 @@ Contact agence :
                 <Button onClick={handleDownloadTicketPdf} className="h-12 w-full rounded-2xl bg-slate-900 font-black text-white hover:bg-slate-800 shadow-md">
                   <Download className="mr-2 h-4 w-4" /> Télécharger mon billet électronique (PDF)
                 </Button>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Button onClick={() => handleWalletAction("apple")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100">
+                     Apple Wallet
+                  </Button>
+                  <Button onClick={() => handleWalletAction("google")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100">
+                    G Pay Google Wallet
+                  </Button>
+                </div>
+
                 <div>
                   <a href="/" className="text-sm font-bold text-blue-600 hover:underline">← Retour à l'accueil</a>
                 </div>
               </div>
             </motion.div>
           )}
+
+          {/* Modale d'information Wallet */}
+          <AnimatePresence>
+            {showWalletModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="presentation">
+                <motion.div role="dialog" aria-modal="true" aria-labelledby="wallet-modal-title" className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl md:p-8" initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }}>
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 id="wallet-modal-title" className="text-lg font-black text-slate-900">
+                      {walletType === "apple" ? "Ajouter à Apple Wallet" : "Ajouter à Google Wallet"}
+                    </h3>
+                    <button type="button" aria-label="Fermer" onClick={() => setShowWalletModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+                  </div>
+                  <div className="my-5 space-y-3 text-sm text-slate-600">
+                    <p>Le pass pour {walletType === "apple" ? "Apple Wallet" : "Google Wallet"} nécessite l’émission définitive de votre billet par l’agence 3M Travel.</p>
+                    <div className="rounded-2xl bg-amber-50 p-4 text-xs font-medium text-amber-900">
+                      <p className="font-bold">Pass provisoire sécurisé :</p>
+                      <p className="mt-1">Votre dossier <strong>{dossierRef}</strong> est enregistré. Téléchargez votre reçu PDF ci-dessous ou contactez notre agence pour recevoir votre pass portefeuille officiel directement par e-mail ou WhatsApp.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button onClick={() => { setShowWalletModal(false); handleDownloadTicketPdf(); }} className="h-12 flex-1 rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700">
+                      Télécharger le PDF
+                    </Button>
+                    <Button onClick={() => setShowWalletModal(false)} variant="outline" className="h-12 rounded-xl border-slate-300 font-bold">
+                      Fermer
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
 
           {/* Fenêtre modale de confirmation */}
           <AnimatePresence>

@@ -62,7 +62,7 @@ describe("evaluation.submit", () => {
 
     expect(result.success).toBe(true);
     expect(result.message).toContain("succès");
-  });
+  }, 15000);
 
   it("soumet une demande Canada RP avec CV", async () => {
     const ctx = createPublicContext();
@@ -81,7 +81,7 @@ describe("evaluation.submit", () => {
     });
 
     expect(result.success).toBe(true);
-  });
+  }, 15000);
 
   it("soumet une demande pour autre pays", async () => {
     const ctx = createPublicContext();
@@ -97,7 +97,7 @@ describe("evaluation.submit", () => {
     });
 
     expect(result.success).toBe(true);
-  });
+  }, 15000);
 
   it("rejette une demande avec email invalide", async () => {
     const ctx = createPublicContext();

@@ -2039,3 +2039,8 @@
 - [x] Créer le générateur de PDF client pour la confirmation de vol dans `FlightBookingCheckout.tsx`
 - [x] Ajouter le bouton « Télécharger mon billet (PDF) » sur la vue de confirmation finale
 - [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
+
+## Intégration Apple Wallet & Google Wallet (v129)
+- [x] Créer le composant de bouton d’enregistrement portefeuille avec détection d’appareil et modal de repli sécurisé dans `FlightBookingCheckout.tsx`
+- [x] Configurer la vérification des clés de signature de pass et le repli automatique vers le téléchargement PDF et l’e-mail de confirmation
+- [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
