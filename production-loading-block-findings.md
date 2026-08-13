@@ -43,3 +43,7 @@ Le nouveau bundle `index-6g99Fi9J.js` référence bien `react-ui-vendor-BdfaWPKb
 ## Publication 851f3485 non propagée au départ
 
 À 23:18 UTC, le domaine public contient bien le marker HTML `react-ui-vendor-fix-2026-08-13`, mais sert encore `index-6g99Fi9J.js`, le build de l’étape précédente qui référence `react-ui-vendor`. Le bundle local sans manual chunk produit `index-D-zS0723.js` et un `vendor-CKDcPjFK.js` unifié. Le checkpoint 851f3485 n’était donc pas encore reflété par les assets publics ; un nouveau marker unique est nécessaire pour forcer une publication vérifiable.
+
+## Validation publique finale
+
+Après la publication `7c6b44d5`, les trois domaines publics servent le nouveau bundle principal `index-DJkXq_JR.js`. L’inspection du bundle ne trouve plus `react-ui-vendor` ni `radix-vendor`. Le navigateur public a ensuite monté React avec succès : le DOM contient la navigation, le hero, la recherche de vols, Aureol, les formulaires et les boutons flottants ; la page n’est plus bloquée sur le loader. Le marker HTML reste temporairement celui de l’étape précédente côté CDN, mais le script principal effectivement exécuté est bien le nouveau bundle sans manual chunk.
