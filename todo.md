@@ -1895,3 +1895,8 @@
 - [x] Auditer le composant des témoignages, les données de destination et le statut d’approbation
 - [x] Finaliser les filtres Canada, Espace Schengen et toutes les destinations avec états bilingues
 - [x] Vérifier l’affichage responsive, l’accessibilité, les données approuvées, TypeScript, les tests, le build et publier
+
+## Recherche textuelle des témoignages (v101)
+- [x] Auditer le composant de témoignages et définir les champs de recherche
+- [x] Intégrer la barre de recherche avec filtrage combiné et états bilingues
+- [x] Vérifier accessibilité, responsive, résultats approuvés, TypeScript, les tests, le build et publier

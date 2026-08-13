@@ -74,21 +74,39 @@ export default function ApprovedReviewsSection() {
   const { data: reviews, isLoading } = trpc.customerReview.listApproved.useQuery();
   const { data: stats } = trpc.customerReview.getStats.useQuery();
   const [destinationFilter, setDestinationFilter] = useState<DestinationFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
 
   const displayedReviews = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase("fr-FR");
     const filtered = approvedReviews.filter((review) => {
-      if (destinationFilter === "all") return true;
-      if (destinationFilter === "canada") return isCanadaReview(review);
-      if (destinationFilter === "schengen") return isSchengenReview(review);
-      return !isCanadaReview(review) && !isSchengenReview(review);
+      const matchesDestination =
+        destinationFilter === "all" ||
+        (destinationFilter === "canada" && isCanadaReview(review)) ||
+        (destinationFilter === "schengen" && isSchengenReview(review)) ||
+        (destinationFilter === "other" && !isCanadaReview(review) && !isSchengenReview(review));
+
+      if (!matchesDestination) return false;
+      if (!normalizedQuery) return true;
+
+      const searchableText = [
+        review.displayName,
+        review.destinationCountry,
+        review.serviceType,
+        review.reviewText,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("fr-FR");
+
+      return searchableText.includes(normalizedQuery);
     });
 
     return [...filtered]
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
       .slice(0, 6);
-  }, [approvedReviews, destinationFilter]);
+  }, [approvedReviews, destinationFilter, searchQuery]);
 
   const labels = language === "en"
     ? {
@@ -101,8 +119,11 @@ export default function ApprovedReviewsSection() {
         canada: "Canada",
         schengen: "Schengen Area",
         other: "Other destinations",
+        searchPlaceholder: "Search a country, service or keyword...",
+        searchLabel: "Search testimonials",
+        clearSearch: "Clear search",
         results: "approved reviews shown",
-        empty: "No approved review is available for this destination yet.",
+        empty: "No approved review matches your search.",
         share: "You can also share your experience.",
         leave: "Leave a review",
       }
@@ -116,8 +137,11 @@ export default function ApprovedReviewsSection() {
         canada: "Canada",
         schengen: "Espace Schengen",
         other: "Autres destinations",
+        searchPlaceholder: "Rechercher un pays, un service ou un mot-clé...",
+        searchLabel: "Rechercher dans les témoignages",
+        clearSearch: "Effacer la recherche",
         results: "avis approuvés affichés",
-        empty: "Aucun avis approuvé n’est encore disponible pour cette destination.",
+        empty: "Aucun avis approuvé ne correspond à votre recherche.",
         share: "Vous aussi, partagez votre expérience.",
         leave: "Laisser un avis",
       };
@@ -180,6 +204,30 @@ export default function ApprovedReviewsSection() {
               </div>
             </div>
           )}
+
+          <div className="mx-auto mb-4 max-w-xl">
+            <label htmlFor="approved-reviews-search" className="sr-only">{labels.searchLabel}</label>
+            <div className="relative">
+              <input
+                id="approved-reviews-search"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={labels.searchPlaceholder}
+                className="w-full rounded-full border border-slate-200 bg-white px-5 py-3 pr-24 text-sm text-slate-800 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                  aria-label={labels.clearSearch}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
 
           <div className="flex flex-wrap justify-center gap-2 mt-4" role="group" aria-label={language === "en" ? "Filter reviews by destination" : "Filtrer les avis par destination"}>
             {filterOptions.map((option) => {
