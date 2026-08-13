@@ -2023,3 +2023,9 @@
 - [x] Relier les cartes de vols au nouveau flux de réservation en ligne
 - [x] Maintenir les hôtels et véhicules en tant que services auxiliaires optionnels dans le panier
 - [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
+
+## Modale de Confirmation de Réservation de Vol (v126)
+- [x] Intégrer la fenêtre modale de récapitulatif dans `FlightBookingCheckout.tsx`
+- [x] Afficher les détails complets du passager, du numéro de passeport, des dates et des options de contact
+- [x] Permettre au client de confirmer la réservation ou de revenir modifier ses informations
+- [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé

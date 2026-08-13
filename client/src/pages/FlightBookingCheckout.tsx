@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
-import { motion } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ export default function FlightBookingCheckout() {
   const [, params] = useRoute<{ flightId: string }>("/flight-booking/:flightId");
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [dossierRef, setDossierRef] = useState("");
 
   const [formData, setFormData] = useState({
@@ -32,16 +33,21 @@ export default function FlightBookingCheckout() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleOpenConfirm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName || !formData.email || !formData.passportNumber) {
       toast({ title: "Informations incomplètes", description: "Veuillez renseigner votre nom, e-mail et numéro de passeport.", variant: "destructive" });
       return;
     }
+    setShowConfirmModal(true);
+  };
+
+  const handleFinalSubmit = () => {
+    setShowConfirmModal(false);
     const ref = `3M-FL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     setDossierRef(ref);
     setSubmitted(true);
-    toast({ title: "Réservation enregistrée", description: `Dossier ${ref} créé avec succès.` });
+    toast({ title: "Réservation confirmée", description: `Dossier ${ref} créé et transmis à l'agence.` });
   };
 
   const whatsappNumber = "237698104832";
@@ -61,11 +67,11 @@ export default function FlightBookingCheckout() {
               <ShieldCheck className="h-4 w-4" /> Réservation Sécurisée GDS & Passeport
             </span>
             <h1 className="mt-3 text-3xl font-black text-slate-900 md:text-4xl">Finalisation de votre vol</h1>
-            <p className="mt-2 text-sm text-slate-600">Renseignez les informations officielles de votre passeport et choisissez votre mode de contact direct avec l'agence.</p>
+            <p className="mt-2 text-sm text-slate-600">Renseignez les informations officielles de votre passeport et validez votre réservation en ligne.</p>
           </div>
 
           {!submitted ? (
-            <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-[1fr_360px]">
+            <form onSubmit={handleOpenConfirm} className="grid gap-8 lg:grid-cols-[1fr_360px]">
               <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm">
                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <User className="h-5 w-5 text-blue-600" /> Informations du Passager & Passeport
@@ -109,7 +115,7 @@ export default function FlightBookingCheckout() {
                 </div>
 
                 <Button type="submit" className="h-12 w-full rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md">
-                  Enregistrer ma réservation et afficher les options de contact <ArrowRight className="ml-2 h-4 w-4" />
+                  Vérifier et confirmer la réservation <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
 
@@ -128,8 +134,8 @@ export default function FlightBookingCheckout() {
           ) : (
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-xl rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-xl">
               <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-emerald-600" />
-              <h2 className="text-2xl font-black text-slate-900">Réservation enregistrée avec succès !</h2>
-              <p className="mt-2 text-sm text-slate-600">Votre numéro de dossier est le <span className="font-mono font-bold text-blue-700">{dossierRef}</span>. Vos informations de passeport ont été transmises de façon sécurisée à l'équipe de 3M Travel Agency.</p>
+              <h2 className="text-2xl font-black text-slate-900">Réservation confirmée avec succès !</h2>
+              <p className="mt-2 text-sm text-slate-600">Votre numéro de dossier est le <span className="font-mono font-bold text-blue-700">{dossierRef}</span>. Vos informations de passeport ont été transmises à l'équipe de 3M Travel Agency.</p>
 
               <div className="my-6 rounded-2xl bg-blue-50 p-4 text-left text-xs leading-6 text-blue-900">
                 <p className="font-black mb-1">Contactez directement notre agence par le canal de votre choix :</p>
@@ -153,6 +159,46 @@ export default function FlightBookingCheckout() {
               </div>
             </motion.div>
           )}
+
+          {/* Fenêtre modale de confirmation */}
+          <AnimatePresence>
+            {showConfirmModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+                <motion.div initial={{ opacity: 0, scale: 0.95, y: 15 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 15 }} className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl md:p-8">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h3 className="text-lg font-black text-slate-900">Récapitulatif de votre réservation</h3>
+                    <button type="button" onClick={() => setShowConfirmModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"><X className="h-5 w-5" /></button>
+                  </div>
+                  <div className="my-5 space-y-4 text-sm text-slate-600">
+                    <div className="rounded-2xl bg-blue-50/70 p-4">
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Passager principal</p>
+                      <p className="mt-1 text-base font-black text-slate-900">{formData.fullName}</p>
+                      <p className="text-xs text-slate-500">{formData.email} · {formData.phone}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl bg-slate-50 p-3">
+                        <p className="text-[11px] font-bold uppercase text-slate-400">N° de Passeport</p>
+                        <p className="font-mono font-bold text-slate-800">{formData.passportNumber}</p>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-3">
+                        <p className="text-[11px] font-bold uppercase text-slate-400">Nationalité</p>
+                        <p className="font-semibold text-slate-800">{formData.nationality}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 p-4">
+                      <div className="flex justify-between text-xs text-slate-500"><span>Prestation :</span><span className="font-bold text-slate-800">Vol GDS international</span></div>
+                      <div className="mt-2 flex justify-between text-base font-black text-blue-900"><span>Montant estimé :</span><span>450 000 FCFA</span></div>
+                    </div>
+                    <p className="text-xs text-slate-500">En confirmant, vous autorisez 3M Travel Agency à enregistrer votre dossier et à vous contacter par WhatsApp, e-mail ou téléphone.</p>
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-12 rounded-xl border-slate-200">Modifier</Button>
+                    <Button type="button" onClick={handleFinalSubmit} className="flex-1 h-12 rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700"><Check className="mr-2 h-4 w-4" /> Confirmer</Button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
       <Footer />
