@@ -2056,3 +2056,9 @@
 - [x] Créer une section dynamique de suggestions d'hôtels et de véhicules adaptée à la destination
 - [x] Ajouter un bouton « Copier le lien » avec toast de confirmation visuelle
 - [x] Validé avec TypeScript, 127 tests unitaires, build de production et capture mobile
+
+## Dates de Séjour, Validation E-mail et Filtres Rapides (v132)
+- [ ] Ajouter les sélecteurs de dates de séjour (Check-in / Check-out) pour les suggestions d'hôtels
+- [ ] Mettre en place une validation en temps réel de l'e-mail du proche avec badge de confirmation visuelle
+- [ ] Intégrer des filtres rapides par gamme de prix et note pour affiner les suggestions dynamiques
+- [ ] Valider avec TypeScript, tests unitaires, build de production et publication
