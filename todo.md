@@ -1883,3 +1883,10 @@
 - [x] Auditer la source du visuel actuel et confirmer les calques d’identité à retirer
 - [x] Générer un nouveau visuel de héros sans logos ni textes de marques tierces
 - [x] Remplacer l’asset et vérifier contraste, parallaxe, responsive, TypeScript, tests, build et publier
+
+## Refonte réaliste, drapeaux 107 pays et arrière-plans par service (v99)
+- [x] Auditer les pages, services, fiches destination, catalogue des 107 pays et système de drapeaux existant
+- [x] Produire un nouveau héros photoréaliste avec une femme et un homme distincts, sans marque tierce
+- [x] Structurer les badges de drapeaux et les priorités Canada, Schengen, Chine et autres destinations
+- [x] Appliquer des arrière-plans par service et par fiche destination avec fallbacks et chargement fiable
+- [x] Vérifier cohérence visuelle, performance, responsive, accessibilité, TypeScript, tests, build et publier

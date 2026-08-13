@@ -5,7 +5,7 @@ describe("procedure visuals", () => {
   it("uses the Canada visual and badge for Canada destinations", () => {
     const country = { id: "canada-travail", name: "Canada", region: "Amérique du Nord" };
     expect(getProcedureVisual(country)).toBe(PROCEDURE_VISUALS.canada);
-    expect(getProcedureRegionBadges(country)).toEqual(["🇨🇦", "Mobilité Canada"]);
+    expect(getProcedureRegionBadges(country)).toEqual(["🇨🇦", "Canada — Priorité N°1"]);
   });
 
   it("uses the Schengen visual for European destinations", () => {
