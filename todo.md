@@ -2108,3 +2108,7 @@
 - [x] Diagnostiquer le blocage persistant sur « Chargement de la page… » et identifier l’erreur de montage ou de chunk
 - [x] Corriger le mécanisme pour afficher la page ou déclencher une récupération explicite sans attente indéfinie
 - [x] Revalider les routes publiques sur desktop/mobile, les logs console et le build avant publication
+
+- [x] Vérifier la date et le contenu du dernier déploiement réellement servis par les domaines publics
+- [x] Forcer une nouvelle publication du correctif de chargement et invalider le cache si nécessaire
+- [x] Recontrôler le bundle, le loader et les en-têtes du domaine public après publication
