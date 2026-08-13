@@ -1890,3 +1890,8 @@
 - [x] Structurer les badges de drapeaux et les priorités Canada, Schengen, Chine et autres destinations
 - [x] Appliquer des arrière-plans par service et par fiche destination avec fallbacks et chargement fiable
 - [x] Vérifier cohérence visuelle, performance, responsive, accessibilité, TypeScript, tests, build et publier
+
+## Filtrage des témoignages par destination (v100)
+- [x] Auditer le composant des témoignages, les données de destination et le statut d’approbation
+- [x] Finaliser les filtres Canada, Espace Schengen et toutes les destinations avec états bilingues
+- [x] Vérifier l’affichage responsive, l’accessibilité, les données approuvées, TypeScript, les tests, le build et publier
