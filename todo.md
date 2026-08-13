@@ -2128,3 +2128,5 @@
 
 - [x] Supprimer le manual chunk React UI responsable de `Cannot set properties of undefined (setting 'Activity')` avec React 19
 - [ ] Vérifier en production que l’évaluation du bundle principal réussit et que l’accueil s’affiche réellement
+
+- [ ] Publier un marker unique du build sans manual chunk et confirmer que le domaine sert le nouveau bundle

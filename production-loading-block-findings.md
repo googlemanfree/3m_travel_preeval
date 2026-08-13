@@ -39,3 +39,7 @@ Après la publication 7c9e6154, les domaines publics servent désormais `/assets
 ## Seconde cause confirmée après regroupement
 
 Le nouveau bundle `index-6g99Fi9J.js` référence bien `react-ui-vendor-BdfaWPKb.js`, mais l’évaluation échoue encore avec `TypeError: Cannot set properties of undefined (setting 'Activity')` dans `react-ui-vendor`, appelé depuis `vendor-4V6XU30T.js`. Le regroupement manuel React/Radix a supprimé l’erreur `forwardRef`, mais force toujours une initialisation circulaire de React 19/React DOM. Le correctif final doit retirer le regroupement manuel des dépendances React/Radix et laisser Rollup résoudre leur ordre d’initialisation naturel.
+
+## Publication 851f3485 non propagée au départ
+
+À 23:18 UTC, le domaine public contient bien le marker HTML `react-ui-vendor-fix-2026-08-13`, mais sert encore `index-6g99Fi9J.js`, le build de l’étape précédente qui référence `react-ui-vendor`. Le bundle local sans manual chunk produit `index-D-zS0723.js` et un `vendor-CKDcPjFK.js` unifié. Le checkpoint 851f3485 n’était donc pas encore reflété par les assets publics ; un nouveau marker unique est nécessaire pour forcer une publication vérifiable.
