@@ -2130,3 +2130,5 @@
 - [x] Vérifier en production que l’évaluation du bundle principal réussit et que l’accueil s’affiche réellement
 
 - [x] Publier un marker unique du build sans manual chunk et confirmer que le domaine sert le nouveau bundle `index-DJkXq_JR.js` (le marker HTML précédent reste temporairement servi par le CDN)
+
+- [x] Rédiger les recommandations d’amélioration pour le système de réservation de vols en ligne
