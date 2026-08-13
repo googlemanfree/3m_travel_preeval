@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download } from "lucide-react";
+import { Plane, ShieldCheck, Mail, Phone, MessageCircle, ArrowRight, CheckCircle2, User, Globe, Calendar, CreditCard, X, Check, Download, Share2, CalendarPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,9 +63,48 @@ export default function FlightBookingCheckout() {
   const agencyEmail = "hello@3mtravelagency.com";
   const agencyPhone = "+237 698 10 48 32";
 
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Bonjour 3M Travel, je souhaite finaliser ma réservation de vol (Réf: ${dossierRef || 'Nouveau'}). Nom: ${formData.fullName}, Passeport: ${formData.passportNumber}`)}`;
-  const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef || 'En attente'}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite confirmer mon vol.\n\nNom: ${formData.fullName}\nTéléphone: ${formData.phone}\nE-mail: ${formData.email}\nPasseport: ${formData.passportNumber}\n\nMerci de me contacter.`)}`;
+  const shareText = `✈️ Ma Réservation 3M Travel Agency\nRef Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: 3M-FL-${params && params.flightId ? params.flightId : "REF"}\nContact Agence: +237 698 10 48 32`;
+
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
+  const smsUrl = `sms:?body=${encodeURIComponent(shareText)}`;
+  const mailtoUrl = `mailto:${agencyEmail}?subject=${encodeURIComponent(`Réservation Vol 3M Travel - Réf ${dossierRef}`)}&body=${encodeURIComponent(shareText)}`;
   const telUrl = `tel:${whatsappNumber}`;
+
+  const handleAddToGoogleCalendar = () => {
+    const title = encodeURIComponent("Vol 3M Travel - Réservation " + dossierRef);
+    const details = encodeURIComponent("Vol réservé via 3M Travel Agency.\nPassager: " + formData.fullName + "\nPasseport: " + formData.passportNumber);
+    const location = encodeURIComponent("Aéroport International (GDS 3M Travel)");
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=20260901T100000Z/20260901T180000Z`;
+    window.open(googleUrl, "_blank");
+  };
+
+  const handleDownloadIcs = () => {
+    const icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//3M Travel Agency//Vol Confirme//FR",
+      "BEGIN:VEVENT",
+      `SUMMARY:Vol 3M Travel - Réf ${dossierRef}`,
+      `DESCRIPTION:Réservation de vol confirmée pour ${formData.fullName} (Passeport: ${formData.passportNumber}).`,
+      "LOCATION:3M Travel Agency - Agence Centrale",
+      "DTSTART:20260901T100000Z",
+      "DTEND:20260901T180000Z",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Vol_3M_Travel_${dossierRef}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: "Calendrier téléchargé", description: "Le fichier .ics a été enregistré pour votre application de calendrier." });
+  };
 
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [walletType, setWalletType] = useState<"apple" | "google">("apple");
@@ -265,20 +304,49 @@ Contact agence :
               </div>
 
               <div className="mt-6 space-y-3">
-                <Button onClick={handleDownloadTicketPdf} className="h-12 w-full rounded-2xl bg-slate-900 font-black text-white hover:bg-slate-800 shadow-md">
+                <Button onClick={handleDownloadTicketPdf} className="h-12 w-full rounded-2xl bg-blue-600 font-black text-white hover:bg-blue-700 shadow-md">
                   <Download className="mr-2 h-4 w-4" /> Télécharger mon billet électronique (PDF)
                 </Button>
 
+                {/* Boutons Wallet alignés et optimisés mobile */}
                 <div className="grid grid-cols-2 gap-3">
-                  <Button onClick={() => handleWalletAction("apple")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100">
+                  <Button onClick={() => handleWalletAction("apple")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100 text-xs sm:text-sm">
                      Apple Wallet
                   </Button>
-                  <Button onClick={() => handleWalletAction("google")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100">
+                  <Button onClick={() => handleWalletAction("google")} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100 text-xs sm:text-sm">
                     G Pay Google Wallet
                   </Button>
                 </div>
 
-                <div>
+                {/* Section Partage social direct */}
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="mb-2 text-xs font-black uppercase tracking-wider text-slate-700 flex items-center justify-center gap-1.5">
+                    <Share2 className="h-3.5 w-3.5 text-blue-600" /> Partager mon récapitulatif
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow hover:bg-emerald-700">
+                      WhatsApp
+                    </a>
+                    <a href={telegramUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center rounded-xl bg-sky-500 py-2.5 text-xs font-bold text-white shadow hover:bg-sky-600">
+                      Telegram
+                    </a>
+                    <a href={smsUrl} className="flex items-center justify-center rounded-xl bg-slate-700 py-2.5 text-xs font-bold text-white shadow hover:bg-slate-800">
+                      SMS
+                    </a>
+                  </div>
+                </div>
+
+                {/* Section Ajout au calendrier */}
+                <div className="grid grid-cols-2 gap-3">
+                  <Button onClick={handleAddToGoogleCalendar} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100 text-xs sm:text-sm">
+                    <CalendarPlus className="mr-1.5 h-4 w-4 text-blue-600" /> Google Agenda
+                  </Button>
+                  <Button onClick={handleDownloadIcs} variant="outline" className="h-11 rounded-xl border-slate-300 font-bold text-slate-800 hover:bg-slate-100 text-xs sm:text-sm">
+                    <CalendarPlus className="mr-1.5 h-4 w-4 text-slate-700" /> Apple Calendar
+                  </Button>
+                </div>
+
+                <div className="pt-2">
                   <a href="/" className="text-sm font-bold text-blue-600 hover:underline">← Retour à l'accueil</a>
                 </div>
               </div>

@@ -2044,3 +2044,9 @@
 - [x] Créer le composant de bouton d’enregistrement portefeuille avec détection d’appareil et modal de repli sécurisé dans `FlightBookingCheckout.tsx`
 - [x] Configurer la vérification des clés de signature de pass et le repli automatique vers le téléchargement PDF et l’e-mail de confirmation
 - [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
+
+## Partage, Calendrier et Optimisation Mobile (v130)
+- [x] Ajouter les boutons de partage direct (WhatsApp, Telegram, SMS) dans `FlightBookingCheckout.tsx`
+- [x] Intégrer les options d’export de vol vers Google Agenda (lien URL) et Apple Calendar (fichier `.ics`)
+- [x] Réorganiser la disposition mobile des boutons Wallet, PDF et actions pour une ergonomie parfaite sans défilement excessif
+- [x] Validé avec TypeScript, 127 tests unitaires réussis et build de production optimisé
