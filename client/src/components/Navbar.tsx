@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
+import { prefetchNavigation } from "@/lib/navigationCache";
+import { notifyNavigationStart } from "./NavigationProgress";
 
 const menuItems = [
   { href: "/", label: "Accueil", icon: "🏠" },
@@ -58,6 +60,8 @@ export default function Navbar() {
 
   const closeMenu = () => setIsMenuOpen(false);
   const closeProfile = () => setIsProfileOpen(false);
+  const handleNavigationIntent = (href: string) => prefetchNavigation(href);
+  const handleNavigationClick = () => notifyNavigationStart();
 
   return (
     <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
@@ -65,6 +69,9 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-20">
           <a
             href="/"
+            onMouseEnter={() => handleNavigationIntent("/")}
+            onFocus={() => handleNavigationIntent("/")}
+            onClick={handleNavigationClick}
             className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
           >
             <img
@@ -82,6 +89,9 @@ export default function Navbar() {
               <a
                 key={item.href}
                 href={item.href}
+                onMouseEnter={() => handleNavigationIntent(item.href)}
+                onFocus={() => handleNavigationIntent(item.href)}
+                onClick={handleNavigationClick}
                 className={nativeLinkClass(item.highlight)}
               >
                 <span aria-hidden="true">{item.icon}</span> {item.label}
@@ -124,7 +134,9 @@ export default function Navbar() {
                     </div>
                     <a
                       href="/mon-espace"
-                      onClick={closeProfile}
+                      onMouseEnter={() => handleNavigationIntent("/mon-espace")}
+                      onFocus={() => handleNavigationIntent("/mon-espace")}
+                      onClick={() => { handleNavigationClick(); closeProfile(); }}
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
@@ -132,7 +144,9 @@ export default function Navbar() {
                     </a>
                     <a
                       href="/evaluation"
-                      onClick={closeProfile}
+                      onMouseEnter={() => handleNavigationIntent("/evaluation")}
+                      onFocus={() => handleNavigationIntent("/evaluation")}
+                      onClick={() => { handleNavigationClick(); closeProfile(); }}
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
@@ -154,12 +168,18 @@ export default function Navbar() {
               <>
                 <a
                   href="/login"
+                  onMouseEnter={() => handleNavigationIntent("/login")}
+                  onFocus={() => handleNavigationIntent("/login")}
+                  onClick={handleNavigationClick}
                   className="bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 border border-blue-100 px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95"
                 >
                   👤 Accès Client
                 </a>
                 <a
                   href="/register"
+                  onMouseEnter={() => handleNavigationIntent("/register")}
+                  onFocus={() => handleNavigationIntent("/register")}
+                  onClick={handleNavigationClick}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95 shadow-sm"
                 >
                   ✍️ Créer un compte
@@ -225,7 +245,9 @@ export default function Navbar() {
                 <motion.a
                   key={item.href}
                   href={item.href}
-                  onClick={closeMenu}
+                  onMouseEnter={() => handleNavigationIntent(item.href)}
+                  onFocus={() => handleNavigationIntent(item.href)}
+                  onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors w-full text-left"
                   variants={itemVariants}
                   initial="hidden"
@@ -267,21 +289,27 @@ export default function Navbar() {
               >
                 <a
                   href="/evaluation"
-                  onClick={closeMenu}
+                  onMouseEnter={() => handleNavigationIntent("/evaluation")}
+                  onFocus={() => handleNavigationIntent("/evaluation")}
+                  onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className="block w-full text-center bg-gradient-to-r from-amber-500 to-amber-600 text-white py-3 rounded-xl font-bold shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all"
                 >
                   ⭐ Évaluer mon profil
                 </a>
                 <a
                   href="/login"
-                  onClick={closeMenu}
+                  onMouseEnter={() => handleNavigationIntent("/login")}
+                  onFocus={() => handleNavigationIntent("/login")}
+                  onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className="block w-full text-center bg-blue-50 text-blue-700 py-3 rounded-xl font-bold border border-blue-100 transition-all"
                 >
                   👤 Accès Client
                 </a>
                 <a
                   href="/register"
-                  onClick={closeMenu}
+                  onMouseEnter={() => handleNavigationIntent("/register")}
+                  onFocus={() => handleNavigationIntent("/register")}
+                  onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className="block w-full text-center bg-blue-600 text-white py-3 rounded-xl font-bold transition-all mt-2"
                 >
                   ✍️ Créer un compte

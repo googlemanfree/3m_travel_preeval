@@ -111,6 +111,7 @@ import React from "react";
 import Navbar from "./components/Navbar";
 import PageTransition from "./components/PageTransition";
 import PageLoadingFallback from "./components/PageLoadingFallback";
+import NavigationProgress from "./components/NavigationProgress";
 
 const ClientDashboard = React.lazy(() => import("./pages/ClientDashboard"));
 const AdminAIEvaluationDashboard = React.lazy(() => import("./pages/AdminAIEvaluationDashboard"));
@@ -412,6 +413,7 @@ function App() {
             <>
               {/* Header global visible sur toutes les pages */}
               <Navbar />
+              <NavigationProgress />
               {/* Contenu des pages avec transition douce entre les routes */}
               <PageTransition>
                 <React.Suspense fallback={<PageLoadingFallback />}>

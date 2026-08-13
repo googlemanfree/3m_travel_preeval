@@ -1743,3 +1743,10 @@
 - [x] Corriger la cause commune sans modifier les contenus ni le design
 - [x] Tester tous les liens publics, les retours arrière et le responsive desktop/mobile
 - [x] Valider TypeScript, tests, build et publier le correctif
+
+## Navigation instantanée et transitions (v76)
+- [x] Auditer Navbar, routes et shell de transition existants
+- [x] Ajouter le préchargement intelligent au survol et au focus clavier des liens principaux
+- [x] Ajouter un cache mémoire limité aux routes publiques fréquentes, sans données sensibles
+- [x] Ajouter une barre de progression subtile lors des changements de route
+- [x] Tester accessibilité, allers-retours, responsive, TypeScript, tests et build puis publier
