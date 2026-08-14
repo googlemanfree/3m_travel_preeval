@@ -31,25 +31,25 @@ interface Admin {
   name: string;
   email: string;
   phone: string;
-  role: "super_admin" | "admin" | "moderator";
+  role: "admin";
   status: "active" | "inactive";
   createdAt: string;
   lastLogin?: string;
   permissions: string[];
 }
 
-// Mock data - Replace with real API calls
+// Données d’affichage de secours : tous les comptes partagent le rôle et les permissions admin.
 const mockAdmins: Admin[] = [
   {
     id: 1,
     name: "Aureol Donfack",
     email: "aureol@3mtravel.com",
     phone: "+237698104832",
-    role: "super_admin",
+    role: "admin",
     status: "active",
     createdAt: "2026-01-15",
     lastLogin: "2026-07-25",
-    permissions: ["manage_users", "manage_admins", "manage_settings", "view_analytics"],
+    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
   },
   {
     id: 2,
@@ -60,7 +60,7 @@ const mockAdmins: Admin[] = [
     status: "active",
     createdAt: "2026-02-20",
     lastLogin: "2026-07-24",
-    permissions: ["manage_users", "manage_applications", "view_analytics"],
+    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
   },
   {
     id: 3,
@@ -71,30 +71,26 @@ const mockAdmins: Admin[] = [
     status: "active",
     createdAt: "2026-03-10",
     lastLogin: "2026-07-23",
-    permissions: ["manage_applications", "manage_documents"],
+    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
   },
   {
     id: 4,
     name: "Sophie Bernard",
     email: "sophie@3mtravel.com",
     phone: "+237698104835",
-    role: "moderator",
+    role: "admin",
     status: "inactive",
     createdAt: "2026-04-05",
-    permissions: ["view_applications", "moderate_content"],
+    permissions: ["manage_users", "manage_admins", "manage_settings", "manage_applications", "manage_documents", "view_analytics"],
   },
 ];
 
 const roleLabels = {
-  super_admin: "Super Admin",
-  admin: "Admin",
-  moderator: "Modérateur",
+  admin: "Administrateur",
 };
 
 const roleColors = {
-  super_admin: "bg-red-100 text-red-800",
   admin: "bg-blue-100 text-blue-800",
-  moderator: "bg-yellow-100 text-yellow-800",
 };
 
 export default function AdminsList() {
@@ -150,7 +146,7 @@ export default function AdminsList() {
               Gestion des Administrateurs
             </h1>
             <p className="text-gray-600 mt-2">
-              Gérez les administrateurs et leurs permissions
+              Gérez les administrateurs avec un rôle et des permissions communes
             </p>
           </div>
           <Button
@@ -189,9 +185,9 @@ export default function AdminsList() {
             transition={{ delay: 0.2 }}
             className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500"
           >
-            <p className="text-gray-600 text-sm">Super Admins</p>
+              <p className="text-gray-600 text-sm">Rôle commun</p>
             <p className="text-3xl font-bold text-red-600 mt-2">
-              {admins.filter((a) => a.role === "super_admin").length}
+              {admins.filter((a) => a.role === "admin").length}
             </p>
           </motion.div>
           <motion.div
@@ -200,10 +196,8 @@ export default function AdminsList() {
             transition={{ delay: 0.3 }}
             className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500"
           >
-            <p className="text-gray-600 text-sm">Modérateurs</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">
-              {admins.filter((a) => a.role === "moderator").length}
-            </p>
+            <p className="text-gray-600 text-sm">Permissions communes</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">Admin</p>
           </motion.div>
         </div>
 
@@ -230,9 +224,7 @@ export default function AdminsList() {
                 className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="tous">Tous les rôles</option>
-                <option value="super_admin">Super Admin</option>
-                <option value="admin">Admin</option>
-                <option value="moderator">Modérateur</option>
+                <option value="admin">Administrateur</option>
               </select>
             </div>
             <div>

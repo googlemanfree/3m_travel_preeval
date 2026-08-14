@@ -26,7 +26,7 @@ export default function SuperAdminDashboard() {
   const meQuery = trpc.adminAuth.me.useQuery(undefined, { retry: false });
   const statsQuery = trpc.adminAuth.getGlobalStats.useQuery(
     { sessionToken },
-    { enabled: Boolean(sessionToken) && meQuery.data?.admin?.role === "super_admin", refetchInterval: 30_000, retry: false },
+    { enabled: Boolean(sessionToken) && meQuery.data?.authenticated === true, refetchInterval: 30_000, retry: false },
   );
 
   if (!sessionToken || meQuery.data?.authenticated === false) {
@@ -37,8 +37,8 @@ export default function SuperAdminDashboard() {
     return <div className="flex min-h-screen items-center justify-center bg-slate-50 text-slate-600">Vérification des permissions…</div>;
   }
 
-  if (meQuery.data?.admin?.role !== "super_admin") {
-    return <AccessState title="Accès Super administrateur requis" description="Ce tableau de bord contient des statistiques globales et reste réservé au compte Super administrateur." action={() => navigate("/admin")} actionLabel="Retour au tableau admin" />;
+  if (meQuery.data?.authenticated !== true) {
+    return <AccessState title="Accès administrateur requis" description="Ce tableau de bord est accessible à tous les comptes administrateurs actifs." action={() => navigate("/admin/login")} actionLabel="Se connecter" />;
   }
 
   const stats = statsQuery.data;
@@ -50,7 +50,7 @@ export default function SuperAdminDashboard() {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 rounded-2xl bg-slate-950 p-6 text-white shadow-xl sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-cyan-300" /><Badge className="bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/15">Super administrateur</Badge></div>
+            <div className="mb-2 flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-cyan-300" /><Badge className="bg-cyan-400/15 text-cyan-100 hover:bg-cyan-400/15">Administrateur</Badge></div>
             <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Pilotage global 3M Travel Agency</h1>
             <p className="mt-2 text-sm text-slate-300">Statistiques réelles des opérations, dossiers et demandes de vols.</p>
           </div>
@@ -66,7 +66,7 @@ export default function SuperAdminDashboard() {
         {stats ? <>
           <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Indicateurs globaux">
             <MetricCard icon={<UsersRound className="h-5 w-5" />} label="Administrateurs actifs" value={`${stats.admins.active}/${stats.admins.total}`} tone="blue" />
-            <MetricCard icon={<ShieldCheck className="h-5 w-5" />} label="Super administrateurs" value={stats.admins.superAdmins} tone="violet" />
+            <MetricCard icon={<ShieldCheck className="h-5 w-5" />} label="Administrateurs au rôle commun" value={stats.admins.adminsWithCommonRole} tone="violet" />
             <MetricCard icon={<FileCheck2 className="h-5 w-5" />} label="Évaluations" value={stats.evaluations} tone="amber" />
             <MetricCard icon={<BarChart3 className="h-5 w-5" />} label="Demandes de vols" value={totalFlightRequests} tone="emerald" />
           </section>

@@ -1205,9 +1205,9 @@ export default function AdminDashboard() {
                 <a href="/admin/flight-requests" className="flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                   Ouvrir la file des demandes de vols
                 </a>
-                {typeof window !== "undefined" && localStorage.getItem("adminType") === "super_admin" ? <a href="/admin/super-dashboard" className="flex h-12 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
-                  Dashboard Super administrateur
-                </a> : null}
+                <a href="/admin/super-dashboard" className="flex h-12 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                  Pilotage global administrateur
+                </a>
               </div>
             </Card>
           </TabsContent>

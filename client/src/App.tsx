@@ -293,7 +293,7 @@ function Router() {
         </AdminGuard>
       </Route>
       <Route path={"/admin/super-dashboard"}>
-        <AdminGuard message="Accès réservé au Super administrateur de 3M Travel Agency.">
+        <AdminGuard message="Accès réservé aux administrateurs de 3M Travel Agency.">
           <SuperAdminDashboard />
         </AdminGuard>
       </Route>

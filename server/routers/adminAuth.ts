@@ -49,13 +49,13 @@ export async function requireValidAdminSession(sessionToken: string) {
   return admin;
 }
 
-/** Valide une session et réserve la gestion des comptes aux Super administrateurs. */
+/**
+ * Compatibilité historique : toutes les fonctions de gestion admin utilisent
+ * désormais le même rôle opérationnel. La sécurité repose toujours sur une
+ * session admin HttpOnly valide et sur le statut actif du compte.
+ */
 export async function requireSuperAdminSession(sessionToken: string) {
-  const admin = await requireValidAdminSession(sessionToken);
-  if (admin.role !== "super_admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Droits Super administrateur requis." });
-  }
-  return admin;
+  return requireValidAdminSession(sessionToken);
 }
 
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
@@ -237,7 +237,7 @@ export const adminAuthRouter = router({
       }
     }),
 
-  /** Statistiques globales visibles uniquement par le Super administrateur. */
+  /** Statistiques globales visibles par tous les administrateurs authentifiés. */
   getGlobalStats: publicProcedure
     .input(z.object({ sessionToken: z.string() }))
     .query(async ({ input }) => {
@@ -257,7 +257,7 @@ export const adminAuthRouter = router({
         admins: {
           total: adminRoleRows.reduce((sum, row) => sum + Number(row.total), 0),
           active: adminRoleRows.filter((row) => row.status === "active").reduce((sum, row) => sum + Number(row.total), 0),
-          superAdmins: adminRoleRows.filter((row) => row.role === "super_admin").reduce((sum, row) => sum + Number(row.total), 0),
+          adminsWithCommonRole: adminRoleRows.filter((row) => row.role === "admin").reduce((sum, row) => sum + Number(row.total), 0),
         },
         evaluations: Number(evaluationTotals[0]?.total ?? 0),
         flightRequests: {
@@ -269,7 +269,7 @@ export const adminAuthRouter = router({
     }),
 
   /**
-   * Lister tous les comptes administrateurs (réservé aux admins connectés)
+   * Lister tous les comptes administrateurs connectés
    */
   listAdmins: publicProcedure
     .input(z.object({
@@ -298,7 +298,7 @@ export const adminAuthRouter = router({
     }),
 
   /**
-   * Inviter (créer) un nouveau compte administrateur avec un mot de passe
+   * Inviter (créer) un nouveau compte administrateur avec le rôle commun admin et un mot de passe
    * généré automatiquement, envoyé par email.
    */
   inviteAdmin: publicProcedure
@@ -334,6 +334,7 @@ export const adminAuthRouter = router({
         fullName: input.fullName,
         phone: input.phone,
         adminType: input.adminType,
+        role: "admin",
         passwordHash,
         status: "active",
       });

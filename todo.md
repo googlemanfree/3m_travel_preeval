@@ -2488,8 +2488,8 @@
 - [x] Ajouter les tests d’acceptation des portraits légers et publier la correction
 
 ## Uniformisation des rôles administrateurs (v171)
-- [ ] Auditer les rôles, permissions et protections serveur actuellement utilisés
-- [ ] Garantir qu’un seul rôle admin commun donne les mêmes accès à tous les administrateurs
-- [ ] Supprimer les différences d’interface ou de procédures fondées sur un sous-rôle non demandé
-- [ ] Ajouter les tests d’autorisation pour administrateurs égaux et refus des comptes non admin
-- [ ] Vérifier TypeScript, la suite Vitest, les routes admin et publier la correction
+- [x] Auditer les rôles, permissions et protections serveur actuellement utilisés
+- [x] Garantir qu’un seul rôle admin commun donne les mêmes accès à tous les administrateurs
+- [x] Supprimer les différences d’interface ou de procédures fondées sur un sous-rôle non demandé
+- [x] Ajouter les tests d’autorisation pour administrateurs égaux et refus des comptes non admin
+- [x] Vérifier TypeScript, la suite Vitest, les routes admin et publier la correction

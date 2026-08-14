@@ -6,23 +6,24 @@ const app = readFileSync(new URL("../client/src/App.tsx", import.meta.url), "utf
 const dashboard = readFileSync(new URL("../client/src/pages/SuperAdminDashboard.tsx", import.meta.url), "utf8");
 const agentDashboard = readFileSync(new URL("../client/src/pages/FlightAgentDashboard.tsx", import.meta.url), "utf8");
 
-describe("super administrator dashboard", () => {
-  it("protects global statistics with the Super administrator session guard", () => {
+describe("tableau global administrateur", () => {
+  it("protège les statistiques globales avec la session admin serveur", () => {
     expect(adminAuth).toContain("getGlobalStats: publicProcedure");
     expect(adminAuth).toContain("await requireSuperAdminSession(input.sessionToken)");
     expect(adminAuth).toContain("flightBookingRequests");
     expect(adminAuth).toContain("insuranceRequests");
   });
 
-  it("registers a dedicated lazy route and refuses standard admins in the page", () => {
+  it("enregistre une route dédiée accessible au rôle admin commun", () => {
     expect(app).toContain("/admin/super-dashboard");
     expect(app).toContain("SuperAdminDashboard");
-    expect(dashboard).toContain('role === "super_admin"');
+    expect(dashboard).not.toContain('role === "super_admin"');
+    expect(dashboard).toContain("meQuery.data?.authenticated === true");
     expect(dashboard).toContain("getGlobalStats");
     expect(dashboard).toContain("Les données sont recalculées côté serveur");
   });
 
-  it("keeps explicit color badges for all priority levels in the agent queue", () => {
+  it("conserve les badges de priorité explicites dans la file des agents", () => {
     expect(agentDashboard).toContain('urgent: "bg-red-50 text-red-700"');
     expect(agentDashboard).toContain('high: "bg-amber-50 text-amber-800"');
     expect(agentDashboard).toContain('normal: "bg-blue-50 text-blue-700"');
