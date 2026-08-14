@@ -176,11 +176,8 @@ function Router() {
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
-      <Route path={"/dashboard"}>
-        <AuthGuard message="Vous devez vous connecter pour accéder à votre espace candidat." autoRedirect>
-          <Dashboard />
-        </AuthGuard>
-      </Route>
+      {/* Entrée historique : l’espace client unique est désormais /mon-espace. */}
+      <Route path={"/dashboard"}>{() => <Redirect to="/mon-espace" />}</Route>
 
       {/* Ouverture de dossier & paiement */}
       <Route path={"/open-dossier"}>
@@ -201,17 +198,9 @@ function Router() {
       </Route>
       <Route path={"/suivi-client"} component={ClientCaseTracking} />
 
-      {/* Mon Espace Candidat */}
-      <Route path={"/mon-espace-candidat"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
-        </AuthGuard>
-      </Route>
-      <Route path={"/my-space"}>
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre espace candidat.">
-          <MySpace />
-        </AuthGuard>
-      </Route>
+      {/* Mon Espace Candidat — aliases historiques vers l’espace client unique. */}
+      <Route path={"/mon-espace-candidat"}>{() => <Redirect to="/mon-espace" />}</Route>
+      <Route path={"/my-space"}>{() => <Redirect to="/mon-espace" />}</Route>
 
       {/* Depot des documents */}
       <Route path={"/submit-documents"}>
@@ -252,8 +241,9 @@ function Router() {
         </AdminGuard>
       </Route>
       <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
-      <Route path={"/mon-espace-enhanced"} component={ClientSpaceEnhanced} />
-      <Route path={"/mon-espace-v2"} component={ClientSpaceEnhancedV2} />
+      {/* Prototypes historiques : redirigés vers l’espace client synchronisé. */}
+      <Route path={"/mon-espace-enhanced"}>{() => <Redirect to="/mon-espace" />}</Route>
+      <Route path={"/mon-espace-v2"}>{() => <Redirect to="/mon-espace" />}</Route>
       <Route path={"/document-upload"} component={DocumentUploadPage} />
 
       {/* Bibliothèque de ressources PDF */}
@@ -412,11 +402,8 @@ function Router() {
         </AdminGuard>
       </Route>
 
-      <Route path="/client-dashboard">
-        <AuthGuard message="Vous devez créer un compte pour accéder à votre tableau de bord.">
-          <ClientDashboard />
-        </AuthGuard>
-      </Route>
+      {/* Ancien tableau de bord : redirection conservant les liens partagés. */}
+      <Route path="/client-dashboard">{() => <Redirect to="/mon-espace" />}</Route>
       <Route path="/mes-vols-favoris">
         <AuthGuard message="Vous devez créer un compte pour gérer vos vols favoris.">
           <FlightFavorites />

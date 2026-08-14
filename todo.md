@@ -2190,3 +2190,19 @@
 - [x] Permettre à l’administrateur d’ajouter des annotations précises lors du rejet d’un document
 - [x] Afficher clairement les corrections demandées et l’alerte de refus dans l’espace candidat
 - [x] Permettre au candidat de remplacer ou de soumettre à nouveau un document annoté
+
+- [x] Réunifier les espaces sous « Espace client » unique et rediriger l’ancien /dashboard vers /mon-espace
+- [x] Synchroniser la messagerie candidat-admin pour que les messages soient immédiatement consultables et traités dans le back-office
+- [x] Permettre à l’administrateur de modifier les informations candidat et déclencher une notification dans l’espace client
+- [x] Permettre aux anciens clients d’accéder directement à leur dossier agence préexistant à l’aide de leur numéro de dossier
+- [x] Vérifier tous les boutons, liens et soumissions de l’espace client sur desktop et mobile
+
+## Phase 2 — Espace client unifié
+- [x] Définir `/mon-espace` comme entrée canonique et rediriger les anciens espaces clients sans casser les liens existants
+- [x] Fusionner dans l’espace canonique le suivi réel du dossier, les documents candidat/agence, l’avatar et l’historique des évaluations
+- [x] Intégrer une messagerie bidirectionnelle candidate ↔ administrateur dans l’espace client canonique avec compteur de messages non lus
+- [x] Synchroniser le statut réel du dossier et les notifications de changement avec l’espace client
+- [x] Ajouter un accès sécurisé aux dossiers historiques par numéro de dossier, sans permettre l’accès aux dossiers d’un autre candidat
+- [x] Ajouter dans le back-office les contrôles de consultation, réponse et synchronisation associés aux dossiers clients
+- [x] Vérifier les boutons, soumissions, redirections et responsive desktop/mobile de l’espace unifié
+- [x] Écrire et exécuter les tests Vitest de contrat pour les routes et la synchronisation de l’espace client

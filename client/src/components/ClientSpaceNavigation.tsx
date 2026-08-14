@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { CalendarDays, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText } from "lucide-react";
+import { CalendarDays, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -12,6 +12,8 @@ const quickLinks = [
   { href: "/document-upload", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
   { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700" },
   { href: "/evisas", label: "Destinations", description: "Explorer les procédures e-Visa", icon: Plane, tone: "bg-amber-50 text-amber-700" },
+  { href: "/mon-espace?section=messages", label: "Messagerie", description: "Échanger avec votre conseiller", icon: MessageCircle, tone: "bg-sky-50 text-sky-700" },
+  { href: "/mon-espace?section=profile", label: "Mon profil", description: "Mettre à jour vos informations", icon: UserRound, tone: "bg-violet-50 text-violet-700" },
 ] as const;
 
 const statusLabels: Record<string, string> = {
@@ -54,9 +56,9 @@ export default function ClientSpaceNavigation() {
       <Card className="border-blue-100 bg-white p-5 shadow-sm md:p-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Espace personnel</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Espace Client</p>
             <h2 id="client-space-navigation-title" className="mt-1 text-xl font-black text-slate-900">Bonjour {candidate?.fullName || "Candidat"}</h2>
-            <p className="mt-1 text-sm text-slate-600">Retrouvez ici vos dossiers, documents, favoris et demandes de vols.</p>
+            <p className="mt-1 text-sm text-slate-600">Retrouvez ici vos dossiers, documents, messages, favoris et demandes de vols.</p>
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-bold">
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700"><FolderOpen className="h-3.5 w-3.5" /> Dossier actif :</span>
               {dossierNumber ? <a href="/mon-dossier" className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800 hover:bg-blue-200">#{dossierNumber}</a> : <span className="rounded-full bg-amber-100 px-3 py-1.5 text-amber-800">Aucun dossier actif</span>}
@@ -67,7 +69,7 @@ export default function ClientSpaceNavigation() {
           </Button>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {quickLinks.map(({ href, label, description, icon: Icon, tone }) => (
             <a key={href} href={href} className="group rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
               <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>

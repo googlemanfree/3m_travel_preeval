@@ -884,15 +884,47 @@ export const candidateRouter = router({
       .orderBy(desc(applications.createdAt))
       .limit(1);
 
-    if (!app || app.length === 0) {
-      return {
-        success: false,
-        message: "Aucun dossier trouvé",
-        data: null,
-      };
+    // Les dossiers ouverts directement en agence n’étaient pas reliés à une
+    // application en ligne. Ils sont maintenant exposés dans le même espace,
+    // uniquement lorsque l’adresse e-mail appartient au candidat connecté.
+    const [historicalAgencyDossier] = await db
+      .select()
+      .from(agencyDossiers)
+      .where(eq(agencyDossiers.email, ctx.candidate.email))
+      .orderBy(desc(agencyDossiers.createdAt))
+      .limit(1);
+
+    if (!app.length && !historicalAgencyDossier) {
+      return { success: false, message: "Aucun dossier trouvé", data: null };
     }
 
-    const application = app[0];
+    const application = app[0] ?? ({
+      id: historicalAgencyDossier.id,
+      dossierNumber: `3M-AG-${historicalAgencyDossier.id}`,
+      candidateId: ctx.candidate.id,
+      fullName: historicalAgencyDossier.fullName,
+      email: historicalAgencyDossier.email,
+      whatsappNumber: historicalAgencyDossier.phone,
+      destination: "autre",
+      formulaChosen: "integral",
+      dossierStatus: historicalAgencyDossier.status === "documents_requis"
+        ? "en_attente_documents"
+        : historicalAgencyDossier.status === "soumis"
+          ? "soumis_agences"
+          : historicalAgencyDossier.status === "approuve"
+            ? "visa_approuve"
+            : historicalAgencyDossier.status === "refuse"
+              ? "refuse"
+              : historicalAgencyDossier.status === "en_cours"
+                ? "en_evaluation"
+                : "nouveau",
+      agreementSigned: false,
+      paymentStatus: "non_paye",
+      scoringTotal: null,
+      evaluationScore: null,
+      createdAt: historicalAgencyDossier.createdAt,
+      updatedAt: historicalAgencyDossier.updatedAt,
+    } as any);
 
     // Récupérer les documents
     const documents = await db
@@ -946,6 +978,55 @@ export const candidateRouter = router({
       },
     };
   }),
+
+  /**
+   * Vérifier un numéro de dossier historique appartenant au candidat connecté.
+   * Aucun détail n’est renvoyé si le numéro ne correspond pas à son e-mail ou
+   * à son identifiant candidat.
+   */
+  getDossierByNumber: candidateProcedure
+    .input(z.object({ dossierNumber: z.string().trim().min(4).max(32) }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const { applications } = await import("../../drizzle/schema");
+      const [application] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.dossierNumber, input.dossierNumber))
+        .limit(1);
+
+      if (application && (application.candidateId === ctx.candidate.id || application.email.toLowerCase() === ctx.candidate.email.toLowerCase())) {
+        return { success: true, source: "online" as const, application };
+      }
+
+      const agencyId = /^3M-AG-(\d+)$/i.exec(input.dossierNumber)?.[1];
+      if (agencyId) {
+        const [agencyDossier] = await db
+          .select()
+          .from(agencyDossiers)
+          .where(eq(agencyDossiers.id, Number(agencyId)))
+          .limit(1);
+        if (agencyDossier && agencyDossier.email.toLowerCase() === ctx.candidate.email.toLowerCase()) {
+          return {
+            success: true,
+            source: "agency" as const,
+            application: {
+              id: agencyDossier.id,
+              dossierNumber: `3M-AG-${agencyDossier.id}`,
+              fullName: agencyDossier.fullName,
+              email: agencyDossier.email,
+              destination: agencyDossier.destination,
+              dossierStatus: agencyDossier.status,
+              createdAt: agencyDossier.createdAt,
+              updatedAt: agencyDossier.updatedAt,
+            },
+          };
+        }
+      }
+
+      return { success: false, message: "Dossier introuvable ou non associé à votre compte." };
+    }),
 
   /**
    * Recuperer les documents du candidat avec details

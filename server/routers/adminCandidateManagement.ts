@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
-import { applications, agencyDossiers, clientDocuments } from "../../drizzle/schema";
+import { applications, agencyDossiers, clientDocuments, candidateMessages, candidates } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
 import { sendDossierConfirmationEmail } from "../emailService";
@@ -63,6 +63,26 @@ export function paginateCandidates<T>(records: T[], requestedPage: number, pageS
   const page = Math.min(requestedPage, totalPages);
   const start = (page - 1) * pageSize;
   return { records: records.slice(start, start + pageSize), total, page, pageSize, totalPages };
+}
+
+async function resolveCandidateIdForAdmin(candidateId: string) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  const reference = parseAdminCandidateReference(candidateId);
+  if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
+
+  if (reference.source === "online") {
+    const [application] = await db.select({ candidateId: applications.candidateId, email: applications.email }).from(applications).where(eq(applications.id, reference.id)).limit(1);
+    if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+    if (application.candidateId) return application.candidateId;
+    const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, application.email)).limit(1);
+    return candidate?.id ?? null;
+  }
+
+  const [dossier] = await db.select({ email: agencyDossiers.email }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+  if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+  const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+  return candidate?.id ?? null;
 }
 
 async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
@@ -160,6 +180,11 @@ export const adminCandidateManagementRouter = router({
       candidateId: z.string().regex(/^(online|agency)_\d+$/),
       status: z.string().min(1).max(50),
       adminNotes: z.string().max(5000).optional(),
+      fullName: z.string().trim().min(2).max(160).optional(),
+      email: z.string().email().optional(),
+      phone: z.string().trim().max(40).optional(),
+      destination: z.string().trim().max(120).optional(),
+      visaType: z.string().trim().max(120).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
@@ -168,20 +193,123 @@ export const adminCandidateManagementRouter = router({
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
       const { source, id } = reference;
+      let candidateIdForMessage: number | null = null;
+      let dossierNumberForMessage = input.candidateId;
+      let previousStatus = "";
+      const profilePatch = {
+        ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
+        ...(input.email !== undefined ? { email: input.email } : {}),
+        ...(input.phone !== undefined ? { phone: input.phone } : {}),
+        ...(input.destination !== undefined ? { destination: input.destination } : {}),
+        ...(input.visaType !== undefined ? { visaType: input.visaType } : {}),
+      };
+
       if (source === "online") {
         const allowed = ["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier en ligne invalide." });
-        const result = await db.update(applications).set({ dossierStatus: input.status as any, ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}), lastStatusUpdateAt: new Date(), lastStatusUpdatedBy: admin.email }).where(eq(applications.id, id));
+        const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, id)).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+        candidateIdForMessage = record.candidateId ?? null;
+        dossierNumberForMessage = record.dossierNumber;
+        previousStatus = record.dossierStatus;
+        if (!candidateIdForMessage) {
+          const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
+          candidateIdForMessage = linkedCandidate?.id ?? null;
+        }
+        const result = await db.update(applications).set({
+          dossierStatus: input.status as any,
+          ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
+          ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
+          ...(input.email !== undefined ? { email: input.email } : {}),
+          ...(input.phone !== undefined ? { whatsappNumber: input.phone } : {}),
+          ...(input.destination !== undefined ? { destination: input.destination as any } : {}),
+          ...(input.visaType !== undefined ? { visaType: input.visaType } : {}),
+          lastStatusUpdateAt: new Date(),
+          lastStatusUpdatedBy: admin.email,
+        }).where(eq(applications.id, id));
         const affectedRows = Number((result as unknown as [{ affectedRows?: number }])[0]?.affectedRows ?? 0);
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
       } else {
         const allowed = ["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier agence invalide." });
-        const result = await db.update(agencyDossiers).set({ status: input.status as any, ...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}), lastStatusChangeAt: new Date(), lastStatusChangeBy: admin.email }).where(eq(agencyDossiers.id, id));
+        const [record] = await db.select({ email: agencyDossiers.email, status: agencyDossiers.status }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+        if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+        previousStatus = record.status;
+        const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
+        candidateIdForMessage = linkedCandidate?.id ?? null;
+        dossierNumberForMessage = `3M-AG-${id}`;
+        const result = await db.update(agencyDossiers).set({
+          status: input.status as any,
+          ...(input.adminNotes !== undefined ? { adminNotes: input.adminNotes } : {}),
+          ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
+          ...(input.email !== undefined ? { email: input.email } : {}),
+          ...(input.phone !== undefined ? { phone: input.phone } : {}),
+          ...(input.destination !== undefined ? { destination: input.destination } : {}),
+          ...(input.visaType !== undefined ? { visaType: input.visaType } : {}),
+          lastStatusChangeAt: new Date(),
+          lastStatusChangeBy: admin.email,
+        }).where(eq(agencyDossiers.id, id));
         const affectedRows = Number((result as unknown as [{ affectedRows?: number }])[0]?.affectedRows ?? 0);
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
       }
-      return { success: true };
+
+      if (candidateIdForMessage && Object.keys(profilePatch).length > 0) {
+        await db.update(candidates).set(profilePatch as any).where(eq(candidates.id, candidateIdForMessage));
+      }
+
+      if (candidateIdForMessage && (previousStatus !== input.status || Object.keys(profilePatch).length > 0)) {
+        const statusLabels: Record<string, string> = {
+          nouveau: "Nouveau dossier",
+          en_evaluation: "Évaluation en cours",
+          en_cours: "Dossier en cours de traitement",
+          documents_requis: "Documents requis",
+          en_attente_documents: "Documents requis",
+          documents_recus: "Documents reçus",
+          soumis: "Dossier soumis",
+          soumis_agences: "Dossier soumis aux autorités",
+          approuve: "Dossier approuvé",
+          visa_approuve: "Visa approuvé",
+          refuse: "Dossier refusé",
+        };
+        await db.insert(candidateMessages).values({
+          candidateId: candidateIdForMessage,
+          senderRole: "advisor",
+          content: `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\nNouveau statut : ${statusLabels[input.status] ?? input.status}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`,
+          isRead: false,
+        });
+      }
+
+      return { success: true, notifiedCandidate: Boolean(candidateIdForMessage && (previousStatus !== input.status || Object.keys(profilePatch).length > 0)) };
+    }),
+
+  getMessages: publicProcedure
+    .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/) }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
+      if (!candidateId) return [];
+      const messages = await db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateId)).orderBy(candidateMessages.createdAt);
+      await db.update(candidateMessages).set({ isRead: true }).where(eq(candidateMessages.candidateId, candidateId));
+      return messages;
+    }),
+
+  replyToCandidate: publicProcedure
+    .input(z.object({ candidateId: z.string().regex(/^(online|agency)_\d+$/), content: z.string().trim().min(1).max(2000) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
+      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Ce dossier n’est pas encore relié à un compte candidat." });
+      await db.insert(candidateMessages).values({
+        candidateId,
+        senderRole: "advisor",
+        content: input.content.trim(),
+        isRead: false,
+      });
+      return { success: true, adminEmail: admin.email };
     }),
 
   resendConfirmation: publicProcedure

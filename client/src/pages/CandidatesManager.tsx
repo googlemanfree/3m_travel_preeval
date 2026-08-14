@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Mail,
   MessageSquare,
+  Send,
   Plus,
   MoreVertical,
   RefreshCw,
@@ -169,7 +170,38 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
 }) => {
   const [adminNotes, setAdminNotes] = useState(candidate?.adminNotes || "");
   const [status, setStatus] = useState(candidate?.status || "nouveau");
+  const [fullName, setFullName] = useState(candidate?.fullName || "");
+  const [email, setEmail] = useState(candidate?.email || "");
+  const [phone, setPhone] = useState(candidate?.phone || "");
+  const [destination, setDestination] = useState(candidate?.destination || "");
+  const [visaType, setVisaType] = useState(candidate?.visaType || "");
+  const [messageText, setMessageText] = useState("");
   const utils = trpc.useUtils();
+  const candidateReference = candidate ? String(candidate.id) : "online_1";
+
+  useEffect(() => {
+    if (!candidate) return;
+    setAdminNotes(candidate.adminNotes || "");
+    setStatus(candidate.status || "nouveau");
+    setFullName(candidate.fullName || "");
+    setEmail(candidate.email || "");
+    setPhone(candidate.phone || "");
+    setDestination(candidate.destination || "");
+    setVisaType(candidate.visaType || "");
+  }, [candidate]);
+
+  const messagesQuery = trpc.adminCandidateManagement.getMessages.useQuery(
+    { candidateId: candidateReference },
+    { enabled: isOpen && Boolean(candidate), retry: false },
+  );
+  const replyMutation = trpc.adminCandidateManagement.replyToCandidate.useMutation({
+    onSuccess: async () => {
+      setMessageText("");
+      await utils.adminCandidateManagement.getMessages.invalidate({ candidateId: candidateReference });
+      toast.success("Réponse envoyée au candidat.");
+    },
+    onError: (error) => toast.error(error.message || "Impossible d’envoyer la réponse."),
+  });
   const updateCandidateMutation = trpc.adminCandidateManagement.updateCandidate.useMutation({
     onSuccess: () => {
       utils.adminCandidateManagement.list.invalidate();
@@ -189,6 +221,11 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
       candidateId: String(candidate.id),
       status: persistedStatus,
       adminNotes,
+      fullName: fullName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      destination: destination.trim(),
+      visaType: visaType.trim(),
     });
   };
 
@@ -203,8 +240,9 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
         </DialogHeader>
 
         <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="info">Informations</TabsTrigger>
+            <TabsTrigger value="messages">Messagerie</TabsTrigger>
             <TabsTrigger value="ai-summary">Résumé IA</TabsTrigger>
             <TabsTrigger value="interview">Questions d'Entretien</TabsTrigger>
           </TabsList>
@@ -215,30 +253,22 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
               <h3 className="font-semibold text-gray-900 mb-4">
                 Informations personnelles
               </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-xs text-gray-600">Nom complet</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.fullName}
-                </p>
+                <Label htmlFor="admin-full-name" className="text-xs text-gray-600">Nom complet</Label>
+                <Input id="admin-full-name" value={fullName} onChange={(event) => setFullName(event.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs text-gray-600">Email</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.email}
-                </p>
+                <Label htmlFor="admin-email" className="text-xs text-gray-600">Email</Label>
+                <Input id="admin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs text-gray-600">Téléphone</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.phone}
-                </p>
+                <Label htmlFor="admin-phone" className="text-xs text-gray-600">Téléphone</Label>
+                <Input id="admin-phone" type="tel" value={phone} onChange={(event) => setPhone(event.target.value)} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs text-gray-600">Numéro de dossier</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.applicationNumber}
-                </p>
+                <Input value={candidate.applicationNumber} readOnly className="mt-1 bg-gray-50" />
               </div>
             </div>
           </div>
@@ -248,18 +278,14 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
             <h3 className="font-semibold text-gray-900 mb-4">
               Informations de candidature
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label className="text-xs text-gray-600">Destination</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.destination}
-                </p>
+                <Label htmlFor="admin-destination" className="text-xs text-gray-600">Destination</Label>
+                <Input id="admin-destination" value={destination} onChange={(event) => setDestination(event.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs text-gray-600">Type de visa</Label>
-                <p className="text-sm font-semibold text-gray-900 mt-1">
-                  {candidate.visaType}
-                </p>
+                <Label htmlFor="admin-visa-type" className="text-xs text-gray-600">Type de visa</Label>
+                <Input id="admin-visa-type" value={visaType} onChange={(event) => setVisaType(event.target.value)} className="mt-1" />
               </div>
               <div>
                 <Label className="text-xs text-gray-600">Date de création</Label>
@@ -356,6 +382,26 @@ const CandidateDetailModal: React.FC<CandidateDetailModalProps> = ({
                   {updateCandidateMutation.isPending ? "Enregistrement..." : "Sauvegarder les modifications"}
                 </Button>
               </div>
+            </TabsContent>
+
+            <TabsContent value="messages" className="space-y-4">
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                <h3 className="flex items-center gap-2 font-semibold text-blue-950"><MessageSquare className="h-4 w-4" /> Conversation avec le candidat</h3>
+                <p className="mt-1 text-xs text-blue-800">Les réponses envoyées ici apparaissent automatiquement dans son Espace client.</p>
+              </div>
+              <div className="max-h-80 space-y-3 overflow-y-auto rounded-xl border bg-white p-4" aria-live="polite">
+                {messagesQuery.isLoading ? <p className="text-sm text-gray-500">Chargement des messages…</p> : messagesQuery.isError ? <p className="text-sm text-red-600">Impossible de charger les messages de ce dossier.</p> : messagesQuery.data?.length ? messagesQuery.data.map((message) => (
+                  <div key={message.id} className={`rounded-xl p-3 text-sm ${message.senderRole === "advisor" ? "ml-8 bg-blue-50 text-blue-950" : "mr-8 bg-gray-50 text-gray-800"}`}>
+                    <div className="mb-1 flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-wide text-gray-500"><span>{message.senderRole === "advisor" ? "Équipe 3M Travel" : "Candidat"}</span><span>{new Date(message.createdAt).toLocaleString("fr-FR")}</span></div>
+                    <p className="whitespace-pre-wrap">{message.content}</p>
+                  </div>
+                )) : <p className="text-sm text-gray-500">Aucun message pour ce dossier.</p>}
+              </div>
+              <form onSubmit={(event) => { event.preventDefault(); const text = messageText.trim(); if (text) replyMutation.mutate({ candidateId: candidateReference, content: text }); }} className="space-y-3">
+                <Label htmlFor="admin-candidate-message">Répondre au candidat</Label>
+                <Textarea id="admin-candidate-message" value={messageText} onChange={(event) => setMessageText(event.target.value.slice(0, 2000))} rows={4} placeholder="Écrire une réponse claire au candidat…" disabled={replyMutation.isPending} />
+                <Button type="submit" disabled={!messageText.trim() || replyMutation.isPending} className="bg-blue-600 hover:bg-blue-700"><Send className="mr-2 h-4 w-4" />{replyMutation.isPending ? "Envoi…" : "Envoyer la réponse"}</Button>
+              </form>
             </TabsContent>
 
             <TabsContent value="ai-summary" className="space-y-4">

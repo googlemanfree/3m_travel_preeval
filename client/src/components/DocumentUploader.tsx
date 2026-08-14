@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
 import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
+import { trpc } from "@/lib/trpc";
 
 interface DocumentFile {
   id: string;
@@ -39,6 +40,7 @@ export function DocumentUploader({
   const [editingFileId, setEditingFileId] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -154,6 +156,24 @@ export function DocumentUploader({
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 65 } : f));
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Erreur lors du dépôt du document.");
+
+      const serverFileType: Record<string, string> = {
+        passport: "passeport",
+        education_documents: "diplome",
+        proof_of_residence: "justificatif_domicile",
+        birth_certificate: "extrait_naissance",
+        police_certificate: "casier_judiciaire",
+        professional_documents: "cv",
+        other: "autre",
+      };
+      await saveDocumentMutation.mutateAsync({
+        fileType: (serverFileType[file.category || "other"] || "autre") as any,
+        fileName: payload.fileName || file.name,
+        fileUrl: payload.fileUrl,
+        fileKey: payload.fileKey,
+        fileSizeBytes: payload.fileSizeBytes ?? file.size,
+        mimeType: payload.mimeType || fileObj.type,
+      });
 
       setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "success" as const, progress: 100 } : f));
       onUploadSuccess?.();

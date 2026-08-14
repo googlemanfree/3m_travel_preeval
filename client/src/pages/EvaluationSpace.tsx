@@ -23,16 +23,20 @@ import { DocumentUploader } from "@/components/DocumentUploader";
 import { DocumentProgressBar } from "@/components/DocumentProgressBar";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
+import ClientMessagesPanel from "@/components/ClientMessagesPanel";
+import ClientProfilePanel from "@/components/ClientProfilePanel";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 
 export default function EvaluationSpace() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+  const section = new URLSearchParams(location.split("?")[1] || "").get("section") || "overview";
   const { candidate, isAuthenticated } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
   const [dossierNumber, setDossierNumber] = useState<string | null>(null);
+  const [requestedDossier, setRequestedDossier] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState<string>('');
   const [userDossierLoading, setUserDossierLoading] = useState(true);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
@@ -68,7 +72,8 @@ export default function EvaluationSpace() {
     const dossier = params.get("dossier");
     
     if (dossier) {
-      setDossierNumber(dossier);
+      setRequestedDossier(dossier.trim());
+      setDossierNumber(null);
       setUserDossierLoading(false);
     } else if (isAuthenticated) {
       // Charger le dossier du candidat connecté (résolu depuis son JWT,
@@ -77,11 +82,29 @@ export default function EvaluationSpace() {
     } else {
       setUserDossierLoading(false);
     }
-  }, [isAuthenticated, candidate]);
+  }, [isAuthenticated, candidate, location]);
+
+  // Vérifier un numéro saisi pour un dossier historique avant toute lecture du bilan.
+  const dossierAccessQuery = trpc.candidate.getDossierByNumber.useQuery(
+    { dossierNumber: requestedDossier || "" },
+    { enabled: isAuthenticated && Boolean(requestedDossier), retry: false },
+  );
+
+  useEffect(() => {
+    if (!requestedDossier) return;
+    if (dossierAccessQuery.data?.success) {
+      setDossierNumber(requestedDossier);
+      setUserDossierLoading(false);
+    } else if (dossierAccessQuery.isError || (dossierAccessQuery.data && !dossierAccessQuery.data.success)) {
+      setDossierNumber(null);
+      setUserDossierLoading(false);
+    }
+  }, [dossierAccessQuery.data, dossierAccessQuery.isError, requestedDossier]);
 
   // Récupérer le dossier réel du candidat connecté (authentifié via son JWT)
   const { data: myDossierData } = trpc.candidate.getMyDossierData.useQuery(undefined, {
-    enabled: isAuthenticated && !dossierNumber,
+    enabled: isAuthenticated && !dossierNumber && !requestedDossier,
+    refetchInterval: 15_000,
   });
   const { data: myAgencyDocuments } = trpc.candidate.getMyAgencyDocuments.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -123,6 +146,17 @@ export default function EvaluationSpace() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Chargement de votre espace...</h2>
             <p className="text-gray-600">Veuillez patienter</p>
           </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (section === "messages" || section === "profile") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="mx-auto max-w-5xl py-8">
+          <ClientSpaceNavigation />
+          {section === "messages" ? <ClientMessagesPanel /> : <ClientProfilePanel />}
         </div>
       </div>
     );
