@@ -2344,3 +2344,8 @@
 - [x] Créer le moteur d’analyse de qualité des dossiers (détection pièces manquantes, documents expirés, écarts nom/numéro de passeport entre OCR et profil)
 - [x] Afficher les alertes de qualité et le score de complétude dans l’espace candidat et le back-office administrateur
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Infobulle explicative du score de complétude (v144)
+- [x] Créer le composant d’infobulle détaillée listant les pièces manquantes, expirées ou rejetées pour atteindre 100%
+- [x] Intégrer l’infobulle à côté de la barre de progression dans `/mon-espace` et le back-office
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
