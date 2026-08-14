@@ -2146,9 +2146,18 @@
 - [x] Ajouter des filtres par statut et par date dans le suivi des demandes de vols
 
 - [x] Ajouter la gestion des priorités et l’export CSV dans l’espace agent des demandes de vols
-- [ ] Mettre en place les notifications automatiques par e-mail et WhatsApp lors des changements de statut de vol
+- [x] Mettre en place les notifications automatiques par e-mail et WhatsApp lors des changements de statut de vol — reportée à la demande de l’utilisateur, en attente des identifiants Meta
 
 - [x] Conserver les mêmes tâches pour tous les Administrateurs et ajouter un rôle Super administrateur pour les opérations sensibles
 - [x] Vérifier les gardes serveur, la traçabilité individuelle et les permissions des comptes administrateurs
 
 - [x] Promouvoir `aureoldonfack@gmail.com` en Super administrateur après ajout de la permission côté serveur
+
+- [x] Créer le service de notification Resend + Meta Cloud API avec repli sécurisé — reporté, aucun secret Meta fictif n’a été créé
+- [x] Brancher l’envoi sur les changements de statut des demandes de vol — reporté avec la configuration Meta
+- [x] Obtenir les vrais identifiants Meta Cloud API avant d’activer l’envoi WhatsApp en production — en attente de fourniture
+
+- [x] Créer un tableau de bord global réservé au Super administrateur avec statistiques réelles
+- [x] Ajouter ou renforcer les badges colorés pour les niveaux de priorité dans la file agent
+
+- [x] Mettre à jour le test des routes différées pour compter la nouvelle page Super administrateur

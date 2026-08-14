@@ -1201,9 +1201,14 @@ export default function AdminDashboard() {
                 Définissez le pourcentage de commission appliqué automatiquement sur les prix des billets d'avion affichés aux clients.
               </p>
               <FlightCommissionSettings />
-              <a href="/admin/flight-requests" className="mt-5 flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                Ouvrir la file des demandes de vols
-              </a>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <a href="/admin/flight-requests" className="flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  Ouvrir la file des demandes de vols
+                </a>
+                {typeof window !== "undefined" && localStorage.getItem("adminType") === "super_admin" ? <a href="/admin/super-dashboard" className="flex h-12 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                  Dashboard Super administrateur
+                </a> : null}
+              </div>
             </Card>
           </TabsContent>
 

@@ -26,6 +26,7 @@ const PaymentFailed = lazyWithTimeout(() => import("./pages/PaymentFailed"));
 const VerifyApplicationEmail = lazyWithTimeout(() => import("./pages/VerifyApplicationEmail"));
 const AdminConsultationRequests = lazyWithTimeout(() => import("./pages/AdminConsultationRequests"));
 const AdminsList = lazyWithTimeout(() => import("./pages/AdminsList"));
+const SuperAdminDashboard = lazyWithTimeout(() => import("./pages/SuperAdminDashboard"));
 const CandidatesManager = lazyWithTimeout(() => import("./pages/CandidatesManager"));
 const AdminAccompagnement = lazyWithTimeout(() => import("./pages/AdminAccompagnement"));
 const ResetPasswordSimple = lazyWithTimeout(() => import("./pages/ResetPasswordSimple"));
@@ -299,6 +300,11 @@ function Router() {
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/super-dashboard"}>
+        <AdminGuard message="Accès réservé au Super administrateur de 3M Travel Agency.">
+          <SuperAdminDashboard />
         </AdminGuard>
       </Route>
       <Route path={"/admin/flight-requests"}>

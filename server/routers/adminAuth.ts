@@ -10,8 +10,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getDb } from "../db";
-import { adminAccounts } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { adminAccounts, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
+import { count, eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
@@ -235,6 +235,37 @@ export const adminAuthRouter = router({
         console.error("[Admin Auth] Logout error:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la déconnexion" });
       }
+    }),
+
+  /** Statistiques globales visibles uniquement par le Super administrateur. */
+  getGlobalStats: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      await requireSuperAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [adminRoleRows, evaluationTotals, flightTotals, insuranceTotals, flightStatusRows] = await Promise.all([
+        db.select({ role: adminAccounts.role, status: adminAccounts.status, total: count() }).from(adminAccounts).groupBy(adminAccounts.role, adminAccounts.status),
+        db.select({ total: count() }).from(evaluations),
+        db.select({ total: count() }).from(flightBookingRequests),
+        db.select({ total: count() }).from(insuranceRequests),
+        db.select({ status: flightBookingRequests.status, total: count() }).from(flightBookingRequests).groupBy(flightBookingRequests.status),
+      ]);
+
+      return {
+        admins: {
+          total: adminRoleRows.reduce((sum, row) => sum + Number(row.total), 0),
+          active: adminRoleRows.filter((row) => row.status === "active").reduce((sum, row) => sum + Number(row.total), 0),
+          superAdmins: adminRoleRows.filter((row) => row.role === "super_admin").reduce((sum, row) => sum + Number(row.total), 0),
+        },
+        evaluations: Number(evaluationTotals[0]?.total ?? 0),
+        flightRequests: {
+          total: Number(flightTotals[0]?.total ?? 0),
+          byStatus: flightStatusRows.reduce<Record<string, number>>((acc, row) => { acc[row.status] = Number(row.total); return acc; }, {}),
+        },
+        insuranceRequests: Number(insuranceTotals[0]?.total ?? 0),
+      };
     }),
 
   /**
