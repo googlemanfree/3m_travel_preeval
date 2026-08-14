@@ -2429,3 +2429,7 @@
 - [x] Enregistrer les documents débloqués dans l’Espace Client de l’utilisateur après connexion
 - [x] Permettre l’envoi optionnel ou automatique du guide téléchargé à l’e-mail vérifié du candidat
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Animation de validation visuelle sur le bouton de copie du lien (v162)
+- [x] Créer l’état animé avec coche verte et message de succès temporaire sur le bouton de copie du lien
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
