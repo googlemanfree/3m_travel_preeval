@@ -2313,3 +2313,8 @@
 - [x] Créer le composant de formulaire unifié avec bouton de téléversement dédié par pièce et aperçu miniature (PDF/Image)
 - [x] Synchroniser les dépôts pour qu’ils soient immédiatement visibles et gérables tant côté candidat que côté administrateur
 - [x] Valider la compilation, exécuter les tests et publier la mise à jour
+
+## Audit et fiabilisation de la synchronisation documentaire bidirectionnelle (v138)
+- [x] Ajouter la traçabilité de l’origine (« En ligne », « Scan en agence », « Original remis en agence ») pour chaque document
+- [x] Écrire un test Vitest de contrat bidirectionnel vérifiant que les dépôts client et agence sont visibles des deux côtés
+- [x] Valider la compilation, exécuter la suite de tests et publier la mise à jour
