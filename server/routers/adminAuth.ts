@@ -27,7 +27,9 @@ function generateSessionToken(): string {
  * Valide un sessionToken admin et retourne le compte admin correspondant.
  * Lève une TRPCError UNAUTHORIZED si la session est invalide/expirée.
  */
-export async function requireValidAdminSession(sessionToken: string) {
+type AdminSessionOptions = { allowPasswordChange?: boolean };
+
+export async function requireValidAdminSession(sessionToken: string, options: AdminSessionOptions = {}) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
@@ -46,6 +48,10 @@ export async function requireValidAdminSession(sessionToken: string) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée" });
   }
 
+  if (admin.requiresPasswordChange && !options.allowPasswordChange) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "PASSWORD_CHANGE_REQUIRED" });
+  }
+
   return admin;
 }
 
@@ -59,14 +65,14 @@ export async function requireSuperAdminSession(sessionToken: string) {
 }
 
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
-export async function requireAdminSessionFromCookie(cookieHeader: string | undefined) {
+export async function requireAdminSessionFromCookie(cookieHeader: string | undefined, options: AdminSessionOptions = {}) {
   const sessionCookie = (cookieHeader ?? "")
     .split(";")
     .map(part => part.trim())
     .find(part => part.startsWith(`${ADMIN_SESSION_COOKIE}=`))
     ?.slice(`${ADMIN_SESSION_COOKIE}=`.length);
   if (!sessionCookie) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
-  return requireValidAdminSession(decodeURIComponent(sessionCookie));
+  return requireValidAdminSession(decodeURIComponent(sessionCookie), options);
 }
 
 export const adminAuthRouter = router({
@@ -142,9 +148,10 @@ export const adminAuthRouter = router({
   /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */
   me: publicProcedure.query(async ({ ctx }) => {
     try {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
       return {
         authenticated: true,
+        requiresPasswordChange: admin.requiresPasswordChange,
         admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType, role: admin.role },
       } as const;
     } catch {
@@ -162,7 +169,7 @@ export const adminAuthRouter = router({
       newPassword: z.string().min(8),
     }))
     .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 

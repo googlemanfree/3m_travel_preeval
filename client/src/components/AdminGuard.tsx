@@ -12,16 +12,25 @@ interface AdminGuardProps {
 }
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const adminSession = trpc.adminAuth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: true });
   const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
+  const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
 
-  if (isAuthorized === null) {
+  useEffect(() => {
+    if (requiresPasswordChange && location !== "/admin/change-password") {
+      navigate("/admin/change-password");
+    }
+  }, [location, navigate, requiresPasswordChange]);
+
+  if (isAuthorized === null || requiresPasswordChange) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Vérification de l'accès...</p>
+          <p className="mt-4 text-gray-600">
+            {requiresPasswordChange ? "Redirection vers la création de votre nouveau mot de passe..." : "Vérification de l'accès..."}
+          </p>
         </div>
       </div>
     );

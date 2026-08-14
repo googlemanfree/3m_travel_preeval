@@ -16,6 +16,11 @@ export default function AdminLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string>('');
 
+  const temporaryPasswordMutation = trpc.adminPasswordReset.requestTemporaryPassword.useMutation({
+    onSuccess: (data) => toast.success(data.message),
+    onError: (error) => setLocalError(error.message || "Impossible d’envoyer le mot de passe temporaire."),
+  });
+
   const loginMutation = trpc.adminAuth.login.useMutation({
     onSuccess: (data) => {
       // Le cookie HttpOnly est créé par le serveur. Ce stockage par onglet ne
@@ -37,6 +42,15 @@ export default function AdminLogin() {
       setLocalError(err.message || 'Email ou mot de passe incorrect.');
     },
   });
+
+  const handleRequestTemporaryPassword = () => {
+    setLocalError("");
+    if (!email.trim()) {
+      setLocalError("Saisissez votre adresse e-mail administrateur avant de demander un temporaire.");
+      return;
+    }
+    temporaryPasswordMutation.mutate({ email: email.trim() });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +152,17 @@ export default function AdminLogin() {
             </form>
           </CardContent>
         </Card>
+
+        <div className="text-center mt-5">
+          <button
+            type="button"
+            onClick={handleRequestTemporaryPassword}
+            disabled={temporaryPasswordMutation.isPending || loginMutation.isPending}
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-60"
+          >
+            {temporaryPasswordMutation.isPending ? "Envoi du temporaire..." : "Recevoir un mot de passe temporaire par e-mail"}
+          </button>
+        </div>
 
         <p className="text-center text-sm text-gray-500 mt-6">
           <a href="/" className="text-blue-600 hover:underline">← Retour à l'accueil</a>

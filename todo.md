@@ -2508,3 +2508,17 @@
 - [x] Afficher un bouton clair de réinitialisation par e-mail dans le panneau actif
 - [x] Relier le bouton à la mutation protégée et afficher les états confirmation, chargement et erreur
 - [x] Tester l’accès admin, le déclenchement et publier la correction
+
+## Exécution du reset administrateur confirmé (v174)
+- [ ] Déclencher le reset global depuis une session administrateur autorisée
+- [ ] Envoyer un temporaire distinct à chaque adresse admin sans afficher les secrets
+- [ ] Vérifier l’invalidation des sessions et l’obligation de choisir un nouveau mot de passe
+- [ ] Confirmer l’état serveur et clôturer la tâche après retour de livraison e-mail
+
+## Flux admin mot de passe temporaire obligatoire (v175)
+- [x] Vérifier le contrat de connexion et la page de changement obligatoire
+- [x] Faire rediriger tout compte avec requiresPasswordChange vers la création d’un nouveau mot de passe
+- [x] Enregistrer le nouveau hash côté serveur et invalider le temporaire après succès
+- [x] Bloquer l’accès au back-office tant que le changement n’est pas terminé
+- [x] Ajouter les tests de régression et publier le parcours complet
+- [x] Permettre depuis la connexion admin de demander un nouveau temporaire envoyé par e-mail sans exposer l’existence du compte

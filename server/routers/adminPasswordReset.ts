@@ -12,7 +12,7 @@ import { adminAccounts } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordResetEmailTemplate, getPasswordResetSuccessEmailTemplate } from "../_core/emailTemplates";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 
 // Générer un token de réinitialisation sécurisé
 function generateResetToken(): string {
@@ -23,7 +23,77 @@ function hashResetToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+function generateTemporaryPassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghjkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%*?";
+  const all = upper + lower + digits;
+  const chars = [
+    upper[randomInt(upper.length)],
+    lower[randomInt(lower.length)],
+    digits[randomInt(digits.length)],
+    symbols[randomInt(symbols.length)],
+  ];
+  for (let index = 0; index < 8; index += 1) chars.push(all[randomInt(all.length)]);
+  for (let index = chars.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(index + 1);
+    [chars[index], chars[swapIndex]] = [chars[swapIndex], chars[index]];
+  }
+  return chars.join("");
+}
+
 export const adminPasswordResetRouter = router({
+  /**
+   * Générer un mot de passe temporaire et l’envoyer par e-mail.
+   * La réponse reste volontairement générique pour ne pas révéler les comptes.
+   */
+  requestTemporaryPassword: publicProcedure
+    .input(z.object({ email: z.string().email("Email invalide") }))
+    .mutation(async ({ input }) => {
+      const genericMessage = "Si cette adresse correspond à un compte administrateur actif, un mot de passe temporaire sera envoyé par e-mail.";
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const rows = await db.select().from(adminAccounts).where(eq(adminAccounts.email, input.email)).limit(1);
+      const admin = rows[0];
+      if (!admin || admin.status !== "active") return { success: true, message: genericMessage };
+
+      const temporaryPassword = generateTemporaryPassword();
+      const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+      const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+
+      try {
+        await sendEmail({
+          to: admin.email,
+          subject: "Votre mot de passe temporaire — 3M Travel",
+          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
+            <h2 style="color:#1e40af">Mot de passe temporaire administrateur</h2>
+            <p>Bonjour ${admin.fullName || admin.email},</p>
+            <p>Voici votre mot de passe temporaire pour accéder à l’espace administrateur :</p>
+            <p><strong>Adresse :</strong> ${admin.email}</p>
+            <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
+            <p>Après connexion, vous devrez obligatoirement créer un nouveau mot de passe personnel.</p>
+            <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>
+          </div>`,
+        });
+
+        await db.update(adminAccounts).set({
+          passwordHash,
+          requiresPasswordChange: true,
+          passwordChangedAt: null,
+          resetToken: null,
+          resetTokenExpiresAt: null,
+          sessionToken: null,
+          sessionExpiresAt: null,
+        }).where(eq(adminAccounts.id, admin.id));
+      } catch (emailError) {
+        console.error(`[Admin Password Reset] Temporary password email failed for admin ${admin.id}:`, emailError);
+      }
+
+      return { success: true, message: genericMessage };
+    }),
+
   /**
    * Demander une réinitialisation de mot de passe
    * Envoie un email avec un lien de réinitialisation
