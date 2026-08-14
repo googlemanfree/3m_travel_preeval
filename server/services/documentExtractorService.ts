@@ -8,6 +8,8 @@ export interface ExtractedDocumentInfo {
     value: string;
   }[];
   authenticityConfidence: number; // 0 - 100
+  expirationDate?: string; // Format YYYY-MM-DD
+  isExpired?: boolean;
   recommendations: string[];
 }
 
@@ -75,11 +77,23 @@ export async function extractDocumentInformation(
     summary = "Pièce justificative enregistrée et analysée avec succès dans le dossier du candidat.";
   }
 
+  let expirationDate: string | undefined = undefined;
+  let isExpired = false;
+
+  if (detectedType.includes("Passeport")) {
+    // Simuler une date d'expiration valide à 3 ans dans le futur
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 3);
+    expirationDate = futureDate.toISOString().split("T")[0];
+  }
+
   return {
     documentTypeDetected: detectedType,
     summary,
     keyFields,
     authenticityConfidence: confidence,
+    expirationDate,
+    isExpired,
     recommendations: [
       "Document conforme aux standards de l'agence 3M Travel.",
       "Aucune anomalie détectée lors du contrôle automatique."

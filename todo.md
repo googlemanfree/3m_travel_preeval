@@ -2213,3 +2213,9 @@
 - [x] Exposer une procédure tRPC d’extraction et de consultation des données structurées extraites
 - [x] Afficher les informations clés extraites dans le centre documentaire de l’espace candidat et du back-office administrateur
 - [x] Écrire les tests unitaires et de contrat associés, valider le build et publier la version
+
+## Filtrage et tri des documents par métadonnées extraites (v121)
+- [x] Ajouter les options de filtrage par type détecté et statut d’expiration dans le centre documentaire
+- [x] Permettre le tri dynamique des pièces (par date de dépôt, par score d’authenticité, par ordre alphabétique)
+- [x] Mettre à jour l’interface dans l’espace candidat et dans le back-office administrateur
+- [x] Valider l’ergonomie responsive et le bon fonctionnement des filtres
