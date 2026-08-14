@@ -2418,3 +2418,8 @@
 - [x] Créer le module utilitaire de génération de PDF avec filigrane « 3M Travel Agency » et en-tête d’agence sécurisé
 - [x] Appliquer le modèle unifié aux exports existants (rapports d’évaluation, rapports budgétaires, reçus A5)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Chiffrement et protection anti-revente des PDF et ressources (v160)
+- [x] Créer le service de protection cryptographique des documents (chiffrement PDF, restrictions d’impression/copie et identification nominative)
+- [x] Appliquer le chiffrement aux guides PDF et rapports exportés pour empêcher la revente et l’utilisation non autorisée
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
