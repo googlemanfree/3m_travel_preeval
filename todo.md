@@ -2219,3 +2219,9 @@
 - [x] Permettre le tri dynamique des pièces (par date de dépôt, par score d’authenticité, par ordre alphabétique)
 - [x] Mettre à jour l’interface dans l’espace candidat et dans le back-office administrateur
 - [x] Valider l’ergonomie responsive et le bon fonctionnement des filtres
+
+## Prévisualisation rapide des documents (v122)
+- [x] Créer le composant modal de prévisualisation (pour PDF, images et textes)
+- [x] Intégrer le bouton d’aperçu rapide dans le centre documentaire de l’espace candidat (`AgencyDocumentsPanel.tsx`)
+- [x] Intégrer le bouton d’aperçu rapide dans le gestionnaire documentaire administrateur (`AdminDocumentsManagement.tsx`)
+- [x] Valider la sécurité des liens signés et le rendu responsive

@@ -1,6 +1,8 @@
-import { Download, FileCheck2, FileText, MessageSquare, ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DocumentReceiptButton from "@/components/DocumentReceiptButton";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
+import { ShieldCheck, FileText, FileCheck2, Download, Eye, MessageSquare } from "lucide-react";
 
 export type AgencyDocumentView = {
   id: number;
@@ -19,7 +21,6 @@ export type AgencyDocumentView = {
     status: "open" | "resolved";
     createdAt: Date | string;
   }>;
-
 };
 
 function statusLabel(status: AgencyDocumentView["verificationStatus"]): string {
@@ -45,8 +46,16 @@ export default function AgencyDocumentsPanel({
   candidateEmail?: string;
   dossierNumber?: string | null;
 }) {
+  const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
+
   return (
     <Card className="mb-8 border-blue-100 bg-white shadow-sm">
+      <DocumentPreviewModal
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+        documentTitle={previewDoc?.title || ""}
+        documentUrl={previewDoc?.url || ""}
+      />
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-2 text-lg text-gray-900">
@@ -94,11 +103,19 @@ export default function AgencyDocumentsPanel({
                     {document.verificationStatus === "verified" && <FileCheck2 className="mr-1 inline h-3 w-3" />}
                     {statusLabel(document.verificationStatus)}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDoc({ title: document.documentName, url: document.documentUrl })}
+                    className="inline-flex h-10 items-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  >
+                    <Eye className="h-4 w-4" />
+                    Aperçu
+                  </button>
                   <a
                     href={document.documentUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex h-10 items-center gap-1 rounded-xl border border-blue-200 px-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="inline-flex h-10 items-center gap-1 rounded-xl border border-gray-200 px-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     aria-label={`Télécharger ${document.documentName}`}
                   >
                     <Download className="h-4 w-4" />

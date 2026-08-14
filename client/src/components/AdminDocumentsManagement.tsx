@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles } from "lucide-react";
+import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -418,6 +419,12 @@ export function AdminDocumentsManagement() {
 
         {/* Tableau des documents */}
         <Card>
+          <DocumentPreviewModal
+            isOpen={Boolean(previewingDoc)}
+            onClose={() => setPreviewingDoc(null)}
+            documentTitle={previewingDoc?.documentName || ""}
+            documentUrl={previewingDoc?.documentUrl || ""}
+          />
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -561,10 +568,11 @@ export function AdminDocumentsManagement() {
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <Button
-                              onClick={() => handleViewDocument(doc)}
+                              onClick={() => setPreviewingDoc(doc)}
                               variant="ghost"
                               size="sm"
-                              title="Voir le document"
+                              title="Aperçu rapide"
+                              className="text-blue-600 hover:text-blue-700 bg-blue-50"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
