@@ -12,8 +12,11 @@ const LOGO_URL = "/manus-storage/pasted_file_nP22ud_logo3Mfull_b9e4b2c3.jpeg";
 export default function VerifyEmailLink() {
   const [location, navigate] = useLocation();
   const { login } = useCandidateAuth();
-  const params = new URLSearchParams(location.split("?")[1] ?? "");
-  const token = params.get("token") ?? "";
+  // wouter v3 expose le pathname via useLocation ; la query string doit être
+  // lue depuis window.location.search pour conserver le token d’activation.
+  const queryString = typeof window !== "undefined" ? window.location.search : location.split("?")[1] ?? "";
+  const params = new URLSearchParams(queryString);
+  const token = params.get("token")?.trim() ?? "";
   const redirect = params.get("redirect") ?? "/dashboard";
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");

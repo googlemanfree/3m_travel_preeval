@@ -2603,3 +2603,10 @@
 - [x] Afficher une colonne avec badges Activé, En attente, Lien expiré ou Échec d’envoi
 - [x] Ajouter un filtre par statut sans exposer de token d’activation
 - [x] Ajouter les tests, vérifier le responsive et publier
+
+## Correctif lien de confirmation candidat (v186)
+- [x] Auditer la génération, le domaine, la route et l’expiration du lien de confirmation
+- [x] Vérifier que le lien utilise hello@3mtravelagency.com et l’URL publique correcte
+- [x] Corriger la lecture de la query string navigateur, le renvoi, le hachage et l’invalidation des anciens tokens
+- [x] Tester activation, expiration, réutilisation, redirection et affichage d’un lien invalide
+- [x] Publier le correctif et documenter la procédure en cas de lien invalide
