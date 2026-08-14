@@ -2339,3 +2339,8 @@
 - [x] Créer la procédure tRPC d’agrégation des volumes de dossiers par destination et par statut pour la direction
 - [x] Intégrer l’interface graphique analytique dans le panel Super Administrateur / Direction
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Système de qualité des dossiers et détection d’incohérences OCR (v143)
+- [x] Créer le moteur d’analyse de qualité des dossiers (détection pièces manquantes, documents expirés, écarts nom/numéro de passeport entre OCR et profil)
+- [x] Afficher les alertes de qualité et le score de complétude dans l’espace candidat et le back-office administrateur
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
