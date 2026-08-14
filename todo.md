@@ -2394,3 +2394,8 @@
 - [x] Créer le moteur de génération dynamique des pièces requises selon le profil (statut marital, enfants, offre d'emploi)
 - [x] Intégrer la liste dynamique dans le récapitulatif de rendez-vous de la page d'évaluation Canada (`/evaluation-canada`)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Infobulles pratiques sur les documents complexes (v155)
+- [x] Créer le catalogue d’aide contextuelle pour chaque pièce complexe (où l'obtenir, pièces à préparer, précautions)
+- [x] Intégrer les infobulles cliquables dans la checklist dynamique de la page d’évaluation Canada (`/evaluation-canada`)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
