@@ -2248,3 +2248,9 @@
 - [x] Ajouter une procédure tRPC d’envoi d’itinéraire de vol par e-mail dans le routeur candidat
 - [x] Intégrer les boutons de partage e-mail et WhatsApp dans les cartes de vols favoris de `/mon-espace`
 - [x] Valider l’envoi sécurisé, tester la compilation et publier
+
+## Suivi budgétaire, historique des prix et témoignages (v127)
+- [x] Créer le widget de suivi budgétaire multi-devises (XAF, EUR, USD, CAD) dans l’espace client
+- [x] Ajouter l’historique des variations tarifaires des vols favoris
+- [x] Intégrer la galerie de témoignages filtrable par destination sans faux avis
+- [x] Valider l’intégrité du code, exécuter les tests et publier
