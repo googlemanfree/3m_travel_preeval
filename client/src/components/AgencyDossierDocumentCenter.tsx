@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { CheckCircle2, Download, FileText, Loader2, ScanLine, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, Check, Download, FileText, Loader2, MessageSquare, ScanLine, Send, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,9 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
   const fileRef = useRef<HTMLInputElement>(null);
   const [documentType, setDocumentType] = useState("passport");
   const [isUploading, setIsUploading] = useState(false);
+  const [activeAnnotationDocumentId, setActiveAnnotationDocumentId] = useState<number | null>(null);
+  const [annotationMessage, setAnnotationMessage] = useState("");
+  const [annotationArea, setAnnotationArea] = useState("");
   const utils = trpc.useUtils();
   const documentsQuery = trpc.agencyDossierDocuments.listForAdmin.useQuery({ dossierId });
   const statusMutation = trpc.agencyDossierDocuments.updateVerificationStatus.useMutation({
@@ -37,6 +40,16 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
       toast.success("Statut du document mis à jour.");
     },
     onError: (error) => toast.error(error.message || "Impossible de mettre à jour le document."),
+  });
+  const annotationMutation = trpc.agencyDossierDocuments.addCorrectionAnnotation.useMutation({
+    onSuccess: async () => {
+      await utils.agencyDossierDocuments.listForAdmin.invalidate({ dossierId });
+      setActiveAnnotationDocumentId(null);
+      setAnnotationMessage("");
+      setAnnotationArea("");
+      toast.success("Correction ajoutée au document refusé.");
+    },
+    onError: (error) => toast.error(error.message || "Impossible d’ajouter la correction."),
   });
 
   const handleUpload = async () => {
@@ -141,6 +154,33 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
                     <XCircle className="mr-1 h-4 w-4" /> Rejeter
                   </Button>
                 </div>
+                {document.verificationStatus === "rejected" && (
+                  <div className="w-full rounded-xl border border-red-900/60 bg-red-950/20 p-3">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <p className="flex items-center gap-2 text-xs font-semibold text-red-200"><MessageSquare className="h-4 w-4" /> Corrections demandées</p>
+                      {activeAnnotationDocumentId !== document.id && (
+                        <Button type="button" variant="outline" onClick={() => setActiveAnnotationDocumentId(document.id)} className="h-9 rounded-xl border-red-700 text-red-200 hover:bg-red-950">
+                          <Send className="mr-1 h-3.5 w-3.5" /> Ajouter une annotation
+                        </Button>
+                      )}
+                    </div>
+                    {document.annotations?.filter((annotation) => annotation.status === "open").map((annotation) => (
+                      <div key={annotation.id} className="mb-2 rounded-lg border border-red-900/60 bg-slate-950/50 p-2 text-xs text-red-100">
+                        <span className="font-semibold">{annotation.areaLabel ? `${annotation.areaLabel} : ` : ""}</span>{annotation.message}
+                      </div>
+                    ))}
+                    {activeAnnotationDocumentId === document.id && (
+                      <div className="grid gap-2 md:grid-cols-[180px_minmax(0,1fr)_auto]">
+                        <input value={annotationArea} onChange={(event) => setAnnotationArea(event.target.value)} placeholder="Zone : photo, MRZ..." className="h-10 rounded-xl border border-red-800 bg-slate-950 px-3 text-xs text-white placeholder:text-slate-500" aria-label="Zone concernée par la correction" />
+                        <textarea value={annotationMessage} onChange={(event) => setAnnotationMessage(event.target.value)} placeholder="Décrivez précisément la correction à effectuer..." className="min-h-10 rounded-xl border border-red-800 bg-slate-950 px-3 py-2 text-xs text-white placeholder:text-slate-500" aria-label="Description de la correction" />
+                        <div className="flex gap-2">
+                          <Button type="button" onClick={() => annotationMutation.mutate({ documentId: document.id, message: annotationMessage, areaLabel: annotationArea || undefined })} disabled={annotationMutation.isPending || annotationMessage.trim().length < 3} className="h-10 rounded-xl bg-red-700 text-white hover:bg-red-800"><Check className="mr-1 h-3.5 w-3.5" /> Enregistrer</Button>
+                          <Button type="button" variant="ghost" onClick={() => setActiveAnnotationDocumentId(null)} className="h-10 rounded-xl text-slate-300">Annuler</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

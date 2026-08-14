@@ -62,4 +62,17 @@ describe("Centre documentaire par dossier", () => {
     expect(agencyUpload).toContain("notifyDocumentSubmission");
     expect(agencyUpload).toContain("Notification document non envoyée");
   });
+
+  it("permet des corrections ciblées uniquement sur les documents refusés", () => {
+    const adminSource = readProjectFile("server/routers/agencyDossierDocuments.ts");
+    const candidateSource = readProjectFile("server/routers/candidate.ts");
+    const adminPanel = readProjectFile("client/src/components/AgencyDossierDocumentCenter.tsx");
+    const candidatePanel = readProjectFile("client/src/components/AgencyDocumentsPanel.tsx");
+    expect(adminSource).toContain("addCorrectionAnnotation");
+    expect(adminSource).toContain('document.verificationStatus !== "rejected"');
+    expect(adminSource).toContain("agencyDossierDocumentAnnotations");
+    expect(candidateSource).toContain("agencyDossierDocumentAnnotations");
+    expect(adminPanel).toContain("Ajouter une annotation");
+    expect(candidatePanel).toContain("Correction demandée");
+  });
 });

@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers } from "../../drizzle/schema";
+import { agencyDossierDocuments, agencyDossierDocumentAnnotations, agencyDossierHistory, agencyDossiers } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storageGetSignedUrl } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -26,9 +26,13 @@ export const agencyDossierDocumentsRouter = router({
         ? and(eq(agencyDossierDocuments.dossierId, input.dossierId), eq(agencyDossierDocuments.verificationStatus, input.verificationStatus))
         : eq(agencyDossierDocuments.dossierId, input.dossierId);
       const documents = await db.select().from(agencyDossierDocuments).where(where).orderBy(desc(agencyDossierDocuments.createdAt));
+      const annotations = await db.select().from(agencyDossierDocumentAnnotations)
+        .where(eq(agencyDossierDocumentAnnotations.dossierId, input.dossierId))
+        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
       const documentsWithPrivateUrls = await Promise.all(documents.map(async document => ({
         ...document,
         documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+        annotations: annotations.filter(annotation => annotation.documentId === document.id),
       })));
       return { documents: documentsWithPrivateUrls };
     }),
@@ -62,6 +66,72 @@ export const agencyDossierDocumentsRouter = router({
         details: input.verificationComment || `Document ${document.documentName} : statut mis à jour`,
       });
 
+      return { success: true };
+    }),
+
+  listAnnotationsForAdmin: protectedProcedure
+    .input(z.object({ documentId: z.number().int().positive() }))
+    .query(async ({ input, ctx }) => {
+      adminOnly(ctx.user?.role);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      return db.select().from(agencyDossierDocumentAnnotations)
+        .where(eq(agencyDossierDocumentAnnotations.documentId, input.documentId))
+        .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
+    }),
+
+  addCorrectionAnnotation: protectedProcedure
+    .input(z.object({
+      documentId: z.number().int().positive(),
+      message: z.string().trim().min(3).max(2000),
+      areaLabel: z.string().trim().max(120).optional(),
+      x: z.number().int().min(0).max(100000).optional(),
+      y: z.number().int().min(0).max(100000).optional(),
+      width: z.number().int().min(0).max(100000).optional(),
+      height: z.number().int().min(0).max(100000).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      adminOnly(ctx.user?.role);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const [document] = await db.select().from(agencyDossierDocuments).where(eq(agencyDossierDocuments.id, input.documentId)).limit(1);
+      if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable" });
+      if (document.verificationStatus !== "rejected") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Les annotations sont réservées aux documents refusés" });
+      }
+      const [annotation] = await db.insert(agencyDossierDocumentAnnotations).values({
+        documentId: document.id,
+        dossierId: document.dossierId,
+        authorEmail: ctx.user?.email || "admin",
+        message: input.message,
+        areaLabel: input.areaLabel || null,
+        x: input.x ?? null,
+        y: input.y ?? null,
+        width: input.width ?? null,
+        height: input.height ?? null,
+      }).$returningId();
+      await db.insert(agencyDossierHistory).values({
+        dossierId: document.dossierId,
+        action: "document_correction_requested",
+        changedBy: ctx.user?.email || "admin",
+        oldValue: document.verificationStatus,
+        newValue: "rejected",
+        details: input.message,
+      });
+      return { success: true, annotationId: annotation?.id };
+    }),
+
+  resolveCorrectionAnnotation: protectedProcedure
+    .input(z.object({ annotationId: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      adminOnly(ctx.user?.role);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      await db.update(agencyDossierDocumentAnnotations).set({
+        status: "resolved",
+        resolvedBy: ctx.user?.email || "admin",
+        resolvedAt: new Date(),
+      }).where(eq(agencyDossierDocumentAnnotations.id, input.annotationId));
       return { success: true };
     }),
 });

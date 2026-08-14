@@ -1,4 +1,4 @@
-import { Download, FileCheck2, FileText, ShieldCheck } from "lucide-react";
+import { Download, FileCheck2, FileText, MessageSquare, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import DocumentReceiptButton from "@/components/DocumentReceiptButton";
 
@@ -12,6 +12,14 @@ export type AgencyDocumentView = {
   verificationStatus: "pending" | "verified" | "rejected";
   verificationComment?: string | null;
   createdAt: Date | string;
+  annotations?: Array<{
+    id: number;
+    message: string;
+    areaLabel?: string | null;
+    status: "open" | "resolved";
+    createdAt: Date | string;
+  }>;
+
 };
 
 function statusLabel(status: AgencyDocumentView["verificationStatus"]): string {
@@ -72,6 +80,13 @@ export default function AgencyDocumentsPanel({
                     {document.verificationComment && document.verificationStatus === "rejected" && (
                       <p className="mt-1 text-xs text-red-600">{document.verificationComment}</p>
                     )}
+                    {document.verificationStatus === "rejected" && document.annotations?.filter((annotation) => annotation.status === "open").map((annotation) => (
+                      <div key={annotation.id} className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+                        <p className="flex items-center gap-1 font-semibold"><MessageSquare className="h-3.5 w-3.5" /> Correction demandée{annotation.areaLabel ? ` · ${annotation.areaLabel}` : ""}</p>
+                        <p className="mt-1">{annotation.message}</p>
+                        <p className="mt-1 font-medium">Après correction, téléversez une nouvelle version de cette pièce depuis votre espace.</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 sm:shrink-0">

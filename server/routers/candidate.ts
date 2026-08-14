@@ -18,6 +18,7 @@ import {
   clientDocuments,
   agencyDossiers,
   agencyDossierDocuments,
+  agencyDossierDocumentAnnotations,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
@@ -994,9 +995,16 @@ export const candidateRouter = router({
       .where(eq(agencyDossierDocuments.dossierId, dossier.id))
       .orderBy(desc(agencyDossierDocuments.createdAt));
 
+    const annotations = await db
+      .select()
+      .from(agencyDossierDocumentAnnotations)
+      .where(eq(agencyDossierDocumentAnnotations.dossierId, dossier.id))
+      .orderBy(desc(agencyDossierDocumentAnnotations.createdAt));
+
     const documents = await Promise.all(rawDocuments.map(async document => ({
       ...document,
       documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+      annotations: annotations.filter(annotation => annotation.documentId === document.id),
     })));
 
     return { success: true, dossier, documents };

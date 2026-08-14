@@ -1537,5 +1537,25 @@ export const agencyDossierDocuments = mysqlTable("agency_dossier_documents", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const agencyDossierDocumentAnnotations = mysqlTable("agency_dossier_document_annotations", {
+  id: int("id").autoincrement().primaryKey(),
+  documentId: int("documentId").notNull(),
+  dossierId: int("dossierId").notNull(),
+  authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
+  message: text("message").notNull(),
+  areaLabel: varchar("areaLabel", { length: 120 }),
+  // Coordonnées en millièmes de pourcentage pour rester indépendantes de la résolution.
+  x: int("x"),
+  y: int("y"),
+  width: int("width"),
+  height: int("height"),
+  status: mysqlEnum("status", ["open", "resolved"]).default("open").notNull(),
+  resolvedBy: varchar("resolvedBy", { length: 320 }),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type AgencyDossierDocument = typeof agencyDossierDocuments.$inferSelect;
 export type InsertAgencyDossierDocument = typeof agencyDossierDocuments.$inferInsert;
+export type AgencyDossierDocumentAnnotation = typeof agencyDossierDocumentAnnotations.$inferSelect;
+export type InsertAgencyDossierDocumentAnnotation = typeof agencyDossierDocumentAnnotations.$inferInsert;

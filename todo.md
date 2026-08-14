@@ -2185,3 +2185,8 @@
 - [x] Ajouter une checklist dynamique des pièces requises selon la destination (Canada, Schengen, etc.)
 - [x] Générer automatiquement une décharge PDF de remise des documents pour chaque dossier
 - [x] Notifier l’administrateur et le candidat lors d’un nouveau dépôt distant
+
+- [x] Ajouter les champs d’annotation et de correction aux documents d’agence dans la base de données
+- [x] Permettre à l’administrateur d’ajouter des annotations précises lors du rejet d’un document
+- [x] Afficher clairement les corrections demandées et l’alerte de refus dans l’espace candidat
+- [x] Permettre au candidat de remplacer ou de soumettre à nouveau un document annoté
