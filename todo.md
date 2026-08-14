@@ -2404,3 +2404,7 @@
 - [x] Créer la fonction d’export PDF du rapport d’évaluation Canada (score estimé, critères et checklist personnalisée)
 - [x] Intégrer le bouton de téléchargement dans la section des résultats de la page `/evaluation-canada`
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Partage WhatsApp du résultat d’évaluation Canada (v157)
+- [x] Créer le lien de partage WhatsApp prérempli à côté du téléchargement PDF dans la page `/evaluation-canada`
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
