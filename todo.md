@@ -2307,3 +2307,9 @@
 - [x] Exposer une procédure tRPC d’extraction et de proposition de pré-remplissage des informations du profil
 - [x] Intégrer l’interface de confirmation dans le dépôt documentaire ou l’espace candidat
 - [x] Valider la compilation, exécuter les tests et publier la mise à jour
+
+## Checklist documentaire internationale (style Canada) unifiée et synchronisée (v137)
+- [x] Définir la liste standardisée des pièces justificatives (Passeport, Relevés de notes, Preuve de fonds/Relevé bancaire, Diplômes, CV/Expérience, Casier judiciaire, Certificat médical, Acte de naissance)
+- [x] Créer le composant de formulaire unifié avec bouton de téléversement dédié par pièce et aperçu miniature (PDF/Image)
+- [x] Synchroniser les dépôts pour qu’ils soient immédiatement visibles et gérables tant côté candidat que côté administrateur
+- [x] Valider la compilation, exécuter les tests et publier la mise à jour
