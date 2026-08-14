@@ -57,7 +57,11 @@ export const adminPasswordResetRouter = router({
 
       const rows = await db.select().from(adminAccounts).where(eq(adminAccounts.email, input.email)).limit(1);
       const admin = rows[0];
-      if (!admin || admin.status !== "active") return { success: true, message: genericMessage };
+      if (!admin || admin.status !== "active") {
+        const lookupDigest = createHash("sha256").update(input.email.trim().toLowerCase()).digest("hex").slice(0, 16);
+        console.warn(`[Admin Password Reset] No active admin match for lookup ${lookupDigest}`);
+        return { success: true, message: genericMessage };
+      }
 
       const temporaryPassword = generateTemporaryPassword();
       const passwordHash = await bcrypt.hash(temporaryPassword, 12);

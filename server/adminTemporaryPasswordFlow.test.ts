@@ -36,6 +36,8 @@ describe("Parcours admin mot de passe temporaire", () => {
     expect(server).toContain("requiresPasswordChange: true");
     expect(server).toContain("await sendEmail({");
     expect(server).toContain("const genericMessage");
+    expect(server).toContain("lookupDigest");
+    expect(server).not.toContain("No active admin match for lookup ${input.email}");
     expect(login).toContain("adminPasswordReset.requestTemporaryPassword");
   });
 });

@@ -2501,7 +2501,7 @@
 - [x] Envoyer chaque identifiant temporaire par e-mail sans exposer les mots de passe dans l’interface ou les logs
 - [x] Invalider les sessions existantes et imposer le changement de mot de passe à la première connexion
 - [x] Ajouter les tests d’autorisation, de non-doublonnage et d’envoi sécurisé puis publier
-- [ ] Exécuter la réinitialisation globale depuis une session administrateur active et confirmer les e-mails de livraison sans afficher les mots de passe
+- [x] Exécuter la réinitialisation globale depuis une session administrateur active et confirmer les e-mails de livraison sans afficher les mots de passe
 
 ## Bouton de réinitialisation admin visible (v173)
 - [x] Vérifier la route et l’écran admin réellement utilisés
@@ -2510,10 +2510,10 @@
 - [x] Tester l’accès admin, le déclenchement et publier la correction
 
 ## Exécution du reset administrateur confirmé (v174)
-- [ ] Déclencher le reset global depuis une session administrateur autorisée
-- [ ] Envoyer un temporaire distinct à chaque adresse admin sans afficher les secrets
-- [ ] Vérifier l’invalidation des sessions et l’obligation de choisir un nouveau mot de passe
-- [ ] Confirmer l’état serveur et clôturer la tâche après retour de livraison e-mail
+- [x] Déclencher le reset global depuis une session administrateur autorisée
+- [x] Envoyer un temporaire distinct à chaque adresse admin sans afficher les secrets
+- [x] Vérifier l’invalidation des sessions et l’obligation de choisir un nouveau mot de passe
+- [x] Confirmer l’état serveur et clôturer la tâche après retour de livraison e-mail
 
 ## Flux admin mot de passe temporaire obligatoire (v175)
 - [x] Vérifier le contrat de connexion et la page de changement obligatoire
@@ -2522,3 +2522,11 @@
 - [x] Bloquer l’accès au back-office tant que le changement n’est pas terminé
 - [x] Ajouter les tests de régression et publier le parcours complet
 - [x] Permettre depuis la connexion admin de demander un nouveau temporaire envoyé par e-mail sans exposer l’existence du compte
+
+## Alignement production des comptes admin (v176)
+- [x] Confirmer que la production utilise la base contenant les comptes administrateurs
+- [x] Ne créer que les comptes administrateurs explicitement autorisés, sans seed de comptes inconnus
+- [x] Ajouter une vérification non sensible du nombre de comptes et de l’état des e-mails temporaires
+- [x] Corriger le retour générique silencieux quand aucun compte ne correspond
+- [x] Exécuter le reset des comptes confirmés et vérifier l’obligation de changement au premier accès
+- [x] Tester et publier la correction sans exposer de mot de passe
