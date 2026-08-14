@@ -3,6 +3,7 @@ import { CheckCircle2, Download, FileText, Loader2, ScanLine, Upload, XCircle } 
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import DocumentReceiptButton from "@/components/DocumentReceiptButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DOCUMENT_TYPES = [
@@ -122,6 +123,17 @@ export default function AgencyDossierDocumentCenter({ dossierId }: { dossierId: 
                   <a href={document.documentUrl} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-1 rounded-xl border border-slate-600 px-3 text-xs font-semibold text-slate-200 hover:bg-slate-700" aria-label={`Ouvrir ${document.documentName}`}>
                     <Download className="h-4 w-4" /> Ouvrir
                   </a>
+                  <DocumentReceiptButton
+                    document={{
+                      id: document.id ?? 0,
+                      documentName: document.documentName ?? "Document",
+                      documentType: document.documentType ?? "other",
+                      createdAt: document.createdAt ?? new Date().toISOString(),
+                    }}
+                    candidateName="Candidat du dossier"
+                    candidateEmail={document.uploadedBy ?? ""}
+                    dossierNumber={`DOS-${dossierId}`}
+                  />
                   <Button type="button" variant="outline" onClick={() => statusMutation.mutate({ documentId: document.id, verificationStatus: "verified" })} disabled={statusMutation.isPending} className="h-10 rounded-xl border-emerald-700 text-emerald-300 hover:bg-emerald-950">
                     <CheckCircle2 className="mr-1 h-4 w-4" /> Valider
                   </Button>

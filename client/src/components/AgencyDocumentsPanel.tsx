@@ -1,5 +1,6 @@
 import { Download, FileCheck2, FileText, ShieldCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import DocumentReceiptButton from "@/components/DocumentReceiptButton";
 
 export type AgencyDocumentView = {
   id: number;
@@ -25,7 +26,17 @@ function statusClass(status: AgencyDocumentView["verificationStatus"]): string {
   return "bg-amber-100 text-amber-700 border-amber-200";
 }
 
-export default function AgencyDocumentsPanel({ documents }: { documents: AgencyDocumentView[] }) {
+export default function AgencyDocumentsPanel({
+  documents,
+  candidateName = "Candidat",
+  candidateEmail = "",
+  dossierNumber,
+}: {
+  documents: AgencyDocumentView[];
+  candidateName?: string;
+  candidateEmail?: string;
+  dossierNumber?: string | null;
+}) {
   return (
     <Card className="mb-8 border-blue-100 bg-white shadow-sm">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
@@ -78,6 +89,12 @@ export default function AgencyDocumentsPanel({ documents }: { documents: AgencyD
                     <Download className="h-4 w-4" />
                     Ouvrir
                   </a>
+                  <DocumentReceiptButton
+                    document={document}
+                    candidateName={candidateName}
+                    candidateEmail={candidateEmail}
+                    dossierNumber={dossierNumber}
+                  />
                 </div>
               </div>
             ))}

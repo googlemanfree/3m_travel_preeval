@@ -6,6 +6,7 @@ import { getDb } from "../db";
 import { storagePut } from "../storage";
 import { sdk } from "../_core/sdk";
 import { agencyDossiers, agencyDossierDocuments, agencyDossierHistory } from "../../drizzle/schema";
+import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -105,6 +106,15 @@ export function registerAgencyDossierUploadRoute(app: Express): void {
         oldValue: null,
         newValue: JSON.stringify({ documentId: inserted.id, documentType, documentName: safeName }),
         details: "Document scanné ou téléversé par l’agence",
+      });
+      await notifyDocumentSubmission({
+        candidateEmail: dossier.email,
+        documentType,
+        documentName: safeName,
+        receiptNumber: `DOC-${inserted.id}`,
+        dossierNumber: `DOS-${dossierId}`,
+      }).catch((notificationError) => {
+        console.error("[AgencyDossierUpload] Notification document non envoyée:", notificationError);
       });
 
       res.status(201).json({

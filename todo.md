@@ -2179,3 +2179,9 @@
 
 - [x] Remplacer le faux dépôt de documents candidat par l’upload réel vers le stockage privé
 - [x] Synchroniser les dépôts candidats avec le centre documentaire et supprimer l’identifiant candidat fourni par le navigateur
+
+- [x] Permettre aux clients situés à distance de téléverser directement leurs pièces justificatives depuis leur espace candidat
+- [x] Synchroniser instantanément ces dépôts distants pour qu’ils soient téléchargeables et visualisables par l’administrateur
+- [x] Ajouter une checklist dynamique des pièces requises selon la destination (Canada, Schengen, etc.)
+- [x] Générer automatiquement une décharge PDF de remise des documents pour chaque dossier
+- [x] Notifier l’administrateur et le candidat lors d’un nouveau dépôt distant

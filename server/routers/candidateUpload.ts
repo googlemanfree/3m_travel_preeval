@@ -10,6 +10,7 @@ import { randomBytes } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidates } from "../../drizzle/schema";
+import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -184,6 +185,16 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
           oldValue: null,
           newValue: JSON.stringify({ documentId, documentType, documentName: safeName }),
           details: "Document téléversé par le candidat depuis son espace",
+        });
+        await notifyDocumentSubmission({
+          candidateEmail: candidate.email,
+          documentType,
+          documentName: safeName,
+          receiptNumber: `DOC-${documentId}`,
+          dossierNumber: `DOS-${agencyDossier.id}`,
+
+        }).catch((notificationError) => {
+          console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
         });
       }
       res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, synchronized: Boolean(agencyDossier) });

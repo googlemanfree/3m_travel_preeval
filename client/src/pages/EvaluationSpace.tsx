@@ -26,10 +26,12 @@ import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
+import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
   const { candidate, isAuthenticated } = useCandidateAuth();
+  const trpcUtils = trpc.useUtils();
   const [dossierNumber, setDossierNumber] = useState<string | null>(null);
   const [searchCode, setSearchCode] = useState<string>('');
   const [userDossierLoading, setUserDossierLoading] = useState(true);
@@ -477,8 +479,19 @@ export default function EvaluationSpace() {
             />
           </motion.div>
 
+          {myDossierData?.data?.application?.destination && (
+            <DossierDocumentChecklist
+              destination={myDossierData.data.application.destination}
+              documents={(myAgencyDocuments?.documents ?? []) as AgencyDocumentView[]}
+            />
+          )}
           {myAgencyDocuments?.documents && (
-            <AgencyDocumentsPanel documents={myAgencyDocuments.documents as AgencyDocumentView[]} />
+            <AgencyDocumentsPanel
+              documents={myAgencyDocuments.documents as AgencyDocumentView[]}
+              candidateName={myDossierData?.data?.candidate?.fullName ?? candidate?.fullName ?? "Candidat"}
+              candidateEmail={myDossierData?.data?.candidate?.email ?? candidate?.email ?? ""}
+              dossierNumber={dossierNumber}
+            />
           )}
 
           {/* Score Card */}
@@ -606,8 +619,9 @@ export default function EvaluationSpace() {
             <DocumentUploader
               dossierNumber={dossierNumber || ""}
               onUploadSuccess={() => {
-                // Optionally refresh the page or show a success message
-                console.log("Documents uploaded successfully");
+                setUploadedDocuments((current) => current + 1);
+                void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
+                void trpcUtils.candidate.getMyDossierData.invalidate();
               }}
             />
           </motion.div>

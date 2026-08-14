@@ -42,4 +42,24 @@ describe("Centre documentaire par dossier", () => {
     expect(candidatePage).toContain("AgencyDocumentsPanel");
     expect(adminPage).toContain("AgencyDossierDocumentCenter");
   });
+
+  it("rafraîchit la checklist après un dépôt et propose une décharge PDF", () => {
+    const candidatePage = readProjectFile("client/src/pages/EvaluationSpace.tsx");
+    const checklist = readProjectFile("client/src/components/DossierDocumentChecklist.tsx");
+    const receipt = readProjectFile("client/src/components/DocumentReceiptButton.tsx");
+    expect(candidatePage).toContain("DossierDocumentChecklist");
+    expect(candidatePage).toContain("getMyAgencyDocuments.invalidate");
+    expect(checklist).toContain("requiredDocuments");
+    expect(receipt).toContain("jsPDF");
+    expect(receipt).toContain("Décharge PDF");
+  });
+
+  it("notifie après un dépôt candidat ou agence sans bloquer le stockage", () => {
+    const candidateUpload = readProjectFile("server/routers/candidateUpload.ts");
+    const agencyUpload = readProjectFile("server/routers/agencyDossierUpload.ts");
+    expect(candidateUpload).toContain("notifyDocumentSubmission");
+    expect(candidateUpload).toContain("Notification document non envoyée");
+    expect(agencyUpload).toContain("notifyDocumentSubmission");
+    expect(agencyUpload).toContain("Notification document non envoyée");
+  });
 });
