@@ -2385,3 +2385,7 @@
 ## Bouton « Ajouter au calendrier » (Google Calendar / Outlook) (v152)
 - [x] Créer les générateurs de liens d’exportation Google Calendar et Outlook dans le récapitulatif de rendez-vous
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Rappel des documents à préparer avant la consultation (v153)
+- [x] Créer le bloc de rappel des pièces requises et recommandées dans le récapitulatif de rendez-vous de la modale
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
