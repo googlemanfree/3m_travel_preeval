@@ -25,6 +25,7 @@ import { AIScoreGauge } from "@/components/AIScoreGauge";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
+import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -80,6 +81,9 @@ export default function EvaluationSpace() {
   const { data: myDossierData } = trpc.candidate.getMyDossierData.useQuery(undefined, {
     enabled: isAuthenticated && !dossierNumber,
   });
+  const { data: myAgencyDocuments } = trpc.candidate.getMyAgencyDocuments.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
 
   useEffect(() => {
     if (!dossierNumber && myDossierData?.success && myDossierData.data?.application?.dossierNumber) {
@@ -127,6 +131,9 @@ export default function EvaluationSpace() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto py-12">
           <ClientSpaceNavigation />
+          {myAgencyDocuments?.documents && myAgencyDocuments.documents.length > 0 && (
+            <AgencyDocumentsPanel documents={myAgencyDocuments.documents as AgencyDocumentView[]} />
+          )}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -469,6 +476,10 @@ export default function EvaluationSpace() {
               pendingDocuments={requiredDocuments - uploadedDocuments}
             />
           </motion.div>
+
+          {myAgencyDocuments?.documents && (
+            <AgencyDocumentsPanel documents={myAgencyDocuments.documents as AgencyDocumentView[]} />
+          )}
 
           {/* Score Card */}
           <motion.div

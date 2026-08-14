@@ -16,10 +16,13 @@ import {
   candidateMessages,
   candidates,
   clientDocuments,
+  agencyDossiers,
+  agencyDossierDocuments,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { storageGetSignedUrl } from "../storage";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -896,6 +899,25 @@ export const candidateRouter = router({
       .from(candidateFiles)
       .where(eq(candidateFiles.candidateId, ctx.candidate.id));
 
+    // Documents déposés ou scannés par l’agence, limités au dossier rattaché à l’e-mail du candidat.
+    const agencyDossier = await db
+      .select({ id: agencyDossiers.id })
+      .from(agencyDossiers)
+      .where(eq(agencyDossiers.email, ctx.candidate.email))
+      .orderBy(desc(agencyDossiers.createdAt))
+      .limit(1);
+    const rawAgencyDocuments = agencyDossier[0]
+      ? await db
+          .select()
+          .from(agencyDossierDocuments)
+          .where(eq(agencyDossierDocuments.dossierId, agencyDossier[0].id))
+          .orderBy(desc(agencyDossierDocuments.createdAt))
+      : [];
+    const agencyDocuments = await Promise.all(rawAgencyDocuments.map(async document => ({
+      ...document,
+      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+    })));
+
     // Récupérer les messages
     const messages = await db
       .select()
@@ -908,6 +930,7 @@ export const candidateRouter = router({
       data: {
         application,
         documents,
+        agencyDocuments,
         messages,
         dossierStatus: application.dossierStatus,
         agreementSigned: application.agreementSigned,
@@ -947,6 +970,36 @@ export const candidateRouter = router({
         status: doc.status,
       })),
     };
+  }),
+
+  /**
+   * Documents du dossier ouvert en agence, visibles uniquement par le candidat propriétaire.
+   */
+  getMyAgencyDocuments: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const [dossier] = await db
+      .select({ id: agencyDossiers.id, destination: agencyDossiers.destination, status: agencyDossiers.status })
+      .from(agencyDossiers)
+      .where(eq(agencyDossiers.email, ctx.candidate.email))
+      .orderBy(desc(agencyDossiers.createdAt))
+      .limit(1);
+
+    if (!dossier) return { success: true, dossier: null, documents: [] };
+
+    const rawDocuments = await db
+      .select()
+      .from(agencyDossierDocuments)
+      .where(eq(agencyDossierDocuments.dossierId, dossier.id))
+      .orderBy(desc(agencyDossierDocuments.createdAt));
+
+    const documents = await Promise.all(rawDocuments.map(async document => ({
+      ...document,
+      documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
+    })));
+
+    return { success: true, dossier, documents };
   }),
 
   /**

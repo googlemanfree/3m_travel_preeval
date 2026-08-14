@@ -5,6 +5,7 @@ import { Upload, File, X, CheckCircle2, AlertCircle, Loader2, ChevronDown, Edit2
 import { motion, AnimatePresence } from "framer-motion";
 import { DOCUMENT_CATEGORIES, getCategoryById, getCategoryIcon, getCategoryColor } from "@/data/documentCategories";
 import { EditDocumentCategoryModal } from "./EditDocumentCategoryModal";
+import { getCandidateToken } from "@/hooks/useCandidateAuth";
 
 interface DocumentFile {
   id: string;
@@ -15,6 +16,7 @@ interface DocumentFile {
   progress: number;
   error?: string;
   category?: string;
+  file?: File;
 }
 
 interface DocumentUploaderProps {
@@ -78,6 +80,7 @@ export function DocumentUploader({
           progress: 0,
           error: validation.error,
           category: selectedCategory,
+          file,
         };
       });
 
@@ -135,57 +138,38 @@ export function DocumentUploader({
 
   const uploadFile = async (file: DocumentFile, fileObj: File) => {
     try {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, status: "uploading" as const, progress: 0 } : f
-        )
-      );
+      const token = getCandidateToken();
+      if (!token) throw new Error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "uploading" as const, progress: 15 } : f));
 
-      for (let i = 0; i <= 100; i += 10) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        setFiles((prev) =>
-          prev.map((f) =>
-            f.id === file.id ? { ...f, progress: i } : f
-          )
-        );
-      }
+      const formData = new FormData();
+      formData.append("file", fileObj);
+      formData.append("fileType", file.category || "other");
+      const response = await fetch("/api/candidate/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+        credentials: "include",
+      });
+      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, progress: 65 } : f));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Erreur lors du dépôt du document.");
 
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, status: "success" as const, progress: 100 } : f
-        )
-      );
-
-      if (onUploadSuccess) {
-        onUploadSuccess();
-      }
+      setFiles((prev) => prev.map((f) => f.id === file.id ? { ...f, status: "success" as const, progress: 100 } : f));
+      onUploadSuccess?.();
     } catch (error) {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id
-            ? {
-                ...f,
-                status: "error" as const,
-                error: "Erreur lors de l'upload",
-              }
-            : f
-        )
-      );
+      setFiles((prev) => prev.map((f) => f.id === file.id ? {
+        ...f,
+        status: "error" as const,
+        error: error instanceof Error ? error.message : "Erreur lors du dépôt du document",
+      } : f));
     }
   };
 
   const handleUploadAll = async () => {
     const pendingFiles = files.filter((f) => f.status === "pending");
-    const fileElements = fileInputRef.current?.files;
-
-    if (fileElements) {
-      for (let i = 0; i < pendingFiles.length; i++) {
-        const file = pendingFiles[i];
-        const fileObj = fileElements[i];
-        if (fileObj) {
-          await uploadFile(file, fileObj);
-        }
-      }
+    for (const file of pendingFiles) {
+      if (file.file) await uploadFile(file, file.file);
     }
   };
 

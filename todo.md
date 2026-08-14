@@ -2170,3 +2170,12 @@
 
 - [x] Ajouter un badge et une notification visuelle lorsqu’une nouvelle étape de dossier est détectée
 - [x] Mémoriser l’étape déjà consultée pour éviter de répéter l’alerte
+
+- [x] Créer un centre documentaire centralisé et synchronisé par dossier pour l’agence et le candidat
+- [x] Permettre à l’administrateur de téléverser et scanner les pièces fournies en agence
+- [x] Rendre tous les documents visibles, téléchargeables et vérifiables dans l’espace candidat et le back-office
+
+- [x] Conserver la référence privée de chaque document et ne délivrer les liens signés qu’après contrôle de propriété
+
+- [x] Remplacer le faux dépôt de documents candidat par l’upload réel vers le stockage privé
+- [x] Synchroniser les dépôts candidats avec le centre documentaire et supprimer l’identifiant candidat fourni par le navigateur

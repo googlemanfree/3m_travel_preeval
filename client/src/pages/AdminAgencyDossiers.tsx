@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import AgencyDossierDocumentCenter from "@/components/AgencyDossierDocumentCenter";
 import {
   ArrowLeft,
   Plus,
@@ -847,6 +848,8 @@ export default function AdminAgencyDossiers() {
                   <p className="text-slate-300 text-sm whitespace-pre-wrap">{selectedDossier.adminNotes}</p>
                 </div>
               )}
+
+              <AgencyDossierDocumentCenter dossierId={selectedDossier.id} />
 
               {/* Créé par */}
               <p className="text-slate-500 text-xs">

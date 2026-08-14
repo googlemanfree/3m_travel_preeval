@@ -40,7 +40,7 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
       const token = localStorage.getItem("3m_candidate_token") || sessionStorage.getItem("3m_candidate_token");
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("fileType", "photo");
+      formData.append("fileType", "photo_identite");
 
       const res = await fetch("/api/candidate/upload", {
         method: "POST",

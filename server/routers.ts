@@ -16,6 +16,7 @@ import { adminAuthRouter } from "./routers/adminAuth";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
+import { agencyDossierDocumentsRouter } from "./routers/agencyDossierDocuments";
 import { documentSubmissionRouter } from "./routers/documentSubmission";
 import { candidateAuthOTPRouter } from "./routers/candidateAuthOTP";
 import { monitoringRouter } from "./routers/monitoring";
@@ -115,6 +116,7 @@ export const appRouter = router({
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,
   agencyDossier: agencyDossierRouter,
+  agencyDossierDocuments: agencyDossierDocumentsRouter,
   documentSubmission: documentSubmissionRouter,
   monitoring: monitoringRouter,
   payment: paymentRouter,

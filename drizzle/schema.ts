@@ -1520,3 +1520,22 @@ export const flightBookingRequestHistory = mysqlTable("flight_booking_request_hi
 ]);
 export type FlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferSelect;
 export type InsertFlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferInsert;
+
+
+export const agencyDossierDocuments = mysqlTable("agency_dossier_documents", {
+  id: int("id").autoincrement().primaryKey(),
+  dossierId: int("dossierId").notNull(), // Référence à agencyDossiers(id)
+  documentType: varchar("documentType", { length: 100 }).notNull(), // passeport, cv, diplome, contrat, autre
+  documentName: varchar("documentName", { length: 255 }).notNull(),
+  documentUrl: text("documentUrl").notNull(),
+  fileSize: int("fileSize"),
+  source: mysqlEnum("source", ["agency_scan", "admin_upload", "candidate_upload"]).default("agency_scan").notNull(),
+  uploadedBy: varchar("uploadedBy", { length: 320 }).notNull(), // Email de l'admin ou du candidat
+  verificationStatus: mysqlEnum("verificationStatus", ["pending", "verified", "rejected"]).default("pending").notNull(),
+  verificationComment: text("verificationComment"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AgencyDossierDocument = typeof agencyDossierDocuments.$inferSelect;
+export type InsertAgencyDossierDocument = typeof agencyDossierDocuments.$inferInsert;

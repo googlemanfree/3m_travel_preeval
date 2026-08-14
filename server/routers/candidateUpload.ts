@@ -7,6 +7,9 @@ import jwt from "jsonwebtoken";
 import multer from "multer";
 import { storagePut } from "../storage";
 import { randomBytes } from "node:crypto";
+import { desc, eq } from "drizzle-orm";
+import { getDb } from "../db";
+import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidates } from "../../drizzle/schema";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -142,18 +145,12 @@ export function registerPublicUploadRoute(app: import("express").Express) {
 export function registerCandidateUploadRoute(app: import("express").Express) {
   app.post("/api/candidate/upload", upload.single("file"), async (req: MulterRequest, res: Response) => {
     try {
-      let candidateId: number | null = null;
-      const bodyCandidateId = (req.body as any)?.candidateId;
-      if (bodyCandidateId) {
-        candidateId = Number(bodyCandidateId);
-      } else {
-        const authorization = req.headers.authorization;
-        if (!authorization?.startsWith("Bearer ")) {
-          res.status(401).json({ error: "Non authentifié" });
-          return;
-        }
-        candidateId = verifyCandidateToken(authorization.slice(7));
+      const authorization = req.headers.authorization;
+      if (!authorization?.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Non authentifié" });
+        return;
       }
+      const candidateId = verifyCandidateToken(authorization.slice(7));
 
       if (!candidateId || isNaN(candidateId)) {
         res.status(400).json({ error: "Identifiant candidat manquant ou invalide." });
@@ -163,7 +160,33 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       const { file, documentType, safeName } = validateIncomingDocument(req);
       const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
-      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype });
+      const db = await getDb();
+      if (!db) throw new Error("Base de données indisponible");
+      const [candidate] = await db.select({ email: candidates.email }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      if (!candidate) throw new Error("Candidat introuvable");
+      const [agencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossiers.createdAt)).limit(1);
+      if (agencyDossier) {
+        const insertResult = await db.insert(agencyDossierDocuments).values({
+          dossierId: agencyDossier.id,
+          documentType,
+          documentName: safeName,
+          documentUrl: url,
+          fileSize: file.size,
+          source: "candidate_upload",
+          uploadedBy: candidate.email,
+          verificationStatus: "pending",
+        });
+        const documentId = Number((insertResult as any)[0]?.insertId || 0);
+        await db.insert(agencyDossierHistory).values({
+          dossierId: agencyDossier.id,
+          action: "document_uploaded",
+          changedBy: candidate.email,
+          oldValue: null,
+          newValue: JSON.stringify({ documentId, documentType, documentName: safeName }),
+          details: "Document téléversé par le candidat depuis son espace",
+        });
+      }
+      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, synchronized: Boolean(agencyDossier) });
     } catch (error) {
       console.error("[CandidateUpload] Error:", error);
       uploadErrorResponse(res, error);

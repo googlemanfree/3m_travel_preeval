@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
+import { getCandidateToken } from "@/hooks/useCandidateAuth";
 
 const DESTINATIONS = [
   { value: "canada", label: "🇨🇦 Canada" },
@@ -127,15 +128,13 @@ export default function CompleteProfile() {
       setIsUploadingAvatar(true);
       const uploadForm = new FormData();
       uploadForm.append("file", avatarFile);
-      uploadForm.append("documentType", "photo");
-      
-      const candidateId = localStorage.getItem("candidateId");
-      if (candidateId) {
-        uploadForm.append("candidateId", candidateId);
-      }
+      uploadForm.append("fileType", "photo_identite");
+      const token = getCandidateToken();
+      if (!token) throw new Error("Votre session candidat a expiré. Veuillez vous reconnecter.");
 
       const response = await fetch("/api/candidate/upload", {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
         body: uploadForm,
       });
 

@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerCandidateUploadRoute, registerPublicUploadRoute } from "../routers/candidateUpload";
+import { registerAgencyDossierUploadRoute } from "../routers/agencyDossierUpload";
 import { registerCinetPayWebhook } from "../routers/cinetpayWebhook";
 import { setupDocumentsRoutes } from "../documentsRoutes";
 import { handleEvaluationJob } from "../scheduled/evaluationJob";
@@ -47,6 +48,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerCandidateUploadRoute(app);
   registerPublicUploadRoute(app);
+  registerAgencyDossierUploadRoute(app);
   registerCinetPayWebhook(app);
   setupDocumentsRoutes(app);
   // Scheduled jobs
