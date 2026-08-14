@@ -236,6 +236,7 @@ export async function sendVerificationLink(to: string, fullName: string, verific
     });
   } catch (error) {
     console.error("Failed to send verification link email:", error);
+    throw error;
   }
 }
 
@@ -296,6 +297,7 @@ export async function sendPasswordResetEmail(to: string, fullName: string, reset
     });
   } catch (error) {
     console.error("Failed to send password reset email:", error);
+    throw error;
   }
 }
 

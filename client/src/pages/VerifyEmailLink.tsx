@@ -69,7 +69,6 @@ export default function VerifyEmailLink() {
 
   useEffect(() => {
     if (token) {
-      console.log(`[VerifyEmailLink] Verifying token: ${token.substring(0, 8)}...`);
       verifyMutation.mutate({ token });
     } else {
       setStatus("error");

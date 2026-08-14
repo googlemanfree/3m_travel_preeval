@@ -32,8 +32,6 @@ export default function ResetPassword() {
   const params = new URLSearchParams(queryString);
   const token = params.get("token")?.trim() ?? "";
   
-  console.log("[ResetPassword] URL:", typeof window !== 'undefined' ? window.location.href : location);
-  console.log("[ResetPassword] Token extrait:", token ? `${token.substring(0, 10)}...` : "VIDE");
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -63,9 +61,7 @@ export default function ResetPassword() {
     resetMutation.mutate({ token, newPassword: password });
   }
 
-  // Afficher le token pour debug
   if (!token) {
-    console.warn("[ResetPassword] Aucun token trouvé dans l'URL");
     return (
       <div className="min-h-screen flex items-center justify-center px-4"
         style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 100%)" }}>

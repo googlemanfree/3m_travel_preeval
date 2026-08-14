@@ -429,8 +429,8 @@ export default function Login() {
                     toast.error("Veuillez entrer votre adresse email");
                     return;
                   }
-                  // Rediriger vers la page de réinitialisation
-                  window.location.href = `/forgot-password?email=${encodeURIComponent(forgotPasswordEmail)}`;
+                  // Ouvrir la page d’envoi réelle en conservant l’adresse saisie.
+                  navigate(`/forgot-password?email=${encodeURIComponent(forgotPasswordEmail.trim().toLowerCase())}`);
                 }}
                 className="space-y-4"
               >

@@ -70,6 +70,15 @@ export function issueVerificationToken() {
   return { rawToken, tokenHash: hashVerificationToken(rawToken) };
 }
 
+export function hashPasswordResetToken(token: string): string {
+  return hashVerificationToken(token);
+}
+
+export function issuePasswordResetToken() {
+  const rawToken = randomBytes(32).toString("hex");
+  return { rawToken, tokenHash: hashPasswordResetToken(rawToken) };
+}
+
 // ─── Middleware : extraire le candidat depuis le header Authorization ─────────
 async function getCandidateFromHeader(authHeader: string | undefined) {
   if (!authHeader?.startsWith("Bearer ")) {
@@ -761,10 +770,15 @@ export const candidateRouter = router({
       const rows = await db.select().from(candidates).where(eq(candidates.email, input.email)).limit(1);
       if (!rows.length) return { success: true, message: "Si cet email existe, un lien a été envoyé." };
       const candidate = rows[0];
-      const resetToken = crypto.randomUUID().replace(/-/g, "");
+      const { rawToken, tokenHash } = issuePasswordResetToken();
       const resetExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
-      await db.update(candidates).set({ passwordResetToken: resetToken, passwordResetExpiresAt: resetExpiresAt }).where(eq(candidates.id, candidate.id));
-      try { await sendPasswordResetEmail(candidate.email, candidate.fullName, resetToken); } catch {}
+      await db.update(candidates).set({ passwordResetToken: tokenHash, passwordResetExpiresAt: resetExpiresAt }).where(eq(candidates.id, candidate.id));
+      try {
+        await sendPasswordResetEmail(candidate.email, candidate.fullName, rawToken);
+      } catch (error) {
+        console.error("[CandidatePasswordReset] Email send failed:", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Le lien n’a pas pu être envoyé. Veuillez réessayer." });
+      }
       return { success: true, message: "Si cet email existe, un lien a été envoyé." };
     }),
 
@@ -773,7 +787,16 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
+      if (!/[A-Z]/.test(input.newPassword) || !/[0-9]/.test(input.newPassword)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le mot de passe doit contenir une majuscule et un chiffre." });
+      }
+
+      const tokenHash = hashPasswordResetToken(input.token);
+      let rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, tokenHash)).limit(1);
+      // Compatibilité de courte durée avec les liens émis avant le stockage haché.
+      if (!rows.length) {
+        rows = await db.select().from(candidates).where(eq(candidates.passwordResetToken, input.token)).limit(1);
+      }
       if (!rows.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Lien invalide ou expiré." });
       const candidate = rows[0];
       if (!candidate.passwordResetExpiresAt || new Date() > candidate.passwordResetExpiresAt) {

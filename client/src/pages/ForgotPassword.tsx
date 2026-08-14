@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Mail, ArrowLeft, CheckCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,11 @@ import { toast } from "sonner";
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState("");
+  const [location] = useLocation();
+  const [email, setEmail] = useState(() => {
+    const query = new URLSearchParams(location.split("?")[1] ?? "");
+    return query.get("email") ?? "";
+  });
   const [sent, setSent] = useState(false);
 
   const resetMutation = trpc.candidate.requestPasswordReset.useMutation({

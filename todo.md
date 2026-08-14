@@ -2588,3 +2588,11 @@
 - [x] Supprimer les seuils stricts de résolution, qualité et durée d’analyse
 - [x] Prévoir un mode de repli clair lorsque le navigateur ne permet pas la détection locale
 - [x] Ajouter les tests de photos compressées, caméra mobile et galerie puis publier
+
+## Vérification inscription et mot de passe oublié (v184)
+- [x] Auditer les routes, formulaires et mutations candidat d’inscription et de récupération
+- [x] Vérifier le bouton Inscription, la validation portrait et la création serveur du compte
+- [x] Vérifier la redirection vers l’écran d’attente et l’envoi du lien d’activation SMTP
+- [x] Vérifier le bouton Mot de passe oublié et l’envoi du lien à usage unique
+- [x] Vérifier l’enregistrement du nouveau mot de passe, l’invalidation du token et la reconnexion
+- [x] Corriger les anomalies, ajouter les tests et publier après vérification desktop/mobile
