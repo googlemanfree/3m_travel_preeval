@@ -2349,3 +2349,7 @@
 - [x] Créer le composant d’infobulle détaillée listant les pièces manquantes, expirées ou rejetées pour atteindre 100%
 - [x] Intégrer l’infobulle à côté de la barre de progression dans `/mon-espace` et le back-office
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Boutons de téléchargement direct dans l’infobulle de complétude (v145)
+- [x] Ajouter un bouton d’action « Déposer » pour chaque pièce manquante dans l’infobulle pour un accès instantané au formulaire
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
