@@ -2318,3 +2318,9 @@
 - [x] Ajouter la traçabilité de l’origine (« En ligne », « Scan en agence », « Original remis en agence ») pour chaque document
 - [x] Écrire un test Vitest de contrat bidirectionnel vérifiant que les dépôts client et agence sont visibles des deux côtés
 - [x] Valider la compilation, exécuter la suite de tests et publier la mise à jour
+
+## Améliorations opérationnelles avancées (v139)
+- [x] Module de génération de factures et reçus A5 pour les paiements en agence
+- [x] Système de rappels de rendez-vous par e-mail et WhatsApp la veille de la consultation
+- [x] Historique détaillé des variations de prix pour les vols favoris enregistrés
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
