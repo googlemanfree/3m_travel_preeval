@@ -2610,3 +2610,10 @@
 - [x] Corriger la lecture de la query string navigateur, le renvoi, le hachage et l’invalidation des anciens tokens
 - [x] Tester activation, expiration, réutilisation, redirection et affichage d’un lien invalide
 - [x] Publier le correctif et documenter la procédure en cas de lien invalide
+
+## Message de succès après validation e-mail (v187)
+- [x] Auditer l’écran actuel de confirmation et la redirection vers /login
+- [x] Ajouter un message de succès clair avec compte à rebours visible
+- [x] Rediriger automatiquement vers la connexion après quelques secondes
+- [x] Ajouter un bouton de connexion immédiate et gérer l’annulation du compte à rebours
+- [x] Vérifier desktop/mobile, tests et publier

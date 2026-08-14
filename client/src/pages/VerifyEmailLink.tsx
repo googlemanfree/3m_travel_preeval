@@ -22,7 +22,7 @@ export default function VerifyEmailLink() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const [candidateData, setCandidateData] = useState<any>(null);
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(4);
   const [email, setEmail] = useState("");
   const [isResending, setIsResending] = useState(false);
 
@@ -175,7 +175,7 @@ export default function VerifyEmailLink() {
                   transition={{ delay: 0.4 }}
                   className="text-green-50 text-lg relative z-10"
                 >
-                  Votre compte est maintenant activé
+                  Votre compte est activé avec succès
                 </motion.p>
               </div>
 
@@ -195,7 +195,7 @@ export default function VerifyEmailLink() {
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-green-900 mb-1">Email Confirmé</h3>
                       <p className="text-green-700">
-                        Votre adresse email a été vérifiée avec succès. Vous pouvez maintenant accéder à votre espace candidat.
+                        Votre adresse e-mail est confirmée. Vous pouvez maintenant vous connecter avec vos identifiants pour accéder à votre espace candidat.
                       </p>
                     </div>
                   </div>
@@ -234,7 +234,15 @@ export default function VerifyEmailLink() {
                   transition={{ delay: 0.8 }}
                   className="text-center mb-8"
                 >
-                  <p className="text-gray-600 mb-3">Redirection automatique dans</p>
+                  <p className="text-gray-600 mb-3">Redirection automatique vers la connexion dans</p>
+                  <div className="h-2 w-full max-w-xs mx-auto mb-4 overflow-hidden rounded-full bg-gray-100" aria-label={`Redirection dans ${countdown} secondes`}>
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                      initial={{ width: "100%" }}
+                      animate={{ width: `${(countdown / 4) * 100}%` }}
+                      transition={{ duration: 0.9, ease: "linear" }}
+                    />
+                  </div>
                   <motion.div
                     key={countdown}
                     initial={{ scale: 1.5, opacity: 0 }}
