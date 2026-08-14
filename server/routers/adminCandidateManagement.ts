@@ -185,6 +185,9 @@ export const adminCandidateManagementRouter = router({
       phone: z.string().trim().max(40).optional(),
       destination: z.string().trim().max(120).optional(),
       visaType: z.string().trim().max(120).optional(),
+      dossierNumber: z.string().trim().max(64).optional(),
+      gdsReference: z.string().trim().max(64).optional(),
+      ticketNumber: z.string().trim().max(64).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
@@ -210,7 +213,7 @@ export const adminCandidateManagementRouter = router({
         const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
         candidateIdForMessage = record.candidateId ?? null;
-        dossierNumberForMessage = record.dossierNumber;
+        dossierNumberForMessage = input.dossierNumber || record.dossierNumber;
         previousStatus = record.dossierStatus;
         if (!candidateIdForMessage) {
           const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
@@ -218,6 +221,7 @@ export const adminCandidateManagementRouter = router({
         }
         const result = await db.update(applications).set({
           dossierStatus: input.status as any,
+          ...(input.dossierNumber !== undefined ? { dossierNumber: input.dossierNumber } : {}),
           ...(input.adminNotes !== undefined ? { adminNote: input.adminNotes } : {}),
           ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
           ...(input.email !== undefined ? { email: input.email } : {}),
@@ -227,6 +231,14 @@ export const adminCandidateManagementRouter = router({
           lastStatusUpdateAt: new Date(),
           lastStatusUpdatedBy: admin.email,
         }).where(eq(applications.id, id));
+
+        if (candidateIdForMessage && (input.gdsReference || input.ticketNumber || input.dossierNumber)) {
+          await db.update(candidates).set({
+            ...(input.gdsReference !== undefined ? { gdsReference: input.gdsReference } : {}),
+            ...(input.ticketNumber !== undefined ? { ticketNumber: input.ticketNumber } : {}),
+            ...(input.dossierNumber !== undefined ? { dossierNumber: input.dossierNumber } : {}),
+          }).where(eq(candidates.id, candidateIdForMessage));
+        }
         const affectedRows = Number((result as unknown as [{ affectedRows?: number }])[0]?.affectedRows ?? 0);
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
       } else {

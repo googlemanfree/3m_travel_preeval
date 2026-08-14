@@ -2231,3 +2231,9 @@
 - [x] Refondre `/mon-espace` en un tableau de bord modulaire hautement professionnel avec barre de progression de complétion du profil, widgets par activité et actualisation asynchrone
 - [x] Vérifier la synchronisation bidirectionnelle complète avec le back-office administrateur
 - [x] Valider les tests, le build et le rendu responsive
+
+## Opérationnalisation complète et synchronisation GDS (v124)
+- [x] Ajouter les champs de référence de réservation GDS et de numéros de dossier administrables dans le schéma Drizzle et appliquer la migration SQL
+- [x] Étendre le routeur administrateur pour permettre l’attribution directe des numéros de dossier et des PNR/références GDS aux candidats
+- [x] Permettre au client d’ouvrir son dossier et de consulter ses références de réservation et numéros de vol GDS dans `/mon-espace`
+- [x] Ajouter les tests de contrat, valider le build et publier la version opérationnelle
