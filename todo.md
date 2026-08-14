@@ -2274,3 +2274,8 @@
 - [x] Ajouter l’état et l’interface de sélection du type de visa (Études, Travail/Résidence, Tourisme/Visiteur) dans le tableau de bord budgétaire
 - [x] Ajuster dynamiquement le total estimé des frais consulaires et répercuter le calcul dans le récapitulatif et l’export PDF
 - [x] Valider la compilation, les tests et publier la mise à jour
+
+## Module de prise de rendez-vous en agence (v132)
+- [x] Créer l’état modal et le formulaire de prise de rendez-vous (date, heure, objet, conseiller) dans l’onglet des vols/budget de `/mon-espace`
+- [x] Enregistrer la demande de consultation dans le dossier du candidat et notifier l’équipe administrative
+- [x] Valider la compilation, les tests et publier la mise à jour

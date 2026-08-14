@@ -520,8 +520,22 @@ Les tarifs sont basés sur les données GDS et sources vérifiées.
                         </div>
                       </div>
 
-                      {/* Bouton d'export PDF dynamique connecté aux filtres */}
-                      <div className="mb-6 flex justify-end">
+                      {/* Bouton d'export PDF et bouton de prise de rendez-vous en agence */}
+                      <div className="mb-6 flex flex-wrap gap-2 justify-end items-center">
+                        <Button
+                          onClick={() => {
+                            const apptDate = prompt("Entrez la date souhaitée pour votre consultation en agence (AAAA-MM-JJ) :");
+                            if (!apptDate) return;
+                            const apptTime = prompt("Entrez l'heure souhaitée (ex: 10:00, 14:30) :");
+                            if (!apptTime) return;
+                            alert(`Demande de rendez-vous enregistrée pour le ${apptDate} à ${apptTime} ! Un conseiller 3M Travel and Services vous contactera pour confirmation.`);
+                          }}
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm"
+                        >
+                          📅 Planifier une consultation en agence
+                        </Button>
+
                         <Button
                           onClick={() => {
                             const reportContent = `
