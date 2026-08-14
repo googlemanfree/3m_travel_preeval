@@ -2377,3 +2377,7 @@
 - [x] Créer la fenêtre modale de sélection de créneau de rendez-vous directement intégrée à `/evaluation-canada`
 - [x] Connecter la modal aux procédures tRPC de réservation et valider l’absence de rechargement de page
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Animation de confirmation et récapitulatif détaillé du rendez-vous (v151)
+- [x] Créer l’animation de succès et le récapitulatif structuré (conseiller, date, heure, lieu, référence) dans la modale
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
