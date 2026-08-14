@@ -2389,3 +2389,8 @@
 ## Rappel des documents à préparer avant la consultation (v153)
 - [x] Créer le bloc de rappel des pièces requises et recommandées dans le récapitulatif de rendez-vous de la modale
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Checklist documentaire dynamique selon le profil (v154)
+- [x] Créer le moteur de génération dynamique des pièces requises selon le profil (statut marital, enfants, offre d'emploi)
+- [x] Intégrer la liste dynamique dans le récapitulatif de rendez-vous de la page d'évaluation Canada (`/evaluation-canada`)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
