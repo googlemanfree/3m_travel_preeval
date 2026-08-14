@@ -2502,3 +2502,9 @@
 - [x] Invalider les sessions existantes et imposer le changement de mot de passe à la première connexion
 - [x] Ajouter les tests d’autorisation, de non-doublonnage et d’envoi sécurisé puis publier
 - [ ] Exécuter la réinitialisation globale depuis une session administrateur active et confirmer les e-mails de livraison sans afficher les mots de passe
+
+## Bouton de réinitialisation admin visible (v173)
+- [x] Vérifier la route et l’écran admin réellement utilisés
+- [x] Afficher un bouton clair de réinitialisation par e-mail dans le panneau actif
+- [x] Relier le bouton à la mutation protégée et afficher les états confirmation, chargement et erreur
+- [x] Tester l’accès admin, le déclenchement et publier la correction

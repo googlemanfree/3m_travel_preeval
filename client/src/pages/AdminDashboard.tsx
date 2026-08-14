@@ -591,7 +591,9 @@ function ImportAgencyModal({
 export default function AdminDashboard() {
   const [, navigate] = useLocation();
   const adminName = typeof window !== "undefined" ? localStorage.getItem("adminName") || "Admin" : "Admin";
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    : "";
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -686,8 +688,30 @@ export default function AdminDashboard() {
     },
   });
 
+  const resetAllPasswordsMutation = trpc.adminAuth.resetAllPasswords.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Réinitialisation envoyée", description: result.message });
+      sessionStorage.removeItem("adminSessionToken");
+      localStorage.removeItem("adminSessionToken");
+      navigate("/admin/login");
+    },
+    onError: (error) => {
+      toast({ title: "Réinitialisation impossible", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleResetAllPasswords = () => {
+    if (!sessionToken) {
+      toast({ title: "Session administrateur absente", description: "Reconnectez-vous avant de lancer la réinitialisation.", variant: "destructive" });
+      return;
+    }
+    if (!window.confirm("Réinitialiser les mots de passe de tous les administrateurs ? Chaque compte recevra un mot de passe temporaire par e-mail et devra le changer à la prochaine connexion.")) return;
+    resetAllPasswordsMutation.mutate({ sessionToken });
+  };
+
   const logoutMutation = trpc.adminAuth.logout.useMutation({
     onSuccess: () => {
+      sessionStorage.removeItem("adminSessionToken");
       localStorage.removeItem("adminSessionToken");
       localStorage.removeItem("adminType");
       localStorage.removeItem("adminName");
@@ -794,6 +818,17 @@ export default function AdminDashboard() {
             >
               <Download className="w-4 h-4" />
               <span className="hidden md:inline">Rapport CSV</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetAllPasswords}
+              disabled={resetAllPasswordsMutation.isPending || !sessionToken}
+              className="gap-1.5 border-amber-300/70 text-amber-100 hover:bg-amber-400/20"
+              title="Envoyer un mot de passe temporaire par e-mail à chaque administrateur"
+            >
+              <Mail className="w-4 h-4" />
+              <span className="hidden md:inline">Réinitialiser par e-mail</span>
             </Button>
             <Button
               size="sm"
