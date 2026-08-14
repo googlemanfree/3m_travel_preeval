@@ -2279,3 +2279,15 @@
 - [x] Créer l’état modal et le formulaire de prise de rendez-vous (date, heure, objet, conseiller) dans l’onglet des vols/budget de `/mon-espace`
 - [x] Enregistrer la demande de consultation dans le dossier du candidat et notifier l’équipe administrative
 - [x] Valider la compilation, les tests et publier la mise à jour
+
+## Centre de pilotage candidat complet (« Faire tout ») (v133)
+- [x] Carte de synthèse supérieure avec photo, nom, numéro de dossier actif et statut
+- [x] Bloc « Action requise » prioritaire (documents manquants, corrections, rendez-vous)
+- [x] Timeline interactive à 5 étapes avec notifications de franchissement
+- [x] Centre documentaire intelligent avec statuts (Reçu, Validé, Rejeté, En analyse) et prévisualisation rapide
+- [x] Messagerie bidirectionnelle avec notifications et historique complet
+- [x] Gestion centralisée des vols, favoris, références PNR/GDS et numéros de billets
+- [x] Tableau de bord budgétaire multi-devises, graphique de répartition, filtres et export PDF
+- [x] Module de prise de rendez-vous en agence pour consultations physiques
+- [x] Journal d’activité du dossier et aide contextuelle par étape
+- [x] Validation responsive mobile/bureau, tests de non-régression et publication
