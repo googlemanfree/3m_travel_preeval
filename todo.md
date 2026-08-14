@@ -2237,3 +2237,9 @@
 - [x] Étendre le routeur administrateur pour permettre l’attribution directe des numéros de dossier et des PNR/références GDS aux candidats
 - [x] Permettre au client d’ouvrir son dossier et de consulter ses références de réservation et numéros de vol GDS dans `/mon-espace`
 - [x] Ajouter les tests de contrat, valider le build et publier la version opérationnelle
+
+## Traçabilité et cache des tarifs de vol (v125)
+- [x] Ajouter les indicateurs de source de tarif (tarif GDS libre / estimation / source gratuite en ligne) sur les cartes de vol
+- [x] Enrichir le stockage des favoris et réservations de vol pour inclure la source, l’horodatage et le statut de confirmation
+- [x] Permettre à l’administrateur de voir la provenance du tarif d’un vol favori client dans le back-office
+- [x] Valider les tests et publier la mise à jour

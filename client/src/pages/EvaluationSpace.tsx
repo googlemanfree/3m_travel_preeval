@@ -348,15 +348,21 @@ export default function EvaluationSpace() {
                       <div key={f.id} className="p-4 rounded-xl border border-purple-100 bg-purple-50/50 flex flex-col justify-between">
                         <div>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="font-bold text-gray-900 text-lg">{f.departureCity} ➔ {f.arrivalCity}</span>
-                            <span className="font-bold text-purple-700">{f.price} {f.currency || "XAF"}</span>
+                            <span className="font-bold text-gray-900 text-lg">{f.departureCity || "Vol"} ➔ {f.arrivalCity || "Destination"}</span>
+                            <div className="text-right">
+                              <span className="font-bold text-purple-700 text-lg">{f.price} {f.currency || "XAF"}</span>
+                              <div className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 mt-0.5">
+                                Tarif source vérifié ({f.priceSource || "gds_live"})
+                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-600 mb-3">Compagnie : {f.airline} • Cabine : {f.cabinClass || "Économique"}</p>
+                          <p className="text-xs text-gray-600 mb-1">Compagnie : {f.airline || "Partenaire"} • Cabine : {f.cabinClass || "Économique"}</p>
+                          <p className="text-xs text-gray-500 mb-3">Voyageurs : {f.passengersCount || 1} • Date : {f.departureDate || "Libre"}</p>
                         </div>
                         <div className="flex items-center justify-between pt-3 border-t border-purple-100">
-                          <span className="text-xs text-gray-500">Ajouté le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
-                          <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white">
-                            Réserver
+                          <span className="text-xs text-gray-500">Enregistré le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
+                          <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white font-bold">
+                            Consulter l'agence
                           </Button>
                         </div>
                       </div>
