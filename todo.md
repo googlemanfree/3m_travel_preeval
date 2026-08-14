@@ -2410,9 +2410,9 @@
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
 
 ## Copie du lien d’évaluation Canada dans le presse-papiers (v158)
-- [ ] Créer la fonction de copie du lien de la page d’évaluation dans le presse-papiers avec toast de confirmation
-- [ ] Intégrer le bouton de copie à côté du partage WhatsApp et du téléchargement PDF sur `/evaluation-canada`
-- [ ] Valider la compilation, les tests unitaires et publier la mise à jour
+- [x] Créer la fonction de copie du lien de la page d’évaluation dans le presse-papiers avec toast de confirmation
+- [x] Intégrer le bouton de copie à côté du partage WhatsApp et du téléchargement PDF sur `/evaluation-canada`
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
 
 ## Filigrane officiel et en-tête formel sur tous les PDF exportés (v159)
 - [x] Créer le module utilitaire de génération de PDF avec filigrane « 3M Travel Agency » et en-tête d’agence sécurisé
