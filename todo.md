@@ -2479,3 +2479,10 @@
 - [x] Ajouter dans les paramètres candidat une action « Reprendre ma photo » par caméra ou galerie
 - [x] Réutiliser le jeton signé et les contrôles serveur pour chaque nouvelle photo
 - [x] Synchroniser le statut de revue côté client et admin, puis tester et publier
+
+## Assouplissement de la vérification des portraits (v170)
+- [x] Identifier le seuil minimum de taille qui rejette les photos de moins de 8 Ko
+- [x] Autoriser les images de faible qualité ou de faible résolution si un visage unique est détecté
+- [x] Conserver les contrôles de type MIME, taille maximale, contenu réel et sécurité serveur
+- [x] Harmoniser les messages client pour expliquer les seuls motifs bloquants
+- [x] Ajouter les tests d’acceptation des portraits légers et publier la correction

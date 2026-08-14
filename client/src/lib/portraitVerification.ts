@@ -55,12 +55,15 @@ export async function verifyHumanPortrait(file: Blob): Promise<PortraitVerificat
   }
 
   const image = await readImage(file);
-  if (image.naturalWidth < 240 || image.naturalHeight < 240) {
+  // Les photos prises avec certains téléphones compressent fortement l’image.
+  // Une résolution minimale modérée suffit ici : le contrôle humain repose sur
+  // le visage détecté, pas sur une qualité photographique professionnelle.
+  if (image.naturalWidth < 96 || image.naturalHeight < 96) {
     return {
       accepted: false,
       faceCount: 0,
       confidence: 0,
-      reason: "La photo est trop petite. Utilisez un portrait d’au moins 240 × 240 pixels.",
+      reason: "L’image est trop petite pour vérifier le visage. Utilisez une photo d’au moins 96 × 96 pixels.",
     };
   }
 
@@ -92,12 +95,14 @@ export async function verifyHumanPortrait(file: Blob): Promise<PortraitVerificat
     const rawConfidence = Array.isArray(face.probability) ? face.probability[0] ?? 0 : face.probability ?? 0;
     const confidence = Math.round(rawConfidence * 100) / 100;
 
-    if (areaRatio < 0.025 || confidence < 0.65) {
+    // Seuils tolérants pour les portraits compressés ou pris avec une caméra
+    // d’entrée de gamme. Le nombre de visages reste strictement égal à un.
+    if (areaRatio < 0.008 || confidence < 0.45) {
       return {
         accepted: false,
         faceCount,
         confidence,
-        reason: "Le visage est trop éloigné ou insuffisamment net. Rapprochez-vous et reprenez la photo.",
+        reason: "Le visage n’est pas suffisamment visible. Rapprochez légèrement le téléphone et réessayez.",
       };
     }
 

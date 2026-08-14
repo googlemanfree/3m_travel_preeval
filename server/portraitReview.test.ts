@@ -23,6 +23,17 @@ describe("portrait review and recovery workflow", () => {
     expect(source).toContain("portraitVerificationToken");
   });
 
+  it("accepts compressed or low-quality portraits without restoring the 8 Ko gate", () => {
+    const client = read("client/src/lib/portraitVerification.ts");
+    const upload = read("server/routers/candidateUpload.ts");
+    expect(client).toContain("naturalWidth < 96");
+    expect(client).toContain("areaRatio < 0.008");
+    expect(client).toContain("confidence < 0.45");
+    expect(upload).not.toContain("file.size < 8 * 1024");
+    expect(upload).toContain("file.size <= 0 || file.size > 5 * 1024 * 1024");
+    expect(upload).toContain("width < 96 || height < 96");
+  });
+
   it("keeps manual portrait review behind the admin session check", () => {
     const router = read("server/routers/adminCandidateManagement.ts");
     const panel = read("client/src/components/AdminPortraitReviewPanel.tsx");

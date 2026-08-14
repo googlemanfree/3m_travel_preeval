@@ -84,8 +84,11 @@ function validatePortrait(file: Express.Multer.File): { width: number; height: n
   if (!("image/jpeg" === file.mimetype || "image/png" === file.mimetype || "image/webp" === file.mimetype)) {
     throw new Error("Le portrait doit être au format JPG, PNG ou WebP");
   }
-  if (file.size < 8 * 1024 || file.size > 5 * 1024 * 1024) {
-    throw new Error("Le portrait doit peser entre 8 Ko et 5 Mo");
+  // Certains téléphones produisent des portraits très compressés. La taille
+  // minimale n’est pas un indicateur fiable de présence humaine : le contenu,
+  // la signature MIME et les dimensions sont contrôlés séparément ci-dessous.
+  if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
+    throw new Error("Le portrait doit peser moins de 5 Mo et contenir des données valides");
   }
   let dimensions: { width?: number; height?: number };
   try {
@@ -95,8 +98,8 @@ function validatePortrait(file: Express.Multer.File): { width: number; height: n
   }
   const width = Number(dimensions.width || 0);
   const height = Number(dimensions.height || 0);
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 240 || height < 240) {
-    throw new Error("Le portrait doit faire au moins 240 × 240 pixels");
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 96 || height < 96) {
+    throw new Error("Le portrait doit faire au moins 96 × 96 pixels");
   }
   if (width > 8000 || height > 8000) {
     throw new Error("Les dimensions du portrait sont trop élevées");
