@@ -1341,4 +1341,27 @@ export const candidateRouter = router({
       },
     };
   }),
+
+  shareFlightFavoriteEmail: candidateProcedure
+    .input(z.object({
+      flightId: z.number().int().positive(),
+      recipientEmail: z.string().email(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      const [flight] = await db.select().from(favoriteFlights).where(and(eq(favoriteFlights.id, input.flightId), eq(favoriteFlights.candidateId, ctx.candidate.id))).limit(1);
+      if (!flight) throw new TRPCError({ code: "NOT_FOUND", message: "Vol favori introuvable." });
+
+      const subject = `Itinéraire de vol 3M Travel Agency : ${flight.departureCity} ➔ ${flight.arrivalCity}`;
+      const textBody = `Bonjour,\n\nVoici un itinéraire de vol partagé par ${ctx.candidate.fullName} via 3M Travel Agency :\n\nTrajet : ${flight.departureCity} vers ${flight.arrivalCity}\nCompagnie : ${flight.airline}\nPrix estimé : ${flight.price} ${flight.currency || "XAF"}\nCabine : ${flight.cabinClass || "Économique"}\nDate : ${flight.departureDate || "Libre"}\n\nContactez-nous pour réserver dès maintenant !\n3M Travel Agency — hello@3mtravelagency.com`;
+
+      const sent = await sendWelcomeEmail(input.recipientEmail, ctx.candidate.fullName, subject);
+      if (!sent) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Échec de l’envoi de l’e-mail." });
+      }
+
+      return { success: true, recipientEmail: input.recipientEmail };
+    }),
 });

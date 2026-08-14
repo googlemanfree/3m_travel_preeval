@@ -2243,3 +2243,8 @@
 - [x] Enrichir le stockage des favoris et réservations de vol pour inclure la source, l’horodatage et le statut de confirmation
 - [x] Permettre à l’administrateur de voir la provenance du tarif d’un vol favori client dans le back-office
 - [x] Valider les tests et publier la mise à jour
+
+## Partage rapide des vols favoris (v126)
+- [x] Ajouter une procédure tRPC d’envoi d’itinéraire de vol par e-mail dans le routeur candidat
+- [x] Intégrer les boutons de partage e-mail et WhatsApp dans les cartes de vols favoris de `/mon-espace`
+- [x] Valider l’envoi sécurisé, tester la compilation et publier

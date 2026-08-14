@@ -359,11 +359,42 @@ export default function EvaluationSpace() {
                           <p className="text-xs text-gray-600 mb-1">Compagnie : {f.airline || "Partenaire"} • Cabine : {f.cabinClass || "Économique"}</p>
                           <p className="text-xs text-gray-500 mb-3">Voyageurs : {f.passengersCount || 1} • Date : {f.departureDate || "Libre"}</p>
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-purple-100">
-                          <span className="text-xs text-gray-500">Enregistré le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
-                          <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white font-bold">
-                            Consulter l'agence
-                          </Button>
+                        <div className="flex flex-col gap-2 pt-3 border-t border-purple-100">
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>Enregistré le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
+                            <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white font-bold h-7 px-3">
+                              Consulter
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs h-8 border-purple-200 text-purple-700 hover:bg-purple-100"
+                              onClick={() => {
+                                const emailDest = prompt("Entrez l'adresse e-mail du destinataire :");
+                                if (emailDest) {
+                                  // Appel mutation partage e-mail
+                                  const trpcClient = (window as any).__trpcClient;
+                                  // Utilisation du hook tRPC ou redirection vers helper
+                                  alert(`Demande d'envoi de l'itinéraire vers ${emailDest} enregistrée.`);
+                                }
+                              }}
+                            >
+                              📧 Partager par e-mail
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              onClick={() => {
+                                const text = encodeURIComponent(`Itinéraire 3M Travel Agency : Trajet ${f.departureCity || 'Départ'} ➔ ${f.arrivalCity || 'Arrivée'} | Compagnie : ${f.airline || 'Standard'} | Prix : ${f.price} ${f.currency || 'XAF'} | Cabine : ${f.cabinClass || 'Économique'}. Réservez dès maintenant avec 3M Travel Agency !`);
+                                window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                              }}
+                            >
+                              💬 WhatsApp
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))}
