@@ -49,6 +49,15 @@ export async function requireValidAdminSession(sessionToken: string) {
   return admin;
 }
 
+/** Valide une session et réserve la gestion des comptes aux Super administrateurs. */
+export async function requireSuperAdminSession(sessionToken: string) {
+  const admin = await requireValidAdminSession(sessionToken);
+  if (admin.role !== "super_admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Droits Super administrateur requis." });
+  }
+  return admin;
+}
+
 /** Récupère et valide exclusivement le jeton contenu dans le cookie HttpOnly admin. */
 export async function requireAdminSessionFromCookie(cookieHeader: string | undefined) {
   const sessionCookie = (cookieHeader ?? "")
@@ -123,6 +132,7 @@ export const adminAuthRouter = router({
         success: true,
         sessionToken,
         adminType: admin.adminType,
+        role: admin.role,
         fullName: admin.fullName,
         email: admin.email,
         requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
@@ -135,7 +145,7 @@ export const adminAuthRouter = router({
       const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
       return {
         authenticated: true,
-        admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType },
+        admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType, role: admin.role },
       } as const;
     } catch {
       return { authenticated: false } as const;
@@ -235,7 +245,7 @@ export const adminAuthRouter = router({
       sessionToken: z.string(),
     }))
     .query(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      await requireSuperAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -269,7 +279,7 @@ export const adminAuthRouter = router({
       adminType: z.enum(["evaluation", "accompagnement", "procedures"]),
     }))
     .mutation(async ({ input }) => {
-      const inviter = await requireValidAdminSession(input.sessionToken);
+      const inviter = await requireSuperAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
@@ -341,7 +351,7 @@ export const adminAuthRouter = router({
       customBody: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      await requireSuperAdminSession(input.sessionToken);
 
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });

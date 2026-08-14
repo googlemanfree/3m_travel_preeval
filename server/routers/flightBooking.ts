@@ -26,6 +26,14 @@ const requestStatus = [
   "issued",
   "cancelled",
 ] as const;
+const requestPriority = ["low", "normal", "high", "urgent"] as const;
+
+type FlightPassengerData = Record<string, unknown>;
+
+function extractCandidatePhone(passengers: FlightPassengerData[]) {
+  const value = passengers[0]?.phone ?? passengers[0]?.phoneNumber ?? passengers[0]?.telephone;
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 32) : null;
+}
 
 const passportExtractedDataSchema = z.object({
   surname: z.string().nullable(),
@@ -199,6 +207,8 @@ export const flightBookingRouter = router({
         flightId: input.flightId,
         flightData: input.flightData,
         passengerData: input.passengerData,
+        candidatePhone: extractCandidatePhone(input.passengerData),
+        priority: "normal",
         status: "pending_review",
       });
       const requestId = Number((inserted as any)[0]?.insertId ?? 0);
@@ -242,12 +252,22 @@ export const flightBookingRouter = router({
     }),
 
   getQueue: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), status: z.enum(["ALL", ...requestStatus]).default("ALL"), limit: z.number().int().min(1).max(100).default(25), offset: z.number().int().min(0).default(0) }))
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      status: z.enum(["ALL", ...requestStatus]).default("ALL"),
+      priority: z.enum(["ALL", ...requestPriority]).default("ALL"),
+      limit: z.number().int().min(1).max(100).default(25),
+      offset: z.number().int().min(0).default(0),
+    }))
     .query(async ({ input }) => {
       await assertAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const condition = input.status === "ALL" ? undefined : eq(flightBookingRequests.status, input.status);
+      const conditions = [
+        input.status === "ALL" ? undefined : eq(flightBookingRequests.status, input.status),
+        input.priority === "ALL" ? undefined : eq(flightBookingRequests.priority, input.priority),
+      ].filter(Boolean) as ReturnType<typeof eq>[];
+      const condition = conditions.length ? and(...conditions) : undefined;
       const requests = await db.select().from(flightBookingRequests).where(condition).orderBy(desc(flightBookingRequests.createdAt)).limit(input.limit).offset(input.offset);
       const [{ total }] = await db.select({ total: count() }).from(flightBookingRequests).where(condition);
       return { requests, total: Number(total), limit: input.limit, offset: input.offset };
@@ -289,6 +309,19 @@ export const flightBookingRouter = router({
       await db.update(flightBookingRequests).set({ status: input.status, agentNotes: input.details ?? existing.agentNotes }).where(eq(flightBookingRequests.id, input.requestId));
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "status_changed", changedBy: admin.email, oldValue: existing.status, newValue: input.status, details: input.details ?? null });
       return { success: true };
+    }),
+
+  updatePriority: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), priority: z.enum(requestPriority) }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
+      await db.update(flightBookingRequests).set({ priority: input.priority }).where(eq(flightBookingRequests.id, input.requestId));
+      await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "priority_changed", changedBy: admin.email, oldValue: existing.priority, newValue: input.priority, details: "Priorité opérationnelle modifiée par un agent." });
+      return { success: true, priority: input.priority };
     }),
 
   addNote: publicProcedure

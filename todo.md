@@ -2144,3 +2144,11 @@
 - [x] Créer une page dédiée pour afficher et gérer les vols favoris du client
 - [x] Afficher le numéro de dossier actif dans l’en-tête de l’espace client
 - [x] Ajouter des filtres par statut et par date dans le suivi des demandes de vols
+
+- [x] Ajouter la gestion des priorités et l’export CSV dans l’espace agent des demandes de vols
+- [ ] Mettre en place les notifications automatiques par e-mail et WhatsApp lors des changements de statut de vol
+
+- [x] Conserver les mêmes tâches pour tous les Administrateurs et ajouter un rôle Super administrateur pour les opérations sensibles
+- [x] Vérifier les gardes serveur, la traçabilité individuelle et les permissions des comptes administrateurs
+
+- [x] Promouvoir `aureoldonfack@gmail.com` en Super administrateur après ajout de la permission côté serveur

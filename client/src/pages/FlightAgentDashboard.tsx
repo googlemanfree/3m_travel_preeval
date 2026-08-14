@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, FileText, Inbox, MessageSquare, Plane, RefreshCw, Search, UserRound } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Download, FileText, Inbox, MessageSquare, Plane, RefreshCw, Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,26 @@ const STATUS_LABELS = {
 
 type RequestStatus = keyof typeof STATUS_LABELS;
 
+const PRIORITY_LABELS = {
+  low: "Basse",
+  normal: "Normale",
+  high: "Haute",
+  urgent: "Urgente",
+} as const;
+
+type RequestPriority = keyof typeof PRIORITY_LABELS;
+
+const PRIORITY_STYLES: Record<RequestPriority, string> = {
+  low: "bg-slate-100 text-slate-700",
+  normal: "bg-blue-50 text-blue-700",
+  high: "bg-amber-50 text-amber-800",
+  urgent: "bg-red-50 text-red-700",
+};
+
+function csvCell(value: unknown) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
 function getAdminToken() {
   if (typeof window === "undefined") return "";
   return localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "";
@@ -35,6 +55,7 @@ export default function FlightAgentDashboard() {
   const { toast } = useToast();
   const sessionToken = getAdminToken();
   const [statusFilter, setStatusFilter] = useState<"ALL" | RequestStatus>("ALL");
+  const [priorityFilter, setPriorityFilter] = useState<"ALL" | RequestPriority>("ALL");
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
   const [agentEmail, setAgentEmail] = useState("");
   const [note, setNote] = useState("");
@@ -44,7 +65,7 @@ export default function FlightAgentDashboard() {
     { enabled: Boolean(sessionToken), refetchInterval: 30_000, retry: false },
   );
   const queueQuery = trpc.flightBooking.getQueue.useQuery(
-    { sessionToken, status: statusFilter, limit: 50, offset: 0 },
+    { sessionToken, status: statusFilter, priority: priorityFilter, limit: 100, offset: 0 },
     { enabled: Boolean(sessionToken), refetchInterval: 30_000, retry: false },
   );
   const detailQuery = trpc.flightBooking.getRequest.useQuery(
@@ -60,6 +81,15 @@ export default function FlightAgentDashboard() {
       void utils.flightBooking.getRequest.invalidate();
     },
     onError: (error) => toast({ title: "Mise à jour impossible", description: error.message, variant: "destructive" }),
+  });
+  const priorityMutation = trpc.flightBooking.updatePriority.useMutation({
+    onSuccess: () => {
+      toast({ title: "Priorité mise à jour", description: "La file agent a été actualisée." });
+      void utils.flightBooking.getQueue.invalidate();
+      void utils.flightBooking.getRequest.invalidate();
+      void utils.flightBooking.getQueueSummary.invalidate();
+    },
+    onError: (error) => toast({ title: "Priorité impossible à modifier", description: error.message, variant: "destructive" }),
   });
   const assignMutation = trpc.flightBooking.assignRequest.useMutation({
     onSuccess: () => {
@@ -80,7 +110,33 @@ export default function FlightAgentDashboard() {
   });
 
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
-  const isBusy = statusMutation.isPending || assignMutation.isPending || noteMutation.isPending;
+  const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending;
+
+  const exportCsv = () => {
+    const requests = queueQuery.data?.requests ?? [];
+    if (!requests.length) {
+      toast({ title: "Aucune donnée à exporter", description: "Aucune demande ne correspond aux filtres actuels." });
+      return;
+    }
+    const header = ["Référence", "Client", "Vol", "Statut", "Priorité", "Créée le"];
+    const rows = requests.map((request) => [
+      request.requestRef,
+      request.candidateEmail,
+      request.flightId,
+      STATUS_LABELS[request.status as RequestStatus] || request.status,
+      PRIORITY_LABELS[request.priority as RequestPriority] || request.priority,
+      new Date(request.createdAt).toLocaleString("fr-FR"),
+    ]);
+    const csv = [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\\r\\n");
+    const blob = new Blob([`\\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `demandes-vols-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export CSV prêt", description: `${requests.length} demande(s) exportée(s).` });
+  };
 
   if (!sessionToken) {
     return <div className="min-h-screen bg-slate-50 p-6 text-center text-slate-700">Session administrateur absente. Veuillez vous reconnecter.</div>;
@@ -118,15 +174,15 @@ export default function FlightAgentDashboard() {
           <Card className="overflow-hidden border-0 shadow-sm">
             <div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
               <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-900"><Plane className="h-5 w-5 text-blue-600" /> Demandes de réservation</h2><p className="mt-1 text-xs text-slate-500">{queueQuery.data?.total ?? 0} dossier(s) correspondant au filtre</p></div>
-              <div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" /><select aria-label="Filtrer par statut" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | RequestStatus)} className="h-12 min-w-52 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
+              <div className="flex flex-wrap items-center gap-2"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" /><select aria-label="Filtrer par statut" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | RequestStatus)} className="h-12 min-w-48 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div><select aria-label="Filtrer par priorité" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as "ALL" | RequestPriority)} className="h-12 min-w-40 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Toutes priorités</option>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><Button type="button" variant="outline" onClick={exportCsv} className="h-12 rounded-xl border-slate-200 font-bold"><Download className="mr-2 h-4 w-4" /> CSV</Button></div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Référence</th><th className="px-5 py-3">Client</th><th className="px-5 py-3">Vol</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Créée</th></tr></thead>
+                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Référence</th><th className="px-5 py-3">Client</th><th className="px-5 py-3">Vol</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Priorité</th><th className="px-5 py-3">Créée</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
-                  {queueQuery.isLoading && <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-500"><Clock3 className="mx-auto mb-2 h-5 w-5 animate-pulse" />Chargement de la file…</td></tr>}
-                  {!queueQuery.isLoading && !queueQuery.data?.requests.length && <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-500">Aucune demande pour ce filtre.</td></tr>}
-                  {queueQuery.data?.requests.map((request) => <tr key={request.id} onClick={() => { setSelectedRequestId(request.id); setAgentEmail(request.assignedAgentEmail || ""); setNote(request.agentNotes || ""); }} className={`cursor-pointer transition hover:bg-blue-50 ${selectedRequestId === request.id ? "bg-blue-50" : ""}`}><td className="px-5 py-4 font-mono font-bold text-blue-700">{request.requestRef}</td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.candidateEmail}</span><span className="text-xs text-slate-500">Candidat #{request.candidateId}</span></td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.flightId}</span><span className="text-xs text-slate-500">Voir détails</span></td><td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[request.status as RequestStatus] || request.status}</span></td><td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(request.createdAt).toLocaleString("fr-FR")}</td></tr>)}
+                  {queueQuery.isLoading && <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-500"><Clock3 className="mx-auto mb-2 h-5 w-5 animate-pulse" />Chargement de la file…</td></tr>}
+                  {!queueQuery.isLoading && !queueQuery.data?.requests.length && <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-500">Aucune demande pour ce filtre.</td></tr>}
+                  {queueQuery.data?.requests.map((request) => <tr key={request.id} onClick={() => { setSelectedRequestId(request.id); setAgentEmail(request.assignedAgentEmail || ""); setNote(request.agentNotes || ""); }} className={`cursor-pointer transition hover:bg-blue-50 ${selectedRequestId === request.id ? "bg-blue-50" : ""}`}><td className="px-5 py-4 font-mono font-bold text-blue-700">{request.requestRef}</td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.candidateEmail}</span><span className="text-xs text-slate-500">Candidat #{request.candidateId}</span></td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.flightId}</span><span className="text-xs text-slate-500">Voir détails</span></td><td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[request.status as RequestStatus] || request.status}</span></td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${PRIORITY_STYLES[request.priority as RequestPriority] || PRIORITY_STYLES.normal}`}>{PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}</span></td><td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(request.createdAt).toLocaleString("fr-FR")}</td></tr>)}
                 </tbody>
               </table>
             </div>
@@ -143,6 +199,7 @@ export default function FlightAgentDashboard() {
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les passagers et passeports</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson(detailQuery.data.request.passengerData)}</pre></details>
                 <div className="space-y-2"><Label htmlFor="agent-email">Affecter à un agent</Label><div className="flex gap-2"><Input id="agent-email" type="email" value={agentEmail} onChange={(event) => setAgentEmail(event.target.value)} placeholder="agent@3mtravelagency.com" className="h-12 rounded-xl" /><Button type="button" disabled={isBusy || !agentEmail} onClick={() => assignMutation.mutate({ sessionToken, requestId: selectedRequestId, assignedAgentEmail: agentEmail })} className="h-12 rounded-xl bg-blue-700 font-bold text-white">Affecter</Button></div></div>
                 <div className="space-y-2"><Label htmlFor="request-status">Statut opérationnel</Label><select id="request-status" value={detailQuery.data.request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: selectedRequestId, status: event.target.value as RequestStatus, details: note || undefined })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"><option value="pending_review">À traiter</option>{Object.entries(STATUS_LABELS).filter(([value]) => value !== "pending_review").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
+                <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="agent-note">Note interne</Label><Textarea id="agent-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. tarif revalidé auprès du GDS, bagage à confirmer…" className="min-h-24 rounded-xl" /><Button type="button" disabled={isBusy || !note.trim()} onClick={() => noteMutation.mutate({ sessionToken, requestId: selectedRequestId, note: note.trim() })} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white"><MessageSquare className="mr-2 h-4 w-4" /> Enregistrer la note</Button></div>
                 <div><p className="mb-2 text-sm font-black text-slate-900">Historique</p><div className="max-h-40 space-y-2 overflow-auto">{detailQuery.data.history.map((entry) => <div key={entry.id} className="rounded-lg bg-slate-50 p-2 text-xs"><span className="font-bold text-slate-800">{entry.action}</span><span className="ml-2 text-slate-500">{entry.changedBy} · {new Date(entry.createdAt).toLocaleString("fr-FR")}</span>{entry.details && <p className="mt-1 text-slate-600">{entry.details}</p>}</div>)}</div></div>
               </div>

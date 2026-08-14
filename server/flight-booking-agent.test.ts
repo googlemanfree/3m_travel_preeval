@@ -23,6 +23,8 @@ describe("flight booking agent workflow", () => {
     expect(router).toContain("getQueueSummary");
     expect(router).toContain("assignRequest");
     expect(router).toContain("updateStatus");
+    expect(router).toContain("updatePriority");
+    expect(router).toContain("priority: z.enum");
     expect(router).toContain("getScan");
   });
 
@@ -39,6 +41,9 @@ describe("flight booking agent workflow", () => {
     expect(agentDashboard).toContain("Tableau de bord agents");
     expect(agentDashboard).toContain("Affecter");
     expect(agentDashboard).toContain("Statut opérationnel");
+    expect(agentDashboard).toContain("Filtrer par priorité");
+    expect(agentDashboard).toContain("exportCsv");
+    expect(agentDashboard).toContain("CSV");
     expect(checkout).toContain("Le tarif et la disponibilité seront revalidés par un agent");
   });
 });

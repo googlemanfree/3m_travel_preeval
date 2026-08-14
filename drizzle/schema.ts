@@ -498,6 +498,7 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   // Identifiants
   email: varchar("email", { length: 320 }).notNull().unique(),
   adminType: mysqlEnum("adminType", ["evaluation", "accompagnement", "procedures"]).notNull(),
+  role: mysqlEnum("role", ["admin", "super_admin"]).default("admin").notNull(),
   passwordHash: varchar("passwordHash", { length: 255 }),  // Mot de passe hashé (bcrypt) - optionnel si OTP
   // OTP
   otpCode: varchar("otpCode", { length: 6 }),  // Code OTP actuel
@@ -1475,6 +1476,8 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   flightId: varchar("flightId", { length: 255 }).notNull(),
   flightData: json("flightData").notNull(),
   passengerData: json("passengerData").notNull(),
+  candidatePhone: varchar("candidatePhone", { length: 32 }),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
   status: mysqlEnum("status", ["pending_review", "assigned", "needs_info", "revalidated", "awaiting_payment", "issued", "cancelled"]).default("pending_review").notNull(),
   assignedAgentEmail: varchar("assignedAgentEmail", { length: 320 }),
   agentNotes: text("agentNotes"),
@@ -1487,6 +1490,21 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
 ]);
 export type FlightBookingRequest = typeof flightBookingRequests.$inferSelect;
 export type InsertFlightBookingRequest = typeof flightBookingRequests.$inferInsert;
+
+export const flightBookingNotifications = mysqlTable("flight_booking_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  requestId: int("requestId").notNull(),
+  channel: mysqlEnum("channel", ["email", "whatsapp"]).notNull(),
+  recipient: varchar("recipient", { length: 320 }).notNull(),
+  status: mysqlEnum("status", ["sent", "failed", "skipped"]).notNull(),
+  statusValue: varchar("statusValue", { length: 64 }).notNull(),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_flight_notifications_request").on(table.requestId, table.createdAt),
+]);
+export type FlightBookingNotification = typeof flightBookingNotifications.$inferSelect;
+export type InsertFlightBookingNotification = typeof flightBookingNotifications.$inferInsert;
 
 export const flightBookingRequestHistory = mysqlTable("flight_booking_request_history", {
   id: int("id").autoincrement().primaryKey(),
