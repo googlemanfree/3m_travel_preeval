@@ -2408,3 +2408,13 @@
 ## Partage WhatsApp du résultat d’évaluation Canada (v157)
 - [x] Créer le lien de partage WhatsApp prérempli à côté du téléchargement PDF dans la page `/evaluation-canada`
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Copie du lien d’évaluation Canada dans le presse-papiers (v158)
+- [ ] Créer la fonction de copie du lien de la page d’évaluation dans le presse-papiers avec toast de confirmation
+- [ ] Intégrer le bouton de copie à côté du partage WhatsApp et du téléchargement PDF sur `/evaluation-canada`
+- [ ] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Filigrane officiel et en-tête formel sur tous les PDF exportés (v159)
+- [x] Créer le module utilitaire de génération de PDF avec filigrane « 3M Travel Agency » et en-tête d’agence sécurisé
+- [x] Appliquer le modèle unifié aux exports existants (rapports d’évaluation, rapports budgétaires, reçus A5)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
