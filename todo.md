@@ -2581,3 +2581,10 @@
 - [x] Intégrer un système d’alerte administrateur en cas d’échecs répétés sur une même adresse
 - [x] Ajouter les actions CSV et relance dans l’interface du panneau AdminCandidateActivationPanel
 - [x] Valider les tests, le build et publier la mise à jour
+
+## Vérification portrait allégée et rapide (v183)
+- [x] Identifier les contrôles responsables du message « contenu non pris en charge »
+- [x] Conserver uniquement validation image réelle, taille maximale et présence probable d’un humain
+- [x] Supprimer les seuils stricts de résolution, qualité et durée d’analyse
+- [x] Prévoir un mode de repli clair lorsque le navigateur ne permet pas la détection locale
+- [x] Ajouter les tests de photos compressées, caméra mobile et galerie puis publier

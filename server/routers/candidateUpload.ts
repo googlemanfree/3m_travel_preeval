@@ -98,8 +98,8 @@ function validatePortrait(file: Express.Multer.File): { width: number; height: n
   }
   const width = Number(dimensions.width || 0);
   const height = Number(dimensions.height || 0);
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 96 || height < 96) {
-    throw new Error("Le portrait doit faire au moins 96 × 96 pixels");
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+    throw new Error("Les dimensions du portrait sont illisibles");
   }
   if (width > 8000 || height > 8000) {
     throw new Error("Les dimensions du portrait sont trop élevées");

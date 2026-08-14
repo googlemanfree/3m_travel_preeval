@@ -90,10 +90,12 @@ export function AvatarCropperModal({ isOpen, imageSrc, onClose, onCropComplete }
 
     canvas.toBlob((blob) => {
       if (!blob) return;
-      const croppedFile = new File([blob], "avatar_cropped.webp", { type: "image/webp" });
+      // JPEG est mieux pris en charge par les caméras et WebViews mobiles que
+      // WebP, tout en restant accepté par la validation serveur.
+      const croppedFile = new File([blob], "avatar_cropped.jpg", { type: "image/jpeg" });
       onCropComplete(croppedFile);
       onClose();
-    }, "image/webp", 0.92);
+    }, "image/jpeg", 0.86);
   };
 
   return (

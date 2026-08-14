@@ -81,7 +81,7 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
   async function verifyAndPublish(file: File, method: "camera" | "gallery") {
     setIsChecking(true);
     setVerificationState("checking");
-    setMessage("Analyse du visage en cours : vérification de la netteté et du nombre de personnes…");
+    setMessage("Vérification rapide du portrait en cours…");
     try {
       const result = await verifyHumanPortrait(file);
       if (!result.accepted) {
@@ -92,8 +92,8 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
       }
       const preview = await fileToDataUrl(file);
       setVerificationState("success");
-      setMessage("Portrait humain vérifié. Vous pouvez finaliser votre inscription.");
-      toast.success("Portrait humain vérifié.");
+      setMessage(result.faceCount === 1 ? "Portrait accepté. Vous pouvez finaliser votre inscription." : "Portrait reçu. Vous pouvez finaliser votre inscription.");
+      toast.success("Portrait accepté.");
       onVerified({ ...result, file, preview, method });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "La vérification du portrait a échoué.";
@@ -111,9 +111,9 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
       setMessage("Sélectionnez une image JPG, PNG ou WebP.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size <= 0 || file.size > 5 * 1024 * 1024) {
       setVerificationState("error");
-      setMessage("La photo doit faire moins de 5 Mo.");
+      setMessage("La photo doit être lisible et faire moins de 5 Mo.");
       return;
     }
     setPendingMethod(method);

@@ -10,7 +10,7 @@ describe("portrait review and recovery workflow", () => {
   it("exposes an animated, accessible detection state", () => {
     const source = read("client/src/components/PortraitCapture.tsx");
     expect(source).toContain("verificationState");
-    expect(source).toContain("Analyse du visage en cours");
+    expect(source).toContain("Vérification rapide du portrait en cours");
     expect(source).toContain("animate-pulse");
     expect(source).toContain('aria-live="polite"');
   });
@@ -26,12 +26,13 @@ describe("portrait review and recovery workflow", () => {
   it("accepts compressed or low-quality portraits without restoring the 8 Ko gate", () => {
     const client = read("client/src/lib/portraitVerification.ts");
     const upload = read("server/routers/candidateUpload.ts");
-    expect(client).toContain("naturalWidth < 96");
-    expect(client).toContain("areaRatio < 0.008");
-    expect(client).toContain("confidence < 0.45");
+    expect(client).not.toContain("naturalWidth < 96");
+    expect(client).toContain("faceCount === 0");
+    expect(client).toContain("areaRatio < 0.001");
+    expect(client).toContain("confidence < 0.2");
     expect(upload).not.toContain("file.size < 8 * 1024");
     expect(upload).toContain("file.size <= 0 || file.size > 5 * 1024 * 1024");
-    expect(upload).toContain("width < 96 || height < 96");
+    expect(upload).not.toContain("width < 96 || height < 96");
   });
 
   it("keeps manual portrait review behind the admin session check", () => {
