@@ -2530,3 +2530,15 @@
 - [x] Corriger le retour générique silencieux quand aucun compte ne correspond
 - [x] Exécuter le reset des comptes confirmés et vérifier l’obligation de changement au premier accès
 - [x] Tester et publier la correction sans exposer de mot de passe
+
+## Délivrabilité des mots de passe temporaires (v177)
+- [x] Remplacer le transport Resend bloqué par le domaine non vérifié par un canal SMTP exclusif et opérationnel
+- [x] Garantir l’envoi effectif des e-mails avec les identifiants temporaires aux comptes administrateurs
+- [x] Ajouter un mécanisme de secours par modale dans le tableau admin si une livraison rencontre un obstacle de domaine, permettant à l’administrateur de récupérer ses identifiants immédiatement
+- [x] Valider, sauvegarder et publier la mise à jour complète de délivrabilité admin
+
+## Délivrabilité des mots de passe temporaires par e-mail et modale de secours (v177)
+- [x] Analyser les journaux de livraison et identifier le rejet Resend pour domaine non vérifié
+- [x] S’appuyer sur le canal SMTP configuré pour garantir la livraison sans erreur de domaine
+- [x] Ajouter dans le tableau admin une modale de secours affichant les identifiants temporaires en clair si une restriction empêche l’envoi e-mail, garantissant que l’administrateur accède immédiatement à ses accès
+- [x] Tester le flux complet et publier la mise à jour

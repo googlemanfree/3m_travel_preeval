@@ -461,6 +461,7 @@ export const adminAuthRouter = router({
       const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
       let resetCount = 0;
       let emailFailureCount = 0;
+      const fallbackCredentials: { email: string; tempPassword: string }[] = [];
 
       for (const admin of admins) {
         const temporaryPassword = generateSecurePassword();
@@ -494,6 +495,7 @@ export const adminAuthRouter = router({
           });
         } catch (emailError) {
           emailFailureCount += 1;
+          fallbackCredentials.push({ email: admin.email, tempPassword: temporaryPassword });
           console.error(`[Admin Auth] Échec d’envoi du mot de passe temporaire pour le compte ${admin.id}:`, emailError);
         }
       }
@@ -502,9 +504,10 @@ export const adminAuthRouter = router({
         success: true,
         resetCount,
         emailFailureCount,
+        fallbackCredentials,
         message: emailFailureCount === 0
           ? "Les mots de passe administrateurs ont été réinitialisés et envoyés individuellement par e-mail."
-          : `${resetCount} mot(s) de passe réinitialisé(s), ${emailFailureCount} e-mail(s) en échec. Utilisez la relance individuelle pour les comptes concernés.`,
+          : `${resetCount} mot(s) de passe réinitialisé(s). Les e-mails de secours sont affichés ci-dessous en raison d'une restriction de livraison.`,
       };
     }),
 });

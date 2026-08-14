@@ -688,12 +688,18 @@ export default function AdminDashboard() {
     },
   });
 
+  const [resetModalData, setResetModalData] = useState<{ count: number; credentials: { email: string; tempPassword: string }[] } | null>(null);
+
   const resetAllPasswordsMutation = trpc.adminAuth.resetAllPasswords.useMutation({
     onSuccess: (result) => {
-      toast({ title: "Réinitialisation envoyée", description: result.message });
-      sessionStorage.removeItem("adminSessionToken");
-      localStorage.removeItem("adminSessionToken");
-      navigate("/admin/login");
+      if (result.fallbackCredentials && result.fallbackCredentials.length > 0) {
+        setResetModalData({ count: result.resetCount, credentials: result.fallbackCredentials });
+      } else {
+        toast({ title: "Réinitialisation envoyée", description: result.message });
+        sessionStorage.removeItem("adminSessionToken");
+        localStorage.removeItem("adminSessionToken");
+        navigate("/admin/login");
+      }
     },
     onError: (error) => {
       toast({ title: "Réinitialisation impossible", description: error.message, variant: "destructive" });
@@ -905,6 +911,50 @@ export default function AdminDashboard() {
             <strong>{stats.agency}</strong> dossiers agence
           </span>
         </div>
+
+        {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
+        {resetModalData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between border-b pb-3">
+                <h3 className="font-bold text-lg text-red-600 flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5" />
+                  Réinitialisation effectuée (Alerte e-mail)
+                </h3>
+                <button onClick={() => { setResetModalData(null); navigate("/admin/login"); }} className="text-gray-400 hover:text-gray-600 text-sm font-bold">✕</button>
+              </div>
+              <p className="text-sm text-gray-600">
+                Les mots de passe des {resetModalData.count} comptes administrateurs ont été réinitialisés avec succès, mais les e-mails n’ont pas pu être envoyés automatiquement en raison de la configuration du domaine d’expédition.
+              </p>
+              <p className="text-xs font-semibold text-gray-800 bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                ⚠️ Notez précieusement ces mots de passe temporaires avant de fermer cette fenêtre. Ils ne seront plus affichés.
+              </p>
+              <div className="space-y-2 max-h-60 overflow-y-auto border rounded-xl p-3 bg-gray-50">
+                {resetModalData.credentials.map((cred, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white p-2.5 rounded-lg border shadow-sm text-sm">
+                    <span className="font-medium text-gray-800">{cred.email}</span>
+                    <code className="bg-gray-100 text-blue-700 font-mono px-2.5 py-1 rounded text-xs select-all font-bold">
+                      {cred.tempPassword}
+                    </code>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-end pt-2">
+                <Button
+                  onClick={() => {
+                    setResetModalData(null);
+                    sessionStorage.removeItem("adminSessionToken");
+                    localStorage.removeItem("adminSessionToken");
+                    navigate("/admin/login");
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-xl text-sm"
+                >
+                  J'ai noté mes identifiants, aller à la connexion
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Widget : répartition des candidats par pays */}
         <Card className="border-0 shadow-sm overflow-hidden hover:-translate-y-0.5">

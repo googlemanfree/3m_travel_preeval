@@ -67,33 +67,29 @@ export const adminPasswordResetRouter = router({
       const passwordHash = await bcrypt.hash(temporaryPassword, 12);
       const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
 
-      try {
-        await sendEmail({
-          to: admin.email,
-          subject: "Votre mot de passe temporaire — 3M Travel",
-          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
-            <h2 style="color:#1e40af">Mot de passe temporaire administrateur</h2>
-            <p>Bonjour ${admin.fullName || admin.email},</p>
-            <p>Voici votre mot de passe temporaire pour accéder à l’espace administrateur :</p>
-            <p><strong>Adresse :</strong> ${admin.email}</p>
-            <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
-            <p>Après connexion, vous devrez obligatoirement créer un nouveau mot de passe personnel.</p>
-            <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>
-          </div>`,
-        });
+      await sendEmail({
+        to: admin.email,
+        subject: "Votre mot de passe temporaire — 3M Travel",
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
+          <h2 style="color:#1e40af">Mot de passe temporaire administrateur</h2>
+          <p>Bonjour ${admin.fullName || admin.email},</p>
+          <p>Voici votre mot de passe temporaire pour accéder à l’espace administrateur :</p>
+          <p><strong>Adresse :</strong> ${admin.email}</p>
+          <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
+          <p>Après connexion, vous devrez obligatoirement créer un nouveau mot de passe personnel.</p>
+          <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>
+        </div>`,
+      });
 
-        await db.update(adminAccounts).set({
-          passwordHash,
-          requiresPasswordChange: true,
-          passwordChangedAt: null,
-          resetToken: null,
-          resetTokenExpiresAt: null,
-          sessionToken: null,
-          sessionExpiresAt: null,
-        }).where(eq(adminAccounts.id, admin.id));
-      } catch (emailError) {
-        console.error(`[Admin Password Reset] Temporary password email failed for admin ${admin.id}:`, emailError);
-      }
+      await db.update(adminAccounts).set({
+        passwordHash,
+        requiresPasswordChange: true,
+        passwordChangedAt: null,
+        resetToken: null,
+        resetTokenExpiresAt: null,
+        sessionToken: null,
+        sessionExpiresAt: null,
+      }).where(eq(adminAccounts.id, admin.id));
 
       return { success: true, message: genericMessage };
     }),
