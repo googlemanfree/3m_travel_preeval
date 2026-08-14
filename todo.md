@@ -2445,3 +2445,9 @@
 - [x] Créer un module d’import et de rattachement pour les anciens candidats Luxembourg avec génération de comptes associés
 - [x] Mettre en place le pipeline d’évaluation sous 48 heures produisant un rapport PDF complet, envoyé automatiquement par e-mail et accessible dans l’Espace Client
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Cloche de notifications pour le rapport PDF d’évaluation (v165)
+- [x] Créer le composant de cloche avec badge de notification non lue dans l’Espace Client
+- [x] Relier la notification à la disponibilité effective du rapport PDF d’évaluation de 48h
+- [x] Permettre au candidat d’ouvrir directement le PDF et de marquer l’alerte comme lue
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
