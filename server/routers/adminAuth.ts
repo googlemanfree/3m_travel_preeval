@@ -432,6 +432,74 @@ export const adminAuthRouter = router({
 
       return { success: true, message: "Nouveau mot de passe envoyé par email." };
     }),
+
+  /**
+   * Réinitialise les identifiants de tous les comptes admin.
+   * Aucun mot de passe n’est retourné : chaque mot de passe temporaire est
+   * transmis uniquement à l’adresse e-mail déjà enregistrée du compte.
+   */
+  resetAllPasswords: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const admins = await db.select().from(adminAccounts);
+      if (admins.length === 0) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte administrateur à réinitialiser." });
+      }
+
+      const loginUrl = `${process.env.APP_URL ?? "https://3mtravelagency.click"}/admin/login`;
+      let resetCount = 0;
+      let emailFailureCount = 0;
+
+      for (const admin of admins) {
+        const temporaryPassword = generateSecurePassword();
+        const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+
+        await db.update(adminAccounts).set({
+          passwordHash,
+          requiresPasswordChange: true,
+          passwordChangedAt: null,
+          resetToken: null,
+          resetTokenExpiresAt: null,
+          sessionToken: null,
+          sessionExpiresAt: null,
+        }).where(eq(adminAccounts.id, admin.id));
+        resetCount += 1;
+
+        try {
+          await sendEmail({
+            to: admin.email,
+            subject: "🔐 Réinitialisation de votre accès administrateur — 3M Travel",
+            html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#172033">
+              <h2 style="color:#1e40af">Réinitialisation de votre accès administrateur</h2>
+              <p>Bonjour ${admin.fullName || admin.email},</p>
+              <p>Le mot de passe de votre compte administrateur 3M Travel a été réinitialisé par un administrateur autorisé.</p>
+              <p><strong>Adresse :</strong> ${admin.email}</p>
+              <p><strong>Mot de passe temporaire :</strong> <code style="background:#f3f4f6;padding:6px 8px;border-radius:6px">${temporaryPassword}</code></p>
+              <p>Vous devrez choisir un nouveau mot de passe dès votre première connexion.</p>
+              <p><a href="${loginUrl}" style="display:inline-block;background:#1e40af;color:#fff;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:700">Se connecter</a></p>
+              <p style="color:#6b7280;font-size:12px">Ne partagez jamais ce message. Si vous n’êtes pas à l’origine de cette demande, contactez la direction.</p>
+            </div>`,
+          });
+        } catch (emailError) {
+          emailFailureCount += 1;
+          console.error(`[Admin Auth] Échec d’envoi du mot de passe temporaire pour le compte ${admin.id}:`, emailError);
+        }
+      }
+
+      return {
+        success: true,
+        resetCount,
+        emailFailureCount,
+        message: emailFailureCount === 0
+          ? "Les mots de passe administrateurs ont été réinitialisés et envoyés individuellement par e-mail."
+          : `${resetCount} mot(s) de passe réinitialisé(s), ${emailFailureCount} e-mail(s) en échec. Utilisez la relance individuelle pour les comptes concernés.`,
+      };
+    }),
 });
 
 /**

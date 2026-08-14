@@ -2493,3 +2493,12 @@
 - [x] Supprimer les différences d’interface ou de procédures fondées sur un sous-rôle non demandé
 - [x] Ajouter les tests d’autorisation pour administrateurs égaux et refus des comptes non admin
 - [x] Vérifier TypeScript, la suite Vitest, les routes admin et publier la correction
+
+## Administration des comptes et réinitialisation globale (v172)
+- [x] Vérifier que fabienbah203@gmail.com est admin sans créer de doublon
+- [x] Ajouter une procédure serveur admin-only pour réinitialiser tous les mots de passe
+- [x] Générer automatiquement un mot de passe temporaire distinct pour chaque compte
+- [x] Envoyer chaque identifiant temporaire par e-mail sans exposer les mots de passe dans l’interface ou les logs
+- [x] Invalider les sessions existantes et imposer le changement de mot de passe à la première connexion
+- [x] Ajouter les tests d’autorisation, de non-doublonnage et d’envoi sécurisé puis publier
+- [ ] Exécuter la réinitialisation globale depuis une session administrateur active et confirmer les e-mails de livraison sans afficher les mots de passe

@@ -25,6 +25,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { trpc } from "@/lib/trpc";
+
+function getAdminSessionToken() {
+  if (typeof window === "undefined") return "";
+  return sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "";
+}
 
 interface Admin {
   id: number;
@@ -103,6 +109,28 @@ export default function AdminsList() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isResendOpen, setIsResendOpen] = useState(false);
+  const resetAllPasswords = trpc.adminAuth.resetAllPasswords.useMutation({
+    onSuccess: (result) => {
+      window.alert(result.message);
+      sessionStorage.removeItem("adminSessionToken");
+      localStorage.removeItem("adminSessionToken");
+      window.location.assign("/admin/login");
+    },
+    onError: (error) => window.alert(error.message),
+  });
+
+  const handleResetAllPasswords = () => {
+    const confirmed = window.confirm(
+      "Réinitialiser les mots de passe de tous les administrateurs ? Chaque compte recevra un mot de passe temporaire par e-mail et devra le changer à la prochaine connexion.",
+    );
+    if (!confirmed) return;
+    const sessionToken = getAdminSessionToken();
+    if (!sessionToken) {
+      window.alert("Session administrateur introuvable. Veuillez vous reconnecter.");
+      return;
+    }
+    resetAllPasswords.mutate({ sessionToken });
+  };
 
   // Apply filters
   React.useEffect(() => {
@@ -149,13 +177,24 @@ export default function AdminsList() {
               Gérez les administrateurs avec un rôle et des permissions communes
             </p>
           </div>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => setIsInviteOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter Admin
-          </Button>
+          <div className="flex flex-wrap gap-3 justify-end">
+            <Button
+              variant="outline"
+              className="border-red-200 text-red-700 hover:bg-red-50"
+              onClick={handleResetAllPasswords}
+              disabled={resetAllPasswords.isPending}
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              {resetAllPasswords.isPending ? "Réinitialisation…" : "Réinitialiser tous les mots de passe"}
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setIsInviteOpen(true)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter Admin
+            </Button>
+          </div>
         </motion.div>
 
         {/* Stats */}
