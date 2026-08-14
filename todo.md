@@ -2334,3 +2334,8 @@
 - [x] Créer le gestionnaire de notifications push (API Notification du navigateur + cloche de notifications in-app)
 - [x] Déclencher une notification push dès qu’un document est validé par l’admin ou qu’un rendez-vous est confirmé
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Tableau de bord analytique pour la direction (v142)
+- [x] Créer la procédure tRPC d’agrégation des volumes de dossiers par destination et par statut pour la direction
+- [x] Intégrer l’interface graphique analytique dans le panel Super Administrateur / Direction
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
