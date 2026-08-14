@@ -318,7 +318,10 @@ export default function EvaluationSpace() {
           )}
           {myDossierData?.data?.dossierStatus && (
             <div className="mb-6">
-              <DossierProgressTimeline dossierStatus={myDossierData.data.dossierStatus} />
+              <DossierProgressTimeline
+                dossierStatus={myDossierData.data.dossierStatus}
+                dossierKey={myDossierData.data.application?.dossierNumber || dossierNumber || "mon-dossier"}
+              />
             </div>
           )}
           <Card className="p-8">
@@ -429,7 +432,10 @@ export default function EvaluationSpace() {
           {/* Suivi réel du dossier */}
           {myDossierData?.data?.dossierStatus && (
             <div className="mb-6">
-              <DossierProgressTimeline dossierStatus={myDossierData.data.dossierStatus} />
+              <DossierProgressTimeline
+                dossierStatus={myDossierData.data.dossierStatus}
+                dossierKey={myDossierData.data.application?.dossierNumber || dossierNumber || "mon-dossier"}
+              />
             </div>
           )}
 

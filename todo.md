@@ -2167,3 +2167,6 @@
 - [x] Synchroniser une timeline réelle à cinq étapes avec le statut administrateur
 
 - [x] Corriger le contrat de test de l’espace client après le marqueur EOF parasite
+
+- [x] Ajouter un badge et une notification visuelle lorsqu’une nouvelle étape de dossier est détectée
+- [x] Mémoriser l’étape déjà consultée pour éviter de répéter l’alerte

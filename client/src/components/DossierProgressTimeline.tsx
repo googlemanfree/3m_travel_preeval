@@ -1,4 +1,5 @@
-import { CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BellRing, CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
 
 /**
  * Timeline de progression du dossier — reflète le vrai statut fixé par
@@ -60,15 +61,87 @@ function getStageIndex(status: string): number {
   return idx === -1 ? 0 : idx;
 }
 
-export default function DossierProgressTimeline({ dossierStatus }: { dossierStatus: string }) {
+function getStageLabel(status: string): string {
+  return STAGE_GROUPS.find((stage) => stage.statuses.includes(status))?.label || "Nouvelle étape";
+}
+
+function getSeenStatusKey(dossierKey: string): string {
+  return `3m-travel:dossier-status-seen:${dossierKey}`;
+}
+
+export default function DossierProgressTimeline({
+  dossierStatus,
+  dossierKey = "default",
+}: {
+  dossierStatus: string;
+  dossierKey?: string;
+}) {
   const isRefused = dossierStatus === "refuse";
   const currentStageIndex = getStageIndex(dossierStatus);
+  const currentStageLabel = getStageLabel(dossierStatus);
   const message = STAGE_MESSAGES[dossierStatus] || "Votre dossier progresse — nous vous tiendrons informé à chaque étape.";
+  const [hasNewStage, setHasNewStage] = useState(false);
+
+  useEffect(() => {
+    const storageKey = getSeenStatusKey(dossierKey);
+    try {
+      const seenStatus = window.localStorage.getItem(storageKey);
+      if (seenStatus === null) {
+        window.localStorage.setItem(storageKey, dossierStatus);
+        setHasNewStage(false);
+      } else {
+        setHasNewStage(seenStatus !== dossierStatus);
+      }
+    } catch {
+      setHasNewStage(false);
+    }
+  }, [dossierKey, dossierStatus]);
+
+  const markStageAsRead = () => {
+    setHasNewStage(false);
+    try {
+      window.localStorage.setItem(getSeenStatusKey(dossierKey), dossierStatus);
+    } catch {
+      // localStorage may be unavailable in private browsing; the visual state still updates.
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h3 className="text-lg font-bold text-gray-900 mb-1">Suivi de votre dossier</h3>
-      <p className="text-sm text-gray-500 mb-6">Mis à jour en temps réel par notre équipe</p>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Suivi de votre dossier</h3>
+          <p className="text-sm text-gray-500">Mis à jour en temps réel par notre équipe</p>
+        </div>
+        {hasNewStage && (
+          <span
+            role="status"
+            aria-live="polite"
+            className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-bold text-orange-800"
+          >
+            <BellRing className="h-3.5 w-3.5" aria-hidden="true" />
+            Nouvelle étape
+          </span>
+        )}
+      </div>
+
+      {hasNewStage && (
+        <div
+          role="alert"
+          className="mb-6 mt-4 flex flex-col gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-sm text-orange-900 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p>
+            Votre dossier vient d’avancer à l’étape <strong>{currentStageLabel}</strong>.
+          </p>
+          <button
+            type="button"
+            onClick={markStageAsRead}
+            className="h-10 rounded-lg border border-orange-300 bg-white px-4 font-semibold text-orange-900 transition-colors hover:bg-orange-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+          >
+            Marquer comme lu
+          </button>
+        </div>
+      )}
 
       {/* Étapes */}
       <div className="flex items-start justify-between mb-6 relative">

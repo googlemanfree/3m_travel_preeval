@@ -27,7 +27,17 @@ describe("espace client professionnel", () => {
     expect(timeline).toContain('key: "documents"');
     expect(timeline).toContain('key: "soumission"');
     expect(timeline).toContain('key: "decision"');
-    expect(page).toContain("<DossierProgressTimeline dossierStatus={myDossierData.data.dossierStatus} />");
+    expect(page).toContain("dossierStatus={myDossierData.data.dossierStatus}");
     expect(router).toContain("dossierStatus: application.dossierStatus");
+  });
+
+  it("alerte d’une nouvelle étape et mémorise l’étape consultée", () => {
+    const timeline = read("client/src/components/DossierProgressTimeline.tsx");
+
+    expect(timeline).toContain("Nouvelle étape");
+    expect(timeline).toContain("Marquer comme lu");
+    expect(timeline).toContain("localStorage");
+    expect(timeline).toContain("3m-travel:dossier-status-seen:");
+    expect(timeline).toContain("dossierKey");
   });
 });
