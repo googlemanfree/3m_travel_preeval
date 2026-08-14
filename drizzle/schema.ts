@@ -1569,3 +1569,28 @@ export type AgencyDossierDocument = typeof agencyDossierDocuments.$inferSelect;
 export type InsertAgencyDossierDocument = typeof agencyDossierDocuments.$inferInsert;
 export type AgencyDossierDocumentAnnotation = typeof agencyDossierDocumentAnnotations.$inferSelect;
 export type InsertAgencyDossierDocumentAnnotation = typeof agencyDossierDocumentAnnotations.$inferInsert;
+
+/**
+ * Journal immuable des connexions et actions sensibles effectuées par les administrateurs.
+ * Ne stocke jamais de mot de passe, jeton, fichier privé ou contenu de formulaire complet.
+ */
+export const adminAuditLogs = mysqlTable("admin_audit_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  adminAccountId: int("adminAccountId"),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  action: varchar("action", { length: 120 }).notNull(),
+  category: varchar("category", { length: 40 }).notNull(),
+  resourceType: varchar("resourceType", { length: 80 }),
+  resourceId: varchar("resourceId", { length: 120 }),
+  outcome: mysqlEnum("outcome", ["success", "failure"]).default("success").notNull(),
+  details: text("details"),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  userAgent: varchar("userAgent", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_admin_audit_created").on(table.createdAt),
+  index("idx_admin_audit_admin_created").on(table.adminAccountId, table.createdAt),
+  index("idx_admin_audit_action_created").on(table.action, table.createdAt),
+]);
+export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
+export type InsertAdminAuditLog = typeof adminAuditLogs.$inferInsert;

@@ -6,7 +6,16 @@ const smtpHost = process.env.SMTP_HOST;
 const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
-const smtpFrom = process.env.SMTP_FROM || process.env.RESEND_FROM_EMAIL || "hello@3mtravelagency.com";
+const smtpFrom = process.env.SMTP_FROM || "hello@3mtravelagency.com";
+
+/** Normalise les anciennes configurations Resend vers l’adresse officielle. */
+export function normalizeResendSender(value?: string | null): string {
+  const normalized = (value || "").replace(/^mailto:/i, "").trim().toLowerCase();
+  if (!normalized || normalized === "onboarding@resend.dev" || normalized.endsWith("@3mtravelagency.click")) {
+    return "hello@3mtravelagency.com";
+  }
+  return normalized;
+}
 
 console.log("[Email Config (SMTP-Only)] Host:", smtpHost || "missing", "User:", smtpUser || "missing");
 

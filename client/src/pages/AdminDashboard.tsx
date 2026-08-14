@@ -51,6 +51,7 @@ import {
   Upload,
   ExternalLink,
   ImagePlus,
+  ShieldAlert,
 } from "lucide-react";
 import {
   BarChart,
@@ -66,6 +67,7 @@ import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
+import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -1001,7 +1003,7 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className="grid w-full grid-cols-8 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -1009,6 +1011,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
             <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
             <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
+            <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
           </TabsList>
 
           <TabsContent value="rag" className="space-y-6">
@@ -1441,6 +1444,10 @@ export default function AdminDashboard() {
             </div>
           )}
         </Card>
+          </TabsContent>
+
+          <TabsContent value="audit" className="space-y-6">
+            <AdminAuditLogPanel sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">

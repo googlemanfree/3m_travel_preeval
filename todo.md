@@ -2542,3 +2542,12 @@
 - [x] S’appuyer sur le canal SMTP configuré pour garantir la livraison sans erreur de domaine
 - [x] Ajouter dans le tableau admin une modale de secours affichant les identifiants temporaires en clair si une restriction empêche l’envoi e-mail, garantissant que l’administrateur accède immédiatement à ses accès
 - [x] Tester le flux complet et publier la mise à jour
+
+## Journal d’audit administrateur (v178)
+- [x] Relire les règles de sécurité admin et de stockage avant l’implémentation
+- [x] Identifier les événements sensibles : connexions, déconnexions, mots de passe, dossiers, documents, statuts, paiements et exports
+- [x] Créer une table d’audit avec horodatage UTC, admin, action, ressource, résultat, IP et métadonnées minimisées
+- [x] Ajouter un enregistreur serveur centralisé non contournable par l’interface
+- [x] Ajouter la consultation admin avec recherche, filtres, pagination et détail sécurisé
+- [x] Empêcher les comptes non admin de lire ou modifier le journal et éviter les secrets dans les événements
+- [x] Ajouter les tests d’autorisation, d’écriture, d’intégrité et publier

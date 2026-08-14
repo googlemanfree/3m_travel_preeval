@@ -13,6 +13,7 @@ import { profileEvaluationRouter } from "./routers/profileEvaluation";
 import { contactRouter } from "./routers/contact";
 import { adminRouter } from "./routers/admin";
 import { adminAuthRouter } from "./routers/adminAuth";
+import { adminAuditRouter } from "./routers/adminAudit";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
@@ -112,6 +113,7 @@ export const appRouter = router({
   embassyNews: embassyNewsRouter,
   mediaLibrary: mediaLibraryRouter,
   adminAuth: adminAuthRouter,
+  adminAudit: adminAuditRouter,
   adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,

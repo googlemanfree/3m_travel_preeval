@@ -3,6 +3,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
 import { logger } from "./logger";
+import { findAdminByEmail, findAdminBySessionToken, recordAdminAuditFromContext } from "../services/adminAudit";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -33,7 +34,40 @@ const t = initTRPC.context<TrpcContext>().create({
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
+
+const ADMIN_ROUTE_RE = /(^|\.)(admin|adminAuth|adminPasswordReset|adminCandidateManagement|adminSavedViews|adminDossier|adminDashboardStats|adminNotifications|adminAudit|evaluationAdmin|evisaAdmin)(\.|$)/i;
+
+/**
+ * Audit transversal des routes admin. Les détails d’entrée ne sont jamais persistés :
+ * seuls le chemin, le type d’opération et les identifiants de ressource explicitement
+ * sûrs peuvent être enregistrés par les procédures spécialisées.
+ */
+const adminAuditMiddleware = t.middleware(async opts => {
+  const { path, type, input, ctx, next } = opts;
+  if (!ADMIN_ROUTE_RE.test(path)) return next();
+
+  const payload = (input && typeof input === "object") ? input as Record<string, unknown> : {};
+  const sessionToken = typeof payload.sessionToken === "string" ? payload.sessionToken : null;
+  const email = typeof payload.email === "string" ? payload.email : null;
+  const admin = sessionToken ? await findAdminBySessionToken(sessionToken) : (email ? await findAdminByEmail(email) : null);
+  const isAuthPath = path.startsWith("adminAuth.login") || path.startsWith("adminAuth.logout") || path.startsWith("adminAuth.changePassword");
+
+  const result = await next();
+  if (!isAuthPath && type !== "mutation") return result;
+
+  const ok = result.ok;
+  await recordAdminAuditFromContext(ctx, {
+    adminAccountId: admin?.id ?? null,
+    adminEmail: admin?.email ?? (email ?? "unknown-admin"),
+    action: `${type}:${path}`,
+    category: isAuthPath ? "auth" : "mutation",
+    outcome: ok ? "success" : "failure",
+    details: { procedure: path, operationType: type },
+  });
+  return result;
+});
+
+export const publicProcedure = t.procedure.use(adminAuditMiddleware);
 
 const requireUser = t.middleware(async opts => {
   const { ctx, next } = opts;
