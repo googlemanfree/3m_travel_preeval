@@ -77,14 +77,12 @@ export default function Register() {
       // Conserver uniquement le nécessaire pour terminer le profil sécurisé.
       localStorage.setItem("registrationEmail", form.email);
       localStorage.setItem("candidateId", String(data.candidateId));
-      if (data.candidateToken) {
-        sessionStorage.setItem("3m_candidate_token", data.candidateToken);
-      }
-      // Attendre 2 secondes avant de rediriger
+      // Aucun JWT candidat n’est créé avant la validation du lien d’activation.
+      sessionStorage.removeItem("3m_candidate_token");
+      // Attendre 2 secondes avant d’afficher l’écran d’activation
       setTimeout(() => {
-        toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
-        // Rediriger vers la page de complétion de profil
-        navigate(`/complete-profile?email=${encodeURIComponent(form.email)}`);
+        toast.success("Compte créé ! Un lien d’activation a été envoyé à votre adresse email.");
+        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
       }, 2000);
     },
     onError: (err) => {

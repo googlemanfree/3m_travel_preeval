@@ -47,33 +47,24 @@ export default function VerifyEmailLink() {
     },
   });
 
-  const resendVerificationEmail = async () => {
+  const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
+    onSuccess: () => {
+      setIsResending(false);
+      toast.success("Si le compte existe, un nouveau lien d’activation a été envoyé.");
+    },
+    onError: () => {
+      setIsResending(false);
+      toast.error("Impossible de renvoyer le lien pour le moment.");
+    },
+  });
+
+  const resendVerificationEmail = () => {
     if (!email.trim()) {
       toast.error("Veuillez entrer votre adresse email");
       return;
     }
     setIsResending(true);
-    try {
-      // Appeler la mutation pour renvoyer l'email
-      await new Promise((resolve) => {
-        const mutation = trpc.candidate.resendVerificationEmail.useMutation({
-          onSuccess: () => {
-            toast.success("Email de vérification renvoyé avec succès !");
-            setIsResending(false);
-            resolve(null);
-          },
-          onError: (err) => {
-            toast.error(err.message || "Erreur lors de l'envoi de l'email");
-            setIsResending(false);
-            resolve(null);
-          },
-        });
-        mutation.mutate({ email: email.toLowerCase().trim() });
-      });
-    } catch (error) {
-      console.error("Erreur lors du renvoi:", error);
-      setIsResending(false);
-    }
+    resendMutation.mutate({ email: email.toLowerCase().trim() });
   };
 
   useEffect(() => {
@@ -361,7 +352,7 @@ export default function VerifyEmailLink() {
                     />
                     <Button
                       onClick={resendVerificationEmail}
-                      disabled={isResending || !email.trim()}
+                      disabled={isResending || resendMutation.isPending || !email.trim()}
                       className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-2 rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isResending ? "Envoi en cours..." : "Renvoyer l'email"}

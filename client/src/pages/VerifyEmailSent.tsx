@@ -4,44 +4,30 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Mail, CheckCircle2, ArrowRight } from "lucide-react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function VerifyEmailSent() {
   const [, setLocation] = useLocation();
-  const [resendLoading, setResendLoading] = React.useState(false);
   const [resendSuccess, setResendSuccess] = React.useState(false);
+  const email = new URLSearchParams(window.location.search).get("email") || localStorage.getItem("registrationEmail") || "";
 
-  const handleResendEmail = async () => {
-    setResendLoading(true);
-    try {
-      // Récupérer l'email depuis les paramètres URL ou localStorage
-      const email = new URLSearchParams(window.location.search).get("email") || 
-                    localStorage.getItem("registrationEmail");
-      
-      if (!email) {
-        alert("Email non trouvé. Veuillez vous inscrire à nouveau.");
-        setLocation("/register");
-        return;
-      }
+  const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
+    onSuccess: () => {
+      setResendSuccess(true);
+      setTimeout(() => setResendSuccess(false), 3000);
+      toast.success("Si le compte existe, un nouveau lien d’activation a été envoyé.");
+    },
+    onError: () => toast.error("Impossible de renvoyer le lien pour le moment. Réessayez plus tard."),
+  });
 
-      // Appeler l'API pour renvoyer l'email
-      const response = await fetch("/api/auth/resend-verification-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setResendSuccess(true);
-        setTimeout(() => setResendSuccess(false), 3000);
-      } else {
-        alert("Erreur lors du renvoi de l'email. Veuillez réessayer.");
-      }
-    } catch (error) {
-      console.error("Resend email error:", error);
-      alert("Erreur lors du renvoi de l'email.");
-    } finally {
-      setResendLoading(false);
+  const handleResendEmail = () => {
+    if (!email) {
+      toast.error("Adresse e-mail introuvable. Veuillez recommencer l’inscription.");
+      setLocation("/register");
+      return;
     }
+    resendMutation.mutate({ email });
   };
 
   return (
@@ -131,10 +117,10 @@ export default function VerifyEmailSent() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleResendEmail}
-              disabled={resendLoading}
+              disabled={resendMutation.isPending}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resendLoading ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}
+              {resendMutation.isPending ? "Envoi en cours..." : "Renvoyer l'email de confirmation"}
             </motion.button>
 
             <motion.button

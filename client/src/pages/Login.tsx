@@ -59,9 +59,10 @@ export default function Login() {
       navigate(from ? decodeURIComponent(from) : "/dashboard");
     },
     onError: (err) => {
-      // Si l'email n'est pas vérifié, proposer de renvoyer le code
-      if (err.message.includes("valider votre adresse e-mail")) {
-        toast.error(err.message, { duration: 6000 });
+      if (err.message === "EMAIL_VERIFICATION_REQUIRED") {
+        setResendEmail(email);
+        setShowResendModal(true);
+        toast.error("Veuillez activer votre compte avec le lien reçu par e-mail avant de vous connecter.", { duration: 6000 });
       } else {
         toast.error(err.message);
       }

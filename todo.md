@@ -2551,3 +2551,18 @@
 - [x] Ajouter la consultation admin avec recherche, filtres, pagination et détail sécurisé
 - [x] Empêcher les comptes non admin de lire ou modifier le journal et éviter les secrets dans les événements
 - [x] Ajouter les tests d’autorisation, d’écriture, d’intégrité et publier
+
+## Non-réception persistante des temporaires admin (v179)
+- [x] Vérifier les derniers statuts et erreurs de livraison sans exposer les secrets
+- [x] Confirmer les destinataires admin et le canal réellement utilisé en production
+- [x] Corriger le parcours de récupération si l’envoi n’est pas vérifiable
+- [x] Tester un envoi contrôlé et la redirection vers le nouveau mot de passe
+- [x] Publier le correctif et documenter l’action à effectuer par l’administrateur
+
+## Activation e-mail des comptes candidats (v180)
+- [x] Auditer les chemins d’inscription candidat et les vérifications existantes
+- [x] Ajouter un token d’activation à usage unique, expirant et stocké sous forme hachée
+- [x] Envoyer un lien d’activation via le canal SMTP configuré sans envoyer le mot de passe
+- [x] Bloquer la connexion et les ressources protégées tant que l’e-mail n’est pas confirmé
+- [x] Créer la page de validation, les états succès/échec et le renvoi anti-abus
+- [x] Ajouter les tests de sécurité, d’expiration, de non-réutilisation et de délivrabilité puis publier

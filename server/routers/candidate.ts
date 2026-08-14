@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 import { and, desc, eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
-import { randomInt } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import {
   Candidate,
   CandidateFile,
@@ -59,6 +59,15 @@ function verifyPortraitProof(token: string, candidateEmail: string, avatarUrl?: 
   } catch {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Le portrait n’est plus valide. Reprenez une photo puis réessayez." });
   }
+}
+
+export function hashVerificationToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+export function issueVerificationToken() {
+  const rawToken = randomBytes(32).toString("hex");
+  return { rawToken, tokenHash: hashVerificationToken(rawToken) };
 }
 
 // ─── Middleware : extraire le candidat depuis le header Authorization ─────────
@@ -114,6 +123,10 @@ export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }
     ? await getOrCreateCandidateForPlatformUser(ctx.user)
     : await getCandidateFromHeader((ctx.req as any)?.headers?.authorization as string | undefined);
 
+  if (!candidate.emailVerified) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "EMAIL_VERIFICATION_REQUIRED" });
+  }
+
   if (candidate.avatarVerificationStatus !== "verified" && !PORTRAIT_ONBOARDING_PATHS.has(path)) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Un portrait humain vérifié est obligatoire pour accéder à votre espace et à vos ressources." });
   }
@@ -149,15 +162,15 @@ export const candidateRouter = router({
       }
 
       const candidate = rows[0];
-      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      const { rawToken, tokenHash } = issueVerificationToken();
       const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
       await db.update(candidates)
-        .set({ verificationToken, verificationExpiresAt })
+        .set({ verificationToken: tokenHash, verificationExpiresAt })
         .where(eq(candidates.id, candidate.id));
 
       try {
-        await sendVerificationLink(candidate.email, candidate.fullName, verificationToken);
+        await sendVerificationLink(candidate.email, candidate.fullName, rawToken);
       } catch (err) {
         console.error("[ResendVerification] Email send failed:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de l'envoi de l'email." });
@@ -194,7 +207,7 @@ export const candidateRouter = router({
       const passwordHash = await bcrypt.hash(input.password, 12);
 
       // Générer un token de vérification unique
-      const verificationToken = crypto.randomUUID().replace(/-/g, "");
+      const { rawToken, tokenHash } = issueVerificationToken();
       const verificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 heures
 
       let candidateId: number;
@@ -214,7 +227,7 @@ export const candidateRouter = router({
           avatarVerificationReason: "Portrait humain détecté sur l’appareil du candidat.",
           avatarFaceCount: 1,
           avatarVerifiedAt: new Date(),
-          verificationToken,
+          verificationToken: tokenHash,
           verificationExpiresAt,
         });
 
@@ -238,14 +251,15 @@ export const candidateRouter = router({
 
       // Envoyer l'email de confirmation avec lien
       try {
-        await sendVerificationLink(input.email, input.fullName, verificationToken);
+        await sendVerificationLink(input.email, input.fullName, rawToken);
       } catch (err) {
         console.error("[Register] Email verification link send error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Compte créé, mais l’e-mail d’activation n’a pas pu être envoyé. Utilisez le renvoi d’activation." });
       }
 
       return {
         candidateId,
-        candidateToken: signCandidateToken(candidateId),
+        candidateToken: null,
         requiresEmailVerification: true,
         requiresPortrait: false,
         message: "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email.",
@@ -275,8 +289,9 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
       }
 
-      // Note: La vérification d'email n'est plus requise pour la connexion
-      // Les candidats peuvent se connecter immédiatement après l'inscription
+      if (!candidate.emailVerified) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "EMAIL_VERIFICATION_REQUIRED" });
+      }
 
       // Mettre à jour lastLoginAt
       await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
@@ -668,11 +683,8 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      console.log(`[verifyEmailLink] Searching for token: ${input.token.substring(0, 8)}...`);
-      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, input.token)).limit(1);
-      console.log(`[verifyEmailLink] Found ${rows.length} matching candidate(s)`);
+      const rows = await db.select().from(candidates).where(eq(candidates.verificationToken, hashVerificationToken(input.token))).limit(1);
       if (!rows.length) {
-        console.log(`[verifyEmailLink] No candidate found with token. Checking database...`);
         throw new TRPCError({ code: "NOT_FOUND", message: "Lien de vérification invalide ou expiré." });
       }
       const candidate = rows[0];
