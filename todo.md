@@ -2301,3 +2301,9 @@
 - [x] Créer le composant de badge de statut document (En attente, En analyse, Validé, Rejeté) avec couleurs normalisées
 - [x] Intégrer les badges dans les listes de pièces du centre documentaire (`AgencyDocumentsPanel.tsx`)
 - [x] Valider la compilation, les tests et publier la mise à jour
+
+## Extraction automatique OCR du passeport et pré-remplissage (v136)
+- [x] Créer le service serveur d’analyse optique et d’extraction MRZ des scans de passeport téléversés
+- [x] Exposer une procédure tRPC d’extraction et de proposition de pré-remplissage des informations du profil
+- [x] Intégrer l’interface de confirmation dans le dépôt documentaire ou l’espace candidat
+- [x] Valider la compilation, exécuter les tests et publier la mise à jour
