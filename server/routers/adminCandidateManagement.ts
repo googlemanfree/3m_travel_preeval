@@ -13,6 +13,7 @@ const candidateFilterSchema = z.object({
   paymentStatus: z.enum(["all", "paye", "en_attente", "non_paye"]).default("all"),
   scoreBand: z.enum(["all", "excellent", "bon", "moyen", "faible"]).default("all"),
   destination: z.string().trim().max(100).optional().default("all"),
+  portraitStatus: z.enum(["all", "missing", "pending", "verified", "rejected"]).default("all"),
   sortBy: z.enum(["createdAt", "fullName", "score"]).default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
@@ -36,6 +37,10 @@ type AdminCandidate = {
   createdAt: Date;
   documentsCount: number;
   source: "web" | "agence";
+  avatarUrl?: string | null;
+  avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
+  avatarVerificationReason?: string | null;
+  avatarFaceCount: number;
 };
 
 function toUiScoreBand(badge: string | null): "excellent" | "bon" | "moyen" | "faible" {
@@ -89,11 +94,16 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [online, agency, documents] = await Promise.all([
+  const [online, agency, documents, candidateRows] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(sourceLimit),
     db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(sourceLimit),
     db.select().from(clientDocuments).limit(Math.min(sourceLimit * 2, 10000)),
+    db.select().from(candidates).limit(sourceLimit),
   ]);
+  const candidateByEmail = new Map<string, typeof candidates.$inferSelect>();
+  for (const candidate of candidateRows as Array<typeof candidates.$inferSelect>) {
+    candidateByEmail.set(candidate.email.toLowerCase(), candidate);
+  }
   const documentCounts = new Map<string, number>();
   documents.forEach(document => documentCounts.set(document.candidateEmail.toLowerCase(), (documentCounts.get(document.candidateEmail.toLowerCase()) ?? 0) + 1));
 
@@ -112,6 +122,10 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
       createdAt: application.createdAt,
       documentsCount: documentCounts.get(application.email.toLowerCase()) ?? 0,
       source: "web" as const,
+      avatarUrl: candidateByEmail.get(application.email.toLowerCase())?.avatarUrl ?? null,
+      avatarVerificationStatus: candidateByEmail.get(application.email.toLowerCase())?.avatarVerificationStatus ?? "missing",
+      avatarVerificationReason: candidateByEmail.get(application.email.toLowerCase())?.avatarVerificationReason ?? null,
+      avatarFaceCount: candidateByEmail.get(application.email.toLowerCase())?.avatarFaceCount ?? 0,
     }) as AdminCandidate);
   const agencyCandidates: AdminCandidate[] = agency.map(dossier => ({
       id: `agency_${dossier.id}`,
@@ -128,24 +142,29 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
       createdAt: dossier.createdAt,
       documentsCount: documentCounts.get(dossier.email.toLowerCase()) ?? 0,
       source: "agence" as const,
+      avatarUrl: candidateByEmail.get(dossier.email.toLowerCase())?.avatarUrl ?? null,
+      avatarVerificationStatus: candidateByEmail.get(dossier.email.toLowerCase())?.avatarVerificationStatus ?? "missing",
+      avatarVerificationReason: candidateByEmail.get(dossier.email.toLowerCase())?.avatarVerificationReason ?? null,
+      avatarFaceCount: candidateByEmail.get(dossier.email.toLowerCase())?.avatarFaceCount ?? 0,
     }) as AdminCandidate);
-  let candidates: AdminCandidate[] = onlineCandidates.concat(agencyCandidates);
+  let candidateRecords: AdminCandidate[] = onlineCandidates.concat(agencyCandidates);
 
   const query = filter.search.toLowerCase();
-  if (query) candidates = candidates.filter(candidate => [candidate.fullName, candidate.email, candidate.applicationNumber, candidate.destination, candidate.visaType].some(value => value.toLowerCase().includes(query)));
-  if (filter.status !== "all") candidates = candidates.filter(candidate => candidate.status === filter.status);
-  if (filter.paymentStatus !== "all") candidates = candidates.filter(candidate => candidate.paymentStatus === filter.paymentStatus);
-  if (filter.scoreBand !== "all") candidates = candidates.filter(candidate => candidate.scoringBadge === filter.scoreBand);
-  if (filter.destination !== "all") candidates = candidates.filter(candidate => candidate.destination.toLowerCase() === filter.destination.toLowerCase());
+  if (query) candidateRecords = candidateRecords.filter(candidate => [candidate.fullName, candidate.email, candidate.applicationNumber, candidate.destination, candidate.visaType].some(value => value.toLowerCase().includes(query)));
+  if (filter.status !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.status === filter.status);
+  if (filter.paymentStatus !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.paymentStatus === filter.paymentStatus);
+  if (filter.scoreBand !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.scoringBadge === filter.scoreBand);
+  if (filter.destination !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.destination.toLowerCase() === filter.destination.toLowerCase());
+  if (filter.portraitStatus !== "all") candidateRecords = candidateRecords.filter(candidate => candidate.avatarVerificationStatus === filter.portraitStatus);
 
-  candidates.sort((left, right) => {
+  candidateRecords.sort((left, right) => {
     const direction = filter.sortDirection === "asc" ? 1 : -1;
     if (filter.sortBy === "score") return direction * (left.scoringTotal - right.scoringTotal);
     if (filter.sortBy === "fullName") return direction * left.fullName.localeCompare(right.fullName, "fr");
     return direction * (new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime());
   });
 
-  return candidates;
+  return candidateRecords;
 }
 
 export const adminCandidateManagementRouter = router({
@@ -172,8 +191,35 @@ export const adminCandidateManagementRouter = router({
       candidate.paymentStatus, candidate.documentsCount, candidate.source,
       new Date(candidate.createdAt).toLocaleString("fr-FR"),
     ].map(escapeCsvCell).join(","));
-    return { csv: `\uFEFF${headers.map(escapeCsvCell).join(",")}\n${rows.join("\n")}`, count: candidates.length };
+    return { csv: `\\uFEFF${headers.map(escapeCsvCell).join(",")}\\n${rows.join("\\n")}`, count: candidates.length };
   }),
+
+  reviewPortrait: publicProcedure
+    .input(z.object({
+      candidateId: z.string().regex(/^(online|agency)_\\d+$/),
+      decision: z.enum(["approve", "reject", "request_new"]),
+      reason: z.string().trim().max(500).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
+      if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun compte candidat lié à ce dossier." });
+      const [candidate] = await db.select({ id: candidates.id, avatarUrl: candidates.avatarUrl }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      if (input.decision === "approve" && !candidate.avatarUrl) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Impossible de valider un portrait absent." });
+      }
+      const status = input.decision === "approve" ? "verified" : input.decision === "reject" ? "rejected" : "pending";
+      const reason = input.reason || (input.decision === "approve" ? `Portrait validé manuellement par ${admin.email}.` : "Merci de reprendre votre portrait selon les consignes.");
+      await db.update(candidates).set({
+        avatarVerificationStatus: status,
+        avatarVerificationReason: reason,
+        avatarVerifiedAt: input.decision === "approve" ? new Date() : null,
+      }).where(eq(candidates.id, candidateId));
+      return { success: true, status, candidateId };
+    }),
 
   updateCandidate: publicProcedure
     .input(z.object({

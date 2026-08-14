@@ -2470,3 +2470,12 @@
 - [x] Bloquer côté serveur l’accès aux ressources premium/PDF tant qu’un portrait vérifié n’est pas enregistré
 - [x] Synchroniser l’état de vérification dans l’Espace Client et le back-office sans exposer les fichiers privés
 - [x] Ajouter les tests de validation, d’autorisation et de régression puis publier
+
+## Revue et reprise sécurisée du portrait humain (v169)
+- [x] Ajouter une animation de chargement et un état explicite pendant la détection du visage
+- [x] Afficher un résultat clair : portrait accepté, visage absent, plusieurs visages ou analyse indisponible
+- [x] Ajouter au panneau admin une liste des portraits en attente ou suspects avec aperçu privé
+- [x] Permettre à un administrateur autorisé de valider, rejeter ou demander une nouvelle photo avec motif
+- [x] Ajouter dans les paramètres candidat une action « Reprendre ma photo » par caméra ou galerie
+- [x] Réutiliser le jeton signé et les contrôles serveur pour chaque nouvelle photo
+- [x] Synchroniser le statut de revue côté client et admin, puis tester et publier

@@ -34,6 +34,7 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const [isChecking, setIsChecking] = useState(false);
+  const [verificationState, setVerificationState] = useState<"idle" | "checking" | "success" | "error">("idle");
   const [message, setMessage] = useState("Aucun portrait vérifié pour le moment.");
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -79,20 +80,24 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
 
   async function verifyAndPublish(file: File, method: "camera" | "gallery") {
     setIsChecking(true);
-    setMessage("Vérification du portrait en cours…");
+    setVerificationState("checking");
+    setMessage("Analyse du visage en cours : vérification de la netteté et du nombre de personnes…");
     try {
       const result = await verifyHumanPortrait(file);
       if (!result.accepted) {
+        setVerificationState("error");
         setMessage(result.reason);
         toast.error(result.reason);
         return;
       }
       const preview = await fileToDataUrl(file);
+      setVerificationState("success");
       setMessage("Portrait humain vérifié. Vous pouvez finaliser votre inscription.");
       toast.success("Portrait humain vérifié.");
       onVerified({ ...result, file, preview, method });
     } catch (error) {
       const reason = error instanceof Error ? error.message : "La vérification du portrait a échoué.";
+      setVerificationState("error");
       setMessage(reason);
       toast.error(reason);
     } finally {
@@ -102,10 +107,12 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
 
   function openCropper(file: File, method: "camera" | "gallery") {
     if (!file.type.startsWith("image/")) {
+      setVerificationState("error");
       setMessage("Sélectionnez une image JPG, PNG ou WebP.");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
+      setVerificationState("error");
       setMessage("La photo doit faire moins de 5 Mo.");
       return;
     }
@@ -113,7 +120,10 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
     void fileToDataUrl(file).then((dataUrl) => {
       setRawImageSrc(dataUrl);
       setCropperOpen(true);
-    }).catch(() => setMessage("Impossible de lire cette image."));
+    }).catch(() => {
+      setVerificationState("error");
+      setMessage("Impossible de lire cette image.");
+    });
   }
 
   function captureFromCamera() {
@@ -181,12 +191,19 @@ export function PortraitCapture({ disabled = false, onVerified }: PortraitCaptur
       )}
 
       {cameraError && <p className="text-xs font-medium text-red-700" role="alert">{cameraError}</p>}
-      <p className={`flex items-center gap-2 text-xs ${message.includes("vérifié") ? "font-semibold text-green-700" : "text-gray-600"}`} role="status" aria-live="polite">
-        {isChecking ? <Loader className="h-3.5 w-3.5 animate-spin" /> : message.includes("vérifié") ? <CheckCircle className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
-        {message}
-      </p>
+      <div className={`rounded-lg border p-3 ${verificationState === "checking" ? "border-blue-200 bg-blue-50" : verificationState === "success" ? "border-emerald-200 bg-emerald-50" : verificationState === "error" ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`} role="status" aria-live="polite">
+        <div className={`flex items-center gap-2 text-xs ${verificationState === "success" ? "font-semibold text-emerald-700" : verificationState === "error" ? "font-medium text-red-700" : "text-gray-700"}`}>
+          {verificationState === "checking" ? <Loader className="h-3.5 w-3.5 animate-spin" /> : verificationState === "success" ? <CheckCircle className="h-3.5 w-3.5" /> : verificationState === "error" ? <RotateCcw className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+          <span>{message}</span>
+        </div>
+        {verificationState === "checking" && (
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100" aria-label="Progression de la détection">
+            <div className="h-full w-2/3 animate-pulse rounded-full bg-blue-600" />
+          </div>
+        )}
+      </div>
       {message.includes("Aucun portrait") === false && !isChecking && !message.includes("vérifié") && (
-        <button type="button" className="inline-flex items-center text-xs font-semibold text-blue-700 hover:underline" onClick={() => setMessage("Aucun portrait vérifié pour le moment.")}>
+          <button type="button" className="inline-flex items-center text-xs font-semibold text-blue-700 hover:underline" onClick={() => { setVerificationState("idle"); setMessage("Aucun portrait vérifié pour le moment."); }}>
           <RotateCcw className="mr-1 h-3 w-3" /> Recommencer
         </button>
       )}

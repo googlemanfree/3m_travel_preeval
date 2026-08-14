@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Camera, Loader } from "lucide-react";
+import { Camera, CheckCircle2, Loader, RefreshCw } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
@@ -42,6 +42,7 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
       return;
     }
     setUploading(true);
+    setError("Analyse du portrait en cours…");
     try {
       const verification = await verifyHumanPortrait(file);
       if (!verification.accepted) throw new Error(verification.reason);
@@ -61,6 +62,7 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
         avatarUrl: data.fileUrl,
         portraitVerificationToken: data.portraitVerificationToken,
       });
+      setError("");
       onUpdated?.(result.avatarUrl);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la mise à jour de la photo.");
@@ -84,16 +86,21 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            aria-label="Changer la photo de profil"
+            aria-label="Reprendre la photo de profil"
             className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md transition-colors"
           >
             {uploading ? <Loader className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
           </button>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={handleFileSelect} className="hidden" />
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-700 hover:underline disabled:cursor-wait disabled:opacity-60">
+            {uploading ? <Loader className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            {uploading ? "Vérification en cours…" : "Reprendre ma photo"}
+          </button>
+          {!uploading && !error && avatarUrl && <span className="mt-1 flex items-center gap-1 text-[11px] text-emerald-700"><CheckCircle2 className="h-3 w-3" /> Portrait enregistré</span>}
         </>
       )}
 
-      {error && <p className="absolute top-full mt-1 left-1/2 -translate-x-1/2 text-xs text-red-600 whitespace-nowrap">{error}</p>}
+      {error && <p className="mt-1 max-w-56 text-xs leading-relaxed text-red-600" role="status" aria-live="polite">{error}</p>}
     </div>
   );
 }

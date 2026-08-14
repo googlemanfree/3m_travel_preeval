@@ -50,6 +50,7 @@ import {
 import { AISummary } from "@/components/AISummary";
 import { InterviewQuestions } from "@/components/InterviewQuestions";
 import { PDFExporter } from "@/components/PDFExporter";
+import AdminPortraitReviewPanel from "@/components/AdminPortraitReviewPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -79,6 +80,10 @@ interface Candidate {
   adminNotes?: string;
   documentsCount?: number;
   source?: "web" | "agence";
+  avatarUrl?: string | null;
+  avatarVerificationStatus: "missing" | "pending" | "verified" | "rejected";
+  avatarVerificationReason?: string | null;
+  avatarFaceCount: number;
 }
 
 // ─── MOCK DATA ───────────────────────────────────────────────────────────────
@@ -98,6 +103,10 @@ const mockCandidates: Candidate[] = [
     paymentStatus: "non_paye",
     createdAt: "2026-07-25",
     documentsCount: 0,
+    avatarUrl: null,
+    avatarVerificationStatus: "missing",
+    avatarVerificationReason: null,
+    avatarFaceCount: 0,
   },
   {
     id: 2,
@@ -113,6 +122,10 @@ const mockCandidates: Candidate[] = [
     paymentStatus: "paye",
     createdAt: "2026-07-24",
     documentsCount: 3,
+    avatarUrl: null,
+    avatarVerificationStatus: "pending",
+    avatarVerificationReason: null,
+    avatarFaceCount: 0,
   },
   {
     id: 3,
@@ -128,6 +141,10 @@ const mockCandidates: Candidate[] = [
     paymentStatus: "en_attente",
     createdAt: "2026-07-23",
     documentsCount: 1,
+    avatarUrl: null,
+    avatarVerificationStatus: "rejected",
+    avatarVerificationReason: "Photo à reprendre",
+    avatarFaceCount: 2,
   },
 ];
 
@@ -448,6 +465,7 @@ export default function CandidatesManager() {
       paymentStatus,
       scoreBand,
       destination: destinationFilter === "tous" ? "all" : destinationFilter,
+      portraitStatus: "all" as const,
       sortBy: sortBy as "createdAt" | "fullName" | "score",
       sortDirection: "desc" as const,
       page,
@@ -646,6 +664,8 @@ export default function CandidatesManager() {
             </p>
           </motion.div>
         </div>
+
+        <AdminPortraitReviewPanel candidates={candidates} />
 
         {/* Filters */}
         <motion.div
