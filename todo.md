@@ -2368,3 +2368,7 @@
 - [x] Créer la page dédiée `/evaluation-canada` avec calcul professionnel style IRCC (Grille FSW / CRS sur 1200 et 100 points)
 - [x] Ajouter le partage de lien direct en un clic pour diffusion par e-mail ou réseaux sociaux (ex: eBay / WhatsApp)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Appel à l’action de prise de rendez-vous dans le simulateur Canada (v149)
+- [x] Ajouter un bouton d’appel à l’action contextuel à la fin des résultats du simulateur Canada pour réserver une consultation
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
