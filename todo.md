@@ -2451,3 +2451,8 @@
 - [x] Relier la notification à la disponibilité effective du rapport PDF d’évaluation de 48h
 - [x] Permettre au candidat d’ouvrir directement le PDF et de marquer l’alerte comme lue
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Préférences de notifications e-mail dans l’Espace Client (v166)
+- [x] Ajouter l’option de préférence de notification e-mail pour les documents et rapports dans le profil/paramètres de l’Espace Client
+- [x] Persister le choix en base de données et conditionner l’envoi des alertes e-mail
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
