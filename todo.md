@@ -2353,3 +2353,8 @@
 ## Boutons de téléchargement direct dans l’infobulle de complétude (v145)
 - [x] Ajouter un bouton d’action « Déposer » pour chaque pièce manquante dans l’infobulle pour un accès instantané au formulaire
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Simulateur complet de score de Résidence Permanente (RP) Canada (v146)
+- [x] Créer le widget proéminent d’évaluation du score RP Canada avec drapeau canadien sur la page d’accueil et les pages clés
+- [x] Implémenter le formulaire complet de calcul du score (âge, études, notes linguistiques français/anglais, expérience professionnelle, adaptabilité)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
