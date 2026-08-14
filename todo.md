@@ -2423,3 +2423,9 @@
 - [x] Créer le service de protection cryptographique des documents (chiffrement PDF, restrictions d’impression/copie et identification nominative)
 - [x] Appliquer le chiffrement aux guides PDF et rapports exportés pour empêcher la revente et l’utilisation non autorisée
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Accès sécurisé aux guides PDF (compte obligatoire et Espace Client) (v161)
+- [x] Bloquer le téléchargement direct des guides PDF et procédures sans authentification (redirection vers Inscription)
+- [x] Enregistrer les documents débloqués dans l’Espace Client de l’utilisateur après connexion
+- [x] Permettre l’envoi optionnel ou automatique du guide téléchargé à l’e-mail vérifié du candidat
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
