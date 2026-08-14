@@ -32,6 +32,10 @@ export default function VerifyEmailLink() {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
     } else if (status === "success" && countdown === 0) {
+      toast.info("Redirection vers la page de connexion…", {
+        duration: 1200,
+        description: "Votre compte est activé. Connectez-vous avec vos identifiants.",
+      });
       navigate("/login");
     }
   }, [status, countdown, redirect, navigate]);
@@ -41,7 +45,10 @@ export default function VerifyEmailLink() {
       setStatus("success");
       setMessage("Email vérifié avec succès !");
       setCandidateData(data);
-      toast.success("Email verifie ! Veuillez vous connecter avec vos identifiants.");
+      toast.success("E-mail vérifié avec succès", {
+        description: "Votre compte est activé. La connexion sera proposée automatiquement.",
+        duration: 3000,
+      });
     },
     onError: (err) => {
       setStatus("error");

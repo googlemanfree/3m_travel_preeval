@@ -2617,3 +2617,9 @@
 - [x] Rediriger automatiquement vers la connexion après quelques secondes
 - [x] Ajouter un bouton de connexion immédiate et gérer l’annulation du compte à rebours
 - [x] Vérifier desktop/mobile, tests et publier
+
+## Toast de redirection après activation e-mail (v188)
+- [x] Auditer le déclencheur de redirection et le système de toast existant
+- [x] Afficher un toast clair juste avant la redirection automatique vers /login
+- [x] Rendre le toast accessible, visible sur mobile et synchronisé avec le compte à rebours
+- [x] Ajouter les tests et publier
