@@ -35,7 +35,7 @@ const t = initTRPC.context<TrpcContext>().create({
 
 export const router = t.router;
 
-const ADMIN_ROUTE_RE = /(^|\.)(admin|adminAuth|adminPasswordReset|adminCandidateManagement|adminSavedViews|adminDossier|adminDashboardStats|adminNotifications|adminAudit|evaluationAdmin|evisaAdmin)(\.|$)/i;
+const ADMIN_ROUTE_RE = /(^|\.)(admin|adminAuth|adminPasswordReset|adminCandidateManagement|adminSavedViews|adminDossier|adminDashboardStats|adminNotifications|adminAudit|adminActivation|evaluationAdmin|evisaAdmin)(\.|$)/i;
 
 /**
  * Audit transversal des routes admin. Les détails d’entrée ne sont jamais persistés :

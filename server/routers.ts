@@ -14,6 +14,7 @@ import { contactRouter } from "./routers/contact";
 import { adminRouter } from "./routers/admin";
 import { adminAuthRouter } from "./routers/adminAuth";
 import { adminAuditRouter } from "./routers/adminAudit";
+import { adminActivationRouter } from "./routers/adminActivation";
 import { clientDocumentsRouter } from "./routers/clientDocuments";
 import { translationRouter } from "./routers/translation";
 import { agencyDossierRouter } from "./routers/agencyDossier";
@@ -114,6 +115,7 @@ export const appRouter = router({
   mediaLibrary: mediaLibraryRouter,
   adminAuth: adminAuthRouter,
   adminAudit: adminAuditRouter,
+  adminActivation: adminActivationRouter,
   adminDossier: adminDossierRouter,
   clientDocuments: clientDocumentsRouter,
   translation: translationRouter,

@@ -68,6 +68,7 @@ import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement"
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
+import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -1003,11 +1004,12 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-8 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="payments">Paiements</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
+            <TabsTrigger value="activations">Activations</TabsTrigger>
             <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
             <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
             <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
@@ -1460,6 +1462,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="emails" className="space-y-6">
             <AdminEmailDeliveryManagement />
+          </TabsContent>
+
+          <TabsContent value="activations" className="space-y-6">
+            <AdminCandidateActivationPanel sessionToken={sessionToken} />
           </TabsContent>
         </Tabs>
       </div>

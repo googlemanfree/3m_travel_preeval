@@ -2566,3 +2566,11 @@
 - [x] Bloquer la connexion et les ressources protégées tant que l’e-mail n’est pas confirmé
 - [x] Créer la page de validation, les états succès/échec et le renvoi anti-abus
 - [x] Ajouter les tests de sécurité, d’expiration, de non-réutilisation et de délivrabilité puis publier
+
+## Suivi admin des activations candidat (v181)
+- [x] Auditer les statuts d’activation et les journaux d’envoi existants
+- [x] Ajouter une procédure admin-only listant les activations en attente, échouées et expirées
+- [x] Ajouter les compteurs, filtres, recherche et pagination côté serveur
+- [x] Permettre le renvoi sécurisé du lien et l’affichage du dernier motif d’échec sans exposer de token
+- [x] Intégrer la section au tableau de bord admin avec états de chargement et erreurs
+- [x] Ajouter les tests d’autorisation, de filtrage et de renvoi puis publier
