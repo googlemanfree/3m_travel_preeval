@@ -2456,3 +2456,9 @@
 - [x] Ajouter l’option de préférence de notification e-mail pour les documents et rapports dans le profil/paramètres de l’Espace Client
 - [x] Persister le choix en base de données et conditionner l’envoi des alertes e-mail
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Photo de profil obligatoire à l’inscription et synchronisation admin (v167)
+- [x] Exiger un portrait (capture webcam ou téléversement) lors de l’inscription ou de la première connexion
+- [x] Valider et stocker sécurisé l’avatar, interdisant l’accès au site tant que le portrait n’est pas fourni
+- [x] Afficher l’avatar synchronisé dans l’Espace Client et dans le back-office administrateur pour chaque candidat
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
