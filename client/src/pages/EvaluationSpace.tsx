@@ -44,10 +44,11 @@ export default function EvaluationSpace() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "documents" | "profile" | "messages" | "testimonials">("overview");
 
-  // États pour les filtres budgétaires et l'export PDF
+  // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
   const [budgetStartDate, setBudgetStartDate] = useState<string>("");
   const [budgetEndDate, setBudgetEndDate] = useState<string>("");
+  const [visaTypeCalc, setVisaTypeCalc] = useState<string>("study"); // study, work, visitor, business
 
   // Requête unique pour le résumé complet du tableau de bord client
   const { data: dashboardData, isLoading, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
@@ -408,40 +409,66 @@ Les tarifs sont basés sur les données GDS et sources vérifiées.
                     </Button>
                   </div>
                 </div>
-                {/* Contrôles de filtre par catégorie et plage de dates */}
-                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-6 space-y-3">
-                  <p className="text-xs font-bold text-gray-800 uppercase tracking-wide">Filtres du rapport budgétaire</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {/* Contrôles de filtre et Calculateur interactif de frais consulaires */}
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-6 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-3 border-b border-indigo-50">
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Catégorie de coût</label>
-                      <select
-                        value={budgetCategoryFilter}
-                        onChange={(e) => setBudgetCategoryFilter(e.target.value)}
-                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
-                      >
-                        <option value="all">Toutes les catégories</option>
-                        <option value="flight">Billets d'avion uniquement</option>
-                        <option value="consular">Frais consulaires & Visas</option>
-                        <option value="agency">Frais d'agence & Accompagnement</option>
-                      </select>
+                      <p className="text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">Filtres du rapport budgétaire</p>
+                      <div className="grid grid-cols-1 gap-2">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-600 mb-1">Catégorie de coût</label>
+                          <select
+                            value={budgetCategoryFilter}
+                            onChange={(e) => setBudgetCategoryFilter(e.target.value)}
+                            className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="all">Toutes les catégories</option>
+                            <option value="flight">Billets d'avion uniquement</option>
+                            <option value="consular">Frais consulaires & Visas</option>
+                            <option value="agency">Frais d'agence & Accompagnement</option>
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Début</label>
+                            <input
+                              type="date"
+                              value={budgetStartDate}
+                              onChange={(e) => setBudgetStartDate(e.target.value)}
+                              className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-600 mb-1">Fin</label>
+                            <input
+                              type="date"
+                              value={budgetEndDate}
+                              onChange={(e) => setBudgetEndDate(e.target.value)}
+                              className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
+
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date de début (optionnel)</label>
-                      <input
-                        type="date"
-                        value={budgetStartDate}
-                        onChange={(e) => setBudgetStartDate(e.target.value)}
-                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date de fin (optionnel)</label>
-                      <input
-                        type="date"
-                        value={budgetEndDate}
-                        onChange={(e) => setBudgetEndDate(e.target.value)}
-                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
-                      />
+                      <p className="text-xs font-bold text-indigo-900 uppercase tracking-wide mb-2">🧮 Calculateur de Frais Consulaires</p>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-gray-600 mb-1">Type de procédure / Visa</label>
+                        <select
+                          value={visaTypeCalc}
+                          onChange={(e) => setVisaTypeCalc(e.target.value)}
+                          className="w-full text-xs border border-indigo-200 rounded-lg p-2 bg-indigo-50/50 text-indigo-900 font-semibold focus:ring-2 focus:ring-indigo-500"
+                        >
+                          <option value="study">Permis d'Études (Canada / Campus France) — ~150 000 XAF</option>
+                          <option value="work">Permis de Travail / Résidence — ~250 000 XAF</option>
+                          <option value="visitor">Visa Visiteur / Tourisme (Schengen / US) — ~95 000 XAF</option>
+                          <option value="business">Visa d'Affaires / Conférence — ~120 000 XAF</option>
+                        </select>
+                        <p className="text-[10px] text-gray-500 mt-1 italic">
+                          * Les frais consulaires officiels s'ajoutent dynamiquement à votre estimation globale.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -457,20 +484,17 @@ Les tarifs sont basés sur les données GDS et sources vérifiées.
 
                   const rawTotalXAF = filteredFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0);
 
-                  // Ajustement selon la catégorie sélectionnée
-                  let multTransport = 0.70;
-                  let multConsul = 0.20;
-                  let multAgency = 0.10;
+                  // Frais consulaires selon le type de visa choisi dans le calculateur
+                  const consularFeeMap: Record<string, number> = {
+                    study: 150000,
+                    work: 250000,
+                    visitor: 95000,
+                    business: 120000,
+                  };
+                  const consularFee = consularFeeMap[visaTypeCalc] || 150000;
 
-                  if (budgetCategoryFilter === 'flight') {
-                    multTransport = 1.0; multConsul = 0; multAgency = 0;
-                  } else if (budgetCategoryFilter === 'consular') {
-                    multTransport = 0; multConsul = 1.0; multAgency = 0;
-                  } else if (budgetCategoryFilter === 'agency') {
-                    multTransport = 0; multConsul = 0; multAgency = 1.0;
-                  }
-
-                  const totalXAF = Math.round(rawTotalXAF * (budgetCategoryFilter === 'all' ? 1.0 : (budgetCategoryFilter === 'flight' ? 0.70 : (budgetCategoryFilter === 'consular' ? 0.20 : 0.10))));
+                  const baseCalculatedXAF = Math.round(rawTotalXAF * (budgetCategoryFilter === 'all' ? 1.0 : (budgetCategoryFilter === 'flight' ? 0.70 : (budgetCategoryFilter === 'consular' ? 0.20 : 0.10))));
+                  const totalXAF = budgetCategoryFilter === 'consular' ? consularFee : (budgetCategoryFilter === 'all' ? (baseCalculatedXAF + consularFee) : baseCalculatedXAF);
                   const totalEUR = Math.round(totalXAF / 655.957);
                   const totalUSD = Math.round(totalXAF / 600);
                   const totalCAD = Math.round(totalXAF / 440);

@@ -2269,3 +2269,8 @@
 - [x] Ajouter l’état et les contrôles de filtrage (catégories et plage de dates) dans le tableau de bord budgétaire de `/mon-espace`
 - [x] Filtrer dynamiquement les itinéraires et le calcul des totaux multi-devises avant l’export PDF
 - [x] Valider la compilation, les tests et publier la mise à jour
+
+## Calculateur interactif de frais consulaires (v131)
+- [x] Ajouter l’état et l’interface de sélection du type de visa (Études, Travail/Résidence, Tourisme/Visiteur) dans le tableau de bord budgétaire
+- [x] Ajuster dynamiquement le total estimé des frais consulaires et répercuter le calcul dans le récapitulatif et l’export PDF
+- [x] Valider la compilation, les tests et publier la mise à jour
