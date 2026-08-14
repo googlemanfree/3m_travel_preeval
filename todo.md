@@ -2329,3 +2329,8 @@
 - [x] Créer le composant de calendrier interactif de réservation de créneaux avec sélection du conseiller et des horaires
 - [x] Synchroniser les rendez-vous réservés avec le dossier du candidat et le back-office administrateur
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Système de notifications push en temps réel (v141)
+- [x] Créer le gestionnaire de notifications push (API Notification du navigateur + cloche de notifications in-app)
+- [x] Déclencher une notification push dès qu’un document est validé par l’admin ou qu’un rendez-vous est confirmé
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
