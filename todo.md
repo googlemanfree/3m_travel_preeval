@@ -2140,3 +2140,7 @@
 - [x] Ajouter un lien direct depuis le nom du client connecté vers son espace personnel
 - [x] Ajouter un lien de retour depuis l’espace client vers le site et la réservation de vols
 - [x] Vérifier que dossiers, documents, favoris, demandes de vols et profil restent accessibles dans l’espace client
+
+- [x] Créer une page dédiée pour afficher et gérer les vols favoris du client
+- [x] Afficher le numéro de dossier actif dans l’en-tête de l’espace client
+- [x] Ajouter des filtres par statut et par date dans le suivi des demandes de vols

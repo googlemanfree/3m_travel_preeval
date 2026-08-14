@@ -116,6 +116,7 @@ import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
 
 const ClientDashboard = lazyWithTimeout(() => import("./pages/ClientDashboard"));
+const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
 const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAIEvaluationDashboard"));
 const CVGenerator = lazyWithTimeout(() => import("./pages/CVGenerator"));
 const Dashboard = lazyWithTimeout(() => import("./pages/Dashboard"));
@@ -408,6 +409,11 @@ function Router() {
       <Route path="/client-dashboard">
         <AuthGuard message="Vous devez créer un compte pour accéder à votre tableau de bord.">
           <ClientDashboard />
+        </AuthGuard>
+      </Route>
+      <Route path="/mes-vols-favoris">
+        <AuthGuard message="Vous devez créer un compte pour gérer vos vols favoris.">
+          <FlightFavorites />
         </AuthGuard>
       </Route>
 
