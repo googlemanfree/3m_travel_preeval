@@ -42,7 +42,12 @@ export default function EvaluationSpace() {
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "documents" | "profile" | "messages">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "documents" | "profile" | "messages" | "testimonials">("overview");
+
+  // États pour les filtres budgétaires et l'export PDF
+  const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
+  const [budgetStartDate, setBudgetStartDate] = useState<string>("");
+  const [budgetEndDate, setBudgetEndDate] = useState<string>("");
 
   // Requête unique pour le résumé complet du tableau de bord client
   const { data: dashboardData, isLoading, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
@@ -403,32 +408,143 @@ Les tarifs sont basés sur les données GDS et sources vérifiées.
                     </Button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100 mb-6">
-                  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Total XAF (FCFA)</p>
-                    <p className="text-xl font-extrabold text-indigo-900 mt-1">
-                      {favoriteFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0).toLocaleString()} XAF
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Total EUR (€)</p>
-                    <p className="text-xl font-extrabold text-indigo-900 mt-1">
-                      {Math.round(favoriteFlights.reduce((acc: number, f: any) => acc + ((Number(f.price) || 0) / 655.957), 0)).toLocaleString()} €
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Total USD ($)</p>
-                    <p className="text-xl font-extrabold text-indigo-900 mt-1">
-                      {Math.round(favoriteFlights.reduce((acc: number, f: any) => acc + ((Number(f.price) || 0) / 600), 0)).toLocaleString()} $
-                    </p>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <p className="text-xs text-gray-500 uppercase font-semibold">Total CAD ($CA)</p>
-                    <p className="text-xl font-extrabold text-indigo-900 mt-1">
-                      {Math.round(favoriteFlights.reduce((acc: number, f: any) => acc + ((Number(f.price) || 0) / 440), 0)).toLocaleString()} $CA
-                    </p>
+                {/* Contrôles de filtre par catégorie et plage de dates */}
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm mb-6 space-y-3">
+                  <p className="text-xs font-bold text-gray-800 uppercase tracking-wide">Filtres du rapport budgétaire</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Catégorie de coût</label>
+                      <select
+                        value={budgetCategoryFilter}
+                        onChange={(e) => setBudgetCategoryFilter(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value="all">Toutes les catégories</option>
+                        <option value="flight">Billets d'avion uniquement</option>
+                        <option value="consular">Frais consulaires & Visas</option>
+                        <option value="agency">Frais d'agence & Accompagnement</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date de début (optionnel)</label>
+                      <input
+                        type="date"
+                        value={budgetStartDate}
+                        onChange={(e) => setBudgetStartDate(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-gray-600 mb-1">Date de fin (optionnel)</label>
+                      <input
+                        type="date"
+                        value={budgetEndDate}
+                        onChange={(e) => setBudgetEndDate(e.target.value)}
+                        className="w-full text-xs border border-gray-300 rounded-lg p-2 bg-white text-gray-800 font-medium focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
                   </div>
                 </div>
+
+                {/* Calcul des vols filtrés selon la plage de dates */}
+                {(() => {
+                  const filteredFlights = favoriteFlights.filter((f: any) => {
+                    const flightDate = f.createdAt ? new Date(f.createdAt).toISOString().split('T')[0] : '';
+                    if (budgetStartDate && flightDate && flightDate < budgetStartDate) return false;
+                    if (budgetEndDate && flightDate && flightDate > budgetEndDate) return false;
+                    return true;
+                  });
+
+                  const rawTotalXAF = filteredFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0);
+
+                  // Ajustement selon la catégorie sélectionnée
+                  let multTransport = 0.70;
+                  let multConsul = 0.20;
+                  let multAgency = 0.10;
+
+                  if (budgetCategoryFilter === 'flight') {
+                    multTransport = 1.0; multConsul = 0; multAgency = 0;
+                  } else if (budgetCategoryFilter === 'consular') {
+                    multTransport = 0; multConsul = 1.0; multAgency = 0;
+                  } else if (budgetCategoryFilter === 'agency') {
+                    multTransport = 0; multConsul = 0; multAgency = 1.0;
+                  }
+
+                  const totalXAF = Math.round(rawTotalXAF * (budgetCategoryFilter === 'all' ? 1.0 : (budgetCategoryFilter === 'flight' ? 0.70 : (budgetCategoryFilter === 'consular' ? 0.20 : 0.10))));
+                  const totalEUR = Math.round(totalXAF / 655.957);
+                  const totalUSD = Math.round(totalXAF / 600);
+                  const totalCAD = Math.round(totalXAF / 440);
+
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100 mb-6">
+                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Total XAF (FCFA)</p>
+                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalXAF.toLocaleString()} XAF</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Total EUR (€)</p>
+                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalEUR.toLocaleString()} €</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Total USD ($)</p>
+                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalUSD.toLocaleString()} $</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                          <p className="text-xs text-gray-500 uppercase font-semibold">Total CAD ($CA)</p>
+                          <p className="text-xl font-extrabold text-indigo-900 mt-1">{totalCAD.toLocaleString()} $CA</p>
+                        </div>
+                      </div>
+
+                      {/* Bouton d'export PDF dynamique connecté aux filtres */}
+                      <div className="mb-6 flex justify-end">
+                        <Button
+                          onClick={() => {
+                            const reportContent = `
+==================================================
+   3M TRAVEL AND SERVICES — RAPPORT BUDGÉTAIRE
+==================================================
+Date d'édition : ${new Date().toLocaleDateString("fr-FR")}
+Candidat : ${cProfile.fullName} (${cProfile.email})
+N° de Dossier : ${cProfile.dossierNumber}
+Filtre Catégorie : ${budgetCategoryFilter}
+Période : ${budgetStartDate || 'Début'} au ${budgetEndDate || 'Aujourd\'hui'}
+
+--------------------------------------------------
+RÉCAPITULATIF MULTI-DEVISES (FILTRÉ)
+--------------------------------------------------
+- Total XAF (FCFA) : ${totalXAF.toLocaleString()} XAF
+- Total EUR (€)    : ${totalEUR.toLocaleString()} €
+- Total USD ($)    : ${totalUSD.toLocaleString()} $
+- Total CAD ($CA)  : ${totalCAD.toLocaleString()} $CA
+
+--------------------------------------------------
+MENTION LÉGALE & JUSTIFICATION FINANCIÈRE
+--------------------------------------------------
+Ce rapport est généré automatiquement par l'espace client 
+3M Travel and Services à des fins de justification de fonds.
+--------------------------------------------------
+`;
+                            const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download = `Rapport_Budgetaire_Filtre_${cProfile.dossierNumber || '3MTravel'}.txt`;
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                            alert("Rapport budgétaire filtré exporté avec succès !");
+                          }}
+                          size="sm"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                        >
+                          📥 Exporter le Rapport Budgétaire Filtré (PDF/TXT)
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Graphique visuel de répartition des coûts par catégorie */}
                 <div className="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm">

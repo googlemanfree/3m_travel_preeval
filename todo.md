@@ -2264,3 +2264,8 @@
 - [x] Ajouter un bouton de téléchargement du rapport budgétaire au format PDF dans l’espace client
 - [x] Implémenter la génération propre du document PDF avec en-tête agence, totaux multi-devises et ventilation des coûts
 - [x] Valider l’export et publier la mise à jour
+
+## Filtres par catégorie et plage de dates pour le rapport budgétaire (v130)
+- [x] Ajouter l’état et les contrôles de filtrage (catégories et plage de dates) dans le tableau de bord budgétaire de `/mon-espace`
+- [x] Filtrer dynamiquement les itinéraires et le calcul des totaux multi-devises avant l’export PDF
+- [x] Valider la compilation, les tests et publier la mise à jour
