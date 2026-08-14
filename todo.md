@@ -2399,3 +2399,8 @@
 - [x] Créer le catalogue d’aide contextuelle pour chaque pièce complexe (où l'obtenir, pièces à préparer, précautions)
 - [x] Intégrer les infobulles cliquables dans la checklist dynamique de la page d’évaluation Canada (`/evaluation-canada`)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Export PDF du résultat d’évaluation Canada et de la checklist (v156)
+- [x] Créer la fonction d’export PDF du rapport d’évaluation Canada (score estimé, critères et checklist personnalisée)
+- [x] Intégrer le bouton de téléchargement dans la section des résultats de la page `/evaluation-canada`
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
