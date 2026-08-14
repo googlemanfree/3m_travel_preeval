@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
@@ -14,744 +14,384 @@ import {
   TrendingUp,
   FileText,
   Mail,
+  Plane,
+  FolderOpen,
+  User,
+  MessageSquare,
+  ShieldCheck,
+  RefreshCw,
+  Award,
+  Calendar,
+  Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { CommentsSection } from "@/components/CommentsSection";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
-import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
-import { DocumentUploader } from "@/components/DocumentUploader";
-import { DocumentProgressBar } from "@/components/DocumentProgressBar";
-import { AIScoreGauge } from "@/components/AIScoreGauge";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 import ClientMessagesPanel from "@/components/ClientMessagesPanel";
 import ClientProfilePanel from "@/components/ClientProfilePanel";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
-import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
+import { DocumentUploader } from "@/components/DocumentUploader";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
-  const section = new URLSearchParams(location.split("?")[1] || "").get("section") || "overview";
-  const { candidate, isAuthenticated } = useCandidateAuth();
+  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const section = searchParams.get("section") || "overview";
+  const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
-  const [dossierNumber, setDossierNumber] = useState<string | null>(null);
-  const [requestedDossier, setRequestedDossier] = useState<string | null>(null);
-  const [searchCode, setSearchCode] = useState<string>('');
-  const [userDossierLoading, setUserDossierLoading] = useState(true);
-  const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const [showDocumentUploader, setShowDocumentUploader] = useState(false);
-  const [uploadedDocuments, setUploadedDocuments] = useState(0);
-  const [requiredDocuments, setRequiredDocuments] = useState(5);
 
-  // Fonction pour télécharger le bilan en PDF
-  const handleDownloadBilanPDF = async () => {
-    if (!bilanData) return;
-    
-    setIsExportingPDF(true);
-    try {
-      await exportBilanToPDF({
-        dossierNumber: bilanData.dossierNumber || dossierNumber || '',
-        fullName: bilanData.fullName,
-        score: bilanData.score || 0,
-        verdict: bilanData.verdict || '',
-        strengths: bilanData.strengths,
-        weaknesses: bilanData.weaknesses,
-        recommendations: bilanData.recommendations,
-      });
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du PDF:', error);
-    } finally {
-      setIsExportingPDF(false);
-    }
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "documents" | "profile" | "messages">("overview");
+
+  // Requête unique pour le résumé complet du tableau de bord client
+  const { data: dashboardData, isLoading, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: false,
+  });
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setTimeout(() => setIsRefreshing(false), 500);
   };
 
-  // Récupérer le numéro de dossier depuis les paramètres d'URL ou depuis l'utilisateur connecté
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const dossier = params.get("dossier");
-    
-    if (dossier) {
-      setRequestedDossier(dossier.trim());
-      setDossierNumber(null);
-      setUserDossierLoading(false);
-    } else if (isAuthenticated) {
-      // Charger le dossier du candidat connecté (résolu depuis son JWT,
-      // jamais depuis un email fourni côté client)
-      setUserDossierLoading(false); // la vraie recherche se fait via la query dédiée ci-dessous
-    } else {
-      setUserDossierLoading(false);
+    if (searchParams.get("section")) {
+      const s = searchParams.get("section") as any;
+      if (["overview", "dossier", "flights", "documents", "profile", "messages"].includes(s)) {
+        setActiveTab(s);
+      }
     }
-  }, [isAuthenticated, candidate, location]);
+  }, [location]);
 
-  // Vérifier un numéro saisi pour un dossier historique avant toute lecture du bilan.
-  const dossierAccessQuery = trpc.candidate.getDossierByNumber.useQuery(
-    { dossierNumber: requestedDossier || "" },
-    { enabled: isAuthenticated && Boolean(requestedDossier), retry: false },
-  );
-
-  useEffect(() => {
-    if (!requestedDossier) return;
-    if (dossierAccessQuery.data?.success) {
-      setDossierNumber(requestedDossier);
-      setUserDossierLoading(false);
-    } else if (dossierAccessQuery.isError || (dossierAccessQuery.data && !dossierAccessQuery.data.success)) {
-      setDossierNumber(null);
-      setUserDossierLoading(false);
-    }
-  }, [dossierAccessQuery.data, dossierAccessQuery.isError, requestedDossier]);
-
-  // Récupérer le dossier réel du candidat connecté (authentifié via son JWT)
-  const { data: myDossierData } = trpc.candidate.getMyDossierData.useQuery(undefined, {
-    enabled: isAuthenticated && !dossierNumber && !requestedDossier,
-    refetchInterval: 15_000,
-  });
-  const { data: myAgencyDocuments } = trpc.candidate.getMyAgencyDocuments.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  useEffect(() => {
-    if (!dossierNumber && myDossierData?.success && myDossierData.data?.application?.dossierNumber) {
-      setDossierNumber(myDossierData.data.application.dossierNumber);
-    }
-  }, [myDossierData, dossierNumber]);
-
-  // Récupérer le bilan
-  const { data: bilanData, isLoading, error } = trpc.evaluationAI.getBilan.useQuery(
-    { dossierNumber: dossierNumber || "" },
-    { enabled: !!dossierNumber }
-  );
-
-  // Récupérer l'historique des évaluations Luxembourg du candidat connecté
-  const { data: myEvaluations } = trpc.luxembourgEvaluation.getMyEvaluations.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  // Récupérer l'historique des pré-évaluations générales (avec rapport IA)
-  const { data: myGeneralEvaluations } = trpc.evaluation.getMyEvaluations.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  // Récupérer l'historique des demandes de consultation (avec CV)
-  const { data: myConsultations } = trpc.consultationRequest.getMyConsultations.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  if (userDossierLoading) {
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-2xl mx-auto py-12">
-          <Card className="p-8 text-center">
-            <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Chargement de votre espace...</h2>
-            <p className="text-gray-600">Veuillez patienter</p>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (section === "messages" || section === "profile") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="mx-auto max-w-5xl py-8">
-          <ClientSpaceNavigation />
-          {section === "messages" ? <ClientMessagesPanel /> : <ClientProfilePanel />}
-        </div>
-      </div>
-    );
-  }
-
-  if (!dossierNumber) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-2xl mx-auto py-12">
-          <ClientSpaceNavigation />
-          {myAgencyDocuments?.documents && myAgencyDocuments.documents.length > 0 && (
-            <AgencyDocumentsPanel documents={myAgencyDocuments.documents as AgencyDocumentView[]} />
-          )}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Card className="p-8">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
-                  !
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Dossier non trouvé</h2>
-                <p className="text-gray-600 text-sm">
-                  Veuillez vérifier votre numéro de dossier ou effectuer une recherche ci-dessous.
-                </p>
-              </div>
-
-              {/* Évaluations Luxembourg du candidat connecté */}
-              {myEvaluations && myEvaluations.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-bold text-gray-900 mb-3">🌍 Vos évaluations Luxembourg</h3>
-                  <div className="space-y-3">
-                    {myEvaluations.map((ev) => (
-                      <div key={ev.id} className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg p-4">
-                        <div>
-                          <p className="font-semibold text-gray-900">{ev.jobTitle}</p>
-                          <p className="text-xs text-gray-500">{new Date(ev.createdAt).toLocaleDateString("fr-FR")}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-xl font-bold text-blue-600">{ev.scoreTotal}/100</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Pré-évaluations générales, avec statut de l'analyse IA */}
-              {myGeneralEvaluations && myGeneralEvaluations.length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-bold text-gray-900 mb-3">📋 Vos pré-évaluations</h3>
-                  <div className="space-y-3">
-                    {myGeneralEvaluations.map((ev) => (
-                      <div key={ev.id} className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-1">
-                          <p className="font-semibold text-gray-900">{ev.destinationCountry || ev.destinationCategory}</p>
-                          <span className="text-xs text-gray-500">{new Date(ev.createdAt).toLocaleDateString("fr-FR")}</span>
-                        </div>
-                        {ev.aiReportContent ? (
-                          <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-4">{ev.aiReportContent}</p>
-                        ) : ev.aiProcessingError ? (
-                          <p className="text-sm text-amber-600">Analyse IA en attente — notre équipe l'examinera manuellement.</p>
-                        ) : ev.cvFileUrl ? (
-                          <p className="text-sm text-blue-600 flex items-center gap-1">
-                            <Loader2 className="w-3 h-3 animate-spin" /> Analyse IA en cours...
-                          </p>
-                        ) : (
-                          <p className="text-sm text-gray-500">Dossier en attente d'analyse par notre équipe.</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Demandes de consultation (validées par un admin uniquement) */}
-              {myConsultations && myConsultations.filter((c) => c.status === "validated_sent").length > 0 && (
-                <div className="mb-8">
-                  <h3 className="font-bold text-gray-900 mb-3">💬 Vos consultations</h3>
-                  <div className="space-y-3">
-                    {myConsultations.filter((c) => c.status === "validated_sent").map((c) => (
-                      <div key={c.id} className="bg-green-50 border border-green-100 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-semibold text-gray-900">{c.targetCountry || "Consultation générale"}</p>
-                          <span className="text-xs text-gray-500">{c.sentToClientAt ? new Date(c.sentToClientAt).toLocaleDateString("fr-FR") : ""}</span>
-                        </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-line">{c.finalReportContent}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {myConsultations && myConsultations.some((c) => c.status !== "validated_sent") && (
-                <p className="text-sm text-gray-500 mb-8">
-                  ⏳ Une ou plusieurs demandes de consultation sont en cours d'examen par notre équipe.
-                </p>
-              )}
-
-              {/* Champ de recherche manuel */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchCode.trim()) {
-                    setLocation(`/mon-espace?dossier=${encodeURIComponent(searchCode)}`);
-                  }
-                }}
-                className="flex gap-2 mb-6"
-              >
-                <input
-                  type="text"
-                  placeholder="Ex: #3M-20260730-1234"
-                  value={searchCode}
-                  onChange={(e) => setSearchCode(e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
-                  Rechercher
-                </Button>
-              </form>
-
-              {/* Boutons d'action */}
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={() => setLocation("/evaluation")}
-                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition"
-                >
-                  ⭐ Déposer une nouvelle évaluation
-                </Button>
-                <Button
-                  onClick={() => setLocation("/")}
-                  variant="outline"
-                  className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg transition"
-                >
-                  Retour à l'accueil
-                </Button>
-                <a
-                  href="https://wa.me/237698104832?text=Bonjour%2C%20j'ai%20besoin%20d'aide%20pour%20accéder%20à%20mon%20dossier"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition text-center"
-                >
-                  💬 Support WhatsApp
-                </a>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-2xl mx-auto py-12">
-          <Card className="p-8 text-center">
-            <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Chargement...</h2>
-            <p className="text-gray-600">Récupération de votre bilan</p>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-2xl mx-auto py-12">
-          <Card className="p-8 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Erreur</h2>
-            <p className="text-gray-600 mb-6">{error.message}</p>
-            <Button onClick={() => setLocation("/")} className="bg-blue-600 hover:bg-blue-700">
-              Retour à l'accueil
-            </Button>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  if (!bilanData?.success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-2xl mx-auto py-12">
-          {myDossierData?.data?.candidate && (
-            <div className="flex items-center gap-4 mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <CandidateAvatar
-                fullName={myDossierData.data.candidate.fullName || "Candidat"}
-                avatarUrl={myDossierData.data.candidate.avatarUrl}
-                size="md"
-                editable
-              />
-              <div>
-                <p className="font-bold text-gray-900">{myDossierData.data.candidate.fullName}</p>
-                <p className="text-sm text-gray-500">{myDossierData.data.candidate.email}</p>
-              </div>
-            </div>
-          )}
-          {myDossierData?.data?.dossierStatus && (
-            <div className="mb-6">
-              <DossierProgressTimeline
-                dossierStatus={myDossierData.data.dossierStatus}
-                dossierKey={myDossierData.data.application?.dossierNumber || dossierNumber || "mon-dossier"}
-              />
-            </div>
-          )}
-          <Card className="p-8">
-            <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
-              Bilan en cours de traitement
-            </h2>
-            <p className="text-gray-600 text-center mb-6">
-              Votre bilan sera disponible dans <strong>{bilanData?.remainingHours} heures</strong>
-            </p>
-
-            {/* Timeline */}
-            <div className="space-y-4 my-8">
-              <div className="flex items-center gap-4">
-                <CheckCircle2 className="w-6 h-6 text-green-500 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-gray-900">✅ CV reçu</p>
-                  <p className="text-sm text-gray-600">Votre dossier est enregistré</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Clock className="w-6 h-6 text-blue-500 flex-shrink-0 animate-spin" />
-                <div>
-                  <p className="font-semibold text-gray-900">⏳ Analyse en cours</p>
-                  <p className="text-sm text-gray-600">
-                    Nos experts analysent votre profil
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 opacity-50">
-                <FileText className="w-6 h-6 text-gray-400 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold text-gray-900">📋 Bilan disponible</p>
-                  <p className="text-sm text-gray-600">
-                    Sera débloqué dans {bilanData?.remainingHours} heures
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Countdown */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-              <p className="text-sm text-gray-600 mb-2">Temps restant</p>
-              <p className="text-3xl font-bold text-blue-600">
-                {bilanData?.remainingHours}h
-              </p>
-              <p className="text-xs text-gray-500 mt-2">
-                Vous recevrez un email dès que votre bilan sera prêt
-              </p>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-8 space-y-3">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => window.location.reload()}
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Actualiser
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setLocation("/")}
-              >
-                Retour à l'accueil
-              </Button>
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
-  // Bilan disponible
-  if (bilanData.bilanAvailable) {
-    const score = bilanData.score || 0;
-    const verdict = bilanData.verdict || "";
-    const scoreColor =
-      score >= 80 ? "text-green-600" : score >= 60 ? "text-orange-600" : "text-red-600";
-    const scoreBg =
-      score >= 80 ? "bg-green-50" : score >= 60 ? "bg-orange-50" : "bg-red-50";
-
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-4xl mx-auto py-8">
-          <ClientSpaceNavigation />
-
-          {/* Profil du candidat */}
-          {myDossierData?.data?.candidate && (
-            <div className="flex items-center gap-4 mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <CandidateAvatar
-                fullName={myDossierData.data.candidate.fullName || "Candidat"}
-                avatarUrl={myDossierData.data.candidate.avatarUrl}
-                size="md"
-                editable
-              />
-              <div>
-                <p className="font-bold text-gray-900">{myDossierData.data.candidate.fullName}</p>
-                <p className="text-sm text-gray-500">{myDossierData.data.candidate.email}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Suivi réel du dossier */}
-          {myDossierData?.data?.dossierStatus && (
-            <div className="mb-6">
-              <DossierProgressTimeline
-                dossierStatus={myDossierData.data.dossierStatus}
-                dossierKey={myDossierData.data.application?.dossierNumber || dossierNumber || "mon-dossier"}
-              />
-            </div>
-          )}
-
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <CheckCircle2 className="w-8 h-8 text-green-600" />
-              <h1 className="text-3xl font-bold text-gray-900">
-                Votre Bilan d'Admissibilité
-              </h1>
-            </div>
-            <p className="text-gray-600">
-              Dossier <strong>#{bilanData.dossierNumber}</strong>
-            </p>
-          </motion.div>
-
-          {/* Document Progress Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="mb-8"
-          >
-            <DocumentProgressBar
-              requiredDocuments={requiredDocuments}
-              uploadedDocuments={uploadedDocuments}
-              pendingDocuments={requiredDocuments - uploadedDocuments}
-            />
-          </motion.div>
-
-          {myDossierData?.data?.application?.destination && (
-            <DossierDocumentChecklist
-              destination={myDossierData.data.application.destination}
-              documents={(myAgencyDocuments?.documents ?? []) as AgencyDocumentView[]}
-            />
-          )}
-          {myAgencyDocuments?.documents && (
-            <AgencyDocumentsPanel
-              documents={myAgencyDocuments.documents as AgencyDocumentView[]}
-              candidateName={myDossierData?.data?.candidate?.fullName ?? candidate?.fullName ?? "Candidat"}
-              candidateEmail={myDossierData?.data?.candidate?.email ?? candidate?.email ?? ""}
-              dossierNumber={dossierNumber}
-            />
-          )}
-
-          {/* Score Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card className={`${scoreBg} p-8 mb-8 border-2 ${scoreColor.replace("text", "border")}`}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-2">
-                    SCORE D'ADMISSIBILITÉ
-                  </p>
-                  <div className="flex items-baseline gap-2">
-                    <span className={`text-5xl font-black ${scoreColor}`}>
-                      {score}
-                    </span>
-                    <span className="text-2xl text-gray-400">/100</span>
-                  </div>
-                  <div className="mt-5 max-w-sm">
-                    <AIScoreGauge score={score} label="Progression du score IA" />
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-2">VERDICT</p>
-                  <p className={`text-2xl font-bold ${scoreColor}`}>{verdict}</p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {score >= 80
-                      ? "Profil très favorable pour votre projet"
-                      : score >= 60
-                        ? "Profil favorable, quelques points à renforcer"
-                        : "Profil à renforcer avant soumission"}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Strengths */}
-          {bilanData.strengths && bilanData.strengths.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="mb-8"
-            >
-              <Card className="p-6 border-l-4 border-l-green-500">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Points Forts</h3>
-                </div>
-                <ul className="space-y-2">
-                  {bilanData.strengths.map((strength: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{strength}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Weaknesses */}
-          {bilanData.weaknesses && bilanData.weaknesses.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mb-8"
-            >
-              <Card className="p-6 border-l-4 border-l-orange-500">
-                <div className="flex items-center gap-2 mb-4">
-                  <AlertCircle className="w-5 h-5 text-orange-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Points à Améliorer</h3>
-                </div>
-                <ul className="space-y-2">
-                  {bilanData.weaknesses.map((weakness: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <ChevronRight className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700">{weakness}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Recommendations */}
-          {bilanData.recommendations && bilanData.recommendations.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mb-8"
-            >
-              <Card className="p-6 border-l-4 border-l-blue-500 bg-blue-50">
-                <div className="flex items-center gap-2 mb-4">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Recommandations</h3>
-                </div>
-                <ul className="space-y-2">
-                  {bilanData.recommendations.map((rec: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-bold flex-shrink-0 mt-0.5">
-                        {idx + 1}
-                      </span>
-                      <span className="text-gray-700">{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Document Uploader */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="mb-8"
-          >
-            <DocumentUploader
-              dossierNumber={dossierNumber || ""}
-              onUploadSuccess={() => {
-                setUploadedDocuments((current) => current + 1);
-                void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
-                void trpcUtils.candidate.getMyDossierData.invalidate();
-              }}
-            />
-          </motion.div>
-
-          {/* Actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4"
-          >
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+        <Card className="max-w-md w-full p-8 text-center shadow-xl">
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+            🔒
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Accès Restreint</h2>
+          <p className="text-gray-600 mb-6 text-sm">
+            Veuillez vous connecter à votre compte candidat pour accéder à votre tableau de bord unifié.
+          </p>
+          <div className="space-y-3">
             <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleDownloadBilanPDF}
-              disabled={isExportingPDF}
+              onClick={() => setLocation("/login")}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3"
             >
-              {isExportingPDF ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Export...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Télécharger PDF
-                </>
-              )}
+              Se connecter
             </Button>
             <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                const text = `Découvrez mon bilan d'admissibilité: ${window.location.href}`;
-                navigator.share?.({ title: "Mon Bilan 3M", text });
-              }}
-            >
-              <Share2 className="w-4 h-4 mr-2" />
-              Partager
-            </Button>
-            <Button
-              className="w-full bg-blue-600 hover:bg-blue-700"
               onClick={() => setLocation("/")}
+              variant="outline"
+              className="w-full"
             >
               Retour à l'accueil
             </Button>
-          </motion.div>
-
-          {/* Section des commentaires */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-          >
-            <CommentsSection
-              dossierNumber={dossierNumber || ""}
-              email={""}
-              fullName={""}
-              isAdmin={false}
-            />
-          </motion.div>
-
-          {/* Contact CTA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8"
-          >
-            <Card className="p-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-              <h3 className="text-lg font-bold mb-2">Prêt à passer à l'étape suivante?</h3>
-              <p className="mb-4">
-                Contactez nos experts pour discuter de votre dossier et des prochaines étapes
-              </p>
-              <div className="flex gap-3">
-                <a
-                  href="https://wa.me/237698104832"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
-                >
-                  💬 WhatsApp
-                </a>
-                <a
-                  href="mailto:contact@3mtravelagency.click"
-                  className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-lg font-semibold hover:bg-white/30 transition"
-                >
-                  📧 Email
-                </a>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
+          </div>
+        </Card>
       </div>
     );
   }
 
-  return null;
+  if (isLoading || !dashboardData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+        <Card className="max-w-md w-full p-8 text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
+          <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
+          <p className="text-gray-500 text-sm">Veuillez patienter pendant la synchronisation sécurisée</p>
+        </Card>
+      </div>
+    );
+  }
+
+  const { candidate: cProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
+      {/* En-tête du tableau de bord unifié */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <CandidateAvatar avatarUrl={cProfile.avatarUrl} fullName={cProfile.fullName} size="lg" />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-gray-900">{cProfile.fullName}</h1>
+                <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                  N° {cProfile.dossierNumber}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500">{cProfile.email} {cProfile.phone ? `• ${cProfile.phone}` : ""}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleManualRefresh}
+              variant="outline"
+              size="sm"
+              className="gap-2 text-gray-700 bg-white hover:bg-gray-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
+              Actualiser
+            </Button>
+            <Button
+              onClick={() => setLocation("/")}
+              variant="outline"
+              size="sm"
+              className="text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Accueil
+            </Button>
+            <Button
+              onClick={() => {
+                logout();
+                setLocation("/");
+              }}
+              variant="destructive"
+              size="sm"
+            >
+              Déconnexion
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Barre de navigation principale du tableau de bord */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-gray-200">
+          {[
+            { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
+            { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
+            { id: "flights", label: "Vols Favoris & Réservations", icon: Plane },
+            { id: "documents", label: "Centre Documentaire", icon: FileText },
+            { id: "profile", label: "Mon Profil & Avatar", icon: User },
+            { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  setLocation(`/mon-espace?section=${tab.id}`);
+                }}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shrink-0 ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                    : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Contenu dynamique par onglet */}
+        <div className="mt-6">
+          {activeTab === "overview" && (
+            <div className="space-y-6">
+              {/* Widgets statistiques et progression */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-5 border-blue-100 bg-white shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Complétion profil</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.profileCompletionPercent}%</h3>
+                    </div>
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                      <User className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500" style={{ width: `${stats.profileCompletionPercent}%` }} />
+                  </div>
+                </Card>
+
+                <Card className="p-5 border-emerald-100 bg-white shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Documents et pièces</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.totalDocuments}</h3>
+                    </div>
+                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-emerald-600 mt-4 font-medium">Synchronisés avec l'agence</p>
+                </Card>
+
+                <Card className="p-5 border-purple-100 bg-white shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Vols favoris</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.totalFavoriteFlights}</h3>
+                    </div>
+                    <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                      <Plane className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-purple-600 mt-4 font-medium">Itinéraires sauvegardés</p>
+                </Card>
+
+                <Card className="p-5 border-amber-100 bg-white shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Messages non lus</p>
+                      <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.unreadMessages}</h3>
+                    </div>
+                    <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                      <MessageSquare className="w-6 h-6" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-amber-600 mt-4 font-medium">Réponses de l'administrateur</p>
+                </Card>
+              </div>
+
+              {/* Timeline de progression du dossier */}
+              <Card className="p-6 border-blue-100 bg-white shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-blue-600" />
+                  Avancement de votre procédure
+                </h3>
+                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} />
+              </Card>
+
+              {/* Résumé des dernières activités */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="p-6 border-gray-200 bg-white shadow-sm">
+                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Plane className="w-5 h-5 text-purple-600" />
+                    Derniers vols sauvegardés
+                  </h3>
+                  {favoriteFlights.length === 0 ? (
+                    <p className="text-sm text-gray-500">Aucun vol favori pour l'instant.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {favoriteFlights.slice(0, 3).map((f: any) => (
+                        <div key={f.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900">{f.departureCity} ➔ {f.arrivalCity}</p>
+                            <p className="text-xs text-gray-500">{f.airline} • {f.price} {f.currency || "XAF"}</p>
+                          </div>
+                          <Button onClick={() => setLocation("/flights")} size="sm" variant="outline">
+                            Voir
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+
+                <Card className="p-6 border-gray-200 bg-white shadow-sm">
+                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    Derniers documents joints
+                  </h3>
+                  {agencyDocuments.length === 0 && candidateFiles.length === 0 ? (
+                    <p className="text-sm text-gray-500">Aucun document téléversé pour le moment.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {[...agencyDocuments, ...candidateFiles].slice(0, 3).map((doc: any) => (
+                        <div key={doc.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+                          <div className="truncate">
+                            <p className="font-semibold text-gray-900 truncate">{doc.documentName || doc.fileName}</p>
+                            <p className="text-xs text-gray-500">{doc.documentType || doc.fileType}</p>
+                          </div>
+                          <span className="text-xs px-2.5 py-1 bg-blue-50 text-blue-700 font-semibold rounded-full">
+                            Actif
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "dossier" && (
+            <div className="space-y-6">
+              <Card className="p-6 border-blue-100 bg-white shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
+                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} />
+              </Card>
+              {agencyDocuments && agencyDocuments.length > 0 && (
+                <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
+              )}
+            </div>
+          )}
+
+          {activeTab === "flights" && (
+            <div className="space-y-6">
+              <Card className="p-6 border-purple-100 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Itinéraires de vol et réservations favoris</h3>
+                  <Button onClick={() => setLocation("/flights")} className="bg-purple-600 hover:bg-purple-700 text-white font-bold">
+                    Rechercher des vols
+                  </Button>
+                </div>
+                {favoriteFlights.length === 0 ? (
+                  <p className="text-sm text-gray-500">Vous n'avez enregistré aucun vol favori pour l'instant.</p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {favoriteFlights.map((f: any) => (
+                      <div key={f.id} className="p-4 rounded-xl border border-purple-100 bg-purple-50/50 flex flex-col justify-between">
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-bold text-gray-900 text-lg">{f.departureCity} ➔ {f.arrivalCity}</span>
+                            <span className="font-bold text-purple-700">{f.price} {f.currency || "XAF"}</span>
+                          </div>
+                          <p className="text-xs text-gray-600 mb-3">Compagnie : {f.airline} • Cabine : {f.cabinClass || "Économique"}</p>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-purple-100">
+                          <span className="text-xs text-gray-500">Ajouté le {new Date(f.createdAt).toLocaleDateString("fr-FR")}</span>
+                          <Button onClick={() => setLocation("/flights")} size="sm" className="bg-purple-600 text-white">
+                            Réserver
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "documents" && (
+            <div className="space-y-6">
+              {agencyDocuments && agencyDocuments.length > 0 && (
+                <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
+              )}
+              <Card className="p-6 border-blue-100 bg-white shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Téléverser de nouveaux documents</h3>
+                <DocumentUploader dossierNumber={cProfile.dossierNumber} />
+              </Card>
+            </div>
+          )}
+
+          {activeTab === "profile" && (
+            <div className="space-y-6">
+              <ClientProfilePanel />
+            </div>
+          )}
+
+          {activeTab === "messages" && (
+            <div className="space-y-6">
+              <ClientMessagesPanel />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

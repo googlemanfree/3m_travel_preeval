@@ -19,6 +19,9 @@ import {
   agencyDossiers,
   agencyDossierDocuments,
   agencyDossierDocumentAnnotations,
+  applications,
+  favoriteFlights,
+  evaluations,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
@@ -1274,4 +1277,68 @@ export const candidateRouter = router({
         });
       }
     }),
+
+  // ── Tableau de bord client unifié complet ─────────────────────────────────
+  getClientDashboardSummary: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+    const candidate = ctx.candidate;
+
+    const [
+      appRows,
+      favFlights,
+      evalRows,
+      messageRows,
+      fileRows,
+      agencyDocRows,
+    ] = await Promise.all([
+      db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)),
+      db.select().from(favoriteFlights).where(eq((favoriteFlights as any).candidateId || (favoriteFlights as any).userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
+      db.select().from(evaluations).where(eq((evaluations as any).candidateEmail || (evaluations as any).email, candidate.email)).orderBy(desc(evaluations.createdAt)),
+      db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
+      db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidate.id)).orderBy(desc(candidateFiles.uploadedAt)),
+      db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, candidate.email)).orderBy(desc(clientDocuments.createdAt)),
+    ]);
+
+    const activeApp = appRows[0] || null;
+
+    let profileFieldsFilled = 0;
+    const totalProfileFields = 5;
+    if (candidate.fullName) profileFieldsFilled++;
+    if (candidate.email) profileFieldsFilled++;
+    if (candidate.phone) profileFieldsFilled++;
+    if (candidate.destination) profileFieldsFilled++;
+    if ((candidate as any).avatarUrl) profileFieldsFilled++;
+    const profileCompletionPercent = Math.round((profileFieldsFilled / totalProfileFields) * 100);
+
+    return {
+      candidate: {
+        id: candidate.id,
+        fullName: candidate.fullName,
+        email: candidate.email,
+        phone: candidate.phone,
+        destination: candidate.destination,
+        avatarUrl: (candidate as any).avatarUrl || null,
+        passportNumber: (candidate as any).passportNumber || null,
+        dossierNumber: (candidate as any).dossierNumber || activeApp?.dossierNumber || "N/A",
+        dossierStatus: (candidate as any).dossierStatus || activeApp?.dossierStatus || "evaluation",
+        createdAt: candidate.createdAt,
+      },
+      activeDossier: activeApp,
+      applications: appRows,
+      favoriteFlights: favFlights,
+      evaluations: evalRows,
+      messages: messageRows,
+      candidateFiles: fileRows,
+      agencyDocuments: agencyDocRows,
+      stats: {
+        totalEvaluations: evalRows.length,
+        totalFavoriteFlights: favFlights.length,
+        totalDocuments: fileRows.length + agencyDocRows.length,
+        unreadMessages: messageRows.filter((m: any) => m.senderRole === "advisor" && !m.isRead).length,
+        profileCompletionPercent,
+      },
+    };
+  }),
 });

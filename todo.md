@@ -2225,3 +2225,9 @@
 - [x] Intégrer le bouton d’aperçu rapide dans le centre documentaire de l’espace candidat (`AgencyDocumentsPanel.tsx`)
 - [x] Intégrer le bouton d’aperçu rapide dans le gestionnaire documentaire administrateur (`AdminDocumentsManagement.tsx`)
 - [x] Valider la sécurité des liens signés et le rendu responsive
+
+## Tableau de bord client unifié complet (v123)
+- [x] Créer une agrégation serveur tRPC complète pour regrouper profil, vols réservés, dossiers, documents, démarches, messages et notifications
+- [x] Refondre `/mon-espace` en un tableau de bord modulaire hautement professionnel avec barre de progression de complétion du profil, widgets par activité et actualisation asynchrone
+- [x] Vérifier la synchronisation bidirectionnelle complète avec le back-office administrateur
+- [x] Valider les tests, le build et le rendu responsive
