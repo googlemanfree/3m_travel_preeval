@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { AlertTriangle, CheckCircle2, Clock3, Mail, RefreshCw, Search, Send } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock3, Download, Mail, RefreshCw, Search, Send, ShieldAlert } from "lucide-react";
 
 const STATUS_LABELS = {
   pending: { label: "En attente", className: "bg-amber-50 text-amber-800 border-amber-200" },
@@ -40,19 +40,43 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
     enabled: Boolean(sessionToken),
     refetchInterval: 30_000,
   });
+  const alertsQuery = trpc.adminActivation.checkAlerts.useQuery({ sessionToken }, {
+    enabled: Boolean(sessionToken),
+    refetchInterval: 60_000,
+  });
+
   const utils = trpc.useUtils();
   const resendMutation = trpc.adminActivation.resend.useMutation({
     onSuccess: () => {
-      toast({ title: "Lien renvoyé", description: "Le nouveau lien d’activation a été envoyé si le transport e-mail l’a accepté." });
+      toast({ title: "Lien renvoyé", description: "Le nouveau lien d’activation a été envoyé avec succès." });
       void utils.adminActivation.list.invalidate();
+      void utils.adminActivation.checkAlerts.invalidate();
     },
     onError: (error) => {
       toast({ title: "Renvoi impossible", description: error.message, variant: "destructive" });
     },
   });
 
+  const exportMutation = trpc.adminActivation.exportCsv.useMutation({
+    onSuccess: (res) => {
+      const blob = new Blob([res.csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `activations-candidats-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Export réussi", description: `${res.total} compte(s) exporté(s) au format CSV.` });
+    },
+    onError: (error) => {
+      toast({ title: "Export impossible", description: error.message, variant: "destructive" });
+    },
+  });
+
   const data = query.data;
   const totalPages = data?.pages ?? 1;
+  const alerts = alertsQuery.data;
 
   return (
     <Card className="border-0 shadow-sm overflow-hidden">
@@ -63,13 +87,36 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
               <Mail className="w-5 h-5 text-blue-600" /> Activations de comptes candidats
             </h3>
             <p className="text-sm text-gray-500 mt-1">
-              Suivez les comptes non confirmés sans exposer les tokens d’activation.
+              Suivi, alertes d’échecs répétés et relances anti-spam des comptes non confirmés.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => void query.refetch()} disabled={query.isFetching} className="gap-2 shrink-0">
-            <RefreshCw className={`w-4 h-4 ${query.isFetching ? "animate-spin" : ""}`} /> Actualiser
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportMutation.mutate({ sessionToken, status })}
+              disabled={exportMutation.isPending}
+              className="gap-2"
+            >
+              <Download className={`w-4 h-4 ${exportMutation.isPending ? "animate-spin" : ""}`} /> Exporter CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => void query.refetch()} disabled={query.isFetching} className="gap-2">
+              <RefreshCw className={`w-4 h-4 ${query.isFetching ? "animate-spin" : ""}`} /> Actualiser
+            </Button>
+          </div>
         </div>
+
+        {alerts?.hasAlerts && (
+          <div className="p-4 rounded-xl border border-red-200 bg-red-50 flex items-start gap-3 text-red-900">
+            <ShieldAlert className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            <div className="text-xs space-y-1">
+              <p className="font-bold">Alerte : Échecs de livraison répétés détectés</p>
+              <p className="text-red-700">
+                Plusieurs envois consécutifs ont échoué pour : {alerts.repeatedFailures.map((item) => `${item.email} (${item.count} échecs)`).join(", ")}. Vérifiez l’adresse ou basculez vers un renvoi manuel.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="rounded-xl border bg-slate-50 p-3">
@@ -135,7 +182,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
                   <th className="px-4 py-3">Statut</th>
                   <th className="px-4 py-3">Expiration</th>
                   <th className="px-4 py-3">Dernier e-mail</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3 text-right">Action (Cooldown 60s)</th>
                 </tr>
               </thead>
               <tbody className="divide-y bg-white">
@@ -167,7 +214,7 @@ export default function AdminCandidateActivationPanel({ sessionToken }: { sessio
                           disabled={resendMutation.isPending}
                           onClick={() => resendMutation.mutate({ sessionToken, candidateId: row.id })}
                         >
-                          <Send className="w-3.5 h-3.5" /> Renvoyer
+                          <Send className="w-3.5 h-3.5" /> Renvoyer (anti-spam)
                         </Button>
                       </td>
                     </tr>

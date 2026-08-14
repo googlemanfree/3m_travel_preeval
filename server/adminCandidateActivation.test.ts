@@ -19,6 +19,13 @@ describe("Admin candidate activation monitoring", () => {
     expect(classifyEmailError("unexpected provider failure with secret-token-123")).toBe("erreur_envoi");
   });
 
+  it("propose l’export CSV et la détection d’échecs répétés", () => {
+    const source = readFileSync(new URL("./routers/adminActivation.ts", import.meta.url), "utf8");
+    expect(source).toContain("exportCsv");
+    expect(source).toContain("checkAlerts");
+    expect(source).toContain("cooldownMs");
+  });
+
   it("protège la route et ne retourne pas les champs de token", () => {
     const source = readFileSync(new URL("./routers/adminActivation.ts", import.meta.url), "utf8");
     expect(source).toContain("requireValidAdminSession(input.sessionToken)");

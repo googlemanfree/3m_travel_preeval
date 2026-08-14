@@ -2574,3 +2574,10 @@
 - [x] Permettre le renvoi sécurisé du lien et l’affichage du dernier motif d’échec sans exposer de token
 - [x] Intégrer la section au tableau de bord admin avec états de chargement et erreurs
 - [x] Ajouter les tests d’autorisation, de filtrage et de renvoi puis publier
+
+## Améliorations avancées des activations (v182)
+- [x] Ajouter une procédure d’export CSV des activations filtrées avec formatage sécurisé
+- [x] Mettre en place une règle de relance automatique limitée (anti-spam) pour les comptes en attente ou expirés
+- [x] Intégrer un système d’alerte administrateur en cas d’échecs répétés sur une même adresse
+- [x] Ajouter les actions CSV et relance dans l’interface du panneau AdminCandidateActivationPanel
+- [x] Valider les tests, le build et publier la mise à jour

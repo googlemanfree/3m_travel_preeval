@@ -35,6 +35,69 @@ export function getActivationStatus(candidate: { emailVerified: boolean; verific
 }
 
 export const adminActivationRouter = router({
+  exportCsv: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), status: z.enum(["all", "pending", "failed", "expired"]).default("all") }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [candidateRows, activationLogs] = await Promise.all([
+        db.select({
+          id: candidates.id,
+          fullName: candidates.fullName,
+          email: candidates.email,
+          emailVerified: candidates.emailVerified,
+          createdAt: candidates.createdAt,
+          updatedAt: candidates.updatedAt,
+          verificationExpiresAt: candidates.verificationExpiresAt,
+        }).from(candidates).where(eq(candidates.emailVerified, false)).orderBy(desc(candidates.updatedAt)).limit(10000),
+        db.select({
+          recipientEmail: emailDeliveryLogs.recipientEmail,
+          status: emailDeliveryLogs.status,
+          errorDetails: emailDeliveryLogs.errorDetails,
+          providerMessageId: emailDeliveryLogs.providerMessageId,
+          createdAt: emailDeliveryLogs.createdAt,
+        }).from(emailDeliveryLogs).where(like(emailDeliveryLogs.subject, activationSubject)).orderBy(desc(emailDeliveryLogs.createdAt)).limit(10000),
+      ]);
+
+      const latestLogByEmail = new Map<string, (typeof activationLogs)[number]>();
+      for (const log of activationLogs) {
+        const key = log.recipientEmail.toLowerCase();
+        if (!latestLogByEmail.has(key)) latestLogByEmail.set(key, log);
+      }
+
+      const rows = candidateRows.map((candidate) => {
+        const latestLog = latestLogByEmail.get(candidate.email.toLowerCase());
+        const activationStatus = getActivationStatus(candidate, latestLog);
+        return {
+          fullName: candidate.fullName,
+          email: candidate.email,
+          activationStatus,
+          lastEmailStatus: latestLog?.status ?? "not_sent",
+          lastEmailError: latestLog?.errorDetails ? classifyEmailError(latestLog.errorDetails) : "aucun",
+          createdAt: candidate.createdAt ? new Date(candidate.createdAt).toISOString() : "",
+          expiresAt: candidate.verificationExpiresAt ? new Date(candidate.verificationExpiresAt).toISOString() : "",
+        };
+      }).filter((row) => input.status === "all" || row.activationStatus === input.status);
+
+      const header = ["Nom complet", "Email", "Statut", "Dernier statut email", "Erreur", "Création", "Expiration"];
+      const csvLines = [
+        header.join(";"),
+        ...rows.map((r) => [
+          `"${r.fullName.replace(/"/g, '""')}"`,
+          `"${r.email.replace(/"/g, '""')}"`,
+          r.activationStatus,
+          r.lastEmailStatus,
+          r.lastEmailError,
+          r.createdAt,
+          r.expiresAt,
+        ].join(";")),
+      ];
+
+      return { csvContent: csvLines.join("\n"), total: rows.length, exportedBy: admin.email };
+    }),
+
   list: publicProcedure.input(listInput).query(async ({ input }) => {
     const admin = await requireValidAdminSession(input.sessionToken);
     const db = await getDb();
@@ -121,9 +184,30 @@ export const adminActivationRouter = router({
         fullName: candidates.fullName,
         email: candidates.email,
         emailVerified: candidates.emailVerified,
+        verificationExpiresAt: candidates.verificationExpiresAt,
       }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
       if (candidate.emailVerified) throw new TRPCError({ code: "CONFLICT", message: "Ce compte est déjà activé." });
+
+      const recentLogs = await db.select({
+        createdAt: emailDeliveryLogs.createdAt,
+      }).from(emailDeliveryLogs).where(
+        and(
+          like(emailDeliveryLogs.subject, activationSubject),
+          like(emailDeliveryLogs.recipientEmail, candidate.email)
+        )
+      ).orderBy(desc(emailDeliveryLogs.createdAt)).limit(1);
+
+      if (recentLogs.length > 0) {
+        const lastSent = new Date(recentLogs[0].createdAt).getTime();
+        const cooldownMs = 60 * 1000;
+        if (Date.now() - lastSent < cooldownMs) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Veuillez patienter 60 secondes entre chaque renvoi pour éviter le spam e-mail.",
+          });
+        }
+      }
 
       const { rawToken, tokenHash } = issueVerificationToken();
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -136,5 +220,38 @@ export const adminActivationRouter = router({
       }
 
       return { success: true, candidateId: candidate.id, expiresAt };
+    }),
+
+  checkAlerts: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const failedLogs = await db.select({
+        recipientEmail: emailDeliveryLogs.recipientEmail,
+        errorDetails: emailDeliveryLogs.errorDetails,
+      }).from(emailDeliveryLogs).where(
+        and(
+          like(emailDeliveryLogs.subject, activationSubject),
+          eq(emailDeliveryLogs.status, "failed")
+        )
+      ).orderBy(desc(emailDeliveryLogs.createdAt)).limit(100);
+
+      const failureCountByEmail = new Map<string, number>();
+      for (const log of failedLogs) {
+        const key = log.recipientEmail.toLowerCase();
+        failureCountByEmail.set(key, (failureCountByEmail.get(key) || 0) + 1);
+      }
+
+      const repeatedFailures = Array.from(failureCountByEmail.entries())
+        .filter(([_, count]) => count >= 2)
+        .map(([email, count]) => ({ email, count }));
+
+      return {
+        hasAlerts: repeatedFailures.length > 0,
+        repeatedFailures,
+      };
     }),
 });
