@@ -2439,3 +2439,9 @@
 - [x] Garantir l’accessibilité immédiate du numéro dans l’Espace Client et la recherche instantanée côté Administrateur
 - [x] Valider le lien « Suivre le dossier » et la sécurité d’accès (pas d’accès inter-candidat)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Sécurisation par compte, import Luxembourg et évaluations sous 48h (v164)
+- [x] Garantir que l’accès au numéro de dossier nécessite une connexion authentifiée et un rattachement strict par adresse e-mail (refus serveur inter-candidat)
+- [x] Créer un module d’import et de rattachement pour les anciens candidats Luxembourg avec génération de comptes associés
+- [x] Mettre en place le pipeline d’évaluation sous 48 heures produisant un rapport PDF complet, envoyé automatiquement par e-mail et accessible dans l’Espace Client
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
