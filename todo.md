@@ -2291,3 +2291,8 @@
 - [x] Module de prise de rendez-vous en agence pour consultations physiques
 - [x] Journal d’activité du dossier et aide contextuelle par étape
 - [x] Validation responsive mobile/bureau, tests de non-régression et publication
+
+## Zone glisser-déposer et barre de progression documentaire (v134)
+- [x] Créer le composant de glisser-déposer avec retour visuel et barre de progression de transfert
+- [x] Intégrer le composant dans le centre documentaire pour le dépôt rapide des pièces manquantes
+- [x] Valider la compilation, les tests et publier la mise à jour
