@@ -2296,3 +2296,8 @@
 - [x] Créer le composant de glisser-déposer avec retour visuel et barre de progression de transfert
 - [x] Intégrer le composant dans le centre documentaire pour le dépôt rapide des pièces manquantes
 - [x] Valider la compilation, les tests et publier la mise à jour
+
+## Indicateurs visuels de statut pour chaque document (v135)
+- [x] Créer le composant de badge de statut document (En attente, En analyse, Validé, Rejeté) avec couleurs normalisées
+- [x] Intégrer les badges dans les listes de pièces du centre documentaire (`AgencyDocumentsPanel.tsx`)
+- [x] Valider la compilation, les tests et publier la mise à jour
