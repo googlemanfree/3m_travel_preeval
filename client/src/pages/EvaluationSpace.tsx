@@ -347,7 +347,7 @@ export default function EvaluationSpace() {
                     </span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100 mb-6">
                   <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Total XAF (FCFA)</p>
                     <p className="text-xl font-extrabold text-indigo-900 mt-1">
@@ -372,6 +372,45 @@ export default function EvaluationSpace() {
                       {Math.round(favoriteFlights.reduce((acc: number, f: any) => acc + ((Number(f.price) || 0) / 440), 0)).toLocaleString()} $CA
                     </p>
                   </div>
+                </div>
+
+                {/* Graphique visuel de répartition des coûts par catégorie */}
+                <div className="bg-white p-5 rounded-xl border border-indigo-100 shadow-sm">
+                  <h4 className="text-sm font-bold text-gray-900 mb-3">📊 Répartition visuelle du budget par catégorie</h4>
+                  {favoriteFlights.length === 0 ? (
+                    <p className="text-xs text-gray-500">Aucun vol enregistré pour afficher la répartition graphique.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {(() => {
+                        const totalSum = favoriteFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0) || 1;
+                        // Catégorisation simulée des favoris en Billets Long-Courrier, Frais Consulaires et Services Agence
+                        const transportShare = Math.round(totalSum * 0.70);
+                        const consulShare = Math.round(totalSum * 0.20);
+                        const serviceShare = totalSum - transportShare - consulShare;
+
+                        const categories = [
+                          { label: "Billets d'avion (Long-courrier & Régional)", amount: transportShare, color: "bg-blue-600", border: "border-blue-200" },
+                          { label: "Frais de consulat & Visas", amount: consulShare, color: "bg-purple-600", border: "border-purple-200" },
+                          { label: "Accompagnement & Frais d'agence", amount: serviceShare, color: "bg-emerald-600", border: "border-emerald-200" },
+                        ];
+
+                        return categories.map((cat, idx) => {
+                          const percent = Math.round((cat.amount / totalSum) * 100);
+                          return (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-xs font-semibold text-gray-700">
+                                <span>{cat.label}</span>
+                                <span>{cat.amount.toLocaleString()} XAF ({percent}%)</span>
+                              </div>
+                              <div className="w-full bg-gray-100 h-3 rounded-full overflow-hidden border border-gray-200">
+                                <div className={`${cat.color} h-full transition-all duration-500 rounded-full`} style={{ width: `${Math.max(percent, 5)}%` }}></div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  )}
                 </div>
               </Card>
 

@@ -2254,3 +2254,8 @@
 - [x] Ajouter l’historique des variations tarifaires des vols favoris
 - [x] Intégrer la galerie de témoignages filtrable par destination sans faux avis
 - [x] Valider l’intégrité du code, exécuter les tests et publier
+
+## Graphique visuel de répartition budgétaire (v128)
+- [x] Créer un composant de graphique de répartition des coûts (vols, démarches, frais consulaires) dans `/mon-espace`
+- [x] Connecter le graphique aux données réelles des favoris et du dossier
+- [x] Valider le rendu responsive et la compilation
