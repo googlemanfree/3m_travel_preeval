@@ -15,6 +15,20 @@ import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email"
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
+export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
+
+export function deriveCandidateActivationStatus(
+  candidate: { emailVerified: boolean; verificationToken?: string | null; verificationExpiresAt?: Date | null },
+  latestActivationEmail?: { status?: string | null },
+  now = new Date(),
+): CandidateActivationStatus {
+  if (candidate.emailVerified) return "active";
+  if (latestActivationEmail?.status === "failed") return "failed";
+  if (candidate.verificationExpiresAt && candidate.verificationExpiresAt.getTime() <= now.getTime()) return "expired";
+  if (candidate.verificationToken) return "pending";
+  return "not_registered";
+}
+
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
   // ADMIN ÉVALUATION — Gestion des CV et rapports IA
@@ -1068,8 +1082,9 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string(),
       search: z.string().optional(),
-      status: z.string().optional(),
-      limit: z.number().int().min(1).max(200).default(100),
+       status: z.string().optional(),
+       activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
+       limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
     }))
     .query(async ({ input }) => {
@@ -1092,6 +1107,44 @@ export const adminRouter = router({
           .from(agencyDossiers)
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(input.limit);
+
+        const candidateRows = await db
+          .select({
+            email: candidates.email,
+            emailVerified: candidates.emailVerified,
+            verificationToken: candidates.verificationToken,
+            verificationExpiresAt: candidates.verificationExpiresAt,
+          })
+          .from(candidates)
+          .limit(10000);
+        const activationLogs = await db
+          .select({
+            recipientEmail: emailDeliveryLogs.recipientEmail,
+            subject: emailDeliveryLogs.subject,
+            status: emailDeliveryLogs.status,
+          })
+          .from(emailDeliveryLogs)
+          .orderBy(desc(emailDeliveryLogs.createdAt))
+          .limit(10000);
+        const latestActivationLogByEmail = new Map<string, { status: string | null }>();
+        for (const log of activationLogs) {
+          const subject = log.subject.toLowerCase();
+          const isActivationEmail = subject.includes("activation") || subject.includes("confirmation") || subject.includes("vérification") || subject.includes("verification") || subject.includes("verify");
+          const email = log.recipientEmail.toLowerCase();
+          if (isActivationEmail && !latestActivationLogByEmail.has(email)) {
+            latestActivationLogByEmail.set(email, { status: log.status });
+          }
+        }
+        const activationStatusByEmail = new Map<string, CandidateActivationStatus>();
+        for (const candidate of candidateRows) {
+          const email = candidate.email.toLowerCase();
+          activationStatusByEmail.set(
+            email,
+            deriveCandidateActivationStatus(candidate, latestActivationLogByEmail.get(email)),
+          );
+        }
+        const getActivationStatus = (email: string): CandidateActivationStatus =>
+          activationStatusByEmail.get(email.toLowerCase()) ?? "not_registered";
 
         // Mapper les statuts internes vers les statuts admin
         const mapDossierStatus = (status: string): string => {
@@ -1142,6 +1195,7 @@ export const adminRouter = router({
           scoringBadge: app.scoringBadge,
           createdAt: app.createdAt,
           updatedAt: app.updatedAt,
+          activationStatus: getActivationStatus(app.email),
         }));
 
         // Normaliser les dossiers agence
@@ -1162,6 +1216,7 @@ export const adminRouter = router({
           scoringBadge: null,
           createdAt: app.createdAt,
           updatedAt: app.updatedAt,
+          activationStatus: getActivationStatus(app.email),
         }));
 
         // Combiner et trier par date de création
@@ -1172,6 +1227,9 @@ export const adminRouter = router({
         // Filtrer par statut
         if (input.status && input.status !== "ALL") {
           allCandidates = allCandidates.filter(c => c.status === input.status);
+        }
+        if (input.activationStatus && input.activationStatus !== "ALL") {
+          allCandidates = allCandidates.filter(c => c.activationStatus === input.activationStatus);
         }
 
         // Filtrer par recherche

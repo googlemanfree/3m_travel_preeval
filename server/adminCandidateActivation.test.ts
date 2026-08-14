@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { getActivationStatus, classifyEmailError } from "./routers/adminActivation";
+import { deriveCandidateActivationStatus } from "./routers/admin";
 
 describe("Admin candidate activation monitoring", () => {
   it("calcule pending, failed et expired sans exposer de token", () => {
@@ -35,10 +36,23 @@ describe("Admin candidate activation monitoring", () => {
     expect(source).toContain("sendVerificationLink(candidate.email, candidate.fullName, rawToken)");
   });
 
+  it("dérive le statut affiché dans la liste des candidats sans exposer de token", () => {
+    const future = new Date(Date.now() + 60_000);
+    const past = new Date(Date.now() - 60_000);
+    expect(deriveCandidateActivationStatus({ emailVerified: true, verificationToken: null, verificationExpiresAt: null })).toBe("active");
+    expect(deriveCandidateActivationStatus({ emailVerified: false, verificationToken: "hashed", verificationExpiresAt: future })).toBe("pending");
+    expect(deriveCandidateActivationStatus({ emailVerified: false, verificationToken: "hashed", verificationExpiresAt: past })).toBe("expired");
+    expect(deriveCandidateActivationStatus({ emailVerified: false, verificationToken: "hashed", verificationExpiresAt: future }, { status: "failed" })).toBe("failed");
+    expect(deriveCandidateActivationStatus({ emailVerified: false, verificationToken: null, verificationExpiresAt: null })).toBe("not_registered");
+  });
+
   it("monte le routeur et son audit transversal", () => {
     const routers = readFileSync(new URL("./routers.ts", import.meta.url), "utf8");
+    const adminRouter = readFileSync(new URL("./routers/admin.ts", import.meta.url), "utf8");
     const trpc = readFileSync(new URL("./_core/trpc.ts", import.meta.url), "utf8");
     expect(routers).toContain("adminActivation: adminActivationRouter");
     expect(trpc).toContain("adminActivation");
+    expect(adminRouter).toContain("activationStatus");
+    expect(adminRouter).toContain("deriveCandidateActivationStatus");
   });
 });

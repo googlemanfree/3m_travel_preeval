@@ -2596,3 +2596,10 @@
 - [x] Vérifier le bouton Mot de passe oublié et l’envoi du lien à usage unique
 - [x] Vérifier l’enregistrement du nouveau mot de passe, l’invalidation du token et la reconnexion
 - [x] Corriger les anomalies, ajouter les tests et publier après vérification desktop/mobile
+
+## Colonne statut d’activation candidat (v185)
+- [x] Auditer la liste admin et la source des statuts d’activation
+- [x] Exposer un statut dérivé sécurisé pour chaque candidat
+- [x] Afficher une colonne avec badges Activé, En attente, Lien expiré ou Échec d’envoi
+- [x] Ajouter un filtre par statut sans exposer de token d’activation
+- [x] Ajouter les tests, vérifier le responsive et publier

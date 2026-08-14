@@ -76,6 +76,7 @@ import { formatAdminSyncTime } from "@shared/adminSync";
 
 type AdminStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
 type CandidateSource = "WEB" | "AGENCY_PHYSICAL";
+type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
 interface Candidate {
   id: string;
@@ -94,6 +95,7 @@ interface Candidate {
   scoringBadge: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  activationStatus: CandidateActivationStatus;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -179,6 +181,24 @@ function SourceBadge({ source }: { source: string }) {
   if (!config) return <Badge variant="outline">{source}</Badge>;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${config.color}`}>
+      {config.icon}
+      {config.label}
+    </span>
+  );
+}
+
+const ACTIVATION_STATUS_CONFIG: Record<CandidateActivationStatus, { label: string; color: string; icon: React.ReactNode }> = {
+  active: { label: "Activé", color: "text-emerald-700 bg-emerald-50 border-emerald-200", icon: <CheckCircle className="w-3 h-3" /> },
+  pending: { label: "En attente", color: "text-amber-700 bg-amber-50 border-amber-200", icon: <Clock className="w-3 h-3" /> },
+  expired: { label: "Lien expiré", color: "text-orange-700 bg-orange-50 border-orange-200", icon: <AlertCircle className="w-3 h-3" /> },
+  failed: { label: "Échec d’envoi", color: "text-red-700 bg-red-50 border-red-200", icon: <ShieldAlert className="w-3 h-3" /> },
+  not_registered: { label: "Non inscrit", color: "text-slate-600 bg-slate-50 border-slate-200", icon: <Mail className="w-3 h-3" /> },
+};
+
+function ActivationBadge({ status }: { status?: string }) {
+  const config = ACTIVATION_STATUS_CONFIG[status as CandidateActivationStatus] ?? ACTIVATION_STATUS_CONFIG.not_registered;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${config.color}`}>
       {config.icon}
       {config.label}
     </span>
@@ -600,6 +620,7 @@ export default function AdminDashboard() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -635,7 +656,12 @@ export default function AdminDashboard() {
   };
 
   const { data, isLoading, refetch } = trpc.admin.listCandidates.useQuery(
-    { sessionToken, search: search || undefined, status: statusFilter !== "ALL" ? statusFilter : undefined },
+    {
+      sessionToken,
+      search: search || undefined,
+      status: statusFilter !== "ALL" ? statusFilter : undefined,
+      activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
+    },
     { enabled: !!sessionToken }
   );
 
@@ -1330,6 +1356,19 @@ export default function AdminDashboard() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={activationFilter} onValueChange={(value) => setActivationFilter(value as CandidateActivationStatus | "ALL")}>
+            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par statut d’activation">
+              <SelectValue placeholder="Toutes les activations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Toutes les activations</SelectItem>
+              {Object.entries(ACTIVATION_STATUS_CONFIG).map(([key, cfg]) => (
+                <SelectItem key={key} value={key}>
+                  <span className="flex items-center gap-2">{cfg.icon}{cfg.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Tableau */}
@@ -1342,6 +1381,7 @@ export default function AdminDashboard() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Candidat</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden md:table-cell">Destination</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden lg:table-cell">Source</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Activation</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Statut</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden sm:table-cell">Score</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide hidden xl:table-cell">Date</th>
@@ -1352,7 +1392,7 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      {Array.from({ length: 8 }).map((_, j) => (
+                      {Array.from({ length: 9 }).map((_, j) => (
                         <td key={j} className="px-4 py-3">
                           <div className="admin-table-skeleton h-4 rounded w-3/4" />
                         </td>
@@ -1361,10 +1401,10 @@ export default function AdminDashboard() {
                   ))
                 ) : candidates.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>Aucun candidat trouvé</p>
-                      {(search || statusFilter !== "ALL") && (
+                      {(search || statusFilter !== "ALL" || activationFilter !== "ALL") && (
                         <p className="text-xs mt-1">Essayez de modifier vos filtres</p>
                       )}
                     </td>
@@ -1392,6 +1432,9 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <SourceBadge source={candidate.source} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <ActivationBadge status={candidate.activationStatus} />
                       </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={candidate.status} />
