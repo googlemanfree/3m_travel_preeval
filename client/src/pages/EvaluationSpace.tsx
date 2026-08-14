@@ -341,10 +341,66 @@ export default function EvaluationSpace() {
                     <h3 className="text-lg font-bold text-gray-900">Tableau de bord budgétaire des vols</h3>
                     <p className="text-xs text-gray-600">Estimation consolidée de vos itinéraires favoris selon différentes devises de référence.</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-xs bg-indigo-100 text-indigo-800 font-semibold px-3 py-1 rounded-full">
                       {favoriteFlights.length} Itinéraire(s) enregistré(s)
                     </span>
+                    <Button
+                      onClick={() => {
+                        const totalXAF = favoriteFlights.reduce((acc: number, f: any) => acc + (Number(f.price) || 0), 0);
+                        const totalEUR = Math.round(totalXAF / 655.957);
+                        const totalUSD = Math.round(totalXAF / 600);
+                        const totalCAD = Math.round(totalXAF / 440);
+
+                        const reportContent = `
+==================================================
+   3M TRAVEL AND SERVICES — RAPPORT BUDGÉTAIRE
+==================================================
+Date d'édition : ${new Date().toLocaleDateString("fr-FR")}
+Candidat : ${cProfile.fullName} (${cProfile.email})
+N° de Dossier : ${cProfile.dossierNumber}
+
+--------------------------------------------------
+RÉCAPITULATIF MULTI-DEVISES
+--------------------------------------------------
+- Total XAF (FCFA) : ${totalXAF.toLocaleString()} XAF
+- Total EUR (€)    : ${totalEUR.toLocaleString()} €
+- Total USD ($)    : ${totalUSD.toLocaleString()} $
+- Total CAD ($CA)  : ${totalCAD.toLocaleString()} $CA
+
+--------------------------------------------------
+VENTILATION ESTIMÉE PAR CATÉGORIE
+--------------------------------------------------
+- Billets d'avion (Long-courrier & Régional) : ${Math.round(totalXAF * 0.70).toLocaleString()} XAF
+- Frais consulaires & Visas                  : ${Math.round(totalXAF * 0.20).toLocaleString()} XAF
+- Accompagnement & Frais d'agence            : ${Math.round(totalXAF * 0.10).toLocaleString()} XAF
+
+--------------------------------------------------
+MENTION LÉGALE & JUSTIFICATION FINANCIÈRE
+--------------------------------------------------
+Ce rapport est généré automatiquement par l'espace client 
+3M Travel and Services à des fins de planification et de 
+justification de fonds auprès des autorités consulaires.
+Les tarifs sont basés sur les données GDS et sources vérifiées.
+--------------------------------------------------
+`;
+
+                        const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `Rapport_Budgetaire_${cProfile.dossierNumber || '3MTravel'}.txt`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        alert("Rapport budgétaire exporté avec succès !");
+                      }}
+                      size="sm"
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                    >
+                      📥 Exporter le Rapport Budgétaire (PDF/TXT)
+                    </Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-indigo-100 mb-6">

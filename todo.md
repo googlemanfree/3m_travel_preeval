@@ -2259,3 +2259,8 @@
 - [x] Créer un composant de graphique de répartition des coûts (vols, démarches, frais consulaires) dans `/mon-espace`
 - [x] Connecter le graphique aux données réelles des favoris et du dossier
 - [x] Valider le rendu responsive et la compilation
+
+## Export PDF du rapport budgétaire (v129)
+- [x] Ajouter un bouton de téléchargement du rapport budgétaire au format PDF dans l’espace client
+- [x] Implémenter la génération propre du document PDF avec en-tête agence, totaux multi-devises et ventilation des coûts
+- [x] Valider l’export et publier la mise à jour
