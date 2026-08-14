@@ -32,6 +32,7 @@ import ClientProfilePanel from "@/components/ClientProfilePanel";
 import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
+import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 import { DocumentUploader } from "@/components/DocumentUploader";
 
 export default function EvaluationSpace() {
@@ -115,6 +116,11 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: cProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
+    documentType: document.documentType ?? document.fileType,
+    documentName: document.documentName ?? document.fileName,
+    verificationStatus: document.verificationStatus,
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
@@ -170,8 +176,9 @@ export default function EvaluationSpace() {
       </header>
 
       {/* Barre de navigation principale du tableau de bord */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-gray-200">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+          <ClientSpaceNavigation />
+          <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-gray-200">
           {[
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
@@ -720,12 +727,19 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "documents" && (
             <div className="space-y-6">
+              <DossierDocumentChecklist destination={cProfile.destination} documents={checklistDocuments} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Téléverser de nouveaux documents</h3>
-                <DocumentUploader dossierNumber={cProfile.dossierNumber} />
+                <DocumentUploader
+                  dossierNumber={cProfile.dossierNumber}
+                  onUploadSuccess={() => {
+                    void trpcUtils.candidate.getMyAgencyDocuments.invalidate();
+                    void refetch();
+                  }}
+                />
               </Card>
             </div>
           )}

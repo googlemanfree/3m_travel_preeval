@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Camera, Loader } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
 interface Props {
   fullName: string;
@@ -8,6 +9,7 @@ interface Props {
   size?: "md" | "lg";
   editable?: boolean;
   onUpdated?: (url: string) => void;
+  email?: string;
 }
 
 function getInitials(fullName: string): string {
@@ -15,7 +17,7 @@ function getInitials(fullName: string): string {
   return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() || "").join("") || "?";
 }
 
-export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", editable = false, onUpdated }: Props) {
+export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", editable = false, onUpdated, email }: Props) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -35,22 +37,30 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
       return;
     }
     setError("");
+    if (!email) {
+      setError("Votre e-mail de connexion est nécessaire pour sécuriser ce changement.");
+      return;
+    }
     setUploading(true);
     try {
-      const token = localStorage.getItem("3m_candidate_token") || sessionStorage.getItem("3m_candidate_token");
+      const verification = await verifyHumanPortrait(file);
+      if (!verification.accepted) throw new Error(verification.reason);
       const formData = new FormData();
       formData.append("file", file);
       formData.append("fileType", "photo_identite");
+      formData.append("email", email.trim().toLowerCase());
+      formData.append("captureMethod", "gallery");
 
-      const res = await fetch("/api/candidate/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+      const res = await fetch("/api/candidate/upload-public", { method: "POST", body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || typeof data.fileUrl !== "string" || typeof data.portraitVerificationToken !== "string") {
+        throw new Error(data.error || "Échec de l'envoi sécurisé de la photo.");
+      }
+
+      const result = await updateAvatarMutation.mutateAsync({
+        avatarUrl: data.fileUrl,
+        portraitVerificationToken: data.portraitVerificationToken,
       });
-      if (!res.ok) throw new Error("Échec de l'envoi de la photo.");
-      const data = await res.json();
-
-      const result = await updateAvatarMutation.mutateAsync({ avatarUrl: data.fileUrl });
       onUpdated?.(result.avatarUrl);
     } catch (err: any) {
       setError(err.message || "Erreur lors de la mise à jour de la photo.");
@@ -79,7 +89,7 @@ export default function CandidateAvatar({ fullName, avatarUrl, size = "lg", edit
           >
             {uploading ? <Loader className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
           </button>
-          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={handleFileSelect} className="hidden" />
         </>
       )}
 

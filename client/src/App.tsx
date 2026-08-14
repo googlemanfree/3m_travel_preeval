@@ -137,7 +137,7 @@ function Router() {
       {/* Pages publiques (SANS authentification) */}
       <Route path={"/"} component={Home} />
       <Route path={"/register"} component={Register} />
-      <Route path={"/signup"} component={SignUp} />
+      <Route path={"/signup"} component={Register} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
       <Route path={"/evaluation"}>

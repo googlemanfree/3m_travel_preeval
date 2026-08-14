@@ -12,8 +12,9 @@ describe("espace client professionnel", () => {
     const router = read("server/routers/candidate.ts");
 
     expect(avatar).toContain("trpc.candidate.updateAvatar.useMutation()");
-    expect(avatar).toContain("/api/candidate/upload");
-    expect(page).toContain("avatarUrl={myDossierData.data.candidate.avatarUrl}");
+    expect(avatar).toContain("/api/candidate/upload-public");
+    expect(avatar).toContain("verifyHumanPortrait");
+    expect(page).toContain("avatarUrl={cProfile.avatarUrl}");
     expect(router).toContain("updateAvatar:");
   });
 
@@ -27,8 +28,8 @@ describe("espace client professionnel", () => {
     expect(timeline).toContain('key: "documents"');
     expect(timeline).toContain('key: "soumission"');
     expect(timeline).toContain('key: "decision"');
-    expect(page).toContain("dossierStatus={myDossierData.data.dossierStatus}");
-    expect(router).toContain("dossierStatus: application.dossierStatus");
+    expect(page).toContain("dossierStatus={cProfile.dossierStatus}");
+    expect(router).toContain("dossierStatus: (candidate as any).dossierStatus");
   });
 
   it("alerte d’une nouvelle étape et mémorise l’étape consultée", () => {

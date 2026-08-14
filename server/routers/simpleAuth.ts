@@ -43,7 +43,17 @@ export const simpleAuthRouter = router({
         confirmPassword: z.string(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Ce parcours d’inscription est désactivé. Utilisez l’inscription avec portrait humain obligatoire." });
+    }),
+
+  registerLegacy: publicProcedure
+    .input(z.never())
+    .mutation(async () => {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Inscription héritée désactivée." });
+    }),
+
+  /*
       const { fullName, email, password, confirmPassword } = input;
       const db = await getDb();
       if (!db) throw new Error("Database not available");
@@ -119,6 +129,8 @@ export const simpleAuthRouter = router({
         email: email.toLowerCase(),
       };
     }),
+
+  */
 
   /**
    * Procédure de vérification d'email

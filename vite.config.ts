@@ -173,6 +173,12 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
+            if (id.includes("@tensorflow") || id.includes("/tfjs/") || id.includes("blazeface")) {
+              return "portrait-vendor";
+            }
+            if (id.includes("pdfjs-dist") || id.includes("react-pdf")) {
+              return "pdf-viewer-vendor";
+            }
             if (id.includes("jspdf") || id.includes("html2pdf") || id.includes("html2canvas")) {
               return "pdf-vendor";
             }

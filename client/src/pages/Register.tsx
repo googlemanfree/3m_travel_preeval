@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useGoogleLogin } from '@react-oauth/google';
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
+import { PortraitCapture, PortraitCaptureResult } from "@/components/PortraitCapture";
 import { toast } from "sonner";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
@@ -51,6 +52,8 @@ export default function Register() {
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [portrait, setPortrait] = useState<PortraitCaptureResult | null>(null);
+  const [isUploadingPortrait, setIsUploadingPortrait] = useState(false);
   const [form, setForm] = useState({
     fullName: "",
     email: "",
@@ -63,17 +66,20 @@ export default function Register() {
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
     const passwordValid = form.password.length >= 8 && /[A-Z]/.test(form.password) && /[0-9]/.test(form.password);
     const passwordMatch = form.password === form.confirmPassword;
-    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch;
+    const isValid = form.fullName && form.email && emailValid && form.password && passwordValid && passwordMatch && Boolean(portrait);
     setIsFormValid(isValid as boolean);
-  }, [form]);
+  }, [form, portrait]);
 
   const registerMutation = trpc.candidate.register.useMutation({
     onSuccess: (data) => {
       // Afficher l'animation de succès
       setShowSuccessAnimation(true);
-      // Sauvegarder l'email et l'ID du candidat
+      // Conserver uniquement le nécessaire pour terminer le profil sécurisé.
       localStorage.setItem("registrationEmail", form.email);
       localStorage.setItem("candidateId", String(data.candidateId));
+      if (data.candidateToken) {
+        sessionStorage.setItem("3m_candidate_token", data.candidateToken);
+      }
       // Attendre 2 secondes avant de rediriger
       setTimeout(() => {
         toast.success("Compte créé ! Un lien de confirmation a été envoyé à votre adresse email.");
@@ -91,7 +97,7 @@ export default function Register() {
     },
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.fullName || !form.email || !form.password) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
@@ -113,11 +119,35 @@ export default function Register() {
       toast.error("Les mots de passe ne correspondent pas.");
       return;
     }
-    registerMutation.mutate({
-      fullName: form.fullName,
-      email: form.email,
-      password: form.password,
-    });
+    if (!portrait) {
+      toast.error("Un portrait humain vérifié est obligatoire pour finaliser l’inscription.");
+      return;
+    }
+
+    setIsUploadingPortrait(true);
+    try {
+      const uploadForm = new FormData();
+      uploadForm.append("file", portrait.file);
+      uploadForm.append("fileType", "photo_identite");
+      uploadForm.append("email", form.email.trim().toLowerCase());
+      uploadForm.append("captureMethod", portrait.method);
+      const response = await fetch("/api/candidate/upload-public", { method: "POST", body: uploadForm });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || typeof result.portraitVerificationToken !== "string" || typeof result.fileUrl !== "string") {
+        throw new Error(result.error || "La vérification sécurisée du portrait a échoué.");
+      }
+      sessionStorage.setItem("registrationAvatarUrl", result.fileUrl);
+      registerMutation.mutate({
+        fullName: form.fullName,
+        email: form.email,
+        password: form.password,
+        portraitVerificationToken: result.portraitVerificationToken,
+      });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
+    } finally {
+      setIsUploadingPortrait(false);
+    }
   }
 
   return (
@@ -171,7 +201,7 @@ export default function Register() {
             <p className="text-gray-500 text-sm mt-1">Rejoignez l'espace candidat 3M Travel</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" aria-busy={registerMutation.isPending || showSuccessAnimation}>
+          <form onSubmit={handleSubmit} className="space-y-4" aria-busy={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}>
             {/* Nom complet */}
             <div>
               <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700">Nom complet *</Label>
@@ -318,6 +348,12 @@ export default function Register() {
 
 
 
+            {/* Portrait humain obligatoire */}
+            <PortraitCapture
+              disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+              onVerified={setPortrait}
+            />
+
             {/* Bouton */}
             <motion.div
               initial={{ opacity: 1 }}
@@ -326,10 +362,10 @@ export default function Register() {
             >
               <Button
                 type="submit"
-                disabled={registerMutation.isPending || !isFormValid || showSuccessAnimation}
+                disabled={registerMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}
                 className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {registerMutation.isPending ? (
+                {registerMutation.isPending || isUploadingPortrait ? (
                   <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
                     <motion.span
                       animate={{ rotate: 360 }}
@@ -341,7 +377,7 @@ export default function Register() {
                     <motion.span
                       animate={{ opacity: [0.55, 1, 0.55] }}
                       transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
-                    >Création en cours...</motion.span>
+                    >{isUploadingPortrait ? "Vérification et envoi du portrait..." : "Création en cours..."}</motion.span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
@@ -350,7 +386,7 @@ export default function Register() {
                 )}
               </Button>
               <AnimatePresence initial={false}>
-                {registerMutation.isPending && (
+                {(registerMutation.isPending || isUploadingPortrait) && (
                   <motion.div
                     initial={{ opacity: 0, scaleX: 0.7 }}
                     animate={{ opacity: 1, scaleX: 1 }}

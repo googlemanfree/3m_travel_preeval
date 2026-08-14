@@ -25,6 +25,6 @@ describe("client space navigation", () => {
   });
 
   it("mounts the navigation hub in both dossier states", () => {
-    expect(evaluationSpace.match(/<ClientSpaceNavigation \/>/g)?.length).toBe(3);
+    expect(evaluationSpace.match(/<ClientSpaceNavigation \/>/g)?.length).toBe(1);
   });
 });

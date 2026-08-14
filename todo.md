@@ -2464,9 +2464,9 @@
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
 
 ## Renforcement anti-robot par portrait humain (v168)
-- [ ] Ajouter une étape obligatoire de capture webcam ou sélection d’une photo depuis la galerie avant la finalisation du compte
-- [ ] Valider côté serveur le type, la taille, les dimensions et le contenu image de l’avatar
-- [ ] Refuser les images sans visage détectable et afficher une consigne claire pour reprendre ou choisir un autre portrait
-- [ ] Bloquer côté serveur l’accès aux ressources premium/PDF tant qu’un portrait vérifié n’est pas enregistré
-- [ ] Synchroniser l’état de vérification dans l’Espace Client et le back-office sans exposer les fichiers privés
-- [ ] Ajouter les tests de validation, d’autorisation et de régression puis publier
+- [x] Ajouter une étape obligatoire de capture webcam ou sélection d’une photo depuis la galerie avant la finalisation du compte
+- [x] Valider côté serveur le type, la taille, les dimensions et le contenu image de l’avatar
+- [x] Refuser les images sans visage détectable et afficher une consigne claire pour reprendre ou choisir un autre portrait
+- [x] Bloquer côté serveur l’accès aux ressources premium/PDF tant qu’un portrait vérifié n’est pas enregistré
+- [x] Synchroniser l’état de vérification dans l’Espace Client et le back-office sans exposer les fichiers privés
+- [x] Ajouter les tests de validation, d’autorisation et de régression puis publier

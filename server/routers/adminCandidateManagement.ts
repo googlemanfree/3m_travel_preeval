@@ -228,17 +228,12 @@ export const adminCandidateManagementRouter = router({
           ...(input.phone !== undefined ? { whatsappNumber: input.phone } : {}),
           ...(input.destination !== undefined ? { destination: input.destination as any } : {}),
           ...(input.visaType !== undefined ? { visaType: input.visaType } : {}),
+          ...(input.gdsReference !== undefined ? { gdsReference: input.gdsReference } : {}),
+          ...(input.ticketNumber !== undefined ? { ticketNumber: input.ticketNumber } : {}),
           lastStatusUpdateAt: new Date(),
           lastStatusUpdatedBy: admin.email,
         }).where(eq(applications.id, id));
 
-        if (candidateIdForMessage && (input.gdsReference || input.ticketNumber || input.dossierNumber)) {
-          await db.update(candidates).set({
-            ...(input.gdsReference !== undefined ? { gdsReference: input.gdsReference } : {}),
-            ...(input.ticketNumber !== undefined ? { ticketNumber: input.ticketNumber } : {}),
-            ...(input.dossierNumber !== undefined ? { dossierNumber: input.dossierNumber } : {}),
-          }).where(eq(candidates.id, candidateIdForMessage));
-        }
         const affectedRows = Number((result as unknown as [{ affectedRows?: number }])[0]?.affectedRows ?? 0);
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
       } else {

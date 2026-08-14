@@ -26,7 +26,9 @@ import {
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
+import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl } from "../storage";
+import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -48,6 +50,14 @@ function verifyCandidateToken(token: string): number {
     return payload.sub;
   } catch {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée, veuillez vous reconnecter." });
+  }
+}
+
+function verifyPortraitProof(token: string, candidateEmail: string, avatarUrl?: string) {
+  try {
+    return verifyPortraitProofToken(token, candidateEmail, avatarUrl);
+  } catch {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Le portrait n’est plus valide. Reprenez une photo puis réessayez." });
   }
 }
 
@@ -95,15 +105,20 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 }
 
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
-// On crée une procédure custom qui lit le header Authorization candidat
-export const candidateProcedure = publicProcedure.use(async ({ ctx, next }) => {
-  if (ctx.user) {
-    const candidate = await getOrCreateCandidateForPlatformUser(ctx.user);
-    return next({ ctx: { ...ctx, candidate, isManuUser: true } });
+// Le portrait est une barrière serveur : seules les mutations d’onboarding
+// peuvent être appelées avant la vérification humaine.
+const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
+
+export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }) => {
+  const candidate = ctx.user
+    ? await getOrCreateCandidateForPlatformUser(ctx.user)
+    : await getCandidateFromHeader((ctx.req as any)?.headers?.authorization as string | undefined);
+
+  if (candidate.avatarVerificationStatus !== "verified" && !PORTRAIT_ONBOARDING_PATHS.has(path)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Un portrait humain vérifié est obligatoire pour accéder à votre espace et à vos ressources." });
   }
-  const authHeader = (ctx.req as any)?.headers?.authorization as string | undefined;
-  const candidate = await getCandidateFromHeader(authHeader);
-  return next({ ctx: { ...ctx, candidate, isManuUser: false } });
+
+  return next({ ctx: { ...ctx, candidate, isManuUser: Boolean(ctx.user) } });
 });
 
 // ─── DOSSIER STATUS LABELS ────────────────────────────────────────────────────
@@ -162,6 +177,7 @@ export const candidateRouter = router({
         phone: z.string().optional(),
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
         nationality: z.string().optional(),
+        portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
       })
     )
     .mutation(async ({ input }) => {
@@ -174,6 +190,7 @@ export const candidateRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
 
+      const portraitProof = verifyPortraitProof(input.portraitVerificationToken, input.email.toLowerCase());
       const passwordHash = await bcrypt.hash(input.password, 12);
 
       // Générer un token de vérification unique
@@ -191,6 +208,12 @@ export const candidateRouter = router({
           nationality: input.nationality ?? null,
           dossierStatus: "nouveau",
           emailVerified: false,
+          avatarUrl: portraitProof.url,
+          avatarVerificationStatus: "verified",
+          avatarVerificationMethod: portraitProof.captureMethod,
+          avatarVerificationReason: "Portrait humain détecté sur l’appareil du candidat.",
+          avatarFaceCount: 1,
+          avatarVerifiedAt: new Date(),
           verificationToken,
           verificationExpiresAt,
         });
@@ -220,7 +243,13 @@ export const candidateRouter = router({
         console.error("[Register] Email verification link send error:", err);
       }
 
-      return { candidateId, requiresEmailVerification: true, message: "Compte créé. Un lien de confirmation a été envoyé à votre adresse email." };
+      return {
+        candidateId,
+        candidateToken: signCandidateToken(candidateId),
+        requiresEmailVerification: true,
+        requiresPortrait: false,
+        message: "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email.",
+      };
     }),
 
   // ── Connexion ──────────────────────────────────────────────────────────────
@@ -261,6 +290,9 @@ export const candidateRouter = router({
           email: candidate.email,
           destination: candidate.destination,
           dossierStatus: candidate.dossierStatus,
+          avatarUrl: candidate.avatarUrl,
+          avatarVerificationStatus: candidate.avatarVerificationStatus,
+          requiresPortrait: candidate.avatarVerificationStatus !== "verified",
         },
       };
     }),
@@ -287,6 +319,9 @@ export const candidateRouter = router({
         languageLevel: null,
         preferredLanguage: linkedCandidate.preferredLanguage,
         avatarUrl: linkedCandidate.avatarUrl,
+        avatarVerificationStatus: linkedCandidate.avatarVerificationStatus,
+        avatarVerificationMethod: linkedCandidate.avatarVerificationMethod,
+        avatarVerifiedAt: linkedCandidate.avatarVerifiedAt,
         createdAt: ctx.user.createdAt,
         lastLoginAt: ctx.user.lastSignedIn,
       };
@@ -310,6 +345,9 @@ export const candidateRouter = router({
       languageLevel: c.languageLevel,
       preferredLanguage: c.preferredLanguage,
       avatarUrl: c.avatarUrl,
+      avatarVerificationStatus: c.avatarVerificationStatus,
+      avatarVerificationMethod: c.avatarVerificationMethod,
+      avatarVerifiedAt: c.avatarVerifiedAt,
       createdAt: c.createdAt,
       lastLoginAt: c.lastLoginAt,
     };
@@ -330,7 +368,7 @@ export const candidateRouter = router({
         languageLevel: z.string().optional(),
         preferredLanguage: z.enum(["fr", "en"]).optional(),
         formulaChosen: z.string().optional(),
-        avatarUrl: z.string().optional(),
+        avatarUrl: z.string().url().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -338,7 +376,10 @@ export const candidateRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       const updateData: Record<string, unknown> = {};
-      Object.entries(input).forEach(([k, v]) => { if (v !== undefined) updateData[k] = v; });
+      Object.entries(input).forEach(([k, v]) => { if (v !== undefined && k !== "avatarUrl") updateData[k] = v; });
+      if (input.avatarUrl !== undefined && input.avatarUrl !== ctx.candidate.avatarUrl) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Utilisez le parcours de vérification pour modifier votre portrait." });
+      }
 
       await db.update(candidates).set(updateData).where(eq(candidates.id, ctx.candidate.id));
       return { success: true };
@@ -361,16 +402,24 @@ export const candidateRouter = router({
 
   // ── Mettre à jour la photo de profil ──────────────────────────────────────
   updateAvatar: candidateProcedure
-    .input(z.object({ avatarUrl: z.string().url() }))
+    .input(z.object({ avatarUrl: z.string().url(), portraitVerificationToken: z.string().min(20) }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const proof = verifyPortraitProof(input.portraitVerificationToken, ctx.candidate.email, input.avatarUrl);
 
       await db.update(candidates)
-        .set({ avatarUrl: input.avatarUrl })
+        .set({
+          avatarUrl: input.avatarUrl,
+          avatarVerificationStatus: "verified",
+          avatarVerificationMethod: proof.captureMethod,
+          avatarVerificationReason: "Portrait humain vérifié avant enregistrement.",
+          avatarFaceCount: 1,
+          avatarVerifiedAt: new Date(),
+        })
         .where(eq(candidates.id, ctx.candidate.id));
 
-      return { success: true, avatarUrl: input.avatarUrl };
+      return { success: true, avatarUrl: input.avatarUrl, avatarVerificationStatus: "verified" as const };
     }),
 
   // ── Enregistrer un document après upload S3 ───────────────────────────────
@@ -1309,7 +1358,7 @@ export const candidateRouter = router({
     if (candidate.email) profileFieldsFilled++;
     if (candidate.phone) profileFieldsFilled++;
     if (candidate.destination) profileFieldsFilled++;
-    if ((candidate as any).avatarUrl) profileFieldsFilled++;
+    if (candidate.avatarVerificationStatus === "verified") profileFieldsFilled++;
     const profileCompletionPercent = Math.round((profileFieldsFilled / totalProfileFields) * 100);
 
     return {
@@ -1320,6 +1369,9 @@ export const candidateRouter = router({
         phone: candidate.phone,
         destination: candidate.destination,
         avatarUrl: (candidate as any).avatarUrl || null,
+        avatarVerificationStatus: candidate.avatarVerificationStatus,
+        avatarVerificationMethod: candidate.avatarVerificationMethod,
+        avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
         dossierNumber: (candidate as any).dossierNumber || activeApp?.dossierNumber || "N/A",
         dossierStatus: (candidate as any).dossierStatus || activeApp?.dossierStatus || "evaluation",
@@ -1351,14 +1403,27 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const [flight] = await db.select().from(favoriteFlights).where(and(eq(favoriteFlights.id, input.flightId), eq(favoriteFlights.candidateId, ctx.candidate.id))).limit(1);
-      if (!flight) throw new TRPCError({ code: "NOT_FOUND", message: "Vol favori introuvable." });
+      const [favorite] = await db.select().from(favoriteFlights).where(and(eq(favoriteFlights.id, input.flightId), eq(favoriteFlights.userId, ctx.candidate.id))).limit(1);
+      if (!favorite) throw new TRPCError({ code: "NOT_FOUND", message: "Vol favori introuvable." });
 
-      const subject = `Itinéraire de vol 3M Travel Agency : ${flight.departureCity} ➔ ${flight.arrivalCity}`;
-      const textBody = `Bonjour,\n\nVoici un itinéraire de vol partagé par ${ctx.candidate.fullName} via 3M Travel Agency :\n\nTrajet : ${flight.departureCity} vers ${flight.arrivalCity}\nCompagnie : ${flight.airline}\nPrix estimé : ${flight.price} ${flight.currency || "XAF"}\nCabine : ${flight.cabinClass || "Économique"}\nDate : ${flight.departureDate || "Libre"}\n\nContactez-nous pour réserver dès maintenant !\n3M Travel Agency — hello@3mtravelagency.com`;
+      let flight: Record<string, any> = {};
+      try {
+        flight = JSON.parse(favorite.flightData) as Record<string, any>;
+      } catch {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Les données de cet itinéraire sont invalides." });
+      }
+      const departureCity = String(flight.departureCity || flight.departure || "Départ");
+      const arrivalCity = String(flight.arrivalCity || flight.arrival || "Destination");
+      const subject = `Itinéraire de vol 3M Travel Agency : ${departureCity} ➔ ${arrivalCity}`;
+      const textBody = `Bonjour,\n\nVoici un itinéraire de vol partagé par ${ctx.candidate.fullName} via 3M Travel Agency :\n\nTrajet : ${departureCity} vers ${arrivalCity}\nCompagnie : ${String(flight.airline || "À confirmer")}\nPrix estimé : ${String(flight.price ?? "À confirmer")} ${String(flight.currency || "XAF")}\nCabine : ${String(flight.cabinClass || "Économique")}\nDate : ${String(flight.departureDate || "Libre")}\n\nContactez-nous pour réserver dès maintenant !\n3M Travel Agency — hello@3mtravelagency.com`;
 
-      const sent = await sendWelcomeEmail(input.recipientEmail, ctx.candidate.fullName, subject);
-      if (!sent) {
+      try {
+        await sendGenericEmail({
+          to: input.recipientEmail,
+          subject,
+          html: `<p>${textBody.replace(/\n/g, "<br />")}</p>`,
+        });
+      } catch {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Échec de l’envoi de l’e-mail." });
       }
 

@@ -11,6 +11,8 @@ import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidates } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
+import { imageSize } from "image-size";
+import { createPortraitProof } from "../portraitVerification";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -25,6 +27,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
   "image/jpeg",
   "image/png",
+  "image/webp",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ]);
@@ -71,9 +74,34 @@ function isExpectedFileContent(file: Express.Multer.File): boolean {
   if (file.mimetype === "application/pdf") return startsWith(0x25, 0x50, 0x44, 0x46);
   if (file.mimetype === "image/jpeg") return startsWith(0xff, 0xd8, 0xff);
   if (file.mimetype === "image/png") return startsWith(0x89, 0x50, 0x4e, 0x47);
+  if (file.mimetype === "image/webp") return startsWith(0x52, 0x49, 0x46, 0x46) && bytes.subarray(8, 12).toString("ascii") === "WEBP";
   if (file.mimetype === "application/msword") return startsWith(0xd0, 0xcf, 0x11, 0xe0);
   if (file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return startsWith(0x50, 0x4b, 0x03, 0x04);
   return false;
+}
+
+function validatePortrait(file: Express.Multer.File): { width: number; height: number } {
+  if (!("image/jpeg" === file.mimetype || "image/png" === file.mimetype || "image/webp" === file.mimetype)) {
+    throw new Error("Le portrait doit être au format JPG, PNG ou WebP");
+  }
+  if (file.size < 8 * 1024 || file.size > 5 * 1024 * 1024) {
+    throw new Error("Le portrait doit peser entre 8 Ko et 5 Mo");
+  }
+  let dimensions: { width?: number; height?: number };
+  try {
+    dimensions = imageSize(file.buffer);
+  } catch {
+    throw new Error("Impossible de lire les dimensions du portrait");
+  }
+  const width = Number(dimensions.width || 0);
+  const height = Number(dimensions.height || 0);
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 240 || height < 240) {
+    throw new Error("Le portrait doit faire au moins 240 × 240 pixels");
+  }
+  if (width > 8000 || height > 8000) {
+    throw new Error("Les dimensions du portrait sont trop élevées");
+  }
+  return { width, height };
 }
 
 function validateIncomingDocument(req: MulterRequest): { file: Express.Multer.File; documentType: string; safeName: string } {
@@ -133,9 +161,24 @@ export function registerPublicUploadRoute(app: import("express").Express) {
     }
     try {
       const { file, documentType, safeName } = validateIncomingDocument(req);
-      const fileKey = `applications/intake/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
+      const portraitEmail = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+      const captureMethod = req.body.captureMethod === "camera" ? "camera" : "gallery";
+      if (documentType === "photo_identite") {
+        if (!portraitEmail || !/^\S+@\S+\.\S+$/.test(portraitEmail)) {
+          throw new Error("Adresse e-mail requise pour sécuriser le portrait");
+        }
+        validatePortrait(file);
+      }
+      const storageFolder = documentType === "photo_identite" ? "pending-portraits" : "intake";
+      const fileKey = `applications/${storageFolder}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
-      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype });
+      const response: Record<string, unknown> = { fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype };
+      if (documentType === "photo_identite") {
+        const portraitProof = createPortraitProof({ email: portraitEmail, key, url, captureMethod });
+        response.portraitVerificationToken = portraitProof;
+        response.portraitVerificationExpiresIn = 900;
+      }
+      res.json(response);
     } catch (error) {
       console.error("[PublicUpload] Error:", error);
       uploadErrorResponse(res, error);
@@ -159,6 +202,7 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       }
 
       const { file, documentType, safeName } = validateIncomingDocument(req);
+      if (documentType === "photo_identite") validatePortrait(file);
       const fileKey = `candidates/${candidateId}/${documentType}/${Date.now()}-${randomBytes(12).toString("hex")}-${safeName}`;
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
       const db = await getDb();

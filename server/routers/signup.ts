@@ -12,7 +12,8 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink } from "../emailService";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "fallback-secret-change-me";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error("JWT_SECRET est obligatoire pour l’inscription.");
 
 export const signupRouter = router({
   // ── Inscription Simple ──────────────────────────────────────────────────────
@@ -24,7 +25,18 @@ export const signupRouter = router({
         password: z.string().min(8, "Mot de passe : 8 caractères minimum").max(100),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async () => {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Ce parcours d’inscription est désactivé. Utilisez l’inscription avec portrait humain obligatoire." });
+    }),
+
+  /* Ancienne implémentation conservée dans l’historique Git ; elle n’est plus exposée. */
+  registerLegacy: publicProcedure
+    .input(z.never())
+    .mutation(async () => {
+      throw new TRPCError({ code: "FORBIDDEN", message: "Inscription héritée désactivée." });
+    }),
+
+  /*
       const db = await getDb();
       if (!db) {
         throw new TRPCError({
@@ -132,6 +144,7 @@ export const signupRouter = router({
         email: cleanEmail,
       };
     }),
+  */
 
   // ── Vérifier l'email ────────────────────────────────────────────────────────
   verifyEmail: publicProcedure

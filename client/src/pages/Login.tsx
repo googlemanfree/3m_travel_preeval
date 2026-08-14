@@ -48,6 +48,13 @@ export default function Login() {
         email: candidateData.email,
         emailVerified: candidateData.emailVerified ?? true,
       });
+      const candidateWithPortrait = data.candidate as typeof data.candidate & { avatarVerificationStatus?: string };
+      if (candidateWithPortrait.avatarVerificationStatus !== "verified") {
+        localStorage.setItem("candidateId", String(candidateData.id));
+        toast.info("Un portrait humain vérifié est nécessaire pour activer votre espace.");
+        navigate(`/complete-profile?email=${encodeURIComponent(candidateData.email)}`);
+        return;
+      }
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
       navigate(from ? decodeURIComponent(from) : "/dashboard");
     },

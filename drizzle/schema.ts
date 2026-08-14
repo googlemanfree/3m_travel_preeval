@@ -157,6 +157,12 @@ export const candidates = mysqlTable("candidates", {
   languageLevel: varchar("languageLevel", { length: 100 }),
   preferredLanguage: mysqlEnum("preferredLanguage", ["fr", "en"]),
   avatarUrl: text("avatarUrl"),
+  // Contrôle anti-robot : présence d’un portrait validé avant l’accès complet
+  avatarVerificationStatus: mysqlEnum("avatarVerificationStatus", ["missing", "pending", "verified", "rejected"]).default("missing").notNull(),
+  avatarVerificationMethod: mysqlEnum("avatarVerificationMethod", ["camera", "gallery"]).default("gallery"),
+  avatarVerificationReason: varchar("avatarVerificationReason", { length: 255 }),
+  avatarFaceCount: int("avatarFaceCount").default(0).notNull(),
+  avatarVerifiedAt: timestamp("avatarVerifiedAt"),
   // Vérification email (lien de confirmation)
   emailVerified: boolean("emailVerified").default(false).notNull(),
   verificationToken: varchar("verificationToken", { length: 128 }),
@@ -233,6 +239,8 @@ export const applications = mysqlTable("applications", {
   id: int("id").autoincrement().primaryKey(),
   // Numéro de dossier lisible : 3M-YYYY-NNNN
   dossierNumber: varchar("dossierNumber", { length: 20 }).notNull().unique(),
+  gdsReference: varchar("gdsReference", { length: 100 }),
+  ticketNumber: varchar("ticketNumber", { length: 100 }),
   // Candidat (peut être un candidat inscrit ou un visiteur)
   candidateId: int("candidateId"),             // null si soumis sans compte
   // Informations personnelles

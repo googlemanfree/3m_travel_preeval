@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { getCandidateToken } from "@/hooks/useCandidateAuth";
+import { verifyHumanPortrait } from "@/lib/portraitVerification";
 
 const DESTINATIONS = [
   { value: "canada", label: "🇨🇦 Canada" },
@@ -49,10 +50,16 @@ export default function CompleteProfile() {
   const email = params.get("email") ?? "";
 
   useEffect(() => {
-    // Vérifier que l'utilisateur vient de l'inscription
+    // Vérifier que l'utilisateur vient de l'inscription et récupérer le portrait déjà validé.
     const candidateId = localStorage.getItem("candidateId");
+    const storedAvatarUrl = sessionStorage.getItem("registrationAvatarUrl");
     if (!candidateId || !email) {
       navigate("/register");
+      return;
+    }
+    if (storedAvatarUrl) {
+      setFormData((previous) => ({ ...previous, avatarUrl: storedAvatarUrl }));
+      setAvatarPreview(storedAvatarUrl);
     }
   }, [email, navigate]);
 
@@ -72,6 +79,8 @@ export default function CompleteProfile() {
       handleComplete();
     }
   };
+
+  const updateAvatarMutation = trpc.candidate.updateAvatar.useMutation();
 
   const updateProfileMutation = trpc.candidate.updateProfile.useMutation({
     onSuccess: () => {
@@ -105,62 +114,75 @@ export default function CompleteProfile() {
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = (croppedFile: File) => {
+  const handleCropComplete = async (croppedFile: File) => {
+    const verification = await verifyHumanPortrait(croppedFile);
+    if (!verification.accepted) {
+      toast.error(verification.reason);
+      return;
+    }
     setAvatarFile(croppedFile);
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
-      toast.success("Portrait ajusté avec succès !");
+      toast.success("Portrait humain vérifié et ajusté avec succès !");
     };
     reader.readAsDataURL(croppedFile);
   };
 
   const handleComplete = async () => {
-    if (!avatarFile) {
+    if (!avatarFile && !formData.avatarUrl) {
       toast.error("La photo de profil est obligatoire pour continuer.");
       return;
     }
 
     setIsLoading(true);
     let finalAvatarUrl = formData.avatarUrl;
+    let portraitVerificationToken: string | null = null;
 
-    try {
-      setIsUploadingAvatar(true);
-      const uploadForm = new FormData();
-      uploadForm.append("file", avatarFile);
-      uploadForm.append("fileType", "photo_identite");
-      const token = getCandidateToken();
-      if (!token) throw new Error("Votre session candidat a expiré. Veuillez vous reconnecter.");
-
-      const response = await fetch("/api/candidate/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: uploadForm,
-      });
-
-      if (!response.ok) {
-        throw new Error("Échec de l'upload de la photo de profil.");
-      }
-
-      const result = await response.json();
-      if (result && result.fileUrl) {
+    if (avatarFile) {
+      try {
+        setIsUploadingAvatar(true);
+        const uploadForm = new FormData();
+        uploadForm.append("file", avatarFile);
+        uploadForm.append("fileType", "photo_identite");
+        uploadForm.append("email", email.trim().toLowerCase());
+        uploadForm.append("captureMethod", "gallery");
+        const response = await fetch("/api/candidate/upload-public", { method: "POST", body: uploadForm });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || typeof result.fileUrl !== "string" || typeof result.portraitVerificationToken !== "string") {
+          throw new Error(result.error || "Échec de l’upload sécurisé de la photo de profil.");
+        }
         finalAvatarUrl = result.fileUrl;
+        portraitVerificationToken = result.portraitVerificationToken;
+      } catch (err) {
+        console.error("Avatar upload error:", err);
+        toast.error(err instanceof Error ? err.message : "Erreur lors de l'envoi de la photo de profil.");
+        setIsLoading(false);
+        setIsUploadingAvatar(false);
+        return;
+      } finally {
+        setIsUploadingAvatar(false);
       }
-    } catch (err) {
-      console.error("Avatar upload error:", err);
-      toast.error("Erreur lors de l'envoi de la photo de profil.");
-      setIsLoading(false);
-      setIsUploadingAvatar(false);
-      return;
-    } finally {
-      setIsUploadingAvatar(false);
+    }
+
+    if (portraitVerificationToken && finalAvatarUrl) {
+      try {
+        await updateAvatarMutation.mutateAsync({
+          avatarUrl: finalAvatarUrl,
+          portraitVerificationToken,
+        });
+      } catch (error) {
+        setIsLoading(false);
+        toast.error(error instanceof Error ? error.message : "Le portrait n’a pas pu être enregistré.");
+        return;
+      }
     }
 
     updateProfileMutation.mutate({
       destination: formData.destination as any,
       visaType: formData.visaType,
       educationLevel: formData.occupation,
-      avatarUrl: finalAvatarUrl,
+      ...(portraitVerificationToken && finalAvatarUrl ? { avatarUrl: finalAvatarUrl } : {}),
     });
   };
 
@@ -393,7 +415,7 @@ export default function CompleteProfile() {
               </Button>
               <Button
                 onClick={handleComplete}
-                disabled={!avatarFile || isLoading}
+                disabled={(!avatarFile && !formData.avatarUrl) || isLoading}
                 className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
                 {isLoading ? (

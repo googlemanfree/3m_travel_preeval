@@ -104,6 +104,7 @@ export default function ClientProfilePanel() {
         <CandidateAvatar
           fullName={candidate?.fullName || form.fullName || "Candidat"}
           avatarUrl={profileQuery.data.avatarUrl}
+          email={profileQuery.data.email}
           size="lg"
           editable
         />
