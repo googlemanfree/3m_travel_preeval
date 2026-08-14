@@ -2462,3 +2462,11 @@
 - [x] Valider et stocker sécurisé l’avatar, interdisant l’accès au site tant que le portrait n’est pas fourni
 - [x] Afficher l’avatar synchronisé dans l’Espace Client et dans le back-office administrateur pour chaque candidat
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Renforcement anti-robot par portrait humain (v168)
+- [ ] Ajouter une étape obligatoire de capture webcam ou sélection d’une photo depuis la galerie avant la finalisation du compte
+- [ ] Valider côté serveur le type, la taille, les dimensions et le contenu image de l’avatar
+- [ ] Refuser les images sans visage détectable et afficher une consigne claire pour reprendre ou choisir un autre portrait
+- [ ] Bloquer côté serveur l’accès aux ressources premium/PDF tant qu’un portrait vérifié n’est pas enregistré
+- [ ] Synchroniser l’état de vérification dans l’Espace Client et le back-office sans exposer les fichiers privés
+- [ ] Ajouter les tests de validation, d’autorisation et de régression puis publier
