@@ -352,6 +352,20 @@ export const candidateRouter = router({
     return files as CandidateFile[];
   }),
 
+  // ── Mettre à jour la photo de profil ──────────────────────────────────────
+  updateAvatar: candidateProcedure
+    .input(z.object({ avatarUrl: z.string().url() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      await db.update(candidates)
+        .set({ avatarUrl: input.avatarUrl })
+        .where(eq(candidates.id, ctx.candidate.id));
+
+      return { success: true, avatarUrl: input.avatarUrl };
+    }),
+
   // ── Enregistrer un document après upload S3 ───────────────────────────────
   saveDocument: candidateProcedure
     .input(
@@ -900,6 +914,11 @@ export const candidateRouter = router({
         paymentStatus: application.paymentStatus,
         scoringTotal: application.scoringTotal,
         evaluationScore: application.evaluationScore,
+        candidate: {
+          fullName: ctx.candidate.fullName,
+          email: ctx.candidate.email,
+          avatarUrl: ctx.candidate.avatarUrl,
+        },
       },
     };
   }),

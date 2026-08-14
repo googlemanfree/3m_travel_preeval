@@ -23,6 +23,8 @@ import { DocumentUploader } from "@/components/DocumentUploader";
 import { DocumentProgressBar } from "@/components/DocumentProgressBar";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
+import CandidateAvatar from "@/components/CandidateAvatar";
+import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -300,6 +302,25 @@ export default function EvaluationSpace() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto py-12">
+          {myDossierData?.data?.candidate && (
+            <div className="flex items-center gap-4 mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <CandidateAvatar
+                fullName={myDossierData.data.candidate.fullName || "Candidat"}
+                avatarUrl={myDossierData.data.candidate.avatarUrl}
+                size="md"
+                editable
+              />
+              <div>
+                <p className="font-bold text-gray-900">{myDossierData.data.candidate.fullName}</p>
+                <p className="text-sm text-gray-500">{myDossierData.data.candidate.email}</p>
+              </div>
+            </div>
+          )}
+          {myDossierData?.data?.dossierStatus && (
+            <div className="mb-6">
+              <DossierProgressTimeline dossierStatus={myDossierData.data.dossierStatus} />
+            </div>
+          )}
           <Card className="p-8">
             <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">
@@ -388,6 +409,30 @@ export default function EvaluationSpace() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-4xl mx-auto py-8">
           <ClientSpaceNavigation />
+
+          {/* Profil du candidat */}
+          {myDossierData?.data?.candidate && (
+            <div className="flex items-center gap-4 mb-6 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <CandidateAvatar
+                fullName={myDossierData.data.candidate.fullName || "Candidat"}
+                avatarUrl={myDossierData.data.candidate.avatarUrl}
+                size="md"
+                editable
+              />
+              <div>
+                <p className="font-bold text-gray-900">{myDossierData.data.candidate.fullName}</p>
+                <p className="text-sm text-gray-500">{myDossierData.data.candidate.email}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Suivi réel du dossier */}
+          {myDossierData?.data?.dossierStatus && (
+            <div className="mb-6">
+              <DossierProgressTimeline dossierStatus={myDossierData.data.dossierStatus} />
+            </div>
+          )}
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}

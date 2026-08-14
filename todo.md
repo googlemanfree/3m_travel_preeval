@@ -2161,3 +2161,9 @@
 - [x] Ajouter ou renforcer les badges colorés pour les niveaux de priorité dans la file agent
 
 - [x] Mettre à jour le test des routes différées pour compter la nouvelle page Super administrateur
+
+- [x] Remplacer les quatre fichiers fournis de l’espace client aux mêmes chemins
+- [x] Afficher la vraie photo de profil du client dans `/mon-espace`
+- [x] Synchroniser une timeline réelle à cinq étapes avec le statut administrateur
+
+- [x] Corriger le contrat de test de l’espace client après le marqueur EOF parasite
