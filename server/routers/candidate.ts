@@ -389,6 +389,15 @@ export const candidateRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
+      let extractionJson: string | null = null;
+      try {
+        const { extractDocumentInformation } = await import("../services/documentExtractorService");
+        const extraction = await extractDocumentInformation(input.fileType, input.fileName);
+        extractionJson = JSON.stringify(extraction);
+      } catch (err) {
+        console.error("Extraction error:", err);
+      }
+
       await db.insert(candidateFiles).values({
         candidateId: ctx.candidate.id,
         fileType: input.fileType,
@@ -398,6 +407,7 @@ export const candidateRouter = router({
         fileSizeBytes: input.fileSizeBytes ?? null,
         mimeType: input.mimeType ?? null,
         status: "uploaded",
+        extractedData: extractionJson,
       });
 
       // Si le dossier est encore "nouveau", passer à "documents"

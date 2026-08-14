@@ -2206,3 +2206,10 @@
 - [x] Ajouter dans le back-office les contrôles de consultation, réponse et synchronisation associés aux dossiers clients
 - [x] Vérifier les boutons, soumissions, redirections et responsive desktop/mobile de l’espace unifié
 - [x] Écrire et exécuter les tests Vitest de contrat pour les routes et la synchronisation de l’espace client
+
+## Extraction automatique des informations clés des documents (v120)
+- [x] Étendre le schéma de stockage ou la table des documents pour stocker les métadonnées extraites (JSON)
+- [x] Créer le service d’analyse automatique des documents téléversés (passeport, diplômes, contrats, pièces d’identité)
+- [x] Exposer une procédure tRPC d’extraction et de consultation des données structurées extraites
+- [x] Afficher les informations clés extraites dans le centre documentaire de l’espace candidat et du back-office administrateur
+- [x] Écrire les tests unitaires et de contrat associés, valider le build et publier la version

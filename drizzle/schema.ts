@@ -200,6 +200,7 @@ export const candidateFiles = mysqlTable("candidate_files", {
   status: mysqlEnum("status", ["uploaded", "verified", "rejected"]).default("uploaded").notNull(),
   rejectionReason: text("rejectionReason"),
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
+  extractedData: text("extractedData"), // Stocke un JSON structuré des informations clés extraites
 });
 
 export type CandidateFile = typeof candidateFiles.$inferSelect;
