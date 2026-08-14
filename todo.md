@@ -2381,3 +2381,7 @@
 ## Animation de confirmation et récapitulatif détaillé du rendez-vous (v151)
 - [x] Créer l’animation de succès et le récapitulatif structuré (conseiller, date, heure, lieu, référence) dans la modale
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Bouton « Ajouter au calendrier » (Google Calendar / Outlook) (v152)
+- [x] Créer les générateurs de liens d’exportation Google Calendar et Outlook dans le récapitulatif de rendez-vous
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
