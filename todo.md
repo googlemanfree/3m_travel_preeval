@@ -2372,3 +2372,8 @@
 ## Appel à l’action de prise de rendez-vous dans le simulateur Canada (v149)
 - [x] Ajouter un bouton d’appel à l’action contextuel à la fin des résultats du simulateur Canada pour réserver une consultation
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Fenêtre modale avec calendrier interactif dans le simulateur Canada (v150)
+- [x] Créer la fenêtre modale de sélection de créneau de rendez-vous directement intégrée à `/evaluation-canada`
+- [x] Connecter la modal aux procédures tRPC de réservation et valider l’absence de rechargement de page
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
