@@ -2358,3 +2358,13 @@
 - [x] Créer le widget proéminent d’évaluation du score RP Canada avec drapeau canadien sur la page d’accueil et les pages clés
 - [x] Implémenter le formulaire complet de calcul du score (âge, études, notes linguistiques français/anglais, expérience professionnelle, adaptabilité)
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Infobulles explicatives pour le simulateur de score RP Canada (v147)
+- [x] Créer les textes explicatifs et infobulles pour chaque critère (âge, études, langues, expérience, adaptabilité)
+- [x] Intégrer les infobulles dans le widget d’évaluation de la page d’accueil
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Page dédiée d’évaluation de score Canada (CRS / Entrée Express) (v148)
+- [x] Créer la page dédiée `/evaluation-canada` avec calcul professionnel style IRCC (Grille FSW / CRS sur 1200 et 100 points)
+- [x] Ajouter le partage de lien direct en un clic pour diffusion par e-mail ou réseaux sociaux (ex: eBay / WhatsApp)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
