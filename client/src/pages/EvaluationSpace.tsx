@@ -22,6 +22,7 @@ import { exportBilanToPDF } from "@/lib/bilanPdfExporter";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { DocumentProgressBar } from "@/components/DocumentProgressBar";
 import { AIScoreGauge } from "@/components/AIScoreGauge";
+import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 
 export default function EvaluationSpace() {
   const [, setLocation] = useLocation();
@@ -123,6 +124,7 @@ export default function EvaluationSpace() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-2xl mx-auto py-12">
+          <ClientSpaceNavigation />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -385,6 +387,7 @@ export default function EvaluationSpace() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div className="max-w-4xl mx-auto py-8">
+          <ClientSpaceNavigation />
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}

@@ -141,26 +141,36 @@ export default function Navbar() {
             </div>
             <ThemeToggle />
             {candidate ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-expanded={isProfileOpen}
-                  aria-haspopup="menu"
-                  onClick={() => setIsProfileOpen((open) => !open)}
-                  className="flex items-center gap-3 bg-gradient-to-r from-slate-50 to-blue-50/50 hover:from-blue-50 hover:to-indigo-50 border border-blue-100/80 p-1.5 pr-4 rounded-2xl transition-all duration-200 shadow-sm hover:shadow"
+              <div className="relative flex items-center gap-1">
+                <a
+                  href="/mon-espace"
+                  onMouseEnter={() => handleNavigationIntent("/mon-espace")}
+                  onFocus={() => handleNavigationIntent("/mon-espace")}
+                  onClick={() => { handleNavigationClick(); closeProfile(); }}
+                  aria-label={`Ouvrir l'espace de ${candidate.fullName || "votre compte"}`}
+                  className="flex items-center gap-3 rounded-2xl border border-blue-100/80 bg-gradient-to-r from-slate-50 to-blue-50/50 p-1.5 pr-3 transition-all duration-200 hover:from-blue-50 hover:to-indigo-50 hover:shadow"
                 >
-                  <div className="w-9 h-9 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black rounded-xl flex items-center justify-center text-sm shadow-md shadow-blue-500/20">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-sm font-black text-white shadow-md shadow-blue-500/20">
                     {getInitial(candidate.fullName)}
                   </div>
                   <div className="text-left">
-                    <span className="block text-xs font-bold text-[#0a2540] truncate max-w-[120px]">
+                    <span className="block max-w-[120px] truncate text-xs font-bold text-[#0a2540]">
                       {candidate.fullName || "Mon Compte"}
                     </span>
-                    <span className="block text-[10px] font-medium text-emerald-600 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Connecté
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Connecté
                     </span>
                   </div>
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                </a>
+                <button
+                  type="button"
+                  aria-label="Ouvrir le menu du compte"
+                  aria-expanded={isProfileOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setIsProfileOpen((open) => !open)}
+                  className="rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -266,21 +276,25 @@ export default function Navbar() {
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             {candidate && (
-              <motion.div
-                className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50/50 rounded-2xl mb-4 flex items-center gap-3 border border-blue-100/60"
+              <motion.a
+                href="/mon-espace"
+                onClick={() => { handleNavigationClick(); closeMenu(); }}
+                className="flex items-center gap-3 rounded-2xl border border-blue-100/60 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-3.5 transition hover:bg-white"
+                aria-label={`Ouvrir l'espace de ${candidate.fullName || "votre compte"}`}
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
                 custom={0}
               >
-                <div className="w-10 h-10 bg-blue-600 text-white font-black rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-black text-white shadow-md shadow-blue-500/20">
                   {getInitial(candidate.fullName)}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || "Candidat"}</p>
-                  <p className="text-xs text-blue-600 font-medium truncate">{candidate.email}</p>
+                  <p className="text-xs font-medium text-blue-600">Ouvrir mon espace</p>
+                  <p className="max-w-[220px] truncate text-[11px] text-slate-500">{candidate.email}</p>
                 </div>
-              </motion.div>
+              </motion.a>
             )}
 
             <a

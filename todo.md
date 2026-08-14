@@ -2136,3 +2136,7 @@
 - [x] Ajouter un scan optique de passeport avec préremplissage contrôlé des informations passagers
 - [x] Créer un tableau de bord agent pour suivre et gérer les dossiers de vols en attente
 - [x] Couvrir le scan, les permissions agent, les statuts de dossier et le parcours mobile par des tests
+
+- [x] Ajouter un lien direct depuis le nom du client connecté vers son espace personnel
+- [x] Ajouter un lien de retour depuis l’espace client vers le site et la réservation de vols
+- [x] Vérifier que dossiers, documents, favoris, demandes de vols et profil restent accessibles dans l’espace client
