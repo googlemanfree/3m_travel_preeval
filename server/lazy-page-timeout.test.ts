@@ -16,12 +16,12 @@ describe("lazy page timeout recovery contracts", () => {
     expect(helper).toContain("clearTimeout(timeoutId)");
   });
 
-  it("wraps all 103 deferred page imports in App.tsx", () => {
+  it("wraps all deferred page imports in App.tsx", () => {
     const app = readProjectFile("client/src/App.tsx");
     const lazyImports = app.match(/lazyWithTimeout\(\(\) => import\(/g) ?? [];
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
-    expect(lazyImports).toHaveLength(103);
+    expect(lazyImports).toHaveLength(104);
     expect(app).not.toContain("React.lazy(() => import(");
   });
 });

@@ -95,6 +95,7 @@ const Avis = lazyWithTimeout(() => import("./pages/Avis"));
 const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
+const FlightAgentDashboard = lazyWithTimeout(() => import("./pages/FlightAgentDashboard"));
 const AmbassadorProgram = lazyWithTimeout(() => import("./pages/AmbassadorProgram"));
 const CinetPayPayment = lazyWithTimeout(() => import("./pages/CinetPayPayment"));
 const EvisasPage = lazyWithTimeout(() => import("./pages/Evisas"));
@@ -297,6 +298,11 @@ function Router() {
       <Route path={"/admin/dashboard"}>
         <AdminGuard message="Vous devez vous connecter en tant qu'administrateur pour accéder au tableau de bord.">
           <Admin />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/flight-requests"}>
+        <AdminGuard message="Accès réservé aux agents et administrateurs de 3M Travel Agency.">
+          <FlightAgentDashboard />
         </AdminGuard>
       </Route>
       <Route path={"/admin/consultation-requests"}>

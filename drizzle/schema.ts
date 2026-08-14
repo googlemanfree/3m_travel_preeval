@@ -1435,3 +1435,70 @@ export const savedTravelPlans = mysqlTable("saved_travel_plans", {
   planContent: text("planContent").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+
+/**
+ * Scan sécurisé de passeport utilisé pour le préremplissage contrôlé des passagers.
+ * Les octets restent dans Manus Storage ; la base conserve uniquement les références,
+ * l'état de l'analyse et les champs extraits validables par le candidat.
+ */
+export const passportScanRequests = mysqlTable("passport_scan_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  fileKey: varchar("fileKey", { length: 512 }).notNull(),
+  fileUrl: text("fileUrl").notNull(),
+  fileName: varchar("fileName", { length: 255 }).notNull(),
+  mimeType: varchar("mimeType", { length: 100 }).notNull(),
+  scanStatus: mysqlEnum("scanStatus", ["pending", "completed", "failed"]).default("pending").notNull(),
+  extractedData: json("extractedData"),
+  confidence: int("confidence"),
+  issues: json("issues"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_passport_scans_candidate").on(table.candidateId),
+  index("idx_passport_scans_status").on(table.scanStatus),
+]);
+export type PassportScanRequest = typeof passportScanRequests.$inferSelect;
+export type InsertPassportScanRequest = typeof passportScanRequests.$inferInsert;
+
+/**
+ * File d'attente des demandes de réservation de vols à revalider par l'agence.
+ * Une demande ne devient jamais automatiquement un billet émis : l'agent doit
+ * contrôler le tarif, la disponibilité et le paiement avant l'émission.
+ */
+export const flightBookingRequests = mysqlTable("flight_booking_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  requestRef: varchar("requestRef", { length: 32 }).notNull().unique(),
+  candidateId: int("candidateId").notNull(),
+  candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
+  flightId: varchar("flightId", { length: 255 }).notNull(),
+  flightData: json("flightData").notNull(),
+  passengerData: json("passengerData").notNull(),
+  status: mysqlEnum("status", ["pending_review", "assigned", "needs_info", "revalidated", "awaiting_payment", "issued", "cancelled"]).default("pending_review").notNull(),
+  assignedAgentEmail: varchar("assignedAgentEmail", { length: 320 }),
+  agentNotes: text("agentNotes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_flight_requests_status").on(table.status),
+  index("idx_flight_requests_assignee_status").on(table.assignedAgentEmail, table.status),
+  index("idx_flight_requests_candidate").on(table.candidateId),
+]);
+export type FlightBookingRequest = typeof flightBookingRequests.$inferSelect;
+export type InsertFlightBookingRequest = typeof flightBookingRequests.$inferInsert;
+
+export const flightBookingRequestHistory = mysqlTable("flight_booking_request_history", {
+  id: int("id").autoincrement().primaryKey(),
+  requestId: int("requestId").notNull(),
+  action: varchar("action", { length: 80 }).notNull(),
+  changedBy: varchar("changedBy", { length: 320 }).notNull(),
+  oldValue: text("oldValue"),
+  newValue: text("newValue"),
+  details: text("details"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_flight_request_history_request").on(table.requestId, table.createdAt),
+]);
+export type FlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferSelect;
+export type InsertFlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferInsert;

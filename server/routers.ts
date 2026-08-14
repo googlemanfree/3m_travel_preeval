@@ -63,6 +63,7 @@ import { caseTrackingRouter } from "./routers/caseTracking";
 import { destinationMediaRouter } from "./routers/destinationMedia";
 import { embassyNewsRouter } from "./routers/embassyNews";
 import { mediaLibraryRouter } from "./routers/mediaLibrary";
+import { flightBookingRouter } from "./routers/flightBooking";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -95,6 +96,7 @@ export const appRouter = router({
   cvAnalysis: cvAnalysisRouter,
   aiCopilot: aiCopilotRouter,
   flights: flightsRouter,
+  flightBooking: flightBookingRouter,
   candidate: candidateRouter,
   candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,

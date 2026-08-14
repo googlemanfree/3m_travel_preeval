@@ -2132,3 +2132,7 @@
 - [x] Publier un marker unique du build sans manual chunk et confirmer que le domaine sert le nouveau bundle `index-DJkXq_JR.js` (le marker HTML précédent reste temporairement servi par le CDN)
 
 - [x] Rédiger les recommandations d’amélioration pour le système de réservation de vols en ligne
+
+- [x] Ajouter un scan optique de passeport avec préremplissage contrôlé des informations passagers
+- [x] Créer un tableau de bord agent pour suivre et gérer les dossiers de vols en attente
+- [x] Couvrir le scan, les permissions agent, les statuts de dossier et le parcours mobile par des tests

@@ -1201,6 +1201,9 @@ export default function AdminDashboard() {
                 Définissez le pourcentage de commission appliqué automatiquement sur les prix des billets d'avion affichés aux clients.
               </p>
               <FlightCommissionSettings />
+              <a href="/admin/flight-requests" className="mt-5 flex h-12 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Ouvrir la file des demandes de vols
+              </a>
             </Card>
           </TabsContent>
 

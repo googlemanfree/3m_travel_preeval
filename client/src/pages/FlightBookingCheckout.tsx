@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 import Footer from "@/components/Footer";
+import PassportScanUploader from "@/components/PassportScanUploader";
+import { trpc } from "@/lib/trpc";
 
 function formatXaf(amount: number) {
   return `${new Intl.NumberFormat("fr-FR").format(amount)} FCFA`;
@@ -77,6 +79,18 @@ export default function FlightBookingCheckout() {
   const [friendEmail, setFriendEmail] = useState("");
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isTicketExporting, setIsTicketExporting] = useState(false);
+  const [passportScanId, setPassportScanId] = useState<number | null>(null);
+  const createRequestMutation = trpc.flightBooking.createRequest.useMutation({
+    onSuccess: (result) => {
+      setDossierRef(result.requestRef);
+      setShowConfirmModal(false);
+      setSubmitted(true);
+      toast({ title: "Demande transmise à l'agence", description: `Référence ${result.requestRef}. Le tarif et la disponibilité seront revalidés par un agent.` });
+    },
+    onError: (error) => {
+      toast({ title: "Transmission impossible", description: error.message || "Réessayez ou contactez l'agence.", variant: "destructive" });
+    },
+  });
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
   const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
 
@@ -108,11 +122,15 @@ export default function FlightBookingCheckout() {
   };
 
   const handleFinalSubmit = () => {
-    setShowConfirmModal(false);
-    const ref = `3M-FL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    setDossierRef(ref);
-    setSubmitted(true);
-    toast({ title: "Demande préparée", description: `Référence provisoire ${ref}. Contactez l'agence pour la revalidation et l'émission.` });
+    if (!selectedFlight) {
+      toast({ title: "Vol introuvable", description: "Retournez aux résultats et sélectionnez un vol.", variant: "destructive" });
+      return;
+    }
+    createRequestMutation.mutate({
+      flightId: selectedFlight.id,
+      flightData: selectedFlight as unknown as Record<string, unknown>,
+      passengerData: [{ ...(formData as unknown as Record<string, unknown>), passportScanId }],
+    });
   };
 
   const whatsappNumber = "237698104832";
@@ -329,6 +347,18 @@ export default function FlightBookingCheckout() {
                 <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
                   <User className="h-5 w-5 text-blue-600" /> Informations du Passager & Passeport
                 </h2>
+
+                <PassportScanUploader onExtractedData={(data, scanId) => {
+                  setFormData((previous) => ({
+                    ...previous,
+                    fullName: [data.givenNames, data.surname].filter(Boolean).join(" ").trim() || previous.fullName,
+                    passportNumber: data.passportNumber || previous.passportNumber,
+                    nationality: data.nationality || previous.nationality,
+                    dateOfBirth: data.dateOfBirth || previous.dateOfBirth,
+                    passportExpiry: data.expiryDate || previous.passportExpiry,
+                  }));
+                  setPassportScanId(scanId);
+                }} />
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
@@ -567,7 +597,10 @@ export default function FlightBookingCheckout() {
                   </div>
                   <div className="flex gap-3 pt-2">
                     <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-12 rounded-xl border-slate-200">Modifier</Button>
-                    <Button type="button" onClick={handleFinalSubmit} className="flex-1 h-12 rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700"><Check className="mr-2 h-4 w-4" /> Confirmer</Button>
+                    <Button type="button" onClick={handleFinalSubmit} disabled={createRequestMutation.isPending} className="flex-1 h-12 rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700 disabled:opacity-60">
+                      {createRequestMutation.isPending ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                      {createRequestMutation.isPending ? "Transmission…" : "Confirmer"}
+                    </Button>
                   </div>
                 </motion.div>
               </div>

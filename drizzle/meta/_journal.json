@@ -204,6 +204,13 @@
       "when": 1786602589126,
       "tag": "0028_add_destination_media",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1786665029437,
+      "tag": "0029_add_passport_and_flight_booking",
+      "breakpoints": true
     }
   ]
 }
