@@ -2433,3 +2433,9 @@
 ## Animation de validation visuelle sur le bouton de copie du lien (v162)
 - [x] Créer l’état animé avec coche verte et message de succès temporaire sur le bouton de copie du lien
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Audit et fiabilisation des numéros de dossier et liens de suivi (v163)
+- [x] Vérifier la génération automatique, l’unicité et la persistance des numéros de dossier (#3M-AAAA-XXXX) lors des réservations et ouvertures de dossier
+- [x] Garantir l’accessibilité immédiate du numéro dans l’Espace Client et la recherche instantanée côté Administrateur
+- [x] Valider le lien « Suivre le dossier » et la sécurité d’accès (pas d’accès inter-candidat)
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
