@@ -2324,3 +2324,8 @@
 - [x] Système de rappels de rendez-vous par e-mail et WhatsApp la veille de la consultation
 - [x] Historique détaillé des variations de prix pour les vols favoris enregistrés
 - [x] Valider la compilation, les tests unitaires et publier la mise à jour
+
+## Calendrier interactif partagé de rendez-vous (v140)
+- [x] Créer le composant de calendrier interactif de réservation de créneaux avec sélection du conseiller et des horaires
+- [x] Synchroniser les rendez-vous réservés avec le dossier du candidat et le back-office administrateur
+- [x] Valider la compilation, les tests unitaires et publier la mise à jour
