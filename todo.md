@@ -2757,5 +2757,12 @@
 - [x] Débloquer les étapes suivantes après validation administrative
 - [x] Synchroniser la transmission aux agences et leur réponse dans l’espace client
 - [x] Ajouter les tests de non-régression
-- [ ] Publier l’extension
+- [x] Publier l’extension
 
+
+## Section de Notifications Candidat (v206)
+- [x] Créer ou relier le composant de notifications dans l’espace client (remarques admin et réponses agences)
+- [x] Ajouter les filtres de lecture et de catégorie (Administration vs Agences partenaires)
+- [x] Vérifier la synchronisation avec le back-office sans modifier la structure existante
+- [x] Ajouter les tests de non-régression
+- [ ] Publier la mise à jour

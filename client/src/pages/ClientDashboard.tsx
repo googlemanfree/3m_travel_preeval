@@ -23,6 +23,7 @@ import {
   BarChart3,
   CreditCard,
   MessageSquare,
+  Bell,
   Settings,
   LogOut,
   Heart,
@@ -110,6 +111,7 @@ export default function ClientDashboard() {
   const [correctionComment, setCorrectionComment] = useState("");
   const [correctionFile, setCorrectionFile] = useState<File | null>(null);
   const [paymentReceiptUploading, setPaymentReceiptUploading] = useState(false);
+  const [notificationFilter, setNotificationFilter] = useState<"all" | "admin" | "agency">("all");
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -172,6 +174,12 @@ export default function ClientDashboard() {
       toast.success("Document transmis. Notre équipe va maintenant le vérifier.");
     },
     onError: (error) => toast.error(error.message || "Le document n’a pas pu être transmis."),
+  });
+  const markNotificationReadMutation = trpc.caseTracking.markNotificationRead.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.caseTracking.getMyCases.invalidate();
+    },
+    onError: (error) => toast.error(error.message || "La notification n’a pas pu être marquée comme lue."),
   });
   const initiatePaymentMutation = trpc.application.initiateMyCinetPayPayment.useMutation({
     onSuccess: (result) => {
@@ -569,6 +577,15 @@ export default function ClientDashboard() {
       ? "border-red-200 bg-red-50 text-red-950"
       : "border-amber-200 bg-amber-50 text-amber-950";
   const hasOnlineApplication = Boolean(dossierData?.data?.application?.id);
+  const notificationItems = (caseTrackingData?.notifications ?? []).map((notification: any) => {
+    const isAgency = String(notification.type).startsWith("agency_") || notification.type === "agency_response";
+    return {
+      ...notification,
+      category: isAgency ? "agency" as const : "admin" as const,
+      categoryLabel: isAgency ? "Agence de placement" : "Administration",
+    };
+  });
+  const filteredNotifications = notificationItems.filter((notification) => notificationFilter === "all" || notification.category === notificationFilter);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -916,11 +933,15 @@ export default function ClientDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Aperçu</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="favorites">Favoris</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
+            <TabsTrigger value="notifications" className="relative gap-1">
+              <Bell className="h-4 w-4" aria-hidden="true" /> Notifications
+              {(caseTrackingData?.unreadNotifications ?? 0) > 0 && <Badge className="ml-1 h-5 min-w-5 justify-center rounded-full bg-red-600 px-1 text-[10px] text-white">{caseTrackingData?.unreadNotifications}</Badge>}
+            </TabsTrigger>
             <TabsTrigger value="settings">Paramètres</TabsTrigger>
           </TabsList>
 
@@ -1247,9 +1268,50 @@ export default function ClientDashboard() {
                   <MessageSquare className="w-5 h-5" />
                   Messagerie
                 </CardTitle>
+                <CardDescription>Retrouvez les échanges directs avec l’équipe Prime Travel Service.</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-center py-8">Aucun message pour le moment</p>
+                <p className="text-gray-600 text-center py-8">Les messages détaillés apparaîtront ici. Consultez l’onglet Notifications pour les remarques et décisions déjà publiées.</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Notifications */}
+          <TabsContent value="notifications" className="space-y-4">
+            <Card>
+              <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5 text-blue-700" aria-hidden="true" /> Centre de notifications</CardTitle>
+                  <CardDescription>Remarques de l’administration et réponses des agences de placement, synchronisées avec votre dossier.</CardDescription>
+                </div>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer les notifications">
+                  {(["all", "admin", "agency"] as const).map((filter) => (
+                    <Button key={filter} type="button" size="sm" variant={notificationFilter === filter ? "default" : "outline"} onClick={() => setNotificationFilter(filter)}>
+                      {filter === "all" ? "Toutes" : filter === "admin" ? "Administration" : "Agences"}
+                    </Button>
+                  ))}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {caseTrackingLoading ? (
+                  <div className="flex items-center gap-2 py-8 text-sm text-slate-600" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Chargement des notifications…</div>
+                ) : filteredNotifications.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-sm text-slate-600">Aucune notification dans cette catégorie.</div>
+                ) : (
+                  filteredNotifications.map((notification) => (
+                    <article key={notification.id} className={`rounded-xl border p-4 ${notification.isRead ? "border-slate-200 bg-white" : "border-blue-200 bg-blue-50/60"}`}>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{notification.categoryLabel}</Badge>{!notification.isRead && <Badge className="bg-blue-700 text-white">Nouveau</Badge>}</div>
+                          <h3 className="mt-2 font-semibold text-slate-900">{notification.title}</h3>
+                          <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{notification.body}</p>
+                          <p className="mt-2 text-xs text-slate-500">{new Date(notification.createdAt).toLocaleString("fr-FR")}</p>
+                        </div>
+                        {!notification.isRead && <Button type="button" size="sm" variant="outline" disabled={markNotificationReadMutation.isPending} onClick={() => markNotificationReadMutation.mutate({ notificationId: notification.id })}>Marquer comme lue</Button>}
+                      </div>
+                    </article>
+                  ))
+                )}
               </CardContent>
             </Card>
           </TabsContent>

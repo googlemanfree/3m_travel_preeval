@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments, candidateMessages, candidates } from "../../drizzle/schema";
+import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
 import { sendDossierConfirmationEmail } from "../emailService";
@@ -324,10 +325,20 @@ export const adminCandidateManagementRouter = router({
           visa_approuve: "Visa approuvé",
           refuse: "Dossier refusé",
         };
+        const visibleBody = `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\nNouveau statut : ${statusLabels[input.status] ?? input.status}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`;
         await db.insert(candidateMessages).values({
           candidateId: candidateIdForMessage,
           senderRole: "advisor",
-          content: `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\nNouveau statut : ${statusLabels[input.status] ?? input.status}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`,
+          content: visibleBody,
+          isRead: false,
+        });
+        const agencyResponse = ["soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "approuve", "soumis"].includes(input.status);
+        await db.insert(clientNotifications).values({
+          candidateId: candidateIdForMessage,
+          type: agencyResponse ? "agency_response" : input.adminNotes ? "admin_remark" : "admin_status_update",
+          title: agencyResponse ? "Réponse de l’agence de placement" : input.adminNotes ? "Nouvelle remarque de l’administration" : "Mise à jour de votre dossier",
+          body: visibleBody,
+          actionUrl: "/mon-espace",
           isRead: false,
         });
       }
@@ -356,10 +367,19 @@ export const adminCandidateManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Ce dossier n’est pas encore relié à un compte candidat." });
+      const messageBody = input.content.trim();
       await db.insert(candidateMessages).values({
         candidateId,
         senderRole: "advisor",
-        content: input.content.trim(),
+        content: messageBody,
+        isRead: false,
+      });
+      await db.insert(clientNotifications).values({
+        candidateId,
+        type: "admin_message",
+        title: "Nouveau message de Prime Travel Service",
+        body: messageBody,
+        actionUrl: "/mon-espace",
         isRead: false,
       });
       return { success: true, adminEmail: admin.email };
