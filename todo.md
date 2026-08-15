@@ -2816,4 +2816,9 @@
 - [x] Relier les pièces jointes de la galerie modale à l’ID de notification source pour permettre un marquage lu en un clic
 - [x] Ajouter un bouton « Marquer comme lu / Accuser réception » dans le pied de page de la modale d’aperçu
 - [x] Valider les tests de non-régression
+- [x] Publier la mise à jour
+
+## Toast d’accusé de réception (v216)
+- [x] Afficher un toast de confirmation accessible en bas de l’écran après l’accusé de réception
+- [x] Vérifier les tests de non-régression
 - [ ] Publier la mise à jour

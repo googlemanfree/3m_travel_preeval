@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, it, expect } from "vitest";
 
 describe("Visualiseur modal - Accusé de réception des notifications", () => {
@@ -20,5 +21,12 @@ describe("Visualiseur modal - Accusé de réception des notifications", () => {
     };
     markAsRead();
     expect(acknowledged).toBe(true);
+  });
+
+  it("affiche un toast explicite au bas de l’écran après l’accusé de réception", () => {
+    const dashboardSource = readFileSync("client/src/pages/ClientDashboard.tsx", "utf8");
+    expect(dashboardSource).toContain("Accusé de réception enregistré");
+    expect(dashboardSource).toContain('position: "bottom-center"');
+    expect(dashboardSource).toContain("L’administration sait désormais que vous avez consulté ce document.");
   });
 });

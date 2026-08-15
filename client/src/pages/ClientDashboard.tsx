@@ -273,7 +273,11 @@ export default function ClientDashboard() {
     onSuccess: async () => {
       setAttachmentPreview((current) => current ? { ...current, acknowledged: true } : current);
       await trpcUtils.caseTracking.getMyCases.invalidate();
-      toast.success("Accusé de réception enregistré.");
+      toast.success("Accusé de réception enregistré", {
+        description: "L’administration sait désormais que vous avez consulté ce document.",
+        position: "bottom-center",
+        duration: 3500,
+      });
     },
     onError: (error) => toast.error(error.message || "L’accusé de réception n’a pas pu être enregistré."),
   });
