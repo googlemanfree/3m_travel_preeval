@@ -2714,5 +2714,12 @@
 - [x] Vérifier l’écran de suivi candidat et ses statuts réels de dossier
 - [x] Intégrer un module d’avancement visible dans le tableau de bord candidat
 - [x] Ajouter les tests responsive et de synchronisation du suivi
-- [ ] Valider et publier la mise à jour
+- [x] Valider et publier la mise à jour
 
+## Documents, historique & assistance candidat (v200)
+- [x] Permettre le dépôt direct des pièces manquantes depuis le tableau de bord candidat
+- [x] Afficher une chronologie datée des changements réels de statut du dossier
+- [x] Ajouter un bouton d’assistance rapide en cas de dossier à revoir
+- [x] Ajouter les tests de synchronisation, d’accessibilité et de responsive
+- [x] Créer et valider une compétence réutilisable de suivi de dossier candidat
+- [ ] Publier la mise à jour et livrer la compétence

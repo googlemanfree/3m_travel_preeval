@@ -16,6 +16,7 @@ import {
   candidateFiles,
   candidateMessages,
   candidates,
+  applicationStatusHistory,
   clientDocuments,
   agencyDossiers,
   agencyDossierDocuments,
@@ -1062,6 +1063,24 @@ export const candidateRouter = router({
       updatedAt: historicalAgencyDossier.updatedAt,
     } as any);
 
+    const persistedStatusHistory = app[0]
+      ? await db.select().from(applicationStatusHistory)
+          .where(eq(applicationStatusHistory.applicationId, app[0].id))
+          .orderBy(desc(applicationStatusHistory.createdAt))
+      : [];
+    const statusHistory = persistedStatusHistory.length > 0
+      ? persistedStatusHistory
+      : [{
+          id: 0,
+          applicationId: application.id,
+          previousStatus: "",
+          newStatus: application.dossierStatus,
+          changedBy: app[0]?.lastStatusUpdatedBy ?? null,
+          reason: app[0]?.adminNote ?? "Dossier créé et enregistré.",
+          createdAt: application.createdAt,
+          isInitialEntry: true,
+        }];
+
     // Récupérer les documents
     const documents = await db
       .select()
@@ -1101,6 +1120,7 @@ export const candidateRouter = router({
         documents,
         agencyDocuments,
         messages,
+        statusHistory,
         dossierStatus: application.dossierStatus,
         agreementSigned: application.agreementSigned,
         paymentStatus: application.paymentStatus,

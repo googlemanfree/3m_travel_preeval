@@ -370,6 +370,19 @@ export const applications = mysqlTable("applications", {
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
 
+/** Historique horodaté des changements de statut des dossiers en ligne. */
+export const applicationStatusHistory = mysqlTable("application_status_history", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  previousStatus: varchar("previousStatus", { length: 50 }).notNull(),
+  newStatus: varchar("newStatus", { length: 50 }).notNull(),
+  changedBy: varchar("changedBy", { length: 320 }),
+  reason: text("reason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ApplicationStatusHistory = typeof applicationStatusHistory.$inferSelect;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FORMULAIRE D'ÉVALUATION DE PROFIL PREMIUM (MULTI-ÉTAPES)

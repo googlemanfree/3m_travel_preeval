@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileUp,
   FileCheck,
+  FileWarning,
   Clock,
   AlertCircle,
   CheckCircle2,
@@ -21,6 +22,8 @@ import {
   LogOut,
   Heart,
   Plane,
+  LifeBuoy,
+  Loader2,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -74,6 +77,8 @@ const PROGRESS_STEPS = [
   { step: 5, label: "Décision", icon: CheckCircle2 },
 ];
 
+const SUPPORT_WHATSAPP_NUMBER = "237698104832";
+
 export default function ClientDashboard() {
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const [, setLocation] = useLocation();
@@ -94,6 +99,10 @@ export default function ClientDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
+  const { data: caseTrackingData, isLoading: caseTrackingLoading } = trpc.caseTracking.getMyCases.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
 
   const trpcUtils = trpc.useUtils();
   const { data: favoriteFlights, isLoading: favoritesLoading } = trpc.flights.getFavoriteFlights.useQuery(
@@ -108,6 +117,13 @@ export default function ClientDashboard() {
   });
 
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const submitRequirementMutation = trpc.caseTracking.submitMyRequirementDocument.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.caseTracking.getMyCases.invalidate();
+      toast.success("Document transmis. Notre équipe va maintenant le vérifier.");
+    },
+    onError: (error) => toast.error(error.message || "Le document n’a pas pu être transmis."),
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -160,6 +176,55 @@ export default function ClientDashboard() {
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleRequirementUpload = async (
+    requirement: { id?: number; documentType?: string },
+    file: File | undefined,
+  ) => {
+    if (!file) return;
+    if (!requirement.id || !requirement.documentType) {
+      toast.error("La pièce demandée est incomplète. Actualisez votre dossier puis réessayez.");
+      return;
+    }
+    const token = getCandidateToken();
+    if (!token) {
+      toast.error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+      setLocation("/login");
+      return;
+    }
+    const acceptedTypes = new Set([
+      "passport", "cv", "diploma", "transcript", "bank_statement", "employment_letter",
+      "birth_certificate", "marriage_certificate", "proof_of_residence", "passeport", "diplome",
+      "releve_bancaire", "lettre_motivation", "contrat_travail", "lettre_admission", "acte_naissance",
+      "acte_mariage", "justificatif_hebergement", "photo_identite", "casier_judiciaire",
+    ]);
+    const fileType = acceptedTypes.has(requirement.documentType) ? requirement.documentType : "other";
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
+    try {
+      const response = await fetch("/api/candidate/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement");
+      await submitRequirementMutation.mutateAsync({
+        requirementId: requirement.id,
+        fileName: payload.fileName || file.name,
+        fileKey: payload.fileKey,
+        mimeType: payload.mimeType || file.type,
+        fileSizeBytes: payload.fileSizeBytes ?? file.size,
+      });
+      await Promise.all([
+        trpcUtils.candidate.getMyDocuments.invalidate(),
+        trpcUtils.candidate.getMyDossierData.invalidate(),
+      ]);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement");
+    }
   };
 
     const handleUpload = async () => {
@@ -243,6 +308,19 @@ export default function ClientDashboard() {
 
   const currentStatus = STATUS_LABELS[dossier.status] ?? STATUS_LABELS.nouveau;
   const StatusIcon = currentStatus.icon;
+  const activeCase = caseTrackingData?.cases[0];
+  const pendingRequirements = activeCase?.requirements.filter((requirement) =>
+    requirement.status === "pending" || requirement.status === "rejected"
+  ) ?? [];
+  const statusHistory = (activeCase?.history ?? dossierData?.data?.statusHistory ?? [])
+    .filter((entry) => entry?.createdAt)
+    .slice()
+    .sort((left, right) => new Date(left.createdAt!).getTime() - new Date(right.createdAt!).getTime());
+  const requiresRevisionSupport = dossier.status === "refuse" || pendingRequirements.some((requirement) => requirement.status === "rejected");
+  const handleQuickSupport = () => {
+    const message = `Bonjour Prime Travel Service, j’ai besoin d’assistance pour la révision de mon dossier ${dossier.numero}.`;
+    window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -337,6 +415,126 @@ export default function ClientDashboard() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="border border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-orange-950">
+                  <FileWarning className="h-5 w-5 text-orange-600" aria-hidden="true" />
+                  Pièces à compléter
+                </CardTitle>
+                <CardDescription className="mt-1">Déposez directement la pièce demandée. Elle sera transmise au conseiller pour vérification.</CardDescription>
+              </div>
+              <Badge variant="outline" className="border-orange-300 bg-white text-orange-800">
+                {caseTrackingLoading ? "Chargement…" : `${pendingRequirements.length} à traiter`}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {caseTrackingLoading ? (
+              <div className="flex items-center gap-2 py-3 text-sm text-slate-600" role="status">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Chargement des demandes documentaires…
+              </div>
+            ) : pendingRequirements.length > 0 ? (
+              <div className="space-y-3">
+                {pendingRequirements.map((requirement) => {
+                  const inputId = `requirement-upload-${requirement.id}`;
+                  const isRejected = requirement.status === "rejected";
+                  return (
+                    <div key={requirement.id} className="flex flex-col gap-3 rounded-xl border border-orange-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900">{requirement.documentType}</p>
+                        <p className="mt-1 text-sm text-slate-600">{requirement.adminComment || (isRejected ? "Une nouvelle version est demandée par le conseiller." : "Document requis pour poursuivre votre dossier.")}</p>
+                        {requirement.dueAt && <p className="mt-1 text-xs text-slate-500">À transmettre avant le {new Date(requirement.dueAt).toLocaleDateString("fr-FR")}</p>}
+                      </div>
+                      <div className="shrink-0">
+                        <input
+                          id={inputId}
+                          type="file"
+                          className="sr-only"
+                          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                          disabled={submitRequirementMutation.isPending}
+                          onChange={(event) => {
+                            const file = event.currentTarget.files?.[0];
+                            void handleRequirementUpload(requirement, file);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                        <label htmlFor={inputId}>
+                          <Button asChild size="sm" disabled={submitRequirementMutation.isPending} className="cursor-pointer bg-orange-600 hover:bg-orange-700">
+                            <span>
+                              {submitRequirementMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="mr-2 h-4 w-4" aria-hidden="true" />}
+                              Déposer la pièce
+                            </span>
+                          </Button>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-600">
+                Aucune pièce complémentaire n’est demandée pour le moment. Les nouvelles demandes apparaîtront ici dès leur création par votre conseiller.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-blue-700" aria-hidden="true" />
+                Historique du dossier
+              </CardTitle>
+              <CardDescription>Chaque étape est enregistrée avec sa date de mise à jour.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {statusHistory.length > 0 ? (
+                <ol className="relative ml-2 space-y-5 border-l border-slate-200 pl-5" aria-label="Chronologie des changements de statut">
+                  {statusHistory.map((entry, index) => {
+                    const historyStatus = STATUS_LABELS[entry.newStatus || "nouveau"] ?? STATUS_LABELS.nouveau;
+                    return (
+                      <li key={`${entry.id ?? "history"}-${index}`} className="relative">
+                        <span className="absolute -left-[1.78rem] top-1.5 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow" aria-hidden="true" />
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="font-semibold text-slate-900">{historyStatus.label}</p>
+                          <time className="text-xs text-slate-500" dateTime={new Date(entry.createdAt!).toISOString()}>
+                            {new Date(entry.createdAt!).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}
+                          </time>
+                        </div>
+                        {entry.reason && <p className="mt-1 text-sm text-slate-600">{entry.reason}</p>}
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">La première mise à jour apparaîtra ici dès qu’elle sera enregistrée par l’équipe.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {requiresRevisionSupport && (
+            <Card className="border border-amber-200 bg-amber-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-amber-950">
+                  <LifeBuoy className="h-5 w-5 text-amber-700" aria-hidden="true" />
+                  Besoin d’aide ?
+                </CardTitle>
+                <CardDescription className="text-amber-900">Une pièce ou une décision nécessite votre attention.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-sm text-amber-950">Contactez rapidement l’équipe Prime Travel Service afin de comprendre la révision demandée.</p>
+                <Button onClick={handleQuickSupport} className="w-full bg-amber-700 hover:bg-amber-800">
+                  <LifeBuoy className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Contacter l’assistance
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">

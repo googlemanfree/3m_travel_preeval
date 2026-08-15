@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { insuranceRequests } from "../../drizzle/schema";
-import { caseDocuments, cases, caseStatusHistory, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
+import { caseActivityLogs, caseDocuments, cases, caseStatusHistory, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { storageGetSignedUrl } from "../storage";
 import { router } from "../_core/trpc";
@@ -26,6 +26,58 @@ export const caseTrackingRouter = router({
       notifications,
       unreadNotifications: notifications.filter(item => !item.isRead).length,
     };
+  }),
+
+  submitMyRequirementDocument: candidateProcedure.input(z.object({
+    requirementId: z.number().int().positive(),
+    fileName: z.string().trim().min(1).max(255),
+    fileKey: z.string().trim().min(1).max(512),
+    mimeType: z.string().trim().min(1).max(100),
+    fileSizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
+  })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+    const [requirement] = await db
+      .select({
+        id: documentRequirements.id,
+        caseId: documentRequirements.caseId,
+        documentType: documentRequirements.documentType,
+        status: documentRequirements.status,
+      })
+      .from(documentRequirements)
+      .innerJoin(cases, and(eq(documentRequirements.caseId, cases.id), eq(cases.candidateId, ctx.candidate.id)))
+      .where(eq(documentRequirements.id, input.requirementId))
+      .limit(1);
+
+    if (!requirement) throw new TRPCError({ code: "NOT_FOUND", message: "Pièce demandée introuvable ou non autorisée." });
+    if (requirement.status === "approved" || requirement.status === "waived") {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Cette pièce ne nécessite plus de dépôt." });
+    }
+
+    const result = await db.insert(caseDocuments).values({
+      caseId: requirement.caseId,
+      candidateId: ctx.candidate.id,
+      documentType: requirement.documentType,
+      fileName: input.fileName,
+      fileKey: input.fileKey,
+      mimeType: input.mimeType,
+      fileSizeBytes: input.fileSizeBytes,
+      uploadedByRole: "candidate",
+      reviewStatus: "pending",
+    });
+    await db.update(documentRequirements).set({ status: "received" }).where(eq(documentRequirements.id, requirement.id));
+    await db.insert(caseActivityLogs).values({
+      caseId: requirement.caseId,
+      actorRole: "candidate",
+      actorId: ctx.candidate.id,
+      actionType: "document_submitted",
+      entityType: "document_requirement",
+      entityId: String(requirement.id),
+      description: `Pièce déposée : ${requirement.documentType}`,
+    });
+
+    return { success: true, documentId: Number((result as any)[0]?.insertId || 0), requirementId: requirement.id };
   }),
 
   downloadMyDocument: candidateProcedure.input(z.object({ documentId: z.number().int().positive() })).query(async ({ ctx, input }) => {
