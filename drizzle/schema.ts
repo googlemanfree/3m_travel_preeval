@@ -227,6 +227,10 @@ export const candidateMessages = mysqlTable("candidate_messages", {
   candidateId: int("candidateId").notNull(),
   senderRole: mysqlEnum("senderRole", ["candidate", "advisor"]).notNull(),
   content: text("content").notNull(),
+  attachmentUrl: text("attachmentUrl"),
+  attachmentName: varchar("attachmentName", { length: 255 }),
+  attachmentMimeType: varchar("attachmentMimeType", { length: 100 }),
+  attachmentSizeBytes: int("attachmentSizeBytes"),
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

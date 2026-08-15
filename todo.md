@@ -2789,3 +2789,9 @@
 - [x] Intégrer les boutons de sélection de modèles dans le formulaire de réponse rapide du centre de notifications
 - [x] Valider les tests de non-régression
 - [x] Publier la mise à jour
+
+## Pièces Jointes dans la Réponse Rapide (v211)
+- [x] Étendre le schéma et la procédure de messagerie candidat pour supporter une pièce jointe optionnelle (URL et nom de fichier)
+- [x] Ajouter un sélecteur de fichier et un aperçu de pièce jointe dans le formulaire de réponse rapide du centre de notifications
+- [x] Valider les tests de non-régression
+- [x] Publier la mise à jour

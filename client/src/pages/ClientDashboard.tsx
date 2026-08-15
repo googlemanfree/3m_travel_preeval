@@ -119,6 +119,7 @@ export default function ClientDashboard() {
   const [notificationQuery, setNotificationQuery] = useState("");
   const [notificationReplyId, setNotificationReplyId] = useState<number | null>(null);
   const [notificationReplyText, setNotificationReplyText] = useState("");
+  const [notificationReplyAttachment, setNotificationReplyAttachment] = useState<File | null>(null);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -192,10 +193,18 @@ export default function ClientDashboard() {
     onSuccess: async () => {
       setNotificationReplyId(null);
       setNotificationReplyText("");
+      setNotificationReplyAttachment(null);
       await Promise.all([trpcUtils.candidate.getMessages.invalidate(), trpcUtils.caseTracking.getMyCases.invalidate()]);
-      toast.success("Votre réponse a été envoyée à l’administration.");
+      toast.success("Votre réponse et sa pièce jointe ont été envoyées à l’administration.");
     },
     onError: (error) => toast.error(error.message || "La réponse n’a pas pu être envoyée."),
+  });
+
+  const readAttachmentAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Lecture du fichier impossible."));
+    reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
+    reader.readAsDataURL(file);
   });
   const setNotificationArchivedMutation = trpc.caseTracking.setNotificationArchived.useMutation({
     onSuccess: async ({ archived }) => {
@@ -1355,7 +1364,22 @@ export default function ClientDashboard() {
                           </Button>
                         </div>
                       </div>
-                      {notificationReplyId === notification.id && notification.category === "admin" && <form className="mt-4 space-y-3 border-t border-slate-200 pt-4" onSubmit={(event) => { event.preventDefault(); const content = notificationReplyText.trim(); if (!content) { toast.error("Écrivez une réponse avant l’envoi."); return; } sendNotificationReplyMutation.mutate({ content }); }}>
+                      {notificationReplyId === notification.id && notification.category === "admin" && <form className="mt-4 space-y-3 border-t border-slate-200 pt-4" onSubmit={async (event) => {
+                        event.preventDefault();
+                        const content = notificationReplyText.trim();
+                        if (!content && !notificationReplyAttachment) { toast.error("Écrivez une réponse ou ajoutez une pièce jointe."); return; }
+                        try {
+                          const attachment = notificationReplyAttachment ? {
+                            dataUrl: await readAttachmentAsDataUrl(notificationReplyAttachment),
+                            fileName: notificationReplyAttachment.name,
+                            mimeType: notificationReplyAttachment.type as "application/pdf" | "image/jpeg" | "image/png",
+                            sizeBytes: notificationReplyAttachment.size,
+                          } : undefined;
+                          sendNotificationReplyMutation.mutate({ content, attachment });
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : "La pièce jointe n’a pas pu être préparée.");
+                        }
+                      }}>
                         <div className="space-y-1">
                           <Label htmlFor={`notification-reply-${notification.id}`}>Votre réponse</Label>
                           <div className="flex flex-wrap gap-1.5 py-1">
@@ -1367,8 +1391,22 @@ export default function ClientDashboard() {
                           </div>
                         </div>
                         <Textarea id={`notification-reply-${notification.id}`} value={notificationReplyText} onChange={(event) => setNotificationReplyText(event.target.value)} placeholder="Répondez à l’administration au sujet de cette notification…" maxLength={2000} rows={3} autoFocus />
+                        <div className="space-y-2">
+                          <Label htmlFor={`notification-attachment-${notification.id}`}>Pièce jointe (PDF, JPG ou PNG, 5 Mo maximum)</Label>
+                          <Input id={`notification-attachment-${notification.id}`} type="file" accept="application/pdf,image/jpeg,image/png" onChange={(event) => {
+                            const file = event.target.files?.[0] ?? null;
+                            if (!file) { setNotificationReplyAttachment(null); return; }
+                            if (!["application/pdf", "image/jpeg", "image/png"].includes(file.type)) { toast.error("Formats acceptés : PDF, JPG ou PNG."); event.currentTarget.value = ""; return; }
+                            if (file.size > 5 * 1024 * 1024) { toast.error("La pièce jointe ne doit pas dépasser 5 Mo."); event.currentTarget.value = ""; return; }
+                            setNotificationReplyAttachment(file);
+                          }} />
+                          {notificationReplyAttachment && <div className="flex items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2 text-sm">
+                            <span className="truncate">{notificationReplyAttachment.name} · {(notificationReplyAttachment.size / 1024 / 1024).toFixed(2)} Mo</span>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => setNotificationReplyAttachment(null)} aria-label="Retirer la pièce jointe"><X className="h-4 w-4" aria-hidden="true" /></Button>
+                          </div>}
+                        </div>
                         <div className="flex flex-wrap justify-end gap-2">
-                          <Button type="button" size="sm" variant="ghost" onClick={() => { setNotificationReplyId(null); setNotificationReplyText(""); }}>Annuler</Button>
+                          <Button type="button" size="sm" variant="ghost" onClick={() => { setNotificationReplyId(null); setNotificationReplyText(""); setNotificationReplyAttachment(null); }}>Annuler</Button>
                           <Button type="submit" size="sm" disabled={sendNotificationReplyMutation.isPending}>{sendNotificationReplyMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" /> : <MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" />} Envoyer la réponse</Button>
                         </div>
                       </form>}

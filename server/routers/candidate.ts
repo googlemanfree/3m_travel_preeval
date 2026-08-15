@@ -29,7 +29,7 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, sendWelcomeEmail } from "../emailService";
 import { sendEmail as sendGenericEmail } from "../_core/email";
-import { storageGetSignedUrl } from "../storage";
+import { storageGetSignedUrl, storagePut } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 
@@ -697,19 +697,58 @@ export const candidateRouter = router({
 
   // ── Messagerie : envoyer un message ───────────────────────────────────────
   sendMessage: candidateProcedure
-    .input(z.object({ content: z.string().min(1).max(2000) }))
+    .input(z.object({
+      content: z.string().max(2000),
+      attachment: z.object({
+        dataUrl: z.string().max(8_000_000),
+        fileName: z.string().min(1).max(255),
+        mimeType: z.enum(["application/pdf", "image/jpeg", "image/png"]),
+        sizeBytes: z.number().int().positive().max(5 * 1024 * 1024),
+      }).optional(),
+    }).refine((input) => input.content.trim().length > 0 || Boolean(input.attachment), {
+      message: "Ajoutez un message ou une pièce jointe.",
+      path: ["content"],
+    }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
+      let attachment: { url: string; name: string; mimeType: string; sizeBytes: number } | undefined;
+      if (input.attachment) {
+        const match = input.attachment.dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+        if (!match || match[1] !== input.attachment.mimeType) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Format de pièce jointe invalide." });
+        }
+        const buffer = Buffer.from(match[2], "base64");
+        if (!buffer.length || buffer.length > 5 * 1024 * 1024 || buffer.length !== input.attachment.sizeBytes) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "La pièce jointe doit peser au maximum 5 Mo." });
+        }
+        const safeName = input.attachment.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-180) || "piece-jointe";
+        const stored = await storagePut(
+          `candidate-messages/${ctx.candidate.id}/${Date.now()}-${safeName}`,
+          buffer,
+          input.attachment.mimeType,
+        );
+        attachment = {
+          url: stored.url,
+          name: input.attachment.fileName,
+          mimeType: input.attachment.mimeType,
+          sizeBytes: buffer.length,
+        };
+      }
+
       await db.insert(candidateMessages).values({
         candidateId: ctx.candidate.id,
         senderRole: "candidate",
-        content: input.content,
+        content: input.content.trim() || "Pièce jointe envoyée.",
+        attachmentUrl: attachment?.url,
+        attachmentName: attachment?.name,
+        attachmentMimeType: attachment?.mimeType,
+        attachmentSizeBytes: attachment?.sizeBytes,
         isRead: false,
       });
 
-      return { success: true };
+      return { success: true, attachment };
     }),
 
   // ── Nombre de messages non lus ────────────────────────────────────────────
