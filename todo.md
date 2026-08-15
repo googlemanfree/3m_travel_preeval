@@ -2859,7 +2859,12 @@
 - [x] Implémenter l'exhaustivité des pays e-Visa mondiaux (plus de 65 pays et territoires) avec fiches complètes, visuels et doubles boutons d'action et publier la version finale (v221)
 
 ## Simulateur Rapide d'Éligibilité e-Visa par Nationalité (v222)
-- [ ] Créer un composant de sélection de nationalité interactive sur la page Evisas
-- [ ] Calculer et afficher instantanément le statut d'éligibilité (« Éligible e-Visa », « e-Visa / e-VOA disponible », « Vérification consulaire ») pour chaque destination
-- [ ] Ajouter un filtre rapide pour n'afficher que les pays éligibles selon la nationalité sélectionnée
-- [ ] Valider et publier la mise à jour sur la plateforme
+- [x] Créer un composant de sélection de nationalité interactive sur la page Evisas
+- [x] Calculer et afficher instantanément le statut d'éligibilité (« Éligible e-Visa », « e-Visa / e-VOA disponible », « Vérification consulaire ») pour chaque destination
+- [x] Ajouter un filtre rapide pour n'afficher que les pays éligibles selon la nationalité sélectionnée
+- [x] Valider et publier la mise à jour sur la plateforme (v222)
+
+## Générateur Dynamique de Documents Requis par Nationalité et Destination (v223)
+- [ ] Créer une fonction de génération dynamique des documents requis dans Evisas.tsx croisant la nationalité sélectionnée et la destination choisie
+- [ ] Afficher clairement les exigences spécifiques (ex: carnet jaune pour l'Afrique subsaharienne, titre de séjour pour le Maroc, assurance médicale pour la Russie) dans chaque fiche e-Visa
+- [ ] Valider le comportement dynamique et publier la mise à jour

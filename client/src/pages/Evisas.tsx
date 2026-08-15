@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -838,17 +838,47 @@ export default function Evisas() {
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
 
-  // Fonction de simulation d'éligibilité selon la nationalité
   const getEligibilityStatus = (countryName: string, nationalite: string) => {
-    // Par exemple, pour les passeports africains (Cameroun, Gabon, etc.), les e-Visas sont ouverts partout en ligne (moyennant paiement et passeport),
-    // tandis que certains pays exigent un visa classique ou des conditions (ex: Maroc demande un visa partenaire).
     if (countryName === "Maroc") {
       return { status: "condition", label: "Sous conditions (titre de séjour/visa requis)", color: "bg-amber-50 text-amber-800 border-amber-200", icon: AlertTriangle };
     }
-    if (countryName === "Canada (eTA)" || countryName === "Australie" || countryName === "États-Unis") {
-      return { status: "consulate", label: "Vérifier conditions AVE / Visa consulaire", color: "bg-purple-50 text-purple-800 border-purple-200", icon: AlertTriangle };
+    if (countryName === "Canada (eTA)" || countryName === "Australie") {
+      return { status: "consulate", label: "Vérification conditionnelle (Visa précédent requis)", color: "bg-purple-50 text-purple-800 border-purple-200", icon: AlertTriangle };
     }
     return { status: "eligible", label: `Éligible e-Visa en ligne (${nationalite})`, color: "bg-emerald-50 text-emerald-800 border-emerald-200", icon: CheckCircle2 };
+  };
+
+  // Générateur dynamique des documents requis selon la nationalité et la destination
+  const getDynamicRequiredDocuments = (countryName: string, nationalite: string) => {
+    const baseDocs = [
+      "Passeport biométrique valide (minimum 6 mois après la date de retour)",
+      "Photo d'identité couleur récente sur fond blanc",
+      "Billet d'avion aller-retour confirmé"
+    ];
+
+    // Documents spécifiques selon la destination ou la nationalité
+    if (countryName === "Gabon" || countryName === "Tanzanie & Zanzibar" || countryName === "Ouganda" || countryName === "Côte d'Ivoire") {
+      baseDocs.push("Carnet international de vaccination (Fièvre jaune obligatoire)");
+    }
+    if (countryName === "Maroc") {
+      baseDocs.push("Copie d'un visa ou titre de séjour valide (Schengen, US, UK, Canada)");
+    }
+    if (countryName === "Arabie Saoudite" || countryName === "Russie" || countryName === "Équateur") {
+      baseDocs.push("Attestation d'assurance voyage internationale valide");
+    }
+    if (countryName === "Angola" || countryName === "Australie" || countryName === "Colombie") {
+      baseDocs.push("Justificatif de ressources financières (relevés bancaires des 3 derniers mois)");
+    }
+    if (countryName === "Émirats Arabes Unis (Dubaï)" || countryName === "Qatar") {
+      baseDocs.push("Confirmation de réservation d'hôtel ou justificatif d'hébergement");
+    }
+
+    // Si la nationalité nécessite des justificatifs spécifiques d'attache
+    if (nationalite === "Camerounaise" || nationalite === "Gabonaise" || nationalite === "Congolaise (RC)" || nationalite === "Tchadienne") {
+      baseDocs.push("Justificatif de situation professionnelle (attestation d'emploi ou registre de commerce)");
+    }
+
+    return baseDocs;
   };
 
   const filteredEvisas = useMemo(() => {
@@ -889,13 +919,13 @@ export default function Evisas() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Globe className="w-4 h-4" />
-            Catalogue Mondial Exhaustif & Simulateur d'Éligibilité
+            Catalogue Mondial & Documents Requis Dynamiques
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
-            Vérifiez votre éligibilité <span className="text-blue-600">e-Visa</span> par nationalité
+            Vérifiez votre éligibilité et <span className="text-blue-600">documents requis</span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-gray-600">
-            Sélectionnez votre nationalité ci-dessous pour tester instantanément votre éligibilité aux e-Visas, ETA et e-VOA à travers plus de 65 destinations mondiales.
+            Sélectionnez votre nationalité pour afficher instantanément la liste exacte des pièces justificatives générées sur mesure pour chaque destination e-Visa.
           </p>
         </div>
 
@@ -904,10 +934,10 @@ export default function Evisas() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-200 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-                <Sparkles className="w-3.5 h-3.5" /> Simulateur Rapide d'Éligibilité
+                <Sparkles className="w-3.5 h-3.5" /> Simulateur Dynamique par Nationalité
               </div>
               <h2 className="text-2xl font-bold">Sélectionnez votre passeport / nationalité</h2>
-              <p className="text-blue-200 text-sm mt-1">Le catalogue s'adapte en temps réel pour vous indiquer les conditions applicables.</p>
+              <p className="text-blue-200 text-sm mt-1">La liste des documents requis s'ajuste dynamiquement pour chaque pays.</p>
             </div>
             <div className="w-full md:w-auto min-w-[260px]">
               <label className="block text-xs font-medium text-blue-200 mb-1.5">Votre Nationalité :</label>
@@ -967,7 +997,7 @@ export default function Evisas() {
           </p>
           <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Simulateur actif — Éligibilité vérifiée en direct</span>
+            <span>Documents requis générés dynamiquement sur mesure</span>
           </div>
         </div>
 
@@ -976,6 +1006,8 @@ export default function Evisas() {
           {filteredEvisas.map((evisa) => {
             const eligibility = getEligibilityStatus(evisa.country, selectedNationalite);
             const StatusIcon = eligibility.icon;
+            const dynamicDocs = getDynamicRequiredDocuments(evisa.country, selectedNationalite);
+
             return (
               <div
                 key={evisa.country}
@@ -1028,28 +1060,32 @@ export default function Evisas() {
                     </div>
                   </div>
 
-                  {/* Expandable Section */}
+                  {/* Dynamic Required Documents Section */}
                   <div className="border-t border-gray-100 pt-3 mb-5">
                     <button
                       onClick={() => toggleExpanded(evisa.country)}
                       className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 hover:text-blue-600 transition-colors"
                     >
-                      <span>📄 Documents requis & Conseils</span>
+                      <span className="flex items-center gap-1.5">
+                        <CheckSquare className="w-4 h-4 text-blue-600" />
+                        Documents requis ({dynamicDocs.length} pièces)
+                      </span>
                       <ChevronDown
                         className={`w-4 h-4 transition-transform ${expandedItems[evisa.country] ? 'rotate-180' : ''}`}
                       />
                     </button>
 
                     {expandedItems[evisa.country] && (
-                      <div className="mt-3 space-y-2 text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                        <div>
-                          <p className="font-semibold text-gray-900 mb-0.5">Documents :</p>
-                          <p>{evisa.docs}</p>
-                        </div>
-                        <div className="mt-2">
-                          <p className="font-semibold text-gray-900 mb-0.5">Note officielle :</p>
-                          <p className="italic">{evisa.note}</p>
-                        </div>
+                      <div className="mt-3 space-y-2 text-xs text-gray-600 bg-blue-50/40 p-3.5 rounded-xl border border-blue-100">
+                        <p className="font-bold text-blue-900 mb-2">Pièces exigées pour passeport {selectedNationalite} :</p>
+                        <ul className="space-y-1.5 list-disc pl-4">
+                          {dynamicDocs.map((doc, idx) => (
+                            <li key={idx} className="text-gray-700">{doc}</li>
+                          ))}
+                        </ul>
+                        <p className="mt-2.5 pt-2 border-t border-blue-200/60 text-[11px] italic text-gray-500">
+                          {evisa.note}
+                        </p>
                       </div>
                     )}
                   </div>
