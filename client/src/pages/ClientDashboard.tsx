@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileUp,
@@ -120,6 +121,7 @@ export default function ClientDashboard() {
   const [notificationReplyId, setNotificationReplyId] = useState<number | null>(null);
   const [notificationReplyText, setNotificationReplyText] = useState("");
   const [notificationReplyAttachment, setNotificationReplyAttachment] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; name: string; mimeType: string } | null>(null);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -136,10 +138,22 @@ export default function ClientDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
+  const { data: candidateMessages } = trpc.candidate.getMessages.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
   const { data: profileData, isLoading: profileLoading } = trpc.candidate.getProfile.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
+  const messagesWithAttachments = (candidateMessages ?? []) as Array<{
+    id?: number;
+    createdAt?: Date | string | null;
+    senderRole?: string | null;
+    attachmentSignedUrl?: string | null;
+    attachmentName?: string | null;
+    attachmentMimeType?: string | null;
+  }>;
 
   const trpcUtils = trpc.useUtils();
   const { data: favoriteFlights, isLoading: favoritesLoading } = trpc.flights.getFavoriteFlights.useQuery(
@@ -1413,8 +1427,44 @@ export default function ClientDashboard() {
                     </article>
                   ))
                 )}
+                {messagesWithAttachments.some((message) => Boolean(message.attachmentSignedUrl)) && <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <h3 className="font-semibold text-slate-900">Pièces jointes des échanges</h3>
+                  <p className="mt-1 text-sm text-slate-600">Ouvrez un PDF ou une image sans quitter votre espace client.</p>
+                  <div className="mt-3 space-y-2">
+                    {messagesWithAttachments.filter((message) => Boolean(message.attachmentSignedUrl)).map((message) => {
+                      const attachmentUrl = message.attachmentSignedUrl as string;
+                      const attachmentName = message.attachmentName || "Pièce jointe";
+                      const attachmentMimeType = message.attachmentMimeType || "application/octet-stream";
+                      return <div key={`message-attachment-${message.id}`} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-slate-900">{attachmentName}</p>
+                          <p className="text-xs text-slate-500">{message.senderRole === "candidate" ? "Envoyé par vous" : "Envoyé par l’administration"} · {new Date(message.createdAt).toLocaleString("fr-FR")}</p>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap gap-2">
+                          <Button type="button" size="sm" variant="outline" onClick={() => setAttachmentPreview({ url: attachmentUrl, name: attachmentName, mimeType: attachmentMimeType })}><Eye className="mr-1 h-4 w-4" aria-hidden="true" /> Aperçu</Button>
+                          <Button asChild type="button" size="sm" variant="ghost"><a href={attachmentUrl} target="_blank" rel="noreferrer" download={attachmentName}><Download className="mr-1 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>
+                        </div>
+                      </div>;
+                    })}
+                  </div>
+                </div>}
               </CardContent>
             </Card>
+            <Dialog open={Boolean(attachmentPreview)} onOpenChange={(open) => { if (!open) setAttachmentPreview(null); }}>
+              <DialogContent className="max-w-5xl">
+                <DialogHeader>
+                  <DialogTitle className="truncate pr-8">{attachmentPreview?.name || "Aperçu de la pièce jointe"}</DialogTitle>
+                  <DialogDescription>Visualisation sécurisée de la pièce jointe associée à votre échange.</DialogDescription>
+                </DialogHeader>
+                <div className="flex min-h-[320px] max-h-[70vh] items-center justify-center overflow-auto rounded-lg bg-slate-100 p-2">
+                  {attachmentPreview?.mimeType === "application/pdf" ? <iframe title={`Aperçu PDF ${attachmentPreview.name}`} src={attachmentPreview.url} className="h-[65vh] w-full rounded border border-slate-200 bg-white" /> : attachmentPreview ? <img src={attachmentPreview.url} alt={`Aperçu de ${attachmentPreview.name}`} className="max-h-[65vh] max-w-full object-contain" /> : null}
+                </div>
+                <DialogFooter>
+                  {attachmentPreview && <Button asChild variant="outline"><a href={attachmentPreview.url} target="_blank" rel="noreferrer" download={attachmentPreview.name}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>}
+                  <Button type="button" onClick={() => setAttachmentPreview(null)}>Fermer</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Paramètres */}

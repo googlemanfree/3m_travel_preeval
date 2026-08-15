@@ -2795,3 +2795,8 @@
 - [x] Ajouter un sélecteur de fichier et un aperçu de pièce jointe dans le formulaire de réponse rapide du centre de notifications
 - [x] Valider les tests de non-régression
 - [x] Publier la mise à jour
+
+## Visualiseur Modal de Pièces Jointes (v212)
+- [x] Étendre le routeur et les types de messages pour exposer l’URL signée et les métadonnées d’attachement dans l’espace client
+- [x] Créer ou intégrer le composant de visualisation modale accessible (support PDF, JPG et PNG avec zoom et téléchargement)
+- [x] Valider les tests de non-régression et publier la mise à jour

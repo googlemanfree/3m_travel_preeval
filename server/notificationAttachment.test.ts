@@ -26,4 +26,13 @@ describe("pièces jointes des réponses rapides", () => {
     expect(dashboard).toContain("notification-attachment-");
     expect(dashboard).toContain("Retirer la pièce jointe");
   });
+
+  it("propose un aperçu modal des PDF et images à partir d’URLs signées", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const router = read("server/routers/candidate.ts");
+    expect(router).toContain("attachmentSignedUrl");
+    expect(dashboard).toContain("Visualisation sécurisée de la pièce jointe");
+    expect(dashboard).toContain("Aperçu PDF");
+    expect(dashboard).toContain("setAttachmentPreview");
+  });
 });

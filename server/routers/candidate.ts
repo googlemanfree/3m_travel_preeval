@@ -692,7 +692,17 @@ export const candidateRouter = router({
         )
       );
 
-    return msgs as CandidateMessage[];
+    const messagesWithSignedAttachments = await Promise.all(msgs.map(async (message) => {
+      if (!message.attachmentUrl) return message;
+      const key = message.attachmentUrl.replace(/^\/manus-storage\//, "");
+      try {
+        return { ...message, attachmentSignedUrl: await storageGetSignedUrl(key) };
+      } catch {
+        return { ...message, attachmentSignedUrl: null };
+      }
+    }));
+
+    return messagesWithSignedAttachments;
   }),
 
   // ── Messagerie : envoyer un message ───────────────────────────────────────
