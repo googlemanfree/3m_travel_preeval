@@ -6,7 +6,7 @@ import { applications, agencyDossiers, clientDocuments, candidateMessages, candi
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
-import { sendDossierConfirmationEmail } from "../emailService";
+import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 
 const candidateFilterSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
@@ -244,6 +244,8 @@ export const adminCandidateManagementRouter = router({
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Identifiant candidat invalide." });
       const { source, id } = reference;
       let candidateIdForMessage: number | null = null;
+      let candidateEmailForNotification = "";
+      let candidateNameForNotification = "";
       let dossierNumberForMessage = input.candidateId;
       let previousStatus = "";
       const profilePatch = {
@@ -257,9 +259,11 @@ export const adminCandidateManagementRouter = router({
       if (source === "online") {
         const allowed = ["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier en ligne invalide." });
-        const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, id)).limit(1);
+        const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, fullName: applications.fullName, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
         candidateIdForMessage = record.candidateId ?? null;
+        candidateEmailForNotification = record.email;
+        candidateNameForNotification = record.fullName;
         dossierNumberForMessage = input.dossierNumber || record.dossierNumber;
         previousStatus = record.dossierStatus;
         if (!candidateIdForMessage) {
@@ -286,9 +290,11 @@ export const adminCandidateManagementRouter = router({
       } else {
         const allowed = ["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier agence invalide." });
-        const [record] = await db.select({ email: agencyDossiers.email, status: agencyDossiers.status }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+        const [record] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, status: agencyDossiers.status }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
         previousStatus = record.status;
+        candidateEmailForNotification = record.email;
+        candidateNameForNotification = record.fullName;
         const [linkedCandidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, record.email)).limit(1);
         candidateIdForMessage = linkedCandidate?.id ?? null;
         dossierNumberForMessage = `3M-AG-${id}`;
@@ -333,7 +339,7 @@ export const adminCandidateManagementRouter = router({
           isRead: false,
         });
         const agencyResponse = ["soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "approuve", "soumis"].includes(input.status);
-        await db.insert(clientNotifications).values({
+        const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateIdForMessage,
           type: agencyResponse ? "agency_response" : input.adminNotes ? "admin_remark" : "admin_status_update",
           title: agencyResponse ? "Réponse de l’agence de placement" : input.adminNotes ? "Nouvelle remarque de l’administration" : "Mise à jour de votre dossier",
@@ -341,6 +347,20 @@ export const adminCandidateManagementRouter = router({
           actionUrl: "/mon-espace",
           isRead: false,
         });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        const emailSent = candidateEmailForNotification
+          ? await sendClientNotificationEmail({
+              to: candidateEmailForNotification,
+              fullName: candidateNameForNotification,
+              title: agencyResponse ? "Réponse de l’agence de placement" : input.adminNotes ? "Nouvelle remarque de l’administration" : "Mise à jour de votre dossier",
+              body: visibleBody,
+              actionUrl: "/mon-espace",
+              sourceLabel: agencyResponse ? "Agence de placement" : "Prime Travel Service",
+            })
+          : false;
+        if (emailSent && notificationId > 0) {
+          await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+        }
       }
 
       return { success: true, notifiedCandidate: Boolean(candidateIdForMessage && (previousStatus !== input.status || Object.keys(profilePatch).length > 0)) };
@@ -374,7 +394,7 @@ export const adminCandidateManagementRouter = router({
         content: messageBody,
         isRead: false,
       });
-      await db.insert(clientNotifications).values({
+      const notificationResult = await db.insert(clientNotifications).values({
         candidateId,
         type: "admin_message",
         title: "Nouveau message de Prime Travel Service",
@@ -382,7 +402,22 @@ export const adminCandidateManagementRouter = router({
         actionUrl: "/mon-espace",
         isRead: false,
       });
-      return { success: true, adminEmail: admin.email };
+      const [candidateProfile] = await db.select({ email: candidates.email, fullName: candidates.fullName }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      const emailSent = candidateProfile
+        ? await sendClientNotificationEmail({
+            to: candidateProfile.email,
+            fullName: candidateProfile.fullName,
+            title: "Nouveau message de Prime Travel Service",
+            body: messageBody,
+            actionUrl: "/mon-espace",
+            sourceLabel: "Prime Travel Service",
+          })
+        : false;
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      if (emailSent && notificationId > 0) {
+        await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+      }
+      return { success: true, adminEmail: admin.email, emailSent };
     }),
 
   resendConfirmation: publicProcedure

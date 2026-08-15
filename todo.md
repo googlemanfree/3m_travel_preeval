@@ -2771,4 +2771,9 @@
 - [x] Ajouter un champ de recherche textuelle et une vue des notifications archivées dans le centre candidat
 - [x] Étendre le contrat serveur et le schéma de notifications pour supporter l’état archivé
 - [x] Valider les tests de régression
-- [ ] Publier la mise à jour
+- [x] Publier la mise à jour
+
+## Notifications E-mail Automatiques (v208)
+- [x] Étendre le service e-mail pour supporter les alertes de nouveaux messages et réponses partenaires
+- [x] Relier les producteurs de notifications admin à l’envoi SMTP asynchrone
+- [x] Valider les tests de délivrabilité et publier la mise à jour

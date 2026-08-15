@@ -466,3 +466,67 @@ export async function sendAdminNewDossierAlert(fullName: string, dossierNumber: 
 }
 
 
+
+
+type ClientNotificationEmailInput = {
+  to: string;
+  fullName?: string | null;
+  title: string;
+  body: string;
+  actionUrl?: string | null;
+  sourceLabel: string;
+};
+
+function escapeEmailHtml(value: string): string {
+  return value.replace(/[&<>\"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;",
+  }[character] ?? character));
+}
+
+export async function sendClientNotificationEmail(input: ClientNotificationEmailInput): Promise<boolean> {
+  const recipient = input.to.trim();
+  if (!recipient) return false;
+  const baseUrl = SITE_URL.replace(/\/+$/, "");
+  const safeName = escapeEmailHtml(input.fullName?.trim() || "Candidat");
+  const safeTitle = escapeEmailHtml(input.title);
+  const safeBody = escapeEmailHtml(input.body).replace(/\n/g, "<br />");
+  const safeSource = escapeEmailHtml(input.sourceLabel);
+  const safeActionUrl = input.actionUrl && input.actionUrl.startsWith("/")
+    ? `${baseUrl}${input.actionUrl}`
+    : `${baseUrl}/mon-espace`;
+
+  try {
+    await sendGenericEmail({
+      to: recipient,
+      subject: `${input.sourceLabel} — ${input.title}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #172033;">
+          <div style="background: linear-gradient(135deg, #123b70 0%, #2563eb 100%); padding: 28px 32px; color: white;">
+            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">Prime Travel Service</p>
+            <h1 style="margin: 0; font-size: 24px;">${safeTitle}</h1>
+          </div>
+          <div style="padding: 28px 32px; background: #f8fafc;">
+            <p>Bonjour <strong>${safeName}</strong>,</p>
+            <p>Une nouvelle information est disponible dans votre espace client.</p>
+            <div style="background: white; border-left: 4px solid #2563eb; padding: 18px 20px; margin: 22px 0;">
+              <p style="margin: 0 0 8px; color: #475569; font-size: 13px;"><strong>Source :</strong> ${safeSource}</p>
+              <p style="margin: 0; line-height: 1.65;">${safeBody}</p>
+            </div>
+            <p style="text-align: center; margin: 28px 0 12px;">
+              <a href="${safeActionUrl}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 7px; display: inline-block;">Consulter mon espace client</a>
+            </p>
+            <p style="font-size: 12px; color: #64748b;">Vous pouvez gérer vos préférences de notification depuis votre espace client. Ne répondez pas directement à cet e-mail si votre dossier contient des informations sensibles.</p>
+          </div>
+        </div>
+      `,
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to send client notification email:", error);
+    return false;
+  }
+}
