@@ -1210,6 +1210,7 @@ export const candidateRouter = router({
         uploadedAt: doc.uploadedAt,
         fileUrl: doc.fileUrl,
         status: doc.status,
+        rejectionReason: doc.rejectionReason,
       })),
     };
   }),

@@ -60,4 +60,15 @@ describe("actions de dossier candidat", () => {
     expect(dashboard).toContain("Progression globale du dossier");
     expect(dashboard).toContain("Prévisualiser");
   });
+
+  it("guide le candidat vers l’action manquante, recadre le portrait et explique un refus", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const candidateRouter = read("server/routers/candidate.ts");
+    expect(dashboard).toContain("navigateToIncompleteSection");
+    expect(dashboard).toContain("Étape prioritaire");
+    expect(dashboard).toContain("AvatarCropperModal");
+    expect(dashboard).toContain("Motif : {doc.rejectionReason");
+    expect(dashboard).toContain("Document refusé — correction requise");
+    expect(candidateRouter).toContain("rejectionReason: doc.rejectionReason");
+  });
 });

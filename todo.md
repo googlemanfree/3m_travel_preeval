@@ -2736,4 +2736,11 @@
 - [x] Ajouter la mise à jour d’avatar dans les paramètres candidat
 - [x] Ajouter une synthèse visuelle globale de progression du dossier
 - [x] Ajouter les tests de sécurité, d’accessibilité et de responsive
-- [ ] Publier la mise à jour
+- [x] Publier la mise à jour
+
+## Progression actionnable, avatar & refus documentaires (v203)
+- [x] Rendre la progression globale interactive avec accès direct aux sections incomplètes
+- [x] Ajouter un recadrage simple avant la mise à jour du portrait candidat
+- [x] Afficher un motif explicite et une action de correction pour chaque document refusé
+- [x] Mettre à jour et valider la compétence candidate-dossier-followup
+- [ ] Ajouter les tests, vérifier le responsive et publier la mise à jour

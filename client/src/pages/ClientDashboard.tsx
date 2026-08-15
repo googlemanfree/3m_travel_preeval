@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileUp,
@@ -55,6 +56,7 @@ interface DocumentItem {
   uploadedAt: Date;
   status: "pending" | "verified" | "rejected";
   notes?: string;
+  rejectionReason?: string | null;
   fileUrl?: string;
 }
 
@@ -94,6 +96,7 @@ export default function ClientDashboard() {
   const [documentSuccessMessage, setDocumentSuccessMessage] = useState<string | null>(null);
   const [recentDocument, setRecentDocument] = useState<{ id: number; name: string; url: string } | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarCropSource, setAvatarCropSource] = useState<string | null>(null);
   const [historySort, setHistorySort] = useState<"recent" | "oldest">("recent");
   const [historyType, setHistoryType] = useState("all");
   const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", nationality: "", dateOfBirth: "" });
@@ -199,6 +202,7 @@ export default function ClientDashboard() {
           uploadedAt: new Date(doc.uploadedAt),
           status: doc.status || "pending",
           notes: "",
+          rejectionReason: doc.rejectionReason || null,
           fileUrl: doc.fileUrl,
         }))
       );
@@ -384,6 +388,14 @@ export default function ClientDashboard() {
     if (!window.confirm(`Supprimer « ${document.name} » ? Cette action est disponible avant validation par l’équipe.`)) return;
     deleteDocumentMutation.mutate({ fileId: Number(document.id) });
   };
+  const handleAvatarFileSelect = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choisissez une image JPG, PNG ou WebP pour votre portrait.");
+      return;
+    }
+    setAvatarCropSource(URL.createObjectURL(file));
+  };
   const handleAvatarChange = async (file: File | undefined) => {
     if (!file) return;
     const email = profileData?.email || candidate?.email;
@@ -424,6 +436,16 @@ export default function ClientDashboard() {
   const profileFieldsCompleted = [profileData?.fullName || candidate?.fullName, profileData?.phone, profileData?.nationality, profileData?.dateOfBirth].filter(Boolean).length;
   const profileProgress = Math.round((profileFieldsCompleted / 4) * 100);
   const globalProgress = Math.round((dossier.progress + documentProgress + profileProgress) / 3);
+  const nextProgressSection = [
+    { key: "procedure", value: dossier.progress, label: "la procédure" },
+    { key: "documents", value: documentProgress, label: "les documents" },
+    { key: "profile", value: profileProgress, label: "le profil" },
+  ].sort((left, right) => left.value - right.value)[0];
+  const navigateToIncompleteSection = (section: "procedure" | "documents" | "profile") => {
+    if (section === "documents") setActiveTab("documents");
+    if (section === "profile") setActiveTab("settings");
+    window.setTimeout(() => document.getElementById(section === "documents" ? "documents-center" : section === "profile" ? "profile-settings" : "dossier-status")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -458,20 +480,21 @@ export default function ClientDashboard() {
                   <p className="text-sm text-blue-100">Le pourcentage combine votre procédure, vos documents requis et vos informations de profil.</p>
                 </div>
               </div>
-              <div className="space-y-3" role="progressbar" aria-label="Progression globale du dossier" aria-valuemin={0} aria-valuemax={100} aria-valuenow={globalProgress}>
-                <div className="h-3 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-all duration-300" style={{ width: `${globalProgress}%` }} /></div>
+              <button type="button" onClick={() => navigateToIncompleteSection(nextProgressSection.key as "procedure" | "documents" | "profile")} className="w-full space-y-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200" aria-label={`Accéder à ${nextProgressSection.label}, la priorité actuelle de votre dossier`}>
+                <div className="flex items-center justify-between text-sm text-cyan-50"><span>Étape prioritaire : {nextProgressSection.label}</span><span className="font-semibold underline underline-offset-4">Compléter</span></div>
+                <div className="h-3 overflow-hidden rounded-full bg-white/20" role="progressbar" aria-label="Progression globale du dossier" aria-valuemin={0} aria-valuemax={100} aria-valuenow={globalProgress}><div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-all duration-300" style={{ width: `${globalProgress}%` }} /></div>
                 <div className="grid gap-3 text-sm sm:grid-cols-3">
-                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Procédure</span><strong>{dossier.progress}%</strong></div>
-                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Documents</span><strong>{documentProgress}%</strong></div>
-                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Profil</span><strong>{profileProgress}%</strong></div>
+                  <span className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Procédure</span><strong>{dossier.progress}%</strong></span>
+                  <span className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Documents</span><strong>{documentProgress}%</strong></span>
+                  <span className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Profil</span><strong>{profileProgress}%</strong></span>
                 </div>
-              </div>
+              </button>
             </div>
           </CardContent>
         </Card>
 
         {/* Statut Principal */}
-        <Card className="border-2 border-blue-200">
+        <Card id="dossier-status" className="border-2 border-blue-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-2">
@@ -773,7 +796,7 @@ export default function ClientDashboard() {
           </TabsContent>
 
           {/* Documents */}
-          <TabsContent value="documents" className="space-y-4">
+          <TabsContent value="documents" id="documents-center" className="space-y-4">
             {/* Upload */}
             <Card>
               <CardHeader>
@@ -855,6 +878,12 @@ export default function ClientDashboard() {
                             <p className="text-xs text-gray-600">
                               Téléversé le {doc.uploadedAt.toLocaleDateString('fr-FR')}
                             </p>
+                            {doc.status === "rejected" && (
+                              <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-900" role="alert">
+                                <p className="font-semibold">Document refusé — correction requise</p>
+                                <p className="mt-1">Motif : {doc.rejectionReason || "Le conseiller demande une nouvelle version du document."}</p>
+                              </div>
+                            )}
                           </div>
                           <Badge
                             className={
@@ -902,6 +931,11 @@ export default function ClientDashboard() {
                               className="text-red-600 hover:bg-red-50"
                             >
                               <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {doc.status === "rejected" && (
+                            <Button variant="outline" size="sm" onClick={() => document.getElementById("file-input")?.click()} className="border-orange-200 text-orange-800 hover:bg-orange-50">
+                              <Upload className="mr-1 h-4 w-4" aria-hidden="true" /> Corriger
                             </Button>
                           )}
                         </div>
@@ -1036,7 +1070,7 @@ export default function ClientDashboard() {
           </TabsContent>
 
           {/* Paramètres */}
-          <TabsContent value="settings">
+          <TabsContent value="settings" id="profile-settings">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1053,7 +1087,7 @@ export default function ClientDashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-slate-900">Photo de profil</p>
                     <p className="mt-1 text-sm text-slate-600">Ajoutez ou remplacez votre portrait. Une photo humaine, nette et récente est requise pour sécuriser votre dossier.</p>
-                    <input id="profile-avatar" type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" disabled={avatarUploading || updateAvatarMutation.isPending} onChange={(event) => { void handleAvatarChange(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+                    <input id="profile-avatar" type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" disabled={avatarUploading || updateAvatarMutation.isPending} onChange={(event) => { handleAvatarFileSelect(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
                     <label htmlFor="profile-avatar" className={`mt-3 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md bg-blue-700 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-800 ${avatarUploading || updateAvatarMutation.isPending ? "pointer-events-none opacity-60" : ""}`}>
                       {avatarUploading || updateAvatarMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="mr-2 h-4 w-4" aria-hidden="true" />}
                       {profileData?.avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}
@@ -1094,6 +1128,17 @@ export default function ClientDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+        {avatarCropSource && (
+          <AvatarCropperModal
+            isOpen={Boolean(avatarCropSource)}
+            imageSrc={avatarCropSource}
+            onClose={() => {
+              URL.revokeObjectURL(avatarCropSource);
+              setAvatarCropSource(null);
+            }}
+            onCropComplete={(croppedFile) => { void handleAvatarChange(croppedFile); }}
+          />
+        )}
       </div>
     </div>
   );
