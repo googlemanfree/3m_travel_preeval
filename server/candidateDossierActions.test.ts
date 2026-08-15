@@ -71,4 +71,15 @@ describe("actions de dossier candidat", () => {
     expect(dashboard).toContain("Document refusé — correction requise");
     expect(candidateRouter).toContain("rejectionReason: doc.rejectionReason");
   });
+
+  it("attache le commentaire candidat à une correction de document et le transmet au suivi", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const candidateRouter = read("server/routers/candidate.ts");
+    const trackingRouter = read("server/routers/caseTracking.ts");
+    expect(dashboard).toContain("Votre commentaire explicatif");
+    expect(dashboard).toContain("handleCorrectionSubmission");
+    expect(dashboard).toContain("correctionComment:");
+    expect(candidateRouter).toContain("correctionComment: input.correctionComment ?? null");
+    expect(trackingRouter).toContain("Commentaire candidat");
+  });
 });

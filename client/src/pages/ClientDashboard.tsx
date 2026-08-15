@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -100,6 +101,9 @@ export default function ClientDashboard() {
   const [historySort, setHistorySort] = useState<"recent" | "oldest">("recent");
   const [historyType, setHistoryType] = useState("all");
   const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", nationality: "", dateOfBirth: "" });
+  const [correctionTarget, setCorrectionTarget] = useState<DocumentItem | null>(null);
+  const [correctionComment, setCorrectionComment] = useState("");
+  const [correctionFile, setCorrectionFile] = useState<File | null>(null);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -226,6 +230,54 @@ export default function ClientDashboard() {
 
   const handleRemoveFile = (index: number) => {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
+
+  const handleCorrectionSubmission = async () => {
+    if (!correctionTarget || !correctionFile) {
+      toast.error("Sélectionnez la version corrigée du document.");
+      return;
+    }
+    const explanation = correctionComment.trim();
+    if (explanation.length < 3) {
+      toast.error("Ajoutez un court commentaire explicatif avant l’envoi.");
+      return;
+    }
+    const token = getCandidateToken();
+    if (!token) {
+      toast.error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+      setLocation("/login");
+      return;
+    }
+    setUploading(true);
+    try {
+      const allowedTypes = new Set(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre"]);
+      const formData = new FormData();
+      formData.append("file", correctionFile);
+      formData.append("fileType", allowedTypes.has(correctionTarget.type) ? correctionTarget.type : "autre");
+      const response = await fetch("/api/candidate/upload", { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement");
+      const savedDocument = await saveDocumentMutation.mutateAsync({
+        fileType: allowedTypes.has(correctionTarget.type) ? correctionTarget.type as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "autre" : "autre",
+        fileName: payload.fileName || correctionFile.name,
+        fileUrl: payload.fileUrl,
+        fileKey: payload.fileKey,
+        fileSizeBytes: payload.fileSizeBytes ?? correctionFile.size,
+        mimeType: payload.mimeType || correctionFile.type,
+        correctionComment: `Correction de « ${correctionTarget.name} » : ${explanation}`,
+      });
+      if (savedDocument.documentId && payload.fileUrl) setRecentDocument({ id: savedDocument.documentId, name: payload.fileName || correctionFile.name, url: payload.fileUrl });
+      await trpcUtils.candidate.getMyDocuments.invalidate();
+      setDocumentSuccessMessage(`Votre version corrigée et votre commentaire ont été transmis au conseiller pour « ${correctionTarget.name} ».`);
+      setCorrectionTarget(null);
+      setCorrectionComment("");
+      setCorrectionFile(null);
+      toast.success("Correction envoyée au conseiller.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "La correction n’a pas pu être envoyée.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleRequirementUpload = async (
@@ -856,6 +908,21 @@ export default function ClientDashboard() {
               </CardContent>
             </Card>
 
+            {correctionTarget && (
+              <Card className="border-2 border-orange-200 bg-orange-50/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-orange-950"><FileWarning className="h-5 w-5 text-orange-700" aria-hidden="true" />Corriger « {correctionTarget.name} »</CardTitle>
+                  <CardDescription>Ajoutez une courte explication à destination du conseiller, puis sélectionnez la nouvelle version du document.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900" role="alert"><span className="font-semibold">Motif du refus : </span>{correctionTarget.rejectionReason || "Une nouvelle version est demandée."}</div>
+                  <div className="space-y-2"><Label htmlFor="correction-comment">Votre commentaire explicatif</Label><Textarea id="correction-comment" value={correctionComment} onChange={(event) => setCorrectionComment(event.target.value)} maxLength={1000} minLength={3} placeholder="Ex. J’ai fourni une version plus lisible, mise à jour le…" className="min-h-24" /><p className="text-xs text-slate-500">Ce commentaire est transmis avec votre fichier au conseiller.</p></div>
+                  <div className="space-y-2"><Label htmlFor="correction-file">Nouvelle version du document</Label><Input id="correction-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => setCorrectionFile(event.currentTarget.files?.[0] || null)} /><p className="text-xs text-slate-500">{correctionFile ? `Fichier sélectionné : ${correctionFile.name}` : "Aucun fichier sélectionné."}</p></div>
+                  <div className="flex flex-col gap-2 sm:flex-row"><Button type="button" onClick={() => void handleCorrectionSubmission()} disabled={uploading || !correctionFile || correctionComment.trim().length < 3} className="bg-orange-700 hover:bg-orange-800">{uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}Envoyer la correction</Button><Button type="button" variant="outline" onClick={() => { setCorrectionTarget(null); setCorrectionComment(""); setCorrectionFile(null); }}>Annuler</Button></div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Documents Téléversés */}
             <Card>
               <CardHeader>
@@ -934,7 +1001,7 @@ export default function ClientDashboard() {
                             </Button>
                           )}
                           {doc.status === "rejected" && (
-                            <Button variant="outline" size="sm" onClick={() => document.getElementById("file-input")?.click()} className="border-orange-200 text-orange-800 hover:bg-orange-50">
+                            <Button variant="outline" size="sm" onClick={() => { setCorrectionTarget(doc); setCorrectionComment(""); setCorrectionFile(null); }} className="border-orange-200 text-orange-800 hover:bg-orange-50">
                               <Upload className="mr-1 h-4 w-4" aria-hidden="true" /> Corriger
                             </Button>
                           )}

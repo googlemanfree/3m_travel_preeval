@@ -210,6 +210,7 @@ export const candidateFiles = mysqlTable("candidate_files", {
   mimeType: varchar("mimeType", { length: 100 }),
   status: mysqlEnum("status", ["uploaded", "verified", "rejected"]).default("uploaded").notNull(),
   rejectionReason: text("rejectionReason"),
+  correctionComment: text("correctionComment"),
   uploadedAt: timestamp("uploadedAt").defaultNow().notNull(),
   extractedData: text("extractedData"), // Stocke un JSON structuré des informations clés extraites
 });

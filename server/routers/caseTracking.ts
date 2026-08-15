@@ -34,6 +34,7 @@ export const caseTrackingRouter = router({
     fileKey: z.string().trim().min(1).max(512),
     mimeType: z.string().trim().min(1).max(100),
     fileSizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
+    correctionComment: z.string().trim().min(3).max(1000).optional(),
   })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -65,6 +66,7 @@ export const caseTrackingRouter = router({
       fileSizeBytes: input.fileSizeBytes,
       uploadedByRole: "candidate",
       reviewStatus: "pending",
+      reviewNote: input.correctionComment ?? null,
     });
     await db.update(documentRequirements).set({ status: "received" }).where(eq(documentRequirements.id, requirement.id));
     await db.insert(caseActivityLogs).values({
@@ -74,7 +76,7 @@ export const caseTrackingRouter = router({
       actionType: "document_submitted",
       entityType: "document_requirement",
       entityId: String(requirement.id),
-      description: `Pièce déposée : ${requirement.documentType}`,
+      description: input.correctionComment ? `Pièce déposée : ${requirement.documentType}. Commentaire candidat : ${input.correctionComment}` : `Pièce déposée : ${requirement.documentType}`,
     });
 
     return { success: true, documentId: Number((result as any)[0]?.insertId || 0), requirementId: requirement.id };

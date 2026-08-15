@@ -499,6 +499,7 @@ export const candidateRouter = router({
         fileKey: z.string(),
         fileSizeBytes: z.number().optional(),
         mimeType: z.string().optional(),
+        correctionComment: z.string().trim().min(3).max(1000).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -523,6 +524,7 @@ export const candidateRouter = router({
         fileSizeBytes: input.fileSizeBytes ?? null,
         mimeType: input.mimeType ?? null,
         status: "uploaded",
+        correctionComment: input.correctionComment ?? null,
         extractedData: extractionJson,
       });
 
@@ -1211,6 +1213,7 @@ export const candidateRouter = router({
         fileUrl: doc.fileUrl,
         status: doc.status,
         rejectionReason: doc.rejectionReason,
+        correctionComment: doc.correctionComment,
       })),
     };
   }),

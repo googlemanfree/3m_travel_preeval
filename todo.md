@@ -2743,4 +2743,9 @@
 - [x] Ajouter un recadrage simple avant la mise à jour du portrait candidat
 - [x] Afficher un motif explicite et une action de correction pour chaque document refusé
 - [x] Mettre à jour et valider la compétence candidate-dossier-followup
-- [ ] Ajouter les tests, vérifier le responsive et publier la mise à jour
+- [x] Ajouter les tests, vérifier le responsive et publier la mise à jour
+
+## Correction commentée des documents refusés (v204)
+- [x] Permettre au candidat de joindre un commentaire à un document de remplacement
+- [x] Transmettre le commentaire au conseiller avec le document et l’historique d’activité
+- [x] Ajouter les tests et publier la mise à jour
