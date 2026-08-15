@@ -111,6 +111,13 @@ export const caseTrackingRouter = router({
     return { success: true };
   }),
 
+  markNotificationUnread: candidateProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(clientNotifications).set({ isRead: false }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
+    return { success: true };
+  }),
+
   setNotificationArchived: candidateProcedure.input(z.object({ notificationId: z.number().int().positive(), archived: z.boolean() })).mutation(async ({ ctx, input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });

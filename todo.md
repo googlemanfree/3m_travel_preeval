@@ -2821,4 +2821,10 @@
 ## Toast d’accusé de réception (v216)
 - [x] Afficher un toast de confirmation accessible en bas de l’écran après l’accusé de réception
 - [x] Vérifier les tests de non-régression
+- [x] Publier la mise à jour
+
+## Annulation d’accusé de réception (v217)
+- [x] Ajouter une restauration sécurisée de l’état non lu d’une notification
+- [x] Ajouter l’action Annuler dans le toast de confirmation
+- [x] Tester l’annulation
 - [ ] Publier la mise à jour

@@ -269,14 +269,34 @@ export default function ClientDashboard() {
     reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
     reader.readAsDataURL(file);
   });
-  const acknowledgeNotificationMutation = trpc.caseTracking.markNotificationRead.useMutation({
+  const undoNotificationAcknowledgementMutation = trpc.caseTracking.markNotificationUnread.useMutation({
     onSuccess: async () => {
+      setAttachmentPreview((current) => current ? { ...current, acknowledged: false } : current);
+      await trpcUtils.caseTracking.getMyCases.invalidate();
+      toast.info("Accusé de réception annulé", {
+        description: "La notification est de nouveau marquée comme non lue.",
+        position: "bottom-center",
+      });
+    },
+    onError: (error) => toast.error(error.message || "L’annulation n’a pas pu être enregistrée."),
+  });
+  const acknowledgeNotificationMutation = trpc.caseTracking.markNotificationRead.useMutation({
+    onSuccess: async (_result, variables) => {
+      const notificationId = variables && typeof variables === "object" && "notificationId" in variables
+        ? variables.notificationId
+        : attachmentPreview?.notificationId;
       setAttachmentPreview((current) => current ? { ...current, acknowledged: true } : current);
       await trpcUtils.caseTracking.getMyCases.invalidate();
       toast.success("Accusé de réception enregistré", {
         description: "L’administration sait désormais que vous avez consulté ce document.",
         position: "bottom-center",
         duration: 3500,
+        action: {
+          label: "Annuler",
+          onClick: () => {
+            if (notificationId) undoNotificationAcknowledgementMutation.mutate({ notificationId });
+          },
+        },
       });
     },
     onError: (error) => toast.error(error.message || "L’accusé de réception n’a pas pu être enregistré."),

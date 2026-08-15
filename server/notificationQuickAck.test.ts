@@ -29,4 +29,13 @@ describe("Visualiseur modal - Accusé de réception des notifications", () => {
     expect(dashboardSource).toContain('position: "bottom-center"');
     expect(dashboardSource).toContain("L’administration sait désormais que vous avez consulté ce document.");
   });
+
+  it("permet d’annuler l’accusé de réception depuis le toast", () => {
+    const dashboardSource = readFileSync("client/src/pages/ClientDashboard.tsx", "utf8");
+    const routerSource = readFileSync("server/routers/caseTracking.ts", "utf8");
+    expect(dashboardSource).toContain('label: "Annuler"');
+    expect(dashboardSource).toContain("markNotificationUnread");
+    expect(routerSource).toContain("markNotificationUnread");
+    expect(routerSource).toContain("isRead: false");
+  });
 });
