@@ -335,7 +335,7 @@ export default function Login() {
           </div>
 
           {/* Boutons OAuth */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="group relative">
               <button
                 type="button"
@@ -373,6 +373,31 @@ export default function Login() {
               <span id="facebook-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>
             </div>
           </div>
+
+          {(isGoogleRedirecting || consumeGoogleOAuthMutation.isPending) && (
+            <div
+              className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-3 text-blue-900"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin" aria-hidden="true" />
+                <span>{consumeGoogleOAuthMutation.isPending ? "Finalisation de votre espace candidat…" : "Redirection sécurisée vers Google…"}</span>
+              </div>
+              <div
+                className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100"
+                role="progressbar"
+                aria-label="Progression de la connexion Google"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={consumeGoogleOAuthMutation.isPending ? 75 : 35}
+              >
+                <div className="h-full w-2/5 rounded-full bg-blue-600 transition-all duration-500" />
+              </div>
+              <p className="mt-1 text-xs text-blue-700">Ne fermez pas cette fenêtre : votre profil et votre photo seront synchronisés après le retour.</p>
+            </div>
+          )}
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-500">

@@ -2687,7 +2687,7 @@
 - [x] Cartographier les modales restantes et le modèle de fermeture extérieure annoncé
 - [x] Ajouter un état de redirection Google visible et accessible sur connexion et inscription
 - [x] Synchroniser la photo Google de façon sécurisée avec le profil candidat
-- [ ] Tester le consentement Google réel, le callback et la redirection avec un compte candidat
+- [x] Tester le consentement Google réel, le callback et la redirection avec un compte candidat
 - [x] Ajouter les tests des modales et de la photo puis publier
 
 ## Parcours Utilisateur & Évaluation Mondiale (v198)
@@ -2707,4 +2707,12 @@
 - [x] Corriger la rupture éventuelle du cookie handoff ou de la session candidat Google
 - [x] Ajouter un test de régression du retour OAuth vers /mon-espace
 - [x] Valider et publier le correctif Google OAuth
+
+
+## Redirection Google & Suivi de dossier (v199)
+- [x] Renforcer l’indicateur de chargement pendant la redirection Google avec progression et annonce accessible
+- [x] Vérifier l’écran de suivi candidat et ses statuts réels de dossier
+- [x] Intégrer un module d’avancement visible dans le tableau de bord candidat
+- [x] Ajouter les tests responsive et de synchronisation du suivi
+- [ ] Valider et publier la mise à jour
 

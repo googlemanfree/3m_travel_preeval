@@ -31,7 +31,7 @@ interface DossierStatus {
   numero: string;
   destination: string;
   projectType: string;
-  status: "draft" | "submitted" | "in_review" | "documents_needed" | "approved" | "rejected";
+  status: string;
   createdAt: Date;
   updatedAt: Date;
   progress: number;
@@ -51,21 +51,27 @@ interface DocumentItem {
   fileUrl?: string;
 }
 
-const STATUS_LABELS: Record<string, { label: string; color: string; icon: any }> = {
-  draft: { label: "Brouillon", color: "bg-gray-100 text-gray-800", icon: Clock },
-  submitted: { label: "Soumis", color: "bg-blue-100 text-blue-800", icon: FileUp },
-  in_review: { label: "En Révision", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  documents_needed: { label: "Documents Manquants", color: "bg-orange-100 text-orange-800", icon: AlertCircle },
-  approved: { label: "Approuvé", color: "bg-green-100 text-green-800", icon: CheckCircle2 },
-  rejected: { label: "Rejeté", color: "bg-red-100 text-red-800", icon: AlertCircle },
+const STATUS_LABELS: Record<string, { label: string; color: string; icon: any; step: number; progress: number; action: string }> = {
+  nouveau: { label: "Dossier créé", color: "bg-slate-100 text-slate-800", icon: Clock, step: 1, progress: 10, action: "Complétez votre évaluation et vos premières informations." },
+  en_evaluation: { label: "Évaluation en cours", color: "bg-blue-100 text-blue-800", icon: Clock, step: 1, progress: 25, action: "Notre équipe analyse votre profil." },
+  bilan_envoye: { label: "Bilan disponible", color: "bg-indigo-100 text-indigo-800", icon: FileCheck, step: 2, progress: 35, action: "Consultez votre bilan et la destination recommandée." },
+  en_attente_paiement: { label: "Paiement à confirmer", color: "bg-amber-100 text-amber-800", icon: Clock, step: 2, progress: 40, action: "Vérifiez les instructions de paiement communiquées par l’agence." },
+  paye: { label: "Paiement confirmé", color: "bg-cyan-100 text-cyan-800", icon: CheckCircle2, step: 2, progress: 45, action: "Préparez les pièces demandées pour la suite de la procédure." },
+  en_attente_documents: { label: "Documents attendus", color: "bg-orange-100 text-orange-800", icon: AlertCircle, step: 3, progress: 55, action: "Ajoutez les documents manquants dans votre centre documentaire." },
+  documents_recus: { label: "Documents reçus", color: "bg-teal-100 text-teal-800", icon: FileCheck, step: 3, progress: 65, action: "Vos documents sont en cours de contrôle par l’équipe." },
+  soumis_agences: { label: "Dossier transmis", color: "bg-violet-100 text-violet-800", icon: FileUp, step: 4, progress: 78, action: "Votre dossier a été transmis aux partenaires autorisés." },
+  en_cours_recrutement: { label: "Recrutement en cours", color: "bg-purple-100 text-purple-800", icon: Clock, step: 4, progress: 86, action: "Les retours des agences et employeurs sont suivis par l’équipe." },
+  contrat_obtenu: { label: "Contrat obtenu", color: "bg-emerald-100 text-emerald-800", icon: CheckCircle2, step: 4, progress: 92, action: "Votre conseiller vous communiquera les prochaines formalités." },
+  visa_approuve: { label: "Visa approuvé", color: "bg-green-100 text-green-800", icon: CheckCircle2, step: 5, progress: 100, action: "Félicitations. Consultez les instructions finales de votre conseiller." },
+  refuse: { label: "Dossier à revoir", color: "bg-red-100 text-red-800", icon: AlertCircle, step: 5, progress: 100, action: "Consultez vos messages et contactez votre conseiller pour les prochaines options." },
 };
 
 const PROGRESS_STEPS = [
-  { step: 1, label: "Évaluation", icon: "📋" },
-  { step: 2, label: "Bilan", icon: "📊" },
-  { step: 3, label: "Traduction", icon: "🌐" },
-  { step: 4, label: "Soumission", icon: "📤" },
-  { step: 5, label: "Visa", icon: "✅" },
+  { step: 1, label: "Évaluation", icon: FileCheck },
+  { step: 2, label: "Bilan", icon: BarChart3 },
+  { step: 3, label: "Documents", icon: FileUp },
+  { step: 4, label: "Partenaires", icon: Plane },
+  { step: 5, label: "Décision", icon: CheckCircle2 },
 ];
 
 export default function ClientDashboard() {
@@ -112,16 +118,18 @@ export default function ClientDashboard() {
   useEffect(() => {
     if (dossierData && dossierData.data) {
       const app = dossierData.data.application;
+      const dossierStatus = String(dossierData.data.dossierStatus || app.dossierStatus || "nouveau");
+      const statusConfig = STATUS_LABELS[dossierStatus] ?? STATUS_LABELS.nouveau;
       setDossier({
         id: app.id.toString(),
         numero: app.dossierNumber || `DOSS-${app.id}`,
         destination: app.destination || "Non spécifiée",
-        projectType: "Non spécifié",
-        status: "draft",
+        projectType: app.formulaChosen || "Accompagnement international",
+        status: dossierStatus,
         createdAt: new Date(app.createdAt),
         updatedAt: new Date(app.updatedAt),
-        progress: Math.floor((dossierData.data.documents.length / 8) * 100),
-        totalDocuments: 8,
+        progress: statusConfig.progress,
+        totalDocuments: dossierData.data.documents.length,
         uploadedDocuments: dossierData.data.documents.length,
         missingDocuments: [],
       });
@@ -233,7 +241,8 @@ export default function ClientDashboard() {
     );
   }
 
-  const StatusIcon = STATUS_LABELS[dossier.status]?.icon || Clock;
+  const currentStatus = STATUS_LABELS[dossier.status] ?? STATUS_LABELS.nouveau;
+  const StatusIcon = currentStatus.icon;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -257,32 +266,42 @@ export default function ClientDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <CardTitle className="flex items-center gap-2">
-                  <StatusIcon className="w-6 h-6" />
-                  {STATUS_LABELS[dossier.status]?.label}
-                </CardTitle>
-                <CardDescription>
-                  Destination: {dossier.destination} | Type: {dossier.projectType}
-                </CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <StatusIcon className="w-6 h-6" aria-hidden="true" />
+                    {currentStatus.label}
+                  </CardTitle>
+                  <CardDescription>
+                    Destination : {dossier.destination} · Type : {dossier.projectType}
+                  </CardDescription>
               </div>
-              <Badge className={STATUS_LABELS[dossier.status]?.color}>
-                {STATUS_LABELS[dossier.status]?.label}
+              <Badge className={currentStatus.color}>
+                {currentStatus.label}
               </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Barre de Progression */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Progression du Dossier</span>
-                <span className="text-sm text-gray-600">{dossier.progress}%</span>
+            {/* Module de suivi synchronisé avec le statut fixé par l’administration */}
+            <div className="space-y-3" aria-label="Suivi d’avancement du dossier">
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">Suivi de votre dossier</span>
+                <span className="text-sm font-semibold text-blue-700">{dossier.progress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className="w-full overflow-hidden rounded-full bg-gray-200 h-3"
+                role="progressbar"
+                aria-label="Progression du dossier"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={dossier.progress}
+              >
                 <div
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-3 rounded-full transition-all duration-300"
+                  className="h-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300"
                   style={{ width: `${dossier.progress}%` }}
                 />
               </div>
+              <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                <span className="font-semibold">Prochaine action : </span>{currentStatus.action}
+              </p>
             </div>
 
             {/* Étapes */}
@@ -291,12 +310,13 @@ export default function ClientDashboard() {
                 <div
                   key={step.step}
                   className={`p-3 rounded-lg text-center transition-all ${
-                    step.step <= Math.ceil(dossier.progress / 20)
-                      ? "bg-blue-100 border-2 border-blue-600"
-                      : "bg-gray-100 border-2 border-gray-300"
+                    step.step <= currentStatus.step
+                      ? "bg-blue-100 border-2 border-blue-600 text-blue-900"
+                      : "bg-gray-100 border-2 border-gray-300 text-gray-600"
                   }`}
+                  aria-current={step.step === currentStatus.step ? "step" : undefined}
                 >
-                  <div className="text-2xl mb-1">{step.icon}</div>
+                  <step.icon className="mx-auto mb-1 h-6 w-6" aria-hidden="true" />
                   <p className="text-xs font-semibold">{step.label}</p>
                 </div>
               ))}
