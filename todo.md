@@ -2865,6 +2865,11 @@
 - [x] Valider et publier la mise à jour sur la plateforme (v222)
 
 ## Générateur Dynamique de Documents Requis par Nationalité et Destination (v223)
-- [ ] Créer une fonction de génération dynamique des documents requis dans Evisas.tsx croisant la nationalité sélectionnée et la destination choisie
-- [ ] Afficher clairement les exigences spécifiques (ex: carnet jaune pour l'Afrique subsaharienne, titre de séjour pour le Maroc, assurance médicale pour la Russie) dans chaque fiche e-Visa
-- [ ] Valider le comportement dynamique et publier la mise à jour
+- [x] Créer une fonction de génération dynamique des documents requis dans Evisas.tsx croisant la nationalité sélectionnée et la destination choisie
+- [x] Afficher clairement les exigences spécifiques (ex: carnet jaune pour l'Afrique subsaharienne, titre de séjour pour le Maroc, assurance médicale pour la Russie) dans chaque fiche e-Visa
+- [x] Valider le comportement dynamique et publier la mise à jour (v223)
+
+## Infobulles Explicatives et Exemples Visuels pour les Documents Requis (v224)
+- [ ] Enrichir le générateur de documents dans Evisas.tsx avec des infobulles explicatives détaillant les attentes pour chaque pièce (format, validité, conseils)
+- [ ] Ajouter des exemples visuels ou des vignettes d'aide contextuelle pour guider les candidats lors de la préparation des fichiers
+- [ ] Tester l'accessibilité au clavier et sur mobile des infobulles et publier la mise à jour (v224)

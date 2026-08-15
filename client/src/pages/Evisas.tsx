@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -14,6 +14,12 @@ interface Evisa {
   fee: string;
   note: string;
   image: string;
+}
+
+interface DocumentDetail {
+  title: string;
+  description: string;
+  tip: string;
 }
 
 const nationalitesList = [
@@ -826,6 +832,67 @@ const ultimateWorldEvisasDatabase: Evisa[] = [
   }
 ];
 
+const documentExplanations: Record<string, DocumentDetail> = {
+  "Passeport": {
+    title: "Passeport Biométrique Valide",
+    description: "La page d'identification avec photo et signature doit être parfaitement lisible, sans reflets ni coupure.",
+    tip: "Validité minimale requise : 6 mois après la date de retour prévue."
+  },
+  "Photo": {
+    title: "Photo d'Identité Numérique",
+    description: "Format passeport officiel, prise de face sur fond clair ou blanc uni, sans lunettes de soleil ni couvre-chef.",
+    tip: "Moins de 6 mois, format JPEG ou PNG (minimum 600x600 pixels)."
+  },
+  "Billet": {
+    title: "Billet d'Avion Aller-Retour",
+    description: "Confirmation de réservation aérienne complète avec le numéro de vol et les dates de départ et de retour.",
+    tip: "Un billet retour confirmant la sortie du territoire est exigé par les autorités."
+  },
+  "Hébergement": {
+    title: "Justificatif d'Hébergement",
+    description: "Réservation d'hôtel confirmée, voucher touristique ou attestation d'accueil officielle signée par l'hébergeant.",
+    tip: "Doit couvrir l'intégralité du séjour dans le pays de destination."
+  },
+  "Vaccination": {
+    title: "Carnet de Vaccination (Fièvre Jaune)",
+    description: "Certificat international de vaccination exigé à l'entrée de nombreux pays tropicaux et africains.",
+    tip: "Le vaccin doit avoir été administré au moins 10 jours avant le voyage."
+  },
+  "Financier": {
+    title: "Justificatif de Ressources Financières",
+    description: "Relevés bancaires des 3 derniers mois attestant d'fonds suffisants pour couvrir les frais de séjour.",
+    tip: "Solde moyen recommandé : au moins 50 à 100 USD par jour de séjour."
+  },
+  "Titre": {
+    title: "Visa ou Titre de Séjour Partenaire",
+    description: "Copie d'un visa en cours de validité ou titre de séjour (Schengen, US, UK, Canada) pour les e-Visas conditionnels.",
+    tip: "Le titre doit être valide au moment de l'entrée sur le territoire."
+  },
+  "Assurance": {
+    title: "Assurance Voyage Internationale",
+    description: "Police d'assurance couvrant les frais médicaux, d'hospitalisation et de rapatriement sanitaire à l'étranger.",
+    tip: "Couverture minimale exigée de 30 000 EUR / USD selon la destination."
+  }
+};
+
+const getDocumentDetail = (docString: string): DocumentDetail => {
+  const lower = docString.toLowerCase();
+  if (lower.includes("passeport")) return documentExplanations["Passeport"];
+  if (lower.includes("photo")) return documentExplanations["Photo"];
+  if (lower.includes("billet")) return documentExplanations["Billet"];
+  if (lower.includes("hôtel") || lower.includes("hébergement") || lower.includes("invitation")) return documentExplanations["Hébergement"];
+  if (lower.includes("vaccin") || lower.includes("jaune")) return documentExplanations["Vaccination"];
+  if (lower.includes("financier") || lower.includes("relevé")) return documentExplanations["Financier"];
+  if (lower.includes("visa") || lower.includes("titre")) return documentExplanations["Titre"];
+  if (lower.includes("assurance")) return documentExplanations["Assurance"];
+  
+  return {
+    title: docString,
+    description: "Pièce officielle exigée par les services d'immigration pour l'instruction de votre dossier e-Visa.",
+    tip: "Assurez-vous que le document est clair, au format PDF ou image haute définition."
+  };
+};
+
 interface ExpandedItem {
   [key: string]: boolean;
 }
@@ -835,6 +902,7 @@ export default function Evisas() {
   const [selectedRegion, setSelectedRegion] = useState('Tous');
   const [selectedNationalite, setSelectedNationalite] = useState('Camerounaise');
   const [expandedItems, setExpandedItems] = useState<ExpandedItem>({});
+  const [activeTooltipDoc, setActiveTooltipDoc] = useState<string | null>(null);
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
 
@@ -848,34 +916,31 @@ export default function Evisas() {
     return { status: "eligible", label: `Éligible e-Visa en ligne (${nationalite})`, color: "bg-emerald-50 text-emerald-800 border-emerald-200", icon: CheckCircle2 };
   };
 
-  // Générateur dynamique des documents requis selon la nationalité et la destination
   const getDynamicRequiredDocuments = (countryName: string, nationalite: string) => {
     const baseDocs = [
-      "Passeport biométrique valide (minimum 6 mois après la date de retour)",
-      "Photo d'identité couleur récente sur fond blanc",
+      "Passeport biométrique valide (minimum 6 mois)",
+      "Photo d'identité couleur récente",
       "Billet d'avion aller-retour confirmé"
     ];
 
-    // Documents spécifiques selon la destination ou la nationalité
     if (countryName === "Gabon" || countryName === "Tanzanie & Zanzibar" || countryName === "Ouganda" || countryName === "Côte d'Ivoire") {
-      baseDocs.push("Carnet international de vaccination (Fièvre jaune obligatoire)");
+      baseDocs.push("Carnet international de vaccination (Fièvre jaune)");
     }
     if (countryName === "Maroc") {
-      baseDocs.push("Copie d'un visa ou titre de séjour valide (Schengen, US, UK, Canada)");
+      baseDocs.push("Visa ou titre de séjour valide (Schengen, US, UK, Canada)");
     }
     if (countryName === "Arabie Saoudite" || countryName === "Russie" || countryName === "Équateur") {
-      baseDocs.push("Attestation d'assurance voyage internationale valide");
+      baseDocs.push("Attestation d'assurance voyage internationale");
     }
     if (countryName === "Angola" || countryName === "Australie" || countryName === "Colombie") {
-      baseDocs.push("Justificatif de ressources financières (relevés bancaires des 3 derniers mois)");
+      baseDocs.push("Justificatif de ressources financières (relevés bancaires)");
     }
     if (countryName === "Émirats Arabes Unis (Dubaï)" || countryName === "Qatar") {
-      baseDocs.push("Confirmation de réservation d'hôtel ou justificatif d'hébergement");
+      baseDocs.push("Confirmation de réservation d'hôtel");
     }
 
-    // Si la nationalité nécessite des justificatifs spécifiques d'attache
     if (nationalite === "Camerounaise" || nationalite === "Gabonaise" || nationalite === "Congolaise (RC)" || nationalite === "Tchadienne") {
-      baseDocs.push("Justificatif de situation professionnelle (attestation d'emploi ou registre de commerce)");
+      baseDocs.push("Justificatif de situation professionnelle");
     }
 
     return baseDocs;
@@ -919,13 +984,13 @@ export default function Evisas() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Globe className="w-4 h-4" />
-            Catalogue Mondial & Documents Requis Dynamiques
+            Catalogue Mondial, Simulateur & Infobulles Documentaires
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
-            Vérifiez votre éligibilité et <span className="text-blue-600">documents requis</span>
+            Guide des e-Visas avec <span className="text-blue-600">Assistance Documentaire Intégrée</span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-gray-600">
-            Sélectionnez votre nationalité pour afficher instantanément la liste exacte des pièces justificatives générées sur mesure pour chaque destination e-Visa.
+            Survolez ou cliquez sur les infobulles d'aide de chaque document requis pour connaître exactement le format, la validité et les conseils d'experts avant de soumettre votre dossier.
           </p>
         </div>
 
@@ -934,10 +999,10 @@ export default function Evisas() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-200 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-                <Sparkles className="w-3.5 h-3.5" /> Simulateur Dynamique par Nationalité
+                <Sparkles className="w-3.5 h-3.5" /> Simulateur Dynamique d'Éligibilité
               </div>
               <h2 className="text-2xl font-bold">Sélectionnez votre passeport / nationalité</h2>
-              <p className="text-blue-200 text-sm mt-1">La liste des documents requis s'ajuste dynamiquement pour chaque pays.</p>
+              <p className="text-blue-200 text-sm mt-1">Le système adapte les exigences documentaires en temps réel.</p>
             </div>
             <div className="w-full md:w-auto min-w-[260px]">
               <label className="block text-xs font-medium text-blue-200 mb-1.5">Votre Nationalité :</label>
@@ -995,9 +1060,9 @@ export default function Evisas() {
           <p className="text-sm font-medium text-gray-500">
             Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> destinations pour la nationalité <span className="text-blue-600 font-bold">{selectedNationalite}</span>
           </p>
-          <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Documents requis générés dynamiquement sur mesure</span>
+          <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg">
+            <HelpCircle className="w-4 h-4 text-blue-600" />
+            <span>Cliquez sur l'icône d'aide à côté de chaque document pour afficher ses critères précis</span>
           </div>
         </div>
 
@@ -1060,7 +1125,7 @@ export default function Evisas() {
                     </div>
                   </div>
 
-                  {/* Dynamic Required Documents Section */}
+                  {/* Dynamic Required Documents Section with Tooltips */}
                   <div className="border-t border-gray-100 pt-3 mb-5">
                     <button
                       onClick={() => toggleExpanded(evisa.country)}
@@ -1076,13 +1141,40 @@ export default function Evisas() {
                     </button>
 
                     {expandedItems[evisa.country] && (
-                      <div className="mt-3 space-y-2 text-xs text-gray-600 bg-blue-50/40 p-3.5 rounded-xl border border-blue-100">
+                      <div className="mt-3 space-y-2.5 text-xs text-gray-600 bg-blue-50/40 p-3.5 rounded-xl border border-blue-100">
                         <p className="font-bold text-blue-900 mb-2">Pièces exigées pour passeport {selectedNationalite} :</p>
-                        <ul className="space-y-1.5 list-disc pl-4">
-                          {dynamicDocs.map((doc, idx) => (
-                            <li key={idx} className="text-gray-700">{doc}</li>
-                          ))}
-                        </ul>
+                        
+                        <div className="space-y-2">
+                          {dynamicDocs.map((docText, idx) => {
+                            const detail = getDocumentDetail(docText);
+                            const docKey = `${evisa.country}-${idx}`;
+                            const isTooltipOpen = activeTooltipDoc === docKey;
+
+                            return (
+                              <div key={idx} className="bg-white p-2 rounded-lg border border-blue-100 shadow-xs">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-gray-800">{docText}</span>
+                                  <button
+                                    onClick={() => setActiveTooltipDoc(isTooltipOpen ? null : docKey)}
+                                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors"
+                                    title="Afficher l'aide et les conseils"
+                                  >
+                                    <HelpCircle className="w-4 h-4" />
+                                  </button>
+                                </div>
+
+                                {isTooltipOpen && (
+                                  <div className="mt-2 pt-2 border-t border-gray-100 text-[11px] bg-blue-50/80 p-2 rounded text-gray-700 space-y-1">
+                                    <p className="font-bold text-blue-900">📌 {detail.title}</p>
+                                    <p>{detail.description}</p>
+                                    <p className="text-blue-700 font-medium italic">💡 Conseil 3M : {detail.tip}</p>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+
                         <p className="mt-2.5 pt-2 border-t border-blue-200/60 text-[11px] italic text-gray-500">
                           {evisa.note}
                         </p>
