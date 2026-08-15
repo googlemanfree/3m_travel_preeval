@@ -288,7 +288,15 @@ export default function ClientDashboard() {
       setAttachmentPreview((current) => current ? { ...current, acknowledged: true } : current);
       await trpcUtils.caseTracking.getMyCases.invalidate();
       toast.success("Accusé de réception enregistré", {
-        description: "L’administration sait désormais que vous avez consulté ce document.",
+        description: (
+          <div className="space-y-2">
+            <p>L’administration sait désormais que vous avez consulté ce document.</p>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-950" aria-hidden="true">
+              <div className="acknowledgement-toast-progress h-full w-full rounded-full bg-emerald-600" />
+            </div>
+            <span className="sr-only">L’option Annuler disparaîtra dans quelques secondes.</span>
+          </div>
+        ),
         position: "bottom-center",
         duration: 3500,
         action: {

@@ -433,6 +433,23 @@
   100% { background-position: -100% 0; }
 }
 
+@keyframes acknowledgementToastCountdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.acknowledgement-toast-progress {
+  transform-origin: left center;
+  animation: acknowledgementToastCountdown 3.5s linear forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acknowledgement-toast-progress {
+    animation: none !important;
+    transform: scaleX(1);
+  }
+}
+
 .dark .admin-glass-table {
   background: rgba(13, 27, 46, 0.72);
   border-color: rgba(148, 163, 184, 0.2);

@@ -25,9 +25,14 @@ describe("Visualiseur modal - Accusé de réception des notifications", () => {
 
   it("affiche un toast explicite au bas de l’écran après l’accusé de réception", () => {
     const dashboardSource = readFileSync("client/src/pages/ClientDashboard.tsx", "utf8");
+    const stylesSource = readFileSync("client/src/index.css", "utf8");
     expect(dashboardSource).toContain("Accusé de réception enregistré");
     expect(dashboardSource).toContain('position: "bottom-center"');
     expect(dashboardSource).toContain("L’administration sait désormais que vous avez consulté ce document.");
+    expect(dashboardSource).toContain("acknowledgement-toast-progress");
+    expect(dashboardSource).toContain("duration: 3500");
+    expect(stylesSource).toContain("acknowledgementToastCountdown");
+    expect(stylesSource).toContain("animation: acknowledgementToastCountdown 3.5s linear forwards");
   });
 
   it("permet d’annuler l’accusé de réception depuis le toast", () => {

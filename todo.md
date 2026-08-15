@@ -2827,4 +2827,9 @@
 - [x] Ajouter une restauration sécurisée de l’état non lu d’une notification
 - [x] Ajouter l’action Annuler dans le toast de confirmation
 - [x] Tester l’annulation
+- [x] Publier la mise à jour
+
+## Progression du toast d’annulation (v218)
+- [x] Afficher une barre de progression du temps restant dans le toast d’accusé de réception
+- [x] Vérifier l’accessibilité
 - [ ] Publier la mise à jour
