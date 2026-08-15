@@ -2783,3 +2783,9 @@
 - [x] Relier la réponse rapide au système de messagerie sécurisée du candidat
 - [x] Valider les tests de régression
 - [x] Publier la mise à jour
+
+## Modèles de Réponses Rapides (v210)
+- [x] Définir une bibliothèque de modèles de réponses courantes classés par situation (documents, paiement, statut, question générale)
+- [x] Intégrer les boutons de sélection de modèles dans le formulaire de réponse rapide du centre de notifications
+- [x] Valider les tests de non-régression
+- [x] Publier la mise à jour

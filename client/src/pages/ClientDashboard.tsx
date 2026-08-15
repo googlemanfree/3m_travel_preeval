@@ -1355,8 +1355,17 @@ export default function ClientDashboard() {
                           </Button>
                         </div>
                       </div>
-                      {notificationReplyId === notification.id && notification.category === "admin" && <form className="mt-4 space-y-2 border-t border-slate-200 pt-4" onSubmit={(event) => { event.preventDefault(); const content = notificationReplyText.trim(); if (!content) { toast.error("Écrivez une réponse avant l’envoi."); return; } sendNotificationReplyMutation.mutate({ content }); }}>
-                        <Label htmlFor={`notification-reply-${notification.id}`}>Votre réponse</Label>
+                      {notificationReplyId === notification.id && notification.category === "admin" && <form className="mt-4 space-y-3 border-t border-slate-200 pt-4" onSubmit={(event) => { event.preventDefault(); const content = notificationReplyText.trim(); if (!content) { toast.error("Écrivez une réponse avant l’envoi."); return; } sendNotificationReplyMutation.mutate({ content }); }}>
+                        <div className="space-y-1">
+                          <Label htmlFor={`notification-reply-${notification.id}`}>Votre réponse</Label>
+                          <div className="flex flex-wrap gap-1.5 py-1">
+                            <span className="text-xs text-slate-500 self-center mr-1">Modèles :</span>
+                            <button type="button" className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-md transition-colors" onClick={() => setNotificationReplyText("Bonjour, je viens de téléverser le document demandé. Merci de bien vouloir le vérifier.")}>📄 Document joint</button>
+                            <button type="button" className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-md transition-colors" onClick={() => setNotificationReplyText("Bonjour, j'ai effectué le règlement des frais de dossier de 65 000 XAF. Mon reçu a été transmis.")}>💳 Paiement effectué</button>
+                            <button type="button" className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-md transition-colors" onClick={() => setNotificationReplyText("Bonjour, pourrais-je connaître l’état d’avancement actuel de mon dossier s’il vous plaît ?")}>🔍 État du dossier</button>
+                            <button type="button" className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 rounded-md transition-colors" onClick={() => setNotificationReplyText("Bonjour, j'ai besoin d’une assistance avec mon conseiller pour finaliser mon dossier.")}>👤 Besoin d'aide</button>
+                          </div>
+                        </div>
                         <Textarea id={`notification-reply-${notification.id}`} value={notificationReplyText} onChange={(event) => setNotificationReplyText(event.target.value)} placeholder="Répondez à l’administration au sujet de cette notification…" maxLength={2000} rows={3} autoFocus />
                         <div className="flex flex-wrap justify-end gap-2">
                           <Button type="button" size="sm" variant="ghost" onClick={() => { setNotificationReplyId(null); setNotificationReplyText(""); }}>Annuler</Button>

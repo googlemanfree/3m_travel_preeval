@@ -24,4 +24,12 @@ describe("réponse rapide depuis les notifications", () => {
     const dashboard = read("client/src/pages/ClientDashboard.tsx");
     expect(dashboard).toContain("maxLength={2000}");
   });
+
+  it("propose des modèles de réponses rapides pré-rédigés", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    expect(dashboard).toContain("Document joint");
+    expect(dashboard).toContain("Paiement effectué");
+    expect(dashboard).toContain("État du dossier");
+    expect(dashboard).toContain("Besoin d'aide");
+  });
 });
