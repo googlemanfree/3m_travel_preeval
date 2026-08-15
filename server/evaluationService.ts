@@ -142,15 +142,15 @@ function getDestinationDescription(destination: string, score: number): string {
  * Extrait les critères de scoring depuis les détails du dossier
  */
 function extractScoringCriteria(app: Application): ScoringCriteria {
+  // Si les détails de scoring sont absents ou incomplets, on effectue un calcul dynamique basé sur les champs du dossier si disponibles
   let criteria: ScoringCriteria = {
-    education: 15,
-    experience: 15,
-    language: 12,
-    sector: 12,
-    ageAdjustment: 6,
+    education: 12,
+    experience: 12,
+    language: 10,
+    sector: 10,
+    ageAdjustment: 5,
   };
 
-  // Parser les détails du scoring s'ils existent
   if (app.scoringDetails) {
     try {
       const details = JSON.parse(app.scoringDetails);
@@ -161,8 +161,47 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
         sector: details.sector ?? criteria.sector,
         ageAdjustment: details.age ?? criteria.ageAdjustment,
       };
+      return criteria;
     } catch (e) {
-      // Garder les valeurs par défaut
+      // En cas d'erreur de parsing, on utilise une évaluation rigoureuse minimale au lieu d'un score gonflé arbitraire
+    }
+  }
+
+  // Calcul dynamique de repli basé sur le niveau d'études et d'expérience stocké
+  if (app.educationLevel) {
+    const edu = app.educationLevel.toLowerCase();
+    if (edu.includes("master") || edu.includes("doctorat") || edu.includes("ingénieur") || edu.includes("bac+5")) {
+      criteria.education = 22;
+    } else if (edu.includes("licence") || edu.includes("bachelor") || edu.includes("bac+3")) {
+      criteria.education = 18;
+    } else if (edu.includes("bts") || edu.includes("dut") || edu.includes("bac+2")) {
+      criteria.education = 15;
+    } else {
+      criteria.education = 10;
+    }
+  }
+
+  if (app.yearsOfExperience) {
+    const exp = app.yearsOfExperience.toLowerCase();
+    if (exp.includes("5") || exp.includes("plus") || exp.includes("10") || exp.includes("supérieur")) {
+      criteria.experience = 24;
+    } else if (exp.includes("3") || exp.includes("4")) {
+      criteria.experience = 20;
+    } else if (exp.includes("1") || exp.includes("2")) {
+      criteria.experience = 14;
+    } else {
+      criteria.experience = 8;
+    }
+  }
+
+  if (app.frenchLevel || app.englishLevel) {
+    const lang = ((app.frenchLevel || "") + " " + (app.englishLevel || "")).toLowerCase();
+    if (lang.includes("bilingue") || lang.includes("courant") || lang.includes("avancé") || lang.includes("c1") || lang.includes("c2")) {
+      criteria.language = 18;
+    } else if (lang.includes("intermédiaire") || lang.includes("b2")) {
+      criteria.language = 14;
+    } else {
+      criteria.language = 9;
     }
   }
 
@@ -234,8 +273,8 @@ export function generateEvaluationReportHTML(app: Application): string {
 <body>
   <div class="container">
     <div class="header">
-      <h1>📋 Rapport d'Évaluation Professionnelle</h1>
-      <p>Analyse approfondie de votre profil — 3M Travel & Services</p>
+      <h1>📋 Indice de Faisabilité Préliminaire (IFP 3M)</h1>
+      <p>Évaluation indicative d’agence — 3M Travel & Services</p>
     </div>
     
     <div class="body">

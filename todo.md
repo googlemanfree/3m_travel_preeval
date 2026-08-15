@@ -2832,4 +2832,11 @@
 ## Progression du toast d’annulation (v218)
 - [x] Afficher une barre de progression du temps restant dans le toast d’accusé de réception
 - [x] Vérifier l’accessibilité
-- [ ] Publier la mise à jour
+- [x] Publier la mise à jour
+
+## Ajustements du Moteur de Scoring et Traçabilité (v219)
+- [ ] Supprimer les scores par défaut arbitraires en l'absence de `scoringDetails` et exiger une évaluation basée sur les critères réels
+- [ ] Clarifier l'intitulé du rapport en « Indice de Faisabilité Préliminaire 3M (IFP 3M) » pour éviter toute confusion avec une décision officielle d'immigration
+- [ ] Améliorer la pondération linguistique et l'ajustement de l'âge dans le service de scoring
+- [ ] Ajouter une traçabilité obligatoire des modifications manuelles de score par l'administrateur avec motif enregistré dans les logs d'audit
+- [ ] Valider l'ensemble avec des tests unitaires et un build de production
