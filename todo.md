@@ -2629,3 +2629,10 @@
 - [x] Ajouter un toast de succès clair après l’enregistrement du nouveau mot de passe
 - [x] Indiquer la prochaine étape de connexion et conserver un accès manuel
 - [x] Ajouter les tests, vérifier le responsive et publier
+
+## Audit complet du site (v190)
+- [x] Cartographier les routes, les parcours critiques et les composants principaux
+- [x] Vérifier les parcours public, inscription, activation, connexion, reset, client et administrateur
+- [x] Auditer la sécurité des sessions, e-mails, documents, rôles, paiements et tâches automatiques
+- [x] Contrôler les erreurs techniques, les tests, la performance, l’accessibilité et l’affichage mobile
+- [x] Rédiger un rapport priorisé avec constats, risques, correctifs et paramètres externes à confirmer
