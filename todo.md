@@ -2894,3 +2894,8 @@
 - [x] Créer une section dédiée « Historique des paiements et quittances » dans ClientDashboard.tsx
 - [x] Permettre au candidat de consulter l'ensemble de ses versements (Mobile Money, agence) avec leur statut (en attente, validé) et de télécharger chaque quittance PDF correspondante
 - [x] Valider et publier la version (v228)
+
+## Tableau de Bord Administrateur - Validation des Reçus de Paiement (v229)
+- [x] Créer le composant d'administration pour la liste et la vérification des reçus de paiement soumis (Mobile Money / Agence)
+- [x] Ajouter les actions de validation et de rejet motivé avec mise à jour automatique du dossier candidat
+- [x] Valider et publier la version sur la plateforme (v229)

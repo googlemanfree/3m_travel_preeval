@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail, Loader2, AlertCircle, History, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ export function AdminPaymentManagement() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [adminNote, setAdminNote] = useState("");
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -465,13 +467,22 @@ export function AdminPaymentManagement() {
                   </div>
                   
                   {actionType === 'confirm' ? (
-                    <p className="text-sm text-gray-700">
-                      Êtes-vous sûr de vouloir <strong>confirmer ce paiement</strong> ? Le candidat recevra une notification de confirmation.
+                    <p className="text-sm text-slate-700">
+                      En confirmant ce versement de <strong>65 000 XAF</strong>, vous validez l'ouverture officielle du dossier <strong>{selectedPayment.dossierNumber}</strong> et débloquez la quittance PDF pour le candidat.
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-700">
-                      Êtes-vous sûr de vouloir <strong>annuler ce paiement</strong> ? Cette action ne peut pas être annulée.
-                    </p>
+                    <div className="space-y-2 pt-1">
+                      <p className="text-sm text-red-600">
+                        En rejetant ce justificatif, indiquez le motif qui sera transmis au candidat dans son espace.
+                      </p>
+                      <Label className="text-xs font-semibold text-slate-800">Motif du rejet :</Label>
+                      <Input
+                        placeholder="Ex: Image illisible, référence Mobile Money introuvable..."
+                        value={adminNote}
+                        onChange={(e) => setAdminNote(e.target.value)}
+                        className="text-xs"
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -484,12 +495,12 @@ export function AdminPaymentManagement() {
               onClick={() => setConfirmDialogOpen(false)}
               disabled={isProcessing}
             >
-              Annuler
+              Fermer
             </Button>
             <Button
               onClick={handleConfirmAction}
               disabled={isProcessing}
-              className={actionType === 'confirm' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}
+              className={actionType === 'confirm' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold' : 'bg-red-600 hover:bg-red-700 text-white font-semibold'}
             >
               {isProcessing ? (
                 <>
@@ -497,7 +508,7 @@ export function AdminPaymentManagement() {
                   Traitement...
                 </>
               ) : (
-                actionType === 'confirm' ? 'Confirmer le Paiement' : 'Annuler le Paiement'
+                actionType === 'confirm' ? '✓ Confirmer et valider la quittance' : '✗ Rejeter le justificatif'
               )}
             </Button>
           </DialogFooter>
