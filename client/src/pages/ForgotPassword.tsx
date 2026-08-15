@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Mail, ArrowLeft, CheckCircle, Send } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,7 +73,7 @@ export default function ForgotPassword() {
 
           <div className="px-8 py-6">
             {!sent ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" aria-busy={resetMutation.isPending}>
                 <div>
                   <Label htmlFor="email" className="text-gray-700 font-medium">Adresse email</Label>
                   <div className="relative mt-1">
@@ -96,8 +96,17 @@ export default function ForgotPassword() {
                   className="w-full h-12 text-base font-semibold"
                   style={{ background: "linear-gradient(135deg, #1E3A8A, #2563EB)" }}
                 >
-                  <Send className="w-4 h-4 mr-2" />
-                  {resetMutation.isPending ? "Envoi en cours..." : "Envoyer le lien de réinitialisation"}
+                  {resetMutation.isPending ? (
+                    <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+                      <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                      Envoi en cours…
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Send className="w-4 h-4" aria-hidden="true" />
+                      Envoyer le lien de réinitialisation
+                    </span>
+                  )}
                 </Button>
               </form>
             ) : (

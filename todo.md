@@ -2650,3 +2650,10 @@
 - [x] Garantir des zones tactiles et boutons utilisables sur petits écrans
 - [x] Adapter les tableaux et cartes des espaces candidats à la lecture mobile
 - [x] Ajouter des tests de contrat d’accessibilité et vérifier desktop/mobile avant publication
+
+## Modales de connexion et chargements accessibles (v192)
+- [x] Auditer les modales de connexion, renvoi d’activation et récupération de mot de passe
+- [x] Ajouter fermeture Échap, focus-trap et restitution du focus au déclencheur
+- [x] Désactiver clairement Google et Facebook avec une infobulle « Bientôt disponible »
+- [x] Uniformiser les états chargement/aria-busy des boutons de validation candidat
+- [x] Ajouter les tests clavier, états désactivés et chargements puis publier
