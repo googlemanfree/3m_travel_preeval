@@ -2804,4 +2804,10 @@
 ## Téléchargement et Impression du Visualiseur Modal (v213)
 - [x] Ajouter les actions d’impression directe et de téléchargement sécurisé dans les contrôles de la modale d’aperçu
 - [x] Valider les tests de non-régression
+- [x] Publier la mise à jour
+
+## Navigation Multi-Pièces Jointes dans le Visualiseur Modal (v214)
+- [x] Regrouper les pièces jointes par notification et intégrer un index de navigation dans la modale d’aperçu
+- [x] Ajouter les boutons Précédent et Suivant avec raccourcis clavier et indicateur de position (ex: 1/3)
+- [x] Valider les tests de non-régression
 - [ ] Publier la mise à jour

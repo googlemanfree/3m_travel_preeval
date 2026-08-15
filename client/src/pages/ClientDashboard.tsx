@@ -22,6 +22,8 @@ import {
   Eye,
   Upload,
   Printer,
+  ChevronLeft,
+  ChevronRight,
   BarChart3,
   CreditCard,
   MessageSquare,
@@ -122,7 +124,7 @@ export default function ClientDashboard() {
   const [notificationReplyId, setNotificationReplyId] = useState<number | null>(null);
   const [notificationReplyText, setNotificationReplyText] = useState("");
   const [notificationReplyAttachment, setNotificationReplyAttachment] = useState<File | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; name: string; mimeType: string } | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; name: string; mimeType: string; index: number; total: number } | null>(null);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -154,8 +156,35 @@ export default function ClientDashboard() {
     attachmentSignedUrl?: string | null;
     attachmentName?: string | null;
     attachmentMimeType?: string | null;
-  }>;
-
+    }>;
+  const attachmentGallery = messagesWithAttachments
+    .filter((message) => Boolean(message.attachmentSignedUrl))
+    .map((message) => ({
+      url: message.attachmentSignedUrl as string,
+      name: message.attachmentName || "Pièce jointe",
+      mimeType: message.attachmentMimeType || "application/octet-stream",
+    }));
+  const openAttachmentPreview = (index: number) => {
+    const attachment = attachmentGallery[index];
+    if (attachment) setAttachmentPreview({ ...attachment, index, total: attachmentGallery.length });
+  };
+  const moveAttachment = (direction: -1 | 1) => {
+    setAttachmentPreview((current) => {
+      if (!current) return current;
+      const nextIndex = current.index + direction;
+      const nextAttachment = attachmentGallery[nextIndex];
+      return nextAttachment ? { ...nextAttachment, index: nextIndex, total: attachmentGallery.length } : current;
+    });
+  };
+  useEffect(() => {
+    if (!attachmentPreview || attachmentGallery.length < 2) return;
+    const handleAttachmentKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") moveAttachment(-1);
+      if (event.key === "ArrowRight") moveAttachment(1);
+    };
+    window.addEventListener("keydown", handleAttachmentKeyDown);
+    return () => window.removeEventListener("keydown", handleAttachmentKeyDown);
+  }, [attachmentPreview, attachmentGallery.length]);
   const printAttachment = (attachment: { url: string; name: string; mimeType: string }) => {
     const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
     if (!printWindow) {
@@ -1453,13 +1482,14 @@ export default function ClientDashboard() {
                       const attachmentUrl = message.attachmentSignedUrl as string;
                       const attachmentName = message.attachmentName || "Pièce jointe";
                       const attachmentMimeType = message.attachmentMimeType || "application/octet-stream";
+                      const attachmentIndex = attachmentGallery.findIndex((attachment) => attachment.url === attachmentUrl);
                       return <div key={`message-attachment-${message.id}`} className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-slate-900">{attachmentName}</p>
                           <p className="text-xs text-slate-500">{message.senderRole === "candidate" ? "Envoyé par vous" : "Envoyé par l’administration"} · {new Date(message.createdAt).toLocaleString("fr-FR")}</p>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          <Button type="button" size="sm" variant="outline" onClick={() => setAttachmentPreview({ url: attachmentUrl, name: attachmentName, mimeType: attachmentMimeType })}><Eye className="mr-1 h-4 w-4" aria-hidden="true" /> Aperçu</Button>
+                          <Button type="button" size="sm" variant="outline" onClick={() => openAttachmentPreview(attachmentIndex)}><Eye className="mr-1 h-4 w-4" aria-hidden="true" /> Aperçu</Button>
                           <Button asChild type="button" size="sm" variant="ghost"><a href={attachmentUrl} target="_blank" rel="noreferrer" download={attachmentName}><Download className="mr-1 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>
                         </div>
                       </div>;
@@ -1472,15 +1502,22 @@ export default function ClientDashboard() {
               <DialogContent className="max-w-5xl">
                 <DialogHeader>
                   <DialogTitle className="truncate pr-8">{attachmentPreview?.name || "Aperçu de la pièce jointe"}</DialogTitle>
+                  {attachmentPreview && attachmentPreview.total > 1 && <p className="text-xs font-medium text-slate-500" aria-live="polite">Pièce {attachmentPreview.index + 1} sur {attachmentPreview.total} · Utilisez les flèches gauche et droite pour naviguer</p>}
                   <DialogDescription>Visualisation sécurisée de la pièce jointe associée à votre échange.</DialogDescription>
                 </DialogHeader>
                 <div className="flex min-h-[320px] max-h-[70vh] items-center justify-center overflow-auto rounded-lg bg-slate-100 p-2">
                   {attachmentPreview?.mimeType === "application/pdf" ? <iframe title={`Aperçu PDF ${attachmentPreview.name}`} src={attachmentPreview.url} className="h-[65vh] w-full rounded border border-slate-200 bg-white" /> : attachmentPreview ? <img src={attachmentPreview.url} alt={`Aperçu de ${attachmentPreview.name}`} className="max-h-[65vh] max-w-full object-contain" /> : null}
                 </div>
-                <DialogFooter>
+                <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  {attachmentPreview && attachmentPreview.total > 1 && <div className="flex w-full gap-2 sm:w-auto" aria-label="Navigation entre les pièces jointes">
+                    <Button type="button" variant="outline" onClick={() => moveAttachment(-1)} disabled={attachmentPreview.index === 0} aria-label="Pièce jointe précédente"><ChevronLeft className="mr-1 h-4 w-4" aria-hidden="true" /> Précédent</Button>
+                    <Button type="button" variant="outline" onClick={() => moveAttachment(1)} disabled={attachmentPreview.index === attachmentPreview.total - 1} aria-label="Pièce jointe suivante">Suivant <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" /></Button>
+                  </div>}
+                  <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
                   {attachmentPreview && <Button type="button" variant="outline" onClick={() => printAttachment(attachmentPreview)}><Printer className="mr-2 h-4 w-4" aria-hidden="true" /> Imprimer</Button>}
                   {attachmentPreview && <Button asChild variant="outline"><a href={attachmentPreview.url} target="_blank" rel="noreferrer" download={attachmentPreview.name}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>}
                   <Button type="button" onClick={() => setAttachmentPreview(null)}>Fermer</Button>
+                  </div>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

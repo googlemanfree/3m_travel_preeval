@@ -36,6 +36,17 @@ describe("pièces jointes des réponses rapides", () => {
     expect(dashboard).toContain("setAttachmentPreview");
   });
 
+
+  it("permet de naviguer entre plusieurs pièces jointes dans la modale", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    expect(dashboard).toContain("Précédent");
+    expect(dashboard).toContain("Suivant");
+    expect(dashboard).toContain("attachmentGallery");
+    expect(dashboard).toContain("Pièce {attachmentPreview.index + 1} sur {attachmentPreview.total}");
+    expect(dashboard).toContain("ArrowLeft");
+    expect(dashboard).toContain("ArrowRight");
+  });
+
   it("expose le téléchargement et l’impression depuis la modale", () => {
     const dashboard = read("client/src/pages/ClientDashboard.tsx");
     expect(dashboard).toContain("Imprimer");
