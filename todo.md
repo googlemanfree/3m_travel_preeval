@@ -2878,3 +2878,9 @@
 - [x] Transformer la liste des documents requis dans Evisas.tsx en une checklist interactive avec cases à cocher et calcul de progression en temps réel
 - [x] Ajouter une barre de progression visuelle pour chaque destination indiquant le pourcentage de pièces préparées
 - [x] Valider la persistance locale de l'état des cases cochées et publier la mise à jour (v225)
+
+## Circuit de Paiement Manuel 65 000 XAF & Validation Administrative (v226)
+- [x] Ajouter les options de paiement alternatif (Orange Money / Mobile Money, Paiement direct en agence 3M Travel) avec saisie de référence de transaction et dépôt de capture
+- [x] Créer la procédure de soumission du justificatif de paiement et mise en attente de validation par l'administrateur
+- [x] Intégrer le panneau de validation des paiements dans le back-office administrateur avec déblocage automatique de l'étape de dossier
+- [x] Valider l'ensemble et publier la version (v226)

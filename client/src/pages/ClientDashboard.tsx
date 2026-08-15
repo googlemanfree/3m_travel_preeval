@@ -542,7 +542,7 @@ export default function ClientDashboard() {
     }
   };
 
-  const handlePaymentReceiptUpload = async (file: File | undefined) => {
+  const handlePaymentReceiptUpload = async (file: File | undefined, method: string, reference: string) => {
     if (!file) return;
     const token = getCandidateToken();
     if (!token) {
@@ -562,20 +562,24 @@ export default function ClientDashboard() {
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Le justificatif n’a pas pu être téléversé.");
-      await saveDocumentMutation.mutateAsync({
+      const savedDocument = await saveDocumentMutation.mutateAsync({
         fileType: "justificatif_paiement",
-        fileName: payload.fileName || file.name,
+        fileName: `[${method.toUpperCase()} - Réf: ${reference}] ${payload.fileName || file.name}`,
         fileUrl: payload.fileUrl,
         fileKey: payload.fileKey,
         fileSizeBytes: payload.fileSizeBytes ?? file.size,
         mimeType: payload.mimeType || file.type,
+        correctionComment: `Paiement déclaré via ${method === "mobile_money" ? "Mobile Money (OM/MTN)" : "Paiement en Agence"}. Référence : ${reference}`,
       });
+      if (savedDocument.documentId && payload.fileUrl) {
+        setRecentDocument({ id: savedDocument.documentId, name: payload.fileName || file.name, url: payload.fileUrl });
+      }
       await Promise.all([
         trpcUtils.candidate.getMyDocuments.invalidate(),
         trpcUtils.candidate.getMyDossierData.invalidate(),
       ]);
-      setDocumentSuccessMessage("Votre justificatif de paiement a été reçu. Il sera vérifié par l’administration avant l’ouverture complète du dossier.");
-      toast.success("Justificatif de paiement transmis.");
+      setDocumentSuccessMessage(`Votre justificatif (${method === "mobile_money" ? "Mobile Money" : "Agence"}) avec la référence « ${reference} » a été transmis. L'administration va procéder à sa vérification pour valider vos 65 000 XAF.`);
+      toast.success("Justificatif de paiement transmis pour validation administrative.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Le justificatif n’a pas pu être transmis.");
     } finally {
@@ -875,21 +879,88 @@ export default function ClientDashboard() {
               {paymentIsComplete ? (
                 <div className="flex items-center gap-2 font-semibold text-emerald-800"><CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Les étapes suivantes sont ouvertes</div>
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    className="bg-blue-700 hover:bg-blue-800"
-                    disabled={!hasOnlineApplication || initiatePaymentMutation.isPending}
-                    onClick={() => initiatePaymentMutation.mutate({ paymentMethod: "mtn" })}
-                  >
-                    {initiatePaymentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <CreditCard className="mr-2 h-4 w-4" aria-hidden="true" />}
-                    Payer en ligne
-                  </Button>
-                  <label htmlFor="payment-receipt-upload" className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-md border border-current/30 bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus-within:ring-2 focus-within:ring-blue-500">
-                    {paymentReceiptUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="mr-2 h-4 w-4" aria-hidden="true" />}
-                    Déposer un reçu
-                    <input id="payment-receipt-upload" type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" disabled={paymentReceiptUploading} onChange={(event) => { void handlePaymentReceiptUpload(event.target.files?.[0]); event.currentTarget.value = ""; }} />
-                  </label>
+                <div className="w-full space-y-4 pt-2 border-t border-current/20">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-current/80">Modes de règlement des frais d'ouverture (65 000 XAF) :</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-800">
+                    {/* Option Orange Money / Mobile Money */}
+                    <div className="bg-white/90 p-4 rounded-xl border border-amber-200 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-amber-900 flex items-center gap-1.5">
+                          📱 Orange / MTN Mobile Money
+                        </span>
+                        <Badge variant="outline" className="text-xs bg-amber-50 text-amber-800 border-amber-300">Recommandé</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600">Transférez les 65 000 XAF au numéro officiel de l'agence et indiquez la référence de transaction ci-dessous.</p>
+                      
+                      <div className="space-y-2 pt-1">
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-700">Numéro de transaction / Référence OM :</Label>
+                          <Input
+                            id="om-transaction-ref"
+                            placeholder="Ex: TR-2026-OM98421"
+                            className="mt-1 h-9 text-xs bg-white"
+                          />
+                        </div>
+                        <label htmlFor="om-receipt-upload" className="w-full inline-flex cursor-pointer items-center justify-center rounded-lg bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 text-xs font-semibold transition shadow-xs">
+                          {paymentReceiptUploading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
+                          Envoyer la capture ou le reçu Mobile Money
+                          <input
+                            id="om-receipt-upload"
+                            type="file"
+                            accept="application/pdf,image/jpeg,image/png"
+                            className="sr-only"
+                            disabled={paymentReceiptUploading}
+                            onChange={(event) => {
+                              const refInput = (document.getElementById("om-transaction-ref") as HTMLInputElement)?.value || "MOBILE-MONEY";
+                              const file = event.target.files?.[0];
+                              if (file) void handlePaymentReceiptUpload(file, "mobile_money", refInput);
+                              event.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Option Paiement direct en agence */}
+                    <div className="bg-white/90 p-4 rounded-xl border border-blue-200 shadow-xs space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-blue-900 flex items-center gap-1.5">
+                          🏢 Paiement en Agence (Cameroun)
+                        </span>
+                        <Badge variant="outline" className="text-xs bg-blue-50 text-blue-800 border-blue-300">Espèces / Chèque</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600">Rendez-vous directement dans nos bureaux pour régler en espèces et obtenir votre reçu physique.</p>
+                      
+                      <div className="space-y-2 pt-1">
+                        <div>
+                          <Label className="text-[11px] font-semibold text-slate-700">Numéro du reçu de caisse agence :</Label>
+                          <Input
+                            id="agency-receipt-ref"
+                            placeholder="Ex: RECU-AG-5421"
+                            className="mt-1 h-9 text-xs bg-white"
+                          />
+                        </div>
+                        <label htmlFor="agency-receipt-upload" className="w-full inline-flex cursor-pointer items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-xs font-semibold transition shadow-xs">
+                          {paymentReceiptUploading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
+                          Téléverser le reçu de caisse agence
+                          <input
+                            id="agency-receipt-upload"
+                            type="file"
+                            accept="application/pdf,image/jpeg,image/png"
+                            className="sr-only"
+                            disabled={paymentReceiptUploading}
+                            onChange={(event) => {
+                              const refInput = (document.getElementById("agency-receipt-ref") as HTMLInputElement)?.value || "AGENCE-CASH";
+                              const file = event.target.files?.[0];
+                              if (file) void handlePaymentReceiptUpload(file, "cash_agency", refInput);
+                              event.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
