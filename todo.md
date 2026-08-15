@@ -2884,3 +2884,8 @@
 - [x] Créer la procédure de soumission du justificatif de paiement et mise en attente de validation par l'administrateur
 - [x] Intégrer le panneau de validation des paiements dans le back-office administrateur avec déblocage automatique de l'étape de dossier
 - [x] Valider l'ensemble et publier la version (v226)
+
+## Quittance de Paiement PDF Automatique (v227)
+- [x] Implémenter la génération d'un PDF officiel de quittance (frais de dossier 65 000 XAF) avec jsPDF dans ClientDashboard.tsx dès que le paiement est confirmé
+- [x] Ajouter le bouton de téléchargement de la quittance officielle dans l'espace client lorsque le statut du paiement est validé
+- [x] Valider et publier la version sur la plateforme (v227)

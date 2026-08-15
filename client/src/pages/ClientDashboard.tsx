@@ -877,7 +877,54 @@ export default function ClientDashboard() {
                 <p className="mt-1 text-sm text-current/75">Dossier {dossier.numero}</p>
               </div>
               {paymentIsComplete ? (
-                <div className="flex items-center gap-2 font-semibold text-emerald-800"><CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Les étapes suivantes sont ouvertes</div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+                  <div className="flex items-center gap-2 font-semibold text-emerald-800">
+                    <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Paiement validé et enregistré par l'agence
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const doc = new jsPDF();
+                      doc.setFillColor(30, 58, 138); // Bleu 3M
+                      doc.rect(0, 0, 210, 35, "F");
+                      doc.setTextColor(255, 255, 255);
+                      doc.setFontSize(20);
+                      doc.text("3M TRAVEL & SERVICES SARL", 15, 20);
+                      doc.setFontSize(10);
+                      doc.text("Quittance Officielle de Frais de Dossier", 15, 27);
+
+                      doc.setTextColor(50, 50, 50);
+                      doc.setFontSize(12);
+                      doc.text(`N° de Dossier : ${dossier.numero}`, 15, 50);
+                      doc.text(`Date de validation : ${dossier.paymentDate ? dossier.paymentDate.toLocaleDateString("fr-FR") : new Date().toLocaleDateString("fr-FR")}`, 15, 58);
+                      doc.text(`Candidat : ${candidate?.fullName || "Client 3M Travel"}`, 15, 66);
+                      doc.text(`E-mail : ${candidate?.email || "N/C"}`, 15, 74);
+
+                      doc.setDrawColor(200, 200, 200);
+                      doc.line(15, 82, 195, 82);
+
+                      doc.setFontSize(14);
+                      doc.text("Détail du Règlement", 15, 95);
+                      doc.setFontSize(11);
+                      doc.text("• Objet : Frais d'ouverture, de traduction et de soumission de dossier", 15, 105);
+                      doc.text("• Destination cible : " + dossier.destination, 15, 113);
+                      doc.text("• Montant réglé : 65 000 XAF", 15, 121);
+                      doc.text("• Statut : VALIDÉ ET ENCAISSÉ", 15, 129);
+
+                      doc.line(15, 140, 195, 140);
+                      doc.setFontSize(10);
+                      doc.setTextColor(100, 100, 100);
+                      doc.text("3M Travel & Services SARL — Agence de Mobilité Internationale", 15, 155);
+                      doc.text("Cameroun — Contacts : +237 698 104 832 / contact@3mtravelagency.com", 15, 163);
+                      doc.text("Document généré automatiquement et sécurisé.", 15, 171);
+
+                      doc.save(`Quittance_3MTravel_${dossier.numero}.pdf`);
+                      toast.success("Téléchargement de votre quittance officielle en PDF.");
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2 px-4 rounded-xl flex items-center gap-2"
+                  >
+                    <Download className="w-4 h-4" /> Télécharger la Quittance PDF
+                  </Button>
+                </div>
               ) : (
                 <div className="w-full space-y-4 pt-2 border-t border-current/20">
                   <p className="text-xs font-semibold uppercase tracking-wider text-current/80">Modes de règlement des frais d'ouverture (65 000 XAF) :</p>
