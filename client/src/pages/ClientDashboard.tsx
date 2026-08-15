@@ -124,7 +124,7 @@ export default function ClientDashboard() {
   const [notificationReplyId, setNotificationReplyId] = useState<number | null>(null);
   const [notificationReplyText, setNotificationReplyText] = useState("");
   const [notificationReplyAttachment, setNotificationReplyAttachment] = useState<File | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; name: string; mimeType: string; index: number; total: number } | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; name: string; mimeType: string; index: number; total: number; notificationId: number | null; acknowledged: boolean } | null>(null);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -156,6 +156,7 @@ export default function ClientDashboard() {
     attachmentSignedUrl?: string | null;
     attachmentName?: string | null;
     attachmentMimeType?: string | null;
+    notificationId?: number | null;
     }>;
   const attachmentGallery = messagesWithAttachments
     .filter((message) => Boolean(message.attachmentSignedUrl))
@@ -163,17 +164,18 @@ export default function ClientDashboard() {
       url: message.attachmentSignedUrl as string,
       name: message.attachmentName || "Pièce jointe",
       mimeType: message.attachmentMimeType || "application/octet-stream",
+      notificationId: message.notificationId ?? null,
     }));
   const openAttachmentPreview = (index: number) => {
     const attachment = attachmentGallery[index];
-    if (attachment) setAttachmentPreview({ ...attachment, index, total: attachmentGallery.length });
+    if (attachment) setAttachmentPreview({ ...attachment, index, total: attachmentGallery.length, acknowledged: false });
   };
   const moveAttachment = (direction: -1 | 1) => {
     setAttachmentPreview((current) => {
       if (!current) return current;
       const nextIndex = current.index + direction;
       const nextAttachment = attachmentGallery[nextIndex];
-      return nextAttachment ? { ...nextAttachment, index: nextIndex, total: attachmentGallery.length } : current;
+      return nextAttachment ? { ...nextAttachment, index: nextIndex, total: attachmentGallery.length, acknowledged: current.acknowledged } : current;
     });
   };
   useEffect(() => {
@@ -266,6 +268,14 @@ export default function ClientDashboard() {
     reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Lecture du fichier impossible."));
     reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
     reader.readAsDataURL(file);
+  });
+  const acknowledgeNotificationMutation = trpc.caseTracking.markNotificationRead.useMutation({
+    onSuccess: async () => {
+      setAttachmentPreview((current) => current ? { ...current, acknowledged: true } : current);
+      await trpcUtils.caseTracking.getMyCases.invalidate();
+      toast.success("Accusé de réception enregistré.");
+    },
+    onError: (error) => toast.error(error.message || "L’accusé de réception n’a pas pu être enregistré."),
   });
   const setNotificationArchivedMutation = trpc.caseTracking.setNotificationArchived.useMutation({
     onSuccess: async ({ archived }) => {
@@ -1514,6 +1524,7 @@ export default function ClientDashboard() {
                     <Button type="button" variant="outline" onClick={() => moveAttachment(1)} disabled={attachmentPreview.index === attachmentPreview.total - 1} aria-label="Pièce jointe suivante">Suivant <ChevronRight className="ml-1 h-4 w-4" aria-hidden="true" /></Button>
                   </div>}
                   <div className="flex w-full flex-wrap justify-end gap-2 sm:w-auto">
+                  {attachmentPreview?.notificationId && <Button type="button" variant={attachmentPreview.acknowledged ? "secondary" : "default"} disabled={attachmentPreview.acknowledged || acknowledgeNotificationMutation.isPending} onClick={() => acknowledgeNotificationMutation.mutate({ notificationId: attachmentPreview.notificationId as number })} aria-live="polite"><CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" /> {attachmentPreview.acknowledged ? "Réception confirmée" : "Accuser réception"}</Button>}
                   {attachmentPreview && <Button type="button" variant="outline" onClick={() => printAttachment(attachmentPreview)}><Printer className="mr-2 h-4 w-4" aria-hidden="true" /> Imprimer</Button>}
                   {attachmentPreview && <Button asChild variant="outline"><a href={attachmentPreview.url} target="_blank" rel="noreferrer" download={attachmentPreview.name}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>}
                   <Button type="button" onClick={() => setAttachmentPreview(null)}>Fermer</Button>

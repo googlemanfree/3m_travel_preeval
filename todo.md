@@ -2810,4 +2810,10 @@
 - [x] Regrouper les pièces jointes par notification et intégrer un index de navigation dans la modale d’aperçu
 - [x] Ajouter les boutons Précédent et Suivant avec raccourcis clavier et indicateur de position (ex: 1/3)
 - [x] Valider les tests de non-régression
+- [x] Publier la mise à jour
+
+## Accusé de Réception depuis le Visualiseur Modal (v215)
+- [x] Relier les pièces jointes de la galerie modale à l’ID de notification source pour permettre un marquage lu en un clic
+- [x] Ajouter un bouton « Marquer comme lu / Accuser réception » dans le pied de page de la modale d’aperçu
+- [x] Valider les tests de non-régression
 - [ ] Publier la mise à jour

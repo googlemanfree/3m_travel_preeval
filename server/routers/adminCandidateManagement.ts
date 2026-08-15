@@ -332,12 +332,6 @@ export const adminCandidateManagementRouter = router({
           refuse: "Dossier refusé",
         };
         const visibleBody = `Mise à jour du dossier ${dossierNumberForMessage}${previousStatus !== input.status ? `\n\nNouveau statut : ${statusLabels[input.status] ?? input.status}` : ""}${Object.keys(profilePatch).length > 0 ? "\n\nL’équipe a également actualisé certaines informations de votre profil." : ""}${input.adminNotes ? `\n\nNote de l’équipe : ${input.adminNotes}` : ""}`;
-        await db.insert(candidateMessages).values({
-          candidateId: candidateIdForMessage,
-          senderRole: "advisor",
-          content: visibleBody,
-          isRead: false,
-        });
         const agencyResponse = ["soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "approuve", "soumis"].includes(input.status);
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateIdForMessage,
@@ -348,6 +342,13 @@ export const adminCandidateManagementRouter = router({
           isRead: false,
         });
         const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({
+          candidateId: candidateIdForMessage,
+          notificationId: notificationId || null,
+          senderRole: "advisor",
+          content: visibleBody,
+          isRead: false,
+        });
         const emailSent = candidateEmailForNotification
           ? await sendClientNotificationEmail({
               to: candidateEmailForNotification,
@@ -388,12 +389,6 @@ export const adminCandidateManagementRouter = router({
       const candidateId = await resolveCandidateIdForAdmin(input.candidateId);
       if (!candidateId) throw new TRPCError({ code: "NOT_FOUND", message: "Ce dossier n’est pas encore relié à un compte candidat." });
       const messageBody = input.content.trim();
-      await db.insert(candidateMessages).values({
-        candidateId,
-        senderRole: "advisor",
-        content: messageBody,
-        isRead: false,
-      });
       const notificationResult = await db.insert(clientNotifications).values({
         candidateId,
         type: "admin_message",
@@ -414,6 +409,13 @@ export const adminCandidateManagementRouter = router({
           })
         : false;
       const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: messageBody,
+        isRead: false,
+      });
       if (emailSent && notificationId > 0) {
         await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
       }

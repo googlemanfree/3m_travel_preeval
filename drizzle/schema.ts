@@ -225,6 +225,7 @@ export type InsertCandidateFile = typeof candidateFiles.$inferInsert;
 export const candidateMessages = mysqlTable("candidate_messages", {
   id: int("id").autoincrement().primaryKey(),
   candidateId: int("candidateId").notNull(),
+  notificationId: int("notificationId"),
   senderRole: mysqlEnum("senderRole", ["candidate", "advisor"]).notNull(),
   content: text("content").notNull(),
   attachmentUrl: text("attachmentUrl"),
