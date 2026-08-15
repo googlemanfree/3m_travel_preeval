@@ -24,7 +24,7 @@ export const caseTrackingRouter = router({
     return {
       cases: ownedCases.map(item => ({ ...item, requirements: requirements.filter(x => x.caseId === item.id), documents: documents.filter(x => x.caseId === item.id), history: history.filter(x => x.caseId === item.id) })),
       notifications,
-      unreadNotifications: notifications.filter(item => !item.isRead).length,
+      unreadNotifications: notifications.filter(item => !item.isRead && !item.isArchived).length,
     };
   }),
 
@@ -109,5 +109,12 @@ export const caseTrackingRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(clientNotifications).set({ isRead: true }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
     return { success: true };
+  }),
+
+  setNotificationArchived: candidateProcedure.input(z.object({ notificationId: z.number().int().positive(), archived: z.boolean() })).mutation(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(clientNotifications).set({ isArchived: input.archived }).where(and(eq(clientNotifications.id, input.notificationId), eq(clientNotifications.candidateId, ctx.candidate.id)));
+    return { success: true, archived: input.archived };
   }),
 });

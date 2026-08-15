@@ -24,6 +24,9 @@ import {
   CreditCard,
   MessageSquare,
   Bell,
+  Search,
+  Archive,
+  RotateCcw,
   Settings,
   LogOut,
   Heart,
@@ -112,6 +115,8 @@ export default function ClientDashboard() {
   const [correctionFile, setCorrectionFile] = useState<File | null>(null);
   const [paymentReceiptUploading, setPaymentReceiptUploading] = useState(false);
   const [notificationFilter, setNotificationFilter] = useState<"all" | "admin" | "agency">("all");
+  const [notificationView, setNotificationView] = useState<"active" | "archived">("active");
+  const [notificationQuery, setNotificationQuery] = useState("");
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -180,6 +185,13 @@ export default function ClientDashboard() {
       await trpcUtils.caseTracking.getMyCases.invalidate();
     },
     onError: (error) => toast.error(error.message || "La notification n’a pas pu être marquée comme lue."),
+  });
+  const setNotificationArchivedMutation = trpc.caseTracking.setNotificationArchived.useMutation({
+    onSuccess: async ({ archived }) => {
+      await trpcUtils.caseTracking.getMyCases.invalidate();
+      toast.success(archived ? "Notification archivée." : "Notification restaurée.");
+    },
+    onError: (error) => toast.error(error.message || "La notification n’a pas pu être mise à jour."),
   });
   const initiatePaymentMutation = trpc.application.initiateMyCinetPayPayment.useMutation({
     onSuccess: (result) => {
@@ -585,7 +597,13 @@ export default function ClientDashboard() {
       categoryLabel: isAgency ? "Agence de placement" : "Administration",
     };
   });
-  const filteredNotifications = notificationItems.filter((notification) => notificationFilter === "all" || notification.category === notificationFilter);
+  const filteredNotifications = notificationItems.filter((notification) => {
+    const query = notificationQuery.trim().toLocaleLowerCase("fr-FR");
+    const matchesView = notificationView === "archived" ? notification.isArchived : !notification.isArchived;
+    const matchesCategory = notificationFilter === "all" || notification.category === notificationFilter;
+    const matchesSearch = !query || `${notification.title} ${notification.body} ${notification.categoryLabel}`.toLocaleLowerCase("fr-FR").includes(query);
+    return matchesView && matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -1292,7 +1310,17 @@ export default function ClientDashboard() {
                   ))}
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                    <Input value={notificationQuery} onChange={(event) => setNotificationQuery(event.target.value)} placeholder="Rechercher un message, une remarque ou une agence" aria-label="Rechercher dans les notifications" className="pl-9" />
+                  </div>
+                  <div className="flex gap-2" role="group" aria-label="Afficher les notifications actives ou archivées">
+                    <Button type="button" size="sm" variant={notificationView === "active" ? "default" : "outline"} onClick={() => setNotificationView("active")}>Actives</Button>
+                    <Button type="button" size="sm" variant={notificationView === "archived" ? "default" : "outline"} onClick={() => setNotificationView("archived")}><Archive className="mr-1 h-4 w-4" aria-hidden="true" /> Archivées</Button>
+                  </div>
+                </div>
                 {caseTrackingLoading ? (
                   <div className="flex items-center gap-2 py-8 text-sm text-slate-600" role="status"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Chargement des notifications…</div>
                 ) : filteredNotifications.length === 0 ? (
@@ -1307,7 +1335,13 @@ export default function ClientDashboard() {
                           <p className="mt-1 whitespace-pre-line text-sm text-slate-700">{notification.body}</p>
                           <p className="mt-2 text-xs text-slate-500">{new Date(notification.createdAt).toLocaleString("fr-FR")}</p>
                         </div>
-                        {!notification.isRead && <Button type="button" size="sm" variant="outline" disabled={markNotificationReadMutation.isPending} onClick={() => markNotificationReadMutation.mutate({ notificationId: notification.id })}>Marquer comme lue</Button>}
+                        <div className="flex flex-wrap gap-2 sm:justify-end">
+                          {!notification.isRead && <Button type="button" size="sm" variant="outline" disabled={markNotificationReadMutation.isPending} onClick={() => markNotificationReadMutation.mutate({ notificationId: notification.id })}>Marquer comme lue</Button>}
+                          <Button type="button" size="sm" variant="ghost" disabled={setNotificationArchivedMutation.isPending} onClick={() => setNotificationArchivedMutation.mutate({ notificationId: notification.id, archived: !notification.isArchived })}>
+                            {notification.isArchived ? <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" /> : <Archive className="mr-1 h-4 w-4" aria-hidden="true" />}
+                            {notification.isArchived ? "Restaurer" : "Archiver"}
+                          </Button>
+                        </div>
                       </div>
                     </article>
                   ))

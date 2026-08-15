@@ -2765,4 +2765,10 @@
 - [x] Ajouter les filtres de lecture et de catégorie (Administration vs Agences partenaires)
 - [x] Vérifier la synchronisation avec le back-office sans modifier la structure existante
 - [x] Ajouter les tests de non-régression
+- [x] Publier la mise à jour
+
+## Recherche & Archivage Notifications (v207)
+- [x] Ajouter un champ de recherche textuelle et une vue des notifications archivées dans le centre candidat
+- [x] Étendre le contrat serveur et le schéma de notifications pour supporter l’état archivé
+- [x] Valider les tests de régression
 - [ ] Publier la mise à jour
