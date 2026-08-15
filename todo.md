@@ -2851,7 +2851,7 @@
 - [x] Publier la mise à jour sur la plateforme
 
 ## Catalogue Mondial e-Visa Étendu avec Visuels et CTA (v221)
-- [ ] Recenser l'ensemble exhaustif des pays disposant d'un e-Visa, ETA ou e-VOA officiel à travers le monde
-- [ ] Intégrer des images professionnelles et représentatives pour chaque destination
-- [ ] Ajouter un bouton « Lancer la procédure » interactif sur chaque carte avec redirection vers le formulaire de demande ou WhatsApp
-- [ ] Valider l'affichage responsive et le filtrage multicritère
+- [x] Recenser l'ensemble exhaustif des pays disposant d'un e-Visa, ETA ou e-VOA officiel à travers le monde
+- [x] Intégrer des images professionnelles et représentatives pour chaque destination
+- [x] Ajouter un bouton « Lancer la procédure » interactif sur chaque carte avec redirection vers le formulaire de demande ou WhatsApp
+- [x] Valider l'affichage responsive et le filtrage multicritère
