@@ -71,7 +71,7 @@ export default function ClientSpaceNavigation() {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
           {quickLinks.map(({ href, label, description, icon: Icon, tone }) => (
-            <a key={href} href={href} className="group rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <a key={href} href={href} className="group min-h-36 rounded-2xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-white hover:shadow-md">
               <span className={`inline-flex rounded-xl p-2 ${tone}`}><Icon className="h-5 w-5" aria-hidden="true" /></span>
               <span className="mt-3 block text-sm font-black text-slate-900">{label}</span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
@@ -87,14 +87,14 @@ export default function ClientSpaceNavigation() {
         </div>
         <div className="mt-4 grid gap-3 rounded-2xl border border-white/80 bg-white/70 p-3 sm:grid-cols-2" aria-label="Filtres des demandes de vols">
           <label className="flex items-center gap-2 text-xs font-bold text-sky-950"><Filter className="h-4 w-4 text-sky-700" />
-            <span className="sr-only">Filtrer par statut</span>
+            <span className="shrink-0">Statut</span>
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-11 min-w-0 flex-1 rounded-xl border border-sky-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="all">Tous les statuts</option>
               {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-2 text-xs font-bold text-sky-950"><CalendarDays className="h-4 w-4 text-sky-700" />
-            <span className="sr-only">Filtrer par date</span>
+            <span className="shrink-0">Date</span>
             <select value={dateFilter} onChange={(event) => setDateFilter(event.target.value as DateFilter)} className="h-11 min-w-0 flex-1 rounded-xl border border-sky-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="all">Toutes les dates</option>
               <option value="7">7 derniers jours</option>

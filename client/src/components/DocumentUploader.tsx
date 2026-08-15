@@ -199,7 +199,7 @@ export function DocumentUploader({
   const errorCount = files.filter((f) => f.status === "error").length;
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <Card className="p-4 sm:p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="mb-6">
         <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
           <Upload className="w-5 h-5 text-blue-600" />
@@ -212,13 +212,17 @@ export function DocumentUploader({
 
       {/* Category Selector */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-900 mb-2">
+          <label id="document-category-label" className="block text-sm font-semibold text-gray-900 mb-2">
           Catégorie du document
         </label>
         <div className="relative">
           <button
+            type="button"
             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-            className="w-full flex items-center justify-between px-4 py-2 bg-white border border-gray-300 rounded-lg hover:border-blue-400 transition"
+            aria-haspopup="listbox"
+            aria-expanded={showCategoryDropdown}
+            aria-labelledby="document-category-label"
+            className="h-12 w-full flex items-center justify-between px-4 bg-white border border-gray-300 rounded-lg hover:border-blue-400 transition"
           >
             <div className="flex items-center gap-2">
               <span className="text-xl">{selectedCategoryObj?.icon}</span>
@@ -234,15 +238,20 @@ export function DocumentUploader({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+                role="listbox"
+                aria-labelledby="document-category-label"
               >
                 {DOCUMENT_CATEGORIES.map((category) => (
                   <button
+                    type="button"
                     key={category.id}
                     onClick={() => {
                       setSelectedCategory(category.id);
                       setShowCategoryDropdown(false);
                     }}
-                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-blue-50 transition ${
+                    role="option"
+                    aria-selected={selectedCategory === category.id}
+                    className={`min-h-12 w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-blue-50 transition ${
                       selectedCategory === category.id ? "bg-blue-100" : ""
                     }`}
                   >
@@ -297,7 +306,7 @@ export function DocumentUploader({
             type="button"
             variant="outline"
             onClick={() => fileInputRef.current?.click()}
-            className="mt-2"
+            className="mt-2 h-11"
           >
             Parcourir les fichiers
           </Button>
@@ -337,7 +346,7 @@ export function DocumentUploader({
               </div>
             </div>
 
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="mobile-scroll-region space-y-2 max-h-96 overflow-y-auto">
               {files.map((file) => {
                 const fileCategoryObj = getCategoryById(file.category || "other");
                 return (
@@ -346,7 +355,7 @@ export function DocumentUploader({
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition"
+                    className="flex flex-col items-stretch gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition sm:flex-row sm:items-center"
                   >
                     <File className="w-5 h-5 text-gray-400 flex-shrink-0" />
 
@@ -376,7 +385,7 @@ export function DocumentUploader({
                       )}
 
                       {file.error && (
-                        <p className="text-xs text-red-600 mt-1">{file.error}</p>
+                        <p className="text-xs text-red-600 mt-1" role="alert">{file.error}</p>
                       )}
                     </div>
 
@@ -396,8 +405,9 @@ export function DocumentUploader({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleEditCategory(file.id)}
-                          className="text-blue-600 hover:text-blue-700 transition p-1 rounded hover:bg-blue-50"
-                          title="Modifier la catégorie"
+                          type="button"
+                          className="touch-target text-blue-600 hover:text-blue-700 transition p-1 rounded hover:bg-blue-50"
+                          aria-label={`Modifier la catégorie de ${file.name}`}
                         >
                           <Edit2 className="w-4 h-4" />
                         </motion.button>
@@ -405,8 +415,9 @@ export function DocumentUploader({
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => removeFile(file.id)}
-                          className="text-red-600 hover:text-red-700 transition p-1 rounded hover:bg-red-50"
-                          title="Supprimer le fichier"
+                          type="button"
+                          className="touch-target text-red-600 hover:text-red-700 transition p-1 rounded hover:bg-red-50"
+                          aria-label={`Supprimer ${file.name}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </motion.button>
@@ -420,7 +431,7 @@ export function DocumentUploader({
             {pendingCount > 0 && (
               <Button
                 onClick={handleUploadAll}
-                className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                className="h-12 w-full mt-4 bg-blue-600 hover:bg-blue-700"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Téléverser {pendingCount} fichier{pendingCount > 1 ? "s" : ""}

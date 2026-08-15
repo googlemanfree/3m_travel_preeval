@@ -143,12 +143,12 @@ export default function EvaluationSpace() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:w-auto sm:justify-end">
             <Button
               onClick={handleManualRefresh}
               variant="outline"
               size="sm"
-              className="gap-2 text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 gap-2 text-gray-700 bg-white hover:bg-gray-50"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-blue-600" : ""}`} />
               Actualiser
@@ -157,7 +157,7 @@ export default function EvaluationSpace() {
               onClick={() => setLocation("/")}
               variant="outline"
               size="sm"
-              className="text-gray-700 bg-white hover:bg-gray-50"
+              className="h-11 text-gray-700 bg-white hover:bg-gray-50"
             >
               Accueil
             </Button>
@@ -168,6 +168,7 @@ export default function EvaluationSpace() {
               }}
               variant="destructive"
               size="sm"
+              className="h-11"
             >
               Déconnexion
             </Button>
@@ -176,9 +177,9 @@ export default function EvaluationSpace() {
       </header>
 
       {/* Barre de navigation principale du tableau de bord */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
           <ClientSpaceNavigation />
-          <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-gray-200">
+          <div className="mobile-scroll-region -mx-4 mt-4 flex items-center gap-2 overflow-x-auto border-b border-gray-200 px-4 pb-2 sm:mx-0 sm:px-0" role="tablist" aria-label="Sections de l’espace candidat">
           {[
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
@@ -193,11 +194,15 @@ export default function EvaluationSpace() {
             return (
               <button
                 key={tab.id}
+                type="button"
                 onClick={() => {
                   setActiveTab(tab.id as any);
                   setLocation(`/mon-espace?section=${tab.id}`);
                 }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shrink-0 ${
+                role="tab"
+                aria-selected={isActive}
+                aria-controls="candidate-space-content"
+                className={`flex min-h-11 items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition shrink-0 ${
                   isActive
                     ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
                     : "bg-white text-gray-600 hover:bg-gray-100 border border-gray-200"
@@ -211,7 +216,7 @@ export default function EvaluationSpace() {
         </div>
 
         {/* Contenu dynamique par onglet */}
-        <div className="mt-6">
+        <div id="candidate-space-content" className="mt-6" role="tabpanel" tabIndex={-1}>
           {activeTab === "overview" && (
             <div className="space-y-6">
               {/* Widgets statistiques et progression */}

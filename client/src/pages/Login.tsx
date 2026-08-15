@@ -127,7 +127,7 @@ export default function Login() {
         )}
 
         {/* Formulaire */}
-        <div className="p-8">
+        <div className="p-5 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Adresse email</Label>
@@ -139,7 +139,7 @@ export default function Login() {
                   placeholder="votre@email.com"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="h-12 pl-10"
                   autoComplete="email"
                   required
                 />
@@ -156,14 +156,15 @@ export default function Login() {
                   placeholder="••••••••"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="h-12 pl-10 pr-12"
                   autoComplete="current-password"
                   required
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="touch-target absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -206,7 +207,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loginMutation.isPending}
-              className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98]"
+              className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98]"
             >
               {loginMutation.isPending ? (
                 <span className="flex items-center gap-2">
@@ -222,7 +223,7 @@ export default function Login() {
           </form>
 
           {/* Se souvenir de moi + Mot de passe oublié + Renvoyer email */}
-          <div className="flex items-center justify-between mt-4 mb-2 flex-wrap gap-2">
+          <div className="mt-4 mb-2 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -232,7 +233,7 @@ export default function Login() {
               />
               <span className="text-sm text-gray-600">Se souvenir de moi</span>
             </label>
-            <div className="flex gap-2 text-sm">
+            <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
               <button
                 type="button"
                 onClick={() => setShowResendModal(true)}

@@ -2636,3 +2636,17 @@
 - [x] Auditer la sécurité des sessions, e-mails, documents, rôles, paiements et tâches automatiques
 - [x] Contrôler les erreurs techniques, les tests, la performance, l’accessibilité et l’affichage mobile
 - [x] Rédiger un rapport priorisé avec constats, risques, correctifs et paramètres externes à confirmer
+
+## Accessibilité et expérience mobile candidat (v191)
+- [x] Auditer la navigation, les formulaires, les contenus longs et les tableaux candidats à 375 px
+- [x] Corriger les contrastes faibles, les libellés accessibles et les états de focus clavier
+- [x] Garantir des zones tactiles et boutons utilisables sur petits écrans
+- [x] Adapter les tableaux et cartes des espaces candidats à la lecture mobile
+- [x] Ajouter des tests de contrat d’accessibilité et vérifier desktop/mobile avant publication
+
+## Accessibilité et expérience mobile candidat (v191)
+- [x] Auditer la navigation, les formulaires, les contenus longs et les tableaux candidats à 375 px
+- [x] Corriger les contrastes faibles, les libellés accessibles et les états de focus clavier
+- [x] Garantir des zones tactiles et boutons utilisables sur petits écrans
+- [x] Adapter les tableaux et cartes des espaces candidats à la lecture mobile
+- [x] Ajouter des tests de contrat d’accessibilité et vérifier desktop/mobile avant publication

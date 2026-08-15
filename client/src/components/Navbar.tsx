@@ -21,8 +21,8 @@ const menuItems = [
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-1"
-    : "px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
+    ? "min-h-11 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-1"
+    : "min-h-11 px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
 
 const authButtonClass = "inline-flex h-12 w-[148px] items-center justify-center rounded-xl px-4 text-center text-sm font-bold transition-all duration-200 active:scale-95";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -168,7 +168,7 @@ export default function Navbar() {
                   aria-expanded={isProfileOpen}
                   aria-haspopup="menu"
                   onClick={() => setIsProfileOpen((open) => !open)}
-                  className="rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-blue-700"
+                  className="touch-target rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-blue-700"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
@@ -239,8 +239,8 @@ export default function Navbar() {
 
           <div className="flex lg:hidden items-center gap-2">
             <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label="Sélection de langue / Language selector">
-              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span></button>
-              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span></button>
+              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`touch-target px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span></button>
+              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`touch-target px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button
@@ -248,7 +248,7 @@ export default function Navbar() {
               aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition focus:outline-none"
+              className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
               animate={isMenuOpen ? "open" : "closed"}
               variants={hamburgerVariants}
               transition={{ duration: 0.3 }}
@@ -317,7 +317,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent(item.href)}
                   onFocus={() => handleNavigationIntent(item.href)}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
-                  className="block px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors w-full text-left"
+                  className="flex min-h-11 items-center px-3 py-2.5 rounded-xl font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors w-full text-left"
                   variants={itemVariants}
                   initial="hidden"
                   animate="visible"

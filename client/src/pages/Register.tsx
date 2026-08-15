@@ -183,12 +183,12 @@ export default function Register() {
       </div>
 
       {/* Panneau droit — Formulaire */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-          className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8"
+          className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-5 sm:p-8"
         >
           {/* Header */}
           <div className="text-center mb-8">
@@ -210,7 +210,8 @@ export default function Register() {
                   placeholder="Jean Dupont"
                   value={form.fullName}
                   onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
-                  className="pl-10"
+                  autoComplete="name"
+                  className="h-12 pl-10"
                   required
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
@@ -228,7 +229,8 @@ export default function Register() {
                   placeholder="jean@exemple.com"
                   value={form.email}
                   onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="pl-10"
+                  autoComplete="email"
+                  className="h-12 pl-10"
                   required
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
@@ -262,7 +264,8 @@ export default function Register() {
                   placeholder="••••••••"
                   value={form.password}
                   onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-                  className="pl-10 pr-10"
+                  autoComplete="new-password"
+                  className="h-12 pl-10 pr-12"
                   required
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
@@ -270,7 +273,7 @@ export default function Register() {
                   type="button"
                   aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="touch-target absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -315,7 +318,8 @@ export default function Register() {
                   placeholder="••••••••"
                   value={form.confirmPassword}
                   onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
-                  className="pl-10 pr-10"
+                  autoComplete="new-password"
+                  className="h-12 pl-10 pr-12"
                   required
                   disabled={registerMutation.isPending || showSuccessAnimation}
                 />
@@ -323,7 +327,7 @@ export default function Register() {
                   type="button"
                   aria-label={showConfirmPassword ? "Masquer la confirmation du mot de passe" : "Afficher la confirmation du mot de passe"}
                   onClick={() => setShowConfirmPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="touch-target absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -336,6 +340,7 @@ export default function Register() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     className="flex items-center gap-2 p-2 mt-1 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs"
+                    role="alert"
                   >
                     <AlertCircle className="w-3 h-3 flex-shrink-0" />
                     Les mots de passe ne correspondent pas
@@ -361,7 +366,7 @@ export default function Register() {
               <Button
                 type="submit"
                 disabled={registerMutation.isPending || isUploadingPortrait || !isFormValid || showSuccessAnimation}
-                className="w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold py-3 rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending || isUploadingPortrait ? (
                   <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
