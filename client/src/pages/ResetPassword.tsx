@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
@@ -37,14 +37,33 @@ export default function ResetPassword() {
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+
+  useEffect(() => {
+    if (!success || countdown <= 0) return;
+    const timer = window.setTimeout(() => setCountdown(value => value - 1), 1000);
+    return () => window.clearTimeout(timer);
+  }, [success, countdown]);
+
+  useEffect(() => {
+    if (!success || countdown !== 0) return;
+    toast.info("Redirection vers la page de connexion…", {
+      duration: 1200,
+      description: "Connectez-vous avec votre nouveau mot de passe.",
+    });
+    navigate("/login");
+  }, [success, countdown, navigate]);
 
   const strength = getPasswordStrength(password);
 
   const resetMutation = trpc.candidate.resetPassword.useMutation({
     onSuccess: () => {
       setSuccess(true);
-      toast.success("Mot de passe réinitialisé avec succès !");
-      setTimeout(() => navigate("/login"), 3000);
+      setCountdown(3);
+      toast.success("Mot de passe réinitialisé avec succès", {
+        duration: 3000,
+        description: "Votre nouveau mot de passe est enregistré. Vous allez être redirigé vers la connexion.",
+      });
     },
     onError: (err) => {
       toast.error(err.message);
@@ -95,7 +114,9 @@ export default function ResetPassword() {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200 }}>
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-3" />
                 <h1 className="text-2xl font-bold text-gray-900">Mot de passe modifié !</h1>
-                <p className="text-gray-500 mt-2 text-sm">Redirection vers la connexion dans 3 secondes...</p>
+                <p className="text-gray-500 mt-2 text-sm" aria-live="polite">
+                  Redirection vers la connexion dans {countdown} seconde{countdown > 1 ? "s" : ""}…
+                </p>
               </motion.div>
             ) : (
               <>

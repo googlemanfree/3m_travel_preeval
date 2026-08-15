@@ -2623,3 +2623,9 @@
 - [x] Afficher un toast clair juste avant la redirection automatique vers /login
 - [x] Rendre le toast accessible, visible sur mobile et synchronisé avec le compte à rebours
 - [x] Ajouter les tests et publier
+
+## Toast après réinitialisation du mot de passe (v189)
+- [x] Auditer le succès actuel de ResetPassword et la redirection vers /login
+- [x] Ajouter un toast de succès clair après l’enregistrement du nouveau mot de passe
+- [x] Indiquer la prochaine étape de connexion et conserver un accès manuel
+- [x] Ajouter les tests, vérifier le responsive et publier
