@@ -2870,6 +2870,11 @@
 - [x] Valider le comportement dynamique et publier la mise à jour (v223)
 
 ## Infobulles Explicatives et Exemples Visuels pour les Documents Requis (v224)
-- [ ] Enrichir le générateur de documents dans Evisas.tsx avec des infobulles explicatives détaillant les attentes pour chaque pièce (format, validité, conseils)
-- [ ] Ajouter des exemples visuels ou des vignettes d'aide contextuelle pour guider les candidats lors de la préparation des fichiers
-- [ ] Tester l'accessibilité au clavier et sur mobile des infobulles et publier la mise à jour (v224)
+- [x] Enrichir le générateur de documents dans Evisas.tsx avec des infobulles explicatives détaillant les attentes pour chaque pièce (format, validité, conseils)
+- [x] Ajouter des exemples visuels ou des vignettes d'aide contextuelle pour guider les candidats lors de la préparation des fichiers
+- [x] Tester l'accessibilité au clavier et sur mobile des infobulles et publier la mise à jour (v224)
+
+## Checklist Interactive et Barre de Progression des Documents (v225)
+- [ ] Transformer la liste des documents requis dans Evisas.tsx en une checklist interactive avec cases à cocher et calcul de progression en temps réel
+- [ ] Ajouter une barre de progression visuelle pour chaque destination indiquant le pourcentage de pièces préparées
+- [ ] Valider la persistance locale de l'état des cases cochées et publier la mise à jour (v225)

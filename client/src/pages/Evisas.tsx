@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare, HelpCircle } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare, HelpCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -897,12 +897,19 @@ interface ExpandedItem {
   [key: string]: boolean;
 }
 
+interface ChecklistState {
+  [countryKey: string]: {
+    [docIndex: number]: boolean;
+  };
+}
+
 export default function Evisas() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
   const [selectedNationalite, setSelectedNationalite] = useState('Camerounaise');
   const [expandedItems, setExpandedItems] = useState<ExpandedItem>({});
   const [activeTooltipDoc, setActiveTooltipDoc] = useState<string | null>(null);
+  const [checklist, setChecklist] = useState<ChecklistState>({});
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
 
@@ -946,6 +953,19 @@ export default function Evisas() {
     return baseDocs;
   };
 
+  const toggleChecklistDoc = (country: string, docIndex: number) => {
+    setChecklist(prev => {
+      const countryState = prev[country] || {};
+      return {
+        ...prev,
+        [country]: {
+          ...countryState,
+          [docIndex]: !countryState[docIndex]
+        }
+      };
+    });
+  };
+
   const filteredEvisas = useMemo(() => {
     return ultimateWorldEvisasDatabase.filter(evisa => {
       const matchesSearch = 
@@ -984,13 +1004,13 @@ export default function Evisas() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Globe className="w-4 h-4" />
-            Catalogue Mondial, Simulateur & Infobulles Documentaires
+            Catalogue Mondial, Simulateur & Checklist Interactive
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
-            Guide des e-Visas avec <span className="text-blue-600">Assistance Documentaire Intégrée</span>
+            Guide des e-Visas avec <span className="text-blue-600">Suivi de Préparation de Dossier</span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-gray-600">
-            Survolez ou cliquez sur les infobulles d'aide de chaque document requis pour connaître exactement le format, la validité et les conseils d'experts avant de soumettre votre dossier.
+            Cochez les pièces au fur et à mesure de leur obtention pour suivre votre barre de progression en temps réel avant de confier votre dossier à nos experts.
           </p>
         </div>
 
@@ -999,10 +1019,10 @@ export default function Evisas() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-200 px-3 py-1 rounded-full text-xs font-semibold mb-2">
-                <Sparkles className="w-3.5 h-3.5" /> Simulateur Dynamique d'Éligibilité
+                <Sparkles className="w-3.5 h-3.5" /> Simulateur & Checklist Active
               </div>
               <h2 className="text-2xl font-bold">Sélectionnez votre passeport / nationalité</h2>
-              <p className="text-blue-200 text-sm mt-1">Le système adapte les exigences documentaires en temps réel.</p>
+              <p className="text-blue-200 text-sm mt-1">La checklist s'ajuste pour chaque pays selon votre profil.</p>
             </div>
             <div className="w-full md:w-auto min-w-[260px]">
               <label className="block text-xs font-medium text-blue-200 mb-1.5">Votre Nationalité :</label>
@@ -1061,8 +1081,8 @@ export default function Evisas() {
             Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> destinations pour la nationalité <span className="text-blue-600 font-bold">{selectedNationalite}</span>
           </p>
           <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg">
-            <HelpCircle className="w-4 h-4 text-blue-600" />
-            <span>Cliquez sur l'icône d'aide à côté de chaque document pour afficher ses critères précis</span>
+            <CheckSquare className="w-4 h-4 text-blue-600" />
+            <span>Cochez les pièces dans chaque carte pour suivre votre avancement</span>
           </div>
         </div>
 
@@ -1072,6 +1092,10 @@ export default function Evisas() {
             const eligibility = getEligibilityStatus(evisa.country, selectedNationalite);
             const StatusIcon = eligibility.icon;
             const dynamicDocs = getDynamicRequiredDocuments(evisa.country, selectedNationalite);
+            
+            const countryChecklist = checklist[evisa.country] || {};
+            const completedCount = dynamicDocs.filter((_, idx) => countryChecklist[idx]).length;
+            const progressPercent = Math.round((completedCount / dynamicDocs.length) * 100);
 
             return (
               <div
@@ -1125,39 +1149,62 @@ export default function Evisas() {
                     </div>
                   </div>
 
-                  {/* Dynamic Required Documents Section with Tooltips */}
+                  {/* Interactive Checklist & Progress Bar Section */}
                   <div className="border-t border-gray-100 pt-3 mb-5">
-                    <button
-                      onClick={() => toggleExpanded(evisa.country)}
-                      className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 hover:text-blue-600 transition-colors"
-                    >
-                      <span className="flex items-center gap-1.5">
+                    
+                    {/* Progress Header */}
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        onClick={() => toggleExpanded(evisa.country)}
+                        className="flex items-center gap-1.5 text-xs font-bold text-gray-800 hover:text-blue-600 transition-colors"
+                      >
                         <CheckSquare className="w-4 h-4 text-blue-600" />
-                        Documents requis ({dynamicDocs.length} pièces)
+                        <span>Checklist ({completedCount}/{dynamicDocs.length})</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedItems[evisa.country] ? 'rotate-180' : ''}`} />
+                      </button>
+                      <span className={`text-xs font-extrabold ${progressPercent === 100 ? 'text-emerald-600' : 'text-blue-600'}`}>
+                        {progressPercent}%
                       </span>
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${expandedItems[evisa.country] ? 'rotate-180' : ''}`}
-                      />
-                    </button>
+                    </div>
 
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-3">
+                      <div 
+                        className={`h-full transition-all duration-500 ${progressPercent === 100 ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+
+                    {/* Expanded Checklist Items */}
                     {expandedItems[evisa.country] && (
-                      <div className="mt-3 space-y-2.5 text-xs text-gray-600 bg-blue-50/40 p-3.5 rounded-xl border border-blue-100">
-                        <p className="font-bold text-blue-900 mb-2">Pièces exigées pour passeport {selectedNationalite} :</p>
+                      <div className="mt-3 space-y-2 text-xs text-gray-600 bg-blue-50/40 p-3.5 rounded-xl border border-blue-100">
+                        <p className="font-bold text-blue-900 mb-2">Cochez vos pièces préparées :</p>
                         
                         <div className="space-y-2">
                           {dynamicDocs.map((docText, idx) => {
+                            const isChecked = !!countryChecklist[idx];
                             const detail = getDocumentDetail(docText);
                             const docKey = `${evisa.country}-${idx}`;
                             const isTooltipOpen = activeTooltipDoc === docKey;
 
                             return (
-                              <div key={idx} className="bg-white p-2 rounded-lg border border-blue-100 shadow-xs">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium text-gray-800">{docText}</span>
+                              <div key={idx} className={`p-2.5 rounded-lg border transition-all ${isChecked ? 'bg-emerald-50/70 border-emerald-200' : 'bg-white border-blue-100 shadow-xs'}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <label className="flex items-center gap-2.5 cursor-pointer flex-1">
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleChecklistDoc(evisa.country, idx)}
+                                      className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className={`font-medium ${isChecked ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                                      {docText}
+                                    </span>
+                                  </label>
                                   <button
                                     onClick={() => setActiveTooltipDoc(isTooltipOpen ? null : docKey)}
-                                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors"
-                                    title="Afficher l'aide et les conseils"
+                                    className="text-blue-600 hover:text-blue-800 p-1 transition-colors shrink-0"
+                                    title="Aide et conseils"
                                   >
                                     <HelpCircle className="w-4 h-4" />
                                   </button>
