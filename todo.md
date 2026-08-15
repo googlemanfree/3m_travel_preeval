@@ -2834,6 +2834,11 @@
 - [x] Vérifier l’accessibilité
 - [x] Publier la mise à jour
 
+## Catalogue e-Visa Mondial et Nettoyage (v220)
+- [x] Auditer la liste des e-Visas, retirer les faux positifs (Schengen, visas consulaires)
+- [x] Compléter et structurer rigoureusement le catalogue mondial des pays e-Visa, ETA et e-VOA
+- [x] Publier la mise à jour et vérifier son accessibilité sur la plateforme
+
 ## Ajustements du Moteur de Scoring et Traçabilité (v219)
 - [ ] Supprimer les scores par défaut arbitraires en l'absence de `scoringDetails` et exiger une évaluation basée sur les critères réels
 - [ ] Clarifier l'intitulé du rapport en « Indice de Faisabilité Préliminaire 3M (IFP 3M) » pour éviter toute confusion avec une décision officielle d'immigration
@@ -2844,3 +2849,9 @@
 - [x] Ajouter une section de recommandations personnalisées dans evaluationService.ts pour suggérer des améliorations ciblées (langues, expérience, formation)
 - [x] Écrire un test unitaire pour vérifier la pertinence des recommandations générées selon le profil
 - [x] Publier la mise à jour sur la plateforme
+
+## Catalogue Mondial e-Visa Étendu avec Visuels et CTA (v221)
+- [ ] Recenser l'ensemble exhaustif des pays disposant d'un e-Visa, ETA ou e-VOA officiel à travers le monde
+- [ ] Intégrer des images professionnelles et représentatives pour chaque destination
+- [ ] Ajouter un bouton « Lancer la procédure » interactif sur chaque carte avec redirection vers le formulaire de demande ou WhatsApp
+- [ ] Valider l'affichage responsive et le filtrage multicritère
