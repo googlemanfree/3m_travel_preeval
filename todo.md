@@ -2840,11 +2840,11 @@
 - [x] Publier la mise à jour et vérifier son accessibilité sur la plateforme
 
 ## Ajustements du Moteur de Scoring et Traçabilité (v219)
-- [ ] Supprimer les scores par défaut arbitraires en l'absence de `scoringDetails` et exiger une évaluation basée sur les critères réels
-- [ ] Clarifier l'intitulé du rapport en « Indice de Faisabilité Préliminaire 3M (IFP 3M) » pour éviter toute confusion avec une décision officielle d'immigration
-- [ ] Améliorer la pondération linguistique et l'ajustement de l'âge dans le service de scoring
-- [ ] Ajouter une traçabilité obligatoire des modifications manuelles de score par l'administrateur avec motif enregistré dans les logs d'audit
-- [ ] Valider l'ensemble avec des tests unitaires et un build de production
+- [x] Supprimer les scores par défaut arbitraires en l'absence de `scoringDetails` et exiger une évaluation basée sur les critères réels
+- [x] Clarifier l'intitulé du rapport en « Indice de Faisabilité Préliminaire 3M (IFP 3M) » pour éviter toute confusion avec une décision officielle d'immigration
+- [x] Améliorer la pondération linguistique et l'ajustement de l'âge dans le service de scoring
+- [x] Ajouter une traçabilité obligatoire des modifications manuelles de score par l'administrateur avec motif enregistré dans les logs d'audit
+- [x] Valider l'ensemble avec des tests unitaires et un build de production
 
 - [x] Ajouter une section de recommandations personnalisées dans evaluationService.ts pour suggérer des améliorations ciblées (langues, expérience, formation)
 - [x] Écrire un test unitaire pour vérifier la pertinence des recommandations générées selon le profil
@@ -2875,6 +2875,6 @@
 - [x] Tester l'accessibilité au clavier et sur mobile des infobulles et publier la mise à jour (v224)
 
 ## Checklist Interactive et Barre de Progression des Documents (v225)
-- [ ] Transformer la liste des documents requis dans Evisas.tsx en une checklist interactive avec cases à cocher et calcul de progression en temps réel
-- [ ] Ajouter une barre de progression visuelle pour chaque destination indiquant le pourcentage de pièces préparées
-- [ ] Valider la persistance locale de l'état des cases cochées et publier la mise à jour (v225)
+- [x] Transformer la liste des documents requis dans Evisas.tsx en une checklist interactive avec cases à cocher et calcul de progression en temps réel
+- [x] Ajouter une barre de progression visuelle pour chaque destination indiquant le pourcentage de pièces préparées
+- [x] Valider la persistance locale de l'état des cases cochées et publier la mise à jour (v225)
