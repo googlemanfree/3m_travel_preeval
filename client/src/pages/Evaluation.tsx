@@ -293,10 +293,14 @@ export default function Evaluation() {
                 <select value={form.destinationCategory} onChange={(e) => update('destinationCategory', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
                   <option value="canada">Canada</option>
                   <option value="schengen">Europe / Schengen</option>
-                  <option value="autre">Autre destination</option>
+                  <option value="autre">Monde — laissez-nous comparer les possibilités</option>
                 </select>
               </div>
-              <div><Label>Pays précis</Label><Input value={form.destinationCountry} onChange={(e) => update('destinationCountry', e.target.value)} placeholder="Ex: Canada, Luxembourg, Pologne..." className="mt-1" /></div>
+              <div>
+                <Label>Pays précis ou zone souhaitée</Label>
+                <Input value={form.destinationCountry} onChange={(e) => update('destinationCountry', e.target.value)} placeholder="Ex: Canada, Luxembourg, Japon, Allemagne…" className="mt-1" />
+                <p className="mt-1 text-xs text-slate-500">Si vous hésitez, laissez ce champ vide : nous comparerons les possibilités disponibles dans le monde entier.</p>
+              </div>
               <div>
                 <Label>Type de visa recherché *</Label>
                 <select value={form.visaType} onChange={(e) => update('visaType', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
@@ -311,7 +315,16 @@ export default function Evaluation() {
               </div>
               <div><Label>Budget disponible (FCFA)</Label><Input value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} className="mt-1" /></div>
             </div>
-            <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} className="mt-1" /></div>
+            <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} placeholder="Travail, études, recrutement, visite, installation…" className="mt-1" /></div>
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
+              <p className="text-sm font-semibold text-indigo-950">Vous pouvez indiquer n’importe quel pays</p>
+              <p className="mt-1 text-xs leading-5 text-indigo-900">Canada, Europe, Asie, Amériques, Afrique, Golfe, Océanie : votre demande est analysée selon votre profil et les opportunités à vérifier.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {["Canada", "Luxembourg", "Allemagne", "États-Unis", "Chine", "Australie"].map((country) => (
+                  <button type="button" key={country} onClick={() => update('destinationCountry', country)} className="min-h-9 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{country}</button>
+                ))}
+              </div>
+            </div>
 
             <SectionTitle>Historique & antécédents</SectionTitle>
             <div className="space-y-3">

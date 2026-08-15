@@ -142,6 +142,7 @@ function Router() {
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
       <Route path={"/parcours"} component={PrimeJourney} />
+      <Route path={"/evaluation-canada"}>{() => <Redirect to="/evaluation?source=facebook&campaign=Canada" />}</Route>
       <Route path={"/evaluation"}>
         <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
           <Evaluation />

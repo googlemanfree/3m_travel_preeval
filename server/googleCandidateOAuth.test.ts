@@ -13,6 +13,15 @@ describe("Connexion candidat Google", () => {
     expect(url.searchParams.get("scope")).toContain("email");
   });
 
+  it("sécurise l’import de la photo Google vers le stockage privé du candidat", () => {
+    const source = fs.readFileSync(path.join(process.cwd(), "server/googleCandidateOAuth.ts"), "utf8");
+    expect(source).toContain("picture?: string");
+    expect(source).toContain("lh3.googleusercontent.com");
+    expect(source).toContain('redirect: "error"');
+    expect(source).toContain("storagePut(");
+    expect(source).toContain("candidate.avatarUrl");
+  });
+
   it("ne transfère pas la session candidat dans l’URL et utilise une session courte par cookie", () => {
     const source = fs.readFileSync(path.join(process.cwd(), "server/googleCandidateOAuth.ts"), "utf8");
     expect(source).toContain("candidate_google_oauth_handoff");

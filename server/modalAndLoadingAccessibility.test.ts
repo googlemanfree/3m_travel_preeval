@@ -32,6 +32,18 @@ describe("modales et boutons candidat accessibles", () => {
     expect(register).toContain('aria-describedby="register-facebook-coming-soon"');
   });
 
+  it("annonce la fermeture extérieure et la redirection Google", () => {
+    const dialog = source("client/src/components/ui/dialog.tsx");
+    const login = source("client/src/pages/Login.tsx");
+    const register = source("client/src/pages/Register.tsx");
+    expect(dialog).toContain("onPointerDownOutside");
+    expect(dialog).toContain("announceDialogDismissal");
+    expect(login).toContain("isGoogleRedirecting");
+    expect(register).toContain("isGoogleRedirecting");
+    expect(login).toContain("aria-busy={isGoogleRedirecting || consumeGoogleOAuthMutation.isPending}");
+    expect(register).toContain("aria-busy={isGoogleRedirecting}");
+  });
+
   it("annonce les opérations longues dans les formulaires candidats", () => {
     const login = source("client/src/pages/Login.tsx");
     const register = source("client/src/pages/Register.tsx");
