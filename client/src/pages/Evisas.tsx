@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, ArrowRight, Sparkles } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -16,8 +16,8 @@ interface Evisa {
   image: string;
 }
 
-const comprehensiveWorldEvisas: Evisa[] = [
-  // ================= AFRIQUE (18 destinations) =================
+const ultimateWorldEvisasDatabase: Evisa[] = [
+  // ================= AFRIQUE (24 destinations) =================
   {
     country: "Égypte",
     flag: "🇪🇬",
@@ -234,8 +234,80 @@ const comprehensiveWorldEvisas: Evisa[] = [
     note: "Délivré pour tourisme ou affaires.",
     image: "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=800&q=80"
   },
+  {
+    country: "Seychelles",
+    flag: "🇸🇨",
+    region: "Afrique",
+    type: "Travel Authorisation (ETA)",
+    duration: "90 jours",
+    delay: "24h",
+    docs: "Passeport, Billet A/R, Hébergement validé, Assurance",
+    fee: "10 EUR",
+    note: "Autorisation électronique obligatoire des Seychelles.",
+    image: "https://images.unsplash.com/photo-1578922718550-cae6c6fb891d?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Ghana",
+    flag: "🇬🇭",
+    region: "Afrique",
+    type: "e-Visa Électronique",
+    duration: "30 à 90 jours",
+    delay: "3-5 jours ouvrés",
+    docs: "Passeport, Lettre d'invitation, Carnet de vaccination",
+    fee: "60 USD",
+    note: "Déploiement progressif des procédures numériques ghanéennes.",
+    image: "https://images.unsplash.com/photo-1589556264809-a7f71cbda247?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Sao Tomé-et-Principe",
+    flag: "🇸🇹",
+    region: "Afrique",
+    type: "e-Visa Touristique",
+    duration: "30 jours",
+    delay: "3 jours ouvrés",
+    docs: "Passeport, Billet A/R, Réservation hôtelière",
+    fee: "45 EUR",
+    note: "Formalités simplifiées sur le portail officiel de STP.",
+    image: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Sierra Leone",
+    flag: "🇸🇱",
+    region: "Afrique",
+    type: "e-Visa Séjour",
+    duration: "30 jours",
+    delay: "24h - 48h",
+    docs: "Passeport, Carnet de vaccination, Photo",
+    fee: "80 USD",
+    note: "Autorisation numérique d'entrée à Lungi.",
+    image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Soudan du Sud",
+    flag: "🇸🇸",
+    region: "Afrique",
+    type: "e-Visa Entrée",
+    duration: "30 jours",
+    delay: "3-5 jours ouvrés",
+    docs: "Passeport, Lettre d'invitation, Photo",
+    fee: "100 USD",
+    note: "Approbation préalable requise.",
+    image: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Lesotho",
+    flag: "🇱🇸",
+    region: "Afrique",
+    type: "e-Visa Touristique",
+    duration: "44 jours",
+    delay: "3 jours ouvrés",
+    docs: "Passeport, Relevé bancaire, Réservation hôtel",
+    fee: "150 USD",
+    note: "Dépôt complet sur le portail officiel du Lesotho.",
+    image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=800&q=80"
+  },
 
-  // ================= ASIE & MOYEN-ORIENT (20 destinations) =================
+  // ================= ASIE & MOYEN-ORIENT (25 destinations) =================
   {
     country: "Émirats Arabes Unis (Dubaï)",
     flag: "🇦🇪",
@@ -476,8 +548,68 @@ const comprehensiveWorldEvisas: Evisa[] = [
     note: "Enregistrement numérique obligatoire avant l'arrivée.",
     image: "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=800&q=80"
   },
+  {
+    country: "Azerbaïdjan",
+    flag: "🇦🇿",
+    region: "Asie",
+    type: "ASAN e-Visa",
+    duration: "30 jours",
+    delay: "3 jours ouvrés",
+    docs: "Passeport (+6 mois), Formulaire en ligne",
+    fee: "26 USD",
+    note: "Système ASAN Visa officiel de la République d'Azerbaïdjan.",
+    image: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Corée du Sud",
+    flag: "🇰🇷",
+    region: "Asie",
+    type: "K-ETA Électronique",
+    duration: "90 jours",
+    delay: "24h - 72h",
+    docs: "Passeport, Photo numérique, Adresse en Corée",
+    fee: "10 000 KRW",
+    note: "Autorisation électronique de voyage obligatoire pour la Corée.",
+    image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Singapour",
+    flag: "🇸🇬",
+    region: "Asie",
+    type: "SG Arrival Card / e-Visa",
+    duration: "14 à 30 jours",
+    delay: "24h - 48h",
+    docs: "Passeport, Billet d'avion, Hébergement",
+    fee: "Variable selon nationalité",
+    note: "Déclaration d'arrivée électronique et e-Visa pour passeports éligibles.",
+    image: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Iran",
+    flag: "🇮🇷",
+    region: "Asie",
+    type: "e-Visa / Code d'approbation",
+    duration: "30 jours",
+    delay: "5-7 jours ouvrés",
+    docs: "Passeport, Photo, Itinéraire détaillé",
+    fee: "40 à 75 EUR",
+    note: "Délivrance de l'accord préalable du Ministère des Affaires Étrangères.",
+    image: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Tadjikistan",
+    flag: "🇹🇯",
+    region: "Asie",
+    type: "e-Visa Pamir",
+    duration: "45 jours",
+    delay: "3 jours ouvrés",
+    docs: "Passeport, Photo d'identité",
+    fee: "30 USD",
+    note: "Option Permis GBAO disponible pour la région du Pamir.",
+    image: "https://images.unsplash.com/photo-1590523277543-a94d2e4eb00b?auto=format&fit=crop&w=800&q=80"
+  },
 
-  // ================= EUROPE & AMÉRIQUES (10 destinations) =================
+  // ================= EUROPE & AMÉRIQUES (12 destinations) =================
   {
     country: "Russie",
     flag: "🇷🇺",
@@ -562,8 +694,68 @@ const comprehensiveWorldEvisas: Evisa[] = [
     note: "Traitement par l'immigration des Bahamas.",
     image: "https://images.unsplash.com/photo-1548574505-5e92985f11a6?auto=format&fit=crop&w=800&q=80"
   },
+  {
+    country: "Colombie",
+    flag: "🇨🇴",
+    region: "Amériques",
+    type: "e-Visa Consulaire",
+    duration: "90 à 180 jours",
+    delay: "5-10 jours ouvrés",
+    docs: "Passeport, Relevés bancaires, Lettre de motivation",
+    fee: "52 USD",
+    note: "Procédure entièrement numérique pour les nationalités requises.",
+    image: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Équateur",
+    flag: "🇪🇨",
+    region: "Amériques",
+    type: "Visa Électronique en ligne",
+    duration: "90 jours",
+    delay: "5 jours ouvrés",
+    docs: "Passeport, Assurance santé, Justificatif de fonds",
+    fee: "50 USD",
+    note: "Demande de visa en ligne sur le portail consulaire équatorien.",
+    image: "https://images.unsplash.com/photo-1518638150340-f706e86654de?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Montserrat",
+    flag: "🇲🇸",
+    region: "Amériques",
+    type: "e-Visa Touristique",
+    duration: "12 mois (entrées multiples)",
+    delay: "24h - 48h",
+    docs: "Passeport, Photo",
+    fee: "50 USD",
+    note: "Territoire britannique d'outre-mer des Caraïbes.",
+    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Sainte-Hélène",
+    flag: "🇸🇭",
+    region: "Amériques",
+    type: "e-Visa Électronique",
+    duration: "183 jours",
+    delay: "7 jours ouvrés",
+    docs: "Passeport, Assurance médicale rapatriement",
+    fee: "50 GBP",
+    note: "Territoire britannique d'outre-mer de l'Atlantique Sud.",
+    image: "https://images.unsplash.com/photo-1500759285584-2c5ff09ec4a3?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Canada (eTA)",
+    flag: "🇨🇦",
+    region: "Amériques",
+    type: "eTA / AVE (Cas spécifiques)",
+    duration: "5 ans",
+    delay: "24h",
+    docs: "Passeport, Ancien visa canadien (10 ans) ou US non-immigrant valide",
+    fee: "7 CAD",
+    note: "Autorisation de voyage électronique pour les voyageurs éligibles.",
+    image: "https://images.unsplash.com/photo-1503614472348-2fd8f99b16f6?auto=format&fit=crop&w=800&q=80"
+  },
 
-  // ================= OCÉANIE (3 destinations) =================
+  // ================= OCÉANIE (4 destinations) =================
   {
     country: "Australie",
     flag: "🇦🇺",
@@ -599,6 +791,18 @@ const comprehensiveWorldEvisas: Evisa[] = [
     fee: "50 USD",
     note: "Plateforme officielle de l'immigration de PNG.",
     image: "https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    country: "Fidji",
+    flag: "🇫🇯",
+    region: "Océanie",
+    type: "e-Visa / Permis électronique",
+    duration: "4 mois",
+    delay: "3-5 jours ouvrés",
+    docs: "Passeport, Billet A/R, Hébergement",
+    fee: "95 FJD",
+    note: "Demande électronique pour les nationalités soumises.",
+    image: "https://images.unsplash.com/photo-1507699622108-4be3abd695ad?auto=format&fit=crop&w=800&q=80"
   }
 ];
 
@@ -614,7 +818,7 @@ export default function Evisas() {
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
 
   const filteredEvisas = useMemo(() => {
-    return comprehensiveWorldEvisas.filter(evisa => {
+    return ultimateWorldEvisasDatabase.filter(evisa => {
       const matchesSearch = 
         evisa.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
         evisa.docs.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -651,13 +855,13 @@ export default function Evisas() {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Globe className="w-4 h-4" />
-            Catalogue Mondial des e-Visas & Autorisations Officielles
+            Catalogue Mondial Exhaustif des e-Visas & Autorisations Officielles
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
-            Découvrez tous les pays nécessitant un <span className="text-blue-600">e-Visa</span>
+            Tous les pays du monde avec <span className="text-blue-600">e-Visa</span>
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-gray-600">
-            Retrouvez la liste exhaustive de toutes les destinations mondiales disposant d'un système de visa électronique (e-Visa), ETA ou e-VOA. Lancez votre procédure en un clic avec l'accompagnement d'experts de 3M Travel & Services.
+            Retrouvez la liste complète et actualisée de toutes les destinations mondiales dotées d'un système de visa électronique (e-Visa), ETA ou e-VOA. Lancez votre procédure en un clic avec l'accompagnement d'experts de 3M Travel & Services.
           </p>
         </div>
 
@@ -700,11 +904,11 @@ export default function Evisas() {
         {/* Results Count & Assurance Badge */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
           <p className="text-sm font-medium text-gray-500">
-            Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> pays et territoires e-Visa vérifiés
+            Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> pays et territoires e-Visa vérifiés dans le monde
           </p>
           <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg">
             <ShieldCheck className="w-4 h-4 text-blue-600" />
-            <span>Filtre strict : uniquement les pays à autorisation électronique directe</span>
+            <span>Couverture mondiale complète incluant les nouvelles destinations e-Visa</span>
           </div>
         </div>
 

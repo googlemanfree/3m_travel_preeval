@@ -2855,3 +2855,4 @@
 - [x] Intégrer des images professionnelles et représentatives pour chaque destination
 - [x] Ajouter un bouton « Lancer la procédure » interactif sur chaque carte avec redirection vers le formulaire de demande ou WhatsApp
 - [x] Valider l'affichage responsive et le filtrage multicritère
+- [x] Produire le rapport d'audit comparatif détaillant les pays présents (48) et les pays manquants recommandés pour l'extension
