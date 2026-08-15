@@ -211,6 +211,13 @@
       "when": 1786665029437,
       "tag": "0029_add_passport_and_flight_booking",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1786789260832,
+      "tag": "0030_acquisition_provenance",
+      "breakpoints": true
     }
   ]
 }

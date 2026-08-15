@@ -36,6 +36,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 export default function Evaluation() {
   const [form, setForm] = useState<FormState>(initialForm);
+  const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+  const rawSource = acquisitionParams.get("source")?.toLowerCase();
+  const acquisitionSource = rawSource === "whatsapp" || rawSource === "wa" ? "whatsapp" : rawSource === "facebook" || rawSource === "fb" ? "facebook" : "direct";
+  const acquisitionCampaign = acquisitionParams.get("campaign") || acquisitionParams.get("campagne") || undefined;
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
 
@@ -133,6 +137,8 @@ export default function Evaluation() {
       cvBase64,
       cvFileName: cvFile?.name,
       cvMimeType: cvFile?.type,
+      acquisitionSource,
+      acquisitionCampaign,
     });
   };
 
@@ -188,6 +194,11 @@ export default function Evaluation() {
           </span>
           <h1 className="text-3xl font-bold text-gray-900 mt-4 mb-2">Évaluation complète de votre profil</h1>
           <p className="text-gray-600">Ces informations nous permettent d'évaluer votre éligibilité pour n'importe quelle destination — Canada RP, Europe, et bien d'autres.</p>
+          {acquisitionSource !== "direct" && (
+            <div className="mx-auto mt-4 max-w-xl rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-left text-sm text-cyan-950" role="status" aria-live="polite">
+              <strong>Parcours identifié :</strong> {acquisitionSource === "whatsapp" ? "WhatsApp Business" : "Facebook"}{acquisitionCampaign ? ` — campagne « ${acquisitionCampaign} »` : ""}. Votre demande sera rattachée à ce contexte pour faciliter le suivi par notre équipe.
+            </div>
+          )}
         </div>
 
         <Card className="p-6 md:p-8">

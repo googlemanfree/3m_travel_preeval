@@ -2696,3 +2696,9 @@
 - [x] Implémenter le formulaire d'évaluation mondiale multipays avec critères d'éligibilité et suggestions de compatibilité
 - [x] Créer l'espace candidat unifié avec le numéro de dossier, la photo de profil, la timeline à 5 étapes et le dépôt documentaire style Canada
 - [x] Développer le tableau de bord administrateur pour la gestion globale, l'évaluation des dossiers et la transmission aux agences partenaires
+
+- [x] Enregistrer la source d’acquisition Facebook/WhatsApp et la campagne dans chaque évaluation
+- [x] Afficher la provenance de la demande dans le back-office et les filtres administrateur
+- [x] Relier la provenance au dossier candidat et vérifier la migration de données
+- [x] Tester la synchronisation de provenance et publier la mise à jour
+

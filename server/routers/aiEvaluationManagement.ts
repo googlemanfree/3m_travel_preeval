@@ -46,6 +46,8 @@ interface UnifiedItem {
   priorVisaRefusal?: boolean | null;
   criminalRecord?: boolean | null;
   familyAbroad?: boolean | null;
+  acquisitionSource?: "facebook" | "whatsapp" | "direct" | "other" | null;
+  acquisitionCampaign?: string | null;
 }
 
 function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
@@ -101,6 +103,7 @@ export const aiEvaluationManagementRouter = router({
           destinationCategory: e.destinationCategory, destinationCountry: e.destinationCountry, nationality: e.nationality,
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
+          acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
         });
       }
 

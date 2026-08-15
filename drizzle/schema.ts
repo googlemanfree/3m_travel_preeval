@@ -59,6 +59,9 @@ export const evaluations = mysqlTable("evaluations", {
   id: int("id").autoincrement().primaryKey(),
   // Candidat connecté (si applicable — permet de compter ses évaluations)
   candidateId: int("candidateId"),
+  // Attribution de campagne : conservée pour relier Facebook/WhatsApp au dossier
+  acquisitionSource: mysqlEnum("acquisitionSource", ["facebook", "whatsapp", "direct", "other"]).default("direct").notNull(),
+  acquisitionCampaign: varchar("acquisitionCampaign", { length: 160 }),
   // État civil
   fullName: varchar("fullName", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
@@ -135,6 +138,8 @@ export const candidates = mysqlTable("candidates", {
   // Auth
   passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
   // Dossier d'immigration
+  acquisitionSource: mysqlEnum("acquisitionSource", ["facebook", "whatsapp", "direct", "other"]).default("direct").notNull(),
+  acquisitionCampaign: varchar("acquisitionCampaign", { length: 160 }),
   destination: mysqlEnum("destination", ["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).default("autre"),
   visaType: varchar("visaType", { length: 100 }),
   dossierStatus: mysqlEnum("dossierStatus", [

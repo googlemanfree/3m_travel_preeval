@@ -26,6 +26,7 @@ const visaTypeEnum = z.enum([
 ]);
 
 const destinationCategoryEnum = z.enum(["schengen", "canada", "autre"]);
+const acquisitionSourceEnum = z.enum(["facebook", "whatsapp", "direct", "other"]);
 
 const evaluationInput = z.object({
   // État civil & famille
@@ -69,6 +70,9 @@ const evaluationInput = z.object({
   cvBase64: z.string().optional(),
   cvFileName: z.string().optional(),
   cvMimeType: z.string().optional(),
+  // Attribution de campagne pour relier l’entrée Facebook/WhatsApp au dossier
+  acquisitionSource: acquisitionSourceEnum.default("direct"),
+  acquisitionCampaign: z.string().trim().max(160).optional(),
 });
 
 // Schéma pour le formulaire multi-projets
@@ -238,6 +242,8 @@ export const evaluationRouter = router({
         fullName: input.fullName,
         email: input.email,
         phone: input.phone,
+        acquisitionSource: input.acquisitionSource,
+        acquisitionCampaign: input.acquisitionCampaign,
         dateOfBirth: input.dateOfBirth,
         nationality: input.nationality,
         cityOfResidence: input.cityOfResidence,

@@ -30,6 +30,13 @@ const TYPE_LABELS: Record<string, string> = {
   consultation: "Consultation + CV",
 };
 
+const ACQUISITION_LABELS: Record<string, string> = {
+  facebook: "Facebook",
+  whatsapp: "WhatsApp",
+  direct: "Accès direct",
+  other: "Autre",
+};
+
 const PRIORITY_STYLES: Record<string, { badge: string; border: string }> = {
   haute: { badge: "bg-red-100 text-red-800", border: "border-l-4 border-red-500" },
   moyenne: { badge: "bg-amber-100 text-amber-800", border: "border-l-4 border-amber-400" },
@@ -57,6 +64,8 @@ type DashboardItem = {
   priorVisaRefusal?: boolean | null;
   criminalRecord?: boolean | null;
   familyAbroad?: boolean | null;
+  acquisitionSource?: "facebook" | "whatsapp" | "direct" | "other" | null;
+  acquisitionCampaign?: string | null;
 };
 
 type ActivityLog = {
@@ -84,7 +93,7 @@ function displayValue(value: unknown) {
 function buildCsv(items: DashboardItem[]) {
   const headers = [
     "Nom complet", "Email", "Type", "Pays", "Catégorie", "Nationalité", "Études", "Emploi",
-    "Situation matrimoniale", "Statut", "Score IA", "Priorité", "Refus visa", "Antécédents judiciaires",
+    "Situation matrimoniale", "Statut", "Source", "Campagne", "Score IA", "Priorité", "Refus visa", "Antécédents judiciaires",
     "Famille à l’étranger", "Date de soumission",
   ];
   const rows = items.map((item) => [
@@ -98,6 +107,8 @@ function buildCsv(items: DashboardItem[]) {
     item.employmentStatus,
     item.maritalStatus,
     item.status,
+    item.acquisitionSource ? ACQUISITION_LABELS[item.acquisitionSource] ?? item.acquisitionSource : "Accès direct",
+    item.acquisitionCampaign,
     item.score ?? "En attente",
     item.priority,
     item.priorVisaRefusal ? "Oui" : "Non",
@@ -221,6 +232,7 @@ export default function AdminAIEvaluationDashboard() {
   const [educationFilter, setEducationFilter] = useState("all");
   const [employmentFilter, setEmploymentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [acquisitionSourceFilter, setAcquisitionSourceFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const pageSize = 15;
@@ -231,6 +243,7 @@ export default function AdminAIEvaluationDashboard() {
     education: Array.from(new Set(items.map((item) => item.educationLevel).filter(Boolean) as string[])).sort(),
     employment: Array.from(new Set(items.map((item) => item.employmentStatus).filter(Boolean) as string[])).sort(),
     statuses: Array.from(new Set(items.map((item) => item.status).filter(Boolean) as string[])).sort(),
+    acquisitionSources: Array.from(new Set(items.map((item) => item.acquisitionSource).filter(Boolean) as string[])).sort(),
   }), [items]);
 
   const visibleItems = useMemo(() => {
@@ -244,7 +257,8 @@ export default function AdminAIEvaluationDashboard() {
       const matchesEducation = educationFilter === "all" || item.educationLevel === educationFilter;
       const matchesEmployment = employmentFilter === "all" || item.employmentStatus === employmentFilter;
       const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-      return matchesQuery && matchesScore && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus;
+      const matchesAcquisitionSource = acquisitionSourceFilter === "all" || (item.acquisitionSource ?? "direct") === acquisitionSourceFilter;
+      return matchesQuery && matchesScore && matchesType && matchesDestination && matchesEducation && matchesEmployment && matchesStatus && matchesAcquisitionSource;
     });
     if (scoreSort === "default") return filtered;
     return [...filtered].sort((a, b) => {
@@ -252,14 +266,14 @@ export default function AdminAIEvaluationDashboard() {
       const bScore = typeof b.score === "number" ? b.score : -1;
       return scoreSort === "desc" ? bScore - aScore : aScore - bScore;
     });
-  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter]);
+  }, [items, search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter]);
 
   const pageCount = Math.max(1, Math.ceil(visibleItems.length / pageSize));
   const pagedItems = useMemo(() => visibleItems.slice((currentPage - 1) * pageSize, currentPage * pageSize), [visibleItems, currentPage]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter]);
+  }, [search, scoreFilter, scoreSort, typeFilter, destinationFilter, educationFilter, employmentFilter, statusFilter, acquisitionSourceFilter]);
 
   useEffect(() => {
     if (currentPage > pageCount) setCurrentPage(pageCount);
@@ -323,6 +337,7 @@ export default function AdminAIEvaluationDashboard() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="text-xs font-medium text-slate-600 sm:col-span-2 lg:col-span-2">Rechercher<div className="relative mt-1"><Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nom, email, pays, études…" className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></div></label>
             <label className="text-xs font-medium text-slate-600">Type<select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les types</option>{options.types.map((value) => <option key={value} value={value}>{TYPE_LABELS[value] ?? value}</option>)}</select></label>
+            <label className="text-xs font-medium text-slate-600">Source<select value={acquisitionSourceFilter} onChange={(event) => setAcquisitionSourceFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Toutes les sources</option>{options.acquisitionSources.map((value) => <option key={value} value={value}>{ACQUISITION_LABELS[value] ?? value}</option>)}</select></label>
             <label className="text-xs font-medium text-slate-600">Pays<select value={destinationFilter} onChange={(event) => setDestinationFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les pays</option>{options.destinations.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
             <label className="text-xs font-medium text-slate-600">Études<select value={educationFilter} onChange={(event) => setEducationFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Tous les niveaux</option>{options.education.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
             <label className="text-xs font-medium text-slate-600">Emploi<select value={employmentFilter} onChange={(event) => setEmploymentFilter(event.target.value)} className="mt-1 block h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm"><option value="all">Toutes les situations</option>{options.employment.map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
@@ -342,7 +357,7 @@ export default function AdminAIEvaluationDashboard() {
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex flex-wrap items-center gap-2"><p className="font-semibold text-gray-900">{item.fullName}</p><Badge className={priorityStyle.badge}>{item.priority === "haute" ? "Priorité haute" : item.priority === "moyenne" ? "Priorité moyenne" : "Priorité basse"}</Badge><span className="text-xs text-gray-400">{item.typeLabel ?? TYPE_LABELS[item.type] ?? item.type}</span>{item.hasConverted && <Badge className="bg-green-100 text-green-800">✓ Converti</Badge>}</div>
               <p className="text-xs text-gray-500">{item.email} — {new Date(item.createdAt).toLocaleDateString("fr-FR")}</p>
-              <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span></div>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
               {statusOptions.length > 0 ? <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-slate-600">Action rapide<select aria-label={`Modifier le statut de ${item.fullName}`} value={item.status ?? ""} onChange={(event) => changeStatus(item, event.target.value)} disabled={updateStatus.isPending} className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800"><option value="" disabled>Choisir</option>{statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}</select></label> : <span className="mt-3 inline-block text-xs text-slate-500">Statut géré par le moteur de scoring</span>}
             </div>
