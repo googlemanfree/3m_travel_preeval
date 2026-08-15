@@ -117,6 +117,8 @@ export default function ClientDashboard() {
   const [notificationFilter, setNotificationFilter] = useState<"all" | "admin" | "agency">("all");
   const [notificationView, setNotificationView] = useState<"active" | "archived">("active");
   const [notificationQuery, setNotificationQuery] = useState("");
+  const [notificationReplyId, setNotificationReplyId] = useState<number | null>(null);
+  const [notificationReplyText, setNotificationReplyText] = useState("");
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -185,6 +187,15 @@ export default function ClientDashboard() {
       await trpcUtils.caseTracking.getMyCases.invalidate();
     },
     onError: (error) => toast.error(error.message || "La notification n’a pas pu être marquée comme lue."),
+  });
+  const sendNotificationReplyMutation = trpc.candidate.sendMessage.useMutation({
+    onSuccess: async () => {
+      setNotificationReplyId(null);
+      setNotificationReplyText("");
+      await Promise.all([trpcUtils.candidate.getMessages.invalidate(), trpcUtils.caseTracking.getMyCases.invalidate()]);
+      toast.success("Votre réponse a été envoyée à l’administration.");
+    },
+    onError: (error) => toast.error(error.message || "La réponse n’a pas pu être envoyée."),
   });
   const setNotificationArchivedMutation = trpc.caseTracking.setNotificationArchived.useMutation({
     onSuccess: async ({ archived }) => {
@@ -1337,12 +1348,21 @@ export default function ClientDashboard() {
                         </div>
                         <div className="flex flex-wrap gap-2 sm:justify-end">
                           {!notification.isRead && <Button type="button" size="sm" variant="outline" disabled={markNotificationReadMutation.isPending} onClick={() => markNotificationReadMutation.mutate({ notificationId: notification.id })}>Marquer comme lue</Button>}
+                          {notification.category === "admin" && <Button type="button" size="sm" variant="outline" onClick={() => { setNotificationReplyId(notification.id); setNotificationReplyText(""); }}><MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" /> Répondre</Button>}
                           <Button type="button" size="sm" variant="ghost" disabled={setNotificationArchivedMutation.isPending} onClick={() => setNotificationArchivedMutation.mutate({ notificationId: notification.id, archived: !notification.isArchived })}>
                             {notification.isArchived ? <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" /> : <Archive className="mr-1 h-4 w-4" aria-hidden="true" />}
                             {notification.isArchived ? "Restaurer" : "Archiver"}
                           </Button>
                         </div>
                       </div>
+                      {notificationReplyId === notification.id && notification.category === "admin" && <form className="mt-4 space-y-2 border-t border-slate-200 pt-4" onSubmit={(event) => { event.preventDefault(); const content = notificationReplyText.trim(); if (!content) { toast.error("Écrivez une réponse avant l’envoi."); return; } sendNotificationReplyMutation.mutate({ content }); }}>
+                        <Label htmlFor={`notification-reply-${notification.id}`}>Votre réponse</Label>
+                        <Textarea id={`notification-reply-${notification.id}`} value={notificationReplyText} onChange={(event) => setNotificationReplyText(event.target.value)} placeholder="Répondez à l’administration au sujet de cette notification…" maxLength={2000} rows={3} autoFocus />
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button type="button" size="sm" variant="ghost" onClick={() => { setNotificationReplyId(null); setNotificationReplyText(""); }}>Annuler</Button>
+                          <Button type="submit" size="sm" disabled={sendNotificationReplyMutation.isPending}>{sendNotificationReplyMutation.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" /> : <MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" />} Envoyer la réponse</Button>
+                        </div>
+                      </form>}
                     </article>
                   ))
                 )}

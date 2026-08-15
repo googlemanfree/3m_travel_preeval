@@ -2777,3 +2777,9 @@
 - [x] Étendre le service e-mail pour supporter les alertes de nouveaux messages et réponses partenaires
 - [x] Relier les producteurs de notifications admin à l’envoi SMTP asynchrone
 - [x] Valider les tests de délivrabilité et publier la mise à jour
+
+## Réponse Rapide depuis les Notifications (v209)
+- [x] Ajouter un bouton de réponse rapide et un champ de texte extensible sur chaque notification éligible
+- [x] Relier la réponse rapide au système de messagerie sécurisée du candidat
+- [x] Valider les tests de régression
+- [x] Publier la mise à jour
