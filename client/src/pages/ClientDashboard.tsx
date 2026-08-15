@@ -4,6 +4,8 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileUp,
@@ -24,6 +26,7 @@ import {
   Plane,
   LifeBuoy,
   Loader2,
+  X,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -87,6 +90,10 @@ export default function ClientDashboard() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [documentSuccessMessage, setDocumentSuccessMessage] = useState<string | null>(null);
+  const [historySort, setHistorySort] = useState<"recent" | "oldest">("recent");
+  const [historyType, setHistoryType] = useState("all");
+  const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", nationality: "", dateOfBirth: "" });
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -100,6 +107,10 @@ export default function ClientDashboard() {
     { enabled: isAuthenticated }
   );
   const { data: caseTrackingData, isLoading: caseTrackingLoading } = trpc.caseTracking.getMyCases.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+  const { data: profileData, isLoading: profileLoading } = trpc.candidate.getProfile.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
@@ -117,6 +128,13 @@ export default function ClientDashboard() {
   });
 
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const updateProfileMutation = trpc.candidate.updateProfile.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.candidate.getProfile.invalidate();
+      toast.success("Vos informations personnelles ont été mises à jour.");
+    },
+    onError: (error) => toast.error(error.message || "Le profil n’a pas pu être mis à jour."),
+  });
   const submitRequirementMutation = trpc.caseTracking.submitMyRequirementDocument.useMutation({
     onSuccess: async () => {
       await trpcUtils.caseTracking.getMyCases.invalidate();
@@ -168,6 +186,16 @@ export default function ClientDashboard() {
       );
     }
   }, [documentsData]);
+
+  useEffect(() => {
+    if (!profileData) return;
+    setProfileForm({
+      fullName: profileData.fullName || "",
+      phone: profileData.phone || "",
+      nationality: profileData.nationality || "",
+      dateOfBirth: profileData.dateOfBirth || "",
+    });
+  }, [profileData]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -222,6 +250,7 @@ export default function ClientDashboard() {
         trpcUtils.candidate.getMyDocuments.invalidate(),
         trpcUtils.candidate.getMyDossierData.invalidate(),
       ]);
+      setDocumentSuccessMessage(`« ${payload.fileName || file.name} » a été reçu et transmis à votre conseiller pour vérification.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement");
     }
@@ -267,6 +296,7 @@ export default function ClientDashboard() {
         trpcUtils.candidate.getMyDossierData.invalidate(),
       ]);
       toast.success("Documents téléversés avec succès!");
+      setDocumentSuccessMessage(`${uploadedFiles.length} document${uploadedFiles.length > 1 ? "s ont" : " a"} été téléversé${uploadedFiles.length > 1 ? "s" : ""} avec succès.`);
       setUploadedFiles([]);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement");
@@ -316,10 +346,27 @@ export default function ClientDashboard() {
     .filter((entry) => entry?.createdAt)
     .slice()
     .sort((left, right) => new Date(left.createdAt!).getTime() - new Date(right.createdAt!).getTime());
+  const historyTypes = Array.from(new Set(statusHistory.map((entry) => entry.newStatus).filter(Boolean))) as string[];
+  const filteredStatusHistory = statusHistory
+    .filter((entry) => historyType === "all" || entry.newStatus === historyType)
+    .slice()
+    .sort((left, right) => {
+      const delta = new Date(left.createdAt!).getTime() - new Date(right.createdAt!).getTime();
+      return historySort === "oldest" ? delta : -delta;
+    });
   const requiresRevisionSupport = dossier.status === "refuse" || pendingRequirements.some((requirement) => requirement.status === "rejected");
   const handleQuickSupport = () => {
     const message = `Bonjour Prime Travel Service, j’ai besoin d’assistance pour la révision de mon dossier ${dossier.numero}.`;
     window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+  };
+  const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await updateProfileMutation.mutateAsync({
+      fullName: profileForm.fullName.trim(),
+      phone: profileForm.phone.trim() || undefined,
+      nationality: profileForm.nationality.trim() || undefined,
+      dateOfBirth: profileForm.dateOfBirth || undefined,
+    });
   };
 
   return (
@@ -416,6 +463,21 @@ export default function ClientDashboard() {
           </CardContent>
         </Card>
 
+        {documentSuccessMessage && (
+          <div className="flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950" role="status" aria-live="polite">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 rounded-full bg-emerald-600 p-1 text-white"><CheckCircle2 className="h-4 w-4" aria-hidden="true" /></span>
+              <div>
+                <p className="font-semibold">Dépôt confirmé</p>
+                <p className="mt-1 text-sm text-emerald-900">{documentSuccessMessage}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" className="shrink-0 text-emerald-800 hover:bg-emerald-100" aria-label="Masquer la confirmation" onClick={() => setDocumentSuccessMessage(null)}>
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+        )}
+
         <Card className="border border-orange-200 bg-gradient-to-br from-orange-50 to-white">
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -493,8 +555,28 @@ export default function ClientDashboard() {
             </CardHeader>
             <CardContent>
               {statusHistory.length > 0 ? (
-                <ol className="relative ml-2 space-y-5 border-l border-slate-200 pl-5" aria-label="Chronologie des changements de statut">
-                  {statusHistory.map((entry, index) => {
+                <>
+                  <div className="mb-5 grid gap-3 sm:grid-cols-2" aria-label="Filtres de l’historique">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="history-type">Type d’étape</Label>
+                      <select id="history-type" value={historyType} onChange={(event) => setHistoryType(event.target.value)} className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                        <option value="all">Toutes les étapes</option>
+                        {historyTypes.map((status) => <option key={status} value={status}>{(STATUS_LABELS[status] ?? STATUS_LABELS.nouveau).label}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="history-sort">Ordre des dates</Label>
+                      <select id="history-sort" value={historySort} onChange={(event) => setHistorySort(event.target.value as "recent" | "oldest")} className="min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">
+                        <option value="recent">Plus récent d’abord</option>
+                        <option value="oldest">Plus ancien d’abord</option>
+                      </select>
+                    </div>
+                  </div>
+                  {filteredStatusHistory.length === 0 ? (
+                    <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Aucune étape ne correspond à ce filtre.</p>
+                  ) : (
+                  <ol className="relative ml-2 space-y-5 border-l border-slate-200 pl-5" aria-label="Chronologie des changements de statut">
+                  {filteredStatusHistory.map((entry, index) => {
                     const historyStatus = STATUS_LABELS[entry.newStatus || "nouveau"] ?? STATUS_LABELS.nouveau;
                     return (
                       <li key={`${entry.id ?? "history"}-${index}`} className="relative">
@@ -509,7 +591,9 @@ export default function ClientDashboard() {
                       </li>
                     );
                   })}
-                </ol>
+                  </ol>
+                  )}
+                </>
               ) : (
                 <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">La première mise à jour apparaîtra ici dès qu’elle sera enregistrée par l’équipe.</p>
               )}
@@ -844,17 +928,41 @@ export default function ClientDashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="w-5 h-5" />
-                  Paramètres du Compte
+                  Mon profil
                 </CardTitle>
+                <CardDescription>Gardez vos informations de contact à jour afin que l’équipe puisse assurer le suivi de votre dossier.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-semibold">{candidate?.email}</p>
-                </div>
-                <Button variant="outline" className="w-full" onClick={() => setLocation("/forgot-password")}>
-                  Modifier le Mot de Passe
-                </Button>
+                <form className="space-y-4" onSubmit={handleProfileSubmit}>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="profile-name">Nom complet</Label>
+                      <Input id="profile-name" value={profileForm.fullName} minLength={2} required onChange={(event) => setProfileForm((current) => ({ ...current, fullName: event.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-phone">Téléphone</Label>
+                      <Input id="profile-phone" inputMode="tel" value={profileForm.phone} placeholder="Ex. +237 6…" onChange={(event) => setProfileForm((current) => ({ ...current, phone: event.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-nationality">Nationalité</Label>
+                      <Input id="profile-nationality" value={profileForm.nationality} placeholder="Ex. Camerounaise" onChange={(event) => setProfileForm((current) => ({ ...current, nationality: event.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-birth-date">Date de naissance</Label>
+                      <Input id="profile-birth-date" type="date" value={profileForm.dateOfBirth} onChange={(event) => setProfileForm((current) => ({ ...current, dateOfBirth: event.target.value }))} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="profile-email">Adresse e-mail</Label>
+                      <Input id="profile-email" value={profileData?.email || candidate?.email || ""} disabled aria-describedby="profile-email-help" />
+                      <p id="profile-email-help" className="text-xs text-slate-500">L’adresse e-mail est protégée et ne peut pas être modifiée ici.</p>
+                    </div>
+                  </div>
+                  <Button type="submit" disabled={profileLoading || updateProfileMutation.isPending} className="w-full sm:w-auto">
+                    {updateProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                    Enregistrer le profil
+                  </Button>
+                </form>
+                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setLocation("/forgot-password")}>Modifier le mot de passe</Button>
               </CardContent>
             </Card>
           </TabsContent>

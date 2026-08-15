@@ -22,13 +22,24 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("Dossier créé et enregistré.");
   });
 
-  it("propose le dépôt direct, la chronologie datée et le contact d’assistance dans le dashboard", () => {
+  it("propose le dépôt direct, la chronologie filtrable et le contact d’assistance dans le dashboard", () => {
     const dashboard = read("client/src/pages/ClientDashboard.tsx");
     expect(dashboard).toContain("Pièces à compléter");
     expect(dashboard).toContain("handleRequirementUpload");
+    expect(dashboard).toContain("Dépôt confirmé");
     expect(dashboard).toContain("Historique du dossier");
     expect(dashboard).toContain("Chronologie des changements de statut");
+    expect(dashboard).toContain("history-type");
+    expect(dashboard).toContain("history-sort");
     expect(dashboard).toContain("Contacter l’assistance");
     expect(dashboard).toContain("https://wa.me/");
+  });
+
+  it("permet au candidat de modifier uniquement ses informations de base", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    expect(dashboard).toContain("candidate.updateProfile.useMutation");
+    expect(dashboard).toContain("Enregistrer le profil");
+    expect(dashboard).toContain("L’adresse e-mail est protégée");
+    expect(dashboard).toContain("profile-name");
   });
 });

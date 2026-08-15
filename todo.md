@@ -2722,4 +2722,11 @@
 - [x] Ajouter un bouton d’assistance rapide en cas de dossier à revoir
 - [x] Ajouter les tests de synchronisation, d’accessibilité et de responsive
 - [x] Créer et valider une compétence réutilisable de suivi de dossier candidat
-- [ ] Publier la mise à jour et livrer la compétence
+- [x] Publier la mise à jour et livrer la compétence
+
+## Confirmation, filtres & profil candidat (v201)
+- [x] Ajouter une confirmation visuelle durable après le dépôt réussi d’une pièce
+- [x] Ajouter un filtrage par date et type dans l’historique du dossier
+- [x] Ajouter une section de profil éditable dans le tableau de bord candidat
+- [x] Ajouter les tests de régression et vérifier l’interface responsive
+- [ ] Publier la mise à jour
