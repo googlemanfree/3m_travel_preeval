@@ -142,6 +142,7 @@ function getDestinationDescription(destination: string, score: number): string {
  * Extrait les critères de scoring depuis les détails du dossier
  */
 function extractScoringCriteria(app: Application): ScoringCriteria {
+  const anyApp = app as any;
   // Si les détails de scoring sont absents ou incomplets, on effectue un calcul dynamique basé sur les champs du dossier si disponibles
   let criteria: ScoringCriteria = {
     education: 12,
@@ -168,8 +169,8 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
   }
 
   // Calcul dynamique de repli basé sur le niveau d'études et d'expérience stocké
-  if (app.educationLevel) {
-    const edu = app.educationLevel.toLowerCase();
+  if (anyApp.educationLevel) {
+    const edu = anyApp.educationLevel.toLowerCase();
     if (edu.includes("master") || edu.includes("doctorat") || edu.includes("ingénieur") || edu.includes("bac+5")) {
       criteria.education = 22;
     } else if (edu.includes("licence") || edu.includes("bachelor") || edu.includes("bac+3")) {
@@ -181,8 +182,8 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
     }
   }
 
-  if (app.yearsOfExperience) {
-    const exp = app.yearsOfExperience.toLowerCase();
+  if (anyApp.yearsOfExperience) {
+    const exp = anyApp.yearsOfExperience.toLowerCase();
     if (exp.includes("5") || exp.includes("plus") || exp.includes("10") || exp.includes("supérieur")) {
       criteria.experience = 24;
     } else if (exp.includes("3") || exp.includes("4")) {
@@ -194,8 +195,8 @@ function extractScoringCriteria(app: Application): ScoringCriteria {
     }
   }
 
-  if (app.frenchLevel || app.englishLevel) {
-    const lang = ((app.frenchLevel || "") + " " + (app.englishLevel || "")).toLowerCase();
+  if (anyApp.frenchLevel || anyApp.englishLevel) {
+    const lang = ((anyApp.frenchLevel || "") + " " + (anyApp.englishLevel || "")).toLowerCase();
     if (lang.includes("bilingue") || lang.includes("courant") || lang.includes("avancé") || lang.includes("c1") || lang.includes("c2")) {
       criteria.language = 18;
     } else if (lang.includes("intermédiaire") || lang.includes("b2")) {
@@ -216,6 +217,38 @@ export function generateAllDestinationScores(app: Application): DestinationScore
   const destinations = ["pologne", "canada", "allemagne", "luxembourg", "royaume_uni", "etats_unis"];
 
   return destinations.map(dest => calculateDestinationScore(criteria, dest)).sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Génère des recommandations personnalisées basées sur les critères du candidat
+ */
+export function generatePersonalizedRecommendations(criteria: ScoringCriteria, app: Application): string[] {
+  const recommendations: string[] = [];
+
+  if (criteria.language < 14) {
+    recommendations.push("Amélioration linguistique : Votre score en langues peut être optimisé en passant un test officiel certifié (TCF Canada, IELTS ou TEF) pour atteindre un niveau B2/C1, ce qui ajouterait jusqu'à +8 points à votre évaluation globale.");
+  } else {
+    recommendations.push("Compétences linguistiques solides : Votre profil linguistique est un atout majeur pour les programmes de mobilité ciblés.");
+  }
+
+  if (criteria.experience < 18) {
+    recommendations.push("Expérience professionnelle : Consolider vos certificats de travail et formaliser des lettres de recommandation détaillées permettra de valoriser davantage vos années d'expérience auprès des employeurs partenaires.");
+  } else {
+    recommendations.push("Expérience professionnelle confirmée : Votre parcours professionnel constitue une base excellente pour les critères de recrutement internationaux.");
+  }
+
+  if (criteria.education < 16) {
+    recommendations.push("Évaluation des diplômes (WES / ENIC-NARIC) : L'obtention d'une attestation d'équivalence officielle pour vos diplômes renforcera l'admissibilité de votre dossier pour les voies d'immigration qualifiée.");
+  } else {
+    recommendations.push("Niveau de formation académique compétitif : Vos diplômes répondent aux standards requis pour nos destinations partenaires.");
+  }
+
+  const anyApp = app as any;
+  if (anyApp.priorVisaRefusal) {
+    recommendations.push("Antécédents de visa : Une attention particulière sera portée sur la rédaction d'une lettre explicative détaillée pour motiver les antécédents de refus et démontrer un changement significatif de situation.");
+  }
+
+  return recommendations;
 }
 
 /**
@@ -328,11 +361,18 @@ export function generateEvaluationReportHTML(app: Application): string {
       </div>
       
       <div class="section">
-        <div class="section-title">🎯 RECOMMANDATION STRATÉGIQUE</div>
+        <div class="section-title">🎯 RECOMMANDATION STRATÉGIQUE & PLAN D'ACTION</div>
         <div class="recommendation">
           <p><strong>Destination recommandée :</strong> ${DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || topScore.destination}</p>
           <p>${topScore.description}</p>
           <p style="margin-top: 10px;">Notre analyse stratégique identifie cette destination comme offrant les meilleures perspectives pour votre profil, avec des procédures simplifiées et des opportunités réelles d'établissement ou de résidence permanente.</p>
+        </div>
+        
+        <div style="margin-top: 20px;">
+          <h4 style="color: #1E3A8A; font-size: 14px; margin-bottom: 10px; font-weight: 700;">💡 Recommandations personnalisées pour optimiser votre score :</h4>
+          <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 13px; line-height: 1.6;">
+            ${generatePersonalizedRecommendations(criteria, app).map(rec => `<li style="margin-bottom: 8px;">${rec}</li>`).join("")}
+          </ul>
         </div>
       </div>
       

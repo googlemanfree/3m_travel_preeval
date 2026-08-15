@@ -20,7 +20,7 @@ describe("Moteur de Scoring Ajusté (IFP 3M)", () => {
     expect(topScore.score).toBeGreaterThan(50);
   });
 
-  it("génère un rapport HTML contenant l'intitulé Indice de Faisabilité Préliminaire (IFP 3M)", () => {
+  it("génère un rapport HTML contenant l'intitulé Indice de Faisabilité Préliminaire (IFP 3M) et les recommandations personnalisées", () => {
     const mockApp: Partial<Application> = {
       id: 1,
       fullName: "Test Candidat",
@@ -33,5 +33,6 @@ describe("Moteur de Scoring Ajusté (IFP 3M)", () => {
     const html = generateEvaluationReportHTML(mockApp as Application);
     expect(html).toContain("Indice de Faisabilité Préliminaire (IFP 3M)");
     expect(html).toContain("Évaluation indicative d’agence");
+    expect(html).toContain("Recommandations personnalisées pour optimiser votre score");
   });
 });

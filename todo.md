@@ -2840,3 +2840,7 @@
 - [ ] Améliorer la pondération linguistique et l'ajustement de l'âge dans le service de scoring
 - [ ] Ajouter une traçabilité obligatoire des modifications manuelles de score par l'administrateur avec motif enregistré dans les logs d'audit
 - [ ] Valider l'ensemble avec des tests unitaires et un build de production
+
+- [ ] Ajouter une section de recommandations personnalisées dans evaluationService.ts pour suggérer des améliorations ciblées (langues, expérience, formation)
+- [ ] Écrire un test unitaire pour vérifier la pertinence des recommandations générées selon le profil
+- [ ] Publier la mise à jour sur la plateforme
