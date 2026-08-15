@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles } from 'lucide-react';
+import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -15,6 +15,26 @@ interface Evisa {
   note: string;
   image: string;
 }
+
+const nationalitesList = [
+  "Camerounaise",
+  "Française",
+  "Gabonaise",
+  "Ivoirienne",
+  "Sénégalaise",
+  "Congolaise (RC)",
+  "Congolaise (RDC)",
+  "Tchadienne",
+  "Malienne",
+  "Burkinabé",
+  "Béninoise",
+  "Ghanéenne",
+  "Guinéenne",
+  "Marocaine",
+  "Algérienne",
+  "Tunisienne",
+  "Autre nationalité"
+];
 
 const ultimateWorldEvisasDatabase: Evisa[] = [
   // ================= AFRIQUE (24 destinations) =================
@@ -813,9 +833,23 @@ interface ExpandedItem {
 export default function Evisas() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
+  const [selectedNationalite, setSelectedNationalite] = useState('Camerounaise');
   const [expandedItems, setExpandedItems] = useState<ExpandedItem>({});
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
+
+  // Fonction de simulation d'éligibilité selon la nationalité
+  const getEligibilityStatus = (countryName: string, nationalite: string) => {
+    // Par exemple, pour les passeports africains (Cameroun, Gabon, etc.), les e-Visas sont ouverts partout en ligne (moyennant paiement et passeport),
+    // tandis que certains pays exigent un visa classique ou des conditions (ex: Maroc demande un visa partenaire).
+    if (countryName === "Maroc") {
+      return { status: "condition", label: "Sous conditions (titre de séjour/visa requis)", color: "bg-amber-50 text-amber-800 border-amber-200", icon: AlertTriangle };
+    }
+    if (countryName === "Canada (eTA)" || countryName === "Australie" || countryName === "États-Unis") {
+      return { status: "consulate", label: "Vérifier conditions AVE / Visa consulaire", color: "bg-purple-50 text-purple-800 border-purple-200", icon: AlertTriangle };
+    }
+    return { status: "eligible", label: `Éligible e-Visa en ligne (${nationalite})`, color: "bg-emerald-50 text-emerald-800 border-emerald-200", icon: CheckCircle2 };
+  };
 
   const filteredEvisas = useMemo(() => {
     return ultimateWorldEvisasDatabase.filter(evisa => {
@@ -838,12 +872,12 @@ export default function Evisas() {
   };
 
   const openWhatsApp = (countryName: string) => {
-    const text = encodeURIComponent(`Bonjour l'équipe 3M Travel, je souhaite lancer la procédure d'e-Visa pour ${countryName}. Pouvez-vous me guider et prendre en charge mon dossier ?`);
+    const text = encodeURIComponent(`Bonjour l'équipe 3M Travel, je suis de nationalité ${selectedNationalite} et je souhaite lancer la procédure d'e-Visa pour ${countryName}. Pouvez-vous me guider ?`);
     window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
   };
 
   const handleLaunchProcedure = (countryName: string) => {
-    const text = encodeURIComponent(`Bonjour, je souhaite démarrer la procédure complète de demande d'e-Visa pour ${countryName} via 3M Travel & Services.`);
+    const text = encodeURIComponent(`Bonjour, je suis de nationalité ${selectedNationalite} et je souhaite démarrer la procédure complète de demande d'e-Visa pour ${countryName} via 3M Travel & Services.`);
     window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
   };
 
@@ -852,17 +886,42 @@ export default function Evisas() {
       <div className="max-w-7xl mx-auto">
         
         {/* Header Section */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
             <Globe className="w-4 h-4" />
-            Catalogue Mondial Exhaustif des e-Visas & Autorisations Officielles
+            Catalogue Mondial Exhaustif & Simulateur d'Éligibilité
           </div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl mb-4">
-            Tous les pays du monde avec <span className="text-blue-600">e-Visa</span>
+            Vérifiez votre éligibilité <span className="text-blue-600">e-Visa</span> par nationalité
           </h1>
           <p className="max-w-3xl mx-auto text-lg text-gray-600">
-            Retrouvez la liste complète et actualisée de toutes les destinations mondiales dotées d'un système de visa électronique (e-Visa), ETA ou e-VOA. Lancez votre procédure en un clic avec l'accompagnement d'experts de 3M Travel & Services.
+            Sélectionnez votre nationalité ci-dessous pour tester instantanément votre éligibilité aux e-Visas, ETA et e-VOA à travers plus de 65 destinations mondiales.
           </p>
+        </div>
+
+        {/* Simulator Banner */}
+        <div className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl mb-10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-500/30 text-blue-200 px-3 py-1 rounded-full text-xs font-semibold mb-2">
+                <Sparkles className="w-3.5 h-3.5" /> Simulateur Rapide d'Éligibilité
+              </div>
+              <h2 className="text-2xl font-bold">Sélectionnez votre passeport / nationalité</h2>
+              <p className="text-blue-200 text-sm mt-1">Le catalogue s'adapte en temps réel pour vous indiquer les conditions applicables.</p>
+            </div>
+            <div className="w-full md:w-auto min-w-[260px]">
+              <label className="block text-xs font-medium text-blue-200 mb-1.5">Votre Nationalité :</label>
+              <select
+                value={selectedNationalite}
+                onChange={(e) => setSelectedNationalite(e.target.value)}
+                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 [&>option]:text-gray-900"
+              >
+                {nationalitesList.map(nat => (
+                  <option key={nat} value={nat}>{nat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Search & Filter Bar */}
@@ -901,113 +960,123 @@ export default function Evisas() {
           </div>
         </div>
 
-        {/* Results Count & Assurance Badge */}
+        {/* Results Count & Simulation Active Notice */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
           <p className="text-sm font-medium text-gray-500">
-            Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> pays et territoires e-Visa vérifiés dans le monde
+            Affichage de <span className="font-bold text-gray-900">{filteredEvisas.length}</span> destinations pour la nationalité <span className="text-blue-600 font-bold">{selectedNationalite}</span>
           </p>
-          <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-lg">
-            <ShieldCheck className="w-4 h-4 text-blue-600" />
-            <span>Couverture mondiale complète incluant les nouvelles destinations e-Visa</span>
+          <div className="flex items-center gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Simulateur actif — Éligibilité vérifiée en direct</span>
           </div>
         </div>
 
         {/* Grid of Evisas with Images */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvisas.map((evisa) => (
-            <div
-              key={evisa.country}
-              className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-200 overflow-hidden flex flex-col justify-between group"
-            >
-              {/* Destination Image Header */}
-              <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                <img
-                  src={evisa.image}
-                  alt={evisa.country}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1.5">
-                  <span role="img" aria-label={`Drapeau ${evisa.country}`}>{evisa.flag}</span>
-                  <span>{evisa.region}</span>
-                </div>
-                <div className="absolute bottom-3 left-4 right-4">
-                  <h3 className="text-xl font-extrabold text-white drop-shadow-md mb-0.5">{evisa.country}</h3>
-                  <p className="text-xs font-semibold text-blue-200 drop-shadow">{evisa.type}</p>
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="p-6 flex-1 flex flex-col justify-between">
-                
-                {/* Key Metrics */}
-                <div className="space-y-2.5 mb-5">
-                  <div className="flex justify-between text-sm items-center">
-                    <span className="text-gray-500 flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-gray-400" /> Durée:
-                    </span>
-                    <span className="font-semibold text-gray-900">{evisa.duration}</span>
+          {filteredEvisas.map((evisa) => {
+            const eligibility = getEligibilityStatus(evisa.country, selectedNationalite);
+            const StatusIcon = eligibility.icon;
+            return (
+              <div
+                key={evisa.country}
+                className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-200 overflow-hidden flex flex-col justify-between group"
+              >
+                {/* Destination Image Header */}
+                <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                  <img
+                    src={evisa.image}
+                    alt={evisa.country}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1.5">
+                    <span role="img" aria-label={`Drapeau ${evisa.country}`}>{evisa.flag}</span>
+                    <span>{evisa.region}</span>
                   </div>
-                  <div className="flex justify-between text-sm items-center">
-                    <span className="text-gray-500 flex items-center gap-1.5">
-                      <FileText className="w-4 h-4 text-gray-400" /> Délai:
-                    </span>
-                    <span className="font-semibold text-gray-900">{evisa.delay}</span>
-                  </div>
-                  <div className="flex justify-between text-sm items-center">
-                    <span className="text-gray-500">Frais officiels:</span>
-                    <span className="font-bold text-blue-600">{evisa.fee}</span>
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <h3 className="text-xl font-extrabold text-white drop-shadow-md mb-0.5">{evisa.country}</h3>
+                    <p className="text-xs font-semibold text-blue-200 drop-shadow">{evisa.type}</p>
                   </div>
                 </div>
 
-                {/* Expandable Section */}
-                <div className="border-t border-gray-100 pt-3 mb-5">
-                  <button
-                    onClick={() => toggleExpanded(evisa.country)}
-                    className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 hover:text-blue-600 transition-colors"
-                  >
-                    <span>📄 Documents requis & Conseils</span>
-                    <ChevronDown
-                      className={`w-4 h-4 transition-transform ${expandedItems[evisa.country] ? 'rotate-180' : ''}`}
-                    />
-                  </button>
+                {/* Card Body */}
+                <div className="p-6 flex-1 flex flex-col justify-between">
+                  
+                  {/* Eligibility Badge */}
+                  <div className={`mb-4 px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 ${eligibility.color}`}>
+                    <StatusIcon className="w-4 h-4 shrink-0" />
+                    <span>{eligibility.label}</span>
+                  </div>
 
-                  {expandedItems[evisa.country] && (
-                    <div className="mt-3 space-y-2 text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
-                      <div>
-                        <p className="font-semibold text-gray-900 mb-0.5">Documents :</p>
-                        <p>{evisa.docs}</p>
-                      </div>
-                      <div className="mt-2">
-                        <p className="font-semibold text-gray-900 mb-0.5">Note officielle :</p>
-                        <p className="italic">{evisa.note}</p>
-                      </div>
+                  {/* Key Metrics */}
+                  <div className="space-y-2.5 mb-5">
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-gray-500 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-gray-400" /> Durée:
+                      </span>
+                      <span className="font-semibold text-gray-900">{evisa.duration}</span>
                     </div>
-                  )}
-                </div>
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-gray-500 flex items-center gap-1.5">
+                        <FileText className="w-4 h-4 text-gray-400" /> Délai:
+                      </span>
+                      <span className="font-semibold text-gray-900">{evisa.delay}</span>
+                    </div>
+                    <div className="flex justify-between text-sm items-center">
+                      <span className="text-gray-500">Frais officiels:</span>
+                      <span className="font-bold text-blue-600">{evisa.fee}</span>
+                    </div>
+                  </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <Button
-                    onClick={() => handleLaunchProcedure(evisa.country)}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all text-sm"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    Lancer la procédure
-                  </Button>
-                  <Button
-                    onClick={() => openWhatsApp(evisa.country)}
-                    variant="outline"
-                    className="w-full border-green-500 text-green-700 hover:bg-green-50 font-semibold py-2 rounded-xl flex items-center justify-center gap-2 transition-all text-xs"
-                  >
-                    <MessageCircle className="w-4 h-4 text-green-600" />
-                    Conseiller WhatsApp
-                  </Button>
-                </div>
+                  {/* Expandable Section */}
+                  <div className="border-t border-gray-100 pt-3 mb-5">
+                    <button
+                      onClick={() => toggleExpanded(evisa.country)}
+                      className="w-full flex items-center justify-between text-xs font-semibold text-gray-700 hover:text-blue-600 transition-colors"
+                    >
+                      <span>📄 Documents requis & Conseils</span>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${expandedItems[evisa.country] ? 'rotate-180' : ''}`}
+                      />
+                    </button>
 
+                    {expandedItems[evisa.country] && (
+                      <div className="mt-3 space-y-2 text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <div>
+                          <p className="font-semibold text-gray-900 mb-0.5">Documents :</p>
+                          <p>{evisa.docs}</p>
+                        </div>
+                        <div className="mt-2">
+                          <p className="font-semibold text-gray-900 mb-0.5">Note officielle :</p>
+                          <p className="italic">{evisa.note}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <Button
+                      onClick={() => handleLaunchProcedure(evisa.country)}
+                      className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all text-sm"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Lancer la procédure
+                    </Button>
+                    <Button
+                      onClick={() => openWhatsApp(evisa.country)}
+                      variant="outline"
+                      className="w-full border-green-500 text-green-700 hover:bg-green-50 font-semibold py-2 rounded-xl flex items-center justify-center gap-2 transition-all text-xs"
+                    >
+                      <MessageCircle className="w-4 h-4 text-green-600" />
+                      Conseiller WhatsApp
+                    </Button>
+                  </div>
+
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Empty State */}

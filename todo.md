@@ -2856,3 +2856,10 @@
 - [x] Ajouter un bouton « Lancer la procédure » interactif sur chaque carte avec redirection vers le formulaire de demande ou WhatsApp
 - [x] Valider l'affichage responsive et le filtrage multicritère
 - [x] Produire le rapport d'audit comparatif détaillant les pays présents (48) et les pays manquants recommandés pour l'extension
+- [x] Implémenter l'exhaustivité des pays e-Visa mondiaux (plus de 65 pays et territoires) avec fiches complètes, visuels et doubles boutons d'action et publier la version finale (v221)
+
+## Simulateur Rapide d'Éligibilité e-Visa par Nationalité (v222)
+- [ ] Créer un composant de sélection de nationalité interactive sur la page Evisas
+- [ ] Calculer et afficher instantanément le statut d'éligibilité (« Éligible e-Visa », « e-Visa / e-VOA disponible », « Vérification consulaire ») pour chaque destination
+- [ ] Ajouter un filtre rapide pour n'afficher que les pays éligibles selon la nationalité sélectionnée
+- [ ] Valider et publier la mise à jour sur la plateforme
