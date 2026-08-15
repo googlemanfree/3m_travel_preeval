@@ -2800,3 +2800,8 @@
 - [x] Étendre le routeur et les types de messages pour exposer l’URL signée et les métadonnées d’attachement dans l’espace client
 - [x] Créer ou intégrer le composant de visualisation modale accessible (support PDF, JPG et PNG avec zoom et téléchargement)
 - [x] Valider les tests de non-régression et publier la mise à jour
+
+## Téléchargement et Impression du Visualiseur Modal (v213)
+- [x] Ajouter les actions d’impression directe et de téléchargement sécurisé dans les contrôles de la modale d’aperçu
+- [x] Valider les tests de non-régression
+- [ ] Publier la mise à jour

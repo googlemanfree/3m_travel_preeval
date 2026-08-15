@@ -35,4 +35,11 @@ describe("pièces jointes des réponses rapides", () => {
     expect(dashboard).toContain("Aperçu PDF");
     expect(dashboard).toContain("setAttachmentPreview");
   });
+
+  it("expose le téléchargement et l’impression depuis la modale", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    expect(dashboard).toContain("Imprimer");
+    expect(dashboard).toContain("printAttachment");
+    expect(dashboard).toContain("download={attachmentPreview.name}");
+  });
 });

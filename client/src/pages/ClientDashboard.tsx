@@ -21,6 +21,7 @@ import {
   Trash2,
   Eye,
   Upload,
+  Printer,
   BarChart3,
   CreditCard,
   MessageSquare,
@@ -154,6 +155,23 @@ export default function ClientDashboard() {
     attachmentName?: string | null;
     attachmentMimeType?: string | null;
   }>;
+
+  const printAttachment = (attachment: { url: string; name: string; mimeType: string }) => {
+    const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=700");
+    if (!printWindow) {
+      toast.error("Autorisez les fenêtres contextuelles pour imprimer ce document.");
+      return;
+    }
+    const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+    const safeUrl = escapeHtml(attachment.url);
+    const safeName = escapeHtml(attachment.name);
+    const preview = attachment.mimeType === "application/pdf"
+      ? `<iframe src="${safeUrl}" title="${safeName}" onload="window.print()"></iframe>`
+      : `<img src="${safeUrl}" alt="${safeName}" onload="window.print()">`;
+    printWindow.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Imprimer — ${safeName}</title><style>html,body{margin:0;min-height:100%;font-family:Arial,sans-serif}body{display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}img,iframe{width:100%;height:calc(100vh - 48px);border:0;object-fit:contain}</style></head><body>${preview}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+  };
 
   const trpcUtils = trpc.useUtils();
   const { data: favoriteFlights, isLoading: favoritesLoading } = trpc.flights.getFavoriteFlights.useQuery(
@@ -1460,6 +1478,7 @@ export default function ClientDashboard() {
                   {attachmentPreview?.mimeType === "application/pdf" ? <iframe title={`Aperçu PDF ${attachmentPreview.name}`} src={attachmentPreview.url} className="h-[65vh] w-full rounded border border-slate-200 bg-white" /> : attachmentPreview ? <img src={attachmentPreview.url} alt={`Aperçu de ${attachmentPreview.name}`} className="max-h-[65vh] max-w-full object-contain" /> : null}
                 </div>
                 <DialogFooter>
+                  {attachmentPreview && <Button type="button" variant="outline" onClick={() => printAttachment(attachmentPreview)}><Printer className="mr-2 h-4 w-4" aria-hidden="true" /> Imprimer</Button>}
                   {attachmentPreview && <Button asChild variant="outline"><a href={attachmentPreview.url} target="_blank" rel="noreferrer" download={attachmentPreview.name}><Download className="mr-2 h-4 w-4" aria-hidden="true" /> Télécharger</a></Button>}
                   <Button type="button" onClick={() => setAttachmentPreview(null)}>Fermer</Button>
                 </DialogFooter>
