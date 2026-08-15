@@ -465,6 +465,52 @@ export const applicationRouter = router({
       }
     }),
 
+  /** Initier le paiement du dossier courant sans exposer l’e-mail ni le numéro à un endpoint public */
+  initiateMyCinetPayPayment: candidateProcedure
+    .input(z.object({ paymentMethod: z.enum(["mtn", "orange", "card"]).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+      const siteId = process.env.CINETPAY_SITE_ID ?? "";
+      const apiKey = process.env.CINETPAY_API_KEY ?? "";
+      const baseUrl = process.env.APP_BASE_URL ?? "https://www.3mtravelagency.com";
+      const [app] = await db
+        .select()
+        .from(applications)
+        .where(eq(applications.candidateId, ctx.candidate.id))
+        .orderBy(desc(applications.createdAt))
+        .limit(1);
+      if (!app) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier en ligne trouvé pour votre compte." });
+      if (app.paymentStatus === "SUCCESS") throw new TRPCError({ code: "BAD_REQUEST", message: "Les frais d’ouverture ont déjà été réglés." });
+      if (!siteId || !apiKey) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le paiement en ligne est temporairement indisponible. Contactez votre conseiller." });
+
+      const transactionId = app.paymentTransactionId ?? `3M-${app.dossierNumber}-${randomBytes(16).toString("hex")}`;
+      const amount = app.paymentAmount ?? 65000;
+      const result = await initCinetPayTransaction({
+        transactionId,
+        amount,
+        currency: "XAF",
+        description: `Frais d’ouverture de dossier Prime Travel Service — ${app.dossierNumber}`,
+        customerName: app.fullName,
+        customerEmail: app.email,
+        customerPhone: app.whatsappNumber,
+        returnUrl: `${baseUrl}/payment-success?dossier=${app.dossierNumber}`,
+        notifyUrl: `${baseUrl}/api/cinetpay/webhook`,
+        siteId,
+        apiKey,
+      });
+
+      await db.update(applications).set({
+        paymentStatus: "PENDING",
+        paymentTransactionId: transactionId,
+        paymentAmount: amount,
+        paymentCurrency: "XAF",
+        paymentMethod: input.paymentMethod ?? null,
+      }).where(eq(applications.id, app.id));
+
+      return { dossierNumber: app.dossierNumber, paymentUrl: result.paymentUrl, amount, currency: "XAF" as const };
+    }),
+
   /** Récupérer un dossier par son numéro */
   getApplicationByDossierNumber: publicProcedure
     .input(z.object({ dossierNumber: z.string() }))

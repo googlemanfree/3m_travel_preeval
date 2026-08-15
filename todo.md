@@ -2749,3 +2749,13 @@
 - [x] Permettre au candidat de joindre un commentaire à un document de remplacement
 - [x] Transmettre le commentaire au conseiller avec le document et l’historique d’activité
 - [x] Ajouter les tests et publier la mise à jour
+
+## Extension non destructive de l’espace client (v205)
+- [x] Ajouter l’affichage des frais d’ouverture de dossier de 65 000 XAF dans l’espace client
+- [x] Permettre le dépôt sécurisé du justificatif de paiement et afficher son statut
+- [x] Ajouter côté administrateur la validation ou le rejet du paiement
+- [x] Débloquer les étapes suivantes après validation administrative
+- [x] Synchroniser la transmission aux agences et leur réponse dans l’espace client
+- [x] Ajouter les tests de non-régression
+- [ ] Publier l’extension
+

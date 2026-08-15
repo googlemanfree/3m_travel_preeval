@@ -82,4 +82,17 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("correctionComment: input.correctionComment ?? null");
     expect(trackingRouter).toContain("Commentaire candidat");
   });
+
+  it("conserve le parcours d’ouverture à 65 000 XAF et le sécurise par le candidat connecté", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    const applicationRouter = read("server/routers/application.ts");
+    const schema = read("drizzle/schema.ts");
+    expect(dashboard).toContain("Frais d’ouverture de dossier");
+    expect(dashboard).toContain("initiateMyCinetPayPayment");
+    expect(dashboard).toContain("justificatif_paiement");
+    expect(applicationRouter).toContain("initiateMyCinetPayPayment: candidateProcedure");
+    expect(applicationRouter).toContain("ctx.candidate.id");
+    expect(applicationRouter).toContain("65000");
+    expect(schema).toContain("justificatif_paiement");
+  });
 });

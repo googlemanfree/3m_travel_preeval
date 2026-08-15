@@ -492,7 +492,7 @@ export const candidateRouter = router({
       z.object({
         fileType: z.enum([
           "cv", "passeport", "diplome", "releve_notes", "photo",
-          "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "autre",
+          "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "autre",
         ]),
         fileName: z.string(),
         fileUrl: z.string().url(),

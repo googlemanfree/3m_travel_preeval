@@ -21,6 +21,7 @@ import {
   Eye,
   Upload,
   BarChart3,
+  CreditCard,
   MessageSquare,
   Settings,
   LogOut,
@@ -47,6 +48,10 @@ interface DossierStatus {
   totalDocuments: number;
   uploadedDocuments: number;
   missingDocuments: string[];
+  paymentStatus?: "PENDING" | "SUCCESS" | "FAILED" | "CANCELLED" | "non_paye";
+  paymentAmount?: number | null;
+  paymentCurrency?: string | null;
+  paymentDate?: Date | null;
 }
 
 interface DocumentItem {
@@ -104,6 +109,7 @@ export default function ClientDashboard() {
   const [correctionTarget, setCorrectionTarget] = useState<DocumentItem | null>(null);
   const [correctionComment, setCorrectionComment] = useState("");
   const [correctionFile, setCorrectionFile] = useState<File | null>(null);
+  const [paymentReceiptUploading, setPaymentReceiptUploading] = useState(false);
 
   // Récupérer les données du dossier
   const { data: dossierData, isLoading: dossierLoading } = trpc.candidate.getMyDossierData.useQuery(
@@ -167,6 +173,13 @@ export default function ClientDashboard() {
     },
     onError: (error) => toast.error(error.message || "Le document n’a pas pu être transmis."),
   });
+  const initiatePaymentMutation = trpc.application.initiateMyCinetPayPayment.useMutation({
+    onSuccess: (result) => {
+      if (result.paymentUrl) window.location.assign(result.paymentUrl);
+      else toast.info("Le paiement en ligne n’a pas fourni de lien. Contactez votre conseiller.");
+    },
+    onError: (error) => toast.error(error.message || "Le paiement n’a pas pu être initialisé."),
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -191,6 +204,10 @@ export default function ClientDashboard() {
         totalDocuments: dossierData.data.documents.length,
         uploadedDocuments: dossierData.data.documents.length,
         missingDocuments: [],
+        paymentStatus: dossierData.data.paymentStatus ?? app.paymentStatus ?? "PENDING",
+        paymentAmount: app.paymentAmount ?? 65000,
+        paymentCurrency: app.paymentCurrency ?? "XAF",
+        paymentDate: app.paymentDate ? new Date(app.paymentDate) : null,
       });
     }
   }, [dossierData]);
@@ -382,6 +399,47 @@ export default function ClientDashboard() {
     }
   };
 
+  const handlePaymentReceiptUpload = async (file: File | undefined) => {
+    if (!file) return;
+    const token = getCandidateToken();
+    if (!token) {
+      toast.error("Votre session candidat a expiré. Veuillez vous reconnecter.");
+      setLocation("/login");
+      return;
+    }
+    setPaymentReceiptUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("fileType", "justificatif_paiement");
+      const response = await fetch("/api/candidate/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Le justificatif n’a pas pu être téléversé.");
+      await saveDocumentMutation.mutateAsync({
+        fileType: "justificatif_paiement",
+        fileName: payload.fileName || file.name,
+        fileUrl: payload.fileUrl,
+        fileKey: payload.fileKey,
+        fileSizeBytes: payload.fileSizeBytes ?? file.size,
+        mimeType: payload.mimeType || file.type,
+      });
+      await Promise.all([
+        trpcUtils.candidate.getMyDocuments.invalidate(),
+        trpcUtils.candidate.getMyDossierData.invalidate(),
+      ]);
+      setDocumentSuccessMessage("Votre justificatif de paiement a été reçu. Il sera vérifié par l’administration avant l’ouverture complète du dossier.");
+      toast.success("Justificatif de paiement transmis.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Le justificatif n’a pas pu être transmis.");
+    } finally {
+      setPaymentReceiptUploading(false);
+    }
+  };
+
   if (dossierLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
@@ -498,6 +556,19 @@ export default function ClientDashboard() {
     if (section === "profile") setActiveTab("settings");
     window.setTimeout(() => document.getElementById(section === "documents" ? "documents-center" : section === "profile" ? "profile-settings" : "dossier-status")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
   };
+  const paymentStatus = dossier.paymentStatus ?? "PENDING";
+  const paymentIsComplete = paymentStatus === "SUCCESS";
+  const paymentStatusLabel = paymentIsComplete
+    ? "Paiement confirmé"
+    : paymentStatus === "FAILED" || paymentStatus === "CANCELLED"
+      ? "Paiement à vérifier"
+      : "Paiement en attente";
+  const paymentStatusClass = paymentIsComplete
+    ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+    : paymentStatus === "FAILED" || paymentStatus === "CANCELLED"
+      ? "border-red-200 bg-red-50 text-red-950"
+      : "border-amber-200 bg-amber-50 text-amber-950";
+  const hasOnlineApplication = Boolean(dossierData?.data?.application?.id);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -619,6 +690,53 @@ export default function ClientDashboard() {
                 </ul>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        <Card id="payment-dossier" className={`border ${paymentStatusClass}`}>
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" aria-hidden="true" />
+                  Frais d’ouverture de dossier
+                </CardTitle>
+                <CardDescription className="mt-1 text-current/75">
+                  Traitement, traduction et soumission de votre profil aux agences partenaires.
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="border-current/30 bg-white/70 text-current">{paymentStatusLabel}</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="text-3xl font-bold">{(dossier.paymentAmount ?? 65000).toLocaleString("fr-FR")} {dossier.paymentCurrency ?? "XAF"}</p>
+                <p className="mt-1 text-sm text-current/75">Dossier {dossier.numero}</p>
+              </div>
+              {paymentIsComplete ? (
+                <div className="flex items-center gap-2 font-semibold text-emerald-800"><CheckCircle2 className="h-5 w-5" aria-hidden="true" /> Les étapes suivantes sont ouvertes</div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    className="bg-blue-700 hover:bg-blue-800"
+                    disabled={!hasOnlineApplication || initiatePaymentMutation.isPending}
+                    onClick={() => initiatePaymentMutation.mutate({ paymentMethod: "mtn" })}
+                  >
+                    {initiatePaymentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <CreditCard className="mr-2 h-4 w-4" aria-hidden="true" />}
+                    Payer en ligne
+                  </Button>
+                  <label htmlFor="payment-receipt-upload" className="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-md border border-current/30 bg-white/80 px-4 py-2 text-sm font-semibold transition hover:bg-white focus-within:ring-2 focus-within:ring-blue-500">
+                    {paymentReceiptUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="mr-2 h-4 w-4" aria-hidden="true" />}
+                    Déposer un reçu
+                    <input id="payment-receipt-upload" type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" disabled={paymentReceiptUploading} onChange={(event) => { void handlePaymentReceiptUpload(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+                  </label>
+                </div>
+              )}
+            </div>
+            {!hasOnlineApplication && !paymentIsComplete && <p className="text-sm text-current/80">Votre dossier historique est rattaché à votre compte. Envoyez le reçu effectué en agence ; l’administration mettra à jour le statut après vérification.</p>}
+            {dossier.paymentDate && <p className="text-xs text-current/70">Dernière mise à jour : {dossier.paymentDate.toLocaleString("fr-FR")}</p>}
           </CardContent>
         </Card>
 

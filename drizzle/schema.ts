@@ -201,6 +201,7 @@ export const candidateFiles = mysqlTable("candidate_files", {
     "justificatif_domicile",
     "extrait_naissance",
     "casier_judiciaire",
+    "justificatif_paiement",
     "autre",
   ]).notNull(),
   fileName: varchar("fileName", { length: 255 }).notNull(),
