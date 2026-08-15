@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
 import { candidates } from "../drizzle/schema";
 import { getDb } from "./db";
+import { storagePut } from "./storage";
 
 const GOOGLE_STATE_COOKIE = "candidate_google_oauth_state";
 export const GOOGLE_HANDOFF_COOKIE = "candidate_google_oauth_handoff";
@@ -19,7 +20,67 @@ type GoogleProfile = {
   email?: string;
   email_verified?: boolean;
   name?: string;
+  picture?: string;
 };
+
+function isTrustedGooglePictureUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      (url.hostname === "lh3.googleusercontent.com" ||
+        url.hostname.endsWith(".googleusercontent.com"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function importGoogleProfilePicture(profile: GoogleProfile, candidate: typeof candidates.$inferSelect) {
+  if (!profile.picture || candidate.avatarUrl || !isTrustedGooglePictureUrl(profile.picture)) {
+    return candidate;
+  }
+
+  try {
+    const response = await fetch(profile.picture, { redirect: "error" });
+    const contentType = response.headers.get("content-type")?.split(";")[0].toLowerCase() || "";
+    const contentLength = Number(response.headers.get("content-length") || 0);
+    const acceptedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+    if (!response.ok || !acceptedTypes.has(contentType) || contentLength > 2 * 1024 * 1024) {
+      return candidate;
+    }
+
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (!bytes.length || bytes.length > 2 * 1024 * 1024) return candidate;
+
+    const extension = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    const stored = await storagePut(`candidates/${candidate.id}/google-profile.${extension}`, bytes, contentType);
+    const db = await getDb();
+    if (!db) return candidate;
+
+    await db
+      .update(candidates)
+      .set({
+        avatarUrl: stored.url,
+        avatarVerificationStatus: candidate.avatarVerificationStatus === "missing" ? "pending" : candidate.avatarVerificationStatus,
+        avatarVerificationMethod: "gallery",
+        avatarVerificationReason:
+          candidate.avatarVerificationStatus === "missing"
+            ? "Photo Google importée : validation du portrait requise."
+            : candidate.avatarVerificationReason,
+      })
+      .where(eq(candidates.id, candidate.id));
+
+    return {
+      ...candidate,
+      avatarUrl: stored.url,
+      avatarVerificationStatus: candidate.avatarVerificationStatus === "missing" ? "pending" : candidate.avatarVerificationStatus,
+    };
+  } catch {
+    return candidate;
+  }
+}
 
 function oauthCookieOptions(req: Request) {
   const forwardedProto = req.header("x-forwarded-proto");
@@ -84,9 +145,9 @@ async function findOrCreateVerifiedCandidate(profile: GoogleProfile) {
     const candidate = existing[0];
     if (!candidate.emailVerified) {
       await db.update(candidates).set({ emailVerified: true, verificationToken: null, verificationExpiresAt: null }).where(eq(candidates.id, candidate.id));
-      return { ...candidate, emailVerified: true };
+      return importGoogleProfilePicture(profile, { ...candidate, emailVerified: true });
     }
-    return candidate;
+    return importGoogleProfilePicture(profile, candidate);
   }
 
   const generatedPassword = randomBytes(32).toString("hex");
@@ -101,7 +162,7 @@ async function findOrCreateVerifiedCandidate(profile: GoogleProfile) {
   });
   const created = await db.select().from(candidates).where(eq(candidates.email, email)).limit(1);
   if (!created.length) throw new Error("CANDIDATE_CREATE_FAILED");
-  return created[0];
+  return importGoogleProfilePicture(profile, created[0]);
 }
 
 export function registerGoogleCandidateOAuthRoutes(app: Express) {

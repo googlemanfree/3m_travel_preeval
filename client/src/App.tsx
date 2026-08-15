@@ -128,6 +128,7 @@ const CountryComparisonPage = lazyWithTimeout(() => import("./pages/CountryCompa
 const EvisasAdvanced = lazyWithTimeout(() => import("./pages/EvisasAdvanced"));
 const Evaluation = lazyWithTimeout(() => import("./pages/Evaluation"));
 const ClientSpaceEnhancedV2 = lazyWithTimeout(() => import("./pages/ClientSpaceEnhancedV2"));
+const PrimeJourney = lazyWithTimeout(() => import("./pages/PrimeJourney"));
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -140,6 +141,7 @@ function Router() {
       <Route path={"/signup"} component={Register} />
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
+      <Route path={"/parcours"} component={PrimeJourney} />
       <Route path={"/evaluation"}>
         <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
           <Evaluation />

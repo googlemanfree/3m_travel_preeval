@@ -19,6 +19,28 @@ const DialogCompositionContext = React.createContext<{
 export const useDialogComposition = () =>
   React.useContext(DialogCompositionContext);
 
+const DIALOG_ANNOUNCER_ID = "dialog-dismissal-announcer";
+
+function announceDialogDismissal() {
+  if (typeof document === "undefined") return;
+
+  let announcer = document.getElementById(DIALOG_ANNOUNCER_ID);
+  if (!announcer) {
+    announcer = document.createElement("div");
+    announcer.id = DIALOG_ANNOUNCER_ID;
+    announcer.setAttribute("role", "status");
+    announcer.setAttribute("aria-live", "polite");
+    announcer.setAttribute("aria-atomic", "true");
+    announcer.className = "sr-only";
+    document.body.appendChild(announcer);
+  }
+
+  announcer.textContent = "";
+  window.setTimeout(() => {
+    announcer!.textContent = "Fenêtre fermée.";
+  }, 0);
+}
+
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -94,6 +116,7 @@ function DialogContent({
   children,
   showCloseButton = true,
   onEscapeKeyDown,
+  onPointerDownOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
@@ -112,10 +135,26 @@ function DialogContent({
         return;
       }
 
-      // Call user's onEscapeKeyDown if provided
       onEscapeKeyDown?.(e);
+      if (!e.defaultPrevented) {
+        announceDialogDismissal();
+      }
     },
     [isComposing, onEscapeKeyDown]
+  );
+
+  const handlePointerDownOutside = React.useCallback(
+    (
+      e: Parameters<
+        NonNullable<React.ComponentProps<typeof DialogPrimitive.Content>["onPointerDownOutside"]>
+      >[0],
+    ) => {
+      onPointerDownOutside?.(e);
+      if (!e.defaultPrevented) {
+        announceDialogDismissal();
+      }
+    },
+    [onPointerDownOutside]
   );
 
   return (
@@ -128,6 +167,7 @@ function DialogContent({
           className
         )}
         onEscapeKeyDown={handleEscapeKeyDown}
+        onPointerDownOutside={handlePointerDownOutside}
         {...props}
       >
         {children}
@@ -206,4 +246,3 @@ export {
   DialogTitle,
   DialogTrigger
 };
-

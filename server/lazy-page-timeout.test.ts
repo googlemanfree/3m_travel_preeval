@@ -21,7 +21,7 @@ describe("lazy page timeout recovery contracts", () => {
     const lazyImports = app.match(/lazyWithTimeout\(\(\) => import\(/g) ?? [];
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
-    expect(lazyImports).toHaveLength(106);
+    expect(lazyImports).toHaveLength(107);
     expect(app).not.toContain("React.lazy(() => import(");
   });
 });

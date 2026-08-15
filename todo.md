@@ -2682,3 +2682,17 @@
 - [x] Conserver Facebook désactivé avec un état « Bientôt disponible » accessible
 - [x] Mettre à jour la documentation et le suivi pour signaler l’annulation de Facebook
 - [x] Tester les parcours sociaux visibles et publier la configuration retenue
+
+## Google OAuth complet et modales universelles (v197)
+- [ ] Cartographier les modales restantes et le modèle de fermeture extérieure annoncé
+- [ ] Ajouter un état de redirection Google visible et accessible sur connexion et inscription
+- [ ] Synchroniser la photo Google de façon sécurisée avec le profil candidat
+- [ ] Tester le consentement Google réel, le callback et la redirection avec un compte candidat
+- [ ] Ajouter les tests des modales et de la photo puis publier
+
+## Parcours Utilisateur & Évaluation Mondiale (v198)
+- [x] Documenter le parcours utilisateur complet (acquisition Facebook/WhatsApp → évaluation mondiale → choix du pays → dossier → transmission partenaires)
+- [x] Concevoir l'écran d'accueil avec point d'entrée contextuel pour les campagnes Facebook et le widget WhatsApp professionnel
+- [ ] Implémenter le formulaire d'évaluation mondiale multipays avec critères d'éligibilité et suggestions de compatibilité
+- [ ] Créer l'espace candidat unifié avec le numéro de dossier, la photo de profil, la timeline à 5 étapes et le dépôt documentaire style Canada
+- [ ] Développer le tableau de bord administrateur pour la gestion globale, l'évaluation des dossiers et la transmission aux agences partenaires
