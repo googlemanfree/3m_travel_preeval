@@ -85,7 +85,10 @@ async function importGoogleProfilePicture(profile: GoogleProfile, candidate: typ
 function oauthCookieOptions(req: Request) {
   const forwardedProto = req.header("x-forwarded-proto");
   const secure = process.env.NODE_ENV === "production" || forwardedProto === "https";
-  return { httpOnly: true, sameSite: "lax" as const, secure, path: "/" };
+  // Le callback Google est une redirection cross-site. En production, None
+  // garantit que le handoff reste disponible au premier appel tRPC après le
+  // retour sur /login ; le mode local conserve Lax pour éviter d’exiger HTTPS.
+  return { httpOnly: true, sameSite: secure ? ("none" as const) : ("lax" as const), secure, path: "/" };
 }
 
 export function isGoogleOAuthConfigured() {

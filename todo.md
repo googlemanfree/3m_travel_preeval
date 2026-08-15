@@ -2702,3 +2702,9 @@
 - [x] Relier la provenance au dossier candidat et vérifier la migration de données
 - [x] Tester la synchronisation de provenance et publier la mise à jour
 
+
+- [x] Diagnostiquer le retour vers /login après le callback Google en production
+- [x] Corriger la rupture éventuelle du cookie handoff ou de la session candidat Google
+- [x] Ajouter un test de régression du retour OAuth vers /mon-espace
+- [x] Valider et publier le correctif Google OAuth
+

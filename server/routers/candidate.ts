@@ -30,6 +30,7 @@ import { sendVerificationLink, sendVerificationOtp, sendPasswordResetEmail, send
 import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
+import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -159,8 +160,9 @@ export const DOSSIER_STEPS = [
 export const candidateRouter = router({
   // ── Finaliser la session courte créée par le callback Google ────────────────
   consumeGoogleOAuth: publicProcedure.mutation(async ({ ctx }) => {
-    const handoff = parseCookieHeader(ctx.req.headers.cookie || "")["candidate_google_oauth_handoff"];
-    ctx.res.clearCookie("candidate_google_oauth_handoff", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+    const handoff = parseCookieHeader(ctx.req.headers.cookie || "")[GOOGLE_HANDOFF_COOKIE];
+    const secure = process.env.NODE_ENV === "production";
+    ctx.res.clearCookie(GOOGLE_HANDOFF_COOKIE, { httpOnly: true, sameSite: secure ? "none" : "lax", secure, path: "/" });
     if (!handoff) throw new TRPCError({ code: "UNAUTHORIZED", message: "La session Google a expiré. Recommencez la connexion." });
 
     let candidateId: number;
