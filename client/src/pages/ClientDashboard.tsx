@@ -27,6 +27,7 @@ import {
   LifeBuoy,
   Loader2,
   X,
+  UserRound,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -91,6 +92,8 @@ export default function ClientDashboard() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [documentSuccessMessage, setDocumentSuccessMessage] = useState<string | null>(null);
+  const [recentDocument, setRecentDocument] = useState<{ id: number; name: string; url: string } | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [historySort, setHistorySort] = useState<"recent" | "oldest">("recent");
   const [historyType, setHistoryType] = useState("all");
   const [profileForm, setProfileForm] = useState({ fullName: "", phone: "", nationality: "", dateOfBirth: "" });
@@ -128,6 +131,21 @@ export default function ClientDashboard() {
   });
 
   const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
+  const deleteDocumentMutation = trpc.candidate.deleteDocument.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.candidate.getMyDocuments.invalidate();
+      setRecentDocument(null);
+      toast.success("Le document a été supprimé de votre espace.");
+    },
+    onError: (error) => toast.error(error.message || "Le document n’a pas pu être supprimé."),
+  });
+  const updateAvatarMutation = trpc.candidate.updateAvatar.useMutation({
+    onSuccess: async () => {
+      await trpcUtils.candidate.getProfile.invalidate();
+      toast.success("Votre photo de profil a été mise à jour.");
+    },
+    onError: (error) => toast.error(error.message || "La photo de profil n’a pas pu être mise à jour."),
+  });
   const updateProfileMutation = trpc.candidate.updateProfile.useMutation({
     onSuccess: async () => {
       await trpcUtils.candidate.getProfile.invalidate();
@@ -282,7 +300,7 @@ export default function ClientDashboard() {
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement");
-        await saveDocumentMutation.mutateAsync({
+        const savedDocument = await saveDocumentMutation.mutateAsync({
           fileType: "autre",
           fileName: payload.fileName || file.name,
           fileUrl: payload.fileUrl,
@@ -290,6 +308,9 @@ export default function ClientDashboard() {
           fileSizeBytes: payload.fileSizeBytes ?? file.size,
           mimeType: payload.mimeType || file.type,
         });
+        if (savedDocument.documentId && payload.fileUrl) {
+          setRecentDocument({ id: savedDocument.documentId, name: payload.fileName || file.name, url: payload.fileUrl });
+        }
       }
       await Promise.all([
         trpcUtils.candidate.getMyDocuments.invalidate(),
@@ -359,6 +380,34 @@ export default function ClientDashboard() {
     const message = `Bonjour Prime Travel Service, j’ai besoin d’assistance pour la révision de mon dossier ${dossier.numero}.`;
     window.open(`https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   };
+  const handleDeleteDocument = (document: { id: string; name: string }) => {
+    if (!window.confirm(`Supprimer « ${document.name} » ? Cette action est disponible avant validation par l’équipe.`)) return;
+    deleteDocumentMutation.mutate({ fileId: Number(document.id) });
+  };
+  const handleAvatarChange = async (file: File | undefined) => {
+    if (!file) return;
+    const email = profileData?.email || candidate?.email;
+    if (!email) {
+      toast.error("Votre adresse e-mail est indisponible. Actualisez la page puis réessayez.");
+      return;
+    }
+    setAvatarUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", "photo_identite");
+    formData.append("email", email);
+    formData.append("captureMethod", "gallery");
+    try {
+      const response = await fetch("/api/candidate/upload-public", { method: "POST", body: formData });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Erreur lors du téléversement de la photo");
+      await updateAvatarMutation.mutateAsync({ avatarUrl: payload.fileUrl, portraitVerificationToken: payload.portraitVerificationToken });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors du téléversement de la photo");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
   const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await updateProfileMutation.mutateAsync({
@@ -368,6 +417,13 @@ export default function ClientDashboard() {
       dateOfBirth: profileForm.dateOfBirth || undefined,
     });
   };
+  const requiredRequirements = activeCase?.requirements.filter((requirement) => requirement.isRequired !== false) ?? [];
+  const documentProgress = requiredRequirements.length > 0
+    ? Math.round((requiredRequirements.filter((requirement) => requirement.status === "received" || requirement.status === "approved").length / requiredRequirements.length) * 100)
+    : documents.length > 0 ? 100 : 0;
+  const profileFieldsCompleted = [profileData?.fullName || candidate?.fullName, profileData?.phone, profileData?.nationality, profileData?.dateOfBirth].filter(Boolean).length;
+  const profileProgress = Math.round((profileFieldsCompleted / 4) * 100);
+  const globalProgress = Math.round((dossier.progress + documentProgress + profileProgress) / 3);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
@@ -385,6 +441,34 @@ export default function ClientDashboard() {
             </Button>
           </div>
         </div>
+
+        <Card className="overflow-hidden border-0 bg-gradient-to-r from-slate-950 via-blue-950 to-blue-800 text-white shadow-lg">
+          <CardContent className="grid gap-6 p-6 md:grid-cols-[10rem_minmax(0,1fr)] md:items-center">
+            <div className="flex items-center gap-4 md:block md:text-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-blue-300/70 bg-white/10 text-2xl font-bold" aria-hidden="true">{globalProgress}%</div>
+              <div>
+                <p className="mt-0 text-sm font-semibold md:mt-3">Avancement global</p>
+                <p className="text-xs text-blue-100">Synthèse de votre dossier</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">Vue d’ensemble de votre progression</h2>
+                  <p className="text-sm text-blue-100">Le pourcentage combine votre procédure, vos documents requis et vos informations de profil.</p>
+                </div>
+              </div>
+              <div className="space-y-3" role="progressbar" aria-label="Progression globale du dossier" aria-valuemin={0} aria-valuemax={100} aria-valuenow={globalProgress}>
+                <div className="h-3 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-emerald-300 transition-all duration-300" style={{ width: `${globalProgress}%` }} /></div>
+                <div className="grid gap-3 text-sm sm:grid-cols-3">
+                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Procédure</span><strong>{dossier.progress}%</strong></div>
+                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Documents</span><strong>{documentProgress}%</strong></div>
+                  <div className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Profil</span><strong>{profileProgress}%</strong></div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Statut Principal */}
         <Card className="border-2 border-blue-200">
@@ -476,6 +560,23 @@ export default function ClientDashboard() {
               <X className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
+        )}
+
+        {recentDocument && (
+          <Card className="border border-emerald-200 bg-white">
+            <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <FileCheck className="h-5 w-5 text-emerald-600" aria-hidden="true" />
+                <div><p className="font-semibold text-slate-900">Document récent : {recentDocument.name}</p><p className="text-sm text-slate-600">Vérifiez le fichier ou supprimez-le tant qu’il n’est pas validé.</p></div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" asChild><a href={recentDocument.url} target="_blank" rel="noopener noreferrer"><Eye className="mr-2 h-4 w-4" aria-hidden="true" />Prévisualiser</a></Button>
+                <Button variant="outline" size="sm" className="border-red-200 text-red-700 hover:bg-red-50" disabled={deleteDocumentMutation.isPending} onClick={() => deleteDocumentMutation.mutate({ fileId: recentDocument.id })}>
+                  {deleteDocumentMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />} Supprimer
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <Card className="border border-orange-200 bg-gradient-to-br from-orange-50 to-white">
@@ -791,6 +892,18 @@ export default function ClientDashboard() {
                               </Button>
                             </>
                           )}
+                          {doc.status !== "verified" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              aria-label={`Supprimer ${doc.name}`}
+                              disabled={deleteDocumentMutation.isPending}
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -933,6 +1046,20 @@ export default function ClientDashboard() {
                 <CardDescription>Gardez vos informations de contact à jour afin que l’équipe puisse assurer le suivi de votre dossier.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-4 sm:flex-row sm:items-center">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-white shadow-sm">
+                    {profileData?.avatarUrl ? <img src={profileData.avatarUrl} alt="Photo de profil" className="h-full w-full object-cover" /> : <UserRound className="h-9 w-9 text-blue-600" aria-hidden="true" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-slate-900">Photo de profil</p>
+                    <p className="mt-1 text-sm text-slate-600">Ajoutez ou remplacez votre portrait. Une photo humaine, nette et récente est requise pour sécuriser votre dossier.</p>
+                    <input id="profile-avatar" type="file" className="sr-only" accept="image/jpeg,image/png,image/webp" disabled={avatarUploading || updateAvatarMutation.isPending} onChange={(event) => { void handleAvatarChange(event.currentTarget.files?.[0]); event.currentTarget.value = ""; }} />
+                    <label htmlFor="profile-avatar" className={`mt-3 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md bg-blue-700 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-800 ${avatarUploading || updateAvatarMutation.isPending ? "pointer-events-none opacity-60" : ""}`}>
+                      {avatarUploading || updateAvatarMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="mr-2 h-4 w-4" aria-hidden="true" />}
+                      {profileData?.avatarUrl ? "Remplacer la photo" : "Ajouter une photo"}
+                    </label>
+                  </div>
+                </div>
                 <form className="space-y-4" onSubmit={handleProfileSubmit}>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-2 sm:col-span-2">

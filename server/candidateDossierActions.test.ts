@@ -22,6 +22,14 @@ describe("actions de dossier candidat", () => {
     expect(candidateRouter).toContain("Dossier créé et enregistré.");
   });
 
+  it("autorise uniquement la suppression de documents appartenant au candidat et non validés", () => {
+    const candidateRouter = read("server/routers/candidate.ts");
+    expect(candidateRouter).toContain("deleteDocument: candidateProcedure");
+    expect(candidateRouter).toContain("eq(candidateFiles.candidateId, ctx.candidate.id)");
+    expect(candidateRouter).toContain("Un document validé ne peut pas être supprimé");
+    expect(candidateRouter).toContain("documentId: Number");
+  });
+
   it("propose le dépôt direct, la chronologie filtrable et le contact d’assistance dans le dashboard", () => {
     const dashboard = read("client/src/pages/ClientDashboard.tsx");
     expect(dashboard).toContain("Pièces à compléter");
@@ -41,5 +49,15 @@ describe("actions de dossier candidat", () => {
     expect(dashboard).toContain("Enregistrer le profil");
     expect(dashboard).toContain("L’adresse e-mail est protégée");
     expect(dashboard).toContain("profile-name");
+  });
+
+  it("propose un avatar vérifié, l’aperçu du dernier document et une synthèse globale", () => {
+    const dashboard = read("client/src/pages/ClientDashboard.tsx");
+    expect(dashboard).toContain("updateAvatar.useMutation");
+    expect(dashboard).toContain("portraitVerificationToken");
+    expect(dashboard).toContain("Photo de profil");
+    expect(dashboard).toContain("globalProgress");
+    expect(dashboard).toContain("Progression globale du dossier");
+    expect(dashboard).toContain("Prévisualiser");
   });
 });

@@ -514,7 +514,7 @@ export const candidateRouter = router({
         console.error("Extraction error:", err);
       }
 
-      await db.insert(candidateFiles).values({
+      const insertResult = await db.insert(candidateFiles).values({
         candidateId: ctx.candidate.id,
         fileType: input.fileType,
         fileName: input.fileName,
@@ -533,6 +533,24 @@ export const candidateRouter = router({
           .where(eq(candidates.id, ctx.candidate.id));
       }
 
+      return { success: true, documentId: Number((insertResult as any)[0]?.insertId || 0) };
+    }),
+
+  // ── Supprimer une pièce récente non validée ─────────────────────────────────
+  deleteDocument: candidateProcedure
+    .input(z.object({ fileId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [document] = await db.select({ id: candidateFiles.id, status: candidateFiles.status })
+        .from(candidateFiles)
+        .where(and(eq(candidateFiles.id, input.fileId), eq(candidateFiles.candidateId, ctx.candidate.id)))
+        .limit(1);
+      if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document introuvable ou non autorisé." });
+      if (document.status === "verified") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Un document validé ne peut pas être supprimé depuis votre espace." });
+      }
+      await db.delete(candidateFiles).where(and(eq(candidateFiles.id, input.fileId), eq(candidateFiles.candidateId, ctx.candidate.id)));
       return { success: true };
     }),
 
@@ -588,20 +606,6 @@ export const candidateRouter = router({
           }],
         },
       }).where(eq(clientDocuments.id, input.documentId));
-      return { success: true };
-    }),
-
-  // ── Supprimer un document ─────────────────────────────────────────────────
-  deleteDocument: candidateProcedure
-    .input(z.object({ fileId: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-      await db
-        .delete(candidateFiles)
-        .where(and(eq(candidateFiles.id, input.fileId), eq(candidateFiles.candidateId, ctx.candidate.id)));
-
       return { success: true };
     }),
 

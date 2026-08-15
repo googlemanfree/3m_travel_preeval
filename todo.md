@@ -2729,4 +2729,11 @@
 - [x] Ajouter un filtrage par date et type dans l’historique du dossier
 - [x] Ajouter une section de profil éditable dans le tableau de bord candidat
 - [x] Ajouter les tests de régression et vérifier l’interface responsive
+- [x] Publier la mise à jour
+
+## Documents, avatar & progression globale (v202)
+- [x] Ajouter une prévisualisation et une suppression contrôlée des documents récemment téléversés
+- [x] Ajouter la mise à jour d’avatar dans les paramètres candidat
+- [x] Ajouter une synthèse visuelle globale de progression du dossier
+- [x] Ajouter les tests de sécurité, d’accessibilité et de responsive
 - [ ] Publier la mise à jour
