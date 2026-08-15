@@ -2657,3 +2657,22 @@
 - [x] Désactiver clairement Google et Facebook avec une infobulle « Bientôt disponible »
 - [x] Uniformiser les états chargement/aria-busy des boutons de validation candidat
 - [x] Ajouter les tests clavier, états désactivés et chargements puis publier
+
+## Modales, inscription et OAuth accessibles (v193)
+- [ ] Annoncer la fermeture des modales au clic extérieur aux lecteurs d’écran
+- [ ] Renforcer l’indicateur de force et la validation temps réel de l’inscription
+- [ ] Préparer les points d’intégration Google/Facebook sans activer de connexion fictive
+- [ ] Ajouter des tests automatisés de parcours clavier et de validation de formulaire
+- [ ] Demander les identifiants OAuth officiels avant toute activation réelle
+
+## Préparation des consoles OAuth (v194)
+- [ ] Documenter les URL de redirection Google et Facebook de 3M Travel Agency
+- [ ] Ouvrir les consoles officielles et accompagner la connexion du propriétaire
+- [ ] Enregistrer uniquement les identifiants OAuth fournis via le gestionnaire sécurisé
+- [ ] Activer et tester les parcours sociaux après validation des fournisseurs
+
+## Icônes Lucide dans la barre de navigation (v195)
+- [x] Auditer les emojis encore affichés dans Navbar.tsx
+- [x] Remplacer les emojis par des icônes Lucide avec labels et aria-hidden appropriés
+- [x] Préserver les zones tactiles, le comportement mobile et les liens existants
+- [x] Vérifier TypeScript, navigation clavier et captures responsive puis publier

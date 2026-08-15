@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, Mail, Lock, ArrowRight, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useGoogleLogin } from '@react-oauth/google';
 import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -25,14 +24,26 @@ export default function Login() {
   const [resendEmail, setResendEmail] = useState("");
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [modalAnnouncement, setModalAnnouncement] = useState("");
   const passwordStrength = usePasswordStrength(password);
-  const resendDialogRef = useFocusTrap(showResendModal, () => setShowResendModal(false));
-  const forgotDialogRef = useFocusTrap(showForgotPasswordModal, () => setShowForgotPasswordModal(false));
+  const closeResendModal = () => {
+    setShowResendModal(false);
+    setModalAnnouncement("Fenêtre de renvoi d’email fermée.");
+  };
+  const closeForgotPasswordModal = () => {
+    setShowForgotPasswordModal(false);
+    setModalAnnouncement("Fenêtre de réinitialisation du mot de passe fermée.");
+  };
+  const resendDialogRef = useFocusTrap(showResendModal, closeResendModal);
+  const forgotDialogRef = useFocusTrap(showForgotPasswordModal, closeForgotPasswordModal);
 
   // Message d'avertissement si redirigé depuis une page protégée
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const redirected = params.get("redirect") === "1";
   const from = params.get("from") ?? "";
+  const googleOAuthCallback = params.get("oauth") === "google";
+  const googleOAuthError = params.get("oauth_error") === "google" || params.get("oauth_error") === "google_unavailable";
+  const googleOAuthConfigured = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   const loginMutation = trpc.candidate.login.useMutation({
     onSuccess: (data) => {
@@ -83,6 +94,57 @@ export default function Login() {
     },
   });
 
+  const consumeGoogleOAuthMutation = trpc.candidate.consumeGoogleOAuth.useMutation({
+    onSuccess: (data) => {
+      const storage = sessionStorage;
+      storage.setItem("3m_candidate_token", data.token);
+      storage.setItem("3m_candidate_info", JSON.stringify({
+        id: data.candidate.id,
+        fullName: data.candidate.fullName,
+        email: data.candidate.email,
+        emailVerified: true,
+      }));
+      login(data.token, {
+        id: data.candidate.id,
+        fullName: data.candidate.fullName,
+        email: data.candidate.email,
+        emailVerified: true,
+      });
+      if (data.candidate.requiresPortrait) {
+        localStorage.setItem("candidateId", String(data.candidate.id));
+        toast.info("Ajoutez maintenant votre portrait pour finaliser votre espace candidat.");
+        navigate(`/complete-profile?email=${encodeURIComponent(data.candidate.email)}`);
+        return;
+      }
+      toast.success(`Bienvenue, ${data.candidate.fullName} !`);
+      navigate(from ? decodeURIComponent(from) : "/dashboard");
+    },
+    onError: () => {
+      toast.error("La connexion Google a expiré. Veuillez réessayer.");
+      navigate("/login", { replace: true });
+    },
+  });
+
+  useEffect(() => {
+    if (googleOAuthCallback && !consumeGoogleOAuthMutation.isPending && !consumeGoogleOAuthMutation.isSuccess) {
+      consumeGoogleOAuthMutation.mutate();
+    }
+  }, [googleOAuthCallback, consumeGoogleOAuthMutation]);
+
+  useEffect(() => {
+    if (googleOAuthError) {
+      toast.error("Connexion Google indisponible ou annulée. Réessayez dans quelques instants.");
+    }
+  }, [googleOAuthError]);
+
+  function handleGoogleLogin() {
+    if (!googleOAuthConfigured) {
+      toast.info("La connexion Google sera disponible prochainement.");
+      return;
+    }
+    window.location.assign("/api/auth/google/start");
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
@@ -103,6 +165,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "linear-gradient(135deg, #0f2460 0%, #1e3a8a 50%, #2563eb 100%)" }}>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">{modalAnnouncement}</p>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -273,10 +336,10 @@ export default function Login() {
             <div className="group relative">
               <button
                 type="button"
-                aria-disabled="true"
-                aria-describedby="google-coming-soon"
-                onClick={(event) => event.preventDefault()}
-                className="h-11 w-full flex items-center justify-center gap-2 px-4 border border-gray-200 rounded-lg text-sm font-medium text-gray-500 opacity-60 cursor-not-allowed"
+                disabled={!googleOAuthConfigured || consumeGoogleOAuthMutation.isPending}
+                aria-describedby={!googleOAuthConfigured ? "google-coming-soon" : undefined}
+                onClick={handleGoogleLogin}
+                className={`h-11 w-full flex items-center justify-center gap-2 px-4 border rounded-lg text-sm font-medium transition-colors ${googleOAuthConfigured ? "border-gray-300 text-gray-700 hover:bg-gray-50" : "border-gray-200 text-gray-500 opacity-60 cursor-not-allowed"}`}
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -284,9 +347,9 @@ export default function Login() {
                   <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
-                Google
+                {consumeGoogleOAuthMutation.isPending ? "Connexion Google..." : "Google"}
               </button>
-              <span id="google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>
+              {!googleOAuthConfigured && <span id="google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>}
             </div>
             <div className="group relative">
               <button
@@ -327,7 +390,7 @@ export default function Login() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={() => setShowResendModal(false)}
+          onClick={closeResendModal}
           role="dialog"
           aria-modal="true"
           aria-labelledby="resend-title"
@@ -348,7 +411,7 @@ export default function Login() {
               <button
                 type="button"
                 aria-label="Fermer la fenêtre de renvoi d’email"
-                onClick={() => setShowResendModal(false)}
+                onClick={closeResendModal}
                 className="touch-target text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -399,7 +462,7 @@ export default function Login() {
 
                 <button
                   type="button"
-                  onClick={() => setShowResendModal(false)}
+                  onClick={closeResendModal}
                   className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
                 >
                   Annuler
@@ -418,7 +481,7 @@ export default function Login() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
-          onClick={() => setShowForgotPasswordModal(false)}
+          onClick={closeForgotPasswordModal}
           role="dialog"
           aria-modal="true"
           aria-labelledby="forgot-title"
@@ -439,7 +502,7 @@ export default function Login() {
               <button
                 type="button"
                 aria-label="Fermer la fenêtre de récupération"
-                onClick={() => setShowForgotPasswordModal(false)}
+                onClick={closeForgotPasswordModal}
                 className="touch-target text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -494,7 +557,7 @@ export default function Login() {
 
                 <button
                   type="button"
-                  onClick={() => setShowForgotPasswordModal(false)}
+                  onClick={closeForgotPasswordModal}
                   className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
                 >
                   Annuler

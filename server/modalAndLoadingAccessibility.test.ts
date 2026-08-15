@@ -22,12 +22,13 @@ describe("modales et boutons candidat accessibles", () => {
     expect(login).toContain('aria-labelledby="forgot-title"');
   });
 
-  it("annonce visuellement les connexions sociales non disponibles au login et à l’inscription", () => {
+  it("active Google configuré et annonce clairement Facebook encore indisponible", () => {
     const login = source("client/src/pages/Login.tsx");
     const register = source("client/src/pages/Register.tsx");
-    expect(login).toContain('aria-describedby="google-coming-soon"');
+    expect(login).toContain('window.location.assign("/api/auth/google/start")');
+    expect(register).toContain('window.location.assign("/api/auth/google/start")');
+    expect(login).toContain('aria-describedby="facebook-coming-soon"');
     expect(login).toContain("Bientôt disponible");
-    expect(register).toContain('aria-describedby="register-google-coming-soon"');
     expect(register).toContain('aria-describedby="register-facebook-coming-soon"');
   });
 

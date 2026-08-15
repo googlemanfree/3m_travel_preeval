@@ -5,18 +5,38 @@ import ThemeToggle from "./ThemeToggle";
 import { prefetchNavigation } from "@/lib/navigationCache";
 import { notifyNavigationStart } from "./NavigationProgress";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ShoppingBag } from "lucide-react";
+import {
+  BookOpen,
+  ChevronDown,
+  FileText,
+  FolderKanban,
+  Globe2,
+  Home,
+  Languages,
+  LogIn,
+  LogOut,
+  Menu,
+  PenLine,
+  Plane,
+  ShoppingBag,
+  Smartphone,
+  Star,
+  UserRound,
+  X,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
-const menuItems = [
-  { href: "/", label: "Accueil", icon: "🏠" },
-  { href: "/vols", label: "Vols", icon: "✈️" },
-  { href: "/procedures", label: "Procédures", icon: "📖" },
-  { href: "/ressources", label: "Ressources", icon: "🌐" },
-  { href: "/guide-procedures", label: "Guide PDF", icon: "📚" },
-  { href: "/evaluation-rapide-enhanced", label: "Évaluation Rapide", icon: "⚡" },
-  { href: "/mon-espace", label: "Suivi de dossier", icon: "📂" },
-  { href: "/evisas", label: "E-Visa", icon: "📱", highlight: true },
+const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: boolean }[] = [
+  { href: "/", label: "Accueil", icon: Home },
+  { href: "/vols", label: "Vols", icon: Plane },
+  { href: "/procedures", label: "Procédures", icon: BookOpen },
+  { href: "/ressources", label: "Ressources", icon: Globe2 },
+  { href: "/guide-procedures", label: "Guide PDF", icon: FileText },
+  { href: "/evaluation-rapide-enhanced", label: "Évaluation Rapide", icon: Zap },
+  { href: "/mon-espace", label: "Suivi de dossier", icon: FolderKanban },
+  { href: "/evisas", label: "E-Visa", icon: Smartphone, highlight: true },
 ];
 
 const nativeLinkClass = (highlight?: boolean) =>
@@ -93,7 +113,9 @@ export default function Navbar() {
             aria-label="Navigation principale"
             className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80"
           >
-            {menuItems.map((item) => (
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              return (
               <a
                 key={item.href}
                 href={item.href}
@@ -102,9 +124,11 @@ export default function Navbar() {
                 onClick={handleNavigationClick}
                 className={nativeLinkClass(item.highlight)}
               >
-                <span aria-hidden="true">{item.icon}</span> {item.label}
+                <Icon className="h-4 w-4" aria-hidden="true" />
+                <span>{item.label}</span>
               </a>
-            ))}
+              );
+            })}
           </nav>
 
           <div className="hidden lg:flex items-center gap-3">
@@ -127,7 +151,7 @@ export default function Navbar() {
                 aria-pressed={language === 'fr'}
                 className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
               >
-                <span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span>
+                <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span>
               </button>
               <button
                 type="button"
@@ -136,7 +160,7 @@ export default function Navbar() {
                 aria-pressed={language === 'en'}
                 className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
               >
-                <span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span>
+                <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span>
               </button>
             </div>
             <ThemeToggle />
@@ -170,9 +194,7 @@ export default function Navbar() {
                   onClick={() => setIsProfileOpen((open) => !open)}
                   className="touch-target rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-blue-700"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
 
                 {isProfileOpen && (
@@ -189,7 +211,7 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
-                      <span aria-hidden="true">📂</span> Tableau de bord / Dossier
+                      <FolderKanban className="h-4 w-4" aria-hidden="true" /> Tableau de bord / Dossier
                     </a>
                     <a
                       href="/evaluation"
@@ -199,7 +221,7 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
-                      <span aria-hidden="true">⭐</span> Nouvelle Évaluation
+                      <Star className="h-4 w-4" aria-hidden="true" /> Nouvelle Évaluation
                     </a>
                     <div className="my-1 border-t border-gray-100" />
                     <button
@@ -208,7 +230,7 @@ export default function Navbar() {
                       className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition text-left"
                       role="menuitem"
                     >
-                      <span aria-hidden="true">🚪</span> Se déconnecter
+                      <LogOut className="h-4 w-4" aria-hidden="true" /> Se déconnecter
                     </button>
                   </div>
                 )}
@@ -222,7 +244,7 @@ export default function Navbar() {
                   onClick={handleNavigationClick}
                   className={`${authButtonClass} bg-blue-50/80 text-blue-700 border border-blue-100 hover:bg-blue-100/80`}
                 >
-                  👤 Accès Client
+                  <UserRound className="h-4 w-4" aria-hidden="true" /> Accès Client
                 </a>
                 <a
                   href="/register"
@@ -231,7 +253,7 @@ export default function Navbar() {
                   onClick={handleNavigationClick}
                   className={`${authButtonClass} bg-blue-600 text-white shadow-sm hover:bg-blue-700`}
                 >
-                  ✍️ Inscription
+                  <PenLine className="h-4 w-4" aria-hidden="true" /> Inscription
                 </a>
               </>
             )}
@@ -239,8 +261,8 @@ export default function Navbar() {
 
           <div className="flex lg:hidden items-center gap-2">
             <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label="Sélection de langue / Language selector">
-              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`touch-target px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇫🇷</span><span className="sr-only"> FR</span></button>
-              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`touch-target px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><span aria-hidden="true">🇬🇧</span><span className="sr-only"> EN</span></button>
+              <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
+              <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button
@@ -253,13 +275,7 @@ export default function Navbar() {
               variants={hamburgerVariants}
               transition={{ duration: 0.3 }}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
+              {isMenuOpen ? <X className="h-6 w-6" aria-hidden="true" /> : <Menu className="h-6 w-6" aria-hidden="true" />}
             </motion.button>
           </div>
         </div>
@@ -310,7 +326,9 @@ export default function Navbar() {
             </a>
 
             <nav aria-label="Navigation mobile" className="space-y-1 mb-4">
-              {menuItems.map((item, index) => (
+              {menuItems.map((item, index) => {
+                const Icon = item.icon;
+                return (
                 <motion.a
                   key={item.href}
                   href={item.href}
@@ -323,9 +341,11 @@ export default function Navbar() {
                   animate="visible"
                   custom={candidate ? index + 1 : index}
                 >
-                  <span aria-hidden="true">{item.icon}</span> {item.label}
+                  <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>{item.label}</span>
                 </motion.a>
-              ))}
+                );
+              })}
             </nav>
 
             <motion.div
@@ -346,7 +366,7 @@ export default function Navbar() {
                 animate="visible"
                 custom={menuItems.length + 2}
               >
-                🚪 Se déconnecter
+                <LogOut className="h-4 w-4" aria-hidden="true" /> Se déconnecter
               </motion.button>
             ) : (
               <motion.div
@@ -363,7 +383,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30`}
                 >
-                  ⭐ Évaluer mon profil
+                  <Star className="h-4 w-4" aria-hidden="true" /> Évaluer mon profil
                 </a>
                 <a
                   href="/login"
@@ -372,7 +392,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100`}
                 >
-                  👤 Accès Client
+                  <LogIn className="h-4 w-4" aria-hidden="true" /> Accès Client
                 </a>
                 <a
                   href="/register"
@@ -381,7 +401,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} mt-2 bg-blue-600 text-white hover:bg-blue-700`}
                 >
-                  ✍️ Inscription
+                  <PenLine className="h-4 w-4" aria-hidden="true" /> Inscription
                 </a>
               </motion.div>
             )}

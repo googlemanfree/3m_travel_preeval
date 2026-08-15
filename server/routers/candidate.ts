@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { and, desc, eq } from "drizzle-orm";
 import jwt from "jsonwebtoken";
+import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
 import { createHash, randomBytes, randomInt } from "node:crypto";
 import {
@@ -37,7 +38,7 @@ if (!JWT_SECRET) {
 }
 const JWT_EXPIRES = "30d";
 
-function signCandidateToken(candidateId: number): string {
+export function signCandidateToken(candidateId: number): string {
   return jwt.sign({ sub: candidateId, type: "candidate" }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES,
   });
@@ -156,6 +157,42 @@ export const DOSSIER_STEPS = [
 
 // ─── ROUTER ──────────────────────────────────────────────────────────────────
 export const candidateRouter = router({
+  // ── Finaliser la session courte créée par le callback Google ────────────────
+  consumeGoogleOAuth: publicProcedure.mutation(async ({ ctx }) => {
+    const handoff = parseCookieHeader(ctx.req.headers.cookie || "")["candidate_google_oauth_handoff"];
+    ctx.res.clearCookie("candidate_google_oauth_handoff", { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+    if (!handoff) throw new TRPCError({ code: "UNAUTHORIZED", message: "La session Google a expiré. Recommencez la connexion." });
+
+    let candidateId: number;
+    try {
+      const payload = jwt.verify(handoff, JWT_SECRET) as { candidateId?: number; type?: string };
+      if (payload.type !== "candidate_google_handoff" || !payload.candidateId) throw new Error("invalid handoff");
+      candidateId = payload.candidateId;
+    } catch {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "La session Google est invalide ou expirée. Recommencez la connexion." });
+    }
+
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const rows = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+    if (!rows.length || !rows[0].emailVerified) throw new TRPCError({ code: "UNAUTHORIZED", message: "Compte Google non disponible." });
+    const candidate = rows[0];
+    await db.update(candidates).set({ lastLoginAt: new Date() }).where(eq(candidates.id, candidate.id));
+    return {
+      token: signCandidateToken(candidate.id),
+      candidate: {
+        id: candidate.id,
+        fullName: candidate.fullName,
+        email: candidate.email,
+        destination: candidate.destination,
+        dossierStatus: candidate.dossierStatus,
+        avatarUrl: candidate.avatarUrl,
+        avatarVerificationStatus: candidate.avatarVerificationStatus,
+        requiresPortrait: candidate.avatarVerificationStatus !== "verified",
+      },
+    };
+  }),
+
   // ── Renvoyer l'email de vérification ────────────────────────────────────────
   resendVerificationEmail: publicProcedure
     .input(z.object({ email: z.string().email() }))
