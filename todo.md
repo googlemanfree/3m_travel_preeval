@@ -2889,3 +2889,8 @@
 - [x] Implémenter la génération d'un PDF officiel de quittance (frais de dossier 65 000 XAF) avec jsPDF dans ClientDashboard.tsx dès que le paiement est confirmé
 - [x] Ajouter le bouton de téléchargement de la quittance officielle dans l'espace client lorsque le statut du paiement est validé
 - [x] Valider et publier la version sur la plateforme (v227)
+
+## Historique des Paiements et Quittances Multiples (v228)
+- [x] Créer une section dédiée « Historique des paiements et quittances » dans ClientDashboard.tsx
+- [x] Permettre au candidat de consulter l'ensemble de ses versements (Mobile Money, agence) avec leur statut (en attente, validé) et de télécharger chaque quittance PDF correspondante
+- [x] Valider et publier la version (v228)

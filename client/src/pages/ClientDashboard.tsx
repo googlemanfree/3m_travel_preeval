@@ -1048,6 +1048,97 @@ export default function ClientDashboard() {
           </Card>
         )}
 
+        {/* Section Historique des Paiements et Quittances */}
+        <Card className="border border-blue-200 bg-gradient-to-br from-blue-50/50 to-white">
+          <CardHeader className="pb-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-blue-950">
+                  <CreditCard className="h-5 w-5 text-blue-600" aria-hidden="true" />
+                  Historique des paiements et quittances
+                </CardTitle>
+                <CardDescription className="mt-1">Consultez l'état de vos règlements de frais d'ouverture et téléchargez vos quittances officielles validées.</CardDescription>
+              </div>
+              <Badge variant="outline" className="border-blue-300 bg-white text-blue-800">
+                {paymentIsComplete ? "1 Paiement Validé" : "En attente de validation"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-xl border border-blue-100 bg-white p-4 shadow-xs">
+                <div className="flex items-start gap-3">
+                  <span className={`mt-1 p-2 rounded-lg ${paymentIsComplete ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
+                    <CreditCard className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-slate-900">Frais d'ouverture et de soumission de dossier</p>
+                      <Badge className={paymentIsComplete ? "bg-emerald-100 text-emerald-800 text-xs" : "bg-amber-100 text-amber-800 text-xs"}>
+                        {paymentIsComplete ? "Validé & Quittance active" : "Vérification en cours"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-slate-600 mt-0.5">Dossier {dossier.numero} — 65 000 XAF ({paymentIsComplete ? "Versement approuvé par l'agence" : "Justificatif transmis, en attente d'approbation"})</p>
+                    <p className="text-xs text-slate-400 mt-1">Date : {dossier.paymentDate ? dossier.paymentDate.toLocaleDateString("fr-FR") : new Date().toLocaleDateString("fr-FR")}</p>
+                  </div>
+                </div>
+                <div>
+                  {paymentIsComplete ? (
+                    <Button
+                      onClick={() => {
+                        const doc = new jsPDF();
+                        doc.setFillColor(30, 58, 138);
+                        doc.rect(0, 0, 210, 35, "F");
+                        doc.setTextColor(255, 255, 255);
+                        doc.setFontSize(20);
+                        doc.text("3M TRAVEL & SERVICES SARL", 15, 20);
+                        doc.setFontSize(10);
+                        doc.text("Quittance Officielle de Frais de Dossier", 15, 27);
+
+                        doc.setTextColor(50, 50, 50);
+                        doc.setFontSize(12);
+                        doc.text(`N° de Dossier : ${dossier.numero}`, 15, 50);
+                        doc.text(`Date de validation : ${dossier.paymentDate ? dossier.paymentDate.toLocaleDateString("fr-FR") : new Date().toLocaleDateString("fr-FR")}`, 15, 58);
+                        doc.text(`Candidat : ${candidate?.fullName || "Client 3M Travel"}`, 15, 66);
+                        doc.text(`E-mail : ${candidate?.email || "N/C"}`, 15, 74);
+
+                        doc.setDrawColor(200, 200, 200);
+                        doc.line(15, 82, 195, 82);
+
+                        doc.setFontSize(14);
+                        doc.text("Détail du Règlement", 15, 95);
+                        doc.setFontSize(11);
+                        doc.text("• Objet : Frais d'ouverture, de traduction et de soumission de dossier", 15, 105);
+                        doc.text("• Destination cible : " + dossier.destination, 15, 113);
+                        doc.text("• Montant réglé : 65 000 XAF", 15, 121);
+                        doc.text("• Statut : VALIDÉ ET ENCAISSÉ", 15, 129);
+
+                        doc.line(15, 140, 195, 140);
+                        doc.setFontSize(10);
+                        doc.setTextColor(100, 100, 100);
+                        doc.text("3M Travel & Services SARL — Agence de Mobilité Internationale", 15, 155);
+                        doc.text("Cameroun — Contacts : +237 698 104 832 / contact@3mtravelagency.com", 15, 163);
+                        doc.text("Document généré automatiquement et sécurisé.", 15, 171);
+
+                        doc.save(`Quittance_3MTravel_${dossier.numero}.pdf`);
+                        toast.success("Téléchargement de la quittance.");
+                      }}
+                      size="sm"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs"
+                    >
+                      <Download className="w-4 h-4 mr-1.5" /> Télécharger la Quittance PDF
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" disabled className="text-xs text-slate-400">
+                      Quittance non disponible (en attente)
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card className="border border-orange-200 bg-gradient-to-br from-orange-50 to-white">
           <CardHeader className="pb-3">
             <div className="flex flex-wrap items-start justify-between gap-3">
