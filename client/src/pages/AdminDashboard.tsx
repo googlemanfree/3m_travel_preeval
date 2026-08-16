@@ -71,6 +71,7 @@ import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
+import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1057,6 +1058,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
             <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
+            <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -1070,6 +1072,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
+          </TabsContent>
+
+          <TabsContent value="consular" className="space-y-6">
+            <AdminConsularRegistry />
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">

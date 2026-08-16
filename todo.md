@@ -111,3 +111,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer un répertoire admin des liens consulaires officiels par pays avec raccourcis de soumission
 - [x] Documenter et configurer le support des modèles IA spécialisés (Claude / Perplexity / Forge LLM) pour l'assistance aux dossiers
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Assistant IA Aureol & Onglet Admin Consulats (v275)
+- [x] Intégrer l'assistant conversationnel IA Aureol dans l'espace client pour répondre aux questions sur les procédures
+- [x] Créer l'onglet administrateur « Consulats & Liens Officiels » avec recherche et accès rapide aux portails consulaires
+- [x] Valider avec les tests et TypeScript puis publier la version finale

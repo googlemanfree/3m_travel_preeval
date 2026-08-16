@@ -33,7 +33,8 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
-import { DocumentUploader } from "@/components/DocumentUploader";
+import { DocumentUploadZone } from "@/components/DocumentUploadZone";
+import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -875,7 +876,26 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "messages" && (
             <div className="space-y-6">
-              <ClientMessagesPanel />
+              <div className="bg-blue-50 dark:bg-slate-900 p-4 rounded-xl border border-blue-200 dark:border-slate-800 mb-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    💬 Messagerie avec votre Conseiller & Assistant Aureol IA
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    Posez vos questions à notre IA pour une réponse instantanée ou échangez directement avec votre conseiller attitré.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Assistant Virtuel Aureol (IA)</h4>
+                  <AureolAssistantChat />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3">Messages Agence & Conseiller</h4>
+                  <ClientMessagesPanel />
+                </div>
+              </div>
             </div>
           )}
 
