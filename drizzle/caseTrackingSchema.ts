@@ -47,6 +47,17 @@ export const clientNotifications = mysqlTable("client_notifications", {
   id: int("id").autoincrement().primaryKey(), candidateId: int("candidateId").notNull(), caseId: int("caseId"), type: varchar("type", { length: 80 }).notNull(), title: varchar("title", { length: 255 }).notNull(), body: text("body").notNull(), actionUrl: varchar("actionUrl", { length: 512 }), isRead: boolean("isRead").notNull().default(false), isArchived: boolean("isArchived").notNull().default(false), emailSentAt: timestamp("emailSentAt"), createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("idx_client_notifications_candidate_read").on(table.candidateId, table.isRead)]);
 
+/** Modèles de relance e-mail configurables par type de procédure. */
+export const procedureReminderTemplates = mysqlTable("procedure_reminder_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  procedureType: varchar("procedureType", { length: 80 }).notNull().unique(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  body: text("body").notNull(),
+  updatedByAdminId: int("updatedByAdminId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const caseTasks = mysqlTable("case_tasks", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), title: varchar("title", { length: 255 }).notNull(), description: text("description"), assignedAdminId: int("assignedAdminId"), dueAt: timestamp("dueAt"), taskStatus: mysqlEnum("taskStatus", ["open", "in_progress", "completed", "cancelled"]).notNull().default("open"), createdByAdminId: int("createdByAdminId"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() }, table => [index("idx_case_tasks_assignee_status").on(table.assignedAdminId, table.taskStatus)]);
 export const caseAdminNotes = mysqlTable("case_admin_notes", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), adminId: int("adminId"), note: text("note").notNull(), isPrivate: boolean("isPrivate").notNull().default(true), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_admin_notes_case_created").on(table.caseId, table.createdAt)]);
 export const caseActivityLogs = mysqlTable("case_activity_logs", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), actorRole: mysqlEnum("actorRole", ["candidate", "admin", "system"]).notNull(), actorId: int("actorId"), actionType: varchar("actionType", { length: 100 }).notNull(), entityType: varchar("entityType", { length: 100 }).notNull(), entityId: varchar("entityId", { length: 100 }), description: text("description"), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_activity_logs_case_created").on(table.caseId, table.createdAt)]);
