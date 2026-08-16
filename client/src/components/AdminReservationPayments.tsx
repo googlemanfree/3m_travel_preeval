@@ -199,6 +199,17 @@ export function AdminReservationPayments() {
                         >
                           <Mail className="h-3.5 w-3.5" /> Reçu
                         </Button>
+                        {p.issuedPdfUrl && !p.pnrViewedAt && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => sendReminderMutation.mutate({ sessionToken, requestId: p.id })}
+                            disabled={sendReminderMutation.isPending}
+                            className="border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs gap-1"
+                          >
+                            <Clock className="h-3 w-3" /> Relance PNR
+                          </Button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {

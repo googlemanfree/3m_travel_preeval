@@ -552,4 +552,63 @@ export const flightBookingRouter = router({
       }).where(eq(flightBookingRequests.id, input.requestId));
       return { success: true };
     }),
+
+  sendPnrReminderEmail: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      if (!existing.issuedPdfUrl) throw new TRPCError({ code: "BAD_REQUEST", message: "Aucun PNR n'a encore été émis pour cette réservation." });
+
+      await sendEmail({
+        to: existing.candidateEmail,
+        subject: `[Rappel 3M Travel] Téléchargement de votre billet PNR en attente - Dossier ${existing.requestRef}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <h2 style="color: #1e3a8a; margin-top: 0;">Rappel : Votre billet PNR est disponible</h2>
+            <p>Bonjour,</p>
+            <p>Sauf erreur de notre part, vous n'avez pas encore consulté ou téléchargé votre document PNR final pour la référence de dossier <strong>${existing.requestRef}</strong>.</p>
+            <div style="background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #f59e0b;">
+              <p style="margin: 0 0 10px 0; color: #b45309;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; font-weight: bold;">${existing.pnrReference || 'N/A'}</span></p>
+              <p style="margin: 0; color: #92400e;">Veuillez vous rendre dans votre espace personnel pour le récupérer dès que possible.</p>
+            </div>
+            <p style="text-align: center; margin: 30px 0;">
+              <a href="${existing.issuedPdfUrl}" target="_blank" style="background: #d97706; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Télécharger mon billet PNR</a>
+            </p>
+            <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+          </div>
+        `,
+      });
+
+      await db.insert(flightBookingRequestHistory).values({
+        requestId: input.requestId,
+        action: "pnr_reminder_sent",
+        changedBy: admin.email,
+        oldValue: existing.status,
+        newValue: existing.status,
+        details: "Relance manuelle PNR non consulté envoyée par e-mail au client.",
+      });
+
+      return { success: true };
+    }),
+
+  exportPnrAuditCsv: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
+      const headers = ["ID", "Reference", "Client", "Statut", "PNR", "Date Creation", "Date Vue PNR", "Date Telechargement PNR"];
+      const csvLines = [headers.join(",")];
+      for (const r of rows) {
+        const viewed = r.pnrViewedAt ? new Date(r.pnrViewedAt).toISOString() : "Non consulté";
+        const downloaded = r.pnrDownloadedAt ? new Date(r.pnrDownloadedAt).toISOString() : "Non téléchargé";
+        csvLines.push([r.id, `"${r.requestRef}"`, `"${r.candidateEmail}"`, r.status, `"${r.pnrReference || ''}"`, new Date(r.createdAt).toISOString(), `"${viewed}"`, `"${downloaded}"`].join(","));
+      }
+      return { success: true, csvContent: csvLines.join("\n") };
+    }),
 });

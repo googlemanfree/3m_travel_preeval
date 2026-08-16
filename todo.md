@@ -50,3 +50,10 @@
 - [x] Exécuter la suite complète de tests unitaires et de contrats tRPC pour vérifier l'ensemble des flux
 - [x] Éditer et enregistrer le rapport d'audit complet (`audit_synchronisation_3m.md`)
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Relance Client, Audit PNR Exportable et Filtre Financier par Dates (v264)
+- [x] Ajouter la relance client en un clic pour les PNR non consultés ou les paiements en attente avec notification e-mail
+- [x] Créer la procédure d'exportation CSV du journal d'audit PNR pour l'administration
+- [x] Intégrer le filtre par plage de dates dans le tableau des paiements de l'espace administrateur
+- [x] Initialiser et formaliser la compétence réutilisable `prime-travel-case-management` avec `skill-creator`
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale et la compétence
