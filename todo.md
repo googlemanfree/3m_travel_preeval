@@ -101,3 +101,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Envoi WhatsApp e-Visa Admin (v272)
 - [x] Intégrer un bouton WhatsApp avec message prérempli et lien du document e-Visa final dans la gestion admin
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Envoi Automatique e-Mail PDF e-Visa (v273)
+- [x] Configurer l'envoi automatique du PDF e-Visa par e-mail au client avec pièce jointe dès le téléversement admin
+- [x] Valider avec les tests et TypeScript puis publier la version finale
