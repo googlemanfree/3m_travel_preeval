@@ -122,9 +122,47 @@ export default function ClientSpaceNavigation() {
           <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <p className="text-[11px] text-slate-500">Créée le {new Date(request.createdAt).toLocaleDateString("fr-FR")}</p>
             {request.issuedPdfUrl && (
-              <a href={request.issuedPdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm">
-                Télécharger le billet PNR
-              </a>
+              <div className="flex items-center gap-1.5">
+                <a
+                  href={request.issuedPdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    fetch("/api/trpc/flightBooking.markPnrAsViewed", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ json: { requestId: request.id } }),
+                    }).catch(() => {});
+                  }}
+                  onMouseEnter={() => {
+                    if (!request.pnrViewedAt) {
+                      fetch("/api/trpc/flightBooking.markPnrAsViewed", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ json: { requestId: request.id } }),
+                      }).catch(() => {});
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-blue-700 shadow-sm"
+                >
+                  Voir PNR
+                </a>
+                <a
+                  href={request.issuedPdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    fetch("/api/trpc/flightBooking.markPnrAsDownloaded", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ json: { requestId: request.id } }),
+                    }).catch(() => {});
+                  }}
+                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm"
+                >
+                  Télécharger PDF
+                </a>
+              </div>
             )}
           </div>
         </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}

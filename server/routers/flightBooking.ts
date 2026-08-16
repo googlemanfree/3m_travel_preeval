@@ -259,6 +259,8 @@ export const flightBookingRouter = router({
       agentNotes: flightBookingRequests.agentNotes,
       pnrReference: flightBookingRequests.pnrReference,
       issuedPdfUrl: flightBookingRequests.issuedPdfUrl,
+      pnrViewedAt: flightBookingRequests.pnrViewedAt,
+      pnrDownloadedAt: flightBookingRequests.pnrDownloadedAt,
       createdAt: flightBookingRequests.createdAt,
       updatedAt: flightBookingRequests.updatedAt,
     }).from(flightBookingRequests)
@@ -521,5 +523,33 @@ export const flightBookingRouter = router({
       }
 
       return { success: true, issuedPdfUrl: url };
+    }),
+
+  markPnrAsViewed: candidateProcedure
+    .input(z.object({ requestId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(and(eq(flightBookingRequests.id, input.requestId), eq(flightBookingRequests.candidateId, ctx.candidate.id))).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      if (!existing.pnrViewedAt) {
+        await db.update(flightBookingRequests).set({ pnrViewedAt: new Date() }).where(eq(flightBookingRequests.id, input.requestId));
+      }
+      return { success: true };
+    }),
+
+  markPnrAsDownloaded: candidateProcedure
+    .input(z.object({ requestId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(and(eq(flightBookingRequests.id, input.requestId), eq(flightBookingRequests.candidateId, ctx.candidate.id))).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const now = new Date();
+      await db.update(flightBookingRequests).set({
+        pnrViewedAt: existing.pnrViewedAt || now,
+        pnrDownloadedAt: now,
+      }).where(eq(flightBookingRequests.id, input.requestId));
+      return { success: true };
     }),
 });

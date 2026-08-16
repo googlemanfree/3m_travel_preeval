@@ -166,11 +166,28 @@ export function AdminReservationPayments() {
                       )}
                     </td>
                     <td className="p-4">
-                      {p.clientValidated ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold">Validé client</Badge>
-                      ) : (
-                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 font-semibold">En attente</Badge>
-                      )}
+                      <div className="flex flex-col gap-1 items-start">
+                        {p.clientValidated ? (
+                          <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold">Validé client</Badge>
+                        ) : (
+                          <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 font-semibold">En attente</Badge>
+                        )}
+                        {p.issuedPdfUrl ? (
+                          p.pnrDownloadedAt ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200" title={`Téléchargé le ${new Date(p.pnrDownloadedAt).toLocaleString("fr-FR")}`}>
+                              ✅ PNR Téléchargé
+                            </span>
+                          ) : p.pnrViewedAt ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200" title={`Consulté le ${new Date(p.pnrViewedAt).toLocaleString("fr-FR")}`}>
+                              👁️ PNR Consulté
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                              ⏳ PNR Non consulté
+                            </span>
+                          )
+                        ) : null}
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">

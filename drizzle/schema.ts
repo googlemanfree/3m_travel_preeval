@@ -1543,6 +1543,8 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   agentNotes: text("agentNotes"),
   pnrReference: varchar("pnrReference", { length: 120 }),
   issuedPdfUrl: text("issuedPdfUrl"),
+  pnrViewedAt: timestamp("pnrViewedAt"),
+  pnrDownloadedAt: timestamp("pnrDownloadedAt"),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   paymentTransactionId: varchar("paymentTransactionId", { length: 120 }),
   clientValidated: boolean("clientValidated").default(false).notNull(),

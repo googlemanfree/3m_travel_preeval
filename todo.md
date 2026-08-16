@@ -39,3 +39,9 @@
 ## Synchronisation E-mail et Espace Client pour le Document PNR Final (v261)
 - [x] Étendre la mutation d'administration pour envoyer automatiquement un e-mail au client avec le lien de téléchargement du PNR et les détails de référence dès le stockage réussi
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Indicateur Admin de Consultation et Téléchargement PNR par le Client (v262)
+- [x] Étendre le schéma Drizzle et la table des réservations pour suivre l'état de consultation du PNR (`pnrViewedAt`)
+- [x] Ajouter une procédure tRPC client pour enregistrer la consultation du PNR lors du clic ou du téléchargement
+- [x] Afficher l'indicateur visuel et l'horodatage de lecture dans le tableau administrateur des paiements et réservations
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
