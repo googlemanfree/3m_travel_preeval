@@ -26,6 +26,16 @@ export function AdminReservationPayments() {
     },
   });
 
+  const sendReminderMutation = trpc.flightBooking.sendPnrReminderEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Relance PNR envoyée par e-mail au client avec succès.");
+      utils.flightBooking.listReservationPayments.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Erreur lors de la relance : ${err.message}`);
+    },
+  });
+
   const filtered = (payments ?? []).filter(p => {
     const matchSearch = search === "" || p.requestRef.toLowerCase().includes(search.toLowerCase()) || p.candidateEmail.toLowerCase().includes(search.toLowerCase()) || (p.paymentTransactionId && p.paymentTransactionId.toLowerCase().includes(search.toLowerCase()));
     const matchMethod = methodFilter === "all" || p.paymentMethod === methodFilter;

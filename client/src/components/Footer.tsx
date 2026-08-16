@@ -1,11 +1,10 @@
-import { Phone, Mail, MapPin, MessageCircle, Facebook, Instagram, Linkedin, Twitter, Send, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail, CheckCircle2, Send } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 
 const SOCIAL_LINKS = [
