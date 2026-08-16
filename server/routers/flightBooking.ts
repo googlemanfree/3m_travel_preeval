@@ -338,6 +338,55 @@ export const flightBookingRouter = router({
       return { success: true };
     }),
 
+  listReservationPayments: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
+      return rows;
+    }),
+
+  sendPaymentReceiptEmail: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+
+      await sendEmail({
+        to: existing.candidateEmail,
+        subject: `[3M Travel] Reçu de paiement et quittance - Dossier ${existing.requestRef}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+            <h2 style="color: #1e3a8a; margin-top: 0;">Quittance de Paiement Validée</h2>
+            <p>Bonjour,</p>
+            <p>Nous vous confirmons la validation de votre règlement pour la réservation <strong>${existing.requestRef}</strong>.</p>
+            <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #e2e8f0;">
+              <p style="margin: 0 0 8px 0;"><strong>Mode de paiement :</strong> ${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}</p>
+              <p style="margin: 0 0 8px 0;"><strong>ID de transaction :</strong> <span style="font-family: monospace; font-weight: bold;">${existing.paymentTransactionId || 'N/A'}</span></p>
+              <p style="margin: 0;"><strong>Statut :</strong> Paiement validé et vérifié par l'agence</p>
+            </div>
+            <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+          </div>
+        `,
+      });
+
+      await db.insert(flightBookingRequestHistory).values({
+        requestId: input.requestId,
+        action: "payment_receipt_emailed",
+        changedBy: admin.email,
+        oldValue: existing.status,
+        newValue: existing.status,
+        details: "Reçu de paiement et quittance envoyés par e-mail au client.",
+      });
+
+      return { success: true };
+    }),
+
   updatePriority: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), priority: z.enum(requestPriority) }))
     .mutation(async ({ input }) => {

@@ -181,35 +181,8 @@ export const evisaRouter = router({
           ) VALUES ('${candidateId}', '${input.dossierNumber}', '${input.countryCode}', 'pending', ${evisas[0].price}, '${JSON.stringify(input.documents || {})}')
         `));
 
-        // Enregistrer une notification admin et envoyer un e-mail de confirmation
-        try {
-          const [candidateRows] = await connection.execute('SELECT fullName, email FROM users WHERE id = ?', [candidateId]);
-          const candidate = (candidateRows as any[])[0];
-          if (candidate) {
-            await db.insert(adminNotifications).values({
-              type: 'new_contact_message',
-              title: `Nouvelle demande e-Visa (${evisas[0].countryName})`,
-              message: `${candidate.fullName} (${candidate.email}) — Dossier: ${input.dossierNumber}`,
-              relatedId: input.dossierNumber,
-              targetAdminType: 'accompagnement',
-            });
-            await sendEmail({
-              to: candidate.email,
-              subject: `[3M Travel] Confirmation de votre demande e-Visa pour ${evisas[0].countryName} (${input.dossierNumber})`,
-              html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
-                  <h2 style="color: #1e3a8a; margin-top: 0;">Demande e-Visa enregistrée</h2>
-                  <p>Bonjour <strong>${candidate.fullName}</strong>,</p>
-                  <p>Votre demande d'e-Visa pour <strong>${evisas[0].countryName}</strong> a bien été transmise à notre back-office (Dossier : ${input.dossierNumber}).</p>
-                  <p>Nos conseillers procèdent à la vérification des pièces ciblées.</p>
-                  <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
-                </div>
-              `,
-            });
-          }
-        } catch (emailErr) {
-          console.error('[Evisa Email/Notification Error]:', emailErr);
-        }
+        // Demande enregistrée avec succès
+        console.log(`[Evisa Application] Créée pour dossier ${input.dossierNumber} et pays ${input.countryCode}`);
 
         return {
           success: true,
@@ -521,6 +494,31 @@ export const evisaRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: error.message || 'Erreur lors de la soumission de la demande',
+        });
+      }
+    }),
+
+  /**
+   * Récupérer les demandes d'e-visa par email candidat (pour le suivi espace client)
+   */
+  getMyEvisaRequests: publicProcedure
+    .input(z.object({ email: z.string().email() }))
+    .query(async ({ input }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+        const [requests] = await connection.execute(`
+          SELECT * FROM evisa_requests 
+          WHERE email = ? 
+          ORDER BY createdAt DESC
+        `, [input.email]);
+        await connection.end();
+        return { success: true, data: requests || [] };
+      } catch (error) {
+        console.error('Erreur lors de la récupération des e-visa requests:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Erreur lors de la récupération des demandes d\'e-visa',
         });
       }
     }),

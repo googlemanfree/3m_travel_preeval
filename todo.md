@@ -83,3 +83,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer une assistance IA prudente pour analyser l'éligibilité et guider le candidat sur les pièces requises
 - [x] Synchroniser les soumissions e-Visa avec le back-office et l'espace client (référence unique, pièces jointes, suivi de dossier)
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Suivi e-Visa en Direct dans l’Espace Client (v269)
+- [x] Ajouter une section de suivi e-Visa dans l’espace personnel du candidat avec statut, étapes de progression et pièces jointes
+- [x] Exposer les requêtes de suivi e-Visa synchronisées avec le back-office administrateur
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale

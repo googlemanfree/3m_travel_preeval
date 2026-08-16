@@ -375,6 +375,59 @@ export default function EvaluationSpace() {
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} />
               </Card>
+
+              {/* Suivi e-Visa en direct */}
+              <Card className="p-6 border-blue-200 bg-gradient-to-r from-blue-50/60 to-indigo-50/60 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-blue-900 flex items-center gap-2">
+                    <Plane className="w-5 h-5 text-blue-600" />
+                    Suivi de vos demandes e-Visa
+                  </h3>
+                  <span className="text-xs font-bold bg-blue-700 text-white px-3 py-1 rounded-full uppercase">Temps réel</span>
+                </div>
+                {(() => {
+                  const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery({ email: cProfile.email });
+                  const list = evisaReqs?.data || [];
+                  if (list.length === 0) {
+                    return (
+                      <div className="text-center py-6 text-gray-500 bg-white/60 rounded-xl border border-dashed border-blue-200">
+                        <p className="text-sm">Aucune demande d'e-Visa active pour l'e-mail {cProfile.email}.</p>
+                        <Button onClick={() => setLocation("/evisas")} className="mt-3 bg-blue-600 hover:bg-blue-700 text-white text-xs">
+                          Explorer les destinations e-Visa
+                        </Button>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="space-y-4">
+                      {list.map((ev: any) => (
+                        <div key={ev.id} className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 text-base">{ev.countryName} ({ev.countryCode.toUpperCase()})</span>
+                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                                ev.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                ev.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                'bg-amber-100 text-amber-800'
+                              }`}>
+                                {ev.status === 'approved' ? 'Approuvé' : ev.status === 'rejected' ? 'Refusé' : 'En attente consulaire'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Soumis le : {new Date(ev.createdAt).toLocaleDateString('fr-FR')} — Frais totaux : {ev.totalCost} {ev.currency}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-mono text-gray-600 block mb-1">ID Demande : #{ev.id}</span>
+                            <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-lg">
+                              {ev.status === 'approved' ? 'Prêt au téléchargement' : 'Vérification en cours au back-office'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </Card>
+
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
