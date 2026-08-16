@@ -1,0 +1,291 @@
+import { TRPCError } from "@trpc/server";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { z } from "zod";
+import {
+  adminAccounts,
+  agencyDossiers,
+  applications,
+  candidateFiles,
+  candidateMessages,
+  consultationRequests,
+  contactMessages,
+  flightBookingRequests,
+  insuranceRequests,
+  profileEvaluations,
+  translationRequests,
+} from "../../drizzle/schema";
+import { unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
+import { getDb } from "../db";
+import { publicProcedure, router } from "../_core/trpc";
+import { requireValidAdminSession } from "./adminAuth";
+
+const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"] as const;
+const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
+const priorities = ["low", "normal", "high", "urgent"] as const;
+
+type SourceType = typeof sourceTypes[number];
+type WorkflowStatus = typeof workflowStatuses[number];
+
+type SourceSnapshot = {
+  sourceType: SourceType;
+  sourceRecordId: number;
+  candidateId: number | null;
+  displayReference: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  destination: string | null;
+  requestTypeLabel: string;
+  sourceStatus: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export function inferUnifiedWorkflow(sourceType: SourceType, status: string): WorkflowStatus {
+  const normalized = status.toLowerCase();
+  if (normalized.includes("rejected") || normalized.includes("cancelled") || normalized === "refuse") return "rejected";
+  if (normalized.includes("completed") || normalized.includes("issued") || normalized.includes("approved") || normalized.includes("visa_approuve")) return "completed";
+  if (normalized.includes("payment") || normalized === "paye") return "payment_review";
+  if (normalized.includes("document")) return "documents_review";
+  if (normalized.includes("submitted") || normalized.includes("soumis")) return "submitted";
+  if (normalized.includes("progress") || normalized.includes("assigned") || normalized.includes("review")) return "processing";
+  if (sourceType === "contact") return "qualifying";
+  return "new";
+}
+
+function workflowLabel(status: WorkflowStatus) {
+  return {
+    new: "Nouvelle demande",
+    qualifying: "À qualifier",
+    waiting_customer: "En attente du client",
+    documents_review: "Documents à vérifier",
+    payment_review: "Paiement à vérifier",
+    processing: "En traitement",
+    submitted: "Transmise",
+    completed: "Terminée",
+    closed: "Clôturée",
+    rejected: "Rejetée",
+  }[status];
+}
+
+export function getUnifiedSlaState(request: { workflowStatus: WorkflowStatus; firstRespondedAt: Date | null; lastActivityAt: Date; dueAt: Date | null; createdAt: Date }) {
+  if (["completed", "closed", "rejected"].includes(request.workflowStatus)) return "closed" as const;
+  const now = Date.now();
+  const firstReference = request.createdAt.getTime();
+  const inactivityHours = (now - request.lastActivityAt.getTime()) / 3_600_000;
+  if (!request.firstRespondedAt && now - firstReference > 24 * 3_600_000) return "overdue" as const;
+  if (request.dueAt && request.dueAt.getTime() < now) return "overdue" as const;
+  if (!request.firstRespondedAt || inactivityHours > 36) return "warning" as const;
+  return "on_track" as const;
+}
+
+async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency] = await Promise.all([
+    db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
+    db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),
+    db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200),
+    db.select().from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt)).limit(200),
+    db.select().from(insuranceRequests).orderBy(desc(insuranceRequests.createdAt)).limit(200),
+    db.select().from(translationRequests).orderBy(desc(translationRequests.createdAt)).limit(200),
+    db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200),
+    db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200),
+  ]);
+
+  const firstContactBySession = new Set<string>();
+  const contactSnapshots: SourceSnapshot[] = [];
+  for (const contact of contacts) {
+    if (contact.senderRole !== "visitor" || firstContactBySession.has(contact.sessionId)) continue;
+    firstContactBySession.add(contact.sessionId);
+    contactSnapshots.push({
+      sourceType: "contact", sourceRecordId: contact.id, candidateId: null,
+      displayReference: `MSG-${contact.id}`, fullName: contact.visitorName, email: contact.visitorEmail,
+      phone: contact.visitorPhone ?? null, destination: null, requestTypeLabel: "Contact / messagerie",
+      sourceStatus: "new", createdAt: contact.createdAt, updatedAt: contact.createdAt,
+    });
+  }
+
+  return [
+    ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `EVAL-${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...consultations.map((row) => ({ sourceType: "consultation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `CONS-${row.id}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.targetCountry ?? null, requestTypeLabel: "Consultation", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.createdAt })),
+    ...flights.map((row) => ({ sourceType: "flight" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.requestRef, fullName: "Client réservation de vol", email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Réservation de vol", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...insurances.map((row) => ({ sourceType: "insurance" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone, destination: row.destinationCountry, requestTypeLabel: "Assurance voyage", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...translations.map((row) => ({ sourceType: "translation" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.invoiceNumber || `TRAD-${row.id}`, fullName: row.candidateName, email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Traduction certifiée", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...contactSnapshots,
+    ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+  ];
+}
+
+async function ensureManagedRequest(source: SourceSnapshot) {
+  const db = await getDb();
+  if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+  const existing = (await db.select().from(unifiedClientRequests).where(and(eq(unifiedClientRequests.sourceType, source.sourceType), eq(unifiedClientRequests.sourceRecordId, source.sourceRecordId))).limit(1))[0];
+  if (existing) return existing;
+  await db.insert(unifiedClientRequests).values({
+    sourceType: source.sourceType,
+    sourceRecordId: source.sourceRecordId,
+    candidateId: source.candidateId,
+    displayReference: source.displayReference,
+    fullName: source.fullName,
+    email: source.email,
+    phone: source.phone,
+    destination: source.destination,
+    requestTypeLabel: source.requestTypeLabel,
+    workflowStatus: inferUnifiedWorkflow(source.sourceType, source.sourceStatus),
+    dueAt: new Date(source.createdAt.getTime() + 24 * 3_600_000),
+    lastActivityAt: source.updatedAt,
+  });
+  const created = (await db.select().from(unifiedClientRequests).where(and(eq(unifiedClientRequests.sourceType, source.sourceType), eq(unifiedClientRequests.sourceRecordId, source.sourceRecordId))).limit(1))[0];
+  if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Impossible de créer le suivi de la demande." });
+  await db.insert(unifiedClientRequestHistory).values({ requestId: created.id, actionType: "request_registered", newValue: created.workflowStatus, comment: "Demande intégrée dans la boîte de réception unifiée." });
+  return created;
+}
+
+const sessionInput = z.object({ sessionToken: z.string().min(20) });
+
+export const unifiedRequestsRouter = router({
+  list: publicProcedure
+    .input(sessionInput.extend({ search: z.string().trim().max(120).optional(), sourceType: z.enum(sourceTypes).optional(), workflowStatus: z.enum(workflowStatuses).optional(), assigneeId: z.number().int().positive().optional(), sla: z.enum(["on_track", "warning", "overdue"]).optional() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [sources, managed, advisors] = await Promise.all([
+        loadSourceSnapshots(),
+        db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.lastActivityAt)).limit(2000),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName),
+      ]);
+      const managedByKey = new Map(managed.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
+      const advisorById = new Map(advisors.map((row) => [row.id, row]));
+      const rows = sources.map((source) => {
+        const management = managedByKey.get(`${source.sourceType}:${source.sourceRecordId}`);
+        const workflowStatus = management?.workflowStatus ?? inferUnifiedWorkflow(source.sourceType, source.sourceStatus);
+        const effective = management ?? { workflowStatus, priority: "normal" as const, assignedAdminAccountId: null, firstRespondedAt: null, dueAt: new Date(source.createdAt.getTime() + 24 * 3_600_000), lastActivityAt: source.updatedAt, createdAt: source.createdAt };
+        const assigned = effective.assignedAdminAccountId ? advisorById.get(effective.assignedAdminAccountId) : null;
+        return { ...source, managedRequestId: management?.id ?? null, workflowStatus, workflowLabel: workflowLabel(workflowStatus), priority: effective.priority, assignedAdminAccountId: effective.assignedAdminAccountId, assignedAdvisor: assigned ? { id: assigned.id, fullName: assigned.fullName, email: assigned.email } : null, sla: getUnifiedSlaState({ ...effective, workflowStatus }), dueAt: effective.dueAt, lastActivityAt: effective.lastActivityAt };
+      }).filter((row) => {
+        const haystack = `${row.fullName} ${row.email} ${row.displayReference} ${row.destination ?? ""} ${row.requestTypeLabel}`.toLowerCase();
+        return (!input.search || haystack.includes(input.search.toLowerCase())) &&
+          (!input.sourceType || row.sourceType === input.sourceType) &&
+          (!input.workflowStatus || row.workflowStatus === input.workflowStatus) &&
+          (!input.assigneeId || row.assignedAdminAccountId === input.assigneeId) &&
+          (!input.sla || row.sla === input.sla);
+      }).sort((left, right) => new Date(right.lastActivityAt).getTime() - new Date(left.lastActivityAt).getTime());
+      return { rows, advisors, total: rows.length };
+    }),
+
+  assign: publicProcedure
+    .input(sessionInput.extend({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive(), assignedAdminAccountId: z.number().int().positive().nullable(), priority: z.enum(priorities).optional(), dueAt: z.date().optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === input.sourceType && item.sourceRecordId === input.sourceRecordId);
+      if (!source) throw new TRPCError({ code: "NOT_FOUND", message: "Demande source introuvable." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      if (input.assignedAdminAccountId) {
+        const advisor = (await db.select().from(adminAccounts).where(and(eq(adminAccounts.id, input.assignedAdminAccountId), eq(adminAccounts.status, "active"))).limit(1))[0];
+        if (!advisor) throw new TRPCError({ code: "BAD_REQUEST", message: "Conseiller indisponible." });
+      }
+      const request = await ensureManagedRequest(source);
+      const firstResponse = request.firstRespondedAt ?? (input.assignedAdminAccountId ? new Date() : null);
+      await db.update(unifiedClientRequests).set({ assignedAdminAccountId: input.assignedAdminAccountId, ...(input.priority ? { priority: input.priority } : {}), ...(input.dueAt ? { dueAt: input.dueAt } : {}), firstRespondedAt: firstResponse, lastActivityAt: new Date() }).where(eq(unifiedClientRequests.id, request.id));
+      await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "assignment", previousValue: request.assignedAdminAccountId ? String(request.assignedAdminAccountId) : null, newValue: input.assignedAdminAccountId ? String(input.assignedAdminAccountId) : "unassigned", actorAdminAccountId: admin.id, comment: input.priority ? `Priorité définie : ${input.priority}` : "Attribution mise à jour." });
+      return { success: true };
+    }),
+
+  updateWorkflow: publicProcedure
+    .input(sessionInput.extend({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive(), workflowStatus: z.enum(workflowStatuses), comment: z.string().trim().max(2000).optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      if (["waiting_customer", "rejected"].includes(input.workflowStatus) && !input.comment) throw new TRPCError({ code: "BAD_REQUEST", message: "Un commentaire est requis pour ce statut." });
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === input.sourceType && item.sourceRecordId === input.sourceRecordId);
+      if (!source) throw new TRPCError({ code: "NOT_FOUND", message: "Demande source introuvable." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const request = await ensureManagedRequest(source);
+      const now = new Date();
+      await db.update(unifiedClientRequests).set({ workflowStatus: input.workflowStatus, firstRespondedAt: request.firstRespondedAt ?? now, lastActivityAt: now, closedAt: ["completed", "closed", "rejected"].includes(input.workflowStatus) ? now : null }).where(eq(unifiedClientRequests.id, request.id));
+      await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "workflow_status", previousValue: request.workflowStatus, newValue: input.workflowStatus, comment: input.comment, actorAdminAccountId: admin.id });
+      return { success: true, workflowLabel: workflowLabel(input.workflowStatus) };
+    }),
+
+  addInternalComment: publicProcedure
+    .input(sessionInput.extend({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive(), comment: z.string().trim().min(2).max(2000) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === input.sourceType && item.sourceRecordId === input.sourceRecordId);
+      if (!source) throw new TRPCError({ code: "NOT_FOUND", message: "Demande source introuvable." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const request = await ensureManagedRequest(source);
+      await db.update(unifiedClientRequests).set({ lastActivityAt: new Date(), firstRespondedAt: request.firstRespondedAt ?? new Date() }).where(eq(unifiedClientRequests.id, request.id));
+      await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "internal_comment", comment: input.comment, actorAdminAccountId: admin.id });
+      return { success: true };
+    }),
+
+  getCustomer360: publicProcedure
+    .input(sessionInput.extend({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === input.sourceType && item.sourceRecordId === input.sourceRecordId);
+      if (!source) throw new TRPCError({ code: "NOT_FOUND", message: "Demande introuvable." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const request = await ensureManagedRequest(source);
+      const [history, dossierRows, evaluationRows, consultationRows, flightRows, insuranceRows, translationRows, documents, messages] = await Promise.all([
+        db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, request.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(100),
+        db.select({ id: applications.id, dossierNumber: applications.dossierNumber, destination: applications.destination, visaType: applications.visaType, dossierStatus: applications.dossierStatus, paymentStatus: applications.paymentStatus, createdAt: applications.createdAt }).from(applications).where(eq(applications.email, source.email)).orderBy(desc(applications.createdAt)).limit(20),
+        db.select({ id: profileEvaluations.id, destination: profileEvaluations.destination, projectType: profileEvaluations.projectType, status: profileEvaluations.status, scoringTotal: profileEvaluations.scoringTotal, createdAt: profileEvaluations.createdAt }).from(profileEvaluations).where(eq(profileEvaluations.email, source.email)).orderBy(desc(profileEvaluations.createdAt)).limit(20),
+        db.select({ id: consultationRequests.id, targetCountry: consultationRequests.targetCountry, status: consultationRequests.status, createdAt: consultationRequests.createdAt }).from(consultationRequests).where(eq(consultationRequests.email, source.email)).orderBy(desc(consultationRequests.createdAt)).limit(20),
+        db.select({ id: flightBookingRequests.id, requestRef: flightBookingRequests.requestRef, status: flightBookingRequests.status, priority: flightBookingRequests.priority, createdAt: flightBookingRequests.createdAt }).from(flightBookingRequests).where(eq(flightBookingRequests.candidateEmail, source.email)).orderBy(desc(flightBookingRequests.createdAt)).limit(20),
+        db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, status: insuranceRequests.status, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, source.email)).orderBy(desc(insuranceRequests.createdAt)).limit(20),
+        db.select({ id: translationRequests.id, documentType: translationRequests.documentType, status: translationRequests.status, paymentStatus: translationRequests.paymentStatus, createdAt: translationRequests.createdAt }).from(translationRequests).where(eq(translationRequests.candidateEmail, source.email)).orderBy(desc(translationRequests.createdAt)).limit(20),
+        source.candidateId ? db.select({ id: candidateFiles.id, fileName: candidateFiles.fileName, fileType: candidateFiles.fileType, uploadedAt: candidateFiles.uploadedAt, status: candidateFiles.status }).from(candidateFiles).where(eq(candidateFiles.candidateId, source.candidateId)).orderBy(desc(candidateFiles.uploadedAt)).limit(30) : Promise.resolve([]),
+        source.candidateId ? db.select({ id: candidateMessages.id, senderRole: candidateMessages.senderRole, content: candidateMessages.content, createdAt: candidateMessages.createdAt }).from(candidateMessages).where(eq(candidateMessages.candidateId, source.candidateId)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
+      ]);
+      return { request: { ...request, source }, history, dossiers: dossierRows, evaluations: evaluationRows, consultations: consultationRows, flights: flightRows, insurance: insuranceRows, translations: translationRows, documents, messages };
+    }),
+
+  dashboard: publicProcedure
+    .input(sessionInput)
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [sources, managedRows] = await Promise.all([
+        loadSourceSnapshots(),
+        db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.createdAt)).limit(5000),
+      ]);
+      const managementByKey = new Map(managedRows.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
+      const rows = sources.map((source) => managementByKey.get(`${source.sourceType}:${source.sourceRecordId}`) ?? {
+        sourceType: source.sourceType,
+        sourceRecordId: source.sourceRecordId,
+        workflowStatus: inferUnifiedWorkflow(source.sourceType, source.sourceStatus),
+        priority: "normal" as const,
+        assignedAdminAccountId: null,
+        firstRespondedAt: null,
+        dueAt: new Date(source.createdAt.getTime() + 24 * 3_600_000),
+        lastActivityAt: source.updatedAt,
+        closedAt: null,
+        createdAt: source.createdAt,
+        updatedAt: source.updatedAt,
+      });
+      const now = Date.now();
+      const active = rows.filter((row) => !["completed", "closed", "rejected"].includes(row.workflowStatus));
+      const completed = rows.filter((row) => row.workflowStatus === "completed" || row.workflowStatus === "closed");
+      const conversionBase = rows.filter((row) => ["application", "evaluation", "consultation"].includes(row.sourceType));
+      const converted = conversionBase.filter((row) => ["processing", "submitted", "completed", "closed"].includes(row.workflowStatus));
+      const durations = completed.map((row) => (row.closedAt ?? row.updatedAt).getTime() - row.createdAt.getTime()).filter((value) => value >= 0);
+      const bySource = sourceTypes.map((sourceType) => ({ sourceType, total: rows.filter((row) => row.sourceType === sourceType).length }));
+      const byAdvisor = new Map<number | null, number>();
+      active.forEach((row) => byAdvisor.set(row.assignedAdminAccountId, (byAdvisor.get(row.assignedAdminAccountId) ?? 0) + 1));
+      return {
+        totals: { all: rows.length, active: active.length, unassigned: active.filter((row) => !row.assignedAdminAccountId).length, overdue: active.filter((row) => getUnifiedSlaState(row as any) === "overdue").length, conversionRate: conversionBase.length ? Math.round((converted.length / conversionBase.length) * 100) : 0, averageProcessingHours: durations.length ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length / 3_600_000) : 0, lastCalculatedAt: new Date(now) },
+        bySource,
+        byAdvisor: Array.from(byAdvisor.entries()).map(([advisorId, total]) => ({ advisorId, total })),
+      };
+    }),
+});

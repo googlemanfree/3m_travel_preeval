@@ -69,6 +69,7 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
+import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -1035,8 +1036,9 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-10 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
+            <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
@@ -1502,6 +1504,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="payments" className="space-y-6">
             <AdminPaymentManagement />
+          </TabsContent>
+
+          <TabsContent value="inbox" className="space-y-6">
+            <UnifiedRequestInbox sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="documents" className="space-y-6">

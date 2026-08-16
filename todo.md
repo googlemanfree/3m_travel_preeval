@@ -2917,3 +2917,15 @@
 - [x] Afficher un badge avec le nombre de paiements en attente dans la navigation administrateur
 - [x] Rendre obligatoire le motif de rejet et l’afficher au-dessus du dépôt de nouveau reçu côté client
 - [x] Tester les flux et publier la version (v232)
+
+## Revue de la Gestion des Demandes Clients (v233)
+- [x] Auditer les demandes entrantes, leurs statuts, les assignations et les parcours de traitement existants
+- [x] Définir les améliorations prioritaires de visibilité, de délai et de synchronisation client-administration
+- [x] Présenter le plan de traitement complet avant implémentation
+
+## Gestion Unifiée et Pilotage des Demandes Clients (v234)
+- [x] Créer un modèle unifié et non destructif pour centraliser les demandes d’évaluation, dossiers, e‑Visa, vols, assurance, traduction et contact
+- [x] Ajouter le cycle de traitement standardisé, l’attribution de conseiller, les commentaires internes et l’historique complet
+- [x] Construire la boîte de réception unifiée et la fiche client 360° dans le tableau de bord administrateur
+- [x] Ajouter les alertes SLA, les indicateurs d’échéance et le tableau de pilotage des volumes, délais et conversions
+- [x] Tester les droits, la synchronisation client-administration et publier la version complète

@@ -48,3 +48,46 @@ export const clientNotifications = mysqlTable("client_notifications", {
 export const caseTasks = mysqlTable("case_tasks", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), title: varchar("title", { length: 255 }).notNull(), description: text("description"), assignedAdminId: int("assignedAdminId"), dueAt: timestamp("dueAt"), taskStatus: mysqlEnum("taskStatus", ["open", "in_progress", "completed", "cancelled"]).notNull().default("open"), createdByAdminId: int("createdByAdminId"), createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull() }, table => [index("idx_case_tasks_assignee_status").on(table.assignedAdminId, table.taskStatus)]);
 export const caseAdminNotes = mysqlTable("case_admin_notes", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), adminId: int("adminId"), note: text("note").notNull(), isPrivate: boolean("isPrivate").notNull().default(true), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_admin_notes_case_created").on(table.caseId, table.createdAt)]);
 export const caseActivityLogs = mysqlTable("case_activity_logs", { id: int("id").autoincrement().primaryKey(), caseId: int("caseId").notNull(), actorRole: mysqlEnum("actorRole", ["candidate", "admin", "system"]).notNull(), actorId: int("actorId"), actionType: varchar("actionType", { length: 100 }).notNull(), entityType: varchar("entityType", { length: 100 }).notNull(), entityId: varchar("entityId", { length: 100 }), description: text("description"), createdAt: timestamp("createdAt").defaultNow().notNull() }, table => [index("idx_case_activity_logs_case_created").on(table.caseId, table.createdAt)]);
+
+/**
+ * Couche opérationnelle transverse : une entrée par demande cliente, quel que soit
+ * son formulaire d’origine. Les données source restent dans leurs tables métier.
+ */
+export const unifiedClientRequests = mysqlTable("unified_client_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceType: mysqlEnum("sourceType", ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"]).notNull(),
+  sourceRecordId: int("sourceRecordId").notNull(),
+  candidateId: int("candidateId"),
+  caseId: int("caseId"),
+  displayReference: varchar("displayReference", { length: 64 }).notNull(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  destination: varchar("destination", { length: 100 }),
+  requestTypeLabel: varchar("requestTypeLabel", { length: 120 }).notNull(),
+  workflowStatus: mysqlEnum("workflowStatus", ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"]).notNull().default("new"),
+  priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).notNull().default("normal"),
+  assignedAdminAccountId: int("assignedAdminAccountId"),
+  firstRespondedAt: timestamp("firstRespondedAt"),
+  dueAt: timestamp("dueAt"),
+  lastActivityAt: timestamp("lastActivityAt").defaultNow().notNull(),
+  closedAt: timestamp("closedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_unified_request_source").on(table.sourceType, table.sourceRecordId),
+  index("idx_unified_request_queue").on(table.workflowStatus, table.assignedAdminAccountId, table.dueAt),
+  index("idx_unified_request_candidate").on(table.candidateId, table.email),
+]);
+
+/** Journal horodaté, lisible et non destructif des actions de traitement. */
+export const unifiedClientRequestHistory = mysqlTable("unified_client_request_history", {
+  id: int("id").autoincrement().primaryKey(),
+  requestId: int("requestId").notNull(),
+  actionType: varchar("actionType", { length: 80 }).notNull(),
+  previousValue: varchar("previousValue", { length: 120 }),
+  newValue: varchar("newValue", { length: 120 }),
+  comment: text("comment"),
+  actorAdminAccountId: int("actorAdminAccountId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("idx_unified_request_history_request").on(table.requestId, table.createdAt)]);
