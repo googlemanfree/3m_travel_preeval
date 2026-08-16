@@ -14,7 +14,7 @@ import {
   profileEvaluations,
   translationRequests,
 } from "../../drizzle/schema";
-import { evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
+import { clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
@@ -52,6 +52,7 @@ type SourceSnapshot = {
   destination: string | null;
   requestTypeLabel: string;
   sourceStatus: string;
+  evaluationApprovalStatus: "not_required" | "pending" | "approved" | "rejected" | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -123,19 +124,19 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
       sourceType: "contact", sourceRecordId: contact.id, candidateId: null,
       displayReference: `MSG-${contact.id}`, fullName: contact.visitorName, email: contact.visitorEmail,
       phone: contact.visitorPhone ?? null, destination: null, requestTypeLabel: "Contact / messagerie",
-      sourceStatus: "new", createdAt: contact.createdAt, updatedAt: contact.createdAt,
+      sourceStatus: "new", evaluationApprovalStatus: null, createdAt: contact.createdAt, updatedAt: contact.createdAt,
     });
   }
 
   return [
-    ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `EVAL-${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...consultations.map((row) => ({ sourceType: "consultation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `CONS-${row.id}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.targetCountry ?? null, requestTypeLabel: "Consultation", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.createdAt })),
-    ...flights.map((row) => ({ sourceType: "flight" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.requestRef, fullName: "Client réservation de vol", email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Réservation de vol", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...insurances.map((row) => ({ sourceType: "insurance" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone, destination: row.destinationCountry, requestTypeLabel: "Assurance voyage", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...translations.map((row) => ({ sourceType: "translation" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.invoiceNumber || `TRAD-${row.id}`, fullName: row.candidateName, email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Traduction certifiée", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...apps.map((row) => ({ sourceType: "application" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.dossierNumber, fullName: row.fullName, email: row.email, phone: row.whatsappNumber ?? null, destination: row.destination, requestTypeLabel: "Ouverture de dossier", sourceStatus: row.dossierStatus, evaluationApprovalStatus: row.evaluationApprovalStatus, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...evaluations.map((row) => ({ sourceType: "evaluation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `EVAL-${row.id}`, fullName: row.fullName, email: row.email, phone: row.whatsappPhone ?? null, destination: row.destination, requestTypeLabel: "Évaluation de profil", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...consultations.map((row) => ({ sourceType: "consultation" as const, sourceRecordId: row.id, candidateId: null, displayReference: `CONS-${row.id}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.targetCountry ?? null, requestTypeLabel: "Consultation", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.createdAt })),
+    ...flights.map((row) => ({ sourceType: "flight" as const, sourceRecordId: row.id, candidateId: row.candidateId, displayReference: row.requestRef, fullName: "Client réservation de vol", email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Réservation de vol", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...insurances.map((row) => ({ sourceType: "insurance" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone, destination: row.destinationCountry, requestTypeLabel: "Assurance voyage", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...translations.map((row) => ({ sourceType: "translation" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.invoiceNumber || `TRAD-${row.id}`, fullName: row.candidateName, email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Traduction certifiée", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...contactSnapshots,
-    ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, evaluationApprovalStatus: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
   ];
 }
 
@@ -168,7 +169,7 @@ const sessionInput = z.object({ sessionToken: z.string().min(20) });
 
 export const unifiedRequestsRouter = router({
   list: publicProcedure
-    .input(sessionInput.extend({ search: z.string().trim().max(120).optional(), sourceType: z.enum(sourceTypes).optional(), workflowStatus: z.enum(workflowStatuses).optional(), assigneeId: z.number().int().positive().optional(), sla: z.enum(["on_track", "warning", "overdue"]).optional() }))
+    .input(sessionInput.extend({ search: z.string().trim().max(120).optional(), sourceType: z.enum(sourceTypes).optional(), workflowStatus: z.enum(workflowStatuses).optional(), assigneeId: z.number().int().positive().optional(), sla: z.enum(["on_track", "warning", "overdue"]).optional(), approvalStatus: z.enum(["not_required", "pending", "approved", "rejected"]).optional() }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -192,7 +193,8 @@ export const unifiedRequestsRouter = router({
           (!input.sourceType || row.sourceType === input.sourceType) &&
           (!input.workflowStatus || row.workflowStatus === input.workflowStatus) &&
           (!input.assigneeId || row.assignedAdminAccountId === input.assigneeId) &&
-          (!input.sla || row.sla === input.sla);
+          (!input.sla || row.sla === input.sla) &&
+          (!input.approvalStatus || row.evaluationApprovalStatus === input.approvalStatus);
       }).sort((left, right) => new Date(right.lastActivityAt).getTime() - new Date(left.lastActivityAt).getTime());
       return { rows, advisors, total: rows.length };
     }),
@@ -257,7 +259,7 @@ export const unifiedRequestsRouter = router({
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const adminDraft = details.adminDraft ?? {};
-      const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
+      const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, contentJson: evaluationBilanVersions.contentJson, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versions = await Promise.all(rawVersions.map(async (version) => ({ ...version, pdfUrl: version.pdfKey ? await storageGetSignedUrl(version.pdfKey) : null })));
       return { application, versions, draft: { finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, requiresSecondApproval: application.evaluationRequiresSecondApproval } };
     }),
@@ -338,13 +340,17 @@ export const unifiedRequestsRouter = router({
       const latestVersion = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
       const versionNumber = latestVersion?.versionNumber ?? 1;
       const finalPdf = await createFinalEvaluationPdf(application, versionNumber);
-      await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: generateEvaluationReportHTML(application) });
+      const availabilityHtml = `${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a>.</p>`;
+      await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
       const now = new Date();
       await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, updatedAt: now }).where(eq(applications.id, application.id));
       if (latestVersion) {
         await db.update(evaluationBilanVersions).set({ approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now }).where(eq(evaluationBilanVersions.id, latestVersion.id));
       } else {
         await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml: generateEvaluationReportHTML(application), createdByAdminAccountId: admin.id, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now });
+      }
+      if (application.candidateId) {
+        await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${application.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
       }
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }

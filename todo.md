@@ -2949,3 +2949,9 @@
 - [x] Enregistrer un historique versionné de chaque modification de bilan avec auteur et horodatage
 - [x] Intégrer les actions et statuts dans la boîte de réception, la fiche client et l’espace candidat
 - [x] Tester les accès, les approbations, les téléchargements et publier la version complète
+
+## Notifications, Comparaison et Filtres des Bilans (v238)
+- [x] Notifier automatiquement le candidat lorsqu’un bilan devient disponible, avec lien direct vers son PDF
+- [x] Ajouter un filtre d’approbation dans la boîte de réception pour les bilans standard, sensibles en attente et approuvés
+- [x] Créer une comparaison visuelle entre deux versions de bilan dans l’historique administrateur
+- [x] Tester les notifications, filtres, comparaisons et publier la version complète

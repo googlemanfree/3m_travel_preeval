@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Download, Eye, FilePenLine, History, Save, Send, ShieldCheck } from "lucide-react";
+import { CalendarClock, Download, Eye, FilePenLine, GitCompareArrows, History, Save, Send, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -53,6 +53,8 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
   const [scheduledAt, setScheduledAt] = useState("");
   const [previewHtml, setPreviewHtml] = useState("");
   const [requiresSecondApproval, setRequiresSecondApproval] = useState(false);
+  const [comparisonLeftId, setComparisonLeftId] = useState("");
+  const [comparisonRightId, setComparisonRightId] = useState("");
 
   useEffect(() => {
     if (!data?.draft) return;
@@ -65,6 +67,8 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     setMessage(data.draft.message);
     setScheduledAt(data.application.evaluationScheduledAt ? new Date(data.application.evaluationScheduledAt).toISOString().slice(0, 16) : "");
     setRequiresSecondApproval(data.draft.requiresSecondApproval);
+    setComparisonLeftId(String(data.versions[1]?.id ?? data.versions[0]?.id ?? ""));
+    setComparisonRightId(String(data.versions[0]?.id ?? ""));
     setPreviewHtml("");
   }, [data]);
 
@@ -125,6 +129,18 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     setMessage(template.message);
   };
   const requiresApprovalBeforeDelivery = requiresSecondApproval && data.application.evaluationApprovalStatus !== "approved";
+  const parseVersionDraft = (version: any) => { try { return JSON.parse(version?.contentJson || "{}").adminDraft ?? {}; } catch { return {}; } };
+  const comparisonLeft = data?.versions.find((version: any) => String(version.id) === comparisonLeftId);
+  const comparisonRight = data?.versions.find((version: any) => String(version.id) === comparisonRightId);
+  const leftDraft = parseVersionDraft(comparisonLeft);
+  const rightDraft = parseVersionDraft(comparisonRight);
+  const comparisonRows = [
+    ["Score final", String(leftDraft.finalScore ?? "—"), String(rightDraft.finalScore ?? "—")],
+    ["Verdict", leftDraft.verdict || "—", rightDraft.verdict || "—"],
+    ["Points forts", Array.isArray(leftDraft.strengths) ? leftDraft.strengths.join(" · ") : "—", Array.isArray(rightDraft.strengths) ? rightDraft.strengths.join(" · ") : "—"],
+    ["Axes d’amélioration", Array.isArray(leftDraft.weaknesses) ? leftDraft.weaknesses.join(" · ") : "—", Array.isArray(rightDraft.weaknesses) ? rightDraft.weaknesses.join(" · ") : "—"],
+    ["Recommandations", Array.isArray(leftDraft.recommendations) ? leftDraft.recommendations.join(" · ") : "—", Array.isArray(rightDraft.recommendations) ? rightDraft.recommendations.join(" · ") : "—"],
+  ] as const;
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[94vh] max-w-6xl overflow-y-auto">
@@ -148,7 +164,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><Label htmlFor="delivery-scheduled-at">Planifier l’envoi à une date et heure</Label><Input id="delivery-scheduled-at" className="mt-2" type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /><Button className="mt-2" variant="outline" disabled={!scheduledAt || schedule.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); else if (await ensureDraft()) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); }}><CalendarClock className="mr-1 h-4 w-4" />{schedule.isPending ? "Programmation…" : "Programmer l’envoi"}</Button></div>
           <Button className="w-full bg-blue-700 hover:bg-blue-800" disabled={sendNow.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) sendNow.mutate({ sessionToken, sourceRecordId }); else if (await ensureDraft()) sendNow.mutate({ sessionToken, sourceRecordId }); }}><Send className="mr-2 h-4 w-4" />{sendNow.isPending ? "Envoi définitif…" : "Valider et envoyer maintenant"}</Button>
         </div>
-        <div className="space-y-4"><div className="min-h-[520px] rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Eye className="h-4 w-4" />Aperçu du bilan qui sera envoyé</div>{previewHtml ? <iframe title="Prévisualisation du bilan" sandbox="" srcDoc={previewHtml} className="h-[560px] w-full rounded border bg-white" /> : <div className="flex h-[560px] items-center justify-center rounded border border-dashed bg-white p-8 text-center text-sm text-slate-500">Modifiez les éléments nécessaires puis cliquez sur <strong className="ml-1">Prévisualiser</strong> pour consulter le rendu exact avant l’envoi.</div>}</div><div className="rounded-lg border p-3"><p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><History className="h-4 w-4" />Historique des versions</p><div className="mt-3 space-y-2">{data.versions.length ? data.versions.map((version) => <div key={version.id} className="flex items-center justify-between gap-3 rounded border bg-slate-50 p-2 text-xs"><div><strong>Version {version.versionNumber}</strong> · {version.approvalStatus}<br /><span className="text-slate-500">{new Date(version.createdAt).toLocaleString("fr-FR")}</span></div>{version.pdfUrl && <Button asChild size="sm" variant="outline"><a href={version.pdfUrl} target="_blank" rel="noreferrer"><Download className="mr-1 h-3.5 w-3.5" />PDF</a></Button>}</div>) : <p className="text-sm text-slate-500">La première version apparaîtra dès l’enregistrement du brouillon.</p>}</div></div></div>
+        <div className="space-y-4"><div className="min-h-[520px] rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Eye className="h-4 w-4" />Aperçu du bilan qui sera envoyé</div>{previewHtml ? <iframe title="Prévisualisation du bilan" sandbox="" srcDoc={previewHtml} className="h-[560px] w-full rounded border bg-white" /> : <div className="flex h-[560px] items-center justify-center rounded border border-dashed bg-white p-8 text-center text-sm text-slate-500">Modifiez les éléments nécessaires puis cliquez sur <strong className="ml-1">Prévisualiser</strong> pour consulter le rendu exact avant l’envoi.</div>}</div><div className="rounded-lg border p-3"><p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><History className="h-4 w-4" />Historique des versions</p><div className="mt-3 space-y-2">{data.versions.length ? data.versions.map((version) => <div key={version.id} className="flex items-center justify-between gap-3 rounded border bg-slate-50 p-2 text-xs"><div><strong>Version {version.versionNumber}</strong> · {version.approvalStatus}<br /><span className="text-slate-500">{new Date(version.createdAt).toLocaleString("fr-FR")}</span></div>{version.pdfUrl && <Button asChild size="sm" variant="outline"><a href={version.pdfUrl} target="_blank" rel="noreferrer"><Download className="mr-1 h-3.5 w-3.5" />PDF</a></Button>}</div>) : <p className="text-sm text-slate-500">La première version apparaîtra dès l’enregistrement du brouillon.</p>}</div>{data.versions.length > 1 && <div className="mt-4 rounded-lg border border-indigo-100 bg-indigo-50/50 p-3"><p className="flex items-center gap-2 text-sm font-semibold text-indigo-950"><GitCompareArrows className="h-4 w-4" />Comparer deux versions</p><div className="mt-3 grid gap-2 sm:grid-cols-2"><Select value={comparisonLeftId} onValueChange={setComparisonLeftId}><SelectTrigger><SelectValue placeholder="Version précédente" /></SelectTrigger><SelectContent>{data.versions.map((version: any) => <SelectItem key={version.id} value={String(version.id)}>Version {version.versionNumber}</SelectItem>)}</SelectContent></Select><Select value={comparisonRightId} onValueChange={setComparisonRightId}><SelectTrigger><SelectValue placeholder="Version récente" /></SelectTrigger><SelectContent>{data.versions.map((version: any) => <SelectItem key={version.id} value={String(version.id)}>Version {version.versionNumber}</SelectItem>)}</SelectContent></Select></div><div className="mt-3 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-xs"><thead><tr className="border-b text-slate-500"><th className="p-2">Élément</th><th className="p-2">V{comparisonLeft?.versionNumber ?? "—"}</th><th className="p-2">V{comparisonRight?.versionNumber ?? "—"}</th></tr></thead><tbody>{comparisonRows.map(([label, left, right]) => { const changed = left !== right; return <tr key={label} className="border-b last:border-0"><th className="p-2 font-medium text-slate-700">{label}</th><td className={`p-2 align-top ${changed ? "bg-amber-50 text-amber-950" : "text-slate-700"}`}>{left}</td><td className={`p-2 align-top ${changed ? "bg-emerald-50 text-emerald-950" : "text-slate-700"}`}>{right}</td></tr>; })}</tbody></table></div></div>}</div></div>
       </div>}
     </DialogContent>
   </Dialog>;

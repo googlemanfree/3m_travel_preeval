@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
+import { clientNotifications, evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
 import { desc, eq } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
@@ -44,7 +44,7 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
         await sendEmail({
           to: app.email,
           subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,
-          html: reportHtml,
+          html: `${reportHtml}<p style="margin-top:24px">Votre bilan finalisé est aussi disponible au format PDF dans votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a>.</p>`,
         });
 
         const sentAt = new Date();
@@ -53,6 +53,9 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
           await db.update(evaluationBilanVersions).set({ approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt }).where(eq(evaluationBilanVersions.id, latestVersion.id));
         } else {
           await db.insert(evaluationBilanVersions).values({ applicationId: app.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml, createdByAdminAccountId: 0, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt });
+        }
+        if (app.candidateId) {
+          await db.insert(clientNotifications).values({ candidateId: app.candidateId, type: "evaluation_available", title: "Votre bilan d’évaluation est disponible", body: `Votre bilan finalisé pour le dossier ${app.dossierNumber} est prêt. Consultez-le et téléchargez votre PDF depuis votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: sentAt });
         }
 
         console.log(`[Evaluation Bilan Job] OK Bilan report sent for ${app.dossierNumber}`);
