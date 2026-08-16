@@ -26,6 +26,7 @@ interface Payment {
 export function AdminPaymentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
+  const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
   
   // États pour la modale de confirmation
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -58,8 +59,15 @@ export function AdminPaymentManagement() {
     transactionId: app.paymentTransactionId,
   }));
 
-  // Les paiements sont déjà filtrés par la requête tRPC
-  const filteredPayments = payments;
+  // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
+  const filteredPayments = payments.filter((payment) => {
+    if (filterMethod === "all") return true;
+    const method = String(payment.paymentMethod || "").toLowerCase();
+    if (filterMethod === "mobile_money") {
+      return method.includes("mobile") || method.includes("orange") || method.includes("mtn");
+    }
+    return method.includes("agency") || method.includes("agence") || method.includes("cash") || method.includes("caisse");
+  });
 
   // Ajouter un indicateur de chargement
   if (isLoading) {
@@ -124,6 +132,7 @@ export function AdminPaymentManagement() {
       await updatePaymentMutation.mutateAsync({
         id: selectedPayment.id,
         paymentStatus: actionType === "confirm" ? "SUCCESS" : "CANCELLED",
+        adminNotes: actionType === "cancel" ? adminNote.trim() || "Justificatif de paiement à corriger." : "Paiement validé par l’administration.",
       });
       
       if (actionType === 'confirm') {
@@ -141,6 +150,7 @@ export function AdminPaymentManagement() {
       setConfirmDialogOpen(false);
       setSelectedPayment(null);
       setActionType(null);
+      setAdminNote("");
       refetch();
       refetchAuditLogs();
     } catch (error) {
@@ -155,11 +165,13 @@ export function AdminPaymentManagement() {
       toast.error("Aucun paiement à exporter");
       return;
     }
-    const headers = ["Dossier", "Candidat", "Email", "Montant", "Statut", "Date"];
+    const headers = ["Dossier", "Candidat", "Email", "Mode de paiement", "Référence", "Montant", "Statut", "Date"];
     const rows = filteredPayments.map((p) => [
       p.dossierNumber,
       p.fullName,
       p.email,
+      p.paymentMethod || "À préciser",
+      p.transactionId || "—",
       `${p.amount} ${p.currency}`,
       p.paymentStatus,
       p.paymentDate ? new Date(p.paymentDate).toLocaleDateString("fr-FR") : "",
@@ -171,6 +183,33 @@ export function AdminPaymentManagement() {
     link.download = `paiements_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
     toast.success("Export CSV téléchargé");
+  };
+
+  const handleExportExcel = () => {
+    if (filteredPayments.length === 0) {
+      toast.error("Aucun paiement filtré à exporter");
+      return;
+    }
+    const rows = filteredPayments.map((payment) => `
+      <tr>
+        <td>${payment.dossierNumber}</td>
+        <td>${payment.fullName}</td>
+        <td>${payment.email}</td>
+        <td>${payment.paymentMethod || "À préciser"}</td>
+        <td>${payment.transactionId || "—"}</td>
+        <td>${payment.amount} ${payment.currency}</td>
+        <td>${payment.paymentStatus}</td>
+        <td>${payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString("fr-FR") : "—"}</td>
+      </tr>`).join("");
+    const workbook = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body><table><thead><tr><th>Dossier</th><th>Candidat</th><th>Email</th><th>Mode de paiement</th><th>Référence</th><th>Montant</th><th>Statut</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+    const blob = new Blob(["\ufeff", workbook], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `suivi_paiements_filtre_${new Date().toISOString().split("T")[0]}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export Excel téléchargé");
   };
 
   const handleExportAuditLogs = () => {
@@ -246,7 +285,7 @@ export function AdminPaymentManagement() {
       {/* Tableau des paiements */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-blue-600" />
@@ -254,10 +293,14 @@ export function AdminPaymentManagement() {
               </CardTitle>
               <CardDescription>Suivi des paiements des frais d'ouverture de dossier</CardDescription>
             </div>
-            <Button onClick={handleExportPayments} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleExportPayments} variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" /> CSV filtré
+              </Button>
+              <Button onClick={handleExportExcel} variant="outline" size="sm">
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> Excel filtré
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -265,7 +308,8 @@ export function AdminPaymentManagement() {
           {/* Filtres */}
           <div className="flex flex-col md:flex-row gap-3">
             <Input
-              placeholder="Chercher par dossier, nom ou email..."
+              aria-label="Rechercher un candidat par nom, dossier ou e-mail"
+              placeholder="Rechercher un candidat par nom, dossier ou e-mail..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
@@ -279,6 +323,16 @@ export function AdminPaymentManagement() {
               <option value="SUCCESS">Confirmés</option>
               <option value="PENDING">En attente</option>
               <option value="FAILED">Échoués</option>
+            </select>
+            <select
+              value={filterMethod}
+              onChange={(e) => setFilterMethod(e.target.value as "all" | "mobile_money" | "agency")}
+              aria-label="Filtrer les paiements par mode de règlement"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous les modes</option>
+              <option value="mobile_money">Mobile Money</option>
+              <option value="agency">Paiement en agence</option>
             </select>
           </div>
 
@@ -296,6 +350,7 @@ export function AdminPaymentManagement() {
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Dossier</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidat</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Mode / Référence</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-700">Montant</th>
                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Statut</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
@@ -308,6 +363,10 @@ export function AdminPaymentManagement() {
                       <td className="py-3 px-4 font-mono text-blue-600">{payment.dossierNumber}</td>
                       <td className="py-3 px-4 font-medium text-gray-900">{payment.fullName}</td>
                       <td className="py-3 px-4 text-gray-600">{payment.email}</td>
+                      <td className="py-3 px-4 text-xs text-gray-600">
+                        <p className="font-medium text-slate-800">{payment.paymentMethod || "À préciser"}</p>
+                        <p className="mt-0.5 font-mono text-slate-500">{payment.transactionId || "—"}</p>
+                      </td>
                       <td className="py-3 px-4 text-right font-semibold text-gray-900">
                         {payment.amount.toLocaleString("fr-FR")} {payment.currency}
                       </td>

@@ -2899,3 +2899,9 @@
 - [x] Créer le composant d'administration pour la liste et la vérification des reçus de paiement soumis (Mobile Money / Agence)
 - [x] Ajouter les actions de validation et de rejet motivé avec mise à jour automatique du dossier candidat
 - [x] Valider et publier la version sur la plateforme (v229)
+
+## Filtres, Notifications et Exports Comptables des Paiements (v230)
+- [x] Ajouter le filtre de méthode de paiement (Mobile Money / Agence) et améliorer la recherche par candidat dans l'administration
+- [x] Notifier visuellement le candidat d'une validation ou d'un rejet de paiement, avec le motif de correction nécessaire
+- [x] Exporter la liste filtrée des paiements au format CSV et Excel pour la comptabilité
+- [x] Tester les flux administrateur et client, puis publier la version (v230)

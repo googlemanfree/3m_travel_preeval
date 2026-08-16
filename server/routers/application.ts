@@ -614,6 +614,23 @@ export const applicationRouter = router({
         details: input.adminNotes || `Statut de paiement défini sur ${input.paymentStatus} pour le dossier ${application.dossierNumber}`,
       });
 
+      // Notification visible dans l’espace client : confirmation ou demande de correction.
+      if (application.candidateId) {
+        const caseRow = (await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyApplicationId, application.id)).limit(1))[0];
+        const isValidated = input.paymentStatus === "SUCCESS";
+        const isRejected = input.paymentStatus === "CANCELLED" || input.paymentStatus === "FAILED";
+        await db.insert(clientNotifications).values({
+          candidateId: application.candidateId,
+          caseId: caseRow?.id,
+          type: isValidated ? "payment_validated" : "payment_action_required",
+          title: isValidated ? "Paiement validé — quittance disponible" : "Votre paiement nécessite une correction",
+          body: isValidated
+            ? `Votre versement de ${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"} pour le dossier ${application.dossierNumber} a été validé. Votre quittance PDF est maintenant disponible dans l’espace client.`
+            : `Le justificatif de paiement du dossier ${application.dossierNumber} n’a pas pu être validé. Motif : ${input.adminNotes || "Veuillez contacter l’administration ou déposer un nouveau reçu."}`,
+          actionUrl: "/mon-espace",
+        });
+      }
+
       return { success: true, dossierNumber: application.dossierNumber, paymentStatus: input.paymentStatus };
     }),
 
