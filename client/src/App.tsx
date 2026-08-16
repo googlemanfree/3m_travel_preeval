@@ -64,7 +64,7 @@ const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"))
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
-const Hotels = lazyWithTimeout(() => import("./pages/Hotels"));
+const Tourism = lazyWithTimeout(() => import("./pages/Tourism"));
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
 const SignUp = lazyWithTimeout(() => import("./pages/SignUp"));
 const ConfirmEmail = lazyWithTimeout(() => import("./pages/ConfirmEmail"));
@@ -271,6 +271,8 @@ function Router() {
       </Route>
 
       {/* Routes Hotels */}
+      <Route path="/tourisme" component={Tourism} />
+      <Route path="/hotels">{() => <Redirect to="/tourisme" />}</Route>
 
       {/* Traduction assermentée */}
 
@@ -413,9 +415,6 @@ function Router() {
         </AuthGuard>
       </Route>
 
-      <Route path="/hotels">
-        <Hotels />
-      </Route>
       <Route path="/panier">
         <MultiServiceCart />
       </Route>

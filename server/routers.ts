@@ -68,6 +68,7 @@ import { embassyNewsRouter } from "./routers/embassyNews";
 import { mediaLibraryRouter } from "./routers/mediaLibrary";
 import { flightBookingRouter } from "./routers/flightBooking";
 import { unifiedRequestsRouter } from "./routers/unifiedRequests";
+import { tourismRouter } from "./routers/tourism";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -102,6 +103,7 @@ export const appRouter = router({
   flights: flightsRouter,
   flightBooking: flightBookingRouter,
   unifiedRequests: unifiedRequestsRouter,
+  tourism: tourismRouter,
   candidate: candidateRouter,
   candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,

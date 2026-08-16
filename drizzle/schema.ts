@@ -571,6 +571,17 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Demandes de tourisme, hôtel, véhicule et packs, avec devis confirmé par l’agence. */
+export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
+  id: int("id").autoincrement().primaryKey(), reference: varchar("reference", { length: 32 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 255 }).notNull(), email: varchar("email", { length: 320 }).notNull(), phone: varchar("phone", { length: 50 }).notNull(),
+  destination: varchar("destination", { length: 160 }).notNull(), departureDate: date("departureDate"), returnDate: date("returnDate"), travelersCount: int("travelersCount").notNull().default(1),
+  serviceTypesJson: text("serviceTypesJson").notNull(), packType: varchar("packType", { length: 80 }), hotelCategory: varchar("hotelCategory", { length: 80 }), vehicleCategory: varchar("vehicleCategory", { length: 80 }), pickupLocation: varchar("pickupLocation", { length: 255 }),
+  budgetXaf: int("budgetXaf"), quotedPriceXaf: int("quotedPriceXaf"), notes: text("notes"), adminNotes: text("adminNotes"), enrichmentJson: text("enrichmentJson"),
+  status: mysqlEnum("status", ["new", "contacted", "quote_sent", "confirmed", "completed", "cancelled"]).notNull().default("new"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("idx_tourism_service_requests_status_created").on(table.status, table.createdAt)]);
+
 /** Vues de filtres candidates enregistrées par un administrateur authentifié. */
 export const adminSavedViews = mysqlTable("admin_saved_views", {
   id: int("id").autoincrement().primaryKey(),

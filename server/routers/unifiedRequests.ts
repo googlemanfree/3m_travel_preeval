@@ -13,6 +13,7 @@ import {
   insuranceRequests,
   profileEvaluations,
   translationRequests,
+  tourismServiceRequests,
 } from "../../drizzle/schema";
 import { clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
@@ -102,11 +103,25 @@ export function canDeliverEvaluation(requiresSecondApproval: boolean, approvalSt
   return !requiresSecondApproval || approvalStatus === "approved";
 }
 
+export function calculateAdvisorWorkload(
+  advisors: Array<{ id: number; fullName: string; email: string }>,
+  activeRows: Array<{ assignedAdminAccountId: number | null; priority: string; workflowStatus: string; dueAt: Date | null }>,
+  now = new Date(),
+) {
+  return advisors.map((advisor) => {
+    const assigned = activeRows.filter((row) => row.assignedAdminAccountId === advisor.id);
+    const overdue = assigned.filter((row) => Boolean(row.dueAt && row.dueAt < now));
+    const blocked = assigned.filter((row) => ["waiting_customer", "documents_review", "payment_review"].includes(row.workflowStatus));
+    const urgent = assigned.filter((row) => row.priority === "urgent" || row.priority === "high");
+    return { ...advisor, total: assigned.length, urgent: urgent.length, overdue: overdue.length, blocked: blocked.length };
+  });
+}
+
 async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
-  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency] = await Promise.all([
+  const [apps, evaluations, consultations, flights, insurances, translations, contacts, agency, tourism] = await Promise.all([
     db.select().from(applications).orderBy(desc(applications.createdAt)).limit(200),
     db.select().from(profileEvaluations).orderBy(desc(profileEvaluations.createdAt)).limit(200),
     db.select().from(consultationRequests).orderBy(desc(consultationRequests.createdAt)).limit(200),
@@ -115,6 +130,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     db.select().from(translationRequests).orderBy(desc(translationRequests.createdAt)).limit(200),
     db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt)).limit(200),
     db.select().from(agencyDossiers).orderBy(desc(agencyDossiers.createdAt)).limit(200),
+    db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt)).limit(200),
   ]);
 
   const firstContactBySession = new Set<string>();
@@ -139,6 +155,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     ...translations.map((row) => ({ sourceType: "translation" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.invoiceNumber || `TRAD-${row.id}`, fullName: row.candidateName, email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Traduction certifiée", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...contactSnapshots,
     ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+    ...tourism.map((row) => ({ sourceType: "tourism" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Tourisme & Devis", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
   ];
 }
 
@@ -409,9 +426,10 @@ export const unifiedRequestsRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const [sources, managedRows] = await Promise.all([
+      const [sources, managedRows, advisors] = await Promise.all([
         loadSourceSnapshots(),
         db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.createdAt)).limit(5000),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName),
       ]);
       const managementByKey = new Map(managedRows.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
       const rows = sources.map((source) => managementByKey.get(`${source.sourceType}:${source.sourceRecordId}`) ?? {
@@ -440,6 +458,7 @@ export const unifiedRequestsRouter = router({
         totals: { all: rows.length, active: active.length, unassigned: active.filter((row) => !row.assignedAdminAccountId).length, overdue: active.filter((row) => getUnifiedSlaState(row as any) === "overdue").length, conversionRate: conversionBase.length ? Math.round((converted.length / conversionBase.length) * 100) : 0, averageProcessingHours: durations.length ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length / 3_600_000) : 0, lastCalculatedAt: new Date(now) },
         bySource,
         byAdvisor: Array.from(byAdvisor.entries()).map(([advisorId, total]) => ({ advisorId, total })),
+        advisorWorkload: calculateAdvisorWorkload(advisors, active as any, new Date(now)),
       };
     }),
 

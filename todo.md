@@ -3003,3 +3003,23 @@
 - [x] Reproduire le faux blocage de portrait dans /mon-espace pour un candidat correctement inscrit
 - [x] Corriger la synchronisation entre l’état de portrait, la session et le résumé de dossier
 - [x] Ajouter un test de régression et publier le correctif
+
+## E-mail, Charge Conseiller et Checklists de Procédure (v247)
+- [x] Conserver les relances automatiques de documents manquants par e-mail uniquement
+- [x] Créer un tableau visuel de charge de travail par conseiller avec volumes, urgences et retards
+- [x] Créer des modèles de checklists documentaires personnalisables par type de procédure, en plus du pays
+- [x] Mettre à jour, valider et livrer la compétence réutilisable correspondante
+- [x] Tester les flux, permissions et publier la version complète
+
+## Modèles de Relance, Capacité et Exports Conseiller (v248)
+- [ ] Ajouter une interface administrateur pour personnaliser les modèles d’e-mail de relance par procédure
+- [ ] Afficher la capacité maximale et le taux d’occupation de chaque conseiller dans le tableau de charge
+- [ ] Exporter le rapport mensuel des dossiers traités par conseiller en CSV et PDF
+- [ ] Tester les permissions, les exports et publier la version complète
+
+## Tourisme, Hôtels, Véhicules et Packs Professionnels (v249)
+- [x] Auditer les services auxiliaires actuels de réservation hôtel et véhicule ainsi que les parcours de panier
+- [x] Créer les contrats de demande et les packs professionnels de tourisme
+- [x] Intégrer des suggestions de lieux Google et des contenus IA générés côté serveur avec mention informative
+- [x] Créer la page Tourisme et les formulaires de demande hôtel, véhicule et pack
+- [x] Tester les demandes, les accès et publier la nouvelle expérience

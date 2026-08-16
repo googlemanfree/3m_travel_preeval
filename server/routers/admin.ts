@@ -65,11 +65,27 @@ const COUNTRY_DOCUMENT_CHECKLISTS: Record<string, Array<{ documentType: string; 
   ],
 };
 
-function countryChecklistFor(destination?: string | null) {
+const PROCEDURE_DOCUMENT_CHECKLISTS: Record<string, { label: string; documents: Array<{ documentType: string; comment: string }> }> = {
+  permanent_residence: { label: "Résidence permanente", documents: [{ documentType: "Formulaires d’immigration", comment: "Formulaires officiels complétés selon le programme retenu." }, { documentType: "Évaluation des diplômes", comment: "Évaluation WES, ENIC-NARIC ou équivalent lorsque le programme l’exige." }, { documentType: "Preuves d’expérience qualifiée", comment: "Attestations d’emploi détaillant les fonctions, la période et la rémunération." }] },
+  work_permit: { label: "Visa / permis de travail", documents: [{ documentType: "Offre d’emploi ou contrat", comment: "Offre signée, contrat ou référence employeur lorsque disponible." }, { documentType: "Certificats professionnels", comment: "Certificats, licences ou formations liés au poste visé." }, { documentType: "Attestations d’emploi", comment: "Justificatifs d’expérience professionnelle correspondant au métier." }] },
+  study_permit: { label: "Études", documents: [{ documentType: "Lettre d’admission", comment: "Lettre d’admission ou preuve d’inscription de l’établissement." }, { documentType: "Projet d’études", comment: "Lettre motivant le choix de formation et le projet professionnel." }, { documentType: "Preuves de prise en charge", comment: "Ressources du répondant financier et preuves de lien si applicable." }] },
+  visitor_visa: { label: "Visite / tourisme", documents: [{ documentType: "Itinéraire de voyage", comment: "Dates, hébergement et programme de séjour cohérents." }, { documentType: "Preuves d’attaches", comment: "Emploi, activité, famille ou biens démontrant le retour prévu." }, { documentType: "Lettre d’invitation", comment: "À fournir lorsqu’un hôte ou un proche reçoit le candidat." }] },
+  family_reunification: { label: "Regroupement familial", documents: [{ documentType: "Preuve du lien familial", comment: "Acte de mariage, naissance ou autre preuve officielle du lien." }, { documentType: "Statut du répondant", comment: "Titre de séjour, passeport ou justificatif de statut du proche à l’étranger." }, { documentType: "Preuves de ressources du répondant", comment: "Revenus, logement et prise en charge selon les règles applicables." }] },
+  evisa: { label: "e‑Visa / autorisation électronique", documents: [{ documentType: "Réservation de voyage", comment: "Vol, hébergement ou itinéraire selon le portail officiel." }, { documentType: "Assurance voyage", comment: "Assurance médicale conforme à la durée et à la destination." }, { documentType: "Photo numérique", comment: "Photo récente conforme au format électronique du portail." }] },
+};
+
+export function countryChecklistFor(destination?: string | null) {
   const normalized = String(destination || "").trim().toLowerCase();
   if (normalized.includes("canada")) return COUNTRY_DOCUMENT_CHECKLISTS.canada;
   if (normalized.includes("luxembourg")) return COUNTRY_DOCUMENT_CHECKLISTS.luxembourg;
   return COUNTRY_DOCUMENT_CHECKLISTS.default;
+}
+
+export function procedureChecklistFor(procedureType?: string | null, destination?: string | null) {
+  const countryDocuments = countryChecklistFor(destination);
+  const template = procedureType ? PROCEDURE_DOCUMENT_CHECKLISTS[procedureType] : undefined;
+  const unique = new Map([...countryDocuments, ...(template?.documents ?? [])].map((item) => [item.documentType.toLowerCase(), item]));
+  return { label: template?.label ?? "Procédure standard", documents: Array.from(unique.values()) };
 }
 
 export function parseCandidate360Labels(value: string | null | undefined) {
@@ -2489,7 +2505,13 @@ export const adminRouter = router({
     }),
 
   createCountryDocumentChecklist: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), destination: z.string().trim().min(2).max(100).optional() }))
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      destination: z.string().trim().min(2).max(100).optional(),
+      procedureType: z.enum(["permanent_residence", "work_permit", "study_permit", "visitor_visa", "family_reunification", "evisa"]).optional(),
+      customDocuments: z.array(z.string().trim().min(2).max(120)).max(12).optional(),
+    }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
@@ -2497,13 +2519,15 @@ export const adminRouter = router({
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
       const operationalCase = await ensureOperationalCase(db, reference);
-      const checklist = countryChecklistFor(input.destination);
+      const template = procedureChecklistFor(input.procedureType, input.destination);
+      const customDocuments = (input.customDocuments ?? []).map((documentType) => ({ documentType, comment: "Pièce ajoutée spécifiquement par l’administration pour cette procédure." }));
+      const checklist = [...template.documents, ...customDocuments];
       const existing = await db.select({ documentType: documentRequirements.documentType }).from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id));
       const existingTypes = new Set(existing.map((item) => item.documentType.toLowerCase()));
       const missing = checklist.filter((item) => !existingTypes.has(item.documentType.toLowerCase()));
       if (missing.length) await db.insert(documentRequirements).values(missing.map((item) => ({ caseId: operationalCase.id, documentType: item.documentType, isRequired: true, status: "pending" as const, adminComment: item.comment })));
-      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "country_checklist_created", entityType: "document_requirement", description: `Checklist ${input.destination || "standard"} créée : ${missing.length} pièce(s) ajoutée(s).` });
-      return { success: true, added: missing.length, country: input.destination || "Standard" };
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "procedure_checklist_created", entityType: "document_requirement", description: `Checklist ${template.label} · ${input.destination || "destination standard"} créée : ${missing.length} pièce(s) ajoutée(s).` });
+      return { success: true, added: missing.length, country: input.destination || "Standard", procedure: template.label };
     }),
 
   sendCandidate360DocumentReminder: publicProcedure
