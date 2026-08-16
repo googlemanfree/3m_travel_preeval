@@ -493,6 +493,33 @@ export const flightBookingRouter = router({
         details: `Document PNR final téléversé par l'agent: ${input.fileName} (Ref: ${input.pnrReference})`,
       });
 
+      // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
+      try {
+        await sendEmail({
+          to: existing.candidateEmail,
+          subject: `[3M Travel] Votre document PNR final est disponible - Dossier ${existing.requestRef}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+              <h2 style="color: #1e3a8a; margin-top: 0;">Votre réservation de voyage est confirmée !</h2>
+              <p>Bonjour,</p>
+              <p>Votre document PNR final pour la référence de dossier <strong>${existing.requestRef}</strong> vient d'être émis et validé par notre agence.</p>
+              <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold;">${input.pnrReference}</span></p>
+                <p style="margin: 0;">Le document officiel de réservation est désormais accessible et téléchargeable depuis votre espace personnel.</p>
+              </div>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${url}" target="_blank" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Télécharger mon billet PNR (PDF)</a>
+              </p>
+              <p>Merci de faire confiance à <strong>3M Travel & Services</strong> pour votre mobilité internationale.</p>
+              <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+              <p style="font-size: 11px; color: #64748b; text-align: center;">Ceci est un message automatique, veuillez ne pas y répondre directement.</p>
+            </div>
+          `,
+        });
+      } catch (err) {
+        console.error("[Email Notification Error] Impossible d'envoyer l'e-mail PNR:", err);
+      }
+
       return { success: true, issuedPdfUrl: url };
     }),
 });

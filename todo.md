@@ -35,3 +35,7 @@
 ## Prévisualisation Admin du Document PNR avant Envoi (v260)
 - [x] Ajouter une modale de prévisualisation PDF intégrée pour l'administrateur avant de valider le téléversement du PNR final
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Synchronisation E-mail et Espace Client pour le Document PNR Final (v261)
+- [x] Étendre la mutation d'administration pour envoyer automatiquement un e-mail au client avec le lien de téléchargement du PNR et les détails de référence dès le stockage réussi
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
