@@ -182,42 +182,89 @@ export function AdminReservationPayments() {
                         >
                           <Mail className="h-3.5 w-3.5" /> Reçu
                         </Button>
-                        <label className="cursor-pointer inline-flex items-center gap-1 rounded bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-                          📄 PNR
-                          <input
-                            type="file"
-                            accept="application/pdf"
-                            className="hidden"
-                            onChange={async (e) => {
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "application/pdf";
+                            input.onchange = async (e: any) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
                               const reader = new FileReader();
-                              reader.onload = async () => {
+                              reader.onload = () => {
                                 const base64 = (reader.result as string).split(",")[1];
+                                const dataUrl = reader.result as string;
                                 const pnrRef = prompt("Entrez la référence PNR / GDS :", p.pnrReference || "PNR-" + Math.floor(Math.random() * 90000 + 10000));
                                 if (!pnrRef) return;
-                                try {
-                                  // Appel mutation tRPC via fetch ou hook
-                                  const res = await fetch("/api/trpc/flightBooking.adminUploadPnrDocument", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ json: { sessionToken, requestId: p.id, pnrReference: pnrRef, fileBase64: base64, fileName: file.name } }),
-                                  });
-                                  const json = await res.json();
-                                  if (json.error) {
-                                    alert("Erreur: " + json.error.message);
-                                  } else {
-                                    alert("Document PNR final téléversé et publié dans l'espace client avec succès !");
-                                    window.location.reload();
-                                  }
-                                } catch (err: any) {
-                                  alert("Erreur réseau: " + err.message);
+
+                                // Ouvrir une fenêtre de prévisualisation PDF sécurisée pour l'administrateur
+                                const win = window.open("", "_blank", "width=800,height=700");
+                                if (win) {
+                                  win.document.write(`
+                                    <html>
+                                      <head><title>Prévisualisation PNR - ${pnrRef}</title>
+                                      <style>
+                                        body { font-family: sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
+                                        .header { background: #1e3a8a; color: white; padding: 15px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+                                        .content { margin-top: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+                                        iframe { width: 100%; height: 500px; border: 1px solid #cbd5e1; border-radius: 6px; }
+                                        .actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+                                        button { padding: 10px 20px; font-weight: bold; border-radius: 6px; cursor: pointer; border: none; }
+                                        .btn-cancel { background: #e2e8f0; color: #475569; }
+                                        .btn-confirm { background: #059669; color: white; }
+                                      </style>
+                                      </head>
+                                      <body>
+                                        <div class="header">
+                                          <h2>Prévisualisation du document PNR final</h2>
+                                          <span>Dossier: ${p.requestRef} | PNR: ${pnrRef}</span>
+                                        </div>
+                                        <div class="content">
+                                          <p>Veuillez vérifier le contenu du document ci-dessous avant de valider l'envoi officiel au client.</p>
+                                          <iframe src="${dataUrl}"></iframe>
+                                          <div class="actions">
+                                            <button class="btn-cancel" onclick="window.close()">Annuler</button>
+                                            <button class="btn-confirm" id="confirmBtn">Confirmer et envoyer au client</button>
+                                          </div>
+                                        </div>
+                                        <script>
+                                          document.getElementById('confirmBtn').onclick = async () => {
+                                            document.getElementById('confirmBtn').innerText = "Envoi en cours...";
+                                            try {
+                                              const res = await fetch("/api/trpc/flightBooking.adminUploadPnrDocument", {
+                                                method: "POST",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ json: { sessionToken: "${sessionToken}", requestId: ${p.id}, pnrReference: "${pnrRef}", fileBase64: "${base64}", fileName: "${file.name}" } }),
+                                              });
+                                              const json = await res.json();
+                                              if (json.error) {
+                                                alert("Erreur: " + json.error.message);
+                                                document.getElementById('confirmBtn').innerText = "Confirmer et envoyer au client";
+                                              } else {
+                                                alert("Document PNR vérifié et publié avec succès dans l'espace client !");
+                                                window.close();
+                                                window.opener.location.reload();
+                                              }
+                                            } catch (err) {
+                                              alert("Erreur réseau: " + err.message);
+                                              document.getElementById('confirmBtn').innerText = "Confirmer et envoyer au client";
+                                            }
+                                          };
+                                        </script>
+                                      </body>
+                                    </html>
+                                  `);
                                 }
                               };
                               reader.readAsDataURL(file);
-                            }}
-                          />
-                        </label>
+                            };
+                            input.click();
+                          }}
+                          className="inline-flex items-center gap-1 rounded bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm"
+                        >
+                          📄 PNR & Prévisualisation
+                        </button>
                       </div>
                     </td>
                   </tr>

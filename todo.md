@@ -31,3 +31,7 @@
 - [x] Ajouter une procédure tRPC d'administration pour téléverser et associer un document PDF PNR final à une réservation
 - [x] Intégrer l'affichage du document PNR et un badge d'alerte visuelle de nouveau document dans l'espace personnel du client
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Prévisualisation Admin du Document PNR avant Envoi (v260)
+- [x] Ajouter une modale de prévisualisation PDF intégrée pour l'administrateur avant de valider le téléversement du PNR final
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
