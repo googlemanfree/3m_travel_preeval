@@ -97,3 +97,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Étendre le modèle de données et l'administration e-Visa pour téléverser et valider le document e-Visa final approuvé
 - [x] Automatiser l'envoi simultané par e-mail au client et l'affichage avec bouton de téléchargement dans son espace personnel
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Envoi WhatsApp e-Visa Admin (v272)
+- [x] Intégrer un bouton WhatsApp avec message prérempli et lien du document e-Visa final dans la gestion admin
+- [x] Valider avec les tests et TypeScript puis publier la version finale

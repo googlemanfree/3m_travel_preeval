@@ -7,6 +7,7 @@ import { protectedProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import mysql from 'mysql2/promise';
+import { storagePut } from '../storage';
 
 // Générer un numéro de dossier unique
 function generateDossierNumber(): string {
@@ -365,6 +366,62 @@ export const evisaAdminRouter = router({
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de la génération du numéro de dossier',
+        });
+      }
+    }),
+
+  /**
+   * Téléversement administrateur du document e-Visa final approuvé (PDF)
+   */
+  adminUploadPdf: protectedProcedure
+    .input(
+      z.object({
+        requestId: z.number().int().positive(),
+        fileBase64: z.string().min(1),
+        fileName: z.string().min(1),
+      })
+    )
+    .mutation(async ({ ctx, input }: any) => {
+      if (ctx.user?.role !== 'admin') {
+        throw new TRPCError({
+          code: 'FORBIDDEN',
+          message: 'Seuls les administrateurs peuvent effectuer cette action',
+        });
+      }
+
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        const [rows]: any = await connection.execute(`
+          SELECT * FROM evisa_requests WHERE id = ?
+        `, [input.requestId]);
+
+        if (!rows || rows.length === 0) {
+          await connection.end();
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Demande d\'e-visa introuvable.' });
+        }
+
+        const req = rows[0];
+
+        const buffer = Buffer.from(input.fileBase64, 'base64');
+        const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${input.fileName}`;
+        const stored = await storagePut(storageKey, buffer, 'application/pdf');
+
+        await connection.execute(`
+          UPDATE evisa_requests 
+          SET status = 'approved', issuedPdfUrl = ?, updatedAt = NOW() 
+          WHERE id = ?
+        `, [stored.url, input.requestId]);
+
+        await connection.end();
+
+        return { success: true, pdfUrl: stored.url };
+      } catch (error: any) {
+        console.error('Erreur adminUploadPdf e-visa:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Erreur lors du téléversement du document',
         });
       }
     }),
