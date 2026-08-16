@@ -9,7 +9,7 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
@@ -35,6 +35,79 @@ export function parseAdminCandidateReference(reference: string): { source: "onli
   const id = Number(match[2]);
   if (!Number.isSafeInteger(id) || id <= 0) return null;
   return { source: match[1] as "online" | "agency", id };
+}
+
+const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
+
+export function parseCandidate360Labels(value: string | null | undefined) {
+  try {
+    const labels = JSON.parse(value ?? "[]");
+    return Array.isArray(labels) ? labels.filter((label): label is string => typeof label === "string").slice(0, 12) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function determineCandidate360NextAction(input: { workflowStatus: string; paymentStatus?: string | null; pendingDocuments: number; openTasks: number; dueAt?: Date | null }) {
+  if (input.paymentStatus && !["SUCCESS", "success", "completed", "paye"].includes(input.paymentStatus)) {
+    return { key: "payment", label: "Vérifier le paiement", description: "Le paiement ou son justificatif doit être contrôlé avant la suite du dossier.", urgency: "high" as const };
+  }
+  if (input.pendingDocuments > 0) {
+    return { key: "documents", label: "Contrôler les documents", description: `${input.pendingDocuments} pièce(s) requise(s) restent à recevoir ou valider.`, urgency: "high" as const };
+  }
+  if (input.workflowStatus === "new" || input.workflowStatus === "qualifying") {
+    return { key: "evaluation", label: "Préparer l’évaluation", description: "Qualifier le projet, compléter le bilan puis choisir l’envoi immédiat ou programmé.", urgency: "normal" as const };
+  }
+  if (input.openTasks > 0) {
+    return { key: "task", label: "Terminer les actions ouvertes", description: `${input.openTasks} action(s) opérationnelle(s) restent à traiter.`, urgency: "normal" as const };
+  }
+  if (input.workflowStatus === "submitted") {
+    return { key: "partner", label: "Suivre la soumission", description: "Relancer le partenaire ou consigner la décision reçue.", urgency: "normal" as const };
+  }
+  return { key: "follow_up", label: "Planifier le suivi", description: "Le dossier est à jour. Programmez la prochaine relance ou clôturez le traitement.", urgency: "low" as const };
+}
+
+async function ensureOperationalCase(db: any, reference: { source: "online" | "agency"; id: number }) {
+  const [existing] = await db.select().from(cases).where(reference.source === "online" ? eq(cases.legacyApplicationId, reference.id) : eq(cases.legacyAgencyDossierId, reference.id)).limit(1);
+  if (existing) return existing;
+
+  if (reference.source === "online") {
+    const [application] = await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1);
+    if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
+    await db.insert(cases).values({
+      caseNumber: application.dossierNumber,
+      candidateId: application.candidateId,
+      legacyApplicationId: application.id,
+      sourceChannel: "online",
+      countryTarget: application.destination,
+      caseType: application.formulaChosen,
+      visaType: application.visaType,
+      currentStatus: application.dossierStatus,
+      openedAt: application.createdAt,
+    });
+    const [created] = await db.select().from(cases).where(eq(cases.legacyApplicationId, application.id)).limit(1);
+    if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Création du dossier opérationnel impossible." });
+    return created;
+  }
+
+  const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1);
+  if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+  const [candidate] = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, dossier.email)).limit(1);
+  const caseNumber = `3M-AGN-${dossier.id.toString().padStart(4, "0")}`;
+  await db.insert(cases).values({
+    caseNumber,
+    candidateId: candidate?.id ?? null,
+    legacyAgencyDossierId: dossier.id,
+    sourceChannel: "agency_manual",
+    countryTarget: dossier.destination,
+    caseType: "integral",
+    visaType: dossier.visaType,
+    currentStatus: dossier.status,
+    openedAt: dossier.createdAt,
+  });
+  const [created] = await db.select().from(cases).where(eq(cases.legacyAgencyDossierId, dossier.id)).limit(1);
+  if (!created) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Création du dossier opérationnel impossible." });
+  return created;
 }
 
 export const adminRouter = router({
@@ -2256,6 +2329,130 @@ export const adminRouter = router({
       }
 
       return { success: true, recipientEmail: log.recipientEmail };
+    }),
+
+  getCandidate360: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      const email = sourceRecord.email;
+      const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
+      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, advisors, requestHistory] = await Promise.all([
+        db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
+        db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
+        db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, email)).orderBy(desc(clientDocuments.uploadedAt)).limit(100),
+        db.select().from(caseTasks).where(eq(caseTasks.caseId, operationalCase.id)).orderBy(asc(caseTasks.dueAt)),
+        db.select().from(caseAdminNotes).where(eq(caseAdminNotes.caseId, operationalCase.id)).orderBy(desc(caseAdminNotes.createdAt)),
+        db.select().from(caseStatusHistory).where(eq(caseStatusHistory.caseId, operationalCase.id)).orderBy(desc(caseStatusHistory.createdAt)),
+        db.select().from(caseActivityLogs).where(eq(caseActivityLogs.caseId, operationalCase.id)).orderBy(desc(caseActivityLogs.createdAt)),
+        candidateRecord ? db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, candidateRecord.id)).orderBy(desc(clientNotifications.createdAt)).limit(30) : Promise.resolve([]),
+        candidateRecord ? db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)),
+        db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30),
+      ]);
+      const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
+      const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
+      const paymentSnapshot = reference.source === "online" ? {
+        status: (sourceRecord as typeof applications.$inferSelect).paymentStatus,
+        amount: (sourceRecord as typeof applications.$inferSelect).paymentAmount,
+        currency: (sourceRecord as typeof applications.$inferSelect).paymentCurrency,
+        method: (sourceRecord as typeof applications.$inferSelect).paymentMethod,
+        reference: (sourceRecord as typeof applications.$inferSelect).paymentTransactionId,
+        paidAt: (sourceRecord as typeof applications.$inferSelect).paymentDate,
+      } : null;
+      const evaluationVersions = reference.source === "online"
+        ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber))
+        : [];
+      const nextAction = determineCandidate360NextAction({ workflowStatus: operationalCase.currentStatus, paymentStatus: paymentSnapshot?.status, pendingDocuments, openTasks, dueAt: operationalCase.dueAt });
+      return {
+        operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
+        nextAction,
+        metrics: { pendingDocuments, openTasks, unreadNotifications: notifications.filter((item) => !item.isRead).length, totalDocuments: operationalDocuments.length + legacyDocuments.length, totalMessages: messages.length },
+        requirements,
+        documents: [
+          ...operationalDocuments,
+          ...legacyDocuments.filter((document) => !operationalDocuments.some((operational) => operational.fileName === document.documentName)).map((document) => ({
+            id: `legacy-${document.id}`,
+            documentType: document.documentType,
+            fileName: document.documentName,
+            uploadedAt: document.uploadedAt,
+            uploadedByRole: document.source === "online" ? "candidate" : "admin",
+            reviewStatus: document.verificationStatus,
+            reviewNote: document.verificationComment,
+            source: document.source,
+          })),
+        ],
+        payments: paymentSnapshot ? [paymentSnapshot] : [],
+        tasks,
+        notes,
+        statusHistory,
+        activity: [...activityLogs.map((item) => ({ type: item.actionType, description: item.description, createdAt: item.createdAt, actor: item.actorRole })), ...requestHistory.map((item) => ({ type: item.actionType, description: item.comment, createdAt: item.createdAt, actor: "admin" }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 50),
+        communications: { notifications, messages },
+        evaluationVersions,
+        advisors,
+        currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
+      };
+    }),
+
+  updateCandidate360Workflow: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      workflowStatus: z.enum(candidate360WorkflowStatuses),
+      priority: z.enum(["low", "normal", "high", "urgent"]),
+      assignedAdminId: z.number().int().positive().nullable(),
+      dueAt: z.date().nullable(),
+      labels: z.array(z.string().trim().min(1).max(32)).max(12),
+      comment: z.string().trim().max(1000).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      await db.update(cases).set({ currentStatus: input.workflowStatus, priority: input.priority, assignedAdminId: input.assignedAdminId, labelsJson: JSON.stringify(input.labels), dueAt: input.dueAt }).where(eq(cases.id, operationalCase.id));
+      if (input.comment) await db.insert(caseAdminNotes).values({ caseId: operationalCase.id, adminId: admin.id, note: input.comment, isPrivate: true });
+      await db.insert(caseStatusHistory).values({ caseId: operationalCase.id, oldStatus: operationalCase.currentStatus, newStatus: input.workflowStatus, changedByRole: "admin", changedById: admin.id, comment: input.comment ?? "Paramètres opérationnels mis à jour." });
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "workflow_updated", entityType: "case", entityId: String(operationalCase.id), description: `Statut ${input.workflowStatus}, priorité ${input.priority}, conseiller ${input.assignedAdminId ?? "non attribué"}.` });
+      return { success: true };
+    }),
+
+  addCandidate360Task: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), title: z.string().trim().min(2).max(255), description: z.string().trim().max(1000).optional(), assignedAdminId: z.number().int().positive().nullable(), dueAt: z.date().nullable() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      await db.insert(caseTasks).values({ caseId: operationalCase.id, title: input.title, description: input.description ?? null, assignedAdminId: input.assignedAdminId, dueAt: input.dueAt, taskStatus: "open", createdByAdminId: admin.id });
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "task_created", entityType: "task", description: input.title });
+      return { success: true };
+    }),
+
+  completeCandidate360Task: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), taskId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [task] = await db.select().from(caseTasks).where(eq(caseTasks.id, input.taskId)).limit(1);
+      if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Action introuvable." });
+      await db.update(caseTasks).set({ taskStatus: "completed" }).where(eq(caseTasks.id, task.id));
+      await db.insert(caseActivityLogs).values({ caseId: task.caseId, actorRole: "admin", actorId: admin.id, actionType: "task_completed", entityType: "task", entityId: String(task.id), description: task.title });
+      return { success: true };
     }),
 });
 

@@ -70,6 +70,7 @@ import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
+import { Candidate360Workspace } from "@/components/Candidate360Workspace";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -257,7 +258,7 @@ function CandidateDetailModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-blue-900">
             <Users className="w-5 h-5" />
@@ -313,6 +314,15 @@ function CandidateDetailModal({
                 <SourceBadge source={candidate.source} />
               </div>
             </div>
+
+            <Candidate360Workspace
+              sessionToken={sessionToken}
+              candidate={candidate as any}
+              onRefresh={() => {
+                void refetch();
+                onStatusUpdated();
+              }}
+            />
 
             {/* Informations de contact */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

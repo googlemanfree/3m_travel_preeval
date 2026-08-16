@@ -2973,3 +2973,15 @@
 - [x] Corriger la mutation, les validations et l’enregistrement de la demande de réservation
 - [x] Afficher un état de chargement, une confirmation visible et une erreur exploitable si la soumission échoue
 - [x] Tester le parcours de réservation et publier le correctif
+
+## Centre de Gestion Intelligent des Candidats (v242)
+- [x] Auditer la fiche candidate, les données d’évaluation, les dossiers et les actions administratives existantes
+- [x] Définir les améliorations de priorisation, prochaines actions, suivi de documents, paiements et décisions d’évaluation
+- [x] Présenter une proposition complète de fonctionnement et un plan d’implémentation avant développement
+
+## Implémentation de la Fiche Client 360° (v243)
+- [x] Créer le contrat sécurisé de données consolidées pour l’évaluation, les documents, les paiements, les échanges et l’historique
+- [x] Construire les onglets Vue d’ensemble, Évaluation, Documents, Paiements, Échanges et Historique
+- [x] Ajouter les prochaines actions, les échéances, les priorités, les conseillers responsables et les étiquettes personnalisées
+- [x] Ajouter la vue quotidienne des dossiers à traiter et les indicateurs de blocage dans le tableau administrateur
+- [x] Tester les permissions, la synchronisation, l’accessibilité et publier la version complète

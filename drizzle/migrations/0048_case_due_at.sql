@@ -1,0 +1,2 @@
+ALTER TABLE `cases`
+  ADD COLUMN `dueAt` TIMESTAMP NULL AFTER `labelsJson`;

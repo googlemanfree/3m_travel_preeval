@@ -13,6 +13,8 @@ export const cases = mysqlTable("cases", {
   currentStatus: varchar("currentStatus", { length: 80 }).notNull().default("nouveau"),
   assignedAdminId: int("assignedAdminId"),
   priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).notNull().default("normal"),
+  labelsJson: text("labelsJson"),
+  dueAt: timestamp("dueAt"),
   openedAt: timestamp("openedAt"),
   closedAt: timestamp("closedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
