@@ -145,3 +145,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger l’erreur interne déclenchée après sélection/téléchargement du passeport dans le parcours e‑Visa.
 - [x] Ajouter un test de non-régression pour l’analyse du passeport avec fichier PDF et image.
 - [x] Vérifier le parcours e‑Visa dans le navigateur et publier la correction validée.
+
+## Vérification manuelle des données passeport
+- [x] Afficher les données extraites du passeport dans un formulaire éditable avant la validation e‑Visa.
+- [x] Valider les champs obligatoires et conserver les corrections manuelles dans le formulaire.
+- [x] Tester le parcours de correction sur ordinateur et mobile puis publier.
+
+## Persistance complète des corrections passeport
+- [x] Reporter tous les champs corrigés (numéro, émission, expiration, genre et lieu de naissance) dans l’étape de confirmation finale.
+- [x] Vérifier la suite du parcours sur desktop et mobile après correction manuelle.
+- [x] Couvrir le parcours upload → extraction → édition → confirmation par un test navigateur automatisé responsive.

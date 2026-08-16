@@ -29,10 +29,18 @@ interface ExtractedData {
 
 interface FormData {
   fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   nationality: string;
   dateOfBirth: string;
+  passportNumber: string;
+  issuingCountry: string;
+  issueDate: string;
+  expiryDate: string;
+  gender: string;
+  placeOfBirth: string;
   countryCode: string;
   countryName: string;
   notes: string;
@@ -40,15 +48,36 @@ interface FormData {
 
 type FormStep = 'upload' | 'validation' | 'confirmation';
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = () => reject(new Error('Impossible de lire le fichier sélectionné.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function EvisaRequestForm() {
   const [, navigate] = useLocation();
   const [currentStep, setCurrentStep] = useState<FormStep>('upload');
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     nationality: '',
     dateOfBirth: '',
+    passportNumber: '',
+    issuingCountry: '',
+    issueDate: '',
+    expiryDate: '',
+    gender: '',
+    placeOfBirth: '',
     countryCode: new URLSearchParams(window.location.search).get('countryCode') || 'ca',
     countryName: new URLSearchParams(window.location.search).get('countryName') || 'Canada',
     notes: '',
@@ -196,7 +225,7 @@ export default function EvisaRequestForm() {
       setCurrentStep('validation');
     },
     onError: (err: any) => {
-      setError(err.message || 'Erreur lors de l\'analyse du passeport');
+      setError(err.message || 'Analyse impossible. Vérifiez que la page d’identité est lisible puis réessayez.');
       setIsAnalyzing(false);
     },
   });
@@ -233,18 +262,22 @@ export default function EvisaRequestForm() {
     }
 
     try {
-      const fileUrl = URL.createObjectURL(file);
-      setPassportFileUrl(fileUrl);
-
-      // Analyser automatiquement le passeport avec l'IA
+      // L’aperçu reste local, mais l’analyse reçoit le fichier encodé puis stocké côté serveur.
+      const previewUrl = URL.createObjectURL(file);
+      setPassportFileUrl(previewUrl);
       setIsAnalyzing(true);
-      analyzePassportMutation.mutate({
-        passportUrl: fileUrl,
-        fileType: file.type,
+
+      const fileBase64 = await fileToBase64(file);
+      await analyzePassportMutation.mutateAsync({
+        fileBase64,
+        fileName: file.name,
+        fileType: file.type || 'application/octet-stream',
       });
     } catch (uploadError: any) {
-      setError('Erreur lors du traitement du fichier passeport');
+      setIsAnalyzing(false);
+      setError(uploadError?.message || 'Impossible de traiter ce passeport. Vérifiez le fichier puis réessayez.');
       setPassportFile(null);
+      setPassportFileUrl(null);
     }
   };
 
@@ -253,8 +286,16 @@ export default function EvisaRequestForm() {
     setFormData(prev => ({
       ...prev,
       fullName: validatedData.fullName,
+      firstName: validatedData.firstName || '',
+      lastName: validatedData.lastName || '',
       dateOfBirth: validatedData.dateOfBirth || '',
       nationality: validatedData.nationality || '',
+      passportNumber: validatedData.passportNumber || '',
+      issuingCountry: validatedData.issuingCountry || '',
+      issueDate: validatedData.issueDate || '',
+      expiryDate: validatedData.expiryDate || '',
+      gender: validatedData.gender || '',
+      placeOfBirth: validatedData.placeOfBirth || '',
     }));
     setCurrentStep('confirmation');
   };
@@ -587,6 +628,49 @@ export default function EvisaRequestForm() {
                       />
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Données passeport confirmées */}
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 space-y-4">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-emerald-950 flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      Données du passeport vérifiées
+                    </h3>
+                    <p className="text-xs text-emerald-800 mt-1">
+                      Les corrections confirmées à l’étape précédente sont conservées ici. Vous pouvez encore les ajuster avant l’envoi.
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setCurrentStep('validation')} className="w-fit border-emerald-300 text-emerald-800 hover:bg-emerald-100">
+                    Modifier les données extraites
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    ['firstName', 'Prénom(s)', 'Ex. AUREOL', 'text'],
+                    ['lastName', 'Nom de famille', 'Ex. DONFACK', 'text'],
+                    ['passportNumber', 'Numéro de passeport', 'Numéro inscrit sur le passeport', 'text'],
+                    ['issuingCountry', 'Pays d’émission', 'Ex. Cameroun', 'text'],
+                    ['issueDate', 'Date d’émission', '', 'date'],
+                    ['expiryDate', 'Date d’expiration', '', 'date'],
+                    ['gender', 'Genre', 'Ex. M ou F', 'text'],
+                    ['placeOfBirth', 'Lieu de naissance', 'Ville et pays si disponibles', 'text'],
+                  ].map(([name, label, placeholder, type]) => (
+                    <div key={name}>
+                      <Label htmlFor={`confirmed-${name}`} className="block text-sm font-medium text-emerald-950 mb-2">{label}</Label>
+                      <Input
+                        id={`confirmed-${name}`}
+                        name={name}
+                        type={type}
+                        placeholder={placeholder}
+                        value={formData[name as keyof FormData] as string}
+                        onChange={handleInputChange}
+                        className="w-full border-emerald-200 bg-white"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 

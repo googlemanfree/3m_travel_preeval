@@ -2,118 +2,101 @@ import { publicProcedure, router } from '../_core/trpc';
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { invokeLLM } from '../_core/llm';
+import { storageGetSignedUrl, storagePut } from '../storage';
+import {
+  assertRemotePassportUrl,
+  buildPassportMediaPart,
+  decodePassportBase64,
+  getPassportMediaKind,
+  parsePassportAnalysisResponse,
+  passportAnalysisSchema,
+} from '../services/passportAnalysisPayload';
 
-/**
- * Routeur robuste pour l'analyse IA des passeports
- */
+const MAX_FILE_NAME_LENGTH = 120;
+
+function safeFileName(fileName: string): string {
+  return fileName
+    .normalize('NFKD')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, MAX_FILE_NAME_LENGTH) || 'passport';
+}
+
 export const passportAnalysisRouter = router({
   analyzePassport: publicProcedure
     .input(
       z.object({
-        passportUrl: z.string(),
-        fileType: z.string(),
+        passportUrl: z.string().optional(),
+        fileBase64: z.string().optional(),
+        fileName: z.string().optional(),
+        fileType: z.string().min(1),
+      }).refine(input => Boolean(input.fileBase64 || input.passportUrl), {
+        message: 'Le fichier passeport est requis.',
       })
     )
-    .mutation(async ({ input }: any) => {
+    .mutation(async ({ input }) => {
       try {
-        const urlStr = String(input.passportUrl || '');
-        const isBlobOrLocal = urlStr.startsWith('blob:') || urlStr.startsWith('data:') || !urlStr.startsWith('http');
+        const mediaKind = getPassportMediaKind(input.fileType, input.fileName || '');
+        let analysisUrl = input.passportUrl;
 
-        // Si l'URL est locale ou blob, extraction structurée intelligente basée sur le nom de fichier ou données par défaut sécurisées
-        if (isBlobOrLocal) {
-          return {
-            success: true,
-            data: {
-              fullName: "CANDIDAT 3M TRAVEL",
-              firstName: "CANDIDAT",
-              lastName: "3M TRAVEL",
-              dateOfBirth: "1990-05-15",
-              nationality: "Camerounaise",
-              passportNumber: "3M9988776",
-              issuingCountry: "Cameroun",
-              issueDate: "2021-01-10",
-              expiryDate: "2031-01-09",
-              gender: "M",
-              placeOfBirth: "Yaoundé",
-            },
-          };
+        if (input.fileBase64) {
+          const bytes = decodePassportBase64(input.fileBase64);
+          const stored = await storagePut(
+            `private/passport-analysis/${Date.now()}-${safeFileName(input.fileName || 'passport')}`,
+            bytes,
+            input.fileType
+          );
+          analysisUrl = await storageGetSignedUrl(stored.key);
         }
 
-        // Tenter l'analyse via invokeLLM avec l'URL S3 distante
-        const prompt = `Analysez ce document de passeport et extrayez les informations au format JSON strict:
-        {
-          "fullName": "Nom complet",
-          "firstName": "Prénom",
-          "lastName": "Nom",
-          "dateOfBirth": "YYYY-MM-DD",
-          "nationality": "Nationalité",
-          "passportNumber": "Numéro de passeport",
-          "issuingCountry": "Pays d'émission",
-          "issueDate": "YYYY-MM-DD",
-          "expiryDate": "YYYY-MM-DD",
-          "gender": "M/F",
-          "placeOfBirth": "Lieu de naissance"
-        }`;
+        if (!analysisUrl) throw new Error('Le fichier passeport n’a pas pu être téléversé.');
+        assertRemotePassportUrl(analysisUrl);
 
+        const mediaPart = buildPassportMediaPart(analysisUrl, input.fileType, input.fileName || '');
         const result = await invokeLLM({
+          model: 'gemini-3-flash-preview',
           messages: [
-            { role: "system", content: "Vous êtes un expert en OCR de passeports internationaux. Retournez uniquement un JSON valide." },
             {
-              role: "user",
+              role: 'system',
+              content: "Vous êtes un spécialiste de l'OCR des passeports. Analysez uniquement le document transmis. Si une donnée est illisible, retournez null. Ne déduisez jamais une identité, un numéro ou une date. Retournez uniquement le JSON demandé.",
+            },
+            {
+              role: 'user',
               content: [
-                { type: "text", text: prompt },
                 {
-                  type: "image_url",
-                  image_url: {
-                    url: urlStr,
-                    detail: "high"
-                  }
-                }
-              ]
-            }
+                  type: 'text',
+                  text: `Extrayez les champs de la page biographique de ce passeport. Le fichier est de type ${mediaKind}. Les dates doivent être au format YYYY-MM-DD quand elles sont lisibles.`,
+                },
+                mediaPart,
+              ],
+            },
           ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'passport_extraction',
+              strict: true,
+              schema: passportAnalysisSchema,
+            },
+          },
           maxTokens: 1024,
         });
 
         const content = result.choices?.[0]?.message?.content;
-        const textContent = typeof content === 'string' ? content : JSON.stringify(content);
-        const cleaned = textContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const extracted = JSON.parse(cleaned);
+        if (typeof content !== 'string' || !content.trim()) {
+          throw new Error('Aucune donnée exploitable n’a été retournée par l’analyse.');
+        }
 
         return {
           success: true,
-          data: {
-            fullName: extracted.fullName || "CANDIDAT 3M TRAVEL",
-            firstName: extracted.firstName || "CANDIDAT",
-            lastName: extracted.lastName || "3M TRAVEL",
-            dateOfBirth: extracted.dateOfBirth || "1990-05-15",
-            nationality: extracted.nationality || "Camerounaise",
-            passportNumber: extracted.passportNumber || "3M9988776",
-            issuingCountry: extracted.issuingCountry || "Cameroun",
-            issueDate: extracted.issueDate || "2021-01-10",
-            expiryDate: extracted.expiryDate || "2031-01-09",
-            gender: extracted.gender || "M",
-            placeOfBirth: extracted.placeOfBirth || "Yaoundé",
-          },
+          data: parsePassportAnalysisResponse(content),
         };
       } catch (error: any) {
-        console.error('Erreur analyse passeport:', error);
-        return {
-          success: true,
-          data: {
-            fullName: "CANDIDAT 3M TRAVEL",
-            firstName: "CANDIDAT",
-            lastName: "3M TRAVEL",
-            dateOfBirth: "1990-05-15",
-            nationality: "Camerounaise",
-            passportNumber: "3M9988776",
-            issuingCountry: "Cameroun",
-            issueDate: "2021-01-10",
-            expiryDate: "2031-01-09",
-            gender: "M",
-            placeOfBirth: "Yaoundé",
-          },
-        };
+        console.error('Erreur lors de l’analyse du passeport:', error);
+        const message = error instanceof Error ? error.message : 'Analyse du passeport impossible.';
+        throw new TRPCError({
+          code: message.includes('Format') || message.includes('requis') || message.includes('téléversé') ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR',
+          message: message || 'Analyse du passeport impossible. Vérifiez le fichier et réessayez.',
+        });
       }
     }),
 });
