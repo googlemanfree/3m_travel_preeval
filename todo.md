@@ -2955,3 +2955,9 @@
 - [x] Ajouter un filtre d’approbation dans la boîte de réception pour les bilans standard, sensibles en attente et approuvés
 - [x] Créer une comparaison visuelle entre deux versions de bilan dans l’historique administrateur
 - [x] Tester les notifications, filtres, comparaisons et publier la version complète
+
+## Consultation, Rappel et Audit des Bilans (v239)
+- [x] Enregistrer la première consultation du bilan PDF par le candidat et l’afficher dans la boîte de réception administrateur
+- [x] Envoyer un rappel e-mail unique après 72 heures sans consultation du bilan finalisé
+- [x] Ajouter l’export PDF du comparatif entre deux versions pour l’audit interne
+- [x] Tester les accès, les délais et les exports, puis publier la version complète

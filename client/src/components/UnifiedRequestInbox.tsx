@@ -64,6 +64,8 @@ export function UnifiedRequestInbox({ sessionToken }: { sessionToken: string }) 
   useEffect(() => { if (selected) setComment(""); }, [selected]);
   const rows = data?.rows ?? [];
   const totals = dashboard?.totals;
+  const deliveredBilans = rows.filter((row: any) => row.evaluationDeliveryStatus === "sent");
+  const viewedBilans = deliveredBilans.filter((row: any) => Boolean(row.evaluationReportViewedAt));
 
   const setRequestStatus = (value: string) => {
     if (!selected) return;
@@ -85,6 +87,8 @@ export function UnifiedRequestInbox({ sessionToken }: { sessionToken: string }) 
       <Card className="border-emerald-100"><CardContent className="flex items-center gap-3 p-4"><UserRoundCheck className="h-8 w-8 text-emerald-600" /><div><p className="text-xs text-slate-500">Conversion suivie</p><p className="text-2xl font-bold text-emerald-700">{totals?.conversionRate ?? 0}%</p></div></CardContent></Card>
       <Card className="border-violet-100"><CardContent className="flex items-center gap-3 p-4"><Clock3 className="h-8 w-8 text-violet-600" /><div><p className="text-xs text-slate-500">Délai moyen</p><p className="text-2xl font-bold text-violet-700">{totals?.averageProcessingHours ?? 0} h</p></div></CardContent></Card>
     </div>
+
+    {deliveredBilans.length > 0 && <div className="grid gap-3 sm:grid-cols-2"><Card className="border-emerald-100 bg-emerald-50/50"><CardContent className="flex items-center gap-3 p-4"><Eye className="h-7 w-7 text-emerald-700" /><div><p className="text-xs text-emerald-800">Bilans consultés par les candidats</p><p className="text-2xl font-bold text-emerald-800">{viewedBilans.length} / {deliveredBilans.length}</p></div></CardContent></Card><Card className="border-amber-100 bg-amber-50/50"><CardContent className="flex items-center gap-3 p-4"><AlertTriangle className="h-7 w-7 text-amber-700" /><div><p className="text-xs text-amber-800">Bilans encore non consultés</p><p className="text-2xl font-bold text-amber-800">{deliveredBilans.length - viewedBilans.length}</p></div></CardContent></Card></div>}
 
     {(rows.filter((row: any) => row.sla === "overdue").length > 0) && <div role="alert" className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" /><div><strong>{rows.filter((row: any) => row.sla === "overdue").length} demande(s) ont dépassé le délai de prise en charge.</strong><p className="mt-1 text-red-700">Filtrez sur « SLA dépassé » pour attribuer un conseiller ou définir la prochaine action immédiatement.</p></div></div>}
 

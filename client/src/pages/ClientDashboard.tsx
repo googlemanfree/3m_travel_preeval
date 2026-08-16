@@ -149,6 +149,7 @@ export default function ClientDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
+  const markEvaluationReportViewed = trpc.candidate.markEvaluationReportViewed.useMutation();
   const messagesWithAttachments = (candidateMessages ?? []) as Array<{
     id?: number;
     createdAt?: Date | string | null;
@@ -821,7 +822,7 @@ export default function ClientDashboard() {
               </p>
               {dossierData?.data?.evaluationReportPdfUrl && (
                 <Button asChild className="w-full sm:w-auto">
-                  <a href={dossierData.data.evaluationReportPdfUrl} target="_blank" rel="noreferrer" download>
+                  <a href={dossierData.data.evaluationReportPdfUrl} target="_blank" rel="noreferrer" download onClick={() => { markEvaluationReportViewed.mutate(); }}>
                     <Download className="mr-2 h-4 w-4" />Télécharger mon bilan d’évaluation finalisé (PDF)
                   </a>
                 </Button>

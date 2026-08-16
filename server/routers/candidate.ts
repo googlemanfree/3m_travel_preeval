@@ -1368,6 +1368,22 @@ export const candidateRouter = router({
     };
   }),
 
+  markEvaluationReportViewed: candidateProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [application] = await db.select().from(applications)
+      .where(eq(applications.candidateId, ctx.candidate.id))
+      .orderBy(desc(applications.createdAt))
+      .limit(1);
+    if (!application?.evaluationReportPdfKey || application.evaluationDeliveryStatus !== "sent") {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Aucun bilan finalisé n’est disponible." });
+    }
+    if (!application.evaluationReportViewedAt) {
+      await db.update(applications).set({ evaluationReportViewedAt: new Date(), updatedAt: new Date() }).where(eq(applications.id, application.id));
+    }
+    return { success: true, firstViewedAt: application.evaluationReportViewedAt ?? new Date() };
+  }),
+
   /**
    * Telecharger un document
    */

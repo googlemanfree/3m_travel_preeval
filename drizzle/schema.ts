@@ -362,6 +362,8 @@ export const applications = mysqlTable("applications", {
   evaluationApprovedByAdminId: int("evaluationApprovedByAdminId"),
   evaluationReportPdfKey: varchar("evaluationReportPdfKey", { length: 512 }),
   evaluationReportPdfUrl: varchar("evaluationReportPdfUrl", { length: 512 }),
+  evaluationReportViewedAt: timestamp("evaluationReportViewedAt"),
+  evaluationReportReminderSentAt: timestamp("evaluationReportReminderSentAt"),
   
   // Gestion des documents (originaux vs scan pro)
   documentsSubmissionMethod: mysqlEnum("documentsSubmissionMethod", ["en_ligne", "agence_physique"]),
