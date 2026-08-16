@@ -118,6 +118,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Valider avec les tests et TypeScript puis publier la version finale
 
 ## Correction Destination e-Visa Non Trouvée (v276)
-- [ ] Corriger la normalisation et la recherche des pays dans le registre e-Visa et le routeur tRPC
-- [ ] Assurer le repli automatique et le préremplissage robuste du formulaire même si le code pays diffère
-- [ ] Valider avec les tests et TypeScript puis publier la version corrigée
+- [x] Corriger la normalisation et la recherche des pays dans le registre e-Visa et le routeur tRPC
+- [x] Assurer le repli automatique et le préremplissage robuste du formulaire même si le code pays diffère
+- [x] Valider avec les tests et TypeScript puis publier la version corrigée

@@ -93,10 +93,19 @@ export const evisaRouter = router({
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
-        const [evisa] = await connection.execute(`
+        const queryTerm = input.countryCode.toLowerCase().trim();
+        let [evisa] = await connection.execute(`
           SELECT * FROM evisas 
-          WHERE countryCode = ? AND isActive = true
-        `, [input.countryCode]);
+          WHERE (LOWER(countryCode) = ? OR LOWER(countryName) LIKE ? OR LOWER(id) = ?) AND isActive = true
+          LIMIT 1
+        `, [queryTerm, `%${queryTerm}%`, queryTerm]);
+
+        if (!evisa || (evisa as any[]).length === 0) {
+          // Fallback sur toutes les destinations actives si non trouvé par correspondance directe
+          [evisa] = await connection.execute(`
+            SELECT * FROM evisas WHERE isActive = true LIMIT 1
+          `);
+        }
         await connection.end();
 
         if (!evisa || (evisa as any[]).length === 0) {

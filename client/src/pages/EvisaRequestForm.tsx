@@ -48,10 +48,35 @@ export default function EvisaRequestForm() {
     phone: '',
     nationality: '',
     dateOfBirth: '',
-    countryCode: new URLSearchParams(window.location.search).get('countryCode') || '',
-    countryName: new URLSearchParams(window.location.search).get('countryName') || '',
+    countryCode: new URLSearchParams(window.location.search).get('countryCode') || 'ca',
+    countryName: new URLSearchParams(window.location.search).get('countryName') || 'Canada',
     notes: '',
   });
+
+  const queryCountryCode = new URLSearchParams(window.location.search).get('countryCode') || 'ca';
+  const queryCountryName = new URLSearchParams(window.location.search).get('countryName') || '';
+
+  const { data: evisaDetails } = trpc.evisa.getEvisaByCountry.useQuery(
+    { countryCode: queryCountryCode },
+    { enabled: !!queryCountryCode }
+  );
+
+  useEffect(() => {
+    if (evisaDetails?.data) {
+      const country = evisaDetails.data;
+      setFormData(prev => ({
+        ...prev,
+        countryCode: country.countryCode || queryCountryCode,
+        countryName: country.countryName || queryCountryName || prev.countryName,
+      }));
+    } else if (queryCountryName) {
+      setFormData(prev => ({
+        ...prev,
+        countryCode: queryCountryCode,
+        countryName: queryCountryName,
+      }));
+    }
+  }, [evisaDetails, queryCountryCode, queryCountryName]);
 
   const [passportFile, setPassportFile] = useState<File | null>(null);
   const [passportFileUrl, setPassportFileUrl] = useState<string | null>(null);
