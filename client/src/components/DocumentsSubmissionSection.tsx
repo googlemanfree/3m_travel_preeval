@@ -182,15 +182,44 @@ export function DocumentsSubmissionSection({
                           {submitted.status === "verified" && "Validé"}
                           {submitted.status === "rejected" && "Rejeté"}
                         </span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedDocType(doc.id);
+                            // Scroll to uploader
+                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="ml-2 text-xs border-green-300 text-green-800 hover:bg-green-100"
+                        >
+                          Remplacer
+                        </Button>
                       </div>
                     ) : (
-                      <Badge variant="outline">Non soumis</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">Non soumis</Badge>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDocType(doc.id);
+                            document.getElementById("specific-doc-uploader")?.scrollIntoView({ behavior: "smooth" });
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+                        >
+                          Ajouter
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </div>
                 {submitted && submitted.submittedAt && (
-                  <div className="mt-2 text-xs text-gray-500">
-                    Soumis le {new Date(submitted.submittedAt as any).toLocaleDateString("fr-FR")}
+                  <div className="mt-2 text-xs text-gray-500 flex justify-between items-center">
+                    <span>Soumis le {new Date(submitted.submittedAt as any).toLocaleDateString("fr-FR")}</span>
+                    {submitted.documentUrl && (
+                      <a href={submitted.documentUrl} target="_blank" rel="noreferrer" className="text-blue-600 underline font-semibold">
+                        Voir le fichier
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
@@ -199,8 +228,10 @@ export function DocumentsSubmissionSection({
         </div>
 
         {/* Formulaire de soumission */}
-        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <h3 className="font-semibold text-gray-700 mb-3">Soumettre un document</h3>
+        <div id="specific-doc-uploader" className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <h3 className="font-semibold text-gray-700 mb-3">
+            {selectedDocType ? `Soumettre / Mettre à jour : ${REQUIRED_DOCUMENTS.find(d => d.id === selectedDocType)?.label || selectedDocType}` : "Soumettre un document"}
+          </h3>
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

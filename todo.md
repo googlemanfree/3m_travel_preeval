@@ -57,3 +57,8 @@
 - [x] Intégrer le filtre par plage de dates dans le tableau des paiements de l'espace administrateur
 - [x] Initialiser et formaliser la compétence réutilisable `prime-travel-case-management` avec `skill-creator`
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale et la compétence
+
+## Boutons Spécifiques par Document et Vérification Admin (v265)
+- [x] Transformer chaque élément de la checklist documentaire en un bouton d'action dédié (Passeport, Photo, Acte de naissance, Domicile, Ressources)
+- [x] Assurer la transmission et la persistance immédiate de chaque type de document vers l'espace administrateur
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
