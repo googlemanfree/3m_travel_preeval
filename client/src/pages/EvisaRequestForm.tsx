@@ -87,8 +87,47 @@ export default function EvisaRequestForm() {
   const [requestId, setRequestId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [draftSavedMessage, setDraftSavedMessage] = useState<string | null>(null);
 
-  const ACCOMPANIMENT_FEE = 25000;
+  // Charger le brouillon existant au montage pour ce pays
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(`3m_evisa_draft_${queryCountryCode}`);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed && typeof parsed === 'object') {
+          setFormData(prev => ({ ...prev, ...parsed }));
+        }
+      }
+    } catch (e) {
+      console.error("Erreur de chargement du brouillon", e);
+    }
+  }, [queryCountryCode]);
+
+  // Fonction pour sauvegarder le brouillon
+  const handleSaveDraft = () => {
+    try {
+      localStorage.setItem(`3m_evisa_draft_${queryCountryCode}`, JSON.stringify(formData));
+      setDraftSavedMessage("Brouillon sauvegardé avec succès ! Vous pourrez reprendre cette demande plus tard.");
+      setTimeout(() => setDraftSavedMessage(null), 4000);
+    } catch (e) {
+      console.error("Erreur de sauvegarde du brouillon", e);
+    }
+  };
+
+  // Calcul dynamique du prix selon la nationalité
+  const getDynamicFee = () => {
+    const nat = (formData.nationality || '').toLowerCase();
+    let base = 25000;
+    if (nat.includes('cameroun') || nat.includes('gabon') || nat.includes('congo') || nat.includes('tchad') || nat.includes('centrafrique')) {
+      base = 25000; // CEMAC standard
+    } else if (nat.length > 0) {
+      base = 35000; // International / traitement spécialisé
+    }
+    return base;
+  };
+
+  const ACCOMPANIMENT_FEE = getDynamicFee();
   const CURRENCY = 'XOF';
 
   const formSteps = [
@@ -274,20 +313,81 @@ export default function EvisaRequestForm() {
       <div className="max-w-2xl mx-auto px-4 py-12">
         {/* En-tête */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/evisas')}
-            className="mb-4 text-blue-600 hover:text-blue-700"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux e-visas
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/evisas')}
+              className="text-blue-600 hover:text-blue-700 p-0"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour aux e-visas
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSaveDraft}
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-semibold rounded-xl"
+            >
+              💾 Sauvegarder en brouillon
+            </Button>
+          </div>
+
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Demande d'E-Visa - {formData.countryName}
           </h1>
-          <p className="text-gray-600">
-            Suivez les étapes ci-dessous pour soumettre votre demande d'e-visa
+          <p className="text-gray-600 mb-4">
+            Formulaire intelligent et assisté par IA avec validation par nos experts.
           </p>
+
+          {/* Message brouillon sauvegardé */}
+          {draftSavedMessage && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
+              {draftSavedMessage}
+            </div>
+          )}
+
+          {/* Aperçu en direct des exigences consulaires et bouton de reprise brouillon */}
+          <div className="bg-blue-50/80 border border-blue-200/60 p-4 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs font-bold text-blue-900 uppercase tracking-wide">Exigences Consulaires & Délais ({formData.countryName})</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    try {
+                      const saved = localStorage.getItem(`3m_evisa_draft_${queryCountryCode}`);
+                      if (saved) {
+                        setFormData(prev => ({ ...prev, ...JSON.parse(saved) }));
+                        setDraftSavedMessage("Brouillon précédent rechargé avec succès !");
+                        setTimeout(() => setDraftSavedMessage(null), 3000);
+                      } else {
+                        setError("Aucun brouillon enregistré pour cette destination.");
+                        setTimeout(() => setError(null), 3000);
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                  className="text-xs text-blue-700 hover:bg-blue-100 h-7 px-2.5 rounded-lg border border-blue-200 font-semibold"
+                >
+                  📂 Reprendre mon brouillon
+                </Button>
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">Estimé : {ACCOMPANIMENT_FEE.toLocaleString()} {CURRENCY}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-blue-900 pt-1 border-t border-blue-200/40">
+              <div>
+                <p className="font-semibold text-blue-950">⏱️ Délai estimé :</p>
+                <p className="text-slate-700">{evisaDetails?.data?.processingTime || '48h - 72h ouvrées'}</p>
+              </div>
+              <div>
+                <p className="font-semibold text-blue-950">📋 Pièces obligatoires :</p>
+                <p className="text-slate-700">{evisaDetails?.data?.docs || 'Passeport valide, Photo d’identité, Justificatif de domicile'}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Barre de progression */}

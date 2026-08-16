@@ -121,3 +121,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la normalisation et la recherche des pays dans le registre e-Visa et le routeur tRPC
 - [x] Assurer le repli automatique et le préremplissage robuste du formulaire même si le code pays diffère
 - [x] Valider avec les tests et TypeScript puis publier la version corrigée
+
+## Sauvegarde Brouillon, Exigences Consulaires et Prix Dynamique e-Visa (v277)
+- [x] Ajouter la persistance des brouillons de demande e-Visa (enregistrement local ou base de données) avec bouton « Reprendre mon brouillon »
+- [x] Intégrer un encadré dynamique dans l'en-tête du formulaire affichant les exigences consulaires, les délais et les documents requis pour le pays choisi
+- [x] Calculer et afficher un indicateur de prix estimatif dynamique selon la nationalité sélectionnée par le candidat
+- [x] Valider avec les tests et TypeScript puis publier la version finale
