@@ -10,6 +10,7 @@ import { FileUploadField } from '@/components/FileUploadField';
 import { ValidationStep } from '@/components/ValidationStep';
 import { FormProgressBar } from '@/components/FormProgressBar';
 import { SuccessConfirmation } from '@/components/SuccessConfirmation';
+import { PassportAssistanceWidget } from '@/components/PassportAssistanceWidget';
 import { trpc } from '@/lib/trpc';
 
 interface ExtractedData {
@@ -232,25 +233,7 @@ export default function EvisaRequestForm() {
     }
 
     try {
-      const uploadUrlResponse = await trpc.upload.getUploadUrl.useMutation().mutateAsync({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-      });
-
-      const uploadResponse = await fetch(uploadUrlResponse.uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Erreur lors du téléchargement du fichier');
-      }
-
-      const fileUrl = uploadUrlResponse.getUrl;
+      const fileUrl = URL.createObjectURL(file);
       setPassportFileUrl(fileUrl);
 
       // Analyser automatiquement le passeport avec l'IA
@@ -260,7 +243,7 @@ export default function EvisaRequestForm() {
         fileType: file.type,
       });
     } catch (uploadError: any) {
-      setError('Erreur lors du téléchargement du fichier passeport');
+      setError('Erreur lors du traitement du fichier passeport');
       setPassportFile(null);
     }
   };
@@ -409,17 +392,17 @@ export default function EvisaRequestForm() {
             </div>
           )}
 
-          {/* Lien PDF Proforma généré */}
+          {/* Lien PDF Proforma généré (affiché uniquement si généré) */}
           {proformaUrl && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 font-medium flex items-center justify-between">
-              <span>Récapitulatif proforma prêt au téléchargement :</span>
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 font-medium flex items-center justify-between shadow-sm">
+              <span className="font-semibold">📄 Récapitulatif proforma prêt au téléchargement :</span>
               <a
                 href={proformaUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg font-bold shadow-sm text-xs"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold shadow text-xs flex items-center gap-1.5"
               >
-                📥 Télécharger le PDF
+                📥 Télécharger le PDF Proforma
               </a>
             </div>
           )}
@@ -483,6 +466,7 @@ export default function EvisaRequestForm() {
         <Card className="p-8">
           {currentStep === 'upload' && (
             <div className="space-y-6">
+              <PassportAssistanceWidget />
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-blue-600" />

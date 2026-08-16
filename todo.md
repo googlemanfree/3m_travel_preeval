@@ -134,3 +134,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Générer un récapitulatif PDF téléchargeable (facture proforma / récapitulatif de demande) avant la validation finale
 - [x] Mettre à jour la compétence réutilisable `prime-travel-case-management` avec `skill-creator`
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Gestion Admin des Taux de Change, Assistant Passeport et Compétence Réutilisable (v279)
+- [ ] Créer la gestion administrateur des taux de change (XAF, EUR, USD) avec persistance et historique dans le tableau de bord
+- [ ] Intégrer un widget d'assistance en direct contextuel lors de la saisie des informations de passeport (exigences, validité, conseils)
+- [ ] Mettre à jour la compétence réutilisable `prime-travel-case-management` avec les derniers flux intelligents et le générateur `/skill-creator`
+- [ ] Valider avec les tests unitaires et TypeScript puis publier la version finale

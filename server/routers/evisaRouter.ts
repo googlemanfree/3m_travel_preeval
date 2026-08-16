@@ -797,4 +797,14 @@ export const evisaRouter = router({
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
       }
     }),
+
+  getExchangeRates: publicProcedure.query(async () => {
+    return { success: true, eurToXaf: 656, usdToXaf: 600 };
+  }),
+
+  updateExchangeRates: publicProcedure
+    .input(z.object({ eurToXaf: z.number(), usdToXaf: z.number() }))
+    .mutation(async ({ input }) => {
+      return { success: true, eurToXaf: input.eurToXaf, usdToXaf: input.usdToXaf };
+    }),
 });
