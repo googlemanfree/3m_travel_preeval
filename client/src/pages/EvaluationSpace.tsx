@@ -387,7 +387,7 @@ export default function EvaluationSpace() {
                 </div>
                 {(() => {
                   const { data: evisaReqs } = trpc.evisa.getMyEvisaRequests.useQuery({ email: cProfile.email });
-                  const list = evisaReqs?.data || [];
+                  const list = Array.isArray(evisaReqs?.data) ? evisaReqs.data : [];
                   if (list.length === 0) {
                     return (
                       <div className="text-center py-6 text-gray-500 bg-white/60 rounded-xl border border-dashed border-blue-200">
@@ -400,29 +400,52 @@ export default function EvaluationSpace() {
                   }
                   return (
                     <div className="space-y-4">
-                      {list.map((ev: any) => (
-                        <div key={ev.id} className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-gray-900 text-base">{ev.countryName} ({ev.countryCode.toUpperCase()})</span>
-                              <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                                ev.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                ev.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                'bg-amber-100 text-amber-800'
-                              }`}>
-                                {ev.status === 'approved' ? 'Approuvé' : ev.status === 'rejected' ? 'Refusé' : 'En attente consulaire'}
-                              </span>
+                      {list.map((ev: any) => {
+                        const stepIndex = ev.status === 'approved' ? 3 : ev.status === 'processing' ? 2 : ev.status === 'rejected' ? 3 : 1;
+                        const percent = ev.status === 'approved' ? 100 : ev.status === 'processing' ? 66 : ev.status === 'rejected' ? 100 : 33;
+                        return (
+                          <div key={ev.id} className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm space-y-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-gray-900 text-base">{ev.countryName} ({ev.countryCode.toUpperCase()})</span>
+                                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                                    ev.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                    ev.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                    'bg-amber-100 text-amber-800'
+                                  }`}>
+                                    {ev.status === 'approved' ? 'Approuvé' : ev.status === 'rejected' ? 'Refusé' : 'En attente consulaire'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Soumis le : {new Date(ev.createdAt).toLocaleDateString('fr-FR')} — Frais totaux : {ev.totalCost} {ev.currency}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-xs font-mono text-gray-600 block mb-1">ID Demande : #{ev.id}</span>
+                                <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-lg">
+                                  {ev.status === 'approved' ? 'Prêt au téléchargement' : 'Vérification en cours au back-office'}
+                                </span>
+                              </div>
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">Soumis le : {new Date(ev.createdAt).toLocaleDateString('fr-FR')} — Frais totaux : {ev.totalCost} {ev.currency}</p>
+
+                            {/* Barre de progression visuelle e-Visa */}
+                            <div className="space-y-2 pt-2 border-t border-gray-100">
+                              <div className="flex justify-between text-xs font-medium text-gray-600">
+                                <span className={stepIndex >= 1 ? 'text-blue-700 font-bold' : ''}>1. Soumission</span>
+                                <span className={stepIndex >= 2 ? 'text-blue-700 font-bold' : ''}>2. Vérification pièces</span>
+                                <span className={stepIndex >= 3 ? 'text-blue-700 font-bold' : ''}>3. Traitement consulaire & Décision</span>
+                              </div>
+                              <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ${
+                                    ev.status === 'rejected' ? 'bg-red-500' : ev.status === 'approved' ? 'bg-emerald-600' : 'bg-blue-600'
+                                  }`}
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <span className="text-xs font-mono text-gray-600 block mb-1">ID Demande : #{ev.id}</span>
-                            <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-lg">
-                              {ev.status === 'approved' ? 'Prêt au téléchargement' : 'Vérification en cours au back-office'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 })()}

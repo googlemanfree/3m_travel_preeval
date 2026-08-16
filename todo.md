@@ -88,3 +88,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une section de suivi e-Visa dans l’espace personnel du candidat avec statut, étapes de progression et pièces jointes
 - [x] Exposer les requêtes de suivi e-Visa synchronisées avec le back-office administrateur
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Barre de Progression Visuelle e-Visa (v270)
+- [ ] Intégrer une frise de progression à 4 étapes sur chaque carte e-Visa de l'espace client (Soumission ➔ Vérification des pièces ➔ Traitement Consulaire ➔ Décision / Prêt)
+- [ ] Valider avec les tests et TypeScript puis publier la version finale
