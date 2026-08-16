@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,15 @@ export function AdminCurrencyRates() {
   const [usdRate, setUsdRate] = useState('600');
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const ratesQuery = trpc.evisa.getExchangeRates?.useQuery() || { data: null, refetch: () => {} };
-  const updateRatesMutation = trpc.evisa.updateExchangeRates?.useMutation({
+  const ratesQuery = trpc.exchangeRates.getRates.useQuery();
+
+  useEffect(() => {
+    if (ratesQuery.data) {
+      setEurRate(String(ratesQuery.data.eurToXaf));
+      setUsdRate(String(ratesQuery.data.usdToXaf));
+    }
+  }, [ratesQuery.data]);
+  const updateRatesMutation = trpc.exchangeRates.updateRates.useMutation({
     onSuccess: () => {
       setSuccessMsg('Taux de change mis à jour avec succès.');
       ratesQuery.refetch();

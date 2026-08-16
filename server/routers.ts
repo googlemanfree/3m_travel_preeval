@@ -69,6 +69,7 @@ import { mediaLibraryRouter } from "./routers/mediaLibrary";
 import { flightBookingRouter } from "./routers/flightBooking";
 import { unifiedRequestsRouter } from "./routers/unifiedRequests";
 import { tourismRouter } from "./routers/tourism";
+import { exchangeRatesRouter } from "./routers/exchangeRatesRouter";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -166,6 +167,7 @@ export const appRouter = router({
   evaluationEngine: router(evaluationEngineRouter),
   visaStatusTracker: visaStatusTrackerRouter,
   flightPlannerAI: flightPlannerAIRouter,
+  exchangeRates: exchangeRatesRouter,
 });
 
 export type AppRouter = typeof appRouter;
