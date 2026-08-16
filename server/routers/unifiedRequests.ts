@@ -102,6 +102,20 @@ export function canDeliverEvaluation(requiresSecondApproval: boolean, approvalSt
   return !requiresSecondApproval || approvalStatus === "approved";
 }
 
+export function calculateAdvisorWorkload(
+  advisors: Array<{ id: number; fullName: string; email: string }>,
+  activeRows: Array<{ assignedAdminAccountId: number | null; priority: string; workflowStatus: string; dueAt: Date | null }>,
+  now = new Date(),
+) {
+  return advisors.map((advisor) => {
+    const assigned = activeRows.filter((row) => row.assignedAdminAccountId === advisor.id);
+    const overdue = assigned.filter((row) => Boolean(row.dueAt && row.dueAt < now));
+    const blocked = assigned.filter((row) => ["waiting_customer", "documents_review", "payment_review"].includes(row.workflowStatus));
+    const urgent = assigned.filter((row) => row.priority === "urgent" || row.priority === "high");
+    return { ...advisor, total: assigned.length, urgent: urgent.length, overdue: overdue.length, blocked: blocked.length };
+  });
+}
+
 async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -409,9 +423,10 @@ export const unifiedRequestsRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const [sources, managedRows] = await Promise.all([
+      const [sources, managedRows, advisors] = await Promise.all([
         loadSourceSnapshots(),
         db.select().from(unifiedClientRequests).orderBy(desc(unifiedClientRequests.createdAt)).limit(5000),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(adminAccounts.fullName),
       ]);
       const managementByKey = new Map(managedRows.map((row) => [`${row.sourceType}:${row.sourceRecordId}`, row]));
       const rows = sources.map((source) => managementByKey.get(`${source.sourceType}:${source.sourceRecordId}`) ?? {
@@ -440,6 +455,7 @@ export const unifiedRequestsRouter = router({
         totals: { all: rows.length, active: active.length, unassigned: active.filter((row) => !row.assignedAdminAccountId).length, overdue: active.filter((row) => getUnifiedSlaState(row as any) === "overdue").length, conversionRate: conversionBase.length ? Math.round((converted.length / conversionBase.length) * 100) : 0, averageProcessingHours: durations.length ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length / 3_600_000) : 0, lastCalculatedAt: new Date(now) },
         bySource,
         byAdvisor: Array.from(byAdvisor.entries()).map(([advisorId, total]) => ({ advisorId, total })),
+        advisorWorkload: calculateAdvisorWorkload(advisors, active as any, new Date(now)),
       };
     }),
 

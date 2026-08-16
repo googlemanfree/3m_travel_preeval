@@ -3003,3 +3003,10 @@
 - [x] Reproduire le faux blocage de portrait dans /mon-espace pour un candidat correctement inscrit
 - [x] Corriger la synchronisation entre l’état de portrait, la session et le résumé de dossier
 - [x] Ajouter un test de régression et publier le correctif
+
+## E-mail, Charge Conseiller et Checklists de Procédure (v247)
+- [x] Conserver les relances automatiques de documents manquants par e-mail uniquement
+- [x] Créer un tableau visuel de charge de travail par conseiller avec volumes, urgences et retards
+- [x] Créer des modèles de checklists documentaires personnalisables par type de procédure, en plus du pays
+- [x] Mettre à jour, valider et livrer la compétence réutilisable correspondante
+- [x] Tester les flux, permissions et publier la version complète
