@@ -142,6 +142,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Valider avec les tests unitaires et TypeScript puis publier la version finale
 
 ## Correction analyse passeport e‑Visa
-- [ ] Corriger l’erreur interne déclenchée après sélection/téléchargement du passeport dans le parcours e‑Visa.
-- [ ] Ajouter un test de non-régression pour l’analyse du passeport avec fichier PDF et image.
-- [ ] Vérifier le parcours e‑Visa dans le navigateur et publier la correction validée.
+- [x] Corriger l’erreur interne déclenchée après sélection/téléchargement du passeport dans le parcours e‑Visa.
+- [x] Ajouter un test de non-régression pour l’analyse du passeport avec fichier PDF et image.
+- [x] Vérifier le parcours e‑Visa dans le navigateur et publier la correction validée.
