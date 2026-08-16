@@ -62,3 +62,12 @@
 - [x] Transformer chaque élément de la checklist documentaire en un bouton d'action dédié (Passeport, Photo, Acte de naissance, Domicile, Ressources)
 - [x] Assurer la transmission et la persistance immédiate de chaque type de document vers l'espace administrateur
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Intégration de la Page Facebook Officielle (v266)
+- [x] Ajouter le lien officiel https://www.facebook.com/3mtravelcm dans le pied de page social du site
+- [x] Vérifier l’accessibilité, l’ouverture dans un nouvel onglet et l’affichage responsive
+- [x] Tester et publier la mise à jour
+
+Votre page Facebook officielle à intégrer : https://www.facebook.com/3mtravelcm
+
+Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de contact sociales sans créer de faux contenu ni de témoignages.

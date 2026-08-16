@@ -68,7 +68,7 @@ export const caseActivityLogs = mysqlTable("case_activity_logs", { id: int("id")
  */
 export const unifiedClientRequests = mysqlTable("unified_client_requests", {
   id: int("id").autoincrement().primaryKey(),
-  sourceType: mysqlEnum("sourceType", ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"]).notNull(),
+  sourceType: mysqlEnum("sourceType", ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"]).notNull(),
   sourceRecordId: int("sourceRecordId").notNull(),
   candidateId: int("candidateId"),
   caseId: int("caseId"),

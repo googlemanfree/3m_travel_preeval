@@ -7,7 +7,7 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: 'https://facebook.com/3mtravelagency', label: 'Facebook', color: 'hover:text-blue-600' },
+  { icon: Facebook, href: 'https://www.facebook.com/3mtravelcm', label: 'Facebook officiel', color: 'hover:text-blue-600' },
   { icon: Instagram, href: 'https://instagram.com/3mtravelagency', label: 'Instagram', color: 'hover:text-pink-600' },
   { icon: Linkedin, href: 'https://linkedin.com/company/3mtravelagency', label: 'LinkedIn', color: 'hover:text-blue-700' },
   { icon: Twitter, href: 'https://twitter.com/3mtravelagency', label: 'Twitter', color: 'hover:text-blue-400' },
