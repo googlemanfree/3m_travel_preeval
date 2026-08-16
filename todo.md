@@ -107,7 +107,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Valider avec les tests et TypeScript puis publier la version finale
 
 ## Formulaires Intelligents Multi-Services, Liens Consulaires & IA Avancée (v274)
-- [ ] Étendre le système de formulaires dynamiques pour s'adapter à chaque service (e-Visa, Visa travail, Études, Tourisme, Vol, Hôtel)
-- [ ] Intégrer un répertoire admin des liens consulaires officiels par pays avec raccourcis de soumission
-- [ ] Documenter et configurer le support des modèles IA spécialisés (Claude / Perplexity / Forge LLM) pour l'assistance aux dossiers
-- [ ] Valider avec les tests et TypeScript puis publier la version finale
+- [x] Étendre le système de formulaires dynamiques pour s'adapter à chaque service (e-Visa, Visa travail, Études, Tourisme, Vol, Hôtel)
+- [x] Intégrer un répertoire admin des liens consulaires officiels par pays avec raccourcis de soumission
+- [x] Documenter et configurer le support des modèles IA spécialisés (Claude / Perplexity / Forge LLM) pour l'assistance aux dossiers
+- [x] Valider avec les tests et TypeScript puis publier la version finale
