@@ -61,6 +61,24 @@ export default function EvisaRequestForm() {
     { enabled: !!queryCountryCode }
   );
 
+  const [currency, setCurrency] = useState<'XAF' | 'EUR' | 'USD'>('XAF');
+  const [proformaUrl, setProformaUrl] = useState<string | null>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Taux de conversion indicatifs basés sur XAF (1 EUR = 656 XAF, 1 USD = 600 XAF)
+  const baseFeeXaf = 65000;
+  const ACCOMPANIMENT_FEE = currency === 'EUR' ? Math.round(baseFeeXaf / 656) : currency === 'USD' ? Math.round(baseFeeXaf / 600) : baseFeeXaf;
+  const CURRENCY = currency;
+
+  const saveCloudDraftMutation = trpc.evisa.saveCloudDraft.useMutation();
+  const getCloudDraftQuery = trpc.evisa.getCloudDraft.useQuery(
+    { email: formData.email, countryCode: queryCountryCode },
+    { enabled: !!formData.email && formData.email.includes('@') }
+  );
+  const generateProformaMutation = trpc.evisa.generateProformaPdf.useMutation();
+
+
+
   useEffect(() => {
     if (evisaDetails?.data) {
       const country = evisaDetails.data;
@@ -105,30 +123,49 @@ export default function EvisaRequestForm() {
   }, [queryCountryCode]);
 
   // Fonction pour sauvegarder le brouillon
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     try {
       localStorage.setItem(`3m_evisa_draft_${queryCountryCode}`, JSON.stringify(formData));
-      setDraftSavedMessage("Brouillon sauvegardé avec succès ! Vous pourrez reprendre cette demande plus tard.");
-      setTimeout(() => setDraftSavedMessage(null), 4000);
+      setDraftSavedMessage("Brouillon sauvegardé !");
+      setTimeout(() => setDraftSavedMessage(null), 3000);
+
+      // Synchronisation cloud si l'email est valide
+      if (formData.email && formData.email.includes('@')) {
+        saveCloudDraftMutation.mutate({
+          email: formData.email,
+          countryCode: queryCountryCode,
+          draftData: { ...formData },
+        });
+      }
     } catch (e) {
-      console.error("Erreur de sauvegarde du brouillon", e);
+      console.error(e);
     }
   };
 
-  // Calcul dynamique du prix selon la nationalité
-  const getDynamicFee = () => {
-    const nat = (formData.nationality || '').toLowerCase();
-    let base = 25000;
-    if (nat.includes('cameroun') || nat.includes('gabon') || nat.includes('congo') || nat.includes('tchad') || nat.includes('centrafrique')) {
-      base = 25000; // CEMAC standard
-    } else if (nat.length > 0) {
-      base = 35000; // International / traitement spécialisé
+  const handleGenerateProforma = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const res = await generateProformaMutation.mutateAsync({
+        fullName: formData.fullName || 'Candidat 3M',
+        email: formData.email || 'candidat@3mtravel.com',
+        phone: formData.phone || '+237000000000',
+        countryName: formData.countryName,
+        totalCost: ACCOMPANIMENT_FEE,
+        currency: CURRENCY,
+      });
+      if (res.success && res.url) {
+        setProformaUrl(res.url);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGeneratingPdf(false);
     }
-    return base;
   };
 
-  const ACCOMPANIMENT_FEE = getDynamicFee();
-  const CURRENCY = 'XOF';
+
+
+
 
   const formSteps = [
     {
@@ -322,14 +359,37 @@ export default function EvisaRequestForm() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Retour aux e-visas
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSaveDraft}
-              className="border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-semibold rounded-xl"
-            >
-              💾 Sauvegarder en brouillon
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Sélecteur de devises */}
+              <select
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as any)}
+                className="text-xs font-bold bg-white border border-blue-200 text-blue-900 rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="XAF">XAF (FCFA)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+              </select>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSaveDraft}
+                className="border-blue-200 text-blue-700 hover:bg-blue-50 text-xs font-semibold rounded-xl"
+              >
+                💾 Sauvegarder
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleGenerateProforma}
+                disabled={isGeneratingPdf}
+                className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-semibold rounded-xl"
+              >
+                {isGeneratingPdf ? 'Génération...' : '📄 PDF Proforma'}
+              </Button>
+            </div>
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -341,8 +401,26 @@ export default function EvisaRequestForm() {
 
           {/* Message brouillon sauvegardé */}
           {draftSavedMessage && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium">
-              {draftSavedMessage}
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium flex items-center justify-between">
+              <span>{draftSavedMessage}</span>
+              {getCloudDraftQuery.data?.data && (
+                <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded-full font-bold">Synchronisé Cloud ☁️</span>
+              )}
+            </div>
+          )}
+
+          {/* Lien PDF Proforma généré */}
+          {proformaUrl && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 font-medium flex items-center justify-between">
+              <span>Récapitulatif proforma prêt au téléchargement :</span>
+              <a
+                href={proformaUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg font-bold shadow-sm text-xs"
+              >
+                📥 Télécharger le PDF
+              </a>
             </div>
           )}
 

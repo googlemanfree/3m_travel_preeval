@@ -661,4 +661,140 @@ export const evisaRouter = router({
       });
     }
   }),
+
+  /**
+   * Sauvegarder un brouillon e-Visa dans le cloud (associé à un email)
+   */
+  saveCloudDraft: publicProcedure
+    .input(z.object({ email: z.string().email(), countryCode: z.string(), draftData: z.any() }))
+    .mutation(async ({ input }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+        // S'assurer que la table evisa_drafts existe
+        await connection.execute(`
+          CREATE TABLE IF NOT EXISTS evisa_drafts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            countryCode VARCHAR(50) NOT NULL,
+            draftData TEXT NOT NULL,
+            updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uk_email_country (email, countryCode)
+          )
+        `);
+        await connection.execute(`
+          INSERT INTO evisa_drafts (email, countryCode, draftData)
+          VALUES (?, ?, ?)
+          ON DUPLICATE KEY UPDATE draftData = VALUES(draftData), updatedAt = CURRENT_TIMESTAMP
+        `, [input.email, input.countryCode, JSON.stringify(input.draftData)]);
+        await connection.end();
+        return { success: true, message: 'Brouillon synchronisé avec succès dans le cloud.' };
+      } catch (error: any) {
+        console.error('Erreur cloud draft save:', error);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+      }
+    }),
+
+  /**
+   * Récupérer un brouillon e-Visa du cloud
+   */
+  getCloudDraft: publicProcedure
+    .input(z.object({ email: z.string().email(), countryCode: z.string() }))
+    .query(async ({ input }: any) => {
+      try {
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+        const [rows]: any = await connection.execute(`
+          SELECT draftData FROM evisa_drafts WHERE email = ? AND countryCode = ? LIMIT 1
+        `, [input.email, input.countryCode]);
+        await connection.end();
+        if (rows && rows.length > 0) {
+          return { success: true, data: JSON.parse(rows[0].draftData) };
+        }
+        return { success: true, data: null };
+      } catch (error) {
+        console.error('Erreur cloud draft get:', error);
+        return { success: true, data: null };
+      }
+    }),
+
+  /**
+   * Générer un récapitulatif PDF proforma de la demande e-Visa avant validation finale
+   */
+  generateProformaPdf: publicProcedure
+    .input(
+      z.object({
+        fullName: z.string(),
+        email: z.string(),
+        phone: z.string(),
+        countryName: z.string(),
+        totalCost: z.number(),
+        currency: z.string(),
+      })
+    )
+    .mutation(async ({ input }: any) => {
+      try {
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Helvetica', Arial, sans-serif; color: #1e293b; padding: 40px; }
+              .header { border-bottom: 3px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; }
+              .title { font-size: 24px; font-weight: bold; color: #1e3a8a; }
+              .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
+              .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+              .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }
+              .label { font-weight: bold; color: #475569; }
+              .value { color: #0f172a; }
+              .total { font-size: 18px; font-weight: bold; color: #1e3a8a; border-top: 2px solid #cbd5e1; padding-top: 10px; margin-top: 10px; }
+              .footer { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 50px; border-top: 1px solid #e2e8f0; paddingTop: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="title">3M TRAVEL & SERVICES</div>
+                <div class="subtitle">Agence de Mobilité Internationale & E-Visas</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-weight: bold; color: #2563eb;">PROFORMA DE DEMANDE</div>
+                <div style="font-size: 12px; color: #64748b;">Date : ${new Date().toLocaleDateString('fr-FR')}</div>
+              </div>
+            </div>
+
+            <div class="box">
+              <h3 style="margin-top: 0; color: #1e3a8a; font-size: 16px;">Informations du Candidat</h3>
+              <div class="row"><span class="label">Nom complet :</span> <span class="value">${input.fullName}</span></div>
+              <div class="row"><span class="label">E-mail :</span> <span class="value">${input.email}</span></div>
+              <div class="row"><span class="label">Téléphone :</span> <span class="value">${input.phone}</span></div>
+              <div class="row"><span class="label">Destination :</span> <span class="value">${input.countryName}</span></div>
+            </div>
+
+            <div class="box">
+              <h3 style="margin-top: 0; color: #1e3a8a; font-size: 16px;">Détail des Frais d'Accompagnement</h3>
+              <div class="row"><span class="label">Procédure e-Visa (${input.countryName})</span> <span class="value">${input.totalCost.toLocaleString()} ${input.currency}</span></div>
+              <div class="row"><span class="label">Frais de dossier et traduction</span> <span class="value">Inclus</span></div>
+              <div class="total row"><span>Total à régler :</span> <span>${input.totalCost.toLocaleString()} ${input.currency}</span></div>
+            </div>
+
+            <div class="footer">
+              <p>3M Travel & Services SARL — Document généré automatiquement avant validation finale.</p>
+              <p>Ce document atteste de la préparation de votre dossier e-Visa. Il ne constitue pas un visa officiel.</p>
+            </div>
+          </body>
+          </html>
+        `;
+
+        const fileKey = `proforma_evisa_${Date.now()}.html`;
+        const buffer = Buffer.from(htmlContent, 'utf-8');
+        const upload = await storagePut(fileKey, buffer, 'text/html');
+
+        return { success: true, url: upload.url };
+      } catch (error: any) {
+        console.error('Erreur proforma PDF:', error);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: error.message });
+      }
+    }),
 });
