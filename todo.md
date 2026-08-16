@@ -116,3 +116,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer l'assistant conversationnel IA Aureol dans l'espace client pour répondre aux questions sur les procédures
 - [x] Créer l'onglet administrateur « Consulats & Liens Officiels » avec recherche et accès rapide aux portails consulaires
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Correction Destination e-Visa Non Trouvée (v276)
+- [ ] Corriger la normalisation et la recherche des pays dans le registre e-Visa et le routeur tRPC
+- [ ] Assurer le repli automatique et le préremplissage robuste du formulaire même si le code pays diffère
+- [ ] Valider avec les tests et TypeScript puis publier la version corrigée

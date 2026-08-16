@@ -250,13 +250,13 @@ export default function EvisaDetailPage() {
                   <p>Validation par nos experts avant soumission officielle sur le portail consulaire.</p>
                 </div>
 
-                <a href={`/evisa/request?countryCode=${destination.id}&countryName=${encodeURIComponent(destination.country)}`}>
+                <a href={`/evisas/request?countryCode=${destination.id}&countryName=${encodeURIComponent(destination.country)}`}>
                   <Button className="w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all text-base">
                     🚀 Lancer la procédure e-Visa
                   </Button>
                 </a>
 
-                <a href={`/evisa/request?countryCode=${destination.id}&countryName=${encodeURIComponent(destination.country)}`}>
+                <a href={`/evisas/request?countryCode=${destination.id}&countryName=${encodeURIComponent(destination.country)}`}>
                   <Button variant="outline" className="w-full border-slate-200 text-slate-700 hover:bg-slate-100 font-bold py-3 px-6 rounded-2xl">
                     Soumettre mes documents en ligne
                   </Button>
