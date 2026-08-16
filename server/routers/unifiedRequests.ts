@@ -24,7 +24,7 @@ import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 
-const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"] as const;
+const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 const priorities = ["low", "normal", "high", "urgent"] as const;
 const evaluationDraftSchema = z.object({

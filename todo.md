@@ -45,3 +45,8 @@
 - [x] Ajouter une procédure tRPC client pour enregistrer la consultation du PNR lors du clic ou du téléchargement
 - [x] Afficher l'indicateur visuel et l'horodatage de lecture dans le tableau administrateur des paiements et réservations
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Audit et Rapport Complet de Synchronisation Client-Administrateur-E-mail (v263)
+- [x] Exécuter la suite complète de tests unitaires et de contrats tRPC pour vérifier l'ensemble des flux
+- [x] Éditer et enregistrer le rapport d'audit complet (`audit_synchronisation_3m.md`)
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
