@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CreditCard, CheckCircle2, Clock, XCircle, Download, Mail, Loader2, AlertCircle, History, FileSpreadsheet } from "lucide-react";
+import { BarChart3, CreditCard, CheckCircle2, Clock, XCircle, Download, Eye, Mail, Loader2, AlertCircle, History, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { paymentAuditLogsToCsv } from "@shared/paymentAuditCsv";
@@ -21,6 +21,9 @@ interface Payment {
   paymentMethod?: string;
   paymentDate?: Date;
   transactionId?: string;
+  receiptUrl?: string;
+  receiptMimeType?: string;
+  receiptFileName?: string;
 }
 
 export function AdminPaymentManagement() {
@@ -34,6 +37,7 @@ export function AdminPaymentManagement() {
   const [actionType, setActionType] = useState<'confirm' | 'cancel' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNote, setAdminNote] = useState("");
+  const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -57,6 +61,9 @@ export function AdminPaymentManagement() {
     paymentMethod: app.paymentMethod,
     paymentDate: app.paymentDate,
     transactionId: app.paymentTransactionId,
+    receiptUrl: app.paymentReceipt?.fileUrl,
+    receiptMimeType: app.paymentReceipt?.mimeType,
+    receiptFileName: app.paymentReceipt?.fileName,
   }));
 
   // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
@@ -68,6 +75,27 @@ export function AdminPaymentManagement() {
     }
     return method.includes("agency") || method.includes("agence") || method.includes("cash") || method.includes("caisse");
   });
+
+  const monthlySummary = useMemo(() => {
+    const aggregates = new Map<string, { label: string; mobileMoney: number; agency: number; other: number }>();
+    for (const payment of payments.filter((item) => item.paymentStatus === "SUCCESS" && item.paymentDate)) {
+      const date = new Date(payment.paymentDate!);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const entry = aggregates.get(key) || {
+        label: date.toLocaleDateString("fr-FR", { month: "short", year: "numeric" }),
+        mobileMoney: 0,
+        agency: 0,
+        other: 0,
+      };
+      const method = String(payment.paymentMethod || "").toLowerCase();
+      if (method.includes("mobile") || method.includes("orange") || method.includes("mtn")) entry.mobileMoney += payment.amount;
+      else if (method.includes("agency") || method.includes("agence") || method.includes("cash") || method.includes("caisse")) entry.agency += payment.amount;
+      else entry.other += payment.amount;
+      aggregates.set(key, entry);
+    }
+    return Array.from(aggregates.entries()).sort(([left], [right]) => left.localeCompare(right)).slice(-6).map(([, value]) => value);
+  }, [payments]);
+  const monthlyMax = Math.max(1, ...monthlySummary.flatMap((item) => [item.mobileMoney, item.agency, item.other]));
 
   // Ajouter un indicateur de chargement
   if (isLoading) {
@@ -282,6 +310,34 @@ export function AdminPaymentManagement() {
         </Card>
       </div>
 
+      <Card className="border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-white">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base text-indigo-950">
+            <BarChart3 className="h-5 w-5 text-indigo-600" /> Synthèse comptable mensuelle
+          </CardTitle>
+          <CardDescription>Encaissements validés, ventilés par mode de paiement et calculés à partir des paiements enregistrés.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {monthlySummary.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-indigo-200 bg-white p-5 text-sm text-slate-600">Aucun paiement validé daté n’est encore disponible pour générer la synthèse mensuelle.</p>
+          ) : (
+            <div className="space-y-4" aria-label="Graphique mensuel des encaissements par mode de paiement">
+              {monthlySummary.map((month) => (
+                <div key={month.label} className="grid grid-cols-[78px_minmax(0,1fr)_auto] items-center gap-3 text-xs">
+                  <span className="font-semibold capitalize text-slate-700">{month.label}</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2"><span className="w-20 text-slate-500">Mobile Money</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-amber-100"><div className="h-full rounded-full bg-amber-500" style={{ width: `${(month.mobileMoney / monthlyMax) * 100}%` }} /></div></div>
+                    <div className="flex items-center gap-2"><span className="w-20 text-slate-500">Agence</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-blue-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${(month.agency / monthlyMax) * 100}%` }} /></div></div>
+                    {month.other > 0 && <div className="flex items-center gap-2"><span className="w-20 text-slate-500">Autres</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-500" style={{ width: `${(month.other / monthlyMax) * 100}%` }} /></div></div>}
+                  </div>
+                  <span className="font-semibold text-slate-800">{(month.mobileMoney + month.agency + month.other).toLocaleString("fr-FR")} XAF</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Tableau des paiements */}
       <Card>
         <CardHeader>
@@ -386,6 +442,7 @@ export function AdminPaymentManagement() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {payment.receiptUrl && <Button onClick={() => setReceiptPreview(payment)} variant="ghost" size="sm" title="Prévisualiser le justificatif de paiement" className="text-blue-700 hover:bg-blue-50"><Eye className="w-4 h-4" /></Button>}
                           {payment.paymentStatus === "PENDING" && (
                             <>
                               <Button
@@ -571,6 +628,21 @@ export function AdminPaymentManagement() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(receiptPreview)} onOpenChange={(open) => !open && setReceiptPreview(null)}>
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Justificatif de paiement</DialogTitle>
+            <DialogDescription>{receiptPreview?.receiptFileName || `Reçu du dossier ${receiptPreview?.dossierNumber || ""}`}</DialogDescription>
+          </DialogHeader>
+          {receiptPreview?.receiptUrl && (receiptPreview.receiptMimeType?.startsWith("image/") ? (
+            <img src={receiptPreview.receiptUrl} alt={`Justificatif de paiement — ${receiptPreview.fullName}`} className="max-h-[65vh] w-full rounded-lg border object-contain" />
+          ) : (
+            <iframe src={receiptPreview.receiptUrl} title={`Justificatif de paiement — ${receiptPreview.fullName}`} className="h-[65vh] w-full rounded-lg border" />
+          ))}
+          <DialogFooter><Button variant="outline" onClick={() => setReceiptPreview(null)}>Fermer</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

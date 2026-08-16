@@ -2905,3 +2905,9 @@
 - [x] Notifier visuellement le candidat d'une validation ou d'un rejet de paiement, avec le motif de correction nécessaire
 - [x] Exporter la liste filtrée des paiements au format CSV et Excel pour la comptabilité
 - [x] Tester les flux administrateur et client, puis publier la version (v230)
+
+## Vérification Visuelle, Synthèse Comptable et Renvoi de Reçu (v231)
+- [x] Ajouter un aperçu direct et sécurisé des justificatifs de paiement dans la table administrateur
+- [x] Ajouter un graphique de synthèse mensuelle des revenus par mode de paiement
+- [x] Permettre au candidat de téléverser un nouveau reçu directement depuis une notification de rejet
+- [x] Tester les permissions et publier la version (v231)

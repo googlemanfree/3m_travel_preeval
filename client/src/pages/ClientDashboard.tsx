@@ -1669,6 +1669,14 @@ export default function ClientDashboard() {
                         </div>
                         <div className="flex flex-wrap gap-2 sm:justify-end">
                           {!notification.isRead && <Button type="button" size="sm" variant="outline" disabled={markNotificationReadMutation.isPending} onClick={() => markNotificationReadMutation.mutate({ notificationId: notification.id })}>Marquer comme lue</Button>}
+                          {notification.type === "payment_action_required" && <label htmlFor={`payment-correction-${notification.id}`} className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 focus-within:ring-2 focus-within:ring-amber-500">
+                            <Upload className="mr-1 h-4 w-4" aria-hidden="true" /> Déposer un nouveau reçu
+                            <input id={`payment-correction-${notification.id}`} type="file" accept="application/pdf,image/jpeg,image/png" className="sr-only" disabled={paymentReceiptUploading} onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) void handlePaymentReceiptUpload(file, "payment_correction", `CORRECTION-${notification.id}`);
+                              event.currentTarget.value = "";
+                            }} />
+                          </label>}
                           {notification.category === "admin" && <Button type="button" size="sm" variant="outline" onClick={() => { setNotificationReplyId(notification.id); setNotificationReplyText(""); }}><MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" /> Répondre</Button>}
                           <Button type="button" size="sm" variant="ghost" disabled={setNotificationArchivedMutation.isPending} onClick={() => setNotificationArchivedMutation.mutate({ notificationId: notification.id, archived: !notification.isArchived })}>
                             {notification.isArchived ? <RotateCcw className="mr-1 h-4 w-4" aria-hidden="true" /> : <Archive className="mr-1 h-4 w-4" aria-hidden="true" />}

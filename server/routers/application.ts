@@ -3,12 +3,12 @@
  */
 
 import { getDb } from "../db";
-import { applications, aiReportHistory, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, aiReportHistory, candidateFiles, paymentAuditLogs } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { eq, desc, or, like, ilike } from "drizzle-orm";
+import { and, eq, desc, inArray, or, like, ilike } from "drizzle-orm";
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
@@ -573,7 +573,22 @@ export const applicationRouter = router({
           (a.whatsappNumber ?? "").includes(s)
         );
       }
-      return filtered;
+      const candidateIds = filtered.map((application) => application.candidateId).filter((id): id is number => Boolean(id));
+      const receipts = candidateIds.length
+        ? await db
+          .select()
+          .from(candidateFiles)
+          .where(and(inArray(candidateFiles.candidateId, candidateIds), eq(candidateFiles.fileType, "justificatif_paiement")))
+          .orderBy(desc(candidateFiles.uploadedAt))
+        : [];
+      const receiptByCandidateId = new Map<number, typeof receipts[number]>();
+      for (const receipt of receipts) {
+        if (!receiptByCandidateId.has(receipt.candidateId)) receiptByCandidateId.set(receipt.candidateId, receipt);
+      }
+      return filtered.map((application) => ({
+        ...application,
+        paymentReceipt: application.candidateId ? receiptByCandidateId.get(application.candidateId) ?? null : null,
+      }));
     }),
 
   /** Valider ou annuler un paiement depuis le tableau de bord administrateur. */
