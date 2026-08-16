@@ -2998,3 +2998,8 @@
 - [x] Permettre la réattribution groupée de dossiers vers un autre conseiller avec historique
 - [x] Ajouter un filtre « dossiers bloqués » à la vue quotidienne des conseillers
 - [x] Tester les permissions, notifications et traitements groupés puis publier
+
+## Correctif Portrait et Accès Espace Client (v246)
+- [x] Reproduire le faux blocage de portrait dans /mon-espace pour un candidat correctement inscrit
+- [x] Corriger la synchronisation entre l’état de portrait, la session et le résumé de dossier
+- [x] Ajouter un test de régression et publier le correctif

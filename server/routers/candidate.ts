@@ -140,6 +140,13 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 // peuvent être appelées avant la vérification humaine.
 const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
 
+export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
+  // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
+  // un statut historique « missing » ou « pending ». On ne bloque pas ces
+  // candidats : seul un portrait absent ou explicitement rejeté reste bloquant.
+  return candidate.avatarVerificationStatus === "verified" || (candidate.avatarVerificationStatus !== "rejected" && Boolean(candidate.avatarUrl));
+}
+
 export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }) => {
   const candidate = ctx.user
     ? await getOrCreateCandidateForPlatformUser(ctx.user)
@@ -149,7 +156,7 @@ export const candidateProcedure = publicProcedure.use(async ({ ctx, next, path }
     throw new TRPCError({ code: "FORBIDDEN", message: "EMAIL_VERIFICATION_REQUIRED" });
   }
 
-  if (candidate.avatarVerificationStatus !== "verified" && !PORTRAIT_ONBOARDING_PATHS.has(path)) {
+  if (!hasUsableCandidatePortrait(candidate) && !PORTRAIT_ONBOARDING_PATHS.has(path)) {
     throw new TRPCError({ code: "FORBIDDEN", message: "Un portrait humain vérifié est obligatoire pour accéder à votre espace et à vos ressources." });
   }
 
@@ -201,7 +208,7 @@ export const candidateRouter = router({
         dossierStatus: candidate.dossierStatus,
         avatarUrl: candidate.avatarUrl,
         avatarVerificationStatus: candidate.avatarVerificationStatus,
-        requiresPortrait: candidate.avatarVerificationStatus !== "verified",
+        requiresPortrait: !hasUsableCandidatePortrait(candidate),
       },
     };
   }),
@@ -366,7 +373,7 @@ export const candidateRouter = router({
           dossierStatus: candidate.dossierStatus,
           avatarUrl: candidate.avatarUrl,
           avatarVerificationStatus: candidate.avatarVerificationStatus,
-          requiresPortrait: candidate.avatarVerificationStatus !== "verified",
+          requiresPortrait: !hasUsableCandidatePortrait(candidate),
         },
       };
     }),
