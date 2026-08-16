@@ -257,6 +257,8 @@ export const flightBookingRouter = router({
       status: flightBookingRequests.status,
       assignedAgentEmail: flightBookingRequests.assignedAgentEmail,
       agentNotes: flightBookingRequests.agentNotes,
+      pnrReference: flightBookingRequests.pnrReference,
+      issuedPdfUrl: flightBookingRequests.issuedPdfUrl,
       createdAt: flightBookingRequests.createdAt,
       updatedAt: flightBookingRequests.updatedAt,
     }).from(flightBookingRequests)
@@ -449,5 +451,48 @@ export const flightBookingRouter = router({
       const { url } = await storagePut(`receipts/${existing.requestRef}-${Date.now()}.txt`, buffer, "text/plain");
 
       return { success: true, receiptUrl: url, reference: existing.requestRef };
+    }),
+
+  adminUploadPnrDocument: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      requestId: z.number().int().positive(),
+      pnrReference: z.string().trim().min(1),
+      fileBase64: z.string().min(1),
+      fileName: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+
+      const buffer = Buffer.from(input.fileBase64, "base64");
+      if (buffer.length > 8 * 1024 * 1024) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier PNR dépasse la taille maximale autorisée (8 Mo)." });
+      }
+      if (!input.fileName.toLowerCase().endsWith(".pdf")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Le document PNR final doit être au format PDF." });
+      }
+
+      const { url } = await storagePut(`pnr-documents/${existing.requestRef}-${Date.now()}-${input.fileName}`, buffer, "application/pdf");
+
+      await db.update(flightBookingRequests).set({
+        pnrReference: input.pnrReference,
+        issuedPdfUrl: url,
+        status: "issued",
+      }).where(eq(flightBookingRequests.id, input.requestId));
+
+      await db.insert(flightBookingRequestHistory).values({
+        requestId: input.requestId,
+        action: "pnr_document_uploaded",
+        changedBy: admin.email,
+        oldValue: existing.status,
+        newValue: "issued",
+        details: `Document PNR final téléversé par l'agent: ${input.fileName} (Ref: ${input.pnrReference})`,
+      });
+
+      return { success: true, issuedPdfUrl: url };
     }),
 });

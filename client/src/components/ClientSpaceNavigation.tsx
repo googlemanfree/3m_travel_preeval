@@ -103,7 +103,31 @@ export default function ClientSpaceNavigation() {
             </select>
           </label>
         </div>
-        {requestsQuery.isLoading ? <p className="mt-4 text-xs text-sky-800">Chargement de vos demandes…</p> : filteredRequests.length ? <div className="mt-4 grid gap-2 md:grid-cols-2">{filteredRequests.slice(0, 8).map((request) => <div key={request.id} className="rounded-xl border border-white/80 bg-white/80 p-3"><div className="flex items-center justify-between gap-3"><span className="font-mono text-xs font-black text-blue-800">{request.requestRef}</span><span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800">{statusLabels[request.status] ?? request.status}</span></div><p className="mt-2 text-xs font-semibold text-slate-700">Vol {request.flightId}</p><p className="mt-1 text-[11px] text-slate-500">Créée le {new Date(request.createdAt).toLocaleDateString("fr-FR")}</p></div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}
+        {requestsQuery.isLoading ? <p className="mt-4 text-xs text-sky-800">Chargement de vos demandes…</p> : filteredRequests.length ? <div className="mt-4 grid gap-2 md:grid-cols-2">{filteredRequests.slice(0, 8).map((request: any) => <div key={request.id} className="rounded-xl border border-white/80 bg-white/80 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-mono text-xs font-black text-blue-800">{request.requestRef}</span>
+            <div className="flex items-center gap-1.5">
+              {request.issuedPdfUrl && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-800 animate-pulse">
+                  📄 Nouveau PNR
+                </span>
+              )}
+              <span className="rounded-full bg-blue-100 px-2 py-1 text-[10px] font-bold text-blue-800">{statusLabels[request.status] ?? request.status}</span>
+            </div>
+          </div>
+          <p className="mt-2 text-xs font-semibold text-slate-700">Vol {request.flightId}</p>
+          {request.pnrReference && (
+            <p className="mt-1 text-xs font-bold text-emerald-700 font-mono">Référence PNR / GDS : {request.pnrReference}</p>
+          )}
+          <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+            <p className="text-[11px] text-slate-500">Créée le {new Date(request.createdAt).toLocaleDateString("fr-FR")}</p>
+            {request.issuedPdfUrl && (
+              <a href={request.issuedPdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm">
+                Télécharger le billet PNR
+              </a>
+            )}
+          </div>
+        </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}
       </Card>
     </section>
   );

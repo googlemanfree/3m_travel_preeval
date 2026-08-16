@@ -173,14 +173,52 @@ export function AdminReservationPayments() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <Button
-                        size="sm"
-                        disabled={sendReceiptMutation.isPending || !p.clientValidated}
-                        onClick={() => sendReceiptMutation.mutate({ sessionToken, requestId: p.id })}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5 disabled:opacity-50"
-                      >
-                        <Mail className="h-3.5 w-3.5" /> Envoyer le reçu
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          size="sm"
+                          disabled={sendReceiptMutation.isPending || !p.clientValidated}
+                          onClick={() => sendReceiptMutation.mutate({ sessionToken, requestId: p.id })}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1 disabled:opacity-50"
+                        >
+                          <Mail className="h-3.5 w-3.5" /> Reçu
+                        </Button>
+                        <label className="cursor-pointer inline-flex items-center gap-1 rounded bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                          📄 PNR
+                          <input
+                            type="file"
+                            accept="application/pdf"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = async () => {
+                                const base64 = (reader.result as string).split(",")[1];
+                                const pnrRef = prompt("Entrez la référence PNR / GDS :", p.pnrReference || "PNR-" + Math.floor(Math.random() * 90000 + 10000));
+                                if (!pnrRef) return;
+                                try {
+                                  // Appel mutation tRPC via fetch ou hook
+                                  const res = await fetch("/api/trpc/flightBooking.adminUploadPnrDocument", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ json: { sessionToken, requestId: p.id, pnrReference: pnrRef, fileBase64: base64, fileName: file.name } }),
+                                  });
+                                  const json = await res.json();
+                                  if (json.error) {
+                                    alert("Erreur: " + json.error.message);
+                                  } else {
+                                    alert("Document PNR final téléversé et publié dans l'espace client avec succès !");
+                                    window.location.reload();
+                                  }
+                                } catch (err: any) {
+                                  alert("Erreur réseau: " + err.message);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                      </div>
                     </td>
                   </tr>
                 );

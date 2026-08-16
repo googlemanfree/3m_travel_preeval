@@ -26,3 +26,8 @@
 - [x] Ajouter une procédure tRPC pour générer ou récupérer le reçu de paiement PDF sécurisé d’une réservation client
 - [x] Intégrer le bouton de téléchargement du reçu dans la liste des réservations de l’espace personnel du candidat
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Téléversement Admin du Document PNR et Alerte Visuelle Client (v259)
+- [x] Ajouter une procédure tRPC d'administration pour téléverser et associer un document PDF PNR final à une réservation
+- [x] Intégrer l'affichage du document PNR et un badge d'alerte visuelle de nouveau document dans l'espace personnel du client
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
