@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Eye, FilePenLine, Loader2, Save, Send } from "lucide-react";
+import { CalendarClock, Download, Eye, FilePenLine, History, Save, Send, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +52,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
   const [message, setMessage] = useState("");
   const [scheduledAt, setScheduledAt] = useState("");
   const [previewHtml, setPreviewHtml] = useState("");
+  const [requiresSecondApproval, setRequiresSecondApproval] = useState(false);
 
   useEffect(() => {
     if (!data?.draft) return;
@@ -62,6 +64,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     setSubject(data.draft.subject);
     setMessage(data.draft.message);
     setScheduledAt(data.application.evaluationScheduledAt ? new Date(data.application.evaluationScheduledAt).toISOString().slice(0, 16) : "");
+    setRequiresSecondApproval(data.draft.requiresSecondApproval);
     setPreviewHtml("");
   }, [data]);
 
@@ -75,7 +78,8 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     recommendations: splitLines(recommendations),
     subject: subject.trim() || undefined,
     message: message.trim() || undefined,
-  }), [sessionToken, sourceRecordId, score, verdict, strengths, weaknesses, recommendations, subject, message]);
+    requiresSecondApproval,
+  }), [sessionToken, sourceRecordId, score, verdict, strengths, weaknesses, recommendations, subject, message, requiresSecondApproval]);
 
   const saveDraft = trpc.unifiedRequests.saveEvaluationDeliveryDraft.useMutation({
     onSuccess: (result) => {
@@ -101,6 +105,10 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     },
     onError: (error) => toast({ title: "Planification impossible", description: error.message, variant: "destructive" }),
   });
+  const approve = trpc.unifiedRequests.approveSensitiveEvaluation.useMutation({
+    onSuccess: (result) => { void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId }); toast({ title: "Bilan approuvé", description: result.message }); },
+    onError: (error) => toast({ title: "Approbation impossible", description: error.message, variant: "destructive" }),
+  });
 
   const ensureDraft = async () => {
     if (!payload.recommendations.length) {
@@ -116,6 +124,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     setSubject(template.subject);
     setMessage(template.message);
   };
+  const requiresApprovalBeforeDelivery = requiresSecondApproval && data.application.evaluationApprovalStatus !== "approved";
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[94vh] max-w-6xl overflow-y-auto">
@@ -133,11 +142,13 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
           <div><Label>Modèle de message</Label><Select onValueChange={(value) => applyTemplate(value as keyof typeof MESSAGE_TEMPLATES)}><SelectTrigger className="mt-1"><SelectValue placeholder="Choisir un modèle, puis personnaliser" /></SelectTrigger><SelectContent>{Object.entries(MESSAGE_TEMPLATES).map(([value, template]) => <SelectItem key={value} value={value}>{template.label}</SelectItem>)}</SelectContent></Select></div>
           <div><Label htmlFor="delivery-subject">Objet de l’e-mail</Label><Input id="delivery-subject" className="mt-1" value={subject} onChange={(event) => setSubject(event.target.value)} /></div>
           <div><Label htmlFor="delivery-message">Message personnalisé</Label><Textarea id="delivery-message" className="mt-1 min-h-28" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ajoutez une introduction personnalisée visible en haut du bilan." /></div>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-950"><Checkbox checked={requiresSecondApproval} onCheckedChange={(value) => setRequiresSecondApproval(value === true)} /><span><strong className="block">Bilan sensible : exiger une seconde approbation</strong>Un autre administrateur devra valider cette version avant son envoi ou sa programmation.</span></label>
+          {requiresSecondApproval && <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900"><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" />Statut d’approbation : {data.application.evaluationApprovalStatus === "approved" ? "approuvé" : data.application.evaluationApprovalStatus === "pending" ? "en attente d’un second administrateur" : "à soumettre"}</div>{data.application.evaluationApprovalStatus === "pending" && <Button className="mt-2" size="sm" variant="outline" disabled={approve.isPending} onClick={() => approve.mutate({ sessionToken, sourceRecordId, approvalComment: "Bilan contrôlé avant diffusion." })}>{approve.isPending ? "Approbation…" : "Approuver comme second administrateur"}</Button>}</div>}
           <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void ensureDraft()} disabled={saveDraft.isPending}><Eye className="mr-1 h-4 w-4" />{saveDraft.isPending ? "Préparation…" : "Prévisualiser"}</Button><Button variant="outline" onClick={() => void ensureDraft()} disabled={saveDraft.isPending}><Save className="mr-1 h-4 w-4" />Enregistrer le brouillon</Button></div>
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><Label htmlFor="delivery-scheduled-at">Planifier l’envoi à une date et heure</Label><Input id="delivery-scheduled-at" className="mt-2" type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /><Button className="mt-2" variant="outline" disabled={!scheduledAt || schedule.isPending || saveDraft.isPending} onClick={async () => { if (await ensureDraft()) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); }}><CalendarClock className="mr-1 h-4 w-4" />{schedule.isPending ? "Programmation…" : "Programmer l’envoi"}</Button></div>
-          <Button className="w-full bg-blue-700 hover:bg-blue-800" disabled={sendNow.isPending || saveDraft.isPending} onClick={async () => { if (await ensureDraft()) sendNow.mutate({ sessionToken, sourceRecordId }); }}><Send className="mr-2 h-4 w-4" />{sendNow.isPending ? "Envoi définitif…" : "Valider et envoyer maintenant"}</Button>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><Label htmlFor="delivery-scheduled-at">Planifier l’envoi à une date et heure</Label><Input id="delivery-scheduled-at" className="mt-2" type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /><Button className="mt-2" variant="outline" disabled={!scheduledAt || schedule.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); else if (await ensureDraft()) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); }}><CalendarClock className="mr-1 h-4 w-4" />{schedule.isPending ? "Programmation…" : "Programmer l’envoi"}</Button></div>
+          <Button className="w-full bg-blue-700 hover:bg-blue-800" disabled={sendNow.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) sendNow.mutate({ sessionToken, sourceRecordId }); else if (await ensureDraft()) sendNow.mutate({ sessionToken, sourceRecordId }); }}><Send className="mr-2 h-4 w-4" />{sendNow.isPending ? "Envoi définitif…" : "Valider et envoyer maintenant"}</Button>
         </div>
-        <div className="min-h-[620px] rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Eye className="h-4 w-4" />Aperçu du bilan qui sera envoyé</div>{previewHtml ? <iframe title="Prévisualisation du bilan" sandbox="" srcDoc={previewHtml} className="h-[680px] w-full rounded border bg-white" /> : <div className="flex h-[680px] items-center justify-center rounded border border-dashed bg-white p-8 text-center text-sm text-slate-500">Modifiez les éléments nécessaires puis cliquez sur <strong className="ml-1">Prévisualiser</strong> pour consulter le rendu exact avant l’envoi.</div>}</div>
+        <div className="space-y-4"><div className="min-h-[520px] rounded-lg border border-slate-200 bg-slate-50 p-3"><div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700"><Eye className="h-4 w-4" />Aperçu du bilan qui sera envoyé</div>{previewHtml ? <iframe title="Prévisualisation du bilan" sandbox="" srcDoc={previewHtml} className="h-[560px] w-full rounded border bg-white" /> : <div className="flex h-[560px] items-center justify-center rounded border border-dashed bg-white p-8 text-center text-sm text-slate-500">Modifiez les éléments nécessaires puis cliquez sur <strong className="ml-1">Prévisualiser</strong> pour consulter le rendu exact avant l’envoi.</div>}</div><div className="rounded-lg border p-3"><p className="flex items-center gap-2 text-sm font-semibold text-slate-800"><History className="h-4 w-4" />Historique des versions</p><div className="mt-3 space-y-2">{data.versions.length ? data.versions.map((version) => <div key={version.id} className="flex items-center justify-between gap-3 rounded border bg-slate-50 p-2 text-xs"><div><strong>Version {version.versionNumber}</strong> · {version.approvalStatus}<br /><span className="text-slate-500">{new Date(version.createdAt).toLocaleString("fr-FR")}</span></div>{version.pdfUrl && <Button asChild size="sm" variant="outline"><a href={version.pdfUrl} target="_blank" rel="noreferrer"><Download className="mr-1 h-3.5 w-3.5" />PDF</a></Button>}</div>) : <p className="text-sm text-slate-500">La première version apparaîtra dès l’enregistrement du brouillon.</p>}</div></div></div>
       </div>}
     </DialogContent>
   </Dialog>;

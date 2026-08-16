@@ -356,6 +356,12 @@ export const applications = mysqlTable("applications", {
   evaluationDeliveryMessage: text("evaluationDeliveryMessage"),
   evaluationDeliverySubject: varchar("evaluationDeliverySubject", { length: 255 }),
   evaluationDeliveryStatus: mysqlEnum("evaluationDeliveryStatus", ["draft", "scheduled", "sent", "failed"]).default("draft").notNull(),
+  evaluationRequiresSecondApproval: boolean("evaluationRequiresSecondApproval").default(false).notNull(),
+  evaluationApprovalStatus: mysqlEnum("evaluationApprovalStatus", ["not_required", "pending", "approved", "rejected"]).default("not_required").notNull(),
+  evaluationApprovedAt: timestamp("evaluationApprovedAt"),
+  evaluationApprovedByAdminId: int("evaluationApprovedByAdminId"),
+  evaluationReportPdfKey: varchar("evaluationReportPdfKey", { length: 512 }),
+  evaluationReportPdfUrl: varchar("evaluationReportPdfUrl", { length: 512 }),
   
   // Gestion des documents (originaux vs scan pro)
   documentsSubmissionMethod: mysqlEnum("documentsSubmissionMethod", ["en_ligne", "agence_physique"]),

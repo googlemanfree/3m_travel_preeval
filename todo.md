@@ -2942,3 +2942,10 @@
 - [x] Ajouter des modèles de messages personnalisables selon le profil et la destination du candidat
 - [x] Permettre l’envoi immédiat ou la planification manuelle à une date et heure précises
 - [x] Tester les permissions, l’envoi unique, la planification et publier la version complète
+
+## PDF, Double Approbation et Historique des Bilans (v237)
+- [x] Créer un PDF final téléchargeable du bilan pour le candidat et l’administration après diffusion
+- [x] Mettre en place une validation à deux niveaux pour les bilans sensibles avant tout envoi
+- [x] Enregistrer un historique versionné de chaque modification de bilan avec auteur et horodatage
+- [x] Intégrer les actions et statuts dans la boîte de réception, la fiche client et l’espace candidat
+- [x] Tester les accès, les approbations, les téléchargements et publier la version complète

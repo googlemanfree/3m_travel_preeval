@@ -14,12 +14,14 @@ import {
   profileEvaluations,
   translationRequests,
 } from "../../drizzle/schema";
-import { unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
+import { evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
+import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
+import { storageGetSignedUrl } from "../storage";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -33,6 +35,7 @@ const evaluationDraftSchema = z.object({
   recommendations: z.array(z.string().trim().min(2).max(800)).min(1).max(8),
   message: z.string().trim().max(3000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
+  requiresSecondApproval: z.boolean().default(false),
 });
 
 type SourceType = typeof sourceTypes[number];
@@ -90,6 +93,10 @@ export function getUnifiedSlaState(request: { workflowStatus: WorkflowStatus; fi
   if (request.dueAt && request.dueAt.getTime() < now) return "overdue" as const;
   if (!request.firstRespondedAt || inactivityHours > 36) return "warning" as const;
   return "on_track" as const;
+}
+
+export function canDeliverEvaluation(requiresSecondApproval: boolean, approvalStatus: string): boolean {
+  return !requiresSecondApproval || approvalStatus === "approved";
 }
 
 async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
@@ -250,7 +257,9 @@ export const unifiedRequestsRouter = router({
       let details: Record<string, any> = {};
       try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
       const adminDraft = details.adminDraft ?? {};
-      return { application, draft: { finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}` } };
+      const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
+      const versions = await Promise.all(rawVersions.map(async (version) => ({ ...version, pdfUrl: version.pdfKey ? await storageGetSignedUrl(version.pdfKey) : null })));
+      return { application, versions, draft: { finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, requiresSecondApproval: application.evaluationRequiresSecondApproval } };
     }),
 
   saveEvaluationDeliveryDraft: publicProcedure
@@ -267,10 +276,35 @@ export const unifiedRequestsRouter = router({
       const nextDetails = { ...details, adminDraft: { finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations } };
       const updatedApplication = { ...application, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null };
       const scoreBadge = input.finalScore >= 80 ? "eligible" : input.finalScore >= 60 ? "admissible" : "faible";
-      await db.update(applications).set({ scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      const latestVersion = (await db.select({ versionNumber: evaluationBilanVersions.versionNumber }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+      const versionNumber = (latestVersion?.versionNumber ?? 0) + 1;
+      const approvalStatus = input.requiresSecondApproval ? "pending" : "not_required" as const;
+      const reportHtml = generateEvaluationReportHTML(updatedApplication);
+      await db.update(applications).set({ scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDetails.adminDraft, subject: input.subject || null, message: input.message || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
-      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: "Brouillon du bilan, score et message d’accompagnement mis à jour.", actorAdminAccountId: admin.id }); }
-      return { success: true, reportHtml: generateEvaluationReportHTML(updatedApplication), message: "Brouillon enregistré et prévisualisation mise à jour." };
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: `Version ${versionNumber} du bilan enregistrée${input.requiresSecondApproval ? " et soumise à une seconde approbation" : ""}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, reportHtml, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
+    }),
+
+  approveSensitiveEvaluation: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), approvalComment: z.string().trim().min(2).max(1200).optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      if (!application.evaluationRequiresSecondApproval || application.evaluationApprovalStatus !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune seconde approbation n’est requise pour ce bilan." });
+      const version = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+      if (!version || version.approvalStatus !== "pending") throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune version de bilan en attente d’approbation." });
+      if (version.createdByAdminAccountId === admin.id) throw new TRPCError({ code: "FORBIDDEN", message: "Un second administrateur distinct doit approuver ce bilan sensible." });
+      const now = new Date();
+      await db.update(evaluationBilanVersions).set({ approvalStatus: "approved", approvedByAdminAccountId: admin.id, approvalComment: input.approvalComment || null, approvedAt: now }).where(eq(evaluationBilanVersions.id, version.id));
+      await db.update(applications).set({ evaluationApprovalStatus: "approved", evaluationApprovedAt: now, evaluationApprovedByAdminId: admin.id, updatedAt: now }).where(eq(applications.id, application.id));
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_second_approval", comment: input.approvalComment || "Bilan sensible approuvé par un second administrateur.", actorAdminAccountId: admin.id }); }
+      return { success: true, message: "Seconde approbation enregistrée. Le bilan peut désormais être envoyé ou planifié." };
     }),
 
   scheduleEvaluationDelivery: publicProcedure
@@ -283,6 +317,7 @@ export const unifiedRequestsRouter = router({
       const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
+      if (!canDeliverEvaluation(application.evaluationRequiresSecondApproval, application.evaluationApprovalStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde approbation est requise avant de programmer ce bilan sensible." });
       await db.update(applications).set({ evaluationScheduledAt: input.scheduledAt, evaluationDeliveryStatus: "scheduled", updatedAt: new Date() }).where(eq(applications.id, application.id));
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_scheduled", comment: `Envoi du bilan programmé pour le ${input.scheduledAt.toLocaleString("fr-FR")}.`, actorAdminAccountId: admin.id }); }
@@ -299,9 +334,18 @@ export const unifiedRequestsRouter = router({
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
       if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
       if (!["nouveau", "en_evaluation"].includes(application.dossierStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "Le dossier a déjà progressé vers une étape ultérieure." });
+      if (!canDeliverEvaluation(application.evaluationRequiresSecondApproval, application.evaluationApprovalStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "La seconde approbation est requise avant l’envoi de ce bilan sensible." });
+      const latestVersion = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+      const versionNumber = latestVersion?.versionNumber ?? 1;
+      const finalPdf = await createFinalEvaluationPdf(application, versionNumber);
       await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: generateEvaluationReportHTML(application) });
       const now = new Date();
-      await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, updatedAt: now }).where(eq(applications.id, application.id));
+      await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, updatedAt: now }).where(eq(applications.id, application.id));
+      if (latestVersion) {
+        await db.update(evaluationBilanVersions).set({ approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now }).where(eq(evaluationBilanVersions.id, latestVersion.id));
+      } else {
+        await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml: generateEvaluationReportHTML(application), createdByAdminAccountId: admin.id, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt: now });
+      }
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }
       return { success: true, message: "Bilan validé et envoyé immédiatement. La relance automatique de 48 h est annulée." };

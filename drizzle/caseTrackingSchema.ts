@@ -91,3 +91,26 @@ export const unifiedClientRequestHistory = mysqlTable("unified_client_request_hi
   actorAdminAccountId: int("actorAdminAccountId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("idx_unified_request_history_request").on(table.requestId, table.createdAt)]);
+
+/** Versions non destructives d’un bilan préparé, approuvé puis envoyé. */
+export const evaluationBilanVersions = mysqlTable("evaluation_bilan_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  versionNumber: int("versionNumber").notNull(),
+  contentJson: text("contentJson").notNull(),
+  reportHtml: text("reportHtml").notNull(),
+  createdByAdminAccountId: int("createdByAdminAccountId").notNull(),
+  requiresSecondApproval: boolean("requiresSecondApproval").notNull().default(false),
+  approvalStatus: mysqlEnum("approvalStatus", ["draft", "pending", "approved", "rejected", "sent"]).notNull().default("draft"),
+  approvedByAdminAccountId: int("approvedByAdminAccountId"),
+  approvalComment: text("approvalComment"),
+  approvedAt: timestamp("approvedAt"),
+  pdfKey: varchar("pdfKey", { length: 512 }),
+  pdfUrl: varchar("pdfUrl", { length: 512 }),
+  sentAt: timestamp("sentAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_evaluation_bilan_versions_application").on(table.applicationId, table.versionNumber),
+  index("idx_evaluation_bilan_versions_approval").on(table.approvalStatus, table.createdAt),
+]);

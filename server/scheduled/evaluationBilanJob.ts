@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
-import { eq, and, lt } from "drizzle-orm";
+import { evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
+import { desc, eq } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
+import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 
 export async function handleEvaluationBilanJob(req: Request, res: Response): Promise<void> {
   try {
@@ -24,7 +26,8 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     const apps = candidates.filter((app) => {
       const isManualScheduleDue = app.evaluationDeliveryStatus === "scheduled" && app.evaluationScheduledAt && app.evaluationScheduledAt <= now;
       const isAutomaticFallbackDue = app.evaluationDeliveryStatus !== "scheduled" && app.createdAt < fortyEightHoursAgo;
-      return isManualScheduleDue || isAutomaticFallbackDue;
+      const isApprovedForDelivery = !app.evaluationRequiresSecondApproval || app.evaluationApprovalStatus === "approved";
+      return isApprovedForDelivery && (isManualScheduleDue || isAutomaticFallbackDue);
     });
 
     console.log(`[Evaluation Bilan Job] Found ${apps.length} applications ready for bilan`);
@@ -35,22 +38,22 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     for (const app of apps) {
       try {
         const reportHtml = generateEvaluationReportHTML(app);
+        const latestVersion = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, app.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+        const versionNumber = latestVersion?.versionNumber ?? 1;
+        const finalPdf = await createFinalEvaluationPdf(app, versionNumber);
         await sendEmail({
           to: app.email,
           subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,
           html: reportHtml,
         });
 
-        await db
-          .update(applications)
-          .set({
-            dossierStatus: "en_attente_paiement",
-            evaluationCompletedAt: new Date(),
-            evaluationDeliveryStatus: "sent",
-            evaluationScheduledAt: null,
-            evaluationReportUrl: `${process.env.APP_BASE_URL || "https://3mtravelagency.click"}/api/dossier/${app.dossierNumber}/report`,
-          })
-          .where(eq(applications.id, app.id));
+        const sentAt = new Date();
+        await db.update(applications).set({ dossierStatus: "en_attente_paiement", evaluationCompletedAt: sentAt, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, evaluationReportUrl: `${process.env.APP_BASE_URL || "https://3mtravelagency.click"}/api/dossier/${app.dossierNumber}/report` }).where(eq(applications.id, app.id));
+        if (latestVersion) {
+          await db.update(evaluationBilanVersions).set({ approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt }).where(eq(evaluationBilanVersions.id, latestVersion.id));
+        } else {
+          await db.insert(evaluationBilanVersions).values({ applicationId: app.id, versionNumber, contentJson: JSON.stringify({ systemGenerated: true }), reportHtml, createdByAdminAccountId: 0, requiresSecondApproval: false, approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt });
+        }
 
         console.log(`[Evaluation Bilan Job] OK Bilan report sent for ${app.dossierNumber}`);
         successCount++;

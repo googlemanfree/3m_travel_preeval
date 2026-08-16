@@ -1160,6 +1160,9 @@ export const candidateRouter = router({
       ...document,
       documentUrl: await storageGetSignedUrl(document.documentUrl.replace(/^\/manus-storage\//, "")),
     })));
+    const evaluationReportPdfUrl = app[0]?.evaluationReportPdfKey
+      ? await storageGetSignedUrl(app[0].evaluationReportPdfKey)
+      : null;
 
     // Récupérer les messages
     const messages = await db
@@ -1174,6 +1177,7 @@ export const candidateRouter = router({
         application,
         documents,
         agencyDocuments,
+        evaluationReportPdfUrl,
         messages,
         statusHistory,
         dossierStatus: application.dossierStatus,

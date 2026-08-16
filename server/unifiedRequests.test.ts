@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getUnifiedSlaState, inferUnifiedWorkflow } from "./routers/unifiedRequests";
+import { canDeliverEvaluation, getUnifiedSlaState, inferUnifiedWorkflow } from "./routers/unifiedRequests";
 
 describe("boîte de réception unifiée", () => {
   it("normalise les statuts métier de sources différentes vers le cycle commun", () => {
@@ -15,5 +15,11 @@ describe("boîte de réception unifiée", () => {
     const now = Date.now();
     expect(getUnifiedSlaState({ workflowStatus: "processing", createdAt: new Date(now - 25 * 3_600_000), lastActivityAt: new Date(now - 25 * 3_600_000), firstRespondedAt: null, dueAt: new Date(now - 60_000) })).toBe("overdue");
     expect(getUnifiedSlaState({ workflowStatus: "completed", createdAt: new Date(now - 48 * 3_600_000), lastActivityAt: new Date(now - 24 * 3_600_000), firstRespondedAt: new Date(now - 47 * 3_600_000), dueAt: new Date(now - 24 * 3_600_000) })).toBe("closed");
+  });
+
+  it("bloque un bilan sensible jusqu’à la seconde approbation et laisse passer un bilan standard", () => {
+    expect(canDeliverEvaluation(true, "pending")).toBe(false);
+    expect(canDeliverEvaluation(true, "approved")).toBe(true);
+    expect(canDeliverEvaluation(false, "not_required")).toBe(true);
   });
 });
