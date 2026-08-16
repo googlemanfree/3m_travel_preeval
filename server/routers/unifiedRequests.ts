@@ -24,7 +24,7 @@ import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 
-const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
+const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 const priorities = ["low", "normal", "high", "urgent"] as const;
 const evaluationDraftSchema = z.object({
@@ -155,7 +155,7 @@ async function loadSourceSnapshots(): Promise<SourceSnapshot[]> {
     ...translations.map((row) => ({ sourceType: "translation" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.invoiceNumber || `TRAD-${row.id}`, fullName: row.candidateName, email: row.candidateEmail, phone: row.candidatePhone ?? null, destination: null, requestTypeLabel: "Traduction certifiée", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
     ...contactSnapshots,
     ...agency.map((row) => ({ sourceType: "agency_dossier" as const, sourceRecordId: row.id, candidateId: null, displayReference: `3M-AGN-${row.id.toString().padStart(4, "0")}`, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Dossier ouvert en agence", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
-    ...tourism.map((row) => ({ sourceType: "tourism" as const, sourceRecordId: row.id, candidateId: null, displayReference: row.reference, fullName: row.fullName, email: row.email, phone: row.phone ?? null, destination: row.destination ?? null, requestTypeLabel: "Tourisme & Devis", sourceStatus: row.status, evaluationApprovalStatus: null, evaluationDeliveryStatus: null, evaluationReportViewedAt: null, createdAt: row.createdAt, updatedAt: row.updatedAt })),
+
   ];
 }
 
