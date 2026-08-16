@@ -358,4 +358,24 @@ export const flightBookingRouter = router({
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "note_added", changedBy: admin.email, oldValue: existing.agentNotes, newValue: input.note, details: "Note interne ajoutée par un agent." });
       return { success: true };
     }),
+
+  listReservationPayments: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select({
+        id: flightBookingRequests.id,
+        requestRef: flightBookingRequests.requestRef,
+        candidateEmail: flightBookingRequests.candidateEmail,
+        flightData: flightBookingRequests.flightData,
+        status: flightBookingRequests.status,
+        paymentMethod: flightBookingRequests.paymentMethod,
+        paymentTransactionId: flightBookingRequests.paymentTransactionId,
+        clientValidated: flightBookingRequests.clientValidated,
+        createdAt: flightBookingRequests.createdAt,
+      }).from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
+      return rows;
+    }),
 });

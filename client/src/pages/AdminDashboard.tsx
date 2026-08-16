@@ -1524,6 +1524,9 @@ export default function AdminDashboard() {
 
           <TabsContent value="payments" className="space-y-6">
             <AdminPaymentManagement />
+            <div className="pt-8 border-t border-slate-200">
+              <AdminReservationPayments />
+            </div>
           </TabsContent>
 
           <TabsContent value="inbox" className="space-y-6">
