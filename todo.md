@@ -3024,3 +3024,8 @@
 - [x] Intégrer les demandes de tourisme dans le tableau de bord administrateur et la boîte de réception unifiée
 - [x] Valider avec les tests unitaires et TypeScript
 
+
+## Exportation iCal des Réservations (v253)
+- [x] Ajouter la procédure tRPC `exportCalendarIcal` dans `server/routers/tourism.ts` pour générer un flux .ics sécurisé
+- [x] Intégrer le bouton d’export iCal dans le composant `AdminCalendarView.tsx` avec téléchargement instantané du fichier
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale

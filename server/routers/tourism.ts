@@ -66,4 +66,43 @@ export const tourismRouter = router({
     }
     return { success: true };
   }),
+
+  exportIcal: publicProcedure.query(async ({ ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+    const rows = await db.select().from(tourismServiceRequests).where(eq(tourismServiceRequests.status, "confirmed"));
+    const formatDate = (dateVal: Date | null) => {
+      if (!dateVal) return new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      return new Date(dateVal).toISOString().replace(/[-:]/g, "").split("T")[0];
+    };
+
+    let icsLines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//3M Travel & Services//Admin Calendar//FR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+    ];
+
+    for (const r of rows) {
+      const start = formatDate(r.departureDate);
+      const end = formatDate(r.returnDate || r.departureDate);
+      icsLines.push(
+        "BEGIN:VEVENT",
+        `UID:tourism-${r.id}@3mtravelagency.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"}`,
+        `DTSTART;VALUE=DATE:${start}`,
+        `DTEND;VALUE=DATE:${end}`,
+        `SUMMARY:Réservation 3M: ${r.destination} (${r.fullName})`,
+        `DESCRIPTION:Client: ${r.fullName} - Ref: ${r.reference} - Voyageurs: ${r.travelersCount} - Statut: Confirmé`,
+        `LOCATION:${r.destination}`,
+        "END:VEVENT"
+      );
+    }
+
+    icsLines.push("END:VCALENDAR");
+    return { icsContent: icsLines.join("\r\n"), fileName: "3m_travel_reservations.ics" };
+  }),
 });
