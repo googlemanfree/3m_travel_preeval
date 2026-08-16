@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 
 const SOCIAL_LINKS = [
   { icon: Facebook, href: 'https://www.facebook.com/3mtravelcm', label: 'Facebook officiel', color: 'hover:text-blue-600' },
@@ -195,8 +197,14 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* QR Code Facebook Widget */}
+        <div className="py-6 border-t border-gray-700/80 mt-8 flex flex-col items-center">
+          <p className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-2">Rejoignez-nous sur notre page officielle</p>
+          <FacebookQRCodeWidget />
+        </div>
+
         {/* Social Media Section */}
-        <div className="flex justify-center gap-4 py-6 border-t border-gray-700 mt-8">
+        <div className="flex justify-center gap-4 py-6 border-t border-gray-700 mt-4">
           {SOCIAL_LINKS.map((social) => {
             const Icon = social.icon;
             return (

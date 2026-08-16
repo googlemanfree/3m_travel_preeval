@@ -29,7 +29,20 @@ export const tourismRouter = router({
     let places: Array<{ name: string; address: string; rating?: number }> = [];
     try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `attractions touristiques et hôtels à ${input.destination}` }); places = (google.results || []).slice(0, 5).map(p => ({ name: p.name, address: p.formatted_address, rating: p.rating })); } catch { /* suggestions facultatives */ }
     let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M Travel avant toute réservation.";
-    try { const ai = await invokeLLM({ messages: [{ role: "system", content: "Tu es un assistant de voyage prudent. Réponds en français en 3 phrases maximum, sans inventer de tarifs ni garantir de disponibilité." }, { role: "user", content: `Présente ${input.destination} à partir de ces suggestions Google : ${places.map(p => p.name).join(", ") || "aucune"}.` }] }); briefing = ai.choices[0]?.message?.content || briefing; } catch { /* repli transparent */ }
+    try {
+      const ai = await invokeLLM({
+        messages: [
+          { role: "system", content: "Tu es un assistant de voyage prudent. Réponds en français en 3 phrases maximum, sans inventer de tarifs ni garantir de disponibilité." },
+          { role: "user", content: `Présente ${input.destination} à partir de ces suggestions Google : ${places.map(p => p.name).join(", ") || "aucune"}.` }
+        ]
+      });
+      const rawContent = ai.choices[0]?.message?.content;
+      if (typeof rawContent === "string") {
+        briefing = rawContent;
+      } else if (Array.isArray(rawContent)) {
+        briefing = rawContent.map(part => ('text' in part ? part.text : '')).join(' ');
+      }
+    } catch { /* repli transparent */ }
     return { places, briefing, sourceNote: "Suggestions Google et aperçu IA à titre informatif. Tarifs et disponibilités à confirmer par l’agence." };
   }),
   create: publicProcedure.input(requestSchema).mutation(async ({ input }) => {

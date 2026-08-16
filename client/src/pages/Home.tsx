@@ -39,6 +39,7 @@ import { VisasCarousel } from "@/components/VisasCarousel";
 import { SimulatorExpress } from "@/components/SimulatorExpress";
 import { FooterLegal } from "@/components/FooterLegal";
 import AureolQuestionField from "@/components/AureolQuestionField";
+import FacebookFeedSection from "@/components/FacebookFeedSection";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -586,6 +587,9 @@ export default function Home() {
 
       {/* ─── SECTION NOS DOMAINES D'EXPERTISE ──────────────────────────── */}
       <ServicesSection />
+
+      {/* ─── SECTION COMMUNAUTÉ & ACTUALITÉS FACEBOOK ──────────────────── */}
+      <FacebookFeedSection />
 
       {/* ─── SECTION ÉVALUATION ──────────────────────────────────────────── */}
       <section id="evaluation" className="py-12 md:py-20 bg-gradient-to-b from-blue-50 to-white">

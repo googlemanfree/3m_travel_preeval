@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, MessageSquare, Zap, AlertCircle, CheckCircle, Facebook } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -384,7 +384,28 @@ export default function Contact() {
             Autres moyens de nous contacter
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Facebook Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0 }}
+            >
+              <Card className="p-6 text-center hover:shadow-lg transition-all duration-300 border-blue-100 bg-blue-50/30">
+                <Facebook className="text-blue-600 mx-auto mb-4" size={40} />
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Page Facebook</h3>
+                <p className="text-gray-600 mb-6 text-sm">Suivez notre actualité et nos offres</p>
+                <a
+                  href="https://www.facebook.com/3mtravelcm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                >
+                  Visiter Facebook
+                </a>
+              </Card>
+            </motion.div>
+
             {/* WhatsApp Card */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}

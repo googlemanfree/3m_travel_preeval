@@ -71,3 +71,9 @@
 Votre page Facebook officielle à intégrer : https://www.facebook.com/3mtravelcm
 
 Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de contact sociales sans créer de faux contenu ni de témoignages.
+
+## Enrichissement Réseau Social & QR Code Officiel (v267)
+- [x] Ajouter des boutons d’appel à l’action Facebook bien visibles sur la page d’accueil et dans la section Contact
+- [x] Créer un composant de flux de publications Facebook récentes de 3M Travel & Services sur la page d’accueil
+- [x] Générer un QR code officiel pointant vers https://www.facebook.com/3mtravelcm et l'intégrer au pied de page et aux quittances/reçus PDF
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
