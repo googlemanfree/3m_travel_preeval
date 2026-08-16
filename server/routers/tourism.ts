@@ -4,6 +4,7 @@ import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
 import { adminNotifications, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
+import { storagePut } from "../storage";
 import { makeRequest, type PlacesSearchResult } from "../_core/map";
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
@@ -33,7 +34,7 @@ export const tourismRouter = router({
   }),
   create: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const reference = `TRM-${new Date().getFullYear()}-${randomInt(100000, 1000000)}`;
+    const reference = `TRM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
     await db.insert(tourismServiceRequests).values({ reference, fullName: input.fullName, email: input.email, phone: input.phone, destination: input.destination, departureDate: input.departureDate ? new Date(`${input.departureDate}T00:00:00Z`) : null, returnDate: input.returnDate ? new Date(`${input.returnDate}T00:00:00Z`) : null, travelersCount: input.travelersCount, serviceTypesJson: JSON.stringify(buildTourismServiceTypes(input.packType, input.serviceTypes)), packType: input.packType || null, hotelCategory: input.hotelCategory || null, vehicleCategory: input.vehicleCategory || null, pickupLocation: input.pickupLocation || null, budgetXaf: input.budgetXaf ?? null, notes: input.notes || null, enrichmentJson: input.enrichment ? JSON.stringify(input.enrichment) : null });
     await db.insert(adminNotifications).values({ type: "new_contact_message", title: "Nouvelle demande Tourisme", message: `${input.fullName} — ${input.destination} — ${reference}`, relatedId: reference, targetAdminType: "accompagnement" });
     return { reference };
@@ -65,73 +66,5 @@ export const tourismRouter = router({
       await db.update(tourismServiceRequests).set(updateData).where(eq(tourismServiceRequests.id, input.id));
     }
     return { success: true };
-  }),
-
-  updatePnrAndVoucher: publicProcedure.input(z.object({ id: z.number().int().positive(), pnrReference: z.string().trim().min(2).max(120), voucherPdfUrl: z.string().url().optional() })).mutation(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    await db.update(tourismServiceRequests).set({ pnrReference: input.pnrReference, voucherPdfUrl: input.voucherPdfUrl || null, status: "confirmed" }).where(eq(tourismServiceRequests.id, input.id));
-    return { success: true };
-  }),
-
-  uploadVoucherPdf: publicProcedure.input(z.object({
-    id: z.number().int().positive(),
-    fileName: z.string().trim().min(5).max(255),
-    mimeType: z.literal("application/pdf"),
-    dataBase64: z.string().min(20).max(7_000_000),
-  })).mutation(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const requests = await db.select().from(tourismServiceRequests).where(eq(tourismServiceRequests.id, input.id)).limit(1);
-    const req = requests[0];
-    if (!req) throw new TRPCError({ code: "NOT_FOUND", message: "Demande introuvable." });
-    const bytes = Buffer.from(input.dataBase64, "base64");
-    if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier PDF doit peser au maximum 5 Mo." });
-    if (!bytes.subarray(0, 4).equals(Buffer.from("%PDF"))) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit être un PDF valide." });
-    const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const stored = await storagePut(`tourism-vouchers/${req.reference}/${safeName}`, bytes, input.mimeType);
-    await db.update(tourismServiceRequests).set({ voucherPdfUrl: stored.url, status: "confirmed" }).where(eq(tourismServiceRequests.id, req.id));
-    return { success: true, url: stored.url };
-  }),
-
-  exportIcal: publicProcedure.query(async ({ ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-
-    const rows = await db.select().from(tourismServiceRequests).where(eq(tourismServiceRequests.status, "confirmed"));
-    const formatDate = (dateVal: Date | null) => {
-      if (!dateVal) return new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-      return new Date(dateVal).toISOString().replace(/[-:]/g, "").split("T")[0];
-    };
-
-    let icsLines = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//3M Travel & Services//Admin Calendar//FR",
-      "CALSCALE:GREGORIAN",
-      "METHOD:PUBLISH",
-    ];
-
-    for (const r of rows) {
-      const start = formatDate(r.departureDate);
-      const end = formatDate(r.returnDate || r.departureDate);
-      icsLines.push(
-        "BEGIN:VEVENT",
-        `UID:tourism-${r.id}@3mtravelagency.com`,
-        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"}`,
-        `DTSTART;VALUE=DATE:${start}`,
-        `DTEND;VALUE=DATE:${end}`,
-        `SUMMARY:Réservation 3M: ${r.destination} (${r.fullName})`,
-        `DESCRIPTION:Client: ${r.fullName} - Ref: ${r.reference} - Voyageurs: ${r.travelersCount} - Statut: Confirmé`,
-        `LOCATION:${r.destination}`,
-        "END:VEVENT"
-      );
-    }
-
-    icsLines.push("END:VCALENDAR");
-    return { icsContent: icsLines.join("\r\n"), fileName: "3m_travel_reservations.ics" };
   }),
 });

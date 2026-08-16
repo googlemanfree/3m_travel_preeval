@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { CreditCard, Search, Download, CheckCircle2, Clock, ShieldCheck, DollarSign, ExternalLink } from "lucide-react";
+import { CreditCard, Search, Download, CheckCircle2, Clock, Send, Mail } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,10 +10,21 @@ import { toast } from "sonner";
 
 export function AdminReservationPayments() {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "active_session" : "active_session";
-  const { data: payments, isLoading, refetch } = trpc.flightBooking.listReservationPayments.useQuery({ sessionToken });
+  const utils = trpc.useUtils();
+  const { data: payments, isLoading } = trpc.flightBooking.listReservationPayments.useQuery({ sessionToken });
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const sendReceiptMutation = trpc.flightBooking.sendPaymentReceiptEmail.useMutation({
+    onSuccess: () => {
+      toast.success("Reçu de paiement et quittance envoyés par e-mail au client avec succès.");
+      utils.flightBooking.listReservationPayments.invalidate();
+    },
+    onError: (err) => {
+      toast.error(`Erreur lors de l'envoi : ${err.message}`);
+    },
+  });
 
   const filtered = (payments ?? []).filter(p => {
     const matchSearch = search === "" || p.requestRef.toLowerCase().includes(search.toLowerCase()) || p.candidateEmail.toLowerCase().includes(search.toLowerCase()) || (p.paymentTransactionId && p.paymentTransactionId.toLowerCase().includes(search.toLowerCase()));
@@ -48,8 +59,8 @@ export function AdminReservationPayments() {
     <div className="space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-black text-slate-900">Récapitulatif des Paiements & Transactions</h2>
-          <p className="text-sm text-slate-500">Vérifiez les ID de transaction Orange Money et les règlements en agence pour les réservations.</p>
+          <h2 className="text-2xl font-black text-slate-900">Récapitulatif des Paiements & Quittances</h2>
+          <p className="text-sm text-slate-500">Vérifiez les ID de transaction et envoyez les reçus officiels par e-mail en un clic.</p>
         </div>
         <Button onClick={exportCsv} variant="outline" className="border-slate-200">
           <Download className="mr-2 h-4 w-4" /> Exporter en CSV
@@ -61,7 +72,7 @@ export function AdminReservationPayments() {
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-blue-50 p-3 text-blue-700"><CreditCard className="h-6 w-6" /></div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">Total Paiements Enregistrés</p>
+              <p className="text-xs text-slate-500 font-medium">Total Paiements</p>
               <p className="text-2xl font-bold text-slate-900">{payments?.length ?? 0}</p>
             </div>
           </div>
@@ -79,7 +90,7 @@ export function AdminReservationPayments() {
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-amber-50 p-3 text-amber-700"><Clock className="h-6 w-6" /></div>
             <div>
-              <p className="text-xs text-slate-500 font-medium">En Attente de Règlement</p>
+              <p className="text-xs text-slate-500 font-medium">En Attente</p>
               <p className="text-2xl font-bold text-amber-700">{payments?.filter(p => !p.clientValidated).length ?? 0}</p>
             </div>
           </div>
@@ -123,8 +134,8 @@ export function AdminReservationPayments() {
                 <th className="p-4">Référence / Client</th>
                 <th className="p-4">Mode de Paiement</th>
                 <th className="p-4">ID de Transaction</th>
-                <th className="p-4">Statut Validation</th>
-                <th className="p-4">Date</th>
+                <th className="p-4">Statut</th>
+                <th className="p-4 text-right">Actions / Reçu</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -156,13 +167,20 @@ export function AdminReservationPayments() {
                     </td>
                     <td className="p-4">
                       {p.clientValidated ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold">Validé par le client</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 font-semibold">Validé client</Badge>
                       ) : (
                         <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800 font-semibold">En attente</Badge>
                       )}
                     </td>
-                    <td className="p-4 text-xs text-slate-500">
-                      {new Date(p.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    <td className="p-4 text-right">
+                      <Button
+                        size="sm"
+                        disabled={sendReceiptMutation.isPending || !p.clientValidated}
+                        onClick={() => sendReceiptMutation.mutate({ sessionToken, requestId: p.id })}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs gap-1.5 disabled:opacity-50"
+                      >
+                        <Mail className="h-3.5 w-3.5" /> Envoyer le reçu
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -170,7 +188,7 @@ export function AdminReservationPayments() {
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={5} className="p-12 text-center text-slate-500">
-                    Aucun paiement de réservation trouvé avec ces filtres.
+                    Aucun paiement trouvé avec ces critères.
                   </td>
                 </tr>
               )}

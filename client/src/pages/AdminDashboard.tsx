@@ -64,12 +64,14 @@ import {
 } from "recharts";
 import { useLocation } from "wouter";
 import { AdminPaymentManagement } from "@/components/AdminPaymentManagement";
+import { AdminReservationPayments } from "@/components/AdminReservationPayments";
 import { AdminDocumentsManagement } from "@/components/AdminDocumentsManagement";
 import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagement";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
+import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -1051,10 +1053,11 @@ export default function AdminDashboard() {
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs defaultValue="candidates" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-11 mb-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
             <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
@@ -1067,6 +1070,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <AdminCalendarView />
           </TabsContent>
 
           <TabsContent value="rag" className="space-y-6">
@@ -1524,9 +1531,6 @@ export default function AdminDashboard() {
 
           <TabsContent value="payments" className="space-y-6">
             <AdminPaymentManagement />
-            <div className="pt-8 border-t border-slate-200">
-              <AdminReservationPayments />
-            </div>
           </TabsContent>
 
           <TabsContent value="inbox" className="space-y-6">

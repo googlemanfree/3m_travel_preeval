@@ -580,8 +580,6 @@ export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
   serviceTypesJson: text("serviceTypesJson").notNull(), packType: varchar("packType", { length: 80 }), hotelCategory: varchar("hotelCategory", { length: 80 }), vehicleCategory: varchar("vehicleCategory", { length: 80 }), pickupLocation: varchar("pickupLocation", { length: 255 }),
   budgetXaf: int("budgetXaf"), quotedPriceXaf: int("quotedPriceXaf"), notes: text("notes"), adminNotes: text("adminNotes"), enrichmentJson: text("enrichmentJson"),
   status: mysqlEnum("status", ["new", "contacted", "quote_sent", "confirmed", "completed", "cancelled"]).notNull().default("new"),
-  pnrReference: varchar("pnrReference", { length: 120 }),
-  voucherPdfUrl: text("voucherPdfUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("idx_tourism_service_requests_status_created").on(table.status, table.createdAt)]);
 
@@ -1541,10 +1539,14 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   candidatePhone: varchar("candidatePhone", { length: 32 }),
   priority: mysqlEnum("priority", ["low", "normal", "high", "urgent"]).default("normal").notNull(),
   status: mysqlEnum("status", ["pending_review", "assigned", "needs_info", "revalidated", "awaiting_payment", "issued", "cancelled"]).default("pending_review").notNull(),
-  assignedAgentEmail: varchar("assignedAgentEmail", { length: 320 }),
+    assignedAgentEmail: varchar("assignedAgentEmail", { length: 320 }),
   agentNotes: text("agentNotes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  pnrReference: varchar("pnrReference", { length: 120 }),
+  issuedPdfUrl: text("issuedPdfUrl"),
+  paymentMethod: varchar("paymentMethod", { length: 50 }),
+  paymentTransactionId: varchar("paymentTransactionId", { length: 120 }),
+  clientValidated: boolean("clientValidated").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [
   index("idx_flight_requests_status").on(table.status),
   index("idx_flight_requests_assignee_status").on(table.assignedAgentEmail, table.status),
