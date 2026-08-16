@@ -80,4 +80,32 @@ export const tourismRouter = router({
     }
     return { success: true };
   }),
+
+  exportIcal: publicProcedure.query(async ({ ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const rows = await db.select().from(tourismServiceRequests);
+    const confirmed = rows.filter(r => r.status === "confirmed" || r.status === "completed");
+    
+    let ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//3M Travel & Services//Admin Calendar//FR\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\n";
+    for (const r of confirmed) {
+      const start = r.departureDate ? new Date(r.departureDate).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : new Date(r.createdAt).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      const end = r.returnDate ? new Date(r.returnDate).toISOString().replace(/[-:]/g, "").split(".")[0] + "Z" : start;
+      ics += "BEGIN:VEVENT\n";
+      ics += `UID:tourism-${r.id}@3mtravelagency.com\n`;
+      ics += `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"}\n`;
+      ics += `DTSTART:${start}\n`;
+      ics += `DTEND:${end}\n`;
+      ics += `SUMMARY:Réservation ${r.destination} (${r.fullName})\n`;
+      ics += `DESCRIPTION:Référence: ${r.reference}\\nClient: ${r.fullName} (${r.email})\\nType: Tourisme\\nStatut: ${r.status}\n`;
+      ics += "END:VEVENT\n";
+    }
+    ics += "END:VCALENDAR";
+
+    return {
+      fileName: `3m_travel_reservations_${new Date().toISOString().split("T")[0]}.ics`,
+      icsContent: ics,
+    };
+  }),
 });

@@ -90,5 +90,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
 
 ## Barre de Progression Visuelle e-Visa (v270)
-- [ ] Intégrer une frise de progression à 4 étapes sur chaque carte e-Visa de l'espace client (Soumission ➔ Vérification des pièces ➔ Traitement Consulaire ➔ Décision / Prêt)
-- [ ] Valider avec les tests et TypeScript puis publier la version finale
+- [x] Intégrer une frise de progression à 3 étapes sur chaque carte e-Visa de l'espace client (Soumission ➔ Vérification pièces ➔ Traitement consulaire & Décision)
+- [x] Valider avec les tests et TypeScript puis publier la version finale
