@@ -29,11 +29,11 @@ const services: Service[] = [
   },
   {
     id: "hotels",
-    name: "Hôtels & Tourisme",
+    name: "Hôtels, véhicules & Tourisme",
     icon: "🏨",
     color: "bg-amber-500",
-    path: "/hotels",
-    description: "Réservation facile",
+    path: "/tourisme",
+    description: "Hôtels, véhicules et packs",
   },
   {
     id: "insurance",

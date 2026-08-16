@@ -3011,15 +3011,16 @@
 - [x] Mettre à jour, valider et livrer la compétence réutilisable correspondante
 - [x] Tester les flux, permissions et publier la version complète
 
-## Modèles de Relance, Capacité et Exports Conseiller (v248)
-- [ ] Ajouter une interface administrateur pour personnaliser les modèles d’e-mail de relance par procédure
-- [ ] Afficher la capacité maximale et le taux d’occupation de chaque conseiller dans le tableau de charge
-- [ ] Exporter le rapport mensuel des dossiers traités par conseiller en CSV et PDF
-- [ ] Tester les permissions, les exports et publier la version complète
-
 ## Tourisme, Hôtels, Véhicules et Packs Professionnels (v249)
 - [x] Auditer les services auxiliaires actuels de réservation hôtel et véhicule ainsi que les parcours de panier
 - [x] Créer les contrats de demande et les packs professionnels de tourisme
 - [x] Intégrer des suggestions de lieux Google et des contenus IA générés côté serveur avec mention informative
 - [x] Créer la page Tourisme et les formulaires de demande hôtel, véhicule et pack
 - [x] Tester les demandes, les accès et publier la nouvelle expérience
+
+## Administration Dédiée Tourisme et Devis (v250)
+- [x] Créer la table et les procédures d’administration pour les demandes de tourisme et devis
+- [x] Développer le composant d’interface administrateur (AdminTourismRequests) avec filtres, recherche, devis, notes et export CSV
+- [x] Intégrer les demandes de tourisme dans le tableau de bord administrateur et la boîte de réception unifiée
+- [x] Valider avec les tests unitaires et TypeScript
+
