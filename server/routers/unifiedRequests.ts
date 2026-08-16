@@ -220,6 +220,27 @@ export const unifiedRequestsRouter = router({
       return { success: true };
     }),
 
+  bulkAssign: publicProcedure
+    .input(sessionInput.extend({ items: z.array(z.object({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive() })).min(1).max(100), assignedAdminAccountId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const advisor = (await db.select().from(adminAccounts).where(and(eq(adminAccounts.id, input.assignedAdminAccountId), eq(adminAccounts.status, "active"))).limit(1))[0];
+      if (!advisor) throw new TRPCError({ code: "BAD_REQUEST", message: "Conseiller indisponible." });
+      const sources = await loadSourceSnapshots();
+      let updated = 0;
+      for (const item of input.items) {
+        const source = sources.find((record) => record.sourceType === item.sourceType && record.sourceRecordId === item.sourceRecordId);
+        if (!source) continue;
+        const request = await ensureManagedRequest(source);
+        await db.update(unifiedClientRequests).set({ assignedAdminAccountId: advisor.id, firstRespondedAt: request.firstRespondedAt ?? new Date(), lastActivityAt: new Date() }).where(eq(unifiedClientRequests.id, request.id));
+        await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "bulk_assignment", previousValue: request.assignedAdminAccountId ? String(request.assignedAdminAccountId) : null, newValue: String(advisor.id), comment: `Réattribution groupée vers ${advisor.fullName}.`, actorAdminAccountId: admin.id });
+        updated++;
+      }
+      return { success: true, updated, advisor: advisor.fullName };
+    }),
+
   updateWorkflow: publicProcedure
     .input(sessionInput.extend({ sourceType: z.enum(sourceTypes), sourceRecordId: z.number().int().positive(), workflowStatus: z.enum(workflowStatuses), comment: z.string().trim().max(2000).optional() }))
     .mutation(async ({ input }) => {
@@ -438,6 +459,7 @@ export const unifiedRequestsRouter = router({
         overdue: open.filter((row) => row.dueAt && row.dueAt < now),
         today: open.filter((row) => row.dueAt && row.dueAt >= start && row.dueAt <= end),
         noDueDate: open.filter((row) => !row.dueAt),
+        blocked: open.filter((row) => ["waiting_customer", "documents_review", "payment_review"].includes(row.workflowStatus) || (row.dueAt && row.dueAt < now)),
         totalOpen: open.length,
       };
     }),

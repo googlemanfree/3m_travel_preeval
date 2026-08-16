@@ -2505,6 +2505,29 @@ export const adminRouter = router({
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "country_checklist_created", entityType: "document_requirement", description: `Checklist ${input.destination || "standard"} créée : ${missing.length} pièce(s) ajoutée(s).` });
       return { success: true, added: missing.length, country: input.destination || "Standard" };
     }),
+
+  sendCandidate360DocumentReminder: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const requirements = await db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id));
+      const missing = requirements.filter((item) => !["approved", "waived"].includes(item.status));
+      if (!missing.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Aucune pièce manquante à relancer pour ce dossier." });
+      const record = reference.source === "online"
+        ? (await db.select({ fullName: applications.fullName, email: applications.email, dossierNumber: applications.dossierNumber, candidateId: applications.candidateId }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ fullName: agencyDossiers.fullName, email: agencyDossiers.email, dossierNumber: agencyDossiers.id, candidateId: candidates.id }).from(agencyDossiers).leftJoin(candidates, eq(candidates.email, agencyDossiers.email)).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!record?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
+      const documentList = missing.map((item) => `<li><strong>${item.documentType}</strong>${item.adminComment ? ` — ${item.adminComment}` : ""}</li>`).join("");
+      await sendGenericEmail({ to: record.email, subject: `Documents à compléter — Dossier ${String(record.dossierNumber)}`, html: `<p>Bonjour ${record.fullName},</p><p>Votre dossier nécessite encore les pièces suivantes :</p><ul>${documentList}</ul><p>Connectez-vous à votre espace 3M Travel pour déposer les documents ou répondre à votre conseiller.</p>` });
+      if (record.candidateId) await db.insert(clientNotifications).values({ candidateId: record.candidateId, caseId: operationalCase.id, type: "documents_reminder", title: "Documents manquants à compléter", body: `${missing.length} pièce(s) restent à déposer ou à corriger. Consultez votre espace candidat.`, actionUrl: "/mon-espace?section=documents", isRead: false });
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "documents_reminder_sent", entityType: "case", entityId: String(operationalCase.id), description: `Relance envoyée pour ${missing.length} document(s) manquant(s).` });
+      return { success: true, count: missing.length };
+    }),
 });
 
 // ─── Générateurs HTML des modèles ─────────────────────────────────────────────

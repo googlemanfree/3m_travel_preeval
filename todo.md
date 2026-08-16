@@ -2992,3 +2992,9 @@
 - [x] Créer une vue « Mes dossiers aujourd’hui » pour chaque conseiller dans l’administration
 - [x] Ajouter une frise chronologique visuelle de l’évolution globale du dossier dans l’onglet Historique
 - [x] Tester les parcours, permissions et publier la version complète
+
+## Relances, Réattribution et Dossiers Bloqués (v245)
+- [x] Ajouter une relance en un clic aux candidats ayant des documents manquants
+- [x] Permettre la réattribution groupée de dossiers vers un autre conseiller avec historique
+- [x] Ajouter un filtre « dossiers bloqués » à la vue quotidienne des conseillers
+- [x] Tester les permissions, notifications et traitements groupés puis publier
