@@ -378,4 +378,48 @@ export const flightBookingRouter = router({
       }).from(flightBookingRequests).orderBy(desc(flightBookingRequests.createdAt));
       return rows;
     }),
+
+  sendPaymentReceiptEmail: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      
+      const subject = `Reçu de Paiement & Quittance - 3M Travel Agency (Réf: ${existing.requestRef})`;
+      const text = `Bonjour,\n\nNous vous confirmons la réception et l'enregistrement de votre règlement pour la réservation ${existing.requestRef}.\nMode de paiement : ${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}\nID de transaction : ${existing.paymentTransactionId || 'N/A'}\nStatut : Validé et enregistré dans votre espace client.\n\nMerci de faire confiance à 3M Travel & Services.\nContact : +237 698 10 48 32\nSite web : https://www.3mtravelagency.com`;
+      const html = `<div style="font-family:Arial,sans-serif;color:#1e293b;padding:20px;max-width:600px;margin:auto;border:1px solid #e2e8f0;border-radius:12px;">
+        <h2 style="color:#1d4ed8;margin-top:0;">3M Travel & Services — Quittance de Paiement</h2>
+        <p>Bonjour,</p>
+        <p>Nous vous confirmons l'enregistrement officiel de votre règlement pour la réservation <b>${existing.requestRef}</b>.</p>
+        <table style="width:100%;border-collapse:collapse;margin:20px 0;">
+          <tr style="background:#f8fafc;"><td style="padding:10px;border:1px solid #e2e8f0;"><b>Référence Dossier</b></td><td style="padding:10px;border:1px solid #e2e8f0;font-family:monospace;">${existing.requestRef}</td></tr>
+          <tr><td style="padding:10px;border:1px solid #e2e8f0;"><b>Mode de Paiement</b></td><td style="padding:10px;border:1px solid #e2e8f0;">${existing.paymentMethod === 'orange_money' ? 'Orange Money' : 'Guichet Agence'}</td></tr>
+          <tr style="background:#f8fafc;"><td style="padding:10px;border:1px solid #e2e8f0;"><b>ID de Transaction</b></td><td style="padding:10px;border:1px solid #e2e8f0;font-family:monospace;font-weight:bold;">${existing.paymentTransactionId || 'N/A'}</td></tr>
+          <tr><td style="padding:10px;border:1px solid #e2e8f0;"><b>Statut</b></td><td style="padding:10px;border:1px solid #e2e8f0;color:#10b981;font-weight:bold;">Validé par l'Agence</td></tr>
+        </table>
+        <p>Retrouvez l'historique complet et vos billets dans votre espace personnel sur notre site.</p>
+        <p style="font-size:12px;color:#64748b;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:10px;">3M Travel & Services SARL • Agence de Mobilité Internationale • Cameroun<br/>Contact : +237 698 10 48 32 • hello@3mtravelagency.com</p>
+      </div>`;
+
+      await sendEmail({
+        to: existing.candidateEmail,
+        subject,
+        text,
+        html,
+      });
+
+      await db.insert(flightBookingRequestHistory).values({
+        requestId: input.requestId,
+        action: "receipt_email_sent",
+        changedBy: admin.email,
+        oldValue: existing.status,
+        newValue: existing.status,
+        details: `Reçu de paiement envoyé par e-mail à ${existing.candidateEmail}`,
+      });
+
+      return { success: true };
+    }),
 });

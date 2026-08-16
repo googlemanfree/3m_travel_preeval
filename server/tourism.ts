@@ -85,7 +85,7 @@ export const tourismRouter = router({
         filtered = filtered.filter(r => r.status === input.status);
       }
       if (input.serviceType && input.serviceType !== "ALL") {
-        filtered = filtered.filter(r => r.serviceType === input.serviceType);
+        filtered = filtered.filter(r => (r.packType ?? "").toLowerCase() === input.serviceType.toLowerCase());
       }
       if (input.search) {
         const q = input.search.toLowerCase();
