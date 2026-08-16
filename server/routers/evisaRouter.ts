@@ -524,6 +524,84 @@ export const evisaRouter = router({
     }),
 
   /**
+   * Téléversement administrateur du document e-Visa final approuvé (PDF),
+   * mise à jour du statut en 'approved' et envoi synchrone par e-mail au client.
+   */
+  adminUploadEvisaPdf: publicProcedure
+    .input(
+      z.object({
+        sessionToken: z.string().min(1),
+        requestId: z.number().int().positive(),
+        fileBase64: z.string().min(1),
+        fileName: z.string().min(1),
+      })
+    )
+    .mutation(async ({ input }: any) => {
+      try {
+        await assertAdminSession(input.sessionToken);
+        const dbUrl = process.env.DATABASE_URL || '';
+        const connection = await mysql.createConnection(dbUrl);
+
+        // Récupérer la demande e-visa
+        const [rows]: any = await connection.execute(`
+          SELECT * FROM evisa_requests WHERE id = ?
+        `, [input.requestId]);
+
+        if (!rows || rows.length === 0) {
+          await connection.end();
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Demande d\'e-visa introuvable.' });
+        }
+
+        const req = rows[0];
+
+        // Stocker le fichier PDF via storagePut
+        const buffer = Buffer.from(input.fileBase64, 'base64');
+        const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${input.fileName}`;
+        const stored = await storagePut(storageKey, buffer, 'application/pdf');
+
+        // Mettre à jour la base de données
+        await connection.execute(`
+          UPDATE evisa_requests 
+          SET status = 'approved', issuedPdfUrl = ?, updatedAt = NOW() 
+          WHERE id = ?
+        `, [stored.url, input.requestId]);
+
+        await connection.end();
+
+        // Envoyer l'e-mail de notification au client avec le lien de téléchargement
+        await sendEmail({
+          to: req.email,
+          subject: `[3M Travel] Votre e-Visa pour ${req.countryName} est disponible - Dossier #${req.id}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px; background: #ffffff;">
+              <h2 style="color: #1e3a8a; margin-top: 0;">Votre e-Visa est approuvé et disponible !</h2>
+              <p>Bonjour <strong>${req.fullName}</strong>,</p>
+              <p>Nous avons le plaisir de vous informer que votre demande d'e-Visa pour <strong>${req.countryName}</strong> a été traitée avec succès et approuvée par les services consulaires.</p>
+              <div style="background: #f0fdf4; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #bbf7d0;">
+                <p style="margin: 0 0 8px 0; color: #166534;"><strong>Destination :</strong> ${req.countryName}</p>
+                <p style="margin: 0 0 8px 0; color: #166534;"><strong>Référence de demande :</strong> #${req.id}</p>
+                <p style="margin: 0; color: #166534;"><strong>Statut :</strong> Approuvé & Prêt au voyage</p>
+              </div>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${stored.url}" target="_blank" style="background: #16a34a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Télécharger mon e-Visa officiel (PDF)</a>
+              </p>
+              <p>Vous pouvez également retrouver ce document à tout moment dans votre espace personnel sur notre site.</p>
+              <p style="margin-top: 30px; font-size: 13px; color: #64748b;">Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+            </div>
+          `,
+        });
+
+        return { success: true, pdfUrl: stored.url };
+      } catch (error: any) {
+        console.error('Erreur lors du téléversement administrateur de l\'e-Visa:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: error.message || 'Erreur lors du téléversement du document e-Visa',
+        });
+      }
+    }),
+
+  /**
    * Récupérer les statistiques des e-visas
    */
   getEvisaStats: publicProcedure.query(async () => {

@@ -419,11 +419,22 @@ export default function EvaluationSpace() {
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">Soumis le : {new Date(ev.createdAt).toLocaleDateString('fr-FR')} — Frais totaux : {ev.totalCost} {ev.currency}</p>
                               </div>
-                              <div className="text-right">
-                                <span className="text-xs font-mono text-gray-600 block mb-1">ID Demande : #{ev.id}</span>
-                                <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-lg">
-                                  {ev.status === 'approved' ? 'Prêt au téléchargement' : 'Vérification en cours au back-office'}
-                                </span>
+                              <div className="text-right flex flex-col items-end gap-2">
+                                <div>
+                                  <span className="text-xs font-mono text-gray-600 block mb-1">ID Demande : #{ev.id}</span>
+                                  <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-lg">
+                                    {ev.status === 'approved' ? 'Approuvé' : 'Vérification en cours'}
+                                  </span>
+                                </div>
+                                {ev.issuedPdfUrl && (
+                                  <Button
+                                    onClick={() => window.open(ev.issuedPdfUrl, '_blank')}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 h-auto flex items-center gap-1.5 shadow-sm"
+                                  >
+                                    <Download className="w-3.5 h-3.5" />
+                                    Télécharger mon e-Visa
+                                  </Button>
+                                )}
                               </div>
                             </div>
 

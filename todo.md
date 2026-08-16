@@ -92,3 +92,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Barre de Progression Visuelle e-Visa (v270)
 - [x] Intégrer une frise de progression à 3 étapes sur chaque carte e-Visa de l'espace client (Soumission ➔ Vérification pièces ➔ Traitement consulaire & Décision)
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Remise Automatique du e-Visa Final (v271)
+- [x] Étendre le modèle de données et l'administration e-Visa pour téléverser et valider le document e-Visa final approuvé
+- [x] Automatiser l'envoi simultané par e-mail au client et l'affichage avec bouton de téléchargement dans son espace personnel
+- [x] Valider avec les tests et TypeScript puis publier la version finale
