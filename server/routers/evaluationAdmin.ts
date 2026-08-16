@@ -10,57 +10,31 @@ import { applications } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { TRPCError } from "@trpc/server";
+import { generateEvaluationReportHTML } from "../evaluationService";
+
+const draftInput = z.object({
+  dossierNumber: z.string().min(1),
+  finalScore: z.number().int().min(0).max(100),
+  verdict: z.string().trim().min(2).max(500),
+  strengths: z.array(z.string().trim().min(2).max(500)).max(6),
+  weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
+  recommendations: z.array(z.string().trim().min(2).max(800)).min(1).max(8),
+  message: z.string().trim().max(3000).optional(),
+  subject: z.string().trim().min(4).max(255).optional(),
+});
 
 /**
- * Envoyer l'email avec le bilan après 48h
+ * Envoyer le bilan validé par l’administration, immédiatement ou via le job planifié.
  */
 async function sendBilanEmail(
-  email: string,
-  fullName: string,
-  dossierNumber: string,
-  aiReport: any
+  application: typeof applications.$inferSelect,
+  subject?: string | null,
+  introMessage?: string | null,
 ): Promise<void> {
-  const htmlContent = `
-    <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
-      <h2 style="color: #0066cc;">3M Travel Agency - Bilan Consulaire</h2>
-      <p>Bonjour <strong>${fullName}</strong>,</p>
-      <p>L'étude de votre CV pour votre projet est terminée.</p>
-
-      <div style="background-color: #f4f6f8; border-left: 5px solid #0066cc; padding: 15px; margin: 20px 0;">
-        <p><strong>Score d'admissibilité :</strong> <span style="font-size: 18px; color: #0066cc; font-weight: bold;">${aiReport.score} / 100</span></p>
-        <p><strong>Verdict Consulaire :</strong> ${aiReport.verdict}</p>
-      </div>
-
-      <h3 style="color: #0066cc;">Points Forts</h3>
-      <ul>
-        ${aiReport.strengths.map((s: string) => `<li>${s}</li>`).join("")}
-      </ul>
-
-      <h3 style="color: #0066cc;">Points à Améliorer</h3>
-      <ul>
-        ${aiReport.weaknesses.map((w: string) => `<li>${w}</li>`).join("")}
-      </ul>
-
-      <h3 style="color: #0066cc;">Recommandations</h3>
-      <ul>
-        ${aiReport.recommendations.map((r: string) => `<li>${r}</li>`).join("")}
-      </ul>
-
-      <p style="text-align: center; margin: 25px 0;">
-        <a href="https://3mtravelagency.click/mon-espace?dossier=${dossierNumber}" 
-           style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-          Consulter mon Bilan Complet
-        </a>
-      </p>
-      <hr />
-      <p style="font-size: 12px; color: #888;">3M Travel Agency — Yaoundé, Biyem-Assi | www.3mtravelagency.click</p>
-    </div>
-  `;
-
   await sendEmail({
-    to: email,
-    subject: `Votre Bilan d'Admissibilité Officiel - Dossier N° ${dossierNumber}`,
-    html: htmlContent,
+    to: application.email,
+    subject: subject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+    html: generateEvaluationReportHTML(application, { introMessage }),
   });
 }
 
@@ -214,6 +188,40 @@ export const evaluationAdminRouter = router({
       }
     }),
 
+  /** Enregistrer un brouillon modifiable et produire l’aperçu du bilan. */
+  saveBilanDraft: protectedProcedure
+    .input(draftInput)
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données non disponible" });
+      const [application] = await db.select().from(applications).where(eq(applications.dossierNumber, input.dossierNumber)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé et ne peut plus être modifié." });
+      let details: Record<string, unknown> = {};
+      try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+      const nextDetails = { ...details, adminDraft: { finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations } };
+      const nextApplication = { ...application, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null };
+      await db.update(applications).set({ scoringDetails: nextApplication.scoringDetails, scoringTotal: input.finalScore, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      return { success: true, reportHtml: generateEvaluationReportHTML(nextApplication), message: "Brouillon enregistré. Vérifiez l’aperçu avant l’envoi." };
+    }),
+
+  /** Programmer la diffusion d’un brouillon de bilan à une date et heure précises. */
+  scheduleBilan: protectedProcedure
+    .input(z.object({ dossierNumber: z.string().min(1), scheduledAt: z.date() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      const now = new Date();
+      if (input.scheduledAt.getTime() <= now.getTime() + 60_000) throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez une date et heure au moins une minute dans le futur." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données non disponible" });
+      const [application] = await db.select().from(applications).where(eq(applications.dossierNumber, input.dossierNumber)).limit(1);
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
+      await db.update(applications).set({ evaluationScheduledAt: input.scheduledAt, evaluationDeliveryStatus: "scheduled", updatedAt: now }).where(eq(applications.id, application.id));
+      return { success: true, message: `Bilan programmé pour le ${input.scheduledAt.toLocaleString("fr-FR")}.` };
+    }),
+
   /**
    * Publier immédiatement le bilan d'un dossier (admin only).
    * Le job à 48 h reste un filet de sécurité pour les dossiers non traités.
@@ -242,32 +250,23 @@ export const evaluationAdminRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
         }
 
-        if (!["nouveau", "en_evaluation"].includes(application.dossierStatus)) {
+        if (application.evaluationDeliveryStatus === "sent" || !["nouveau", "en_evaluation"].includes(application.dossierStatus)) {
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Ce bilan a déjà été publié ou le dossier a progressé vers une étape ultérieure.",
           });
         }
 
-        // Marquer le bilan comme traité avant l'envoi : le job à 48 h ne pourra plus le renvoyer.
-        await db
-          .update(applications)
-          .set({
-            dossierStatus: "bilan_envoye",
-            evaluationCompletedAt: new Date(),
-            ...(input.adminNote ? { adminNote: input.adminNote } : {}),
-            updatedAt: new Date(),
-          })
-          .where(eq(applications.dossierNumber, input.dossierNumber));
-
-        // Envoyer l'email
-        const report = JSON.parse(application.scoringDetails || "{}");
-        await sendBilanEmail(
-          application.email,
-          application.fullName,
-          application.dossierNumber,
-          report
-        );
+        await sendBilanEmail(application, application.evaluationDeliverySubject, application.evaluationDeliveryMessage);
+        // Marquer le bilan comme traité après succès d’envoi : aucun job automatique ne le renverra.
+        await db.update(applications).set({
+          dossierStatus: "bilan_envoye",
+          evaluationCompletedAt: new Date(),
+          evaluationDeliveryStatus: "sent",
+          evaluationScheduledAt: null,
+          ...(input.adminNote ? { adminNote: input.adminNote } : {}),
+          updatedAt: new Date(),
+        }).where(eq(applications.dossierNumber, input.dossierNumber));
 
         return {
           success: true,

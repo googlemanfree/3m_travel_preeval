@@ -254,10 +254,29 @@ export function generatePersonalizedRecommendations(criteria: ScoringCriteria, a
 /**
  * Génère le rapport d'évaluation complet en HTML
  */
-export function generateEvaluationReportHTML(app: Application): string {
+type EvaluationReportOptions = {
+  introMessage?: string | null;
+};
+
+function escapeReportHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+export function generateEvaluationReportHTML(app: Application, options: EvaluationReportOptions = {}): string {
   const scores = generateAllDestinationScores(app);
   const topScore = scores[0];
   const criteria = extractScoringCriteria(app);
+  let adminDraft: { finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[] } = {};
+  try {
+    const parsed = JSON.parse(app.scoringDetails || "{}");
+    adminDraft = parsed.adminDraft || {};
+  } catch {
+    adminDraft = {};
+  }
+  const customIntro = options.introMessage ?? app.evaluationDeliveryMessage;
+  const recommendations = Array.isArray(adminDraft.recommendations) && adminDraft.recommendations.length
+    ? adminDraft.recommendations
+    : generatePersonalizedRecommendations(criteria, app);
 
   // Barre de progression visuelle
   const progressBar = (score: number): string => {
@@ -313,6 +332,7 @@ export function generateEvaluationReportHTML(app: Application): string {
     <div class="body">
       <p>Bonjour <strong>${app.fullName}</strong>,</p>
       <p>Nous avons le plaisir de vous transmettre les conclusions de notre comité d'admission concernant l'analyse approfondie de votre dossier de candidature pour notre programme de mobilité internationale.</p>
+      ${customIntro ? `<div class="recommendation"><p>${escapeReportHtml(customIntro).replace(/\n/g, "<br/>")}</p></div>` : ""}
       
       <div class="section">
         <div class="section-title">📊 SYNTHÈSE DES SCORES PAR DESTINATION</div>
@@ -371,10 +391,11 @@ export function generateEvaluationReportHTML(app: Application): string {
         <div style="margin-top: 20px;">
           <h4 style="color: #1E3A8A; font-size: 14px; margin-bottom: 10px; font-weight: 700;">💡 Recommandations personnalisées pour optimiser votre score :</h4>
           <ul style="margin: 0; padding-left: 20px; color: #374151; font-size: 13px; line-height: 1.6;">
-            ${generatePersonalizedRecommendations(criteria, app).map(rec => `<li style="margin-bottom: 8px;">${rec}</li>`).join("")}
+            ${recommendations.map(rec => `<li style="margin-bottom: 8px;">${escapeReportHtml(rec)}</li>`).join("")}
           </ul>
         </div>
       </div>
+      ${adminDraft.verdict || adminDraft.strengths?.length || adminDraft.weaknesses?.length || adminDraft.finalScore !== undefined ? `<div class="section"><div class="section-title">🧭 AVIS PERSONNALISÉ DU CONSEILLER</div>${adminDraft.finalScore !== undefined ? `<p><strong>Indice révisé par l’administration :</strong> ${adminDraft.finalScore}/100</p>` : ""}${adminDraft.verdict ? `<p><strong>Verdict :</strong> ${escapeReportHtml(adminDraft.verdict)}</p>` : ""}${adminDraft.strengths?.length ? `<p><strong>Points forts :</strong></p><ul>${adminDraft.strengths.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}${adminDraft.weaknesses?.length ? `<p><strong>Axes d’amélioration :</strong></p><ul>${adminDraft.weaknesses.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}</div>` : ""}
       
       <div class="section">
         <div class="section-title">⚙️ CADRE JURIDIQUE</div>

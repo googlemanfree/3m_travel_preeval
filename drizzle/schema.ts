@@ -351,6 +351,11 @@ export const applications = mysqlTable("applications", {
   evaluationReportUrl: text("evaluationReportUrl"),
   evaluationScore: int("evaluationScore"),
   evaluationBadge: varchar("evaluationBadge", { length: 50 }),
+  // Préparation et diffusion du bilan par l’administration
+  evaluationScheduledAt: timestamp("evaluationScheduledAt"),
+  evaluationDeliveryMessage: text("evaluationDeliveryMessage"),
+  evaluationDeliverySubject: varchar("evaluationDeliverySubject", { length: 255 }),
+  evaluationDeliveryStatus: mysqlEnum("evaluationDeliveryStatus", ["draft", "scheduled", "sent", "failed"]).default("draft").notNull(),
   
   // Gestion des documents (originaux vs scan pro)
   documentsSubmissionMethod: mysqlEnum("documentsSubmissionMethod", ["en_ligne", "agence_physique"]),

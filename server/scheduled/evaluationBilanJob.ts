@@ -3,7 +3,7 @@ import { getDb } from "../db";
 import { applications } from "../../drizzle/schema";
 import { eq, and, lt } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
-import { sendEvisaStatusUpdateEmail } from "../emailService";
+import { sendEmail } from "../_core/email";
 
 export async function handleEvaluationBilanJob(req: Request, res: Response): Promise<void> {
   try {
@@ -20,16 +20,12 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
 
     console.log(`[Evaluation Bilan Job] Looking for applications created before ${fortyEightHoursAgo.toISOString()}`);
 
-    const apps = await db
-      .select()
-      .from(applications)
-      .where(
-        and(
-          eq(applications.dossierStatus, "en_evaluation"),
-          lt(applications.createdAt, fortyEightHoursAgo)
-        )
-      )
-      .limit(100);
+    const candidates = await db.select().from(applications).where(eq(applications.dossierStatus, "en_evaluation")).limit(200);
+    const apps = candidates.filter((app) => {
+      const isManualScheduleDue = app.evaluationDeliveryStatus === "scheduled" && app.evaluationScheduledAt && app.evaluationScheduledAt <= now;
+      const isAutomaticFallbackDue = app.evaluationDeliveryStatus !== "scheduled" && app.createdAt < fortyEightHoursAgo;
+      return isManualScheduleDue || isAutomaticFallbackDue;
+    });
 
     console.log(`[Evaluation Bilan Job] Found ${apps.length} applications ready for bilan`);
 
@@ -39,13 +35,19 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     for (const app of apps) {
       try {
         const reportHtml = generateEvaluationReportHTML(app);
-        await sendEvisaStatusUpdateEmail(app.email, app.fullName, app.dossierNumber, app.destination, "processing", reportHtml);
+        await sendEmail({
+          to: app.email,
+          subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,
+          html: reportHtml,
+        });
 
         await db
           .update(applications)
           .set({
             dossierStatus: "en_attente_paiement",
             evaluationCompletedAt: new Date(),
+            evaluationDeliveryStatus: "sent",
+            evaluationScheduledAt: null,
             evaluationReportUrl: `${process.env.APP_BASE_URL || "https://3mtravelagency.click"}/api/dossier/${app.dossierNumber}/report`,
           })
           .where(eq(applications.id, app.id));

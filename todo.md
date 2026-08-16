@@ -2935,3 +2935,10 @@
 - [x] Conserver l’envoi automatique à 48 heures uniquement comme relance et traitement par défaut
 - [x] Afficher clairement la distinction entre action manuelle immédiate et échéance automatique
 - [x] Tester les deux parcours et publier la correction
+
+## Prévisualisation, Personnalisation et Planification des Bilans (v236)
+- [ ] Ajouter un brouillon de bilan modifiable et une prévisualisation complète avant envoi définitif
+- [ ] Permettre l’ajustement administrateur du score, du verdict, des forces, axes d’amélioration et recommandations avec traçabilité
+- [ ] Ajouter des modèles de messages personnalisables selon le profil et la destination du candidat
+- [ ] Permettre l’envoi immédiat ou la planification manuelle à une date et heure précises
+- [ ] Tester les permissions, l’envoi unique, la planification et publier la version complète

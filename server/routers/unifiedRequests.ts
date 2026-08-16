@@ -18,10 +18,22 @@ import { unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzl
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
+import { generateEvaluationReportHTML } from "../evaluationService";
+import { sendEmail } from "../_core/email";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 const priorities = ["low", "normal", "high", "urgent"] as const;
+const evaluationDraftSchema = z.object({
+  sourceRecordId: z.number().int().positive(),
+  finalScore: z.number().int().min(0).max(100),
+  verdict: z.string().trim().min(2).max(500),
+  strengths: z.array(z.string().trim().min(2).max(500)).max(6),
+  weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
+  recommendations: z.array(z.string().trim().min(2).max(800)).min(1).max(8),
+  message: z.string().trim().max(3000).optional(),
+  subject: z.string().trim().min(4).max(255).optional(),
+});
 
 type SourceType = typeof sourceTypes[number];
 type WorkflowStatus = typeof workflowStatuses[number];
@@ -225,6 +237,74 @@ export const unifiedRequestsRouter = router({
       await db.update(unifiedClientRequests).set({ lastActivityAt: new Date(), firstRespondedAt: request.firstRespondedAt ?? new Date() }).where(eq(unifiedClientRequests.id, request.id));
       await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "internal_comment", comment: input.comment, actorAdminAccountId: admin.id });
       return { success: true };
+    }),
+
+  getEvaluationDelivery: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      let details: Record<string, any> = {};
+      try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+      const adminDraft = details.adminDraft ?? {};
+      return { application, draft: { finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}` } };
+    }),
+
+  saveEvaluationDeliveryDraft: publicProcedure
+    .input(sessionInput.extend(evaluationDraftSchema.shape))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé et ne peut plus être modifié." });
+      let details: Record<string, unknown> = {};
+      try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+      const nextDetails = { ...details, adminDraft: { finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations } };
+      const updatedApplication = { ...application, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null };
+      const scoreBadge = input.finalScore >= 80 ? "eligible" : input.finalScore >= 60 ? "admissible" : "faible";
+      await db.update(applications).set({ scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: "Brouillon du bilan, score et message d’accompagnement mis à jour.", actorAdminAccountId: admin.id }); }
+      return { success: true, reportHtml: generateEvaluationReportHTML(updatedApplication), message: "Brouillon enregistré et prévisualisation mise à jour." };
+    }),
+
+  scheduleEvaluationDelivery: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), scheduledAt: z.date() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      if (input.scheduledAt.getTime() <= Date.now() + 60_000) throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez une date et heure au moins une minute dans le futur." });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
+      await db.update(applications).set({ evaluationScheduledAt: input.scheduledAt, evaluationDeliveryStatus: "scheduled", updatedAt: new Date() }).where(eq(applications.id, application.id));
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_scheduled", comment: `Envoi du bilan programmé pour le ${input.scheduledAt.toLocaleString("fr-FR")}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, message: `Bilan programmé pour le ${input.scheduledAt.toLocaleString("fr-FR")}.` };
+    }),
+
+  sendEvaluationNow: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      if (application.evaluationDeliveryStatus === "sent") throw new TRPCError({ code: "BAD_REQUEST", message: "Le bilan a déjà été envoyé." });
+      if (!["nouveau", "en_evaluation"].includes(application.dossierStatus)) throw new TRPCError({ code: "BAD_REQUEST", message: "Le dossier a déjà progressé vers une étape ultérieure." });
+      await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: generateEvaluationReportHTML(application) });
+      const now = new Date();
+      await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, updatedAt: now }).where(eq(applications.id, application.id));
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }
+      return { success: true, message: "Bilan validé et envoyé immédiatement. La relance automatique de 48 h est annulée." };
     }),
 
   getCustomer360: publicProcedure
