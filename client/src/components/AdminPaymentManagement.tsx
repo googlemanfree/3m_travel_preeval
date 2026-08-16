@@ -30,6 +30,8 @@ export function AdminPaymentManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "PENDING" | "SUCCESS" | "FAILED">("all");
   const [filterMethod, setFilterMethod] = useState<"all" | "mobile_money" | "agency">("all");
+  const [summaryStartDate, setSummaryStartDate] = useState("");
+  const [summaryEndDate, setSummaryEndDate] = useState("");
   
   // États pour la modale de confirmation
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -78,7 +80,11 @@ export function AdminPaymentManagement() {
 
   const monthlySummary = useMemo(() => {
     const aggregates = new Map<string, { label: string; mobileMoney: number; agency: number; other: number }>();
-    for (const payment of payments.filter((item) => item.paymentStatus === "SUCCESS" && item.paymentDate)) {
+    for (const payment of payments.filter((item) => {
+      if (item.paymentStatus !== "SUCCESS" || !item.paymentDate) return false;
+      const dateKey = new Date(item.paymentDate).toISOString().slice(0, 10);
+      return (!summaryStartDate || dateKey >= summaryStartDate) && (!summaryEndDate || dateKey <= summaryEndDate);
+    })) {
       const date = new Date(payment.paymentDate!);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       const entry = aggregates.get(key) || {
@@ -94,7 +100,7 @@ export function AdminPaymentManagement() {
       aggregates.set(key, entry);
     }
     return Array.from(aggregates.entries()).sort(([left], [right]) => left.localeCompare(right)).slice(-6).map(([, value]) => value);
-  }, [payments]);
+  }, [payments, summaryStartDate, summaryEndDate]);
   const monthlyMax = Math.max(1, ...monthlySummary.flatMap((item) => [item.mobileMoney, item.agency, item.other]));
 
   // Ajouter un indicateur de chargement
@@ -154,6 +160,10 @@ export function AdminPaymentManagement() {
 
   const handleConfirmAction = async () => {
     if (!selectedPayment || !actionType) return;
+    if (actionType === "cancel" && adminNote.trim().length < 3) {
+      toast.error("Un motif de rejet d’au moins 3 caractères est obligatoire.");
+      return;
+    }
     
     setIsProcessing(true);
     try {
@@ -311,11 +321,17 @@ export function AdminPaymentManagement() {
       </div>
 
       <Card className="border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-white">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-base text-indigo-950">
-            <BarChart3 className="h-5 w-5 text-indigo-600" /> Synthèse comptable mensuelle
-          </CardTitle>
-          <CardDescription>Encaissements validés, ventilés par mode de paiement et calculés à partir des paiements enregistrés.</CardDescription>
+        <CardHeader className="gap-3 pb-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base text-indigo-950">
+              <BarChart3 className="h-5 w-5 text-indigo-600" /> Synthèse comptable mensuelle
+            </CardTitle>
+            <CardDescription>Encaissements validés, ventilés par mode de paiement et calculés à partir des paiements enregistrés.</CardDescription>
+          </div>
+          <div className="grid grid-cols-2 gap-2" aria-label="Filtrer la synthèse comptable par période">
+            <div><Label htmlFor="summary-start-date" className="text-[11px] text-slate-600">Du</Label><Input id="summary-start-date" type="date" value={summaryStartDate} onChange={(event) => setSummaryStartDate(event.target.value)} className="mt-1 h-8 text-xs" /></div>
+            <div><Label htmlFor="summary-end-date" className="text-[11px] text-slate-600">Au</Label><Input id="summary-end-date" type="date" min={summaryStartDate || undefined} value={summaryEndDate} onChange={(event) => setSummaryEndDate(event.target.value)} className="mt-1 h-8 text-xs" /></div>
+          </div>
         </CardHeader>
         <CardContent>
           {monthlySummary.length === 0 ? (
@@ -615,7 +631,7 @@ export function AdminPaymentManagement() {
             </Button>
             <Button
               onClick={handleConfirmAction}
-              disabled={isProcessing}
+              disabled={isProcessing || (actionType === 'cancel' && adminNote.trim().length < 3)}
               className={actionType === 'confirm' ? 'bg-emerald-600 hover:bg-emerald-700 text-white font-semibold' : 'bg-red-600 hover:bg-red-700 text-white font-semibold'}
             >
               {isProcessing ? (

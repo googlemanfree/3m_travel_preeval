@@ -664,6 +664,11 @@ export default function AdminDashboard() {
     },
     { enabled: !!sessionToken }
   );
+  const { data: pendingPaymentApplications = [] } = trpc.application.listApplications.useQuery({
+    paymentStatus: "PENDING",
+    limit: 100,
+    offset: 0,
+  });
 
   const { data: countryDistribution, isLoading: isLoadingCountryDistribution, refetch: refetchCountryDistribution } = trpc.admin.getCandidateCountryDistribution.useQuery(
     { sessionToken, limit: 12 },
@@ -1032,7 +1037,7 @@ export default function AdminDashboard() {
         <Tabs defaultValue="candidates" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-9 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
-            <TabsTrigger value="payments">Paiements</TabsTrigger>
+            <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
             <TabsTrigger value="activations">Activations</TabsTrigger>

@@ -2911,3 +2911,9 @@
 - [x] Ajouter un graphique de synthèse mensuelle des revenus par mode de paiement
 - [x] Permettre au candidat de téléverser un nouveau reçu directement depuis une notification de rejet
 - [x] Tester les permissions et publier la version (v231)
+
+## Pilotage Avancé des Paiements en Attente (v232)
+- [x] Ajouter un sélecteur de plage de dates à la synthèse comptable mensuelle
+- [x] Afficher un badge avec le nombre de paiements en attente dans la navigation administrateur
+- [x] Rendre obligatoire le motif de rejet et l’afficher au-dessus du dépôt de nouveau reçu côté client
+- [x] Tester les flux et publier la version (v232)
