@@ -11,6 +11,7 @@ import { getDb } from '../db';
 import { sql } from 'drizzle-orm';
 import { storagePut } from '../storage';
 import { sendEmail } from '../_core/email';
+import { buildPassportCorrectionAudit } from '../services/passportCorrectionHistory';
 
 export const evisaRouter = router({
   /**
@@ -440,6 +441,8 @@ export const evisaRouter = router({
         passportFile: z.string().optional(),
         passportFileName: z.string().optional(),
         passportFileSize: z.number().optional(),
+        passportExtractedData: z.record(z.string(), z.unknown()).optional(),
+        passportValidatedData: z.record(z.string(), z.unknown()).optional(),
       })
     )
     .mutation(async ({ input }: any) => {
@@ -493,12 +496,35 @@ export const evisaRouter = router({
         ];
 
         const [result] = await connection.execute(query, params);
+        const requestId = (result as any).insertId;
+
+        if (input.passportValidatedData) {
+          const audit = buildPassportCorrectionAudit(
+            input.passportExtractedData || {},
+            input.passportValidatedData || {},
+          );
+
+          await connection.execute(
+            `INSERT INTO evisa_passport_correction_history
+              (requestId, actorEmail, actorName, source, changedFields, previousData, nextData)
+             VALUES (?, ?, ?, 'candidate', ?, ?, ?)`,
+            [
+              requestId,
+              input.email,
+              input.fullName,
+              JSON.stringify(audit.changedFields),
+              JSON.stringify(audit.previousData),
+              JSON.stringify(audit.nextData),
+            ]
+          );
+        }
+
         await connection.end();
 
         return {
           success: true,
           message: 'Demande d\'e-visa soumise avec succès',
-          requestId: (result as any).insertId,
+          requestId,
         };
       } catch (error: any) {
         console.error('Erreur lors de la soumission de la demande d\'e-visa:', error);

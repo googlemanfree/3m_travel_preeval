@@ -155,3 +155,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reporter tous les champs corrigés (numéro, émission, expiration, genre et lieu de naissance) dans l’étape de confirmation finale.
 - [x] Vérifier la suite du parcours sur desktop et mobile après correction manuelle.
 - [x] Couvrir le parcours upload → extraction → édition → confirmation par un test navigateur automatisé responsive.
+
+## Aperçu, PDF et audit des corrections passeport
+- [x] Ajouter une visionneuse miniature du passeport à côté du formulaire d’édition.
+- [x] Générer et télécharger un PDF du récapitulatif des données validées.
+- [x] Enregistrer les corrections manuelles et les rendre visibles dans l’administration.
+- [x] Formaliser et valider le flux dans la compétence `prime-travel-case-management` avec `skill-creator`.

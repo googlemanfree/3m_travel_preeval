@@ -73,6 +73,7 @@ import AdminCandidateActivationPanel from "@/components/AdminCandidateActivation
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminCurrencyRates } from "@/components/AdminCurrencyRates";
+import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrectionHistory";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1070,6 +1071,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
             <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
             <TabsTrigger value="rates" className="gap-1.5 font-bold text-emerald-600">💱 Taux de Change</TabsTrigger>
+            <TabsTrigger value="passport-history" className="gap-1.5 font-bold text-indigo-600">Passeports vérifiés</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tourism" className="space-y-6">
@@ -1539,6 +1541,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="rates" className="space-y-6">
             <AdminCurrencyRates />
+          </TabsContent>
+
+          <TabsContent value="passport-history" className="space-y-6">
+            <AdminPassportCorrectionHistory />
           </TabsContent>
 
           <TabsContent value="payments" className="space-y-6">

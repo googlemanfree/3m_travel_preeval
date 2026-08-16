@@ -3,7 +3,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, FileCheck2, RotateCcw, Save, Upload, UserRoundCheck } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, FileCheck2, RotateCcw, Save, Upload, UserRoundCheck } from 'lucide-react';
+import jsPDF from 'jspdf';
 import { normalizeManualPassportData, validateManualPassportData } from '@/lib/passportValidation';
 
 interface ExtractedData {
@@ -22,6 +23,9 @@ interface ExtractedData {
 
 interface ValidationStepProps {
   extractedData: ExtractedData;
+  passportFileUrl?: string | null;
+  passportFileType?: string;
+  passportFileName?: string;
   onConfirm: (validatedData: ExtractedData) => void;
   onEdit: () => void;
   isLoading?: boolean;
@@ -53,6 +57,9 @@ const fields: FieldConfig[] = [
 
 export function ValidationStep({
   extractedData,
+  passportFileUrl = null,
+  passportFileType = '',
+  passportFileName = '',
   onConfirm,
   onEdit,
   isLoading = false,
@@ -95,6 +102,61 @@ export function ValidationStep({
     onConfirm(normalizeManualPassportData(editedData));
   };
 
+  const downloadValidatedPdf = () => {
+    const data = normalizeManualPassportData(editedData);
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pageWidth, 32, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.text('3M Travel & Services', 15, 13);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('Récapitulatif des données passeport vérifiées', 15, 21);
+    doc.setTextColor(148, 163, 184);
+    doc.setFontSize(30);
+    doc.text('3M TRAVEL', 105, 150, { angle: 35, align: 'center' });
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Informations validées par le candidat', 15, 48);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+
+    const rows: Array<[string, string]> = [
+      ['Nom complet', data.fullName],
+      ['Prénom(s)', data.firstName || 'Non renseigné'],
+      ['Nom de famille', data.lastName || 'Non renseigné'],
+      ['Date de naissance', data.dateOfBirth || 'Non renseignée'],
+      ['Nationalité', data.nationality || 'Non renseignée'],
+      ['Numéro de passeport', data.passportNumber || 'Non renseigné'],
+      ['Pays d’émission', data.issuingCountry || 'Non renseigné'],
+      ['Date d’émission', data.issueDate || 'Non renseignée'],
+      ['Date d’expiration', data.expiryDate || 'Non renseignée'],
+      ['Genre', data.gender || 'Non renseigné'],
+      ['Lieu de naissance', data.placeOfBirth || 'Non renseigné'],
+    ];
+    let y = 61;
+    rows.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label} :`, 15, y);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, 67, y);
+      y += 8;
+    });
+    doc.setDrawColor(226, 232, 240);
+    doc.line(15, y + 4, pageWidth - 15, y + 4);
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text('Document de vérification préparatoire — ne constitue pas un visa officiel.', 15, y + 13);
+    doc.text(`Fichier analysé : ${passportFileName || 'Passeport transmis'}`, 15, y + 19);
+    doc.save(`recapitulatif-passeport-${Date.now()}.pdf`);
+  };
+
+  const isPdf = passportFileType === 'application/pdf' || passportFileName.toLowerCase().endsWith('.pdf');
+
   return (
     <form onSubmit={handleConfirm} className="space-y-6" noValidate>
       <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4" role="status" aria-live="polite">
@@ -116,10 +178,16 @@ export function ValidationStep({
             </h4>
             <p className="mt-1 text-xs text-slate-500">Les champs marqués d’un astérisque sont obligatoires. Les valeurs modifiées sont signalées.</p>
           </div>
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {modifiedFields.size > 0 ? `${modifiedFields.size} correction(s) manuelle(s)` : 'Extraction terminée'}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {modifiedFields.size > 0 ? `${modifiedFields.size} correction(s) manuelle(s)` : 'Extraction terminée'}
+            </span>
+            <Button type="button" variant="outline" size="sm" onClick={downloadValidatedPdf} disabled={isLoading} className="h-8 border-blue-200 text-blue-700">
+              <Download className="mr-1.5 h-3.5 w-3.5" />
+              PDF récapitulatif
+            </Button>
+          </div>
         </div>
 
         {errors.form && (
@@ -129,7 +197,31 @@ export function ValidationStep({
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[240px_minmax(0,1fr)] xl:items-start">
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-3 xl:sticky xl:top-4" aria-label="Aperçu du passeport">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold text-slate-900">Aperçu du document</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">Relisez la page biographique</p>
+              </div>
+              <FileCheck2 className="h-4 w-4 text-blue-600" />
+            </div>
+            {passportFileUrl ? (
+              isPdf ? (
+                <object data={passportFileUrl} type="application/pdf" className="h-[280px] w-full rounded-xl border border-slate-200 bg-white" aria-label={`Aperçu de ${passportFileName || 'votre passeport'}`}>
+                  <p className="p-3 text-xs text-slate-600">L’aperçu PDF n’est pas disponible dans ce navigateur. Utilisez le fichier transmis pour relire vos informations.</p>
+                </object>
+              ) : (
+                <img src={passportFileUrl} alt="Aperçu de la page d’identité du passeport" className="h-[280px] w-full rounded-xl border border-slate-200 bg-white object-contain" />
+              )
+            ) : (
+              <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center text-xs text-slate-500">
+                Aucun aperçu disponible
+              </div>
+            )}
+            <p className="mt-2 text-[11px] leading-relaxed text-slate-500">L’image reste utilisée uniquement pour vous aider à comparer les champs extraits avec votre document.</p>
+          </aside>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {fields.map(field => {
             const value = editedData[field.key] || '';
             const hasError = Boolean(errors[field.key]);
@@ -161,6 +253,7 @@ export function ValidationStep({
               </div>
             );
           })}
+          </div>
         </div>
       </Card>
 

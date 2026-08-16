@@ -348,6 +348,20 @@ export default function EvisaRequestForm() {
       passportFile: finalPassportFileUrl,
       passportFileName: passportFileName,
       passportFileSize: passportFileSize,
+      passportExtractedData: extractedData ? { ...extractedData } : undefined,
+      passportValidatedData: {
+        fullName: formData.fullName,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        dateOfBirth: formData.dateOfBirth,
+        nationality: formData.nationality,
+        passportNumber: formData.passportNumber,
+        issuingCountry: formData.issuingCountry,
+        issueDate: formData.issueDate,
+        expiryDate: formData.expiryDate,
+        gender: formData.gender,
+        placeOfBirth: formData.placeOfBirth,
+      },
     });
   };
 
@@ -536,6 +550,9 @@ export default function EvisaRequestForm() {
           {currentStep === 'validation' && extractedData && (
             <ValidationStep
               extractedData={extractedData}
+              passportFileUrl={passportFileUrl}
+              passportFileType={passportFile?.type}
+              passportFileName={passportFile?.name}
               onConfirm={handleValidationConfirm}
               onEdit={handleEditPassport}
               isLoading={isLoading}

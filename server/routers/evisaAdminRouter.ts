@@ -371,6 +371,54 @@ export const evisaAdminRouter = router({
     }),
 
   /**
+   * Historique des corrections manuelles des données passeport, réservé aux admins
+   */
+  getPassportCorrectionHistory: protectedProcedure
+    .input(z.object({ requestId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(200).default(50) }))
+    .query(async ({ ctx, input }: any) => {
+      if (ctx.user?.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Seuls les administrateurs peuvent consulter cet historique' });
+      }
+
+      const connection = await mysql.createConnection(process.env.DATABASE_URL || '');
+      try {
+        const clauses = ['1 = 1'];
+        const params: any[] = [];
+        if (input.requestId) {
+          clauses.push('h.requestId = ?');
+          params.push(input.requestId);
+        }
+
+        const [rows] = await connection.execute(
+          `SELECT h.*, r.fullName, r.email, r.countryName, r.countryCode
+             FROM evisa_passport_correction_history h
+             LEFT JOIN evisa_requests r ON r.id = h.requestId
+            WHERE ${clauses.join(' AND ')}
+            ORDER BY h.createdAt DESC
+            LIMIT ?`,
+          [...params, input.limit]
+        );
+
+        const parseJson = (value: unknown, fallback: unknown) => {
+          if (typeof value !== 'string') return value ?? fallback;
+          try { return JSON.parse(value); } catch { return fallback; }
+        };
+
+        return (rows as any[]).map(row => ({
+          ...row,
+          changedFields: parseJson(row.changedFields, []),
+          previousData: parseJson(row.previousData, {}),
+          nextData: parseJson(row.nextData, {}),
+        }));
+      } catch (error: any) {
+        console.error('Erreur lors de la récupération de l’historique passeport:', error);
+        throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Impossible de récupérer l’historique des corrections passeport' });
+      } finally {
+        await connection.end();
+      }
+    }),
+
+  /**
    * Téléversement administrateur du document e-Visa final approuvé (PDF)
    */
   adminUploadPdf: protectedProcedure

@@ -43,6 +43,10 @@ test.describe('Demande e-Visa — vérification manuelle du passeport', () => {
     });
 
     await expect(page.getByText('Vérifiez les informations extraites')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('complementary', { name: 'Aperçu du passeport' })).toBeVisible();
+    const pdfDownload = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'PDF récapitulatif' }).click();
+    await expect((await pdfDownload).suggestedFilename()).toMatch(/recapitulatif-passeport-.*\.pdf/);
     const fullName = page.locator('#passport-fullName');
     await expect(fullName).toHaveValue('AUREOL DONFACK');
     await fullName.fill('AUREOL NGONO DONFACK');
