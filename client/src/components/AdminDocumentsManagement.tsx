@@ -517,6 +517,7 @@ export function AdminDocumentsManagement() {
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Dossier</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidat</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-700">Miniature</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Nom du Document</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Classification IA</th>
@@ -530,6 +531,19 @@ export function AdminDocumentsManagement() {
                       <tr key={doc.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-3 px-4 font-mono text-blue-600">{doc.dossierNumber}</td>
                         <td className="py-3 px-4 font-medium text-gray-900">{doc.candidateName}</td>
+                        <td className="py-3 px-4">
+                          <div 
+                            onClick={() => setPreviewingDoc(doc)} 
+                            className="w-10 h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
+                            title="Cliquer pour agrandir la miniature"
+                          >
+                            {doc.documentUrl && (doc.documentUrl.endsWith(".png") || doc.documentUrl.endsWith(".jpg") || doc.documentUrl.endsWith(".jpeg") || doc.documentUrl.includes("image")) ? (
+                              <img src={doc.documentUrl} alt={doc.documentName} className="w-full h-full object-cover" />
+                            ) : (
+                              <FileText className="w-5 h-5 text-blue-600" />
+                            )}
+                          </div>
+                        </td>
                         <td className="py-3 px-4 text-gray-600">{getDocumentTypeLabel(doc.documentType)}</td>
                         <td className="py-3 px-4 text-gray-600 truncate max-w-xs">{doc.documentName}</td>
                         <td className="py-3 px-4">
