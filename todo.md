@@ -2961,3 +2961,9 @@
 - [x] Envoyer un rappel e-mail unique après 72 heures sans consultation du bilan finalisé
 - [x] Ajouter l’export PDF du comparatif entre deux versions pour l’audit interne
 - [x] Tester les accès, les délais et les exports, puis publier la version complète
+
+## Correctif Fiche Candidat et Accès Administrateur (v240)
+- [x] Reproduire et corriger l’erreur « Candidat introuvable » au clic depuis l’administration
+- [x] Fiabiliser la recherche de candidat par identifiant, e-mail et dossier, y compris les dossiers importés en agence
+- [x] Vérifier que tous les administrateurs actifs accèdent aux fiches candidates, dossiers, documents, paiements et historiques autorisés
+- [x] Ajouter des tests de régression, vérifier l’interface et publier le correctif

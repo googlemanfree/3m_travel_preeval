@@ -29,6 +29,14 @@ export function deriveCandidateActivationStatus(
   return "not_registered";
 }
 
+export function parseAdminCandidateReference(reference: string): { source: "online" | "agency"; id: number } | null {
+  const match = /^(online|agency)_(\d+)$/.exec(reference.trim());
+  if (!match) return null;
+  const id = Number(match[2]);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return { source: match[1] as "online" | "agency", id };
+}
+
 export const adminRouter = router({
   // ─────────────────────────────────────────────────────────────────────────
   // ADMIN ÉVALUATION — Gestion des CV et rapports IA
@@ -1274,8 +1282,9 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const [source, idStr] = input.candidateId.split("_");
-        const id = parseInt(idStr);
+        const reference = parseAdminCandidateReference(input.candidateId);
+        if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+        const { source, id } = reference;
 
         // Mapper le statut admin vers le statut interne
         const statusLabels: Record<string, string> = {
@@ -1661,8 +1670,9 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
-        const [source, idStr] = input.candidateId.split("_");
-        const id = parseInt(idStr);
+        const reference = parseAdminCandidateReference(input.candidateId);
+        if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+        const { source, id } = reference;
 
         if (source === "online") {
           const [app] = await db.select().from(applications).where(eq(applications.id, id)).limit(1);

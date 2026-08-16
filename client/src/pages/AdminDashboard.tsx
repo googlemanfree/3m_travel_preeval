@@ -220,9 +220,11 @@ function CandidateDetailModal({
   const { toast } = useToast();
   const [notifyClient, setNotifyClient] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<AdminStatus | "">("");
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    : "";
 
-  const { data, isLoading } = trpc.admin.getCandidateDetails.useQuery(
+  const { data, isLoading, error, refetch } = trpc.admin.getCandidateDetails.useQuery(
     { sessionToken, candidateId },
     { enabled: !!candidateId && !!sessionToken }
   );
@@ -413,9 +415,11 @@ function CandidateDetailModal({
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center py-12 text-gray-500">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            Candidat introuvable
+          <div className="py-12 text-center text-gray-600">
+            <AlertCircle className="mx-auto mb-3 h-6 w-6 text-amber-600" />
+            <p className="font-medium">Impossible de charger cette fiche candidat</p>
+            <p className="mt-1 text-sm text-gray-500">{error?.message || "La fiche est peut-être en cours de synchronisation. Actualisez puis réessayez."}</p>
+            <Button className="mt-4" variant="outline" onClick={() => void refetch()}>Réessayer</Button>
           </div>
         )}
 
