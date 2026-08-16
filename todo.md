@@ -2967,3 +2967,9 @@
 - [x] Fiabiliser la recherche de candidat par identifiant, e-mail et dossier, y compris les dossiers importés en agence
 - [x] Vérifier que tous les administrateurs actifs accèdent aux fiches candidates, dossiers, documents, paiements et historiques autorisés
 - [x] Ajouter des tests de régression, vérifier l’interface et publier le correctif
+
+## Correctif Confirmation de Réservation Vol (v241)
+- [x] Reproduire le clic inactif sur « Confirmer » dans le récapitulatif de vol
+- [x] Corriger la mutation, les validations et l’enregistrement de la demande de réservation
+- [x] Afficher un état de chargement, une confirmation visible et une erreur exploitable si la soumission échoue
+- [x] Tester le parcours de réservation et publier le correctif

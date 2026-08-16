@@ -10,7 +10,7 @@ import {
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
-import { candidateProcedure } from "./candidate";
+import { candidateProcedure, findCandidateFromAuthorizationHeader, getOrCreateCandidateForPlatformUser } from "./candidate";
 import { getDb } from "../db";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
@@ -33,6 +33,23 @@ type FlightPassengerData = Record<string, unknown>;
 function extractCandidatePhone(passengers: FlightPassengerData[]) {
   const value = passengers[0]?.phone ?? passengers[0]?.phoneNumber ?? passengers[0]?.telephone;
   return typeof value === "string" && value.trim() ? value.trim().slice(0, 32) : null;
+}
+
+export function resolveBookingRequester(
+  passenger: FlightPassengerData,
+  candidate: { id: number; email: string } | null,
+) {
+  const email = typeof passenger.email === "string" ? passenger.email.trim().toLowerCase() : "";
+  const fullName = typeof passenger.fullName === "string" ? passenger.fullName.trim() : "";
+  if (!z.string().email().safeParse(email).success || fullName.length < 2) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Le nom complet et une adresse e-mail valide du passager sont requis." });
+  }
+  return {
+    candidateId: candidate?.id ?? null,
+    email: candidate?.email ?? email,
+    fullName,
+    isGuest: !candidate,
+  };
 }
 
 const passportExtractedDataSchema = z.object({
@@ -188,7 +205,7 @@ export const flightBookingRouter = router({
       return { id: scan.id, signedUrl, fileName: scan.fileName, scanStatus: scan.scanStatus, confidence: scan.confidence, extractedData: scan.extractedData, issues: scan.issues };
     }),
 
-  createRequest: candidateProcedure
+  createRequest: publicProcedure
     .input(z.object({
       flightId: z.string().min(1).max(255),
       flightData: z.record(z.string(), z.unknown()),
@@ -199,11 +216,16 @@ export const flightBookingRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+      const candidate = ctx.user
+        ? await getOrCreateCandidateForPlatformUser(ctx.user)
+        : await findCandidateFromAuthorizationHeader((ctx.req as any)?.headers?.authorization as string | undefined);
+      const requester = resolveBookingRequester(input.passengerData[0] ?? {}, candidate ? { id: candidate.id, email: candidate.email } : null);
       const requestRef = buildRequestRef();
       const inserted = await db.insert(flightBookingRequests).values({
         requestRef,
-        candidateId: ctx.candidate.id,
-        candidateEmail: ctx.candidate.email,
+        candidateId: requester.candidateId,
+        candidateEmail: requester.email,
         flightId: input.flightId,
         flightData: input.flightData,
         passengerData: input.passengerData,
@@ -215,12 +237,12 @@ export const flightBookingRouter = router({
       await db.insert(flightBookingRequestHistory).values({
         requestId,
         action: "created",
-        changedBy: ctx.candidate.email,
+        changedBy: requester.email,
         oldValue: null,
         newValue: "pending_review",
-        details: "Demande de réservation créée depuis le checkout en ligne.",
+        details: requester.isGuest ? "Demande de réservation invitée créée depuis le checkout en ligne." : "Demande de réservation créée depuis le checkout candidat.",
       });
-      return { success: true, requestId, requestRef, status: "pending_review" as const };
+      return { success: true, requestId, requestRef, status: "pending_review" as const, requiresAccountActivation: requester.isGuest };
     }),
 
   getMyRequests: candidateProcedure.query(async ({ ctx }) => {

@@ -16,9 +16,11 @@ describe("flight booking agent workflow", () => {
     expect(schema).toContain('"pending_review"');
   });
 
-  it("protège le scan candidat et les actions agent", () => {
+  it("protège le scan candidat et les actions agent, tout en acceptant une demande invitée contrôlée", () => {
     expect(router).toContain("scanPassport: candidateProcedure");
-    expect(router).toContain("createRequest: candidateProcedure");
+    expect(router).toContain("createRequest: publicProcedure");
+    expect(router).toContain("resolveBookingRequester");
+    expect(schema).toContain('candidateId: int("candidateId"),');
     expect(router).toContain("requireValidAdminSession");
     expect(router).toContain("getQueueSummary");
     expect(router).toContain("assignRequest");

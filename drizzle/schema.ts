@@ -1519,7 +1519,7 @@ export type InsertPassportScanRequest = typeof passportScanRequests.$inferInsert
 export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   id: int("id").autoincrement().primaryKey(),
   requestRef: varchar("requestRef", { length: 32 }).notNull().unique(),
-  candidateId: int("candidateId").notNull(),
+  candidateId: int("candidateId"),
   candidateEmail: varchar("candidateEmail", { length: 320 }).notNull(),
   flightId: varchar("flightId", { length: 255 }).notNull(),
   flightData: json("flightData").notNull(),

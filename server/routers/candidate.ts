@@ -96,6 +96,16 @@ async function getCandidateFromHeader(authHeader: string | undefined) {
   return rows[0];
 }
 
+/** Résout une session candidat facultative sans empêcher la création d’une demande publique. */
+export async function findCandidateFromAuthorizationHeader(authHeader: string | undefined) {
+  try {
+    return await getCandidateFromHeader(authHeader);
+  } catch (error) {
+    if (error instanceof TRPCError && (error.code === "UNAUTHORIZED" || error.code === "NOT_FOUND")) return null;
+    throw error;
+  }
+}
+
 // ─── Lier un compte plateforme (Google/Facebook/Manus) à un dossier candidat réel ─
 // Au lieu de renvoyer des données fictives pour les utilisateurs OAuth, on leur
 // associe (ou crée) une vraie ligne dans `candidates`, pour qu'ils bénéficient

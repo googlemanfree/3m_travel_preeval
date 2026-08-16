@@ -80,15 +80,19 @@ export default function FlightBookingCheckout() {
   const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [isTicketExporting, setIsTicketExporting] = useState(false);
   const [passportScanId, setPassportScanId] = useState<number | null>(null);
+  const [bookingSubmitError, setBookingSubmitError] = useState<string | null>(null);
   const createRequestMutation = trpc.flightBooking.createRequest.useMutation({
     onSuccess: (result) => {
       setDossierRef(result.requestRef);
+      setBookingSubmitError(null);
       setShowConfirmModal(false);
       setSubmitted(true);
-      toast({ title: "Demande transmise à l'agence", description: `Référence ${result.requestRef}. Le tarif et la disponibilité seront revalidés par un agent.` });
+      toast({ title: "Demande transmise à l'agence", description: `${result.requiresAccountActivation ? "Votre demande est enregistrée. Créez ou activez votre espace client pour suivre son évolution. " : ""}Référence ${result.requestRef}. Le tarif et la disponibilité seront revalidés par un agent.` });
     },
     onError: (error) => {
-      toast({ title: "Transmission impossible", description: error.message || "Réessayez ou contactez l'agence.", variant: "destructive" });
+      const message = error.message || "Réessayez ou contactez l'agence.";
+      setBookingSubmitError(message);
+      toast({ title: "Transmission impossible", description: message, variant: "destructive" });
     },
   });
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
@@ -126,6 +130,7 @@ export default function FlightBookingCheckout() {
       toast({ title: "Vol introuvable", description: "Retournez aux résultats et sélectionnez un vol.", variant: "destructive" });
       return;
     }
+    setBookingSubmitError(null);
     createRequestMutation.mutate({
       flightId: selectedFlight.id,
       flightData: selectedFlight as unknown as Record<string, unknown>,
@@ -596,12 +601,13 @@ export default function FlightBookingCheckout() {
                      <p className="text-xs text-slate-500">En confirmant, vous préparez votre demande. L’agence doit revalider le tarif et les disponibilités avant toute émission.</p>
                   </div>
                   <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1 h-12 rounded-xl border-slate-200">Modifier</Button>
+                    <Button type="button" variant="outline" onClick={() => { setBookingSubmitError(null); setShowConfirmModal(false); }} className="flex-1 h-12 rounded-xl border-slate-200">Modifier</Button>
                     <Button type="button" onClick={handleFinalSubmit} disabled={createRequestMutation.isPending} className="flex-1 h-12 rounded-xl bg-blue-600 font-black text-white hover:bg-blue-700 disabled:opacity-60">
                       {createRequestMutation.isPending ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                       {createRequestMutation.isPending ? "Transmission…" : "Confirmer"}
                     </Button>
                   </div>
+                  {bookingSubmitError && <p role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{bookingSubmitError}</p>}
                 </motion.div>
               </div>
             )}
