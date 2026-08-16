@@ -33,7 +33,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
-import { DocumentUploadZone } from "@/components/DocumentUploadZone";
+import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 
 export default function EvaluationSpace() {
