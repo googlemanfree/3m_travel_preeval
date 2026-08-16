@@ -67,6 +67,35 @@ export const tourismRouter = router({
     return { success: true };
   }),
 
+  updatePnrAndVoucher: publicProcedure.input(z.object({ id: z.number().int().positive(), pnrReference: z.string().trim().min(2).max(120), voucherPdfUrl: z.string().url().optional() })).mutation(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(tourismServiceRequests).set({ pnrReference: input.pnrReference, voucherPdfUrl: input.voucherPdfUrl || null, status: "confirmed" }).where(eq(tourismServiceRequests.id, input.id));
+    return { success: true };
+  }),
+
+  uploadVoucherPdf: publicProcedure.input(z.object({
+    id: z.number().int().positive(),
+    fileName: z.string().trim().min(5).max(255),
+    mimeType: z.literal("application/pdf"),
+    dataBase64: z.string().min(20).max(7_000_000),
+  })).mutation(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const requests = await db.select().from(tourismServiceRequests).where(eq(tourismServiceRequests.id, input.id)).limit(1);
+    const req = requests[0];
+    if (!req) throw new TRPCError({ code: "NOT_FOUND", message: "Demande introuvable." });
+    const bytes = Buffer.from(input.dataBase64, "base64");
+    if (bytes.length === 0 || bytes.length > 5 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier PDF doit peser au maximum 5 Mo." });
+    if (!bytes.subarray(0, 4).equals(Buffer.from("%PDF"))) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit être un PDF valide." });
+    const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const stored = await storagePut(`tourism-vouchers/${req.reference}/${safeName}`, bytes, input.mimeType);
+    await db.update(tourismServiceRequests).set({ voucherPdfUrl: stored.url, status: "confirmed" }).where(eq(tourismServiceRequests.id, req.id));
+    return { success: true, url: stored.url };
+  }),
+
   exportIcal: publicProcedure.query(async ({ ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();

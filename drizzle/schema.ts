@@ -580,6 +580,8 @@ export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
   serviceTypesJson: text("serviceTypesJson").notNull(), packType: varchar("packType", { length: 80 }), hotelCategory: varchar("hotelCategory", { length: 80 }), vehicleCategory: varchar("vehicleCategory", { length: 80 }), pickupLocation: varchar("pickupLocation", { length: 255 }),
   budgetXaf: int("budgetXaf"), quotedPriceXaf: int("quotedPriceXaf"), notes: text("notes"), adminNotes: text("adminNotes"), enrichmentJson: text("enrichmentJson"),
   status: mysqlEnum("status", ["new", "contacted", "quote_sent", "confirmed", "completed", "cancelled"]).notNull().default("new"),
+  pnrReference: varchar("pnrReference", { length: 120 }),
+  voucherPdfUrl: text("voucherPdfUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(), updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("idx_tourism_service_requests_status_created").on(table.status, table.createdAt)]);
 
