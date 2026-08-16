@@ -45,6 +45,7 @@ export function inferUnifiedWorkflow(sourceType: SourceType, status: string): Wo
   const normalized = status.toLowerCase();
   if (normalized.includes("rejected") || normalized.includes("cancelled") || normalized === "refuse") return "rejected";
   if (normalized.includes("completed") || normalized.includes("issued") || normalized.includes("approved") || normalized.includes("visa_approuve")) return "completed";
+  if (normalized === "bilan_envoye") return "processing";
   if (normalized.includes("payment") || normalized === "paye") return "payment_review";
   if (normalized.includes("document")) return "documents_review";
   if (normalized.includes("submitted") || normalized.includes("soumis")) return "submitted";

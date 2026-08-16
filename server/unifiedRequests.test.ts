@@ -5,6 +5,7 @@ describe("boîte de réception unifiée", () => {
   it("normalise les statuts métier de sources différentes vers le cycle commun", () => {
     expect(inferUnifiedWorkflow("application", "en_attente_documents")).toBe("documents_review");
     expect(inferUnifiedWorkflow("flight", "awaiting_payment")).toBe("payment_review");
+    expect(inferUnifiedWorkflow("application", "bilan_envoye")).toBe("processing");
     expect(inferUnifiedWorkflow("translation", "completed")).toBe("completed");
     expect(inferUnifiedWorkflow("contact", "new")).toBe("qualifying");
     expect(inferUnifiedWorkflow("consultation", "rejected")).toBe("rejected");

@@ -2929,3 +2929,9 @@
 - [x] Construire la boîte de réception unifiée et la fiche client 360° dans le tableau de bord administrateur
 - [x] Ajouter les alertes SLA, les indicateurs d’échéance et le tableau de pilotage des volumes, délais et conversions
 - [x] Tester les droits, la synchronisation client-administration et publier la version complète
+
+## Validation Immédiate des Évaluations et Délai par Défaut (v235)
+- [x] Permettre à l’administrateur d’ouvrir, valider et envoyer immédiatement un bilan d’évaluation prêt
+- [x] Conserver l’envoi automatique à 48 heures uniquement comme relance et traitement par défaut
+- [x] Afficher clairement la distinction entre action manuelle immédiate et échéance automatique
+- [x] Tester les deux parcours et publier la correction

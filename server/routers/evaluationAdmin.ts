@@ -215,10 +215,11 @@ export const evaluationAdminRouter = router({
     }),
 
   /**
-   * Publier manuellement le bilan d'un dossier (admin only)
+   * Publier immédiatement le bilan d'un dossier (admin only).
+   * Le job à 48 h reste un filet de sécurité pour les dossiers non traités.
    */
   publishBilan: protectedProcedure
-    .input(z.object({ dossierNumber: z.string() }))
+    .input(z.object({ dossierNumber: z.string(), adminNote: z.string().trim().max(2000).optional() }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user?.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -241,11 +242,20 @@ export const evaluationAdminRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
         }
 
-        // Mettre à jour le statut
+        if (!["nouveau", "en_evaluation"].includes(application.dossierStatus)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Ce bilan a déjà été publié ou le dossier a progressé vers une étape ultérieure.",
+          });
+        }
+
+        // Marquer le bilan comme traité avant l'envoi : le job à 48 h ne pourra plus le renvoyer.
         await db
           .update(applications)
           .set({
             dossierStatus: "bilan_envoye",
+            evaluationCompletedAt: new Date(),
+            ...(input.adminNote ? { adminNote: input.adminNote } : {}),
             updatedAt: new Date(),
           })
           .where(eq(applications.dossierNumber, input.dossierNumber));
@@ -261,7 +271,7 @@ export const evaluationAdminRouter = router({
 
         return {
           success: true,
-          message: "Bilan publié et email envoyé avec succès",
+          message: "Bilan validé et envoyé immédiatement. L’échéance automatique de 48 h est annulée pour ce dossier.",
         };
       } catch (error) {
         console.error("Erreur lors de la publication du bilan:", error);
