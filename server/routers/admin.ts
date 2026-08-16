@@ -39,6 +39,39 @@ export function parseAdminCandidateReference(reference: string): { source: "onli
 
 const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 
+const COUNTRY_DOCUMENT_CHECKLISTS: Record<string, Array<{ documentType: string; comment: string }>> = {
+  canada: [
+    { documentType: "Passeport", comment: "Passeport valide couvrant la durée prévue du séjour." },
+    { documentType: "CV", comment: "CV détaillé et à jour, adapté au projet." },
+    { documentType: "Test linguistique", comment: "Résultat officiel TCF/TEF ou IELTS si applicable." },
+    { documentType: "Diplômes et relevés", comment: "Copies lisibles des diplômes et relevés académiques." },
+    { documentType: "Justificatifs financiers", comment: "Relevés bancaires et preuves de fonds selon le programme." },
+    { documentType: "Casier judiciaire", comment: "Extrait de casier judiciaire récent, selon les exigences en vigueur." },
+  ],
+  luxembourg: [
+    { documentType: "Passeport", comment: "Passeport valide et pages d’identité lisibles." },
+    { documentType: "CV", comment: "CV détaillé en français ou en anglais." },
+    { documentType: "Diplômes et certifications", comment: "Diplômes, équivalences et attestations professionnelles." },
+    { documentType: "Justificatifs d’expérience", comment: "Attestations d’emploi ou certificats de travail." },
+    { documentType: "Assurance médicale", comment: "Assurance couvrant la période de séjour selon la procédure." },
+    { documentType: "Justificatif d’hébergement", comment: "Réservation ou attestation d’hébergement si requis." },
+  ],
+  default: [
+    { documentType: "Passeport", comment: "Passeport valide, lisible et couvrant la durée du projet." },
+    { documentType: "Photo d’identité", comment: "Photo récente, nette et conforme aux exigences de la destination." },
+    { documentType: "CV", comment: "CV à jour mettant en valeur l’expérience pertinente." },
+    { documentType: "Justificatifs financiers", comment: "Preuves de ressources selon la destination et la procédure." },
+    { documentType: "Documents civils", comment: "Acte de naissance, mariage ou documents familiaux si applicables." },
+  ],
+};
+
+function countryChecklistFor(destination?: string | null) {
+  const normalized = String(destination || "").trim().toLowerCase();
+  if (normalized.includes("canada")) return COUNTRY_DOCUMENT_CHECKLISTS.canada;
+  if (normalized.includes("luxembourg")) return COUNTRY_DOCUMENT_CHECKLISTS.luxembourg;
+  return COUNTRY_DOCUMENT_CHECKLISTS.default;
+}
+
 export function parseCandidate360Labels(value: string | null | undefined) {
   try {
     const labels = JSON.parse(value ?? "[]");
@@ -2453,6 +2486,24 @@ export const adminRouter = router({
       await db.update(caseTasks).set({ taskStatus: "completed" }).where(eq(caseTasks.id, task.id));
       await db.insert(caseActivityLogs).values({ caseId: task.caseId, actorRole: "admin", actorId: admin.id, actionType: "task_completed", entityType: "task", entityId: String(task.id), description: task.title });
       return { success: true };
+    }),
+
+  createCountryDocumentChecklist: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1), destination: z.string().trim().min(2).max(100).optional() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const checklist = countryChecklistFor(input.destination);
+      const existing = await db.select({ documentType: documentRequirements.documentType }).from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id));
+      const existingTypes = new Set(existing.map((item) => item.documentType.toLowerCase()));
+      const missing = checklist.filter((item) => !existingTypes.has(item.documentType.toLowerCase()));
+      if (missing.length) await db.insert(documentRequirements).values(missing.map((item) => ({ caseId: operationalCase.id, documentType: item.documentType, isRequired: true, status: "pending" as const, adminComment: item.comment })));
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "country_checklist_created", entityType: "document_requirement", description: `Checklist ${input.destination || "standard"} créée : ${missing.length} pièce(s) ajoutée(s).` });
+      return { success: true, added: missing.length, country: input.destination || "Standard" };
     }),
 });
 

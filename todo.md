@@ -2985,3 +2985,10 @@
 - [x] Ajouter les prochaines actions, les échéances, les priorités, les conseillers responsables et les étiquettes personnalisées
 - [x] Ajouter la vue quotidienne des dossiers à traiter et les indicateurs de blocage dans le tableau administrateur
 - [x] Tester les permissions, la synchronisation, l’accessibilité et publier la version complète
+
+## Correctif Espace Client et Outils de Suivi (v244)
+- [x] Reproduire et corriger le chargement infini de /mon-espace avec un état de repli exploitable
+- [x] Ajouter la création directe de checklists documentaires spécifiques par pays dans la fiche 360°
+- [x] Créer une vue « Mes dossiers aujourd’hui » pour chaque conseiller dans l’administration
+- [x] Ajouter une frise chronologique visuelle de l’évolution globale du dossier dans l’onglet Historique
+- [x] Tester les parcours, permissions et publier la version complète

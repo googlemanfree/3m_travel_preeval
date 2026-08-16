@@ -421,4 +421,24 @@ export const unifiedRequestsRouter = router({
         byAdvisor: Array.from(byAdvisor.entries()).map(([advisorId, total]) => ({ advisorId, total })),
       };
     }),
+
+  myToday: publicProcedure
+    .input(sessionInput)
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select().from(unifiedClientRequests).where(eq(unifiedClientRequests.assignedAdminAccountId, admin.id)).orderBy(unifiedClientRequests.dueAt, desc(unifiedClientRequests.priority)).limit(100);
+      const now = new Date();
+      const start = new Date(now); start.setHours(0, 0, 0, 0);
+      const end = new Date(now); end.setHours(23, 59, 59, 999);
+      const open = rows.filter((row) => !["completed", "closed", "rejected"].includes(row.workflowStatus));
+      return {
+        admin: { id: admin.id, fullName: admin.fullName },
+        overdue: open.filter((row) => row.dueAt && row.dueAt < now),
+        today: open.filter((row) => row.dueAt && row.dueAt >= start && row.dueAt <= end),
+        noDueDate: open.filter((row) => !row.dueAt),
+        totalOpen: open.length,
+      };
+    }),
 });

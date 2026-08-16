@@ -52,10 +52,22 @@ export default function EvaluationSpace() {
   const [visaTypeCalc, setVisaTypeCalc] = useState<string>("study"); // study, work, visitor, business
 
   // Requête unique pour le résumé complet du tableau de bord client
-  const { data: dashboardData, isLoading, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
+  const { data: dashboardData, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
+    retry: 1,
+    retryDelay: 1000,
   });
+  const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingTimeoutReached(false);
+      return;
+    }
+    const timeout = window.setTimeout(() => setLoadingTimeoutReached(true), 12_000);
+    return () => window.clearTimeout(timeout);
+  }, [isLoading]);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -103,13 +115,32 @@ export default function EvaluationSpace() {
     );
   }
 
-  if (isLoading || !dashboardData) {
+  if (isLoading && !loadingTimeoutReached) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center">
           <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
           <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
-          <p className="text-gray-500 text-sm">Veuillez patienter pendant la synchronisation sécurisée</p>
+          <p className="text-gray-500 text-sm">Synchronisation sécurisée en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isError || !dashboardData) {
+    const errorMessage = error instanceof Error ? error.message : "La synchronisation de votre dossier n’a pas abouti.";
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
+        <Card className="max-w-md w-full p-8 text-center shadow-xl">
+          <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" aria-hidden="true" />
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Votre espace ne répond pas encore</h2>
+          <p className="text-gray-600 text-sm">Nous n’avons pas pu synchroniser les données de votre dossier. Vos informations restent conservées.</p>
+          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">{errorMessage}</p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <Button onClick={() => { setLoadingTimeoutReached(false); void refetch(); }} className="bg-blue-600 hover:bg-blue-700"><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>
+            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button>
+          </div>
+          <Button variant="link" className="mt-3 text-sm" onClick={() => setLocation(`/mon-espace?section=messages`)}><MessageSquare className="mr-1 h-4 w-4" />Contacter l’agence</Button>
         </Card>
       </div>
     );

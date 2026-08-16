@@ -73,6 +73,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [comment, setComment] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDueAt, setTaskDueAt] = useState("");
+  const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "Canada");
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
@@ -113,6 +114,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const completeTaskMutation = trpc.admin.completeCandidate360Task.useMutation({
     onSuccess: () => void refresh(),
     onError: (mutationError) => toast({ title: "Action impossible", description: mutationError.message, variant: "destructive" }),
+  });
+  const countryChecklistMutation = trpc.admin.createCountryDocumentChecklist.useMutation({
+    onSuccess: async (result) => {
+      toast({ title: "Checklist créée", description: `${result.added} pièce(s) ajoutée(s) pour ${result.country}.` });
+      await refresh();
+    },
+    onError: (mutationError) => toast({ title: "Checklist impossible", description: mutationError.message, variant: "destructive" }),
   });
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);
@@ -214,6 +222,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-3 pt-4">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h4 className="font-semibold text-slate-900">Créer une checklist par pays</h4><p className="mt-1 text-sm text-slate-600">Les pièces déjà présentes sont conservées ; seules les exigences manquantes sont ajoutées.</p></div><div className="flex w-full gap-2 sm:w-auto"><Select value={checklistCountry} onValueChange={setChecklistCountry}><SelectTrigger className="flex-1 sm:w-44"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Canada">Canada</SelectItem><SelectItem value="Luxembourg">Luxembourg</SelectItem><SelectItem value="Autre destination">Autre destination</SelectItem></SelectContent></Select><Button disabled={countryChecklistMutation.isPending} onClick={() => countryChecklistMutation.mutate({ sessionToken, candidateId: candidate.id, destination: checklistCountry })}><Plus className="mr-1 h-4 w-4" />Créer</Button></div></div></div>
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Pièces requises et vérification</h4><div className="mt-3 space-y-2">{data.requirements.length ? data.requirements.map((requirement: any) => <div key={requirement.id} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3"><div><p className="text-sm font-medium">{requirement.documentType}</p><p className="text-xs text-slate-500">{requirement.adminComment || "Aucun commentaire"}</p></div><StateBadge status={requirement.status} /></div>) : <p className="text-sm text-slate-500">La checklist documentaire sera créée selon la procédure choisie.</p>}</div></div>
           <div className="rounded-xl border p-4"><h4 className="font-semibold text-slate-900">Documents centralisés</h4><div className="mt-3 space-y-2">{data.documents.length ? data.documents.map((document: any) => <div key={document.id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3"><div><p className="text-sm font-medium">{document.documentType} · {document.fileName}</p><p className="text-xs text-slate-500">Déposé le {formatDate(document.uploadedAt)} · {document.uploadedByRole}</p></div><StateBadge status={document.reviewStatus} /></div>) : <p className="text-sm text-slate-500">Aucun document opérationnel n’est encore centralisé dans ce dossier.</p>}</div></div>
         </TabsContent>
@@ -228,7 +237,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
 
         <TabsContent value="history" className="space-y-3 pt-4">
-          <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Journal d’activité consolidé</h4><div className="mt-3 space-y-2">{data.activity.length ? data.activity.map((activity: any, index: number) => <div key={`${activity.type}-${index}`} className="border-l-2 border-blue-200 pl-3 py-1"><p className="text-sm font-medium text-slate-800">{activity.type}</p><p className="text-sm text-slate-600">{activity.description || "Action enregistrée"}</p><p className="text-xs text-slate-400">{activity.actor} · {formatDate(activity.createdAt)}</p></div>) : <p className="text-sm text-slate-500">L’historique s’alimentera au fil des actions de traitement.</p>}</div></div>
+          <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Frise chronologique du dossier</h4><p className="mt-1 text-sm text-slate-500">Chaque jalon est daté et attribué pour visualiser rapidement l’évolution globale.</p><div className="mt-5 space-y-0">{data.activity.length ? data.activity.map((activity: any, index: number) => <div key={`${activity.type}-${index}`} className="grid grid-cols-[92px_24px_minmax(0,1fr)] gap-3"><p className="pt-1 text-right text-xs text-slate-500">{new Date(activity.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</p><div className="relative flex justify-center"><span className="z-10 mt-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow" />{index < data.activity.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><p className="text-sm font-semibold capitalize text-slate-800">{String(activity.type).replaceAll("_", " ")}</p><p className="mt-1 text-sm text-slate-600">{activity.description || "Action enregistrée"}</p><p className="mt-1 text-xs text-slate-400">{activity.actor} · {formatDate(activity.createdAt)}</p></div></div>) : <p className="text-sm text-slate-500">L’historique s’alimentera au fil des actions de traitement.</p>}</div></div>
         </TabsContent>
       </Tabs>
 

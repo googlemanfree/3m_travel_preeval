@@ -1524,8 +1524,8 @@ export const candidateRouter = router({
       agencyDocRows,
     ] = await Promise.all([
       db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)),
-      db.select().from(favoriteFlights).where(eq((favoriteFlights as any).candidateId || (favoriteFlights as any).userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
-      db.select().from(evaluations).where(eq((evaluations as any).candidateEmail || (evaluations as any).email, candidate.email)).orderBy(desc(evaluations.createdAt)),
+      db.select().from(favoriteFlights).where(eq(favoriteFlights.userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
+      db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)),
       db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
       db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, candidate.id)).orderBy(desc(candidateFiles.uploadedAt)),
       db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, candidate.email)).orderBy(desc(clientDocuments.createdAt)),
