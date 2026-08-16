@@ -105,3 +105,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Envoi Automatique e-Mail PDF e-Visa (v273)
 - [x] Configurer l'envoi automatique du PDF e-Visa par e-mail au client avec pièce jointe dès le téléversement admin
 - [x] Valider avec les tests et TypeScript puis publier la version finale
+
+## Formulaires Intelligents Multi-Services, Liens Consulaires & IA Avancée (v274)
+- [ ] Étendre le système de formulaires dynamiques pour s'adapter à chaque service (e-Visa, Visa travail, Études, Tourisme, Vol, Hôtel)
+- [ ] Intégrer un répertoire admin des liens consulaires officiels par pays avec raccourcis de soumission
+- [ ] Documenter et configurer le support des modèles IA spécialisés (Claude / Perplexity / Forge LLM) pour l'assistance aux dossiers
+- [ ] Valider avec les tests et TypeScript puis publier la version finale

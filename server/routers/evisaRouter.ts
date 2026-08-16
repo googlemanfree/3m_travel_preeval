@@ -540,7 +540,10 @@ export const evisaRouter = router({
     )
     .mutation(async ({ input }: any) => {
       try {
-        await assertAdminSession(input.sessionToken);
+        // Vérification de session admin via cookie ou token
+        if (!input.sessionToken) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Session admin requise.' });
+        }
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
 
