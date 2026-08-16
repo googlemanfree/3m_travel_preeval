@@ -77,3 +77,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer un composant de flux de publications Facebook récentes de 3M Travel & Services sur la page d’accueil
 - [x] Générer un QR code officiel pointant vers https://www.facebook.com/3mtravelcm et l'intégrer au pied de page et aux quittances/reçus PDF
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Parcours e-Visa Intelligent & Assisté par IA (v268)
+- [x] Créer une page dédiée de lancement e-Visa par pays (`/evisa/lancer/:countryCode`) avec formulaire spécifique et checklist documentaire ciblée
+- [x] Intégrer une assistance IA prudente pour analyser l'éligibilité et guider le candidat sur les pièces requises
+- [x] Synchroniser les soumissions e-Visa avec le back-office et l'espace client (référence unique, pièces jointes, suivi de dossier)
+- [x] Valider avec les tests unitaires et TypeScript puis publier la version finale

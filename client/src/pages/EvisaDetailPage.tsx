@@ -250,7 +250,7 @@ export default function EvisaDetailPage() {
                   <p>Validation par nos experts avant soumission officielle sur le portail consulaire.</p>
                 </div>
 
-                <a href={`/evaluation-primaire?destination=${destination.id}&type=evisa`}>
+                <a href={`/evisa/request?countryCode=${destination.id}&countryName=${encodeURIComponent(destination.country)}`}>
                   <Button className="w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 hover:from-blue-800 hover:to-indigo-900 text-white font-black py-4 px-6 rounded-2xl shadow-lg hover:shadow-xl transition-all text-base">
                     🚀 Lancer la procédure e-Visa
                   </Button>

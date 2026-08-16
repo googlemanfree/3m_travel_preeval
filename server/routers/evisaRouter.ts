@@ -143,7 +143,7 @@ export const evisaRouter = router({
           });
         }
 
-        // Vérifier que l'e-visa existe
+        // Récupérer les informations de l'e-visa pour connaître les documents requis
         const evisaResult = await db.execute(sql.raw(`
           SELECT * FROM evisas WHERE countryCode = '${input.countryCode}' AND isActive = true
         `));
@@ -180,6 +180,36 @@ export const evisaRouter = router({
             documents
           ) VALUES ('${candidateId}', '${input.dossierNumber}', '${input.countryCode}', 'pending', ${evisas[0].price}, '${JSON.stringify(input.documents || {})}')
         `));
+
+        // Enregistrer une notification admin et envoyer un e-mail de confirmation
+        try {
+          const [candidateRows] = await connection.execute('SELECT fullName, email FROM users WHERE id = ?', [candidateId]);
+          const candidate = (candidateRows as any[])[0];
+          if (candidate) {
+            await db.insert(adminNotifications).values({
+              type: 'new_contact_message',
+              title: `Nouvelle demande e-Visa (${evisas[0].countryName})`,
+              message: `${candidate.fullName} (${candidate.email}) — Dossier: ${input.dossierNumber}`,
+              relatedId: input.dossierNumber,
+              targetAdminType: 'accompagnement',
+            });
+            await sendEmail({
+              to: candidate.email,
+              subject: `[3M Travel] Confirmation de votre demande e-Visa pour ${evisas[0].countryName} (${input.dossierNumber})`,
+              html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #cbd5e1; border-radius: 8px;">
+                  <h2 style="color: #1e3a8a; margin-top: 0;">Demande e-Visa enregistrée</h2>
+                  <p>Bonjour <strong>${candidate.fullName}</strong>,</p>
+                  <p>Votre demande d'e-Visa pour <strong>${evisas[0].countryName}</strong> a bien été transmise à notre back-office (Dossier : ${input.dossierNumber}).</p>
+                  <p>Nos conseillers procèdent à la vérification des pièces ciblées.</p>
+                  <p>Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
+                </div>
+              `,
+            });
+          }
+        } catch (emailErr) {
+          console.error('[Evisa Email/Notification Error]:', emailErr);
+        }
 
         return {
           success: true,

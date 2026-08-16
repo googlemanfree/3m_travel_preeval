@@ -403,38 +403,45 @@ export default function EvisaRequestForm() {
                 </div>
               </div>
 
-              {/* Informations E-Visa */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Informations E-Visa</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-2">
-                        Code Pays
-                      </Label>
-                      <Input
-                        id="countryCode"
-                        name="countryCode"
-                        type="text"
-                        value={formData.countryCode}
-                        disabled
-                        className="w-full bg-gray-100"
-                      />
-                    </div>
+              {/* Informations E-Visa ciblées */}
+              <div className="rounded-2xl bg-blue-50/70 border border-blue-200 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold text-blue-900 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-blue-600" />
+                    Procédure ciblée : {formData.countryName || 'Destination sélectionnée'}
+                  </h3>
+                  <span className="text-xs font-bold bg-blue-700 text-white px-3 py-1 rounded-full uppercase">e-Visa Officiel</span>
+                </div>
+                <p className="text-xs text-blue-800">
+                  Formulaire spécifique et pièces requises ajustées pour cette destination. Nos experts vérifient chaque justificatif avant le dépôt consulaire.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="countryName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Destination
+                    </Label>
+                    <Input
+                      id="countryName"
+                      name="countryName"
+                      type="text"
+                      value={formData.countryName}
+                      disabled
+                      className="w-full bg-white font-bold text-blue-900"
+                    />
+                  </div>
 
-                    <div>
-                      <Label htmlFor="countryName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Pays de Destination
-                      </Label>
-                      <Input
-                        id="countryName"
-                        name="countryName"
-                        type="text"
-                        value={formData.countryName}
-                        disabled
-                        className="w-full bg-gray-100"
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="countryCode" className="block text-sm font-medium text-gray-700 mb-2">
+                      Code Destination
+                    </Label>
+                    <Input
+                      id="countryCode"
+                      name="countryCode"
+                      type="text"
+                      value={formData.countryCode}
+                      disabled
+                      className="w-full bg-white text-gray-700 font-mono"
+                    />
                   </div>
                 </div>
               </div>
