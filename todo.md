@@ -239,3 +239,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le rendu du poste dossier 360° lorsqu’une prochaine action est absente.
 - [x] Corriger le rendu du poste dossier 360° lorsqu’aucun état opérationnel n’est encore créé.
 - [x] Corriger l’éditeur de bilan lorsqu’aucun brouillon n’a encore été chargé.
+
+## Références e‑Visa et pilotage des bilans
+- [x] Ajouter les liens consulaires officiels et dates de vérification aux destinations e‑Visa du catalogue.
+- [x] Créer une file « Bilans à valider aujourd’hui » filtrée et sécurisée pour les conseillers.
+- [x] Ajouter l’historique des validations et modifications dans les PDF de bilan.
+- [x] Tester les liens, la file conseiller, le contenu PDF et les contrôles d’accès avant publication.
+- [x] Corriger le contraste du contexte professionnel sur les fiches e‑Visa afin de garantir une lecture confortable.
+
+## Optimisation de compilation de production
+- [ ] Réduire le pic mémoire de rendu Vite sans dégrader le fonctionnement du site.
+- [ ] Rejouer la compilation complète avant publication.

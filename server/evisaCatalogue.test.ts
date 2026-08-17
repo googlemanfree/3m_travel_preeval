@@ -18,4 +18,12 @@ describe("catalogue e‑Visa complété", () => {
       expect(destination?.fee).toContain("À confirmer");
     }
   });
+
+  it("associe chaque destination affichée à un portail officiel HTTPS et une date de vérification", () => {
+    for (const destination of evisasDatabaseComplete) {
+      expect(destination.officialPortalUrl, `portail manquant : ${destination.id}`).toMatch(/^https:\/\//);
+      expect(destination.officialPortalLabel, `libellé du portail manquant : ${destination.id}`).toBeTruthy();
+      expect(destination.officialVerifiedAt, `date de vérification manquante : ${destination.id}`).toMatch(/\d{4}/);
+    }
+  });
 });

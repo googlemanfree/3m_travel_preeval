@@ -133,3 +133,33 @@ test("génère un bilan par destination et bloque l’envoi jusqu’à la valida
   await expect(editor.getByRole("button", { name: "Générer un brouillon IA" })).toBeEnabled();
   await expect(editor.getByRole("button", { name: "Valider et envoyer maintenant" })).toBeDisabled();
 });
+
+test("affiche la file quotidienne de bilans à relire et renvoie vers le dossier", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    localStorage.setItem("adminSessionToken", "desktop-admin-test-token");
+    localStorage.setItem("adminName", "Conseiller Test");
+  });
+  await page.route("**/api/trpc/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.split("/api/trpc/")[1] ?? "";
+    const results = path.split(",").map((procedure) => {
+      const json: Record<string, unknown> = {
+        "adminAuth.me": { authenticated: true, requiresPasswordChange: false },
+        "admin.listCandidates": { candidates: [candidate], total: 1 },
+        "application.listApplications": [],
+        "admin.getCandidateCountryDistribution": { totalCandidates: 1, data: [{ country: "Canada", count: 1 }] },
+        "admin.getFaqSatisfactionStats": { stats: { questionsBreakdown: [] } },
+        "admin.listDestinationDocumentsAdmin": [],
+        "unifiedRequests.evaluationReviewsToday": { generatedAt: "2026-08-17T10:00:00.000Z", total: 1, rows: [{ id: 42, dossierNumber: candidate.folderCode, fullName: candidate.fullName, destination: "canada", scoringTotal: 78, updatedAt: "2026-08-17T09:00:00.000Z" }] },
+      };
+      return { result: { data: { json: json[procedure] ?? {} } } };
+    });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(results) });
+  });
+  await page.goto("/admin/dossiers");
+  await page.getByRole("tab", { name: "Bilans à valider" }).click();
+  await expect(page.getByRole("heading", { name: "Bilans à valider aujourd’hui" })).toBeVisible();
+  await expect(page.getByText(candidate.folderCode, { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Traiter le bilan" }).click();
+  await expect(page.getByRole("tab", { name: "Dossiers" })).toHaveAttribute("data-state", "active");
+});

@@ -8,6 +8,20 @@ type BilanDraft = {
   strengths?: string[];
   weaknesses?: string[];
   recommendations?: string[];
+  advisorValidated?: boolean;
+  advisorValidatedAt?: string;
+  advisorValidatedByAdminId?: number;
+};
+
+export type EvaluationPdfAuditEntry = {
+  versionNumber: number;
+  createdAt?: Date | null;
+  createdByAdminAccountId?: number | null;
+  approvalStatus?: string | null;
+  approvedAt?: Date | null;
+  approvedByAdminId?: number | null;
+  approvalComment?: string | null;
+  sentAt?: Date | null;
 };
 
 function readDraft(application: Application): BilanDraft {
@@ -22,6 +36,21 @@ function safeText(value: unknown): string {
   return String(value ?? "").replace(/[\u0000-\u001F]/g, " ").trim();
 }
 
+export function buildEvaluationPdfAuditLines(draft: BilanDraft, auditTrail: EvaluationPdfAuditEntry[]): string[] {
+  const auditLines: string[] = [];
+  if (draft.advisorValidatedAt) {
+    auditLines.push(`Validation conseiller : ${safeText(new Date(draft.advisorValidatedAt).toLocaleString("fr-FR"))}${draft.advisorValidatedByAdminId ? ` — compte administrateur #${draft.advisorValidatedByAdminId}` : ""}.`);
+  }
+  auditTrail.slice().sort((left, right) => left.versionNumber - right.versionNumber).forEach((entry) => {
+    const createdAt = entry.createdAt ? new Date(entry.createdAt).toLocaleString("fr-FR") : "date non disponible";
+    auditLines.push(`Version ${entry.versionNumber} enregistrée le ${safeText(createdAt)}${entry.createdByAdminAccountId ? ` — compte administrateur #${entry.createdByAdminAccountId}` : ""}.`);
+    if (entry.approvedAt) {
+      auditLines.push(`Version ${entry.versionNumber} : seconde approbation le ${safeText(new Date(entry.approvedAt).toLocaleString("fr-FR"))}${entry.approvedByAdminId ? ` — compte administrateur #${entry.approvedByAdminId}` : ""}${entry.approvalComment ? ` — ${safeText(entry.approvalComment)}` : ""}.`);
+    }
+  });
+  return auditLines;
+}
+
 function writeParagraph(doc: jsPDF, text: string, x: number, y: number, width: number): number {
   const lines = doc.splitTextToSize(text, width) as string[];
   lines.forEach((line) => {
@@ -32,7 +61,7 @@ function writeParagraph(doc: jsPDF, text: string, x: number, y: number, width: n
   return y;
 }
 
-export async function createFinalEvaluationPdf(application: Application, versionNumber: number): Promise<{ key: string; url: string }> {
+export async function createFinalEvaluationPdf(application: Application, versionNumber: number, auditTrail: EvaluationPdfAuditEntry[] = []): Promise<{ key: string; url: string }> {
   const draft = readDraft(application);
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   let y = 20;
@@ -64,6 +93,13 @@ export async function createFinalEvaluationPdf(application: Application, version
     items.forEach((item) => { y = writeParagraph(doc, `• ${safeText(item)}`, 21, y, 171) + 2; });
     y += 4;
   });
+  const auditLines = buildEvaluationPdfAuditLines(draft, auditTrail);
+  if (auditLines.length) {
+    if (y > 232) { doc.addPage(); y = 22; }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.text("Historique administratif du bilan", 18, y); y += 7;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+    auditLines.forEach((line) => { y = writeParagraph(doc, `• ${line}`, 21, y, 171) + 1; });
+  }
   if (y > 255) { doc.addPage(); y = 22; }
   doc.setDrawColor(203, 213, 225); doc.line(18, y, 192, y); y += 8;
   doc.setTextColor(100, 116, 139); doc.setFontSize(8);

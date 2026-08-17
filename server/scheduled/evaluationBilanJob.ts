@@ -23,6 +23,18 @@ export function shouldSendEvaluationReminder(application: { evaluationDeliverySt
   return application.evaluationDeliveryStatus === "sent" && Boolean(application.evaluationCompletedAt) && application.evaluationCompletedAt! <= threshold && !application.evaluationReportViewedAt && !application.evaluationReportReminderSentAt;
 }
 
+export function canAutoDeliverEvaluation(application: { dossierStatus: string; evaluationDeliveryStatus: string; evaluationScheduledAt: Date | null; createdAt: Date; evaluationRequiresSecondApproval: boolean; evaluationApprovalStatus: string; scoringDetails: string | null }, now = new Date()): boolean {
+  if (application.dossierStatus !== "en_evaluation") return false;
+  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+  const isManualScheduleDue = application.evaluationDeliveryStatus === "scheduled" && Boolean(application.evaluationScheduledAt && application.evaluationScheduledAt <= now);
+  const isAutomaticFallbackDue = application.evaluationDeliveryStatus !== "scheduled" && application.createdAt < fortyEightHoursAgo;
+  let details: Record<string, unknown> = {};
+  try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+  const draft = details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft as Record<string, unknown> : {};
+  const isApprovedForDelivery = draft.advisorValidated === true && (!application.evaluationRequiresSecondApproval || application.evaluationApprovalStatus === "approved");
+  return isApprovedForDelivery && (isManualScheduleDue || isAutomaticFallbackDue);
+}
+
 export async function handleEvaluationBilanJob(req: Request, res: Response): Promise<void> {
   try {
     console.log("[Evaluation Bilan Job] Starting automated bilan job...");
@@ -39,12 +51,7 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     console.log(`[Evaluation Bilan Job] Looking for applications created before ${fortyEightHoursAgo.toISOString()}`);
 
     const candidates = await db.select().from(applications).where(eq(applications.dossierStatus, "en_evaluation")).limit(200);
-    const apps = candidates.filter((app) => {
-      const isManualScheduleDue = app.evaluationDeliveryStatus === "scheduled" && app.evaluationScheduledAt && app.evaluationScheduledAt <= now;
-      const isAutomaticFallbackDue = app.evaluationDeliveryStatus !== "scheduled" && app.createdAt < fortyEightHoursAgo;
-      const isApprovedForDelivery = !app.evaluationRequiresSecondApproval || app.evaluationApprovalStatus === "approved";
-      return isApprovedForDelivery && (isManualScheduleDue || isAutomaticFallbackDue);
-    });
+    const apps = candidates.filter((app) => canAutoDeliverEvaluation(app, now));
 
     console.log(`[Evaluation Bilan Job] Found ${apps.length} applications ready for bilan`);
 
@@ -55,9 +62,10 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     for (const app of apps) {
       try {
         const reportHtml = generateEvaluationReportHTML(app);
-        const latestVersion = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, app.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+        const versionAuditTrail = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus, approvedAt: evaluationBilanVersions.approvedAt, approvedByAdminId: evaluationBilanVersions.approvedByAdminAccountId, approvalComment: evaluationBilanVersions.approvalComment, sentAt: evaluationBilanVersions.sentAt }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, app.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
+        const latestVersion = versionAuditTrail[0];
         const versionNumber = latestVersion?.versionNumber ?? 1;
-        const finalPdf = await createFinalEvaluationPdf(app, versionNumber);
+        const finalPdf = await createFinalEvaluationPdf(app, versionNumber, versionAuditTrail);
         await sendEmail({
           to: app.email,
           subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,

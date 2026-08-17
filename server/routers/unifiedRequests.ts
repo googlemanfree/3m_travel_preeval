@@ -105,6 +105,29 @@ export function canDeliverEvaluation(requiresSecondApproval: boolean, approvalSt
   return advisorValidated && (!requiresSecondApproval || approvalStatus === "approved");
 }
 
+type EvaluationReviewCandidate = {
+  adminAssignedTo: string | null;
+  evaluationScheduledAt: Date | null;
+  updatedAt: Date;
+  scoringDetails: string | null;
+  evaluationDeliveryStatus: string;
+  dossierStatus: string;
+};
+
+export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date()): Array<T & { advisorValidated: boolean }> {
+  const start = new Date(now); start.setHours(0, 0, 0, 0);
+  const end = new Date(now); end.setHours(23, 59, 59, 999);
+  return applicationsToReview.map((application) => {
+    let details: Record<string, unknown> = {};
+    try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
+    const draft = details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft as Record<string, unknown> : {};
+    const advisorValidated = draft.advisorValidated === true;
+    const belongsToAdvisor = !application.adminAssignedTo || application.adminAssignedTo === advisor.email || application.adminAssignedTo === advisor.fullName;
+    const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end));
+    return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict) };
+  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && application.hasDraft && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, hasDraft: _hasDraft, ...application }) => application as T & { advisorValidated: boolean });
+}
+
 export function calculateAdvisorWorkload(
   advisors: Array<{ id: number; fullName: string; email: string }>,
   activeRows: Array<{ assignedAdminAccountId: number | null; priority: string; workflowStatus: string; dueAt: Date | null }>,
@@ -433,9 +456,10 @@ export const unifiedRequestsRouter = router({
       try { deliveryDetails = JSON.parse(application.scoringDetails || "{}"); } catch { deliveryDetails = {}; }
       const deliveryDraft = (deliveryDetails.adminDraft && typeof deliveryDetails.adminDraft === "object" ? deliveryDetails.adminDraft : {}) as Record<string, unknown>;
       if (!canDeliverEvaluation(application.evaluationRequiresSecondApproval, application.evaluationApprovalStatus, deliveryDraft.advisorValidated === true)) throw new TRPCError({ code: "BAD_REQUEST", message: "Le brouillon doit être validé par un conseiller avant envoi, ainsi que par un second administrateur lorsqu’il est sensible." });
-      const latestVersion = (await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
+      const versionAuditTrail = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus, approvedAt: evaluationBilanVersions.approvedAt, approvedByAdminId: evaluationBilanVersions.approvedByAdminAccountId, approvalComment: evaluationBilanVersions.approvalComment, sentAt: evaluationBilanVersions.sentAt }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
+      const latestVersion = versionAuditTrail[0];
       const versionNumber = latestVersion?.versionNumber ?? 1;
-      const finalPdf = await createFinalEvaluationPdf(application, versionNumber);
+      const finalPdf = await createFinalEvaluationPdf(application, versionNumber, versionAuditTrail);
       const availabilityHtml = `${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a>.</p>`;
       await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
       const now = new Date();
@@ -537,5 +561,17 @@ export const unifiedRequestsRouter = router({
         blocked: open.filter((row) => ["waiting_customer", "documents_review", "payment_review"].includes(row.workflowStatus) || (row.dueAt && row.dueAt < now)),
         totalOpen: open.length,
       };
+    }),
+
+  evaluationReviewsToday: publicProcedure
+    .input(sessionInput)
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const candidates = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, destination: applications.destination, scoringTotal: applications.scoringTotal, adminAssignedTo: applications.adminAssignedTo, evaluationScheduledAt: applications.evaluationScheduledAt, updatedAt: applications.updatedAt, scoringDetails: applications.scoringDetails, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, dossierStatus: applications.dossierStatus }).from(applications).orderBy(desc(applications.updatedAt)).limit(500);
+      const now = new Date();
+      const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now);
+      return { generatedAt: now, total: rows.length, rows };
     }),
 });

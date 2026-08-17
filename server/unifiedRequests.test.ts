@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canDeliverEvaluation, getUnifiedSlaState, inferUnifiedWorkflow } from "./routers/unifiedRequests";
+import { canDeliverEvaluation, getUnifiedSlaState, inferUnifiedWorkflow, selectEvaluationReviewsForAdvisorToday } from "./routers/unifiedRequests";
 
 describe("boîte de réception unifiée", () => {
   it("normalise les statuts métier de sources différentes vers le cycle commun", () => {
@@ -24,5 +24,17 @@ describe("boîte de réception unifiée", () => {
     expect(canDeliverEvaluation(true, "approved", true)).toBe(true);
     expect(canDeliverEvaluation(false, "not_required", false)).toBe(false);
     expect(canDeliverEvaluation(false, "not_required", true)).toBe(true);
+  });
+
+  it("place uniquement les brouillons non validés du conseiller dans la file du jour", () => {
+    const now = new Date("2026-08-17T10:00:00.000Z");
+    const draft = JSON.stringify({ adminDraft: { verdict: "Profil à relire", advisorValidated: false } });
+    const rows = selectEvaluationReviewsForAdvisorToday([
+      { id: 1, adminAssignedTo: "conseiller@3m.test", evaluationScheduledAt: null, updatedAt: now, scoringDetails: draft, evaluationDeliveryStatus: "draft", dossierStatus: "en_evaluation" },
+      { id: 2, adminAssignedTo: "conseiller@3m.test", evaluationScheduledAt: null, updatedAt: now, scoringDetails: JSON.stringify({ adminDraft: { verdict: "Déjà validé", advisorValidated: true } }), evaluationDeliveryStatus: "draft", dossierStatus: "en_evaluation" },
+      { id: 3, adminAssignedTo: "autre@3m.test", evaluationScheduledAt: null, updatedAt: now, scoringDetails: draft, evaluationDeliveryStatus: "draft", dossierStatus: "en_evaluation" },
+      { id: 4, adminAssignedTo: "conseiller@3m.test", evaluationScheduledAt: null, updatedAt: now, scoringDetails: draft, evaluationDeliveryStatus: "sent", dossierStatus: "bilan_envoye" },
+    ], { email: "conseiller@3m.test", fullName: "Conseiller" }, now);
+    expect(rows.map((row) => row.id)).toEqual([1]);
   });
 });

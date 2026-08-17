@@ -16,6 +16,9 @@ export interface EvisaDestination {
   emblems: string[];
   steps: string[];
   image: string;
+  officialPortalUrl?: string;
+  officialPortalLabel?: string;
+  officialVerifiedAt?: string;
 }
 
 const createVerificationFirstEvisa = (id: string, country: string, capital: string, flag: string, region: string): EvisaDestination => ({
@@ -567,3 +570,49 @@ export const evisasDatabaseComplete: EvisaDestination[] = [
   },
   ...verificationFirstDestinations,
 ];
+
+const officialEvisaReferences: Record<string, { url: string; label: string }> = {
+  kenya: { url: "https://www.etakenya.go.ke/", label: "Kenya Electronic Travel Authorisation" },
+  egypte: { url: "https://visa2egypt.gov.eg/", label: "Egypt e‑Visa Portal" },
+  tanzanie: { url: "https://visa.immigration.go.tz/", label: "Tanzania Immigration e‑Services" },
+  maroc: { url: "https://www.acces-maroc.ma/", label: "Portail officiel Accès Maroc" },
+  ethiopie: { url: "https://www.evisa.gov.et/", label: "Ethiopia e‑Visa" },
+  ouganda: { url: "https://visas.immigration.go.ug/", label: "Uganda Electronic Visa/Permit" },
+  rwanda: { url: "https://www.migration.gov.rw/visa", label: "Rwanda Directorate General of Immigration" },
+  djibouti: { url: "https://www.evisa.gouv.dj/", label: "Djibouti e‑Visa" },
+  dubai: { url: "https://smartservices.icp.gov.ae/echannels/web/client/guest/index.html", label: "UAE ICP Smart Services" },
+  turquie: { url: "https://www.evisa.gov.tr/", label: "Republic of Türkiye e‑Visa" },
+  inde: { url: "https://indianvisaonline.gov.in/evisa/tvoa.html", label: "Government of India e‑Visa" },
+  vietnam: { url: "https://evisa.gov.vn/", label: "Viet Nam National e‑Visa System" },
+  cambodge: { url: "https://www.evisa.gov.kh/", label: "Cambodia e‑Visa" },
+  srilanka: { url: "https://eta.gov.lk/", label: "Sri Lanka Electronic Travel Authorization" },
+  azerbaidjan: { url: "https://evisa.gov.az/", label: "Azerbaijan ASAN Visa" },
+  albanie: { url: "https://e-visa.al/", label: "Albania e‑Visa" },
+  bahrein: { url: "https://www.evisa.gov.bh/", label: "Bahrain e‑Visa" },
+  oman: { url: "https://evisa.rop.gov.om/", label: "Royal Oman Police e‑Visa" },
+  pakistan: { url: "https://visa.nadra.gov.pk/", label: "Pakistan Online Visa System" },
+  australie: { url: "https://online.immi.gov.au/", label: "Australian ImmiAccount" },
+  "nouvelle-zelande": { url: "https://www.immigration.govt.nz/new-zealand-visas/visas/visa/nzeta", label: "Immigration New Zealand NZeTA" },
+  "cote-divoire": { url: "https://www.snedai.com/e-visa/", label: "Côte d’Ivoire e‑Visa (SNEDAI)" },
+  malawi: { url: "https://evisa.gov.mw/", label: "Malawi e‑Visa" },
+  zambie: { url: "https://evisa.zambiaimmigration.gov.zm/", label: "Zambia Immigration e‑Visa" },
+  zimbabwe: { url: "https://www.evisa.gov.zw/", label: "Zimbabwe e‑Visa" },
+  mozambique: { url: "https://evisa.gov.mz/", label: "Mozambique e‑Visa" },
+  madagascar: { url: "https://evisamada-mg.com/", label: "Madagascar e‑Visa" },
+  seychelles: { url: "https://seychelles.govtas.com/", label: "Seychelles Travel Authorisation" },
+  laos: { url: "https://laoevisa.gov.la/", label: "Lao Official Online Visa" },
+  qatar: { url: "https://www.hayya.qa/", label: "State of Qatar Hayya Platform" },
+  ouzbekistan: { url: "https://e-visa.gov.uz/", label: "Uzbekistan Electronic Visa" },
+  indonesie: { url: "https://evisa.imigrasi.go.id/", label: "Indonesia Immigration e‑Visa" },
+  bolivie: { url: "https://portalmre.rree.gob.bo/formvisas/", label: "Bolivia Foreign Affairs Visa Portal" },
+  suriname: { url: "https://suriname.vfsevisa.com/", label: "Suriname Official e‑Visa / eTourist Card" },
+  "papouasie-nouvelle-guinee": { url: "https://evisa.ica.gov.pg/", label: "Papua New Guinea e‑Visa" },
+};
+
+for (const destination of evisasDatabaseComplete) {
+  const reference = officialEvisaReferences[destination.id];
+  if (!reference) continue;
+  destination.officialPortalUrl = reference.url;
+  destination.officialPortalLabel = reference.label;
+  destination.officialVerifiedAt = "17 août 2026";
+}
