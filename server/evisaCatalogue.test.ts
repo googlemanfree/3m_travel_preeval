@@ -4,7 +4,7 @@ import { evisasDatabaseComplete } from "../client/src/data/evisasDatabaseComplet
 describe("catalogue e‑Visa complété", () => {
   it("inclut toutes les destinations ajoutées avec un avertissement de vérification officielle", () => {
     const ids = [
-      "cote-divoire", "malawi", "zambie", "zimbabwe", "mozambique", "madagascar", "seychelles",
+      "togo", "cote-divoire", "rdc", "guinee", "malawi", "zambie", "zimbabwe", "mozambique", "madagascar", "seychelles", "somalie",
       "vietnam", "laos", "qatar", "ouzbekistan", "indonesie", "bolivie", "suriname", "papouasie-nouvelle-guinee",
     ];
     const verificationFirstIds = ids.filter((id) => id !== "vietnam");

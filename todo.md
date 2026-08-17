@@ -277,3 +277,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une assistance IA d’autocomplétion contrôlée, sans écraser les corrections humaines ni inventer les informations manquantes.
 - [x] Déclencher après huit heures une alerte interne de relance et de priorité, sans jamais envoyer au client un bilan qui n’a pas été validé par un administrateur.
 - [x] Ajouter des tests de bout en bout du parcours CV → brouillon → modification → validation → numéro de dossier → espace client/e-mail.
+
+## Lot e‑Visa sécurité et catalogue vérifié
+- [x] Inspecter les deux fichiers fournis et confirmer leurs chemins de remplacement.
+- [x] Conserver le routeur e‑Visa renforcé actuel et vérifier qu’il couvre le correctif de contrôle d’autorisation demandé.
+- [x] Fusionner uniquement les destinations absentes du catalogue fourni, sans supprimer les fiches déjà vérifiées.
+- [x] Vérifier la cohérence des liens officiels, dates de vérification et informations de chaque destination ajoutée.
+- [x] Exécuter les tests d’autorisation e‑Visa, du catalogue et des parcours concernés avant publication.

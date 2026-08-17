@@ -47,7 +47,10 @@ const createVerificationFirstEvisa = (id: string, country: string, capital: stri
 });
 
 const verificationFirstDestinations: EvisaDestination[] = [
+  createVerificationFirstEvisa("togo", "Togo", "Lomé", "🇹🇬", "Afrique"),
   createVerificationFirstEvisa("cote-divoire", "Côte d’Ivoire", "Yamoussoukro", "🇨🇮", "Afrique"),
+  createVerificationFirstEvisa("rdc", "République démocratique du Congo", "Kinshasa", "🇨🇩", "Afrique"),
+  createVerificationFirstEvisa("guinee", "Guinée", "Conakry", "🇬🇳", "Afrique"),
   createVerificationFirstEvisa("malawi", "Malawi", "Lilongwe", "🇲🇼", "Afrique"),
   createVerificationFirstEvisa("zambie", "Zambie", "Lusaka", "🇿🇲", "Afrique"),
   createVerificationFirstEvisa("zimbabwe", "Zimbabwe", "Harare", "🇿🇼", "Afrique"),
@@ -61,6 +64,7 @@ const verificationFirstDestinations: EvisaDestination[] = [
   createVerificationFirstEvisa("bolivie", "Bolivie", "Sucre", "🇧🇴", "Autres destinations"),
   createVerificationFirstEvisa("suriname", "Suriname", "Paramaribo", "🇸🇷", "Autres destinations"),
   createVerificationFirstEvisa("papouasie-nouvelle-guinee", "Papouasie‑Nouvelle‑Guinée", "Port Moresby", "🇵🇬", "Autres destinations"),
+  createVerificationFirstEvisa("somalie", "Somalie", "Mogadiscio", "🇸🇴", "Afrique"),
 ];
 
 export const evisasDatabaseComplete: EvisaDestination[] = [
@@ -593,7 +597,10 @@ const officialEvisaReferences: Record<string, { url: string; label: string }> = 
   pakistan: { url: "https://visa.nadra.gov.pk/", label: "Pakistan Online Visa System" },
   australie: { url: "https://online.immi.gov.au/", label: "Australian ImmiAccount" },
   "nouvelle-zelande": { url: "https://www.immigration.govt.nz/new-zealand-visas/visas/visa/nzeta", label: "Immigration New Zealand NZeTA" },
+  togo: { url: "https://voyage.gouv.tg/", label: "Togo Voyage — portail gouvernemental" },
   "cote-divoire": { url: "https://www.snedai.com/e-visa/", label: "Côte d’Ivoire e‑Visa (SNEDAI)" },
+  rdc: { url: "https://evisa.gouv.cd/", label: "RDC DGM e‑Visa" },
+  guinee: { url: "https://www.paf.gov.gn/visa", label: "Guinée — Police de l’Air et des Frontières e‑Visa" },
   malawi: { url: "https://evisa.gov.mw/", label: "Malawi e‑Visa" },
   zambie: { url: "https://evisa.zambiaimmigration.gov.zm/", label: "Zambia Immigration e‑Visa" },
   zimbabwe: { url: "https://www.evisa.gov.zw/", label: "Zimbabwe e‑Visa" },
@@ -607,6 +614,7 @@ const officialEvisaReferences: Record<string, { url: string; label: string }> = 
   bolivie: { url: "https://portalmre.rree.gob.bo/formvisas/", label: "Bolivia Foreign Affairs Visa Portal" },
   suriname: { url: "https://suriname.vfsevisa.com/", label: "Suriname Official e‑Visa / eTourist Card" },
   "papouasie-nouvelle-guinee": { url: "https://evisa.ica.gov.pg/", label: "Papua New Guinea e‑Visa" },
+  somalie: { url: "https://etas.gov.so/", label: "Somalia Immigration eTAS" },
 };
 
 for (const destination of evisasDatabaseComplete) {
