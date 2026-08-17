@@ -314,3 +314,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Journaliser les créations, corrections, désactivations et suppressions avec l’administrateur, la date et le résumé du changement.
 - [x] Ajouter une interface back-office avec recherche, formulaire de destination, validation des URLs officielles et confirmation de suppression.
 - [x] Tester les autorisations, l’audit, les validations de données et les parcours administrateur avant publication.
+
+## Assistance IA du formulaire e‑Visa administrateur
+- [x] Ajouter une procédure IA réservée aux administrateurs pour suggérer des exigences, frais, délais, étapes et précautions à partir du pays sélectionné.
+- [x] Utiliser une sortie JSON structurée avec garde-fous : aucune éligibilité garantie, aucune source non vérifiée présentée comme officielle.
+- [x] Ajouter un bouton d’assistance IA dans la modale d’édition et laisser l’administrateur appliquer ou modifier chaque suggestion avant enregistrement.
+- [x] Tester les autorisations, la validation de sortie, les erreurs IA et le parcours de formulaire avant publication.

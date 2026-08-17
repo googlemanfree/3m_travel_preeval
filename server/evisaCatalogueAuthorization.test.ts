@@ -10,5 +10,7 @@ describe("catalogue e‑Visa administrable", () => {
     expect(source).toContain("confirmation: z.literal(\"SUPPRIMER\")");
     expect(source).toContain("officialPortalUrl");
     expect(source).toContain("startsWith(\"https://\")");
+    expect(source).toContain("suggestWithAI");
+    expect(source).toContain("suggestEvisaCatalogueFields");
   });
 });

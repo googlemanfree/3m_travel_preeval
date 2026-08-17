@@ -5,6 +5,7 @@ import { evisaCatalogueAuditLogs, managedEvisaDestinations } from "../../drizzle
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
+import { suggestEvisaCatalogueFields } from "../services/evisaCatalogueAssistant";
 
 const safeArray = (value?: string | null) => {
   if (!value) return [] as string[];
@@ -49,6 +50,23 @@ function summaryFor(action: "created" | "updated" | "deactivated" | "deleted", c
 }
 
 export const evisaCatalogueRouter = router({
+  suggestWithAI: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1), country: z.string().trim().min(2).max(160), region: z.string().trim().min(2).max(100),
+      visaType: z.string().trim().min(2).max(160), officialPortalUrl: z.string().trim().url().refine((value) => value.startsWith("https://")),
+      officialVerifiedAt: z.string().trim().min(4).max(80), currentRequirements: z.string().max(8000).default(""), currentFee: z.string().max(160).default(""),
+      currentDelay: z.string().max(160).default(""), currentNotes: z.string().max(8000).default(""),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      try {
+        return await suggestEvisaCatalogueFields(input);
+      } catch (error) {
+        console.error("Suggestion IA e‑Visa impossible", error);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La suggestion IA est temporairement indisponible. Vérifiez ou complétez la fiche manuellement." });
+      }
+    }),
+
   /** Surcharges publiques utilisées pour compléter, corriger ou masquer les fiches statiques. */
   getPublicOverrides: publicProcedure.query(async () => {
     const db = await getDb();
