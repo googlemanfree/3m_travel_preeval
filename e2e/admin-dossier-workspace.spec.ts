@@ -163,3 +163,49 @@ test("affiche la file quotidienne de bilans à relire et renvoie vers le dossier
   await page.getByRole("button", { name: "Traiter le bilan" }).click();
   await expect(page.getByRole("tab", { name: "Dossiers" })).toHaveAttribute("data-state", "active");
 });
+
+test("confirme la synchronisation d’une étape du bureau vers l’espace client", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    localStorage.setItem("adminSessionToken", "desktop-admin-test-token");
+    localStorage.setItem("adminName", "Conseiller Test");
+  });
+  let workflowMutationSeen = false;
+  await page.route("**/api/trpc/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.split("/api/trpc/")[1] ?? "";
+    const results = path.split(",").map((procedure) => {
+      if (procedure === "admin.updateCandidate360Workflow") {
+        workflowMutationSeen = true;
+        return { result: { data: { json: { success: true, clientStatusLabel: "Documents à compléter", legacyStatus: "en_attente_documents", notificationCreated: true } } } };
+      }
+      const json: Record<string, unknown> = {
+        "adminAuth.me": { authenticated: true, requiresPasswordChange: false },
+        "admin.listCandidates": { candidates: [candidate], total: 1 },
+        "application.listApplications": [],
+        "admin.getCandidateCountryDistribution": { totalCandidates: 1, data: [{ country: "Canada", count: 1 }] },
+        "admin.getFaqSatisfactionStats": { stats: { questionsBreakdown: [] } },
+        "admin.listDestinationDocumentsAdmin": [],
+        "admin.getCandidateDetails": { candidate: { ...candidate, avatarUrl: null } },
+        "admin.getCandidate360": {
+          operationalCase: { id: 4, currentStatus: "qualifying", priority: "normal", assignedAdminId: null, dueAt: null, labels: [] },
+          nextAction: { label: "Préparer l’évaluation", description: "Qualifiez le dossier." },
+          metrics: { pendingDocuments: 0, openTasks: 0, unreadNotifications: 0, totalDocuments: 0, totalMessages: 0 },
+          requirements: [], documents: [], payments: [], tasks: [], notes: [], statusHistory: [], activity: [],
+          communications: { notifications: [], messages: [] }, evaluationVersions: [], advisors: [],
+          currentAdmin: { id: 1, fullName: "Conseiller Test", email: "admin@example.com" },
+        },
+      };
+      return { result: { data: { json: json[procedure] ?? {} } } };
+    });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(results) });
+  });
+
+  await page.goto("/admin/dossiers");
+  await page.getByText(candidate.folderCode, { exact: true }).click();
+  const workspace = page.getByRole("dialog", { name: "Poste de pilotage dossier 360°" });
+  await workspace.getByText("À qualifier", { exact: true }).click();
+  await page.getByRole("option", { name: "Documents à vérifier" }).click();
+  await workspace.getByRole("button", { name: "Enregistrer le pilotage" }).click();
+  await expect(page.getByText("Dossier mis à jour")).toBeVisible();
+  await expect.poll(() => workflowMutationSeen).toBe(true);
+});

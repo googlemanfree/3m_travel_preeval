@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
 
 type CandidateSummary = {
@@ -62,7 +62,6 @@ function StateBadge({ status }: { status: string }) {
 }
 
 export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Props) {
-  const { toast } = useToast();
   const utils = trpc.useUtils();
   const [evaluationOpen, setEvaluationOpen] = useState(false);
   const [workflowStatus, setWorkflowStatus] = useState("new");
@@ -98,44 +97,44 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   };
 
   const updateMutation = trpc.admin.updateCandidate360Workflow.useMutation({
-    onSuccess: async () => {
-      toast({ title: "Dossier mis à jour", description: "La priorité, le conseiller et la prochaine étape sont synchronisés." });
+    onSuccess: async (result) => {
+      toast.success("Dossier mis à jour", { description: `L’étape « ${result.clientStatusLabel ?? "mise à jour"} » est maintenant visible dans l’espace client.` });
       setComment("");
       await refresh();
     },
-    onError: (mutationError) => toast({ title: "Mise à jour impossible", description: mutationError.message, variant: "destructive" }),
+    onError: (mutationError) => toast.error("Mise à jour impossible", { description: mutationError.message }),
   });
   const createTaskMutation = trpc.admin.addCandidate360Task.useMutation({
     onSuccess: async () => {
-      toast({ title: "Action ajoutée", description: "La tâche est visible dans le dossier et la vue quotidienne." });
+      toast.success("Action ajoutée", { description: "La tâche est visible dans le dossier et la vue quotidienne." });
       setTaskTitle("");
       setTaskDueAt("");
       await refresh();
     },
-    onError: (mutationError) => toast({ title: "Création impossible", description: mutationError.message, variant: "destructive" }),
+    onError: (mutationError) => toast.error("Création impossible", { description: mutationError.message }),
   });
   const completeTaskMutation = trpc.admin.completeCandidate360Task.useMutation({
     onSuccess: () => void refresh(),
-    onError: (mutationError) => toast({ title: "Action impossible", description: mutationError.message, variant: "destructive" }),
+    onError: (mutationError) => toast.error("Action impossible", { description: mutationError.message }),
   });
   const countryChecklistMutation = trpc.admin.createCountryDocumentChecklist.useMutation({
     onSuccess: async (result) => {
-      toast({ title: "Checklist créée", description: `${result.added} pièce(s) ajoutée(s) · ${result.procedure} · ${result.country}.` });
+      toast.success("Checklist créée", { description: `${result.added} pièce(s) ajoutée(s) · ${result.procedure} · ${result.country}.` });
       await refresh();
     },
-    onError: (mutationError) => toast({ title: "Checklist impossible", description: mutationError.message, variant: "destructive" }),
+    onError: (mutationError) => toast.error("Checklist impossible", { description: mutationError.message }),
   });
   const documentReminderMutation = trpc.admin.sendCandidate360DocumentReminder.useMutation({
-    onSuccess: async (result) => { toast({ title: "Relance envoyée", description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
-    onError: (mutationError) => toast({ title: "Relance impossible", description: mutationError.message, variant: "destructive" }),
+    onSuccess: async (result) => { toast.success("Relance envoyée", { description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
+    onError: (mutationError) => toast.error("Relance impossible", { description: mutationError.message }),
   });
   const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
     onSuccess: async (result) => {
-      toast({ title: "Message enregistré", description: result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
+      toast.success("Message enregistré", { description: result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
       setOutboundMessage("");
       await refresh();
     },
-    onError: (mutationError) => toast({ title: "Envoi impossible", description: mutationError.message, variant: "destructive" }),
+    onError: (mutationError) => toast.error("Envoi impossible", { description: mutationError.message }),
   });
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);

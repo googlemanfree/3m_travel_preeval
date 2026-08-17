@@ -252,3 +252,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rejouer la compilation complète avant publication.
 - [x] Extraire les données e‑Visa dupliquées et charger les modules lourds uniquement au besoin.
 - [x] Vérifier le découpage des routes principales et le chargement différé des fonctionnalités PDF ou IA.
+
+## Bureau de traitement Administrateur & Synchronisation Espace Client
+- [x] Cartographier et vérifier l'ensemble des mutations tRPC admin pour la mise à jour des dossiers, étapes, statuts et documents.
+- [x] Implémenter et tester la génération/envoi de documents PDF (attestations, bilans, PNR, quittances) directement depuis le poste admin 360°.
+- [x] Valider le passage synchrone des étapes de dossier (nouveau -> evaluation -> documents -> traitement -> soumis -> approuve) côté client et admin.
+- [x] Vérifier la génération automatique de quittances de paiement, de bilans et de reçus visibles immédiatement dans l'espace client.
+- [x] Exécuter la suite complète des tests Vitest et valider la compilation de production.
+
+## Synchronisation workflow admin-client — 17 août 2026
+- [x] Synchroniser chaque changement d’étape du poste 360° vers `applications` ou `agency_dossiers`.
+- [x] Créer une notification dans l’espace client lors d’un changement d’étape ou d’un commentaire administratif.
+- [x] Afficher une confirmation Sonner après enregistrement du pilotage.
+- [x] Ajouter les tests unitaires du mapping et le scénario navigateur de synchronisation.
+- [x] Valider le typage, 382 tests Vitest et 4 scénarios navigateur du bureau administrateur.

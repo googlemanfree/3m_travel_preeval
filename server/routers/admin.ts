@@ -39,6 +39,29 @@ export function parseAdminCandidateReference(reference: string): { source: "onli
 
 const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 
+/**
+ * Source-of-truth mapping for the client space. The 360° case status is an
+ * operational status, while applications and agency_dossiers use legacy
+ * business statuses. Both records must move together when an admin advances a
+ * case from the office workspace.
+ */
+export const CANDIDATE360_LEGACY_STATUS_MAP = {
+  new: { application: "nouveau", agency: "nouveau", label: "Dossier créé" },
+  qualifying: { application: "en_evaluation", agency: "en_cours", label: "Évaluation en cours" },
+  waiting_customer: { application: "en_attente_documents", agency: "documents_requis", label: "Action attendue du candidat" },
+  documents_review: { application: "en_attente_documents", agency: "documents_requis", label: "Documents à compléter" },
+  payment_review: { application: "en_attente_paiement", agency: "en_cours", label: "Paiement à confirmer" },
+  processing: { application: "en_cours_recrutement", agency: "en_cours", label: "Dossier en traitement" },
+  submitted: { application: "soumis_agences", agency: "soumis", label: "Dossier soumis" },
+  completed: { application: "visa_approuve", agency: "approuve", label: "Dossier approuvé" },
+  closed: { application: "visa_approuve", agency: "approuve", label: "Dossier clôturé" },
+  rejected: { application: "refuse", agency: "refuse", label: "Dossier à revoir" },
+} as const;
+
+export function mapCandidate360Status(status: (typeof candidate360WorkflowStatuses)[number], source: "online" | "agency") {
+  return CANDIDATE360_LEGACY_STATUS_MAP[status][source === "online" ? "application" : "agency"];
+}
+
 const COUNTRY_DOCUMENT_CHECKLISTS: Record<string, Array<{ documentType: string; comment: string }>> = {
   canada: [
     { documentType: "Passeport", comment: "Passeport valide couvrant la durée prévue du séjour." },
@@ -2470,11 +2493,58 @@ export const adminRouter = router({
       const reference = parseAdminCandidateReference(input.candidateId);
       if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
       const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select().from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier source introuvable." });
+
+      const now = new Date();
+      const clientStatus = CANDIDATE360_LEGACY_STATUS_MAP[input.workflowStatus];
+      const legacyStatus = mapCandidate360Status(input.workflowStatus, reference.source);
+      const previousWorkflowStatus = operationalCase.currentStatus;
       await db.update(cases).set({ currentStatus: input.workflowStatus, priority: input.priority, assignedAdminId: input.assignedAdminId, labelsJson: JSON.stringify(input.labels), dueAt: input.dueAt }).where(eq(cases.id, operationalCase.id));
+
+      // Keep the source table in lockstep: the client space reads applications
+      // and agency_dossiers, not only the operational `cases` table.
+      if (reference.source === "online") {
+        await db.update(applications).set({
+          dossierStatus: legacyStatus as any,
+          lastStatusUpdateAt: now,
+          lastStatusUpdatedBy: admin.fullName || "Admin",
+          ...(input.comment ? { adminNote: input.comment } : {}),
+        }).where(eq(applications.id, reference.id));
+      } else {
+        await db.update(agencyDossiers).set({
+          status: legacyStatus as any,
+          lastStatusChangeAt: now,
+          lastStatusChangeBy: admin.email || admin.fullName || "Admin",
+          ...(input.comment ? { adminNotes: input.comment } : {}),
+        }).where(eq(agencyDossiers.id, reference.id));
+      }
+
       if (input.comment) await db.insert(caseAdminNotes).values({ caseId: operationalCase.id, adminId: admin.id, note: input.comment, isPrivate: true });
-      await db.insert(caseStatusHistory).values({ caseId: operationalCase.id, oldStatus: operationalCase.currentStatus, newStatus: input.workflowStatus, changedByRole: "admin", changedById: admin.id, comment: input.comment ?? "Paramètres opérationnels mis à jour." });
-      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "workflow_updated", entityType: "case", entityId: String(operationalCase.id), description: `Statut ${input.workflowStatus}, priorité ${input.priority}, conseiller ${input.assignedAdminId ?? "non attribué"}.` });
-      return { success: true };
+      await db.insert(caseStatusHistory).values({ caseId: operationalCase.id, oldStatus: previousWorkflowStatus, newStatus: input.workflowStatus, changedByRole: "admin", changedById: admin.id, comment: input.comment ?? "Paramètres opérationnels mis à jour." });
+      await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "workflow_updated", entityType: "case", entityId: String(operationalCase.id), description: `Étape ${input.workflowStatus} synchronisée vers ${legacyStatus}, priorité ${input.priority}, conseiller ${input.assignedAdminId ?? "non attribué"}.` });
+
+      const candidateId = reference.source === "online"
+        ? (sourceRecord as typeof applications.$inferSelect).candidateId
+        : (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0]?.id ?? null;
+      let notificationCreated = false;
+      if (candidateId && (previousWorkflowStatus !== input.workflowStatus || Boolean(input.comment))) {
+        await db.insert(clientNotifications).values({
+          candidateId,
+          caseId: operationalCase.id,
+          type: "status_update",
+          title: `Mise à jour de votre dossier ${operationalCase.caseNumber}`,
+          body: input.comment ? `${clientStatus.label}. Message de l’administration : ${input.comment}` : `${clientStatus.label}. Consultez votre espace client pour voir la prochaine action.`,
+          actionUrl: "/mon-espace?section=overview",
+          isRead: false,
+          isArchived: false,
+        });
+        notificationCreated = true;
+      }
+
+      return { success: true, legacyStatus, clientStatusLabel: clientStatus.label, notificationCreated };
     }),
 
   addCandidate360Task: publicProcedure
