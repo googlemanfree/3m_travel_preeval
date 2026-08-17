@@ -326,3 +326,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre en évidence les changements détectés et préciser que toute proposition reste à confirmer sur le portail officiel.
 - [x] Permettre à l’administrateur d’appliquer l’ensemble des suggestions ou de conserver et modifier manuellement la version actuelle.
 - [x] Ajouter les tests de calcul des différences et vérifier le parcours du formulaire avant publication.
+
+## Restauration des versions du catalogue e‑Visa
+- [x] Exposer l’historique des instantanés de création, mise à jour, désactivation et suppression dans le centre e‑Visa.
+- [x] Ajouter une prévisualisation sécurisée d’une version antérieure avant sa restauration.
+- [x] Permettre à un administrateur valide de restaurer une version avec confirmation explicite et journaliser l’action de restauration.
+- [x] Tester les autorisations, les données restaurées, l’audit et le parcours administrateur avant publication.

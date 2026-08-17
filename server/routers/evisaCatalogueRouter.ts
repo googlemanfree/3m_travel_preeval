@@ -45,6 +45,14 @@ function serialise(row: typeof managedEvisaDestinations.$inferSelect) {
   };
 }
 
+function parseAuditSnapshot(value?: string | null): Record<string, unknown> | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : null;
+  } catch { return null; }
+}
+
 function summaryFor(action: "created" | "updated" | "deactivated" | "deleted", country: string) {
   return ({ created: `Destination e‑Visa ${country} créée.`, updated: `Exigences e‑Visa ${country} mises à jour.`, deactivated: `Destination e‑Visa ${country} désactivée.`, deleted: `Surcharge e‑Visa ${country} supprimée.` })[action];
 }
@@ -159,12 +167,49 @@ export const evisaCatalogueRouter = router({
       return { success: true };
     }),
 
+  restoreVersion: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), auditId: z.number().int().positive(), confirmation: z.literal("RESTAURER") }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Catalogue e‑Visa indisponible." });
+      const audit = (await db.select().from(evisaCatalogueAuditLogs).where(eq(evisaCatalogueAuditLogs.id, input.auditId)).limit(1))[0];
+      if (!audit) throw new TRPCError({ code: "NOT_FOUND", message: "Version d’audit introuvable." });
+      const snapshot = parseAuditSnapshot(audit.previousSnapshotJson);
+      const parsed = destinationInput.safeParse(snapshot);
+      if (!parsed.success) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette version ne contient pas une destination restaurable." });
+      const restored = parsed.data;
+      const existing = (await db.select().from(managedEvisaDestinations).where(eq(managedEvisaDestinations.slug, restored.slug)).limit(1))[0];
+      const values = {
+        slug: restored.slug, country: restored.country, capital: restored.capital, flag: restored.flag, region: restored.region, visaType: restored.visaType,
+        duration: restored.duration, delay: restored.delay, requirements: restored.requirements, fee: restored.fee, notes: restored.notes,
+        imageUrl: restored.imageUrl || null, officialPortalUrl: restored.officialPortalUrl, officialPortalLabel: restored.officialPortalLabel,
+        officialVerifiedAt: restored.officialVerifiedAt, highlightsJson: JSON.stringify(restored.highlights), emblemsJson: JSON.stringify(restored.emblems),
+        stepsJson: JSON.stringify(restored.steps), isActive: restored.isActive, updatedByAdminId: admin.id,
+      };
+      let destinationId: number;
+      if (existing) {
+        await db.update(managedEvisaDestinations).set(values).where(eq(managedEvisaDestinations.id, existing.id));
+        destinationId = existing.id;
+      } else {
+        const result = await db.insert(managedEvisaDestinations).values({ ...values, createdByAdminId: admin.id });
+        destinationId = Number((result as any)[0]?.insertId ?? 0);
+      }
+      const current = (await db.select().from(managedEvisaDestinations).where(eq(managedEvisaDestinations.id, destinationId)).limit(1))[0];
+      await db.insert(evisaCatalogueAuditLogs).values({
+        destinationId, destinationSlug: restored.slug, action: "restored", summary: `Version antérieure de ${restored.country} restaurée depuis l’audit #${audit.id}.`,
+        previousSnapshotJson: existing ? JSON.stringify(serialise(existing)) : null, nextSnapshotJson: current ? JSON.stringify(serialise(current)) : JSON.stringify(restored), actorAdminId: admin.id,
+      });
+      return { success: true, destination: current ? serialise(current) : null };
+    }),
+
   listAudit: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), limit: z.number().int().min(1).max(200).default(50) }))
     .query(async ({ input }) => {
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Audit e‑Visa indisponible." });
-      return db.select().from(evisaCatalogueAuditLogs).orderBy(desc(evisaCatalogueAuditLogs.createdAt)).limit(input.limit);
+      const rows = await db.select().from(evisaCatalogueAuditLogs).orderBy(desc(evisaCatalogueAuditLogs.createdAt)).limit(input.limit);
+      return rows.map((row) => ({ ...row, previousSnapshot: parseAuditSnapshot(row.previousSnapshotJson), nextSnapshot: parseAuditSnapshot(row.nextSnapshotJson) }));
     }),
 });
