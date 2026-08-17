@@ -19,19 +19,36 @@ export interface AIEvaluationResult {
   error?: string;
 }
 
-/**
- * Extrait le texte d'un fichier PDF
- */
-export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
+/** Extrait le texte de toutes les pages ou d’un sous-ensemble explicite d’un PDF. */
+export async function extractTextFromPDF(pdfBuffer: Buffer, selectedPages?: number[]): Promise<string> {
   try {
-    // Import dynamique de pdf-parse
-    const pdfParseModule = await import("pdf-parse");
-    const pdfParse = (pdfParseModule as any).default || (pdfParseModule as any);
-    const data = await pdfParse(pdfBuffer);
-    return data.text;
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: pdfBuffer });
+    try {
+      const data = await parser.getText(selectedPages?.length ? { partial: selectedPages } : undefined);
+      return data.text;
+    } finally {
+      await parser.destroy();
+    }
   } catch (err) {
     console.error("[PDF Extract] Error:", err);
     throw new Error("Impossible d'extraire le texte du PDF");
+  }
+}
+
+/** Retourne le nombre de pages d’un PDF sans stocker le fichier. */
+export async function getPdfPageCount(pdfBuffer: Buffer): Promise<number> {
+  try {
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: pdfBuffer });
+    try {
+      return (await parser.getInfo()).total;
+    } finally {
+      await parser.destroy();
+    }
+  } catch (err) {
+    console.error("[PDF Inspect] Error:", err);
+    throw new Error("Impossible de lire les pages du PDF");
   }
 }
 

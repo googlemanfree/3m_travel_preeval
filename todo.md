@@ -207,3 +207,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Formaliser le flux dans la compétence réutilisable `prime-travel-case-management` avec `skill-creator`.
 - [x] Tester les parcours PDF, image OCR, réanalyse, annulation et erreurs puis publier.
 - [x] Vérifier par test qu’une correction manuelle reste intacte après l’annulation du pré-remplissage IA.
+
+## Ciblage du CV avant OCR
+- [x] Ajouter un recadrage interactif et réversible pour les CV image avant OCR.
+- [x] Permettre de sélectionner les pages pertinentes d’un CV PDF avant analyse.
+- [x] Appliquer le recadrage ou les pages sélectionnées au traitement serveur sans conserver de copie intermédiaire.
+- [x] Tester les parcours image, PDF multi-pages, annulation et erreurs de sélection avant publication.

@@ -7,6 +7,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
+import Cropper, { type Area } from 'react-easy-crop';
+import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -52,9 +54,17 @@ export default function Evaluation() {
   const [autoFilledValues, setAutoFilledValues] = useState<Partial<FormState>>({});
   const [prefillOriginalValues, setPrefillOriginalValues] = useState<Partial<FormState>>({});
   const [cvAnalysisNotice, setCvAnalysisNotice] = useState('');
+  const [isPreparingCv, setIsPreparingCv] = useState(false);
+  const [pdfPageCount, setPdfPageCount] = useState(0);
+  const [selectedPdfPages, setSelectedPdfPages] = useState<number[]>([]);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
+  const [cropZoom, setCropZoom] = useState(1);
+  const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
 
   const submitMutation = trpc.evaluation.submit.useMutation();
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
+  const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     const next = { ...formRef.current, [key]: value };
@@ -76,11 +86,11 @@ export default function Evaluation() {
   const prefillClass = (field: (typeof prefillKeys)[number]) => autoFilledFields.has(field) ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200 focus-visible:ring-indigo-500' : '';
   const getCvMimeType = (file: File) => file.type || (file.name.toLowerCase().endsWith('.png') ? 'image/png' : file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : 'application/pdf');
 
-  const extractAndAutoFill = async (file: File) => {
+  const extractAndAutoFill = async (file: File, selectedPages?: number[]) => {
     setIsExtractingCv(true);
     setCvAnalysisNotice('');
     try {
-      const result = await extractCvMutation.mutateAsync({ cvBase64: await fileToBase64(file), cvMimeType: getCvMimeType(file) as 'application/pdf' | 'image/png' | 'image/jpeg' });
+      const result = await extractCvMutation.mutateAsync({ cvBase64: await fileToBase64(file), cvMimeType: getCvMimeType(file) as 'application/pdf' | 'image/png' | 'image/jpeg', selectedPages });
       if (!result.success) {
         const analysisMessage = 'message' in result ? result.message : undefined;
         setCvAnalysisNotice(analysisMessage || 'Le CV est joint. Vous pouvez compléter le formulaire manuellement.');
@@ -118,7 +128,42 @@ export default function Evaluation() {
     }
   };
 
-  const handleCvChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const clearCvTargeting = () => {
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setPdfPageCount(0);
+    setSelectedPdfPages([]);
+    setImagePreviewUrl('');
+    setCropPosition({ x: 0, y: 0 });
+    setCropZoom(1);
+    setCropPixels(null);
+  };
+
+  const togglePdfPage = (page: number) => {
+    setSelectedPdfPages((current) => current.includes(page) ? current.filter((value) => value !== page) : [...current, page].sort((a, b) => a - b));
+  };
+
+  const launchTargetedAnalysis = async () => {
+    if (!cvFile) return;
+    if (getCvMimeType(cvFile) === 'application/pdf') {
+      if (!selectedPdfPages.length) {
+        setCvAnalysisNotice('Sélectionnez au moins une page du CV avant l’analyse.');
+        return;
+      }
+      await extractAndAutoFill(cvFile, selectedPdfPages);
+      return;
+    }
+    if (!imagePreviewUrl || !cropPixels) {
+      setCvAnalysisNotice('Ajustez la zone de recadrage avant de lancer l’OCR.');
+      return;
+    }
+    try {
+      await extractAndAutoFill(await createCroppedCvFile(imagePreviewUrl, cropPixels, cvFile.name));
+    } catch {
+      setCvAnalysisNotice('Le recadrage n’a pas pu être appliqué. Ajustez la zone puis réessayez.');
+    }
+  };
+
+  const handleCvChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -138,12 +183,30 @@ export default function Evaluation() {
     }
 
     setFormError('');
+    clearCvTargeting();
     setCvFile(file);
-    void extractAndAutoFill(file);
+    if (getCvMimeType(file) === 'application/pdf') {
+      setIsPreparingCv(true);
+      setCvAnalysisNotice('Lecture du PDF en cours : choisissez les pages utiles avant l’analyse.');
+      try {
+        const inspected = await inspectPdfMutation.mutateAsync({ cvBase64: await fileToBase64(file) });
+        setPdfPageCount(inspected.totalPages);
+        setSelectedPdfPages([1]);
+        setCvAnalysisNotice(`CV de ${inspected.totalPages} page(s) : sélectionnez les pages utiles, puis lancez l’analyse.`);
+      } catch {
+        setCvAnalysisNotice('Impossible de lire les pages du PDF. Vous pouvez remplacer le fichier ou compléter le formulaire manuellement.');
+      } finally {
+        setIsPreparingCv(false);
+      }
+    } else {
+      setImagePreviewUrl(URL.createObjectURL(file));
+      setCvAnalysisNotice('Recadrez l’image sur les rubriques utiles de votre CV, puis lancez l’OCR.');
+    }
   };
 
   const removeCv = () => {
     setCvFile(null);
+    clearCvTargeting();
     setAutoFilledFields(new Set());
     setAutoFilledValues({});
     setPrefillOriginalValues({});
@@ -157,7 +220,7 @@ export default function Evaluation() {
       setCvAnalysisNotice('Choisissez un CV avant de lancer une analyse.');
       return;
     }
-    void extractAndAutoFill(cvFile);
+    void launchTargetedAnalysis();
   };
 
   const cancelAutoFill = () => {
@@ -487,6 +550,44 @@ export default function Evaluation() {
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
+                    </div>
+                  )}
+                  {cvFile && getCvMimeType(cvFile) === 'application/pdf' && pdfPageCount > 0 && (
+                    <div className="mt-3 rounded-xl border border-blue-200 bg-white p-3" aria-label="Sélection des pages PDF à analyser">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-blue-950">Pages à analyser</p>
+                          <p className="mt-1 text-xs text-blue-800/75">Choisissez uniquement les pages contenant formation, expérience ou langues.</p>
+                        </div>
+                        <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">{selectedPdfPages.length}/{pdfPageCount}</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {Array.from({ length: pdfPageCount }, (_, index) => index + 1).map((page) => {
+                          const selected = selectedPdfPages.includes(page);
+                          return <button key={page} type="button" aria-pressed={selected} onClick={() => togglePdfPage(page)} className={`min-h-10 min-w-10 rounded-lg border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${selected ? 'border-blue-700 bg-blue-700 text-white' : 'border-blue-200 bg-white text-blue-800 hover:bg-blue-50'}`}>Page {page}</button>;
+                        })}
+                      </div>
+                      <Button type="button" size="sm" disabled={isPreparingCv || !selectedPdfPages.length} onClick={() => void launchTargetedAnalysis()} className="mt-3 bg-blue-700 hover:bg-blue-800">
+                        {isPreparingCv ? <Loader className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}Analyser les pages sélectionnées
+                      </Button>
+                    </div>
+                  )}
+                  {cvFile && imagePreviewUrl && (
+                    <div className="mt-3 rounded-xl border border-blue-200 bg-white p-3" aria-label="Recadrage de l’image du CV">
+                      <div>
+                        <p className="text-sm font-semibold text-blue-950">Ciblez les rubriques utiles</p>
+                        <p className="mt-1 text-xs text-blue-800/75">Déplacez le cadre sur les expériences, diplômes ou langues. Seule cette zone sera envoyée à l’OCR.</p>
+                      </div>
+                      <div className="relative mt-3 h-64 overflow-hidden rounded-lg bg-slate-900">
+                        <Cropper image={imagePreviewUrl} crop={cropPosition} zoom={cropZoom} aspect={4 / 5} onCropChange={setCropPosition} onZoomChange={setCropZoom} onCropComplete={(_area: Area, pixels: Area) => setCropPixels(pixels)} />
+                      </div>
+                      <div className="mt-3 flex items-center gap-3">
+                        <Label htmlFor="cv-crop-zoom" className="whitespace-nowrap text-xs text-blue-900">Zoom</Label>
+                        <input id="cv-crop-zoom" type="range" min="1" max="3" step="0.1" value={cropZoom} onChange={(event) => setCropZoom(Number(event.target.value))} className="w-full accent-blue-700" />
+                      </div>
+                      <Button type="button" size="sm" disabled={!cropPixels || isExtractingCv} onClick={() => void launchTargetedAnalysis()} className="mt-3 bg-blue-700 hover:bg-blue-800">
+                        {isExtractingCv ? <Loader className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Sparkles className="mr-1.5 h-3.5 w-3.5" />}Analyser la zone recadrée
+                      </Button>
                     </div>
                   )}
                   {isExtractingCv && (

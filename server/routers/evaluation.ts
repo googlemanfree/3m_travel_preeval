@@ -8,7 +8,7 @@ import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEmail } from "../_core/email";
-import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport, getPdfPageCount } from "../aiEvaluationService";
 import { computeDestinationScore } from "../destinationScoringEngine";
 import { logger } from "../_core/logger";
 import { eq } from "drizzle-orm";
@@ -432,6 +432,7 @@ export const evaluationRouter = router({
     .input(z.object({
       cvBase64: z.string().min(32).max(7_200_000),
       cvMimeType: z.enum(["application/pdf", "image/png", "image/jpeg", "image/jpg"]).optional(),
+      selectedPages: z.array(z.number().int().min(1).max(200)).min(1).max(20).optional(),
     }))
     .mutation(async ({ input }) => {
       try {
@@ -445,12 +446,17 @@ export const evaluationRouter = router({
           throw new TRPCError({ code: "BAD_REQUEST", message: "CV PDF, JPG ou PNG invalide ou trop volumineux." });
         }
         if (isPdf) {
-          const cvText = await extractTextFromPDF(cvBuffer);
+          const totalPages = await getPdfPageCount(cvBuffer);
+          const selectedPages = input.selectedPages?.filter((page, index, pages) => pages.indexOf(page) === index).sort((a, b) => a - b);
+          if (selectedPages?.some((page) => page > totalPages)) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: `Sélection de pages invalide : ce CV contient ${totalPages} page(s).` });
+          }
+          const cvText = await extractTextFromPDF(cvBuffer, selectedPages);
           if (cvText.trim().length < 20) {
             return { success: false, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu. Vous pouvez compléter le formulaire manuellement." };
           }
           const fields = (await extractCVFieldsForForm(cvText)) ?? {};
-          return { success: true, source: "pdf" as const, fields, prefilledCount: Object.keys(fields).length };
+          return { success: true, source: "pdf" as const, analysedPages: selectedPages ?? Array.from({ length: totalPages }, (_, index) => index + 1), fields, prefilledCount: Object.keys(fields).length };
         }
         const fields = (await extractCVFieldsFromImage(`data:${mimeType};base64,${base64Data}`)) ?? {};
         return { success: true, source: "image" as const, fields, prefilledCount: Object.keys(fields).length };
@@ -459,5 +465,18 @@ export const evaluationRouter = router({
         logger.error("evaluation.cv_prefill.failed", {}, error);
         return { success: false, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible. Vous pouvez compléter le formulaire manuellement." };
       }
+    }),
+
+  /** Lit le nombre de pages pour laisser le candidat choisir un sous-ensemble avant extraction. */
+  inspectPdfPages: publicProcedure
+    .input(z.object({ cvBase64: z.string().min(32).max(7_200_000) }))
+    .mutation(async ({ input }) => {
+      const base64Data = input.cvBase64.includes(",") ? input.cvBase64.split(",")[1] : input.cvBase64;
+      const cvBuffer = Buffer.from(base64Data ?? "", "base64");
+      if (!cvBuffer.length || cvBuffer.length > 5 * 1024 * 1024 || cvBuffer.subarray(0, 4).toString() !== "%PDF") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "CV PDF invalide ou trop volumineux." });
+      }
+      const totalPages = await getPdfPageCount(cvBuffer);
+      return { totalPages: Math.min(totalPages, 200) };
     }),
 });
