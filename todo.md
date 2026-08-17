@@ -302,3 +302,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inclure dans le PDF les instantanés e‑Visa archivés et leurs métadonnées de partage.
 - [x] Réserver l’export aux sessions administrateur valides et journaliser la génération dans l’historique du dossier.
 - [x] Vérifier le contenu PDF, les contrôles d’accès et le parcours de téléchargement avant publication.
+
+## Documentation technique e‑Visa et back-office
+- [x] Cartographier les routes, composants, tables et services actifs de l’intégration e‑Visa et du poste administrateur.
+- [x] Rédiger un récapitulatif technique des flux, autorisations, intégrations IA, e-mail, PDF et audit.
+- [x] Inclure les procédures de test, les dépendances opérationnelles et les limites connues pour la reprise par l’équipe.
