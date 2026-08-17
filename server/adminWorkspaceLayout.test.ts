@@ -31,7 +31,8 @@ describe("poste de pilotage administrateur", () => {
 
   it("protège la communication et l’historique par une session administrateur côté serveur", () => {
     const source = readFileSync(resolve(process.cwd(), "server/routers/admin.ts"), "utf8");
-    const messageBlock = source.slice(source.indexOf("sendCandidate360Message:"), source.indexOf("sendCandidate360Message:") + 3_500);
+    const messageStart = source.indexOf("sendCandidate360Message:");
+    const messageBlock = source.slice(messageStart, source.indexOf("}),\n});", messageStart));
 
     expect(messageBlock).toContain("requireValidAdminSession(input.sessionToken)");
     expect(messageBlock).toContain("caseActivityLogs");

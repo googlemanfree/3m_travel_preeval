@@ -49,7 +49,7 @@ test("ouvre un dossier dans un poste de pilotage administrateur pleine largeur",
           notes: [{ id: 3, note: "Dossier prioritaire pour la prochaine soumission.", createdAt: "2026-08-03T08:00:00.000Z" }],
           statusHistory: [{ id: 5, oldStatus: "qualifying", newStatus: "documents_review", comment: "Checklist créée", createdAt: "2026-08-03T08:00:00.000Z" }],
           activity: [{ type: "workflow_updated", description: "Statut actualisé", createdAt: "2026-08-03T08:00:00.000Z", actor: "admin" }],
-          communications: { notifications: [], messages: [{ id: 6, senderRole: "candidate", content: "Documents déposés.", createdAt: "2026-08-03T08:00:00.000Z" }] },
+          communications: { notifications: [], messages: [{ id: 6, senderRole: "advisor", content: "Consultez les exigences e‑Visa.", createdAt: "2026-08-03T08:00:00.000Z", evisaSnapshotJson: JSON.stringify({ version: 1, sharedAt: "2026-08-03T08:00:00.000Z", sharedByAdminId: 1, messageContentAtSend: "Consultez les exigences e‑Visa.", items: [{ destinationId: "togo", country: "Togo", officialPortalUrl: "https://voyage.gouv.tg/", officialPortalLabel: "Togo Voyage", officialVerifiedAt: "17 août 2026", requirements: "Passeport valide", fee: "À confirmer", delay: "5 jours ouvrés", procedureUrl: "/evisas/request?destination=togo" }] }) }] },
           evaluationVersions: [],
           advisors: [],
           currentAdmin: { id: 1, fullName: "Conseiller Test", email: "admin@example.com" },
@@ -72,6 +72,8 @@ test("ouvre un dossier dans un poste de pilotage administrateur pleine largeur",
 
   await workspace.getByRole("tab", { name: "Échanges" }).click();
   await expect(workspace.getByText("Envoyer une communication au candidat")).toBeVisible();
+  await expect(workspace.getByText("Instantané e‑Visa partagé")).toBeVisible();
+  await expect(workspace.getByText(/Togo · vérifié le 17 août 2026/)).toBeVisible();
   await workspace.getByRole("tab", { name: "Historique" }).click();
   await expect(workspace.getByText("Décisions et notes internes")).toBeVisible();
   await expect(workspace.getByText("Changements de procédure")).toBeVisible();

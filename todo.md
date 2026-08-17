@@ -290,3 +290,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Insérer dans le message modifiable le portail officiel, la date de vérification, les exigences principales et le lien de procédure de la destination sélectionnée.
 - [x] Conserver les contrôles administrateur, la traçabilité du message et la possibilité d’éditer le contenu avant envoi.
 - [x] Ajouter les tests de contenu, de sélection et de sécurité, puis vérifier le parcours administrateur concerné.
+
+## Historique des exigences e‑Visa partagées
+- [x] Enregistrer l’instantané normalisé de la destination e‑Visa au moment de l’envoi du message administrateur.
+- [x] Associer l’instantané au message et l’afficher dans l’historique de communication du dossier.
+- [x] Préserver le portail, la date de vérification, les exigences, frais, délai et lien de procédure réellement partagés.
+- [x] Ajouter les tests d’audit et vérifier que les évolutions futures du catalogue ne modifient pas les anciens messages.

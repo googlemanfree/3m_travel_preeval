@@ -232,6 +232,7 @@ export const candidateMessages = mysqlTable("candidate_messages", {
   attachmentName: varchar("attachmentName", { length: 255 }),
   attachmentMimeType: varchar("attachmentMimeType", { length: 100 }),
   attachmentSizeBytes: int("attachmentSizeBytes"),
+  evisaSnapshotJson: text("evisaSnapshotJson"),
   isRead: boolean("isRead").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

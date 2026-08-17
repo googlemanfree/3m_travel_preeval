@@ -12,6 +12,7 @@ import { getDb } from "../db";
 import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
@@ -2632,6 +2633,17 @@ export const adminRouter = router({
       attachmentName: z.string().optional(),
       attachmentMimeType: z.string().optional(),
       attachmentSizeBytes: z.number().int().optional(),
+      evisaSnapshots: z.array(z.object({
+        destinationId: z.string().trim().min(1).max(80),
+        country: z.string().trim().min(1).max(160),
+        officialPortalUrl: z.string().trim().max(1_000),
+        officialPortalLabel: z.string().trim().max(255),
+        officialVerifiedAt: z.string().trim().max(80),
+        requirements: z.string().trim().min(1).max(4_000),
+        fee: z.string().trim().max(255),
+        delay: z.string().trim().max(255),
+        procedureUrl: z.string().trim().min(1).max(1_000),
+      })).max(5).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -2647,6 +2659,9 @@ export const adminRouter = router({
       if (!sourceRecord?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
 
       const messageBody = input.content.trim();
+      const evisaSnapshotJson = input.evisaSnapshots?.length
+        ? createEvisaCommunicationSnapshot(input.evisaSnapshots, messageBody, admin.id)
+        : null;
       const candidateRecord = (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
       if (candidateRecord) {
         const notificationResult = await db.insert(clientNotifications).values({
@@ -2668,6 +2683,7 @@ export const adminRouter = router({
           attachmentName: input.attachmentName || null,
           attachmentMimeType: input.attachmentMimeType || null,
           attachmentSizeBytes: input.attachmentSizeBytes || null,
+          evisaSnapshotJson,
           isRead: false,
         });
       }
@@ -2694,7 +2710,7 @@ export const adminRouter = router({
         actionType: "candidate_message_sent",
         entityType: "communication",
         entityId: String(candidateRecord?.id ?? "email"),
-        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}.`,
+        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
       });
       return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord) };
     }),

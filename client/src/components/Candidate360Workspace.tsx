@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
-import { buildEvisaMessageTemplate } from "@/lib/evisaMessageTemplate";
+import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
 
 type CandidateSummary = {
   id: string;
@@ -82,6 +82,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [quickMessageOpen, setQuickMessageOpen] = useState(false);
   const [quickMessageText, setQuickMessageText] = useState("");
   const [quickMessageEvisaId, setQuickMessageEvisaId] = useState("");
+  const [quickMessageEvisaSnapshots, setQuickMessageEvisaSnapshots] = useState<EvisaMessageSnapshot[]>([]);
   const [quickAttachment, setQuickAttachment] = useState<{ name: string; url: string; size?: number; type?: string } | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
@@ -228,7 +229,9 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
                     const destination = evisasDatabaseComplete.find((item) => item.id === quickMessageEvisaId);
                     if (!destination) return;
                     const template = buildEvisaMessageTemplate(destination, window.location.origin);
+                    const snapshot = buildEvisaMessageSnapshot(destination, window.location.origin);
                     setQuickMessageText((current) => current.trim() ? `${current.trim()}\n\n${template}` : template);
+                    setQuickMessageEvisaSnapshots((current) => [...current.filter((item) => item.destinationId !== snapshot.destinationId), snapshot]);
                     toast.success("Informations e‑Visa insérées", { description: `Le contenu officiel de ${destination.country} peut encore être personnalisé avant envoi.` });
                   }}
                 >
@@ -325,12 +328,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
                     attachmentName: quickAttachment?.name,
                     attachmentMimeType: quickAttachment?.type,
                     attachmentSizeBytes: quickAttachment?.size,
+                    evisaSnapshots: quickMessageEvisaSnapshots,
                   },
                   {
                     onSuccess: () => {
                       setQuickMessageOpen(false);
                       setQuickMessageText("");
                       setQuickAttachment(null);
+                      setQuickMessageEvisaSnapshots([]);
                     },
                   }
                 );
@@ -438,7 +443,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
             <div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-500">{outboundMessage.length}/2000 caractères</span><Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })}><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Envoyer au candidat"}</Button></div>
           </div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><Bell className="h-4 w-4 text-blue-700" />Notifications client</h4><div className="mt-3 space-y-2">{data.communications.notifications.length ? data.communications.notifications.map((notification: any) => <div key={notification.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{notification.title}</p><p className="mt-1 text-xs text-slate-600">{notification.body}</p><p className="mt-1 text-xs text-slate-400">{formatDate(notification.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune notification enregistrée.</p>}</div></div>
-          <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p><p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>
+          <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => { const snapshot = message.evisaSnapshotJson ? (() => { try { return JSON.parse(message.evisaSnapshotJson); } catch { return null; } })() : null; return <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p>{snapshot?.items?.length ? <div className="mt-2 rounded border border-cyan-200 bg-cyan-50 p-2 text-xs text-cyan-950"><p className="font-semibold">Instantané e‑Visa partagé</p>{snapshot.items.map((item: any) => <p key={item.destinationId}>{item.country} · vérifié le {item.officialVerifiedAt} · <a className="underline" href={item.officialPortalUrl} target="_blank" rel="noreferrer">portail officiel</a></p>)}</div> : null}<p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>; }) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-3 pt-4">
