@@ -180,3 +180,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier par test que les modèles d’e-mail d’évaluation utilisent le lien de connexion canonique associé au dossier.
 - [x] Vérifier par test le retour vers le bon dossier après connexion depuis le lien e-mail.
 - [x] Ajouter un test d’intégration de connexion depuis le lien e-mail jusqu’au dossier ciblé.
+
+## Poste de pilotage administrateur pleine largeur
+- [x] Passer le tableau de bord administrateur en disposition PC pleine largeur, avec zones de travail adaptées aux grands écrans.
+- [x] Centraliser la gestion des dossiers dans une fiche 360° accessible depuis la liste administrateur.
+- [x] Étendre les actions administratives sur les procédures, documents, paiements, évaluations, communications et historique.
+- [x] Vérifier les contrôles d’accès, les actions sensibles et l’expérience administrateur sur PC.
+- [x] Ajouter un test navigateur desktop du poste dossier 360° et de ses raccourcis opérationnels.
+- [x] Vérifier les contrôles d’accès administrateurs sur les procédures de pilotage sensibles.
+- [x] Compléter les actions de procédure, communication et historique visibles depuis le poste 360° puis les couvrir par tests.
+- [x] Ajouter un test d’autorisation exécutable prouvant qu’une session absente ou invalide est rejetée pour les actions sensibles du poste 360°.
+- [x] Tester explicitement le rejet d’une session administrateur absente sur les actions sensibles du poste 360°.

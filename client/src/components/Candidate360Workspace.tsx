@@ -76,6 +76,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [checklistCountry, setChecklistCountry] = useState(candidate.destinationCountry || "Canada");
   const [checklistProcedure, setChecklistProcedure] = useState("permanent_residence");
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
+  const [outboundMessage, setOutboundMessage] = useState("");
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
@@ -127,6 +128,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const documentReminderMutation = trpc.admin.sendCandidate360DocumentReminder.useMutation({
     onSuccess: async (result) => { toast({ title: "Relance envoyée", description: `Le candidat a été relancé pour ${result.count} pièce(s).` }); await refresh(); },
     onError: (mutationError) => toast({ title: "Relance impossible", description: mutationError.message, variant: "destructive" }),
+  });
+  const sendMessageMutation = trpc.admin.sendCandidate360Message.useMutation({
+    onSuccess: async (result) => {
+      toast({ title: "Message enregistré", description: result.emailSent ? "Le candidat a été notifié dans son espace et par e-mail." : "Le message est visible dans l’espace candidat. L’e-mail n’a pas pu être envoyé." });
+      setOutboundMessage("");
+      await refresh();
+    },
+    onError: (mutationError) => toast({ title: "Envoi impossible", description: mutationError.message, variant: "destructive" }),
   });
 
   const pendingRequirements = useMemo(() => (data?.requirements ?? []).filter((item: any) => item.status !== "approved" && item.status !== "waived"), [data]);
@@ -239,11 +248,21 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsContent>
 
         <TabsContent value="messages" className="grid gap-3 pt-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:col-span-2">
+            <h4 className="flex items-center gap-2 font-semibold text-slate-900"><Send className="h-4 w-4 text-blue-700" />Envoyer une communication au candidat</h4>
+            <p className="mt-1 text-sm text-slate-600">Le message est journalisé, visible dans l’espace client et envoyé par e-mail lorsqu’il est disponible.</p>
+            <Textarea className="mt-3 bg-white" value={outboundMessage} onChange={(event) => setOutboundMessage(event.target.value)} placeholder="Rédigez une instruction, une décision ou une demande de précision…" maxLength={2000} />
+            <div className="mt-2 flex items-center justify-between gap-3"><span className="text-xs text-slate-500">{outboundMessage.length}/2000 caractères</span><Button size="sm" disabled={outboundMessage.trim().length < 3 || sendMessageMutation.isPending} onClick={() => sendMessageMutation.mutate({ sessionToken, candidateId: candidate.id, content: outboundMessage.trim() })}><Send className="mr-2 h-4 w-4" />{sendMessageMutation.isPending ? "Envoi…" : "Envoyer au candidat"}</Button></div>
+          </div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><Bell className="h-4 w-4 text-blue-700" />Notifications client</h4><div className="mt-3 space-y-2">{data.communications.notifications.length ? data.communications.notifications.map((notification: any) => <div key={notification.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{notification.title}</p><p className="mt-1 text-xs text-slate-600">{notification.body}</p><p className="mt-1 text-xs text-slate-400">{formatDate(notification.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune notification enregistrée.</p>}</div></div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p><p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-3 pt-4">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4 text-blue-700" />Décisions et notes internes</h4><div className="mt-3 space-y-2">{data.notes.length ? data.notes.slice(0, 12).map((note: any) => <div key={note.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm text-slate-700">{note.note}</p><p className="mt-1 text-xs text-slate-400">{formatDate(note.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune note interne. Ajoutez une décision dans Vue d’ensemble.</p>}</div></div>
+            <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Changements de procédure</h4><div className="mt-3 space-y-2">{data.statusHistory.length ? data.statusHistory.slice(0, 12).map((entry: any) => <div key={entry.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium text-slate-700">{STATUS_LABELS[entry.oldStatus] ?? entry.oldStatus} → {STATUS_LABELS[entry.newStatus] ?? entry.newStatus}</p><p className="mt-1 text-xs text-slate-600">{entry.comment || "Statut actualisé"}</p><p className="mt-1 text-xs text-slate-400">{formatDate(entry.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Les changements de statut apparaîtront ici.</p>}</div></div>
+          </div>
           <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Frise chronologique du dossier</h4><p className="mt-1 text-sm text-slate-500">Chaque jalon est daté et attribué pour visualiser rapidement l’évolution globale.</p><div className="mt-5 space-y-0">{data.activity.length ? data.activity.map((activity: any, index: number) => <div key={`${activity.type}-${index}`} className="grid grid-cols-[92px_24px_minmax(0,1fr)] gap-3"><p className="pt-1 text-right text-xs text-slate-500">{new Date(activity.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</p><div className="relative flex justify-center"><span className="z-10 mt-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow" />{index < data.activity.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><p className="text-sm font-semibold capitalize text-slate-800">{String(activity.type).replaceAll("_", " ")}</p><p className="mt-1 text-sm text-slate-600">{activity.description || "Action enregistrée"}</p><p className="mt-1 text-xs text-slate-400">{activity.actor} · {formatDate(activity.createdAt)}</p></div></div>) : <p className="text-sm text-slate-500">L’historique s’alimentera au fil des actions de traitement.</p>}</div></div>
         </TabsContent>
       </Tabs>

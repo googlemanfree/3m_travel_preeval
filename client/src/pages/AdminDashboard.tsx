@@ -52,6 +52,7 @@ import {
   ExternalLink,
   ImagePlus,
   ShieldAlert,
+  MessageSquare,
 } from "lucide-react";
 import {
   BarChart,
@@ -219,10 +220,12 @@ function CandidateDetailModal({
   candidateId,
   onClose,
   onStatusUpdated,
+  onOpenOperations,
 }: {
   candidateId: string;
   onClose: () => void;
   onStatusUpdated: () => void;
+  onOpenOperations: (area: "payments" | "documents" | "emails", folderCode: string) => void;
 }) {
   const { toast } = useToast();
   const [notifyClient, setNotifyClient] = useState(true);
@@ -264,12 +267,13 @@ function CandidateDetailModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-blue-900">
-            <Users className="w-5 h-5" />
-            Fiche Candidat
+      <DialogContent className="h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] !max-w-none overflow-y-auto rounded-2xl border-0 bg-slate-50 p-0 shadow-2xl sm:h-[calc(100vh-2rem)] sm:w-[calc(100vw-2rem)] sm:!max-w-none">
+        <DialogHeader className="sticky top-0 z-20 border-b border-slate-200 bg-white px-5 py-4 shadow-sm sm:px-7">
+          <DialogTitle className="flex items-center gap-2 text-lg text-blue-950 sm:text-xl">
+            <Users className="h-5 w-5" />
+            Poste de pilotage dossier 360°
           </DialogTitle>
+          <p className="mt-1 text-sm text-slate-500">Gérez l’intégralité du dossier : procédure, évaluation, documents, paiements, échanges et historique.</p>
         </DialogHeader>
 
         {isLoading ? (
@@ -277,9 +281,10 @@ function CandidateDetailModal({
             <RefreshCw className="w-6 h-6 animate-spin text-blue-600" />
           </div>
         ) : candidate ? (
-          <div className="space-y-5">
+          <div className="mx-auto grid max-w-[1920px] gap-6 p-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:p-7">
+            <div className="min-w-0 space-y-5">
             {/* En-tête candidat avec avatar et actions */}
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
               <div className="flex items-center gap-4">
                 {candidate.avatarUrl ? (
                   <img
@@ -330,105 +335,55 @@ function CandidateDetailModal({
               }}
             />
 
-            {/* Informations de contact */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Mail className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Email</p>
-                  <p className="text-sm font-medium text-gray-800 break-all">{candidate.email}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Phone className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">WhatsApp</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.whatsapp || "Non renseigné"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <MapPin className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Ville</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.city}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                <Globe className="w-4 h-4 text-gray-500 shrink-0" />
-                <div>
-                  <p className="text-xs text-gray-500">Destination</p>
-                  <p className="text-sm font-medium text-gray-800">{candidate.destinationCountry}</p>
-                </div>
-              </div>
             </div>
 
-            {/* Projet */}
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <p className="text-xs text-gray-500 mb-1">Type de projet</p>
-              <p className="text-sm font-medium text-gray-800">{candidate.projectType}</p>
-            </div>
-
-            {/* Score (si disponible) */}
-            {candidate.scoringTotal !== null && (
-              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 text-green-600" />
-                    <span className="text-sm font-semibold text-green-800">Score d'éligibilité</span>
-                  </div>
-                  <span className="text-2xl font-bold text-green-700">{candidate.scoringTotal}/100</span>
+            <aside className="space-y-4 xl:sticky xl:top-24 xl:h-fit">
+              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Coordonnées & dossier</p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-slate-700"><Mail className="h-4 w-4 text-blue-700" /><span className="break-all">{candidate.email}</span></div>
+                  <div className="flex items-center gap-2 text-sm text-slate-700"><Phone className="h-4 w-4 text-blue-700" /><span>{candidate.whatsapp || "Téléphone non renseigné"}</span></div>
+                  <div className="flex items-center gap-2 text-sm text-slate-700"><MapPin className="h-4 w-4 text-blue-700" /><span>{candidate.city || "Ville non renseignée"}</span></div>
+                  <div className="flex items-center gap-2 text-sm text-slate-700"><Globe className="h-4 w-4 text-blue-700" /><span>{candidate.destinationCountry || "Destination à préciser"}</span></div>
                 </div>
-                {candidate.scoringBadge && SCORING_BADGE_CONFIG[candidate.scoringBadge] && (
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${SCORING_BADGE_CONFIG[candidate.scoringBadge].color}`}>
-                    {SCORING_BADGE_CONFIG[candidate.scoringBadge].label}
-                  </span>
-                )}
-                <div className="mt-2 bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-500 h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min(100, candidate.scoringTotal)}%` }}
-                  />
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {candidate.whatsapp && <a href={`https://wa.me/${candidate.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-600 px-3 text-sm font-semibold text-white hover:bg-emerald-700"><MessageSquare className="h-4 w-4" />WhatsApp</a>}
+                  <a href={`mailto:${candidate.email}`} className="inline-flex h-10 items-center gap-2 rounded-lg bg-blue-700 px-3 text-sm font-semibold text-white hover:bg-blue-800"><Mail className="h-4 w-4" />E-mail</a>
                 </div>
-              </div>
-            )}
+              </section>
 
-            {/* Date de création */}
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>Créé le {new Date(candidate.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</span>
-            </div>
+              <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
+                <p className="mt-2 text-sm font-semibold text-slate-900">{candidate.projectType || "Procédure à qualifier"}</p>
+                <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
+                  <Label htmlFor="candidate-status">Statut général</Label>
+                  <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
+                    <SelectTrigger id="candidate-status" className="bg-white"><SelectValue placeholder="Choisir un statut…" /></SelectTrigger>
+                    <SelectContent>{Object.entries(STATUS_CONFIG).map(([key, cfg]) => <SelectItem key={key} value={key}>{cfg.label}</SelectItem>)}</SelectContent>
+                  </Select>
+                  <label className="flex items-start gap-2 text-sm text-slate-700">
+                    <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
+                    <span>Notifier le candidat par e-mail après la mise à jour.</span>
+                  </label>
+                  <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} className="w-full bg-blue-700 hover:bg-blue-800">
+                    {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer la décision"}
+                  </Button>
+                </div>
+              </section>
 
-            {/* Mise à jour du statut */}
-            <div className="border-t pt-4">
-              <h4 className="text-sm font-semibold text-gray-800 mb-3">Mettre à jour le statut</h4>
-              <div className="space-y-3">
-                <Select value={selectedStatus} onValueChange={(v) => setSelectedStatus(v as AdminStatus)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir un nouveau statut..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {cfg.icon}
-                          {cfg.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Centres de traitement</p>
+                <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
+                <div className="mt-4 grid gap-2">
+                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("documents", candidate.folderCode)}><FileCheck className="mr-2 h-4 w-4 text-violet-700" />Contrôler les documents</Button>
+                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4 text-amber-700" />Valider un paiement</Button>
+                  <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
+                </div>
+              </section>
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notifyClient}
-                    onChange={(e) => setNotifyClient(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600"
-                  />
-                  <span className="text-sm text-gray-700">Notifier le client par email</span>
-                </label>
-              </div>
-            </div>
+              {candidate.scoringTotal !== null && <section className="rounded-xl border border-emerald-100 bg-emerald-50 p-5"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Score d’évaluation</p><p className="mt-1 text-3xl font-black text-emerald-800">{candidate.scoringTotal}<span className="text-base font-semibold">/100</span></p><div className="mt-3 h-2 rounded-full bg-emerald-100"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${Math.min(100, candidate.scoringTotal)}%` }} /></div></section>}
+            </aside>
+
           </div>
         ) : (
           <div className="py-12 text-center text-gray-600">
@@ -439,21 +394,9 @@ function CandidateDetailModal({
           </div>
         )}
 
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 z-20 border-t border-slate-200 bg-white px-5 py-3 sm:px-7">
           <Button variant="outline" onClick={onClose}>Fermer</Button>
-          {selectedStatus && (
-            <Button
-              onClick={handleStatusUpdate}
-              disabled={updateStatusMutation.isPending}
-              className="bg-blue-700 hover:bg-blue-800 text-white"
-            >
-              {updateStatusMutation.isPending ? (
-                <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Mise à jour...</>
-              ) : (
-                "Confirmer le statut"
-              )}
-            </Button>
-          )}
+          <p className="hidden text-xs text-slate-500 md:block">Toutes les actions sont journalisées dans l’historique du dossier.</p>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -643,6 +586,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const [activeAdminTab, setActiveAdminTab] = useState("candidates");
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
@@ -821,7 +765,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-50/70 text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
       <div className="glass-admin-header bg-gradient-to-r from-blue-900/95 to-blue-950/95 text-white fixed top-0 left-0 right-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
+        <div className="mx-auto w-full max-w-[1920px] px-4 py-4 sm:px-6 xl:px-8 2xl:px-10 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <h1 className="text-xl font-bold">Tableau de bord Admin</h1>
@@ -929,7 +873,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 mt-32">
+      <div className="mx-auto w-full max-w-[1920px] px-4 py-6 space-y-6 mt-32 sm:px-6 xl:px-8 2xl:px-10">
         {/* Statistiques */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
@@ -1055,7 +999,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
-        <Tabs defaultValue="candidates" className="w-full">
+        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
@@ -1575,6 +1519,12 @@ export default function AdminDashboard() {
           candidateId={selectedCandidateId}
           onClose={() => setSelectedCandidateId(null)}
           onStatusUpdated={handleRefresh}
+          onOpenOperations={(area, folderCode) => {
+            setSearch(folderCode);
+            setActiveAdminTab(area);
+            setSelectedCandidateId(null);
+            toast({ title: "Centre de traitement ouvert", description: `Module ${area === "documents" ? "documents" : area === "payments" ? "paiements" : "e-mails"} ouvert pour poursuivre le traitement du dossier ${folderCode}.` });
+          }}
         />
       )}
 

@@ -2552,6 +2552,71 @@ export const adminRouter = router({
       await db.insert(caseActivityLogs).values({ caseId: operationalCase.id, actorRole: "admin", actorId: admin.id, actionType: "documents_reminder_sent", entityType: "case", entityId: String(operationalCase.id), description: `Relance envoyée pour ${missing.length} document(s) manquant(s).` });
       return { success: true, count: missing.length };
     }),
+
+  sendCandidate360Message: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      content: z.string().trim().min(3).max(2_000),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const sourceRecord = reference.source === "online"
+        ? (await db.select({ email: applications.email, fullName: applications.fullName }).from(applications).where(eq(applications.id, reference.id)).limit(1))[0]
+        : (await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
+      if (!sourceRecord?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
+
+      const messageBody = input.content.trim();
+      const candidateRecord = (await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, sourceRecord.email)).limit(1))[0];
+      if (candidateRecord) {
+        const notificationResult = await db.insert(clientNotifications).values({
+          candidateId: candidateRecord.id,
+          caseId: operationalCase.id,
+          type: "admin_message",
+          title: "Nouveau message de Prime Travel Service",
+          body: messageBody,
+          actionUrl: "/mon-espace",
+          isRead: false,
+        });
+        const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+        await db.insert(candidateMessages).values({
+          candidateId: candidateRecord.id,
+          notificationId: notificationId || null,
+          senderRole: "advisor",
+          content: messageBody,
+          isRead: false,
+        });
+      }
+
+      let emailSent = false;
+      try {
+        await sendGenericEmail({
+          to: sourceRecord.email,
+          subject: "Nouveau message concernant votre dossier 3M Travel",
+          html: `<p>Bonjour ${sourceRecord.fullName},</p><p>${messageBody.replace(/\n/g, "<br>")}</p><p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
+        });
+        emailSent = true;
+      } catch (error) {
+        console.error("[Candidate360] Envoi e-mail impossible après enregistrement du message", error);
+      }
+
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "candidate_message_sent",
+        entityType: "communication",
+        entityId: String(candidateRecord?.id ?? "email"),
+        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}.`,
+      });
+      return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord) };
+    }),
 });
 
 // ─── Générateurs HTML des modèles ─────────────────────────────────────────────
