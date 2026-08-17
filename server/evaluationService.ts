@@ -266,7 +266,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   const scores = generateAllDestinationScores(app);
   const topScore = scores[0];
   const criteria = extractScoringCriteria(app);
-  let adminDraft: { finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[] } = {};
+  let adminDraft: { destination?: string; modelLabel?: string; criteria?: { education?: number; experience?: number; languages?: number; market?: number; profile?: number }; finalScore?: number; verdict?: string; strengths?: string[]; weaknesses?: string[]; recommendations?: string[]; checklist?: string[]; advisorValidated?: boolean } = {};
   try {
     const parsed = JSON.parse(app.scoringDetails || "{}");
     adminDraft = parsed.adminDraft || {};
@@ -277,6 +277,24 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
   const recommendations = Array.isArray(adminDraft.recommendations) && adminDraft.recommendations.length
     ? adminDraft.recommendations
     : generatePersonalizedRecommendations(criteria, app);
+  const hasDestinationModel = Boolean(adminDraft.criteria && adminDraft.modelLabel);
+  const selectedDestination = adminDraft.modelLabel || app.destination || "Évaluation préliminaire";
+  const selectedScore = adminDraft.finalScore ?? app.scoringTotal ?? 0;
+  const renderedCriteria = hasDestinationModel
+    ? [
+      ["Formation et diplôme", adminDraft.criteria?.education ?? 0, 20],
+      ["Expérience professionnelle", adminDraft.criteria?.experience ?? 0, 20],
+      ["Langues déclarées", adminDraft.criteria?.languages ?? 0, 15],
+      ["Adéquation indicative marché", adminDraft.criteria?.market ?? 0, 30],
+      ["Profil et cohérence du projet", adminDraft.criteria?.profile ?? 0, 15],
+    ] as Array<[string, number, number]>
+    : [
+      ["Formation académique", criteria.education, 25],
+      ["Expérience professionnelle", criteria.experience, 25],
+      ["Compétences linguistiques", criteria.language, 20],
+      ["Secteur en demande", criteria.sector, 20],
+      ["Ajustement marché & métier", criteria.ageAdjustment, 10],
+    ] as Array<[string, number, number]>;
 
   // Barre de progression visuelle
   const progressBar = (score: number): string => {
@@ -335,8 +353,8 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       ${customIntro ? `<div class="recommendation"><p>${escapeReportHtml(customIntro).replace(/\n/g, "<br/>")}</p></div>` : ""}
       
       <div class="section">
-        <div class="section-title">📊 SYNTHÈSE DES SCORES PAR DESTINATION</div>
-        ${scores
+        <div class="section-title">📊 ${hasDestinationModel ? "MODÈLE D’ÉVALUATION SÉLECTIONNÉ" : "SYNTHÈSE DES SCORES PAR DESTINATION"}</div>
+        ${hasDestinationModel ? `<div class="recommendation"><p><strong>${escapeReportHtml(selectedDestination)}</strong></p><p>Score interne préliminaire : <strong>${selectedScore}/100</strong>. Ce résultat doit être interprété avec les pièces justificatives et les critères applicables au moment de la demande.</p></div>` : scores
           .map(
             s => `
           <div class="score-row">
@@ -357,35 +375,17 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
       <div class="section">
         <div class="section-title">📈 ANALYSE DE VOS CRITÈRES</div>
         <table class="criteria-table">
-          <tr>
-            <td>Formation académique</td>
-            <td>${criteria.education} / 25</td>
-          </tr>
-          <tr>
-            <td>Expérience professionnelle</td>
-            <td>${criteria.experience} / 25</td>
-          </tr>
-          <tr>
-            <td>Compétences linguistiques</td>
-            <td>${criteria.language} / 20</td>
-          </tr>
-          <tr>
-            <td>Secteur en demande</td>
-            <td>${criteria.sector} / 20</td>
-          </tr>
-          <tr>
-            <td>Ajustement marché & métier</td>
-            <td>${criteria.ageAdjustment} / 10</td>
-          </tr>
+          ${renderedCriteria.map(([label, value, maximum]) => `<tr><td>${label}</td><td>${value} / ${maximum}</td></tr>`).join("")}
+          ${hasDestinationModel ? `<tr><td><strong>Total de la grille interne</strong></td><td><strong>${selectedScore} / 100</strong></td></tr>` : ""}
         </table>
       </div>
       
       <div class="section">
         <div class="section-title">🎯 RECOMMANDATION STRATÉGIQUE & PLAN D'ACTION</div>
         <div class="recommendation">
-          <p><strong>Destination recommandée :</strong> ${DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || topScore.destination}</p>
-          <p>${topScore.description}</p>
-          <p style="margin-top: 10px;">Notre analyse stratégique identifie cette destination comme offrant les meilleures perspectives pour votre profil, avec des procédures simplifiées et des opportunités réelles d'établissement ou de résidence permanente.</p>
+          <p><strong>Orientation à examiner :</strong> ${hasDestinationModel ? escapeReportHtml(selectedDestination) : DESTINATIONS[topScore.destination as keyof typeof DESTINATIONS]?.name || topScore.destination}</p>
+          <p>${hasDestinationModel ? "Cette orientation est préliminaire et nécessite la vérification des pièces, des conditions de programme et, le cas échéant, d’une offre d’employeur." : topScore.description}</p>
+          <p style="margin-top: 10px;">La décision finale relève toujours de l’autorité compétente, du programme visé et, lorsque nécessaire, de l’employeur. Ce bilan ne constitue pas une garantie de visa, d’emploi ou d’admission.</p>
         </div>
         
         <div style="margin-top: 20px;">
@@ -395,7 +395,7 @@ export function generateEvaluationReportHTML(app: Application, options: Evaluati
           </ul>
         </div>
       </div>
-      ${adminDraft.verdict || adminDraft.strengths?.length || adminDraft.weaknesses?.length || adminDraft.finalScore !== undefined ? `<div class="section"><div class="section-title">🧭 AVIS PERSONNALISÉ DU CONSEILLER</div>${adminDraft.finalScore !== undefined ? `<p><strong>Indice révisé par l’administration :</strong> ${adminDraft.finalScore}/100</p>` : ""}${adminDraft.verdict ? `<p><strong>Verdict :</strong> ${escapeReportHtml(adminDraft.verdict)}</p>` : ""}${adminDraft.strengths?.length ? `<p><strong>Points forts :</strong></p><ul>${adminDraft.strengths.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}${adminDraft.weaknesses?.length ? `<p><strong>Axes d’amélioration :</strong></p><ul>${adminDraft.weaknesses.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}</div>` : ""}
+      ${adminDraft.verdict || adminDraft.strengths?.length || adminDraft.weaknesses?.length || adminDraft.finalScore !== undefined ? `<div class="section"><div class="section-title">🧭 AVIS PERSONNALISÉ DU CONSEILLER</div>${adminDraft.finalScore !== undefined ? `<p><strong>Indice révisé par l’administration :</strong> ${adminDraft.finalScore}/100</p>` : ""}${adminDraft.verdict ? `<p><strong>Verdict :</strong> ${escapeReportHtml(adminDraft.verdict)}</p>` : ""}${adminDraft.strengths?.length ? `<p><strong>Points forts :</strong></p><ul>${adminDraft.strengths.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}${adminDraft.weaknesses?.length ? `<p><strong>Axes d’amélioration :</strong></p><ul>${adminDraft.weaknesses.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}${adminDraft.checklist?.length ? `<p><strong>Pièces à vérifier :</strong></p><ul>${adminDraft.checklist.map((item) => `<li>${escapeReportHtml(item)}</li>`).join("")}</ul>` : ""}</div>` : ""}
       
       <div class="section">
         <div class="section-title">⚙️ CADRE JURIDIQUE</div>

@@ -12,6 +12,7 @@ import { sql } from 'drizzle-orm';
 import { storagePut } from '../storage';
 import { sendEmail } from '../_core/email';
 import { buildPassportCorrectionAudit } from '../services/passportCorrectionHistory';
+import { requireValidAdminSession } from './adminAuth';
 
 export const evisaRouter = router({
   /**
@@ -101,12 +102,6 @@ export const evisaRouter = router({
           LIMIT 1
         `, [queryTerm, `%${queryTerm}%`, queryTerm]);
 
-        if (!evisa || (evisa as any[]).length === 0) {
-          // Fallback sur toutes les destinations actives si non trouvé par correspondance directe
-          [evisa] = await connection.execute(`
-            SELECT * FROM evisas WHERE isActive = true LIMIT 1
-          `);
-        }
         await connection.end();
 
         if (!evisa || (evisa as any[]).length === 0) {
@@ -119,6 +114,7 @@ export const evisaRouter = router({
         return { success: true, data: (evisa as any[])[0] };
       } catch (error) {
         console.error('Erreur lors de la récupération de l\'e-visa:', error);
+        if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Erreur lors de la récupération de l\'e-visa',
@@ -574,13 +570,26 @@ export const evisaRouter = router({
       })
     )
     .mutation(async ({ input }: any) => {
+      let connection: mysql.Connection | null = null;
       try {
-        // Vérification de session admin via cookie ou token
-        if (!input.sessionToken) {
-          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Session admin requise.' });
+        // Ne jamais accepter la simple présence d’un jeton : il doit correspondre
+        // à un compte administrateur actif, non expiré et autorisé côté serveur.
+        await requireValidAdminSession(input.sessionToken);
+
+        const rawBase64 = input.fileBase64.replace(/^data:application\/pdf;base64,/i, '').replace(/\s/g, '');
+        if (rawBase64.length > 16 * 1024 * 1024) {
+          throw new TRPCError({ code: 'PAYLOAD_TOO_LARGE', message: 'Le PDF e-Visa dépasse la taille autorisée.' });
+        }
+        const buffer = Buffer.from(rawBase64, 'base64');
+        if (!buffer.length || buffer.length > 12 * 1024 * 1024 || buffer.subarray(0, 5).toString('ascii') !== '%PDF-') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Seul un document PDF e-Visa valide peut être téléversé.' });
+        }
+        const safeName = input.fileName.trim().replace(/[^a-zA-Z0-9._-]/g, '_');
+        if (!safeName.toLowerCase().endsWith('.pdf')) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Le document final doit porter une extension .pdf.' });
         }
         const dbUrl = process.env.DATABASE_URL || '';
-        const connection = await mysql.createConnection(dbUrl);
+        connection = await mysql.createConnection(dbUrl);
 
         // Récupérer la demande e-visa
         const [rows]: any = await connection.execute(`
@@ -588,15 +597,13 @@ export const evisaRouter = router({
         `, [input.requestId]);
 
         if (!rows || rows.length === 0) {
-          await connection.end();
           throw new TRPCError({ code: 'NOT_FOUND', message: 'Demande d\'e-visa introuvable.' });
         }
 
         const req = rows[0];
 
         // Stocker le fichier PDF via storagePut
-        const buffer = Buffer.from(input.fileBase64, 'base64');
-        const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${input.fileName}`;
+        const storageKey = `evisa-docs/${input.requestId}-${Date.now()}-${safeName}`;
         const stored = await storagePut(storageKey, buffer, 'application/pdf');
 
         // Mettre à jour la base de données
@@ -606,10 +613,11 @@ export const evisaRouter = router({
           WHERE id = ?
         `, [stored.url, input.requestId]);
 
-        await connection.end();
-
-        // Envoyer l'e-mail de notification au client avec le lien de téléchargement
-        await sendEmail({
+        // La demande est déjà validée et son PDF est dans l’espace candidat.
+        // L’échec e-mail est donc journalisé sans annuler ni masquer ce résultat.
+        let emailSent = true;
+        try {
+          await sendEmail({
           to: req.email,
           subject: `[3M Travel] Votre e-Visa pour ${req.countryName} est disponible - Dossier #${req.id}`,
           html: `
@@ -629,15 +637,22 @@ export const evisaRouter = router({
               <p style="margin-top: 30px; font-size: 13px; color: #64748b;">Cordialement,<br/><strong>L'équipe 3M Travel & Services</strong></p>
             </div>
           `,
-        });
+          });
+        } catch (emailError) {
+          emailSent = false;
+          console.error('Notification e-mail e-Visa non envoyée après validation:', emailError);
+        }
 
-        return { success: true, pdfUrl: stored.url };
+        return { success: true, pdfUrl: stored.url, emailSent };
       } catch (error: any) {
         console.error('Erreur lors du téléversement administrateur de l\'e-Visa:', error);
+        if (error instanceof TRPCError) throw error;
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: error.message || 'Erreur lors du téléversement du document e-Visa',
         });
+      } finally {
+        await connection?.end().catch(() => undefined);
       }
     }),
 

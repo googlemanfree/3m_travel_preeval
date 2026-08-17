@@ -223,3 +223,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Produire un exemple détaillé de bilan d’évaluation 3M Travel à partir d’un profil fictif transparent.
 - [x] Créer un prompt réutilisable pour générer des bilans structurés, auditables et sans promesse de visa.
 - [x] Présenter les règles de calcul et les limites de l’automatisation pour validation humaine.
+
+## Bilan IA par destination avec validation conseiller
+- [x] Ajouter la sélection Canada, Luxembourg ou Europe et appliquer un modèle d’évaluation adapté.
+- [x] Intégrer la grille de score cohérente sur 100 points dans la génération du brouillon IA.
+- [x] Rendre la modification et la validation par conseiller obligatoires avant tout envoi client.
+- [x] Formaliser le cycle dans la compétence réutilisable `prime-travel-case-management` avec `skill-creator`.
+- [x] Tester le cycle complet génération, modification, validation et envoi avant publication.
+
+## Sécurité et catalogue e‑Visa
+- [x] Remplacer le routeur e‑Visa fourni et vérifier strictement chaque session administrateur avant approbation ou téléversement.
+- [x] Ajouter les destinations e‑Visa demandées avec un avertissement d’éligibilité à confirmer avant toute démarche ou paiement.
+- [x] Finaliser le workflow de bilan IA administrable interrompu sans affaiblir les contrôles serveur.
+- [x] Tester les autorisations e‑Visa, les nouveaux pays et les parcours principaux avant publication.
+- [x] Corriger le rendu du poste dossier 360° lorsqu’une prochaine action est absente.
+- [x] Corriger le rendu du poste dossier 360° lorsqu’aucun état opérationnel n’est encore créé.
+- [x] Corriger l’éditeur de bilan lorsqu’aucun brouillon n’a encore été chargé.

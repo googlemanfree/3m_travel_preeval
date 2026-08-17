@@ -39,12 +39,21 @@ const MESSAGE_TEMPLATES = {
 
 const splitLines = (value: string) => value.split("\n").map((item) => item.trim()).filter(Boolean);
 const joinLines = (values: string[]) => values.join("\n");
+const evaluationDestinations = ["canada", "luxembourg", "europe"] as const;
+type EvaluationDestination = typeof evaluationDestinations[number];
+const normalizeDestination = (value: string | null | undefined): EvaluationDestination => {
+  const normalized = (value || "").toLowerCase();
+  if (normalized.includes("canada")) return "canada";
+  if (normalized.includes("luxembourg")) return "luxembourg";
+  return "europe";
+};
 
 export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, onOpenChange, onCompleted }: Props) {
   const { toast } = useToast();
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.unifiedRequests.getEvaluationDelivery.useQuery({ sessionToken, sourceRecordId }, { enabled: open });
   const [score, setScore] = useState("0");
+  const [destination, setDestination] = useState<EvaluationDestination>("europe");
   const [verdict, setVerdict] = useState("");
   const [strengths, setStrengths] = useState("");
   const [weaknesses, setWeaknesses] = useState("");
@@ -59,6 +68,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
 
   useEffect(() => {
     if (!data?.draft) return;
+    setDestination(normalizeDestination(data.draft.destination));
     setScore(String(data.draft.finalScore));
     setVerdict(data.draft.verdict);
     setStrengths(joinLines(data.draft.strengths));
@@ -76,6 +86,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
   const payload = useMemo(() => ({
     sessionToken,
     sourceRecordId,
+    destination,
     finalScore: Math.max(0, Math.min(100, Number(score) || 0)),
     verdict: verdict.trim() || "Évaluation préliminaire à consulter",
     strengths: splitLines(strengths),
@@ -84,7 +95,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     subject: subject.trim() || undefined,
     message: message.trim() || undefined,
     requiresSecondApproval,
-  }), [sessionToken, sourceRecordId, score, verdict, strengths, weaknesses, recommendations, subject, message, requiresSecondApproval]);
+  }), [sessionToken, sourceRecordId, destination, score, verdict, strengths, weaknesses, recommendations, subject, message, requiresSecondApproval]);
 
   const saveDraft = trpc.unifiedRequests.saveEvaluationDeliveryDraft.useMutation({
     onSuccess: (result) => {
@@ -114,6 +125,27 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     onSuccess: (result) => { void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId }); toast({ title: "Bilan approuvé", description: result.message }); },
     onError: (error) => toast({ title: "Approbation impossible", description: error.message, variant: "destructive" }),
   });
+  const generateAiDraft = trpc.unifiedRequests.generateDestinationEvaluationDraft.useMutation({
+    onSuccess: (result) => {
+      setDestination(result.draft.destination);
+      setScore(String(result.draft.finalScore));
+      setVerdict(result.draft.verdict);
+      setStrengths(joinLines(result.draft.strengths));
+      setWeaknesses(joinLines(result.draft.weaknesses));
+      setRecommendations(joinLines(result.draft.recommendations));
+      setPreviewHtml(result.reportHtml);
+      void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId });
+      toast({ title: "Brouillon IA généré", description: "Relisez et ajustez le bilan. La validation conseiller reste obligatoire avant diffusion." });
+    },
+    onError: (error) => toast({ title: "Génération IA indisponible", description: error.message, variant: "destructive" }),
+  });
+  const validateDraft = trpc.unifiedRequests.validateEvaluationDraft.useMutation({
+    onSuccess: (result) => {
+      void utils.unifiedRequests.getEvaluationDelivery.invalidate({ sessionToken, sourceRecordId });
+      toast({ title: "Bilan validé", description: result.message });
+    },
+    onError: (error) => toast({ title: "Validation impossible", description: error.message, variant: "destructive" }),
+  });
 
   const ensureDraft = async () => {
     if (!payload.recommendations.length) {
@@ -129,10 +161,12 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     setSubject(template.subject);
     setMessage(template.message);
   };
-  const requiresApprovalBeforeDelivery = requiresSecondApproval && data.application.evaluationApprovalStatus !== "approved";
+  const currentDraft = data?.draft ?? { advisorValidated: false };
+  const requiresApprovalBeforeDelivery = !currentDraft.advisorValidated || (requiresSecondApproval && data?.application?.evaluationApprovalStatus !== "approved");
   const parseVersionDraft = (version: any) => { try { return JSON.parse(version?.contentJson || "{}").adminDraft ?? {}; } catch { return {}; } };
-  const comparisonLeft = data?.versions.find((version: any) => String(version.id) === comparisonLeftId);
-  const comparisonRight = data?.versions.find((version: any) => String(version.id) === comparisonRightId);
+  const versions = data?.versions ?? [];
+  const comparisonLeft = versions.find((version: any) => String(version.id) === comparisonLeftId);
+  const comparisonRight = versions.find((version: any) => String(version.id) === comparisonRightId);
   const leftDraft = parseVersionDraft(comparisonLeft);
   const rightDraft = parseVersionDraft(comparisonRight);
   const comparisonRows = [
@@ -173,6 +207,7 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
       {isLoading || !data ? <div className="py-12 text-center text-sm text-slate-500">Chargement du brouillon d’évaluation…</div> : <div className="grid gap-5 xl:grid-cols-[1fr_1.05fr]">
         <div className="space-y-4">
           <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-950"><strong>{data.application.fullName}</strong> · {data.application.dossierNumber} · {data.application.destination || "Destination à préciser"}</div>
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3"><Label htmlFor="evaluation-destination" className="text-cyan-950">Modèle d’évaluation par destination</Label><div className="mt-2 flex flex-wrap gap-2"><Select value={destination} onValueChange={(value) => setDestination(value as EvaluationDestination)}><SelectTrigger id="evaluation-destination" className="w-full bg-white sm:w-60"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="canada">Canada</SelectItem><SelectItem value="luxembourg">Luxembourg</SelectItem><SelectItem value="europe">Europe</SelectItem></SelectContent></Select><Button type="button" variant="outline" className="border-cyan-300 bg-white" disabled={generateAiDraft.isPending} onClick={() => generateAiDraft.mutate({ sessionToken, sourceRecordId, destination })}>{generateAiDraft.isPending ? "Génération IA…" : "Générer un brouillon IA"}</Button></div><p className="mt-2 text-xs text-cyan-900">Le score est construit sur 100 points et le brouillon demeure obligatoirement soumis à votre relecture.</p></div>
           <div className="grid grid-cols-[120px_1fr] items-end gap-3"><div><Label htmlFor="delivery-score">Score final /100</Label><Input id="delivery-score" className="mt-1" type="number" min="0" max="100" value={score} onChange={(event) => setScore(event.target.value)} /></div><div><Label htmlFor="delivery-verdict">Verdict du conseiller</Label><Input id="delivery-verdict" className="mt-1" value={verdict} onChange={(event) => setVerdict(event.target.value)} placeholder="Ex. Profil favorable sous réserve" /></div></div>
           <div><Label htmlFor="delivery-strengths">Points forts — une ligne par point</Label><Textarea id="delivery-strengths" className="mt-1 min-h-20" value={strengths} onChange={(event) => setStrengths(event.target.value)} placeholder="Expérience professionnelle cohérente\nFormation valorisable" /></div>
           <div><Label htmlFor="delivery-weaknesses">Axes d’amélioration — une ligne par point</Label><Textarea id="delivery-weaknesses" className="mt-1 min-h-20" value={weaknesses} onChange={(event) => setWeaknesses(event.target.value)} placeholder="Justifier le niveau linguistique\nPréparer les attestations de travail" /></div>
@@ -181,7 +216,8 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
           <div><Label htmlFor="delivery-subject">Objet de l’e-mail</Label><Input id="delivery-subject" className="mt-1" value={subject} onChange={(event) => setSubject(event.target.value)} /></div>
           <div><Label htmlFor="delivery-message">Message personnalisé</Label><Textarea id="delivery-message" className="mt-1 min-h-28" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Ajoutez une introduction personnalisée visible en haut du bilan." /></div>
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-950"><Checkbox checked={requiresSecondApproval} onCheckedChange={(value) => setRequiresSecondApproval(value === true)} /><span><strong className="block">Bilan sensible : exiger une seconde approbation</strong>Un autre administrateur devra valider cette version avant son envoi ou sa programmation.</span></label>
-          {requiresSecondApproval && <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900"><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" />Statut d’approbation : {data.application.evaluationApprovalStatus === "approved" ? "approuvé" : data.application.evaluationApprovalStatus === "pending" ? "en attente d’un second administrateur" : "à soumettre"}</div>{data.application.evaluationApprovalStatus === "pending" && <Button className="mt-2" size="sm" variant="outline" disabled={approve.isPending} onClick={() => approve.mutate({ sessionToken, sourceRecordId, approvalComment: "Bilan contrôlé avant diffusion." })}>{approve.isPending ? "Approbation…" : "Approuver comme second administrateur"}</Button>}</div>}
+          <div className={`rounded-lg border p-3 text-sm ${currentDraft.advisorValidated ? "border-emerald-200 bg-emerald-50 text-emerald-950" : "border-amber-200 bg-amber-50 text-amber-950"}`}><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" />Validation obligatoire du conseiller : {currentDraft.advisorValidated ? "effectuée" : "à effectuer"}</div><p className="mt-1 text-xs">Chaque modification remet le bilan à contrôler. L’envoi et la programmation restent bloqués tant que cette validation n’est pas enregistrée.</p><Button className="mt-2" size="sm" variant="outline" disabled={validateDraft.isPending || saveDraft.isPending} onClick={async () => { if (await ensureDraft()) validateDraft.mutate({ sessionToken, sourceRecordId, validationComment: "Bilan relu, ajusté si nécessaire et validé avant diffusion." }); }}>{validateDraft.isPending ? "Validation…" : "Valider le bilan après relecture"}</Button></div>
+          {requiresSecondApproval && <div className="rounded-lg border border-violet-200 bg-violet-50 p-3 text-sm text-violet-900"><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" />Seconde approbation : {data.application.evaluationApprovalStatus === "approved" ? "approuvée" : data.application.evaluationApprovalStatus === "pending" ? "en attente d’un second administrateur" : "à soumettre"}</div>{data.application.evaluationApprovalStatus === "pending" && <Button className="mt-2" size="sm" variant="outline" disabled={approve.isPending} onClick={() => approve.mutate({ sessionToken, sourceRecordId, approvalComment: "Bilan contrôlé avant diffusion." })}>{approve.isPending ? "Approbation…" : "Approuver comme second administrateur"}</Button>}</div>}
           <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void ensureDraft()} disabled={saveDraft.isPending}><Eye className="mr-1 h-4 w-4" />{saveDraft.isPending ? "Préparation…" : "Prévisualiser"}</Button><Button variant="outline" onClick={() => void ensureDraft()} disabled={saveDraft.isPending}><Save className="mr-1 h-4 w-4" />Enregistrer le brouillon</Button></div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3"><Label htmlFor="delivery-scheduled-at">Planifier l’envoi à une date et heure</Label><Input id="delivery-scheduled-at" className="mt-2" type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} /><Button className="mt-2" variant="outline" disabled={!scheduledAt || schedule.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); else if (await ensureDraft()) schedule.mutate({ sessionToken, sourceRecordId, scheduledAt: new Date(scheduledAt) }); }}><CalendarClock className="mr-1 h-4 w-4" />{schedule.isPending ? "Programmation…" : "Programmer l’envoi"}</Button></div>
           <Button className="w-full bg-blue-700 hover:bg-blue-800" disabled={sendNow.isPending || saveDraft.isPending || requiresApprovalBeforeDelivery} onClick={async () => { if (requiresSecondApproval) sendNow.mutate({ sessionToken, sourceRecordId }); else if (await ensureDraft()) sendNow.mutate({ sessionToken, sourceRecordId }); }}><Send className="mr-2 h-4 w-4" />{sendNow.isPending ? "Envoi définitif…" : "Valider et envoyer maintenant"}</Button>

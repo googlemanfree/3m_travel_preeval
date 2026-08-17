@@ -143,7 +143,17 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   if (isLoading) return <div className="py-12 text-center text-sm text-slate-500">Chargement du centre de gestion…</div>;
   if (error || !data) return <div className="py-10 text-center text-sm text-rose-700">La fiche 360° n’a pas pu être chargée. Réessayez depuis la liste des candidats.</div>;
 
-  const operationalCase: any = data.operationalCase;
+  const operationalCase: any = data.operationalCase ?? {
+    currentStatus: "qualifying",
+    priority: "normal",
+    assignedAdminId: null,
+    dueAt: null,
+    labels: [],
+  };
+  const nextAction = data.nextAction ?? {
+    label: "Définir la prochaine action",
+    description: "Aucune action n’est encore planifiée pour ce dossier. Ajoutez une étape de traitement ou une échéance.",
+  };
   const labelsList = labels.split(",").map((value) => value.trim()).filter(Boolean);
   const isOnlineApplication = candidate.id.startsWith("online_");
 
@@ -166,8 +176,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
             <FolderKanban className="mt-0.5 h-5 w-5 text-blue-700" />
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Prochaine action</p>
-              <p className="mt-1 font-semibold text-slate-900">{data.nextAction.label}</p>
-              <p className="mt-1 text-sm text-slate-600">{data.nextAction.description}</p>
+              <p className="mt-1 font-semibold text-slate-900">{nextAction.label}</p>
+              <p className="mt-1 text-sm text-slate-600">{nextAction.description}</p>
             </div>
           </div>
         </div>

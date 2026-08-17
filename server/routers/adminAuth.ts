@@ -44,6 +44,9 @@ export async function requireValidAdminSession(sessionToken: string, options: Ad
   }
 
   const admin = rows[0];
+  if (admin.status !== "active") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Compte administrateur désactivé" });
+  }
   if (!admin.sessionExpiresAt || new Date() > admin.sessionExpiresAt) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: "Session expirée" });
   }

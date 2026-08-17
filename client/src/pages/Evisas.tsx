@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText, Sparkles, CheckCircle2, AlertTriangle, CheckSquare, HelpCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { evisasDatabaseComplete } from '@/data/evisasDatabaseComplete';
 
 interface Evisa {
   country: string;
@@ -966,8 +967,29 @@ export default function Evisas() {
     });
   };
 
+  const unifiedEvisaCatalogue = useMemo(() => {
+    const seen = new Set<string>();
+    return [...ultimateWorldEvisasDatabase, ...evisasDatabaseComplete.map((entry) => ({
+      country: entry.country,
+      flag: entry.flag,
+      region: entry.region,
+      type: entry.type,
+      duration: entry.duration,
+      delay: entry.delay,
+      docs: entry.docs,
+      fee: entry.fee,
+      note: entry.note,
+      image: entry.image,
+    }))].filter((entry) => {
+      const key = entry.country.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, []);
+
   const filteredEvisas = useMemo(() => {
-    return ultimateWorldEvisasDatabase.filter(evisa => {
+    return unifiedEvisaCatalogue.filter(evisa => {
       const matchesSearch = 
         evisa.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
         evisa.docs.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -977,7 +999,7 @@ export default function Evisas() {
       const matchesRegion = selectedRegion === 'Tous' || evisa.region === selectedRegion;
       return matchesSearch && matchesRegion;
     });
-  }, [searchQuery, selectedRegion]);
+  }, [searchQuery, selectedRegion, unifiedEvisaCatalogue]);
 
   const toggleExpanded = (country: string) => {
     setExpandedItems(prev => ({
@@ -1104,11 +1126,11 @@ export default function Evisas() {
               >
                 {/* Destination Image Header */}
                 <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                  <img
+                  {evisa.image ? <img
                     src={evisa.image}
                     alt={evisa.country}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
+                  /> : <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-700 text-7xl" role="img" aria-label={`Drapeau ${evisa.country}`}>{evisa.flag}</div>}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1.5">
                     <span role="img" aria-label={`Drapeau ${evisa.country}`}>{evisa.flag}</span>

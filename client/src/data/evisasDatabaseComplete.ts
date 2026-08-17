@@ -18,6 +18,48 @@ export interface EvisaDestination {
   image: string;
 }
 
+const createVerificationFirstEvisa = (id: string, country: string, capital: string, flag: string, region: string): EvisaDestination => ({
+  id,
+  country,
+  capital,
+  flag,
+  region,
+  type: "e‑Visa — éligibilité à confirmer",
+  duration: "À confirmer",
+  delay: "À confirmer par le portail officiel",
+  docs: "Passeport valide, photographie et justificatifs de voyage : exigences à confirmer selon la nationalité, le motif et la date de départ.",
+  fee: "À confirmer par le portail officiel",
+  note: "Fiche de repérage : la disponibilité de l’e‑Visa et les conditions d’entrée varient selon la nationalité, le type de passeport, le motif du voyage et les règles en vigueur. Vérification obligatoire sur le portail officiel avant paiement ou réservation.",
+  culture: "Destination disponible pour une pré‑évaluation d’e‑Visa par 3M Travel & Services.",
+  workInfo: "Toute mobilité professionnelle dépend d’une offre, d’une autorisation et des règles applicables ; elle n’est pas garantie par cette pré‑évaluation.",
+  highlights: ["Éligibilité à vérifier", "Portail officiel à consulter"],
+  emblems: ["Vérification consulaire requise"],
+  steps: [
+    "Vérifier l’éligibilité individuelle sur le portail gouvernemental officiel",
+    "Préparer le passeport et les justificatifs demandés pour le motif de voyage",
+    "Soumettre uniquement après confirmation des frais et délais officiels",
+    "Conserver la décision électronique et les conditions de voyage mises à jour",
+  ],
+  image: "",
+});
+
+const verificationFirstDestinations: EvisaDestination[] = [
+  createVerificationFirstEvisa("cote-divoire", "Côte d’Ivoire", "Yamoussoukro", "🇨🇮", "Afrique"),
+  createVerificationFirstEvisa("malawi", "Malawi", "Lilongwe", "🇲🇼", "Afrique"),
+  createVerificationFirstEvisa("zambie", "Zambie", "Lusaka", "🇿🇲", "Afrique"),
+  createVerificationFirstEvisa("zimbabwe", "Zimbabwe", "Harare", "🇿🇼", "Afrique"),
+  createVerificationFirstEvisa("mozambique", "Mozambique", "Maputo", "🇲🇿", "Afrique"),
+  createVerificationFirstEvisa("madagascar", "Madagascar", "Antananarivo", "🇲🇬", "Afrique"),
+  createVerificationFirstEvisa("seychelles", "Seychelles", "Victoria", "🇸🇨", "Afrique"),
+  createVerificationFirstEvisa("laos", "Laos", "Vientiane", "🇱🇦", "Asie / Moyen-Orient"),
+  createVerificationFirstEvisa("qatar", "Qatar", "Doha", "🇶🇦", "Asie / Moyen-Orient"),
+  createVerificationFirstEvisa("ouzbekistan", "Ouzbékistan", "Tachkent", "🇺🇿", "Asie / Moyen-Orient"),
+  createVerificationFirstEvisa("indonesie", "Indonésie", "Jakarta", "🇮🇩", "Autres destinations"),
+  createVerificationFirstEvisa("bolivie", "Bolivie", "Sucre", "🇧🇴", "Autres destinations"),
+  createVerificationFirstEvisa("suriname", "Suriname", "Paramaribo", "🇸🇷", "Autres destinations"),
+  createVerificationFirstEvisa("papouasie-nouvelle-guinee", "Papouasie‑Nouvelle‑Guinée", "Port Moresby", "🇵🇬", "Autres destinations"),
+];
+
 export const evisasDatabaseComplete: EvisaDestination[] = [
   {
     id: "kenya",
@@ -522,5 +564,6 @@ export const evisasDatabaseComplete: EvisaDestination[] = [
       "Réception de l'approbation électronique sous 72h"
     ],
     image: "https://images.unsplash.com/photo-1507699622108-4be3957004f1?auto=format&fit=crop&w=800&q=80"
-  }
+  },
+  ...verificationFirstDestinations,
 ];

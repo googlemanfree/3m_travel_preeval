@@ -17,9 +17,12 @@ describe("boîte de réception unifiée", () => {
     expect(getUnifiedSlaState({ workflowStatus: "completed", createdAt: new Date(now - 48 * 3_600_000), lastActivityAt: new Date(now - 24 * 3_600_000), firstRespondedAt: new Date(now - 47 * 3_600_000), dueAt: new Date(now - 24 * 3_600_000) })).toBe("closed");
   });
 
-  it("bloque un bilan sensible jusqu’à la seconde approbation et laisse passer un bilan standard", () => {
-    expect(canDeliverEvaluation(true, "pending")).toBe(false);
-    expect(canDeliverEvaluation(true, "approved")).toBe(true);
-    expect(canDeliverEvaluation(false, "not_required")).toBe(true);
+  it("bloque tout bilan non relu puis respecte la seconde approbation des bilans sensibles", () => {
+    expect(canDeliverEvaluation(true, "pending", false)).toBe(false);
+    expect(canDeliverEvaluation(true, "approved", false)).toBe(false);
+    expect(canDeliverEvaluation(true, "pending", true)).toBe(false);
+    expect(canDeliverEvaluation(true, "approved", true)).toBe(true);
+    expect(canDeliverEvaluation(false, "not_required", false)).toBe(false);
+    expect(canDeliverEvaluation(false, "not_required", true)).toBe(true);
   });
 });
