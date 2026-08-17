@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import jsPDF from "jspdf";
 
 type Props = {
   sessionToken: string;
@@ -176,8 +175,9 @@ export function EvaluationDeliveryEditor({ sessionToken, sourceRecordId, open, o
     ["Axes d’amélioration", Array.isArray(leftDraft.weaknesses) ? leftDraft.weaknesses.join(" · ") : "—", Array.isArray(rightDraft.weaknesses) ? rightDraft.weaknesses.join(" · ") : "—"],
     ["Recommandations", Array.isArray(leftDraft.recommendations) ? leftDraft.recommendations.join(" · ") : "—", Array.isArray(rightDraft.recommendations) ? rightDraft.recommendations.join(" · ") : "—"],
   ] as const;
-  const exportComparisonPdf = () => {
+  const exportComparisonPdf = async () => {
     if (!comparisonLeft || !comparisonRight) return;
+    const { jsPDF } = await import("jspdf");
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     let y = 18;
     const write = (label: string, left: string, right: string) => {

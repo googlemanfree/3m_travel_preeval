@@ -250,3 +250,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Optimisation de compilation de production
 - [ ] Réduire le pic mémoire de rendu Vite sans dégrader le fonctionnement du site.
 - [ ] Rejouer la compilation complète avant publication.
+- [ ] Extraire les données e‑Visa dupliquées et charger les modules lourds uniquement au besoin.
+- [ ] Vérifier le découpage des routes principales et le chargement différé des fonctionnalités PDF ou IA.
