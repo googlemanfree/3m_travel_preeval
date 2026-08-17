@@ -255,7 +255,11 @@ test("permet l’envoi d’un message rapide ou d’une notification personnalis
   const dialog = page.getByRole("dialog", { name: "Envoyer un message personnalisé" });
   await expect(dialog).toBeVisible();
 
-  await dialog.getByRole("button", { name: "Relance pièces" }).click();
+  await dialog.getByRole("combobox", { name: "Insérer les informations e‑Visa officielles" }).click();
+  await page.getByRole("option", { name: /Togo/i }).click();
+  await dialog.getByRole("button", { name: "Insérer dans le message" }).click();
+  await expect(dialog.locator("textarea")).toHaveValue(/https:\/\/voyage\.gouv\.tg\//);
+  await expect(dialog.locator("textarea")).toHaveValue(/\/evisas\/request\?destination=togo/);
   await dialog.getByRole("button", { name: "Envoyer maintenant" }).click();
   await expect.poll(() => messageSent).toBe(true);
 });

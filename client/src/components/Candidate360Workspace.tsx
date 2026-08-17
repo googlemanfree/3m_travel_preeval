@@ -14,6 +14,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
+import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
+import { buildEvisaMessageTemplate } from "@/lib/evisaMessageTemplate";
 
 type CandidateSummary = {
   id: string;
@@ -79,6 +81,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [outboundMessage, setOutboundMessage] = useState("");
   const [quickMessageOpen, setQuickMessageOpen] = useState(false);
   const [quickMessageText, setQuickMessageText] = useState("");
+  const [quickMessageEvisaId, setQuickMessageEvisaId] = useState("");
   const [quickAttachment, setQuickAttachment] = useState<{ name: string; url: string; size?: number; type?: string } | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
@@ -206,6 +209,33 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
                   Demande précision
                 </Button>
               </div>
+            </div>
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+              <Label htmlFor="quick-message-evisa" className="text-cyan-950">Insérer les informations e‑Visa officielles</Label>
+              <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                <Select value={quickMessageEvisaId} onValueChange={setQuickMessageEvisaId}>
+                  <SelectTrigger id="quick-message-evisa" className="bg-white sm:flex-1"><SelectValue placeholder="Sélectionner une destination e‑Visa" /></SelectTrigger>
+                  <SelectContent>
+                    {evisasDatabaseComplete.map((destination) => <SelectItem key={destination.id} value={destination.id}>{destination.flag} {destination.country}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-cyan-300 bg-white text-cyan-950"
+                  disabled={!quickMessageEvisaId}
+                  onClick={() => {
+                    const destination = evisasDatabaseComplete.find((item) => item.id === quickMessageEvisaId);
+                    if (!destination) return;
+                    const template = buildEvisaMessageTemplate(destination, window.location.origin);
+                    setQuickMessageText((current) => current.trim() ? `${current.trim()}\n\n${template}` : template);
+                    toast.success("Informations e‑Visa insérées", { description: `Le contenu officiel de ${destination.country} peut encore être personnalisé avant envoi.` });
+                  }}
+                >
+                  Insérer dans le message
+                </Button>
+              </div>
+              <p className="mt-2 text-xs text-cyan-900">Le message contient le portail officiel, la date de vérification, les exigences principales et le lien vers la procédure. Relisez-le avant envoi.</p>
             </div>
             <div>
               <Label>Message personnalisé</Label>

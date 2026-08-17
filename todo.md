@@ -284,3 +284,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Fusionner uniquement les destinations absentes du catalogue fourni, sans supprimer les fiches déjà vérifiées.
 - [x] Vérifier la cohérence des liens officiels, dates de vérification et informations de chaque destination ajoutée.
 - [x] Exécuter les tests d’autorisation e‑Visa, du catalogue et des parcours concernés avant publication.
+
+## Insertion e‑Visa dans les messages administrateur
+- [x] Réutiliser le catalogue normalisé pour proposer les destinations e‑Visa dans la modale de message de la fiche 360°.
+- [x] Insérer dans le message modifiable le portail officiel, la date de vérification, les exigences principales et le lien de procédure de la destination sélectionnée.
+- [x] Conserver les contrôles administrateur, la traçabilité du message et la possibilité d’éditer le contenu avant envoi.
+- [x] Ajouter les tests de contenu, de sélection et de sécurité, puis vérifier le parcours administrateur concerné.
