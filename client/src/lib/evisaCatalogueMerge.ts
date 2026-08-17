@@ -26,8 +26,9 @@ function isManagedEvisaOverride(value: Partial<ManagedEvisaOverride>): value is 
   return Boolean(value.slug && value.country && value.capital && value.flag && value.region && value.visaType && value.duration && value.delay && value.requirements && value.fee && value.notes && value.officialPortalUrl && value.officialPortalLabel && value.officialVerifiedAt && typeof value.isActive === "boolean");
 }
 
-export function mergeEvisaCatalogue(base: EvisaDestination[], overrides: Array<Partial<ManagedEvisaOverride>> | undefined): EvisaDestination[] {
-  const validOverrides = (overrides ?? []).filter(isManagedEvisaOverride);
+export function mergeEvisaCatalogue(base: EvisaDestination[], overrides: Array<Partial<ManagedEvisaOverride>> | unknown): EvisaDestination[] {
+  const safeOverrides = Array.isArray(overrides) ? overrides : [];
+  const validOverrides = safeOverrides.filter(isManagedEvisaOverride);
   const bySlug = new Map(validOverrides.map((override) => [override.slug, override]));
   const merged = base.flatMap((entry) => {
     const override = bySlug.get(entry.id);

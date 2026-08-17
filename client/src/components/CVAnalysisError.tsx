@@ -120,7 +120,7 @@ export default function CVAnalysisError({
 
         {/* Support Link */}
         <motion.a
-          href="https://wa.me/237123456789?text=Besoin%20d%27aide%20pour%20l%27analyse%20CV"
+          href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20j%27ai%20besoin%20d%27aide%20pour%20l%27analyse%20de%20mon%20CV."
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.02 }}

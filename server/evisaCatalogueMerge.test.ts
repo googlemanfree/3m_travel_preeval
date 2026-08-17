@@ -19,4 +19,9 @@ describe("fusion du catalogue e‑Visa administré", () => {
     const catalogue = mergeEvisaCatalogue(base, [{ ...override, slug: "togo", country: "Togo", capital: "Lomé" }]);
     expect(catalogue.map((item) => item.id)).toContain("togo");
   });
+
+  it("conserve le catalogue public si le retour de surcharge est vide ou mal formé", () => {
+    expect(mergeEvisaCatalogue(base, {})).toEqual(base);
+    expect(mergeEvisaCatalogue(base, null)).toEqual(base);
+  });
 });

@@ -89,7 +89,7 @@ class ErrorBoundary extends Component<Props, State> {
                 Réessayer maintenant
               </button>
               <a
-                href="https://wa.me/237600000000?text=Bonjour,%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site%203M%20Travel"
+                href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-lg cursor-pointer"
@@ -101,7 +101,7 @@ class ErrorBoundary extends Component<Props, State> {
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <PhoneCall size={14} />
-              <span>Assistance téléphonique : +237 6 00 00 00 00</span>
+              <span>Assistance WhatsApp : +237 6 98 10 48 32</span>
             </div>
           </div>
         </div>

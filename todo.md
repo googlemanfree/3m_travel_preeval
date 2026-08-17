@@ -332,3 +332,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une prévisualisation sécurisée d’une version antérieure avant sa restauration.
 - [x] Permettre à un administrateur valide de restaurer une version avec confirmation explicite et journaliser l’action de restauration.
 - [x] Tester les autorisations, les données restaurées, l’audit et le parcours administrateur avant publication.
+
+## Audit des chemins, liens et actions inactifs
+- [x] Inventorier les routes publiques, client et administrateur ainsi que leurs actions, redirections et liens sortants critiques.
+- [x] Exécuter les scénarios de navigation et analyser les erreurs de route, appels réseau, boutons sans effet et chargements bloqués.
+- [x] Corriger les chemins inaccessibles, redirections défectueuses, routes manquantes et actions de formulaire non réactives détectés.
+- [x] Ajouter ou renforcer les tests de régression des parcours corrigés, puis valider les routes critiques sur ordinateur et mobile.
