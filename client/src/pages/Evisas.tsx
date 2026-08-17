@@ -3,6 +3,8 @@ import { Search, ChevronDown, MessageCircle, Globe, ShieldCheck, Clock, FileText
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { evisasDatabaseComplete } from '@/data/evisasDatabaseComplete';
+import { trpc } from '@/lib/trpc';
+import { mergeEvisaCatalogue } from '@/lib/evisaCatalogueMerge';
 
 interface Evisa {
   country: string;
@@ -911,6 +913,7 @@ export default function Evisas() {
   const [expandedItems, setExpandedItems] = useState<ExpandedItem>({});
   const [activeTooltipDoc, setActiveTooltipDoc] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<ChecklistState>({});
+  const { data: managedOverrides } = trpc.evisaCatalogue.getPublicOverrides.useQuery();
 
   const regions = ['Tous', 'Afrique', 'Asie', 'Europe', 'Amériques', 'Océanie'];
 
@@ -969,7 +972,7 @@ export default function Evisas() {
 
   const unifiedEvisaCatalogue = useMemo(() => {
     const seen = new Set<string>();
-    return evisasDatabaseComplete.map((entry) => ({
+    return mergeEvisaCatalogue(evisasDatabaseComplete, managedOverrides).map((entry) => ({
       country: entry.country,
       flag: entry.flag,
       region: entry.region,
@@ -986,7 +989,7 @@ export default function Evisas() {
       seen.add(key);
       return true;
     });
-  }, []);
+  }, [managedOverrides]);
 
   const filteredEvisas = useMemo(() => {
     return unifiedEvisaCatalogue.filter(evisa => {

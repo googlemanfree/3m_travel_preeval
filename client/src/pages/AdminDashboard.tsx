@@ -75,6 +75,7 @@ import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminCurrencyRates } from "@/components/AdminCurrencyRates";
 import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrectionHistory";
+import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueManager";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1007,6 +1008,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="evaluation-review" className="gap-1.5 font-bold text-amber-700">Bilans à valider</TabsTrigger>
             <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
             <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
+            <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -1023,6 +1025,7 @@ export default function AdminDashboard() {
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
           </TabsContent>
+          <TabsContent value="evisa-catalogue" className="space-y-6"><AdminEvisaCatalogueManager sessionToken={sessionToken} /></TabsContent>
 
           <TabsContent value="consular" className="space-y-6">
             <AdminConsularRegistry />

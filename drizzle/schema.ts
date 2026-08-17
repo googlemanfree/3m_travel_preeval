@@ -1,5 +1,6 @@
 import { boolean, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 export * from "./caseTrackingSchema";
+export * from "./evisaCatalogueSchema";
 
 /**
  * Core user table backing auth flow.

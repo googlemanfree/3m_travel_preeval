@@ -17,6 +17,7 @@ import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor"
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
+import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
 
 type CandidateSummary = {
   id: string;
@@ -86,6 +87,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [quickMessageEvisaSnapshots, setQuickMessageEvisaSnapshots] = useState<EvisaMessageSnapshot[]>([]);
   const [quickAttachment, setQuickAttachment] = useState<{ name: string; url: string; size?: number; type?: string } | null>(null);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const { data: managedEvisaOverrides } = trpc.evisaCatalogue.getPublicOverrides.useQuery();
+  const availableEvisas = mergeEvisaCatalogue(evisasDatabaseComplete, managedEvisaOverrides);
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
@@ -227,7 +230,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
                   className="border-cyan-300 bg-white text-cyan-950"
                   disabled={!quickMessageEvisaId}
                   onClick={() => {
-                    const destination = evisasDatabaseComplete.find((item) => item.id === quickMessageEvisaId);
+                    const destination = availableEvisas.find((item) => item.id === quickMessageEvisaId);
                     if (!destination) return;
                     const template = buildEvisaMessageTemplate(destination, window.location.origin);
                     const snapshot = buildEvisaMessageSnapshot(destination, window.location.origin);

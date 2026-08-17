@@ -307,3 +307,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Cartographier les routes, composants, tables et services actifs de l’intégration e‑Visa et du poste administrateur.
 - [x] Rédiger un récapitulatif technique des flux, autorisations, intégrations IA, e-mail, PDF et audit.
 - [x] Inclure les procédures de test, les dépendances opérationnelles et les limites connues pour la reprise par l’équipe.
+
+## Centre de gestion administrateur e‑Visa
+- [x] Créer une source de catalogue e‑Visa persistante et compatible avec les fiches normalisées déjà publiées.
+- [x] Ajouter des procédures administrateur sécurisées pour lister, créer, modifier, désactiver et supprimer une destination e‑Visa.
+- [x] Journaliser les créations, corrections, désactivations et suppressions avec l’administrateur, la date et le résumé du changement.
+- [x] Ajouter une interface back-office avec recherche, formulaire de destination, validation des URLs officielles et confirmation de suppression.
+- [x] Tester les autorisations, l’audit, les validations de données et les parcours administrateur avant publication.
