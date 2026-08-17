@@ -209,3 +209,53 @@ test("confirme la synchronisation d’une étape du bureau vers l’espace clien
   await expect(page.getByText("Dossier mis à jour")).toBeVisible();
   await expect.poll(() => workflowMutationSeen).toBe(true);
 });
+
+test("permet l’envoi d’un message rapide ou d’une notification personnalisée depuis la fiche 360°", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.addInitScript(() => {
+    localStorage.setItem("adminSessionToken", "desktop-admin-test-token");
+    localStorage.setItem("adminName", "Conseiller Test");
+  });
+  let messageSent = false;
+  await page.route("**/api/trpc/**", async (route) => {
+    const path = new URL(route.request().url()).pathname.split("/api/trpc/")[1] ?? "";
+    const results = path.split(",").map((procedure) => {
+      if (procedure === "admin.sendCandidate360Message") {
+        messageSent = true;
+        return { result: { data: { json: { success: true, emailSent: true, deliveredToClientSpace: true } } } };
+      }
+      const json: Record<string, unknown> = {
+        "adminAuth.me": { authenticated: true, requiresPasswordChange: false },
+        "admin.listCandidates": { candidates: [candidate], total: 1 },
+        "application.listApplications": [],
+        "admin.getCandidateCountryDistribution": { totalCandidates: 1, data: [{ country: "Canada", count: 1 }] },
+        "admin.getFaqSatisfactionStats": { stats: { questionsBreakdown: [] } },
+        "admin.listDestinationDocumentsAdmin": [],
+        "admin.getCandidateDetails": { candidate: { ...candidate, avatarUrl: null } },
+        "admin.getCandidate360": {
+          operationalCase: { id: 4, currentStatus: "qualifying", priority: "normal", assignedAdminId: null, dueAt: null, labels: [] },
+          nextAction: { label: "Préparer l’évaluation", description: "Qualifiez le dossier." },
+          metrics: { pendingDocuments: 0, openTasks: 0, unreadNotifications: 0, totalDocuments: 0, totalMessages: 0 },
+          requirements: [], documents: [], payments: [], tasks: [], notes: [], statusHistory: [], activity: [],
+          communications: { notifications: [], messages: [] }, evaluationVersions: [], advisors: [],
+          currentAdmin: { id: 1, fullName: "Conseiller Test", email: "admin@example.com" },
+        },
+      };
+      return { result: { data: { json: json[procedure] ?? {} } } };
+    });
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(results) });
+  });
+
+  await page.goto("/admin/dossiers");
+  await page.getByText(candidate.folderCode, { exact: true }).click();
+  const workspace = page.getByRole("dialog", { name: "Poste de pilotage dossier 360°" });
+  await expect(workspace).toBeVisible();
+
+  await workspace.getByRole("button", { name: /Message & Notification instantanée/i }).click();
+  const dialog = page.getByRole("dialog", { name: "Envoyer un message personnalisé" });
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole("button", { name: "Relance pièces" }).click();
+  await dialog.getByRole("button", { name: "Envoyer maintenant" }).click();
+  await expect.poll(() => messageSent).toBe(true);
+});

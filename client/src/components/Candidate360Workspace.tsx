@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -76,6 +77,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [checklistProcedure, setChecklistProcedure] = useState("permanent_residence");
   const [customChecklistDocuments, setCustomChecklistDocuments] = useState("");
   const [outboundMessage, setOutboundMessage] = useState("");
+  const [quickMessageOpen, setQuickMessageOpen] = useState(false);
+  const [quickMessageText, setQuickMessageText] = useState("");
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
@@ -169,6 +172,75 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-blue-800">Action rapide</p>
+          <p className="text-sm font-medium text-slate-900">Envoyer une notification directe ou un message urgent au candidat</p>
+        </div>
+        <Button className="bg-blue-700 hover:bg-blue-800 text-white shadow" onClick={() => setQuickMessageOpen(true)}>
+          <Mail className="mr-2 h-4 w-4" /> Message & Notification instantanée
+        </Button>
+      </div>
+
+      <Dialog open={quickMessageOpen} onOpenChange={setQuickMessageOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Envoyer un message personnalisé</DialogTitle>
+            <DialogDescription>
+              Le message sera envoyé instantanément dans l’espace personnel du candidat (notification push) et par e-mail.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <Label>Modèle rapide</Label>
+              <div className="mt-1 flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => setQuickMessageText("Bonjour, votre dossier avance bien. Veuillez vérifier vos pièces justificatives dans votre espace.")}>
+                  Relance pièces
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setQuickMessageText("Bonjour, votre bilan d'évaluation est disponible dans votre espace client. Consultez-le dès à présent.")}>
+                  Disponibilité bilan
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setQuickMessageText("Bonjour, nous avons besoin d'une précision concernant votre dossier. Merci de nous répondre ici.")}>
+                  Demande précision
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label>Message personnalisé</Label>
+              <Textarea
+                className="mt-1 h-32"
+                value={quickMessageText}
+                onChange={(e) => setQuickMessageText(e.target.value)}
+                placeholder="Rédigez votre message ici..."
+                maxLength={2000}
+              />
+              <p className="mt-1 text-xs text-slate-500">{quickMessageText.length}/2000 caractères</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setQuickMessageOpen(false)}>Annuler</Button>
+            <Button
+              className="bg-blue-700 hover:bg-blue-800 text-white"
+              disabled={quickMessageText.trim().length < 3 || sendMessageMutation.isPending}
+              onClick={() => {
+                sendMessageMutation.mutate(
+                  { sessionToken, candidateId: candidate.id, content: quickMessageText.trim() },
+                  {
+                    onSuccess: () => {
+                      setQuickMessageOpen(false);
+                      setQuickMessageText("");
+                    },
+                  }
+                );
+              }}
+            >
+              <Send className="mr-2 h-4 w-4" />
+              {sendMessageMutation.isPending ? "Envoi en cours..." : "Envoyer maintenant"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <section className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3 sm:col-span-2">
           <div className="flex items-start gap-3">
