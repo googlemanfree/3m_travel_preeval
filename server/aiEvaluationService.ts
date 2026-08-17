@@ -315,3 +315,54 @@ export async function extractCVFieldsForForm(cvText: string): Promise<CVExtracte
     return {};
   }
 }
+
+/**
+ * Lit un CV image sans le stocker et extrait les mêmes champs non sensibles que
+ * le flux PDF. Le modèle reçoit l'image uniquement côté serveur ; la réponse
+ * reste filtrée par normalizeCVExtractedFields avant tout affichage.
+ */
+export async function extractCVFieldsFromImage(imageDataUrl: string): Promise<CVExtractedFields> {
+  if (!/^data:image\/(png|jpeg);base64,/i.test(imageDataUrl)) return {};
+
+  try {
+    const response = await invokeLLM({
+      model: "gemini-3-flash-preview",
+      maxTokens: 1_200,
+      messages: [
+        {
+          role: "system",
+          content: "Lis ce CV image. Extrais seulement les informations explicitement visibles qui correspondent aux champs académiques, professionnels et linguistiques demandés. Ne déduis rien, ne renvoie aucune donnée d’identité, de contact, familiale, médicale, de visa ou de destination. Utilise null pour tout champ absent.",
+        },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "OCR du CV pour pré-remplissage vérifiable du formulaire." },
+            { type: "image_url", image_url: { url: imageDataUrl, detail: "high" } },
+          ],
+        },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "cv_image_form_prefill",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              educationLevel: { type: ["string", "null"] }, diplomaTitle: { type: ["string", "null"] }, graduationYear: { type: ["string", "null"] }, fieldOfStudy: { type: ["string", "null"] },
+              employmentStatus: { type: ["string", "null"] }, currentJobTitle: { type: ["string", "null"] }, yearsOfExperience: { type: ["string", "null"] }, industrySector: { type: ["string", "null"] }, mainTasks: { type: ["string", "null"] },
+              frenchLevel: { type: ["string", "null"] }, englishLevel: { type: ["string", "null"] }, languageTestsTaken: { type: ["string", "null"] },
+            },
+            required: ["educationLevel", "diplomaTitle", "graduationYear", "fieldOfStudy", "employmentStatus", "currentJobTitle", "yearsOfExperience", "industrySector", "mainTasks", "frenchLevel", "englishLevel", "languageTestsTaken"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = response.choices[0]?.message?.content;
+    return normalizeCVExtractedFields(typeof content === "string" ? JSON.parse(content) : {});
+  } catch (error) {
+    console.error("[CV OCR] Analyse image indisponible", error instanceof Error ? error.message : "erreur inconnue");
+    return {};
+  }
+}

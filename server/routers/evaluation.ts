@@ -8,7 +8,7 @@ import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEmail } from "../_core/email";
-import { extractCVFieldsForForm, extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { computeDestinationScore } from "../destinationScoringEngine";
 import { logger } from "../_core/logger";
 import { eq } from "drizzle-orm";
@@ -431,24 +431,29 @@ export const evaluationRouter = router({
   extractFromCV: publicProcedure
     .input(z.object({
       cvBase64: z.string().min(32).max(7_200_000),
-      cvMimeType: z.string().optional(),
+      cvMimeType: z.enum(["application/pdf", "image/png", "image/jpeg", "image/jpg"]).optional(),
     }))
     .mutation(async ({ input }) => {
       try {
-        if (input.cvMimeType && input.cvMimeType !== "application/pdf") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "Le CV doit être un PDF." });
-        }
+        const mimeType = input.cvMimeType === "image/jpg" ? "image/jpeg" : (input.cvMimeType ?? "application/pdf");
         const base64Data = input.cvBase64.includes(",") ? input.cvBase64.split(",")[1] : input.cvBase64;
         const cvBuffer = Buffer.from(base64Data ?? "", "base64");
-        if (!cvBuffer.length || cvBuffer.length > 5 * 1024 * 1024 || cvBuffer.subarray(0, 4).toString() !== "%PDF") {
-          throw new TRPCError({ code: "BAD_REQUEST", message: "CV PDF invalide ou trop volumineux." });
+        const isPdf = mimeType === "application/pdf";
+        const isPng = mimeType === "image/png" && cvBuffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+        const isJpeg = mimeType === "image/jpeg" && cvBuffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
+        if (!cvBuffer.length || cvBuffer.length > 5 * 1024 * 1024 || (isPdf && cvBuffer.subarray(0, 4).toString() !== "%PDF") || (!isPdf && !isPng && !isJpeg)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "CV PDF, JPG ou PNG invalide ou trop volumineux." });
         }
-        const cvText = await extractTextFromPDF(cvBuffer);
-        if (cvText.trim().length < 20) {
-          return { success: false, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu. Vous pouvez compléter le formulaire manuellement." };
+        if (isPdf) {
+          const cvText = await extractTextFromPDF(cvBuffer);
+          if (cvText.trim().length < 20) {
+            return { success: false, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu. Vous pouvez compléter le formulaire manuellement." };
+          }
+          const fields = (await extractCVFieldsForForm(cvText)) ?? {};
+          return { success: true, source: "pdf" as const, fields, prefilledCount: Object.keys(fields).length };
         }
-        const fields = await extractCVFieldsForForm(cvText);
-        return { success: true, fields, prefilledCount: Object.keys(fields).length };
+        const fields = (await extractCVFieldsFromImage(`data:${mimeType};base64,${base64Data}`)) ?? {};
+        return { success: true, source: "image" as const, fields, prefilledCount: Object.keys(fields).length };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
         logger.error("evaluation.cv_prefill.failed", {}, error);

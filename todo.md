@@ -199,3 +199,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les parcours PDF/image, les erreurs et la sécurité des données CV avant publication.
 - [x] Tester le contrat serveur d’extraction CV pour un PDF valide et le rejet des formats non autorisés.
 - [x] Confirmer le périmètre « CV PDF uniquement » et tester le message visible lors du dépôt d’une image.
+
+## CV OCR et contrôle du pré-remplissage IA
+- [x] Ajouter l’extraction OCR sécurisée pour les CV image (PNG, JPG, JPEG) en complément du PDF.
+- [x] Mettre en évidence chaque champ ajouté par l’IA sans masquer la possibilité de correction manuelle.
+- [x] Ajouter les actions « Réanalyser le CV » et « Annuler le pré-remplissage » sans effacer les saisies manuelles.
+- [x] Formaliser le flux dans la compétence réutilisable `prime-travel-case-management` avec `skill-creator`.
+- [x] Tester les parcours PDF, image OCR, réanalyse, annulation et erreurs puis publier.
+- [x] Vérifier par test qu’une correction manuelle reste intacte après l’annulation du pré-remplissage IA.

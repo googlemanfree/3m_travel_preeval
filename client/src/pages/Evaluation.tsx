@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,8 +34,13 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 className="text-lg font-bold text-blue-900 mb-4 mt-8 first:mt-0 border-b border-blue-100 pb-2">{children}</h2>;
 }
 
+function PrefillLabel({ children, active }: { children: React.ReactNode; active: boolean }) {
+  return <div className="flex min-h-5 items-center justify-between gap-2"><Label>{children}</Label>{active && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-800"><Sparkles className="h-3 w-3" />Pré-rempli par IA</span>}</div>;
+}
+
 export default function Evaluation() {
   const [form, setForm] = useState<FormState>(initialForm);
+  const formRef = useRef<FormState>(initialForm);
   const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const rawSource = acquisitionParams.get("source")?.toLowerCase();
   const acquisitionSource = rawSource === "whatsapp" || rawSource === "wa" ? "whatsapp" : rawSource === "facebook" || rawSource === "fb" ? "facebook" : "direct";
@@ -44,12 +49,18 @@ export default function Evaluation() {
   const [formError, setFormError] = useState('');
   const [isExtractingCv, setIsExtractingCv] = useState(false);
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
+  const [autoFilledValues, setAutoFilledValues] = useState<Partial<FormState>>({});
+  const [prefillOriginalValues, setPrefillOriginalValues] = useState<Partial<FormState>>({});
   const [cvAnalysisNotice, setCvAnalysisNotice] = useState('');
 
   const submitMutation = trpc.evaluation.submit.useMutation();
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    const next = { ...formRef.current, [key]: value };
+    formRef.current = next;
+    setForm(next);
+  };
 
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
@@ -62,13 +73,14 @@ export default function Evaluation() {
   const prefillKeys: Array<keyof Pick<FormState, 'educationLevel' | 'diplomaTitle' | 'graduationYear' | 'fieldOfStudy' | 'employmentStatus' | 'currentJobTitle' | 'yearsOfExperience' | 'industrySector' | 'mainTasks' | 'frenchLevel' | 'englishLevel' | 'languageTestsTaken'>> = [
     'educationLevel', 'diplomaTitle', 'graduationYear', 'fieldOfStudy', 'employmentStatus', 'currentJobTitle', 'yearsOfExperience', 'industrySector', 'mainTasks', 'frenchLevel', 'englishLevel', 'languageTestsTaken',
   ];
+  const prefillClass = (field: (typeof prefillKeys)[number]) => autoFilledFields.has(field) ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200 focus-visible:ring-indigo-500' : '';
+  const getCvMimeType = (file: File) => file.type || (file.name.toLowerCase().endsWith('.png') ? 'image/png' : file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : 'application/pdf');
 
   const extractAndAutoFill = async (file: File) => {
     setIsExtractingCv(true);
-    setAutoFilledFields(new Set());
     setCvAnalysisNotice('');
     try {
-      const result = await extractCvMutation.mutateAsync({ cvBase64: await fileToBase64(file), cvMimeType: file.type || 'application/pdf' });
+      const result = await extractCvMutation.mutateAsync({ cvBase64: await fileToBase64(file), cvMimeType: getCvMimeType(file) as 'application/pdf' | 'image/png' | 'image/jpeg' });
       if (!result.success) {
         const analysisMessage = 'message' in result ? result.message : undefined;
         setCvAnalysisNotice(analysisMessage || 'Le CV est joint. Vous pouvez compléter le formulaire manuellement.');
@@ -76,19 +88,29 @@ export default function Evaluation() {
       }
       const filled = new Set<string>();
       const extracted = result.fields as Partial<Record<(typeof prefillKeys)[number], string>>;
-      setForm((current) => {
-        const next = { ...current };
-        prefillKeys.forEach((key) => {
-          const value = extracted[key]?.trim();
-          if (value && !next[key]) {
-            next[key] = value;
-            filled.add(key);
-          }
-        });
-        return next;
+      const originals: Partial<FormState> = {};
+      const applied: Partial<FormState> = {};
+      const next = { ...formRef.current };
+      prefillKeys.forEach((key) => {
+        const value = extracted[key]?.trim();
+        const unchangedAiValue = autoFilledFields.has(key) && next[key] === autoFilledValues[key];
+        if (value && (!next[key] || unchangedAiValue)) {
+          originals[key] = unchangedAiValue ? (prefillOriginalValues[key] ?? '') : next[key];
+          next[key] = value;
+          applied[key] = value;
+          filled.add(key);
+        }
       });
-      setAutoFilledFields(filled);
-      setCvAnalysisNotice(filled.size ? '' : 'Aucun champ n’a été pré-rempli : vous gardez la main pour compléter le formulaire.');
+      formRef.current = next;
+      setForm(next);
+      if (filled.size) {
+        setAutoFilledFields((current) => new Set(Array.from(current).concat(Array.from(filled))));
+        setAutoFilledValues((current) => ({ ...current, ...applied }));
+        setPrefillOriginalValues((current) => ({ ...current, ...originals }));
+        setCvAnalysisNotice('');
+      } else {
+        setCvAnalysisNotice('Aucun nouveau champ n’a été pré-rempli : vos saisies existantes sont conservées.');
+      }
     } catch {
       setCvAnalysisNotice('L’analyse automatique n’est pas disponible. Votre CV reste joint et vous pouvez compléter le formulaire manuellement.');
     } finally {
@@ -100,10 +122,10 @@ export default function Evaluation() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-    if (!isPdf) {
+    const accepted = ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'].includes(getCvMimeType(file)) || /\.(pdf|png|jpe?g)$/i.test(file.name);
+    if (!accepted) {
       setCvFile(null);
-      setFormError('Le CV doit être au format PDF.');
+      setFormError('Le CV doit être au format PDF, JPG ou PNG.');
       event.target.value = '';
       return;
     }
@@ -123,9 +145,33 @@ export default function Evaluation() {
   const removeCv = () => {
     setCvFile(null);
     setAutoFilledFields(new Set());
+    setAutoFilledValues({});
+    setPrefillOriginalValues({});
     setCvAnalysisNotice('');
     const input = document.getElementById('cv-upload') as HTMLInputElement | null;
     if (input) input.value = '';
+  };
+
+  const reanalyzeCv = () => {
+    if (!cvFile) {
+      setCvAnalysisNotice('Choisissez un CV avant de lancer une analyse.');
+      return;
+    }
+    void extractAndAutoFill(cvFile);
+  };
+
+  const cancelAutoFill = () => {
+    const next = { ...formRef.current };
+    autoFilledFields.forEach((field) => {
+      const key = field as (typeof prefillKeys)[number];
+      if (next[key] === autoFilledValues[key]) next[key] = prefillOriginalValues[key] ?? '';
+    });
+    formRef.current = next;
+    setForm(next);
+    setAutoFilledFields(new Set());
+    setAutoFilledValues({});
+    setPrefillOriginalValues({});
+    setCvAnalysisNotice('Le pré-remplissage IA a été annulé. Vos modifications manuelles sont conservées.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -271,8 +317,8 @@ export default function Evaluation() {
             <SectionTitle>Études & académique</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label>Niveau d'études le plus élevé</Label>
-                <select value={form.educationLevel} onChange={(e) => update('educationLevel', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <PrefillLabel active={autoFilledFields.has('educationLevel')}>Niveau d'études le plus élevé</PrefillLabel>
+                <select value={form.educationLevel} onChange={(e) => update('educationLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('educationLevel')}`}>
                   <option value="">Sélectionner...</option>
                   <option value="bac">Baccalauréat</option>
                   <option value="bac2">Bac+2 / BTS / DUT</option>
@@ -281,16 +327,16 @@ export default function Evaluation() {
                   <option value="doctorat">Doctorat</option>
                 </select>
               </div>
-              <div><Label>Intitulé exact du diplôme</Label><Input value={form.diplomaTitle} onChange={(e) => update('diplomaTitle', e.target.value)} className="mt-1" /></div>
-              <div><Label>Année d'obtention</Label><Input value={form.graduationYear} onChange={(e) => update('graduationYear', e.target.value)} placeholder="2022" className="mt-1" /></div>
-              <div><Label>Domaine d'études</Label><Input value={form.fieldOfStudy} onChange={(e) => update('fieldOfStudy', e.target.value)} className="mt-1" /></div>
+              <div><PrefillLabel active={autoFilledFields.has('diplomaTitle')}>Intitulé exact du diplôme</PrefillLabel><Input value={form.diplomaTitle} onChange={(e) => update('diplomaTitle', e.target.value)} className={`mt-1 ${prefillClass('diplomaTitle')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('graduationYear')}>Année d'obtention</PrefillLabel><Input value={form.graduationYear} onChange={(e) => update('graduationYear', e.target.value)} placeholder="2022" className={`mt-1 ${prefillClass('graduationYear')}`} /></div>
+              <div><PrefillLabel active={autoFilledFields.has('fieldOfStudy')}>Domaine d'études</PrefillLabel><Input value={form.fieldOfStudy} onChange={(e) => update('fieldOfStudy', e.target.value)} className={`mt-1 ${prefillClass('fieldOfStudy')}`} /></div>
             </div>
 
             <SectionTitle>Expérience professionnelle</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label>Situation professionnelle</Label>
-                <select value={form.employmentStatus} onChange={(e) => update('employmentStatus', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <PrefillLabel active={autoFilledFields.has('employmentStatus')}>Situation professionnelle</PrefillLabel>
+                <select value={form.employmentStatus} onChange={(e) => update('employmentStatus', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('employmentStatus')}`}>
                   <option value="">Sélectionner...</option>
                   <option value="employe">Employé(e)</option>
                   <option value="independant">Indépendant(e)</option>
@@ -298,10 +344,10 @@ export default function Evaluation() {
                   <option value="etudiant">Étudiant(e)</option>
                 </select>
               </div>
-              <div><Label>Intitulé du poste actuel</Label><Input value={form.currentJobTitle} onChange={(e) => update('currentJobTitle', e.target.value)} className="mt-1" /></div>
+              <div><PrefillLabel active={autoFilledFields.has('currentJobTitle')}>Intitulé du poste actuel</PrefillLabel><Input value={form.currentJobTitle} onChange={(e) => update('currentJobTitle', e.target.value)} className={`mt-1 ${prefillClass('currentJobTitle')}`} /></div>
               <div>
-                <Label>Années d'expérience continue</Label>
-                <select value={form.yearsOfExperience} onChange={(e) => update('yearsOfExperience', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <PrefillLabel active={autoFilledFields.has('yearsOfExperience')}>Années d'expérience continue</PrefillLabel>
+                <select value={form.yearsOfExperience} onChange={(e) => update('yearsOfExperience', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('yearsOfExperience')}`}>
                   <option value="">Sélectionner...</option>
                   <option value="0-1">Moins d'1 an</option>
                   <option value="1-3">1 à 3 ans</option>
@@ -310,15 +356,15 @@ export default function Evaluation() {
                   <option value="10+">10 ans ou plus</option>
                 </select>
               </div>
-              <div><Label>Secteur d'activité</Label><Input value={form.industrySector} onChange={(e) => update('industrySector', e.target.value)} className="mt-1" /></div>
+              <div><PrefillLabel active={autoFilledFields.has('industrySector')}>Secteur d'activité</PrefillLabel><Input value={form.industrySector} onChange={(e) => update('industrySector', e.target.value)} className={`mt-1 ${prefillClass('industrySector')}`} /></div>
             </div>
-            <div><Label>Tâches principales</Label><Textarea value={form.mainTasks} onChange={(e) => update('mainTasks', e.target.value)} rows={2} className="mt-1" /></div>
+            <div><PrefillLabel active={autoFilledFields.has('mainTasks')}>Tâches principales</PrefillLabel><Textarea value={form.mainTasks} onChange={(e) => update('mainTasks', e.target.value)} rows={2} className={`mt-1 ${prefillClass('mainTasks')}`} /></div>
 
             <SectionTitle>Compétences linguistiques</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label>Niveau en français</Label>
-                <select value={form.frenchLevel} onChange={(e) => update('frenchLevel', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <PrefillLabel active={autoFilledFields.has('frenchLevel')}>Niveau en français</PrefillLabel>
+                <select value={form.frenchLevel} onChange={(e) => update('frenchLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('frenchLevel')}`}>
                   <option value="">Sélectionner...</option>
                   <option value="natif">Natif</option>
                   <option value="c1_c2">C1 / C2 (courant)</option>
@@ -328,8 +374,8 @@ export default function Evaluation() {
                 </select>
               </div>
               <div>
-                <Label>Niveau en anglais</Label>
-                <select value={form.englishLevel} onChange={(e) => update('englishLevel', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                <PrefillLabel active={autoFilledFields.has('englishLevel')}>Niveau en anglais</PrefillLabel>
+                <select value={form.englishLevel} onChange={(e) => update('englishLevel', e.target.value)} className={`mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm ${prefillClass('englishLevel')}`}>
                   <option value="">Sélectionner...</option>
                   <option value="natif">Natif</option>
                   <option value="c1_c2">C1 / C2 (courant)</option>
@@ -339,7 +385,7 @@ export default function Evaluation() {
                 </select>
               </div>
             </div>
-            <div><Label>Tests officiels passés ou à passer</Label><Input value={form.languageTestsTaken} onChange={(e) => update('languageTestsTaken', e.target.value)} placeholder="Ex: TEF, TCF, IELTS..." className="mt-1" /></div>
+            <div><PrefillLabel active={autoFilledFields.has('languageTestsTaken')}>Tests officiels passés ou à passer</PrefillLabel><Input value={form.languageTestsTaken} onChange={(e) => update('languageTestsTaken', e.target.value)} placeholder="Ex: TEF, TCF, IELTS..." className={`mt-1 ${prefillClass('languageTestsTaken')}`} /></div>
 
             <SectionTitle>Projet & pays cible</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -407,15 +453,15 @@ export default function Evaluation() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <Label htmlFor="cv-upload" className="text-sm font-semibold text-blue-950">
-                    CV (PDF, optionnel mais recommandé)
+                    CV (PDF, JPG ou PNG, optionnel mais recommandé)
                   </Label>
                   <p className="mt-1 text-xs text-blue-800/75">
-                    Ajoutez votre CV pour permettre une évaluation plus précise. PDF uniquement, 5 Mo maximum.
+                    Ajoutez votre CV pour permettre une évaluation plus précise. PDF, JPG ou PNG, 5 Mo maximum. Les images sont lues par OCR sécurisé.
                   </p>
                   <input
                     id="cv-upload"
                     type="file"
-                    accept="application/pdf,.pdf"
+                    accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg"
                     onChange={handleCvChange}
                     className="sr-only"
                   />
@@ -424,7 +470,7 @@ export default function Evaluation() {
                     className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2"
                   >
                     <Upload className="h-4 w-4" aria-hidden="true" />
-                    {cvFile ? 'Remplacer le CV' : 'Choisir mon CV PDF'}
+                    {cvFile ? 'Remplacer le CV' : 'Choisir mon CV'}
                   </label>
 
                   {cvFile && (
@@ -450,9 +496,19 @@ export default function Evaluation() {
                     </div>
                   )}
                   {!isExtractingCv && autoFilledFields.size > 0 && (
-                    <div className="mt-3 flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800" role="status" aria-live="polite">
-                      <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-                      <span>{autoFilledFields.size} champ(s) pré-rempli(s) depuis votre CV — vérifiez et corrigez si besoin.</span>
+                    <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-800" role="status" aria-live="polite">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{autoFilledFields.size} champ(s) pré-rempli(s) depuis votre CV — repérez le badge « Pré-rempli par IA » et vérifiez chaque valeur.</span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button type="button" size="sm" variant="outline" disabled={!cvFile || isExtractingCv} onClick={reanalyzeCv} className="border-indigo-300 bg-white text-indigo-800 hover:bg-indigo-100">
+                          <Sparkles className="mr-1.5 h-3.5 w-3.5" />Réanalyser le CV
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" disabled={isExtractingCv} onClick={cancelAutoFill} className="text-indigo-800 hover:bg-indigo-100">
+                          Annuler le pré-remplissage
+                        </Button>
+                      </div>
                     </div>
                   )}
                   {!isExtractingCv && cvAnalysisNotice && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">{cvAnalysisNotice}</p>}
