@@ -213,3 +213,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre de sélectionner les pages pertinentes d’un CV PDF avant analyse.
 - [x] Appliquer le recadrage ou les pages sélectionnées au traitement serveur sans conserver de copie intermédiaire.
 - [x] Tester les parcours image, PDF multi-pages, annulation et erreurs de sélection avant publication.
+
+## Test réel d’évaluation IA et de livraison
+- [x] Créer un dossier de démonstration isolé pour aureoldonfack@gmail.com.
+- [x] Générer un bilan IA de test depuis un profil non sensible et le publier dans l’espace associé.
+- [x] Envoyer le bilan de test à l’adresse autorisée puis vérifier la livraison et l’accès dans l’espace candidat.
+
+## Modèle professionnel de bilan d’évaluation
+- [x] Produire un exemple détaillé de bilan d’évaluation 3M Travel à partir d’un profil fictif transparent.
+- [x] Créer un prompt réutilisable pour générer des bilans structurés, auditables et sans promesse de visa.
+- [x] Présenter les règles de calcul et les limites de l’automatisation pour validation humaine.
