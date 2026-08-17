@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { shouldSendEvaluationReminder } from "./evaluationBilanJob";
+import { buildEvaluationDeliveryEmailHtml, buildEvaluationReminderEmailHtml, shouldSendEvaluationReminder } from "./evaluationBilanJob";
+import { resolveCandidateReturnPath } from "../../client/src/lib/candidateRedirect";
 
 describe("rappel de consultation du bilan", () => {
   const now = new Date("2026-08-16T12:00:00.000Z");
@@ -9,5 +10,20 @@ describe("rappel de consultation du bilan", () => {
     expect(shouldSendEvaluationReminder(base, now)).toBe(true);
     expect(shouldSendEvaluationReminder({ ...base, evaluationReportViewedAt: new Date("2026-08-14T12:00:00.000Z") }, now)).toBe(false);
     expect(shouldSendEvaluationReminder({ ...base, evaluationReportReminderSentAt: new Date("2026-08-16T11:00:00.000Z") }, now)).toBe(false);
+  });
+
+  it("insère dans les e-mails un lien canonique de connexion vers le bon dossier", () => {
+    const dossierNumber = "DOS-2026-001";
+    const html = buildEvaluationDeliveryEmailHtml("<p>Bilan</p>", dossierNumber);
+    const reminderHtml = buildEvaluationReminderEmailHtml("Aline", dossierNumber);
+    const expectedLink = "https://www.3mtravelagency.com/login?redirect=1&from=%2Fmon-espace%3Fdossier%3DDOS-2026-001";
+
+    expect(html).toContain(`href=\"${expectedLink}\"`);
+    expect(reminderHtml).toContain(`href=\"${expectedLink}\"`);
+  });
+
+  it("restaure le dossier du candidat après connexion depuis le lien e-mail", () => {
+    const link = new URL("https://www.3mtravelagency.com/login?redirect=1&from=%2Fmon-espace%3Fdossier%3DDOS-2026-001");
+    expect(resolveCandidateReturnPath(link.searchParams.get("from"))).toBe("/mon-espace?dossier=DOS-2026-001");
   });
 });

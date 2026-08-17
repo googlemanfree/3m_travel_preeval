@@ -4,6 +4,7 @@ import { applications } from '../../drizzle/schema';
 // Table bilans supprimée - utiliser applications à la place
 import { eq, and, lte, isNull } from 'drizzle-orm';
 import { sendEmail } from '../_core/email';
+import { buildCandidateSpaceAccessUrl } from '../services/candidateAccessLink';
 
 /**
  * Tâche planifiée : S'exécute toutes les heures pour vérifier les évaluations arrivées à 48h
@@ -39,6 +40,7 @@ export async function initEvaluationCron() {
 
       for (const application of pendingApplications) {
         try {
+          const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
           // 2. Envoyer l'email avec le résultat d'évaluation
           const mailContent = `
             <div style="font-family: Arial, sans-serif; color: #0a2540; padding: 20px;">
@@ -55,7 +57,7 @@ export async function initEvaluationCron() {
               <p>Pour consulter le rapport détaillé et débloquer la suite de vos démarches :</p>
               
               <p style="text-align: center; margin: 30px 0;">
-                <a href="https://www.3mtravelagency.click/mon-espace?dossier=${application.dossierNumber}" 
+                <a href="${candidateSpaceUrl}" 
                    style="background-color: #0066cc; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
                   Accéder à mon Espace Client
                 </a>

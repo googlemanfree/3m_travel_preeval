@@ -172,3 +172,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Fiabilité des brouillons e‑Visa
 - [x] Créer la table evisa_drafts avant toute lecture afin d’éliminer l’erreur cloud draft en production.
+
+## Lien d’accès après évaluation différée
+- [x] Identifier et corriger le lien erroné envoyé par e-mail après l’évaluation à 24 h.
+- [x] Vérifier la redirection sécurisée vers l’espace client et le bilan associé.
+- [x] Ajouter un test de non-régression du lien dans l’e-mail d’évaluation puis publier.
+- [x] Vérifier par test que les modèles d’e-mail d’évaluation utilisent le lien de connexion canonique associé au dossier.
+- [x] Vérifier par test le retour vers le bon dossier après connexion depuis le lien e-mail.
+- [x] Ajouter un test d’intégration de connexion depuis le lien e-mail jusqu’au dossier ciblé.

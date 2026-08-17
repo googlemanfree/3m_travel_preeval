@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
+import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
 import { toast } from "sonner";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
@@ -39,7 +40,12 @@ export default function Login() {
   const forgotDialogRef = useFocusTrap(showForgotPasswordModal, closeForgotPasswordModal);
 
   // Message d'avertissement si redirigé depuis une page protégée
-  const params = new URLSearchParams(location.split("?")[1] ?? "");
+  // Wouter retourne parfois uniquement le chemin. Lire la recherche native
+  // garantit de conserver le dossier transmis par un lien e-mail.
+  const queryString = typeof window !== "undefined"
+    ? window.location.search
+    : location.split("?")[1] ?? "";
+  const params = new URLSearchParams(queryString);
   const redirected = params.get("redirect") === "1";
   const from = params.get("from") ?? "";
   const googleOAuthCallback = params.get("oauth") === "google";
@@ -71,7 +77,7 @@ export default function Login() {
         return;
       }
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
-      navigate(from ? decodeURIComponent(from) : "/dashboard");
+      navigate(resolveCandidateReturnPath(from));
     },
     onError: (err) => {
       if (err.message === "EMAIL_VERIFICATION_REQUIRED") {
@@ -118,7 +124,7 @@ export default function Login() {
         return;
       }
       toast.success(`Bienvenue, ${data.candidate.fullName} !`);
-      navigate(from ? decodeURIComponent(from) : "/dashboard");
+      navigate(resolveCandidateReturnPath(from));
     },
     onError: () => {
       toast.error("La connexion Google a expiré. Veuillez réessayer.");

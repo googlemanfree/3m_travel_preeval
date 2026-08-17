@@ -19,6 +19,11 @@ interface AuthGuardProps {
   autoRedirect?: boolean;
 }
 
+function getRequestedInternalPath(location: string): string {
+  if (typeof window === "undefined") return location;
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 export default function AuthGuard({
   children,
   message = "Vous devez disposer d’un compte ou vous connecter pour accéder aux outils de 3M Travel.",
@@ -29,7 +34,7 @@ export default function AuthGuard({
 
   useEffect(() => {
     if (!isAuthenticated && autoRedirect) {
-      const encodedFrom = encodeURIComponent(location);
+      const encodedFrom = encodeURIComponent(getRequestedInternalPath(location));
       navigate(`/login?redirect=1&from=${encodedFrom}`);
     }
   }, [isAuthenticated, autoRedirect, location, navigate]);
@@ -80,7 +85,7 @@ export default function AuthGuard({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
               <Button
-                onClick={() => navigate(`/login?redirect=1&from=${encodeURIComponent(location)}`)}
+                onClick={() => navigate(`/login?redirect=1&from=${encodeURIComponent(getRequestedInternalPath(location))}`)}
                 className="h-12 font-semibold"
                 style={{ background: "linear-gradient(135deg, #1E3A8A, #2563EB)" }}
               >

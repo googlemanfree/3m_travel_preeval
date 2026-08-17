@@ -6,6 +6,17 @@ import { desc, eq } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
+import { buildCandidateSpaceAccessUrl, buildEvaluationReportUrl } from "../services/candidateAccessLink";
+
+export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumber: string): string {
+  const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
+  return `${reportHtml}<p style="margin-top:24px">Votre bilan finalisé est aussi disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier. Après connexion, vous serez redirigé vers votre espace en toute sécurité.</p>`;
+}
+
+export function buildEvaluationReminderEmailHtml(fullName: string, dossierNumber: string): string {
+  const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
+  return `<p>Bonjour ${fullName},</p><p>Votre bilan d’évaluation est disponible depuis plus de 72 heures et n’a pas encore été consulté.</p><p>Connectez-vous à votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a> pour le lire et télécharger votre PDF.</p><p>L’équipe 3M Travel & Services reste disponible pour vous accompagner.</p>`;
+}
 
 export function shouldSendEvaluationReminder(application: { evaluationDeliveryStatus: string; evaluationCompletedAt: Date | null; evaluationReportViewedAt: Date | null; evaluationReportReminderSentAt: Date | null }, now = new Date()): boolean {
   const threshold = new Date(now.getTime() - 72 * 60 * 60 * 1000);
@@ -50,11 +61,11 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
         await sendEmail({
           to: app.email,
           subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,
-          html: `${reportHtml}<p style="margin-top:24px">Votre bilan finalisé est aussi disponible au format PDF dans votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a>.</p>`,
+          html: buildEvaluationDeliveryEmailHtml(reportHtml, app.dossierNumber),
         });
 
         const sentAt = new Date();
-        await db.update(applications).set({ dossierStatus: "en_attente_paiement", evaluationCompletedAt: sentAt, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, evaluationReportUrl: `${process.env.APP_BASE_URL || "https://3mtravelagency.click"}/api/dossier/${app.dossierNumber}/report` }).where(eq(applications.id, app.id));
+        await db.update(applications).set({ dossierStatus: "en_attente_paiement", evaluationCompletedAt: sentAt, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, evaluationReportUrl: buildEvaluationReportUrl(app.dossierNumber) }).where(eq(applications.id, app.id));
         if (latestVersion) {
           await db.update(evaluationBilanVersions).set({ approvalStatus: "sent", pdfKey: finalPdf.key, pdfUrl: finalPdf.url, sentAt }).where(eq(evaluationBilanVersions.id, latestVersion.id));
         } else {
@@ -79,7 +90,7 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
         await sendEmail({
           to: app.email,
           subject: `Rappel : votre bilan d’évaluation est disponible — Dossier ${app.dossierNumber}`,
-          html: `<p>Bonjour ${app.fullName},</p><p>Votre bilan d’évaluation est disponible depuis plus de 72 heures et n’a pas encore été consulté.</p><p>Connectez-vous à votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a> pour le lire et télécharger votre PDF.</p><p>L’équipe 3M Travel & Services reste disponible pour vous accompagner.</p>`,
+          html: buildEvaluationReminderEmailHtml(app.fullName, app.dossierNumber),
         });
         const sentAt = new Date();
         await db.update(applications).set({ evaluationReportReminderSentAt: sentAt, updatedAt: sentAt }).where(eq(applications.id, app.id));
