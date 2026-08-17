@@ -2714,6 +2714,27 @@ export const adminRouter = router({
       });
       return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord) };
     }),
+
+  recordCandidate360CommunicationExport: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "communications_pdf_exported",
+        entityType: "communication",
+        entityId: String(operationalCase.id),
+        description: "Historique complet des communications et instantanés e‑Visa exporté au format PDF.",
+      });
+      return { success: true };
+    }),
 });
 
 // ─── Générateurs HTML des modèles ─────────────────────────────────────────────

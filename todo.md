@@ -296,3 +296,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Associer l’instantané au message et l’afficher dans l’historique de communication du dossier.
 - [x] Préserver le portail, la date de vérification, les exigences, frais, délai et lien de procédure réellement partagés.
 - [x] Ajouter les tests d’audit et vérifier que les évolutions futures du catalogue ne modifient pas les anciens messages.
+
+## Export PDF de l’historique de communication
+- [x] Ajouter un export PDF administrateur de l’historique complet des messages, notifications et pièces jointes référencées du dossier.
+- [x] Inclure dans le PDF les instantanés e‑Visa archivés et leurs métadonnées de partage.
+- [x] Réserver l’export aux sessions administrateur valides et journaliser la génération dans l’historique du dossier.
+- [x] Vérifier le contenu PDF, les contrôles d’accès et le parcours de téléchargement avant publication.

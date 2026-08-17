@@ -74,6 +74,7 @@ test("ouvre un dossier dans un poste de pilotage administrateur pleine largeur",
   await expect(workspace.getByText("Envoyer une communication au candidat")).toBeVisible();
   await expect(workspace.getByText("Instantané e‑Visa partagé")).toBeVisible();
   await expect(workspace.getByText(/Togo · vérifié le 17 août 2026/)).toBeVisible();
+  await expect(workspace.getByRole("button", { name: "Exporter l’historique PDF" })).toBeVisible();
   await workspace.getByRole("tab", { name: "Historique" }).click();
   await expect(workspace.getByText("Décisions et notes internes")).toBeVisible();
   await expect(workspace.getByText("Changements de procédure")).toBeVisible();
