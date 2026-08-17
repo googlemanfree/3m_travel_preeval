@@ -2628,6 +2628,10 @@ export const adminRouter = router({
       sessionToken: z.string().min(1),
       candidateId: z.string().min(1),
       content: z.string().trim().min(3).max(2_000),
+      attachmentUrl: z.string().optional(),
+      attachmentName: z.string().optional(),
+      attachmentMimeType: z.string().optional(),
+      attachmentSizeBytes: z.number().int().optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -2660,16 +2664,23 @@ export const adminRouter = router({
           notificationId: notificationId || null,
           senderRole: "advisor",
           content: messageBody,
+          attachmentUrl: input.attachmentUrl || null,
+          attachmentName: input.attachmentName || null,
+          attachmentMimeType: input.attachmentMimeType || null,
+          attachmentSizeBytes: input.attachmentSizeBytes || null,
           isRead: false,
         });
       }
 
       let emailSent = false;
       try {
+        const attachmentHtml = input.attachmentName && input.attachmentUrl
+          ? `<p><strong>Pièce jointe :</strong> <a href="${input.attachmentUrl}" target="_blank">${input.attachmentName}</a></p>`
+          : "";
         await sendGenericEmail({
           to: sourceRecord.email,
           subject: "Nouveau message concernant votre dossier 3M Travel",
-          html: `<p>Bonjour ${sourceRecord.fullName},</p><p>${messageBody.replace(/\n/g, "<br>")}</p><p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
+          html: `<p>Bonjour ${sourceRecord.fullName},</p><p>${messageBody.replace(/\n/g, "<br>")}</p>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
         });
         emailSent = true;
       } catch (error) {

@@ -79,6 +79,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
   const [outboundMessage, setOutboundMessage] = useState("");
   const [quickMessageOpen, setQuickMessageOpen] = useState(false);
   const [quickMessageText, setQuickMessageText] = useState("");
+  const [quickAttachment, setQuickAttachment] = useState<{ name: string; url: string; size?: number; type?: string } | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
 
   const { data, isLoading, error } = trpc.admin.getCandidate360.useQuery(
     { sessionToken, candidateId: candidate.id },
@@ -208,13 +210,74 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
             <div>
               <Label>Message personnalisé</Label>
               <Textarea
-                className="mt-1 h-32"
+                className="mt-1 h-28"
                 value={quickMessageText}
                 onChange={(e) => setQuickMessageText(e.target.value)}
                 placeholder="Rédigez votre message ici..."
                 maxLength={2000}
               />
               <p className="mt-1 text-xs text-slate-500">{quickMessageText.length}/2000 caractères</p>
+            </div>
+            <div>
+              <Label>Pièce jointe (facultatif)</Label>
+              <div className="mt-1 flex items-center gap-2">
+                <input
+                  type="file"
+                  id="admin-quick-attachment-file"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.size > 15 * 1024 * 1024) {
+                      toast.error("Fichier trop volumineux (max 15 Mo)");
+                      return;
+                    }
+                    setUploadingAttachment(true);
+                    try {
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      const res = await fetch("/api/upload", { method: "POST", body: formData });
+                      const data = await res.json();
+                      if (data.url) {
+                        setQuickAttachment({
+                          name: file.name,
+                          url: data.url,
+                          size: file.size,
+                          type: file.type,
+                        });
+                        toast.success("Pièce jointe ajoutée avec succès");
+                      } else {
+                        throw new Error(data.error || "Échec du téléversement");
+                      }
+                    } catch (err: any) {
+                      toast.error("Échec du téléversement du fichier", { description: err.message });
+                    } finally {
+                      setUploadingAttachment(false);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingAttachment}
+                  onClick={() => document.getElementById("admin-quick-attachment-file")?.click()}
+                >
+                  {uploadingAttachment ? "Téléversement..." : "📎 Joindre un document (PDF, image)"}
+                </Button>
+                {quickAttachment && (
+                  <div className="flex items-center gap-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                    <span className="max-w-[150px] truncate font-medium">{quickAttachment.name}</span>
+                    <button
+                      type="button"
+                      className="text-rose-600 hover:text-rose-800"
+                      onClick={() => setQuickAttachment(null)}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -224,11 +287,20 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
               disabled={quickMessageText.trim().length < 3 || sendMessageMutation.isPending}
               onClick={() => {
                 sendMessageMutation.mutate(
-                  { sessionToken, candidateId: candidate.id, content: quickMessageText.trim() },
+                  {
+                    sessionToken,
+                    candidateId: candidate.id,
+                    content: quickMessageText.trim(),
+                    attachmentUrl: quickAttachment?.url,
+                    attachmentName: quickAttachment?.name,
+                    attachmentMimeType: quickAttachment?.type,
+                    attachmentSizeBytes: quickAttachment?.size,
+                  },
                   {
                     onSuccess: () => {
                       setQuickMessageOpen(false);
                       setQuickMessageText("");
+                      setQuickAttachment(null);
                     },
                   }
                 );
