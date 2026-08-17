@@ -25,14 +25,13 @@ export function shouldSendEvaluationReminder(application: { evaluationDeliverySt
 
 export function canAutoDeliverEvaluation(application: { dossierStatus: string; evaluationDeliveryStatus: string; evaluationScheduledAt: Date | null; createdAt: Date; evaluationRequiresSecondApproval: boolean; evaluationApprovalStatus: string; scoringDetails: string | null }, now = new Date()): boolean {
   if (application.dossierStatus !== "en_evaluation") return false;
-  const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
   const isManualScheduleDue = application.evaluationDeliveryStatus === "scheduled" && Boolean(application.evaluationScheduledAt && application.evaluationScheduledAt <= now);
-  const isAutomaticFallbackDue = application.evaluationDeliveryStatus !== "scheduled" && application.createdAt < fortyEightHoursAgo;
   let details: Record<string, unknown> = {};
   try { details = JSON.parse(application.scoringDetails || "{}"); } catch { details = {}; }
   const draft = details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft as Record<string, unknown> : {};
   const isApprovedForDelivery = draft.advisorValidated === true && (!application.evaluationRequiresSecondApproval || application.evaluationApprovalStatus === "approved");
-  return isApprovedForDelivery && (isManualScheduleDue || isAutomaticFallbackDue);
+  // Un bilan n’est jamais diffusé automatiquement sans planification humaine explicite.
+  return isApprovedForDelivery && isManualScheduleDue;
 }
 
 export async function handleEvaluationBilanJob(req: Request, res: Response): Promise<void> {

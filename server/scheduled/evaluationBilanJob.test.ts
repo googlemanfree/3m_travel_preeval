@@ -27,11 +27,12 @@ describe("rappel de consultation du bilan", () => {
     expect(resolveCandidateReturnPath(link.searchParams.get("from"))).toBe("/mon-espace?dossier=DOS-2026-001");
   });
 
-  it("ne diffuse jamais automatiquement un bilan tant que le conseiller ne l’a pas validé", () => {
+  it("ne diffuse jamais automatiquement un bilan, même validé, sans planification humaine", () => {
     const now = new Date("2026-08-17T12:00:00.000Z");
     const base = { dossierStatus: "en_evaluation", evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, createdAt: new Date("2026-08-14T10:00:00.000Z"), evaluationRequiresSecondApproval: false, evaluationApprovalStatus: "not_required", scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan à relire", advisorValidated: false } }) };
     expect(canAutoDeliverEvaluation(base, now)).toBe(false);
-    expect(canAutoDeliverEvaluation({ ...base, scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan validé", advisorValidated: true } }) }, now)).toBe(true);
+    expect(canAutoDeliverEvaluation({ ...base, scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan validé", advisorValidated: true } }) }, now)).toBe(false);
+    expect(canAutoDeliverEvaluation({ ...base, evaluationDeliveryStatus: "scheduled", evaluationScheduledAt: new Date("2026-08-17T11:59:00.000Z"), scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan validé", advisorValidated: true } }) }, now)).toBe(true);
     expect(canAutoDeliverEvaluation({ ...base, scoringDetails: JSON.stringify({ adminDraft: { verdict: "Bilan validé", advisorValidated: true } }), evaluationRequiresSecondApproval: true, evaluationApprovalStatus: "pending" }, now)).toBe(false);
   });
 });

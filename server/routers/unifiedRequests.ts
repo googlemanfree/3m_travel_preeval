@@ -15,7 +15,7 @@ import {
   translationRequests,
   tourismServiceRequests,
 } from "../../drizzle/schema";
-import { clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
+import { cases, clientNotifications, evaluationBilanVersions, unifiedClientRequestHistory, unifiedClientRequests } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
@@ -24,6 +24,7 @@ import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
+import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -40,6 +41,23 @@ const evaluationDraftSchema = z.object({
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
 });
+
+function isProvisionalEvaluationReference(reference: string) {
+  return reference.startsWith("EVAL-DRAFT-");
+}
+
+async function issueFinalDossierNumber(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, application: { id: number; dossierNumber: string }) {
+  if (!isProvisionalEvaluationReference(application.dossierNumber)) return application.dossierNumber;
+  const year = new Date().getFullYear();
+  const standardNumber = `3M-${year}-${String(application.id).padStart(5, "0")}`;
+  const existing = (await db.select({ id: applications.id }).from(applications).where(eq(applications.dossierNumber, standardNumber)).limit(1))[0];
+  const dossierNumber = !existing || existing.id === application.id
+    ? standardNumber
+    : `3M-${year}-${Math.floor(10000 + Math.random() * 90000)}`;
+  await db.update(applications).set({ dossierNumber, updatedAt: new Date() }).where(eq(applications.id, application.id));
+  await db.update(cases).set({ caseNumber: dossierNumber, updatedAt: new Date() }).where(eq(cases.legacyApplicationId, application.id));
+  return dossierNumber;
+}
 
 type SourceType = typeof sourceTypes[number];
 type WorkflowStatus = typeof workflowStatuses[number];
@@ -108,13 +126,14 @@ export function canDeliverEvaluation(requiresSecondApproval: boolean, approvalSt
 type EvaluationReviewCandidate = {
   adminAssignedTo: string | null;
   evaluationScheduledAt: Date | null;
+  createdAt?: Date;
   updatedAt: Date;
   scoringDetails: string | null;
   evaluationDeliveryStatus: string;
   dossierStatus: string;
 };
 
-export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date()): Array<T & { advisorValidated: boolean }> {
+export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationReviewCandidate>(applicationsToReview: T[], advisor: { email: string; fullName: string }, now = new Date()): Array<T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean }> {
   const start = new Date(now); start.setHours(0, 0, 0, 0);
   const end = new Date(now); end.setHours(23, 59, 59, 999);
   return applicationsToReview.map((application) => {
@@ -123,9 +142,11 @@ export function selectEvaluationReviewsForAdvisorToday<T extends EvaluationRevie
     const draft = details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft as Record<string, unknown> : {};
     const advisorValidated = draft.advisorValidated === true;
     const belongsToAdvisor = !application.adminAssignedTo || application.adminAssignedTo === advisor.email || application.adminAssignedTo === advisor.fullName;
-    const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end));
-    return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict) };
-  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && application.hasDraft && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, hasDraft: _hasDraft, ...application }) => application as T & { advisorValidated: boolean });
+    const reviewDeadline = new Date((application.createdAt ?? application.updatedAt).getTime() + 8 * 60 * 60 * 1000);
+    const reviewOverdue = !advisorValidated && reviewDeadline <= now;
+    const relevantToday = Boolean((application.evaluationScheduledAt && application.evaluationScheduledAt <= end) || (application.updatedAt >= start && application.updatedAt <= end) || reviewOverdue);
+    return { ...application, advisorValidated, belongsToAdvisor, relevantToday, hasDraft: Boolean(draft.verdict), reviewDeadline, reviewOverdue };
+  }).filter((application) => application.belongsToAdvisor && application.evaluationDeliveryStatus === "draft" && ["nouveau", "en_evaluation"].includes(application.dossierStatus) && application.hasDraft && !application.advisorValidated && application.relevantToday).map(({ belongsToAdvisor: _belongsToAdvisor, relevantToday: _relevantToday, hasDraft: _hasDraft, ...application }) => application as T & { advisorValidated: boolean; reviewDeadline: Date; reviewOverdue: boolean });
 }
 
 export function calculateAdvisorWorkload(
@@ -326,7 +347,7 @@ export const unifiedRequestsRouter = router({
       const adminDraft = details.adminDraft ?? {};
       const rawVersions = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, contentJson: evaluationBilanVersions.contentJson, approvalStatus: evaluationBilanVersions.approvalStatus, requiresSecondApproval: evaluationBilanVersions.requiresSecondApproval, approvalComment: evaluationBilanVersions.approvalComment, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, createdAt: evaluationBilanVersions.createdAt, approvedAt: evaluationBilanVersions.approvedAt, sentAt: evaluationBilanVersions.sentAt, pdfKey: evaluationBilanVersions.pdfKey }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
       const versions = await Promise.all(rawVersions.map(async (version) => ({ ...version, pdfUrl: version.pdfKey ? await storageGetSignedUrl(version.pdfKey) : null })));
-      return { application, versions, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
+      return { application, versions, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", profileSummary: adminDraft.profileSummary ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify : [], nextAdminAction: adminDraft.nextAdminAction ?? "", message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M Travel" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`), requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
     }),
 
   generateDestinationEvaluationDraft: publicProcedure
@@ -395,11 +416,12 @@ export const unifiedRequestsRouter = router({
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       if (!previousDraft.verdict || !Array.isArray(previousDraft.recommendations) || !previousDraft.recommendations.length) throw new TRPCError({ code: "BAD_REQUEST", message: "Préparez et enregistrez un brouillon complet avant validation." });
       const now = new Date();
+      const finalDossierNumber = await issueFinalDossierNumber(db, application);
       const nextDraft = { ...previousDraft, advisorValidated: true, advisorValidatedAt: now.toISOString(), advisorValidatedByAdminId: admin.id };
-      await db.update(applications).set({ scoringDetails: JSON.stringify({ ...details, adminDraft: nextDraft }), updatedAt: now }).where(eq(applications.id, application.id));
+      await db.update(applications).set({ scoringDetails: JSON.stringify({ ...details, adminDraft: nextDraft, dossierIssuedAt: now.toISOString(), dossierIssuedByAdminId: admin.id }), updatedAt: now }).where(eq(applications.id, application.id));
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
-      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: input.validationComment || "Bilan relu et validé par le conseiller avant diffusion.", actorAdminAccountId: admin.id }); }
-      return { success: true, message: "Validation conseiller enregistrée. Le bilan peut désormais être diffusé si les autres validations requises sont acquises." };
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Numéro de dossier attribué : ${finalDossierNumber}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, dossierNumber: finalDossierNumber, message: `Validation conseiller enregistrée. Le numéro de dossier ${finalDossierNumber} est maintenant attribué ; le bilan peut être envoyé ou planifié après les approbations requises.` };
     }),
 
   approveSensitiveEvaluation: publicProcedure
@@ -460,7 +482,8 @@ export const unifiedRequestsRouter = router({
       const latestVersion = versionAuditTrail[0];
       const versionNumber = latestVersion?.versionNumber ?? 1;
       const finalPdf = await createFinalEvaluationPdf(application, versionNumber, versionAuditTrail);
-      const availabilityHtml = `${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="https://www.3mtravelagency.com/mon-espace">Espace client sécurisé</a>.</p>`;
+      const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
+      const availabilityHtml = `${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
       await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
       const now = new Date();
       await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, updatedAt: now }).where(eq(applications.id, application.id));
@@ -474,7 +497,7 @@ export const unifiedRequestsRouter = router({
       }
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }
-      return { success: true, message: "Bilan validé et envoyé immédiatement. La relance automatique de 48 h est annulée." };
+      return { success: true, dossierNumber: application.dossierNumber, message: "Bilan validé et envoyé immédiatement dans l’espace client et par e-mail." };
     }),
 
   getCustomer360: publicProcedure
@@ -569,7 +592,7 @@ export const unifiedRequestsRouter = router({
       const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-      const candidates = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, destination: applications.destination, scoringTotal: applications.scoringTotal, adminAssignedTo: applications.adminAssignedTo, evaluationScheduledAt: applications.evaluationScheduledAt, updatedAt: applications.updatedAt, scoringDetails: applications.scoringDetails, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, dossierStatus: applications.dossierStatus }).from(applications).orderBy(desc(applications.updatedAt)).limit(500);
+      const candidates = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, destination: applications.destination, scoringTotal: applications.scoringTotal, adminAssignedTo: applications.adminAssignedTo, evaluationScheduledAt: applications.evaluationScheduledAt, createdAt: applications.createdAt, updatedAt: applications.updatedAt, scoringDetails: applications.scoringDetails, evaluationDeliveryStatus: applications.evaluationDeliveryStatus, dossierStatus: applications.dossierStatus }).from(applications).orderBy(desc(applications.updatedAt)).limit(500);
       const now = new Date();
       const rows = selectEvaluationReviewsForAdvisorToday(candidates, admin, now);
       return { generatedAt: now, total: rows.length, rows };

@@ -8,9 +8,12 @@ export type DestinationEvaluationDraft = {
   modelLabel: string;
   finalScore: number;
   verdict: string;
+  profileSummary: string;
   strengths: string[];
   weaknesses: string[];
   recommendations: string[];
+  informationToVerify: string[];
+  nextAdminAction: string;
   criteria: {
     education: number;
     experience: number;
@@ -92,9 +95,12 @@ export async function generateDestinationEvaluationDraft(application: Applicatio
         additionalProperties: false,
         properties: {
           verdict: { type: "string" },
+          profileSummary: { type: "string" },
           strengths: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
           weaknesses: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 5 },
           recommendations: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 6 },
+          informationToVerify: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 6 },
+          nextAdminAction: { type: "string" },
           criteria: {
             type: "object",
             additionalProperties: false,
@@ -108,14 +114,24 @@ export async function generateDestinationEvaluationDraft(application: Applicatio
             required: ["education", "experience", "languages", "market", "profile"],
           },
         },
-        required: ["verdict", "strengths", "weaknesses", "recommendations", "criteria"],
+        required: ["verdict", "profileSummary", "strengths", "weaknesses", "recommendations", "informationToVerify", "nextAdminAction", "criteria"],
       },
     },
     messages: [
-      { role: "system", content: "Tu aides un conseiller de mobilité internationale. N’invente aucun fait. Toute donnée absente doit être décrite comme à vérifier. Ne promets jamais un visa, un emploi, une admission ou un délai. Réponds seulement au JSON conforme." },
+      { role: "system", content: "Tu aides un conseiller de mobilité internationale. Tu produis exclusivement un brouillon interne destiné à un administrateur. N’invente aucun fait, ne déduis jamais une donnée personnelle et ne transformes pas une déclaration en preuve. Toute donnée absente, ambiguë ou non justifiée doit être listée comme à vérifier. Ne promets jamais un visa, un emploi, une admission, un recrutement ou un délai. Réponds uniquement au JSON strict demandé." },
       { role: "user", content: `Prépare un brouillon interne pour ${guide.label}. Profil déclaré : ${JSON.stringify(profile)}. Objectif destination : ${guide.focus}.
 
-Applique la grille interne sur 100 points : formation /20, expérience /20, langues /15, adéquation indicative marché /30, profil et cohérence /15. Le score final sera recalculé par le système. Rédige un verdict prudent, des atouts uniquement fondés sur le profil, des points à vérifier et des recommandations concrètes de pièces ou actions. La validation humaine est obligatoire avant envoi.` },
+Applique la grille interne sur 100 points : formation /20, expérience /20, langues /15, adéquation indicative marché /30, profil et cohérence /15. Le score final sera recalculé par le système.
+
+Retourne :
+- profileSummary : synthèse de 2 à 4 phrases construite uniquement avec les faits disponibles ;
+- strengths : atouts explicitement soutenus par le profil ;
+- weaknesses : limites ou écarts visibles, sans jugement de valeur ;
+- informationToVerify : informations manquantes ou preuves à demander avant toute conclusion ;
+- recommendations : actions concrètes et documents à obtenir ;
+- nextAdminAction : une seule action prioritaire, immédiatement exécutable par le conseiller.
+
+La validation humaine est obligatoire avant envoi. Le candidat ne verra le bilan qu’après la relecture et la validation explicite d’un administrateur.` },
     ],
   });
   const raw = JSON.parse(contentFrom(result)) as Record<string, unknown>;
@@ -132,9 +148,12 @@ Applique la grille interne sur 100 points : formation /20, expérience /20, lang
     modelLabel: guide.label,
     finalScore: criteria.education + criteria.experience + criteria.languages + criteria.market + criteria.profile,
     verdict: typeof raw.verdict === "string" ? raw.verdict.trim() : "Évaluation préliminaire à vérifier par un conseiller.",
+    profileSummary: typeof raw.profileSummary === "string" ? raw.profileSummary.trim() : "Synthèse du profil à compléter par le conseiller.",
     strengths: strings(raw.strengths, 5),
     weaknesses: strings(raw.weaknesses, 5),
     recommendations: strings(raw.recommendations, 6),
+    informationToVerify: strings(raw.informationToVerify, 6),
+    nextAdminAction: typeof raw.nextAdminAction === "string" ? raw.nextAdminAction.trim() : "Relire les informations extraites et demander les preuves manquantes.",
     criteria,
     checklist: guide.checklist,
     humanReviewRequired: true,

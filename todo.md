@@ -266,3 +266,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une confirmation Sonner après enregistrement du pilotage.
 - [x] Ajouter les tests unitaires du mapping et le scénario navigateur de synchronisation.
 - [x] Valider le typage, 382 tests Vitest et 4 scénarios navigateur du bureau administrateur.
+
+## Workflow central CV → validation Admin → dossier client
+- [x] Transformer chaque CV reçu en brouillon IA structuré visible uniquement dans la file administrateur.
+- [x] Permettre à l’administrateur d’éditer les données CV, le score, les recommandations et le texte d’accompagnement dans des formulaires propres et prévisualisables.
+- [x] Conserver l’historique des versions et l’identité de l’administrateur ayant modifié ou validé le bilan.
+- [x] Générer automatiquement le numéro de dossier uniquement au moment de la validation finale administrateur, avec rattachement à l’e-mail du candidat.
+- [x] Envoyer après validation le bilan PDF dans l’espace candidat et le lien sécurisé par e-mail avec le même numéro de dossier.
+- [x] Permettre depuis le back-office de faire évoluer la progression, les documents, les remarques, les paiements et les prochaines actions visibles côté client.
+- [x] Ajouter une assistance IA d’autocomplétion contrôlée, sans écraser les corrections humaines ni inventer les informations manquantes.
+- [x] Déclencher après huit heures une alerte interne de relance et de priorité, sans jamais envoyer au client un bilan qui n’a pas été validé par un administrateur.
+- [x] Ajouter des tests de bout en bout du parcours CV → brouillon → modification → validation → numéro de dossier → espace client/e-mail.

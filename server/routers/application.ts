@@ -18,10 +18,10 @@ import { caseApplicants, caseStatusHistory, cases, clientNotifications } from ".
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function generateDossierNumber(): string {
+function generateEvaluationDraftReference(): string {
   const year = new Date().getFullYear();
-  const rand = randomInt(1000, 10000);
-  return `3M-${year}-${rand}`;
+  const rand = randomInt(100000, 1000000);
+  return `EVAL-DRAFT-${year}-${rand}`;
 }
 
 async function initCinetPayTransaction(params: {
@@ -150,11 +150,11 @@ export const applicationRouter = router({
       const apiKey = process.env.CINETPAY_API_KEY ?? "";
       const baseUrl = process.env.APP_BASE_URL ?? "https://3mtravelagency.click";
 
-      // Générer un numéro de dossier unique
-      let dossierNumber = generateDossierNumber();
+      // La demande reçoit une référence interne. Le numéro de dossier client est attribué uniquement après validation humaine du bilan.
+      let dossierNumber = generateEvaluationDraftReference();
       let existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
       while (existing.length > 0) {
-        dossierNumber = generateDossierNumber();
+        dossierNumber = generateEvaluationDraftReference();
         existing = await db.select().from(applications).where(eq(applications.dossierNumber, dossierNumber)).limit(1);
       }
 
