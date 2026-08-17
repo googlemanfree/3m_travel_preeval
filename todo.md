@@ -320,3 +320,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Utiliser une sortie JSON structurée avec garde-fous : aucune éligibilité garantie, aucune source non vérifiée présentée comme officielle.
 - [x] Ajouter un bouton d’assistance IA dans la modale d’édition et laisser l’administrateur appliquer ou modifier chaque suggestion avant enregistrement.
 - [x] Tester les autorisations, la validation de sortie, les erreurs IA et le parcours de formulaire avant publication.
+
+## Comparaison visuelle des suggestions IA e‑Visa
+- [x] Afficher côte à côte les valeurs actuelles et les propositions IA pour les exigences, frais, délais, étapes et précautions.
+- [x] Mettre en évidence les changements détectés et préciser que toute proposition reste à confirmer sur le portail officiel.
+- [x] Permettre à l’administrateur d’appliquer l’ensemble des suggestions ou de conserver et modifier manuellement la version actuelle.
+- [x] Ajouter les tests de calcul des différences et vérifier le parcours du formulaire avant publication.
