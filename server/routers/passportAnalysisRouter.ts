@@ -78,7 +78,10 @@ export const passportAnalysisRouter = router({
               schema: passportAnalysisSchema,
             },
           },
-          maxTokens: 1024,
+          // Sans budget explicite, Gemini peut consacrer la totalité des tokens au raisonnement
+          // et renvoyer un JSON tronqué. Le plafonnement laisse une sortie structurée exploitable.
+          thinking: { budget_tokens: 128 },
+          maxTokens: 4096,
         });
 
         const content = result.choices?.[0]?.message?.content;

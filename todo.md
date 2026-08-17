@@ -161,3 +161,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Générer et télécharger un PDF du récapitulatif des données validées.
 - [x] Enregistrer les corrections manuelles et les rendre visibles dans l’administration.
 - [x] Formaliser et valider le flux dans la compétence `prime-travel-case-management` avec `skill-creator`.
+
+## Régression critique du traitement e‑Visa
+- [x] Reproduire l’erreur interne réelle après sélection du passeport et identifier sa cause dans les logs.
+- [x] Corriger le flux upload/analyse IA pour les fichiers PDF et image sans réponse générique.
+- [x] Tester une soumission e‑Visa de bout en bout et publier uniquement après validation opérationnelle.
+- [x] Tester explicitement le parcours corrigé avec un fichier PDF jusqu’à la validation et à la confirmation.
+- [x] Couvrir la soumission finale e‑Visa après passeport, vérifier l’obtention d’une référence de dossier et le message de succès.
+- [x] Publier un checkpoint seulement après les contrôles PDF et de soumission finale.
+
+## Fiabilité des brouillons e‑Visa
+- [x] Créer la table evisa_drafts avant toute lecture afin d’éliminer l’erreur cloud draft en production.

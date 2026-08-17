@@ -26,6 +26,8 @@ interface ValidationStepProps {
   passportFileUrl?: string | null;
   passportFileType?: string;
   passportFileName?: string;
+  entryMode?: 'ai' | 'manual';
+  analysisNotice?: string | null;
   onConfirm: (validatedData: ExtractedData) => void;
   onEdit: () => void;
   isLoading?: boolean;
@@ -60,6 +62,8 @@ export function ValidationStep({
   passportFileUrl = null,
   passportFileType = '',
   passportFileName = '',
+  entryMode = 'ai',
+  analysisNotice = null,
   onConfirm,
   onEdit,
   isLoading = false,
@@ -159,12 +163,14 @@ export function ValidationStep({
 
   return (
     <form onSubmit={handleConfirm} className="space-y-6" noValidate>
-      <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4" role="status" aria-live="polite">
-        <UserRoundCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+      <div className={`flex items-start gap-3 rounded-2xl border p-4 ${entryMode === 'ai' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`} role="status" aria-live="polite">
+        {entryMode === 'ai' ? <UserRoundCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" /> : <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />}
         <div>
-          <h3 className="font-semibold text-emerald-950">Vérifiez les informations extraites</h3>
-          <p className="mt-1 text-sm text-emerald-800">
-            L’IA a préparé ces données à partir de votre passeport. Modifiez directement les champs qui ne correspondent pas à votre document, puis confirmez.
+          <h3 className={`font-semibold ${entryMode === 'ai' ? 'text-emerald-950' : 'text-amber-950'}`}>{entryMode === 'ai' ? 'Vérifiez les informations extraites' : 'Saisissez les informations de votre passeport'}</h3>
+          <p className={`mt-1 text-sm ${entryMode === 'ai' ? 'text-emerald-800' : 'text-amber-800'}`}>
+            {entryMode === 'ai'
+              ? 'L’IA a préparé ces données à partir de votre passeport. Modifiez directement les champs qui ne correspondent pas à votre document, puis confirmez.'
+              : analysisNotice || 'Complétez les informations visibles sur la page biographique de votre passeport, puis confirmez pour poursuivre votre demande.'}
           </p>
         </div>
       </div>

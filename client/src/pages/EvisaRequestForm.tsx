@@ -48,6 +48,22 @@ interface FormData {
 
 type FormStep = 'upload' | 'validation' | 'confirmation';
 
+function createEmptyPassportData(): ExtractedData {
+  return {
+    fullName: '',
+    firstName: null,
+    lastName: null,
+    dateOfBirth: null,
+    nationality: null,
+    passportNumber: null,
+    issuingCountry: null,
+    issueDate: null,
+    expiryDate: null,
+    gender: null,
+    placeOfBirth: null,
+  };
+}
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -129,6 +145,8 @@ export default function EvisaRequestForm() {
   const [passportFile, setPassportFile] = useState<File | null>(null);
   const [passportFileUrl, setPassportFileUrl] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [passportEntryMode, setPassportEntryMode] = useState<'ai' | 'manual'>('ai');
+  const [analysisNotice, setAnalysisNotice] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const [submitted, setSubmitted] = useState(false);
@@ -222,11 +240,9 @@ export default function EvisaRequestForm() {
     onSuccess: (result) => {
       setIsAnalyzing(false);
       setExtractedData(result.data);
+      setPassportEntryMode('ai');
+      setAnalysisNotice(null);
       setCurrentStep('validation');
-    },
-    onError: (err: any) => {
-      setError(err.message || 'Analyse impossible. Vérifiez que la page d’identité est lisible puis réessayez.');
-      setIsAnalyzing(false);
     },
   });
 
@@ -255,6 +271,7 @@ export default function EvisaRequestForm() {
     setPassportFile(file);
     setError(null);
     setExtractedData(null);
+    setAnalysisNotice(null);
 
     if (!file) {
       setPassportFileUrl(null);
@@ -275,9 +292,11 @@ export default function EvisaRequestForm() {
       });
     } catch (uploadError: any) {
       setIsAnalyzing(false);
-      setError(uploadError?.message || 'Impossible de traiter ce passeport. Vérifiez le fichier puis réessayez.');
-      setPassportFile(null);
-      setPassportFileUrl(null);
+      setError(null);
+      setExtractedData(createEmptyPassportData());
+      setPassportEntryMode('manual');
+      setAnalysisNotice('Le pré-remplissage automatique est momentanément indisponible. Vous pouvez poursuivre immédiatement en renseignant les informations de votre passeport ; elles seront vérifiées par nos experts.');
+      setCurrentStep('validation');
     }
   };
 
@@ -553,6 +572,8 @@ export default function EvisaRequestForm() {
               passportFileUrl={passportFileUrl}
               passportFileType={passportFile?.type}
               passportFileName={passportFile?.name}
+              entryMode={passportEntryMode}
+              analysisNotice={analysisNotice}
               onConfirm={handleValidationConfirm}
               onEdit={handleEditPassport}
               isLoading={isLoading}

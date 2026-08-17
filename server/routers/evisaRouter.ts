@@ -730,6 +730,16 @@ export const evisaRouter = router({
       try {
         const dbUrl = process.env.DATABASE_URL || '';
         const connection = await mysql.createConnection(dbUrl);
+        await connection.execute(`
+          CREATE TABLE IF NOT EXISTS evisa_drafts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            countryCode VARCHAR(50) NOT NULL,
+            draftData TEXT NOT NULL,
+            updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY uk_email_country (email, countryCode)
+          )
+        `);
         const [rows]: any = await connection.execute(`
           SELECT draftData FROM evisa_drafts WHERE email = ? AND countryCode = ? LIMIT 1
         `, [input.email, input.countryCode]);
