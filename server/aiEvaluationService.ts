@@ -3,6 +3,8 @@
  * Extraction de texte PDF, analyse IA, génération de rapport personnalisé
  */
 
+import { invokeLLM } from "./_core/llm";
+
 // Import dynamique pour éviter les dépendances manquantes
 
 // Types pour l'évaluation IA
@@ -211,4 +213,105 @@ Yaoundé, Cameroun
 RC/YAO/2019/A/2567 | NIU: M112417203369H
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
+}
+
+/** Champs du formulaire pouvant être pré-remplis à partir d'un CV.
+ * Les informations d'identité, de famille, de destination et les déclarations
+ * sensibles restent toujours à la saisie et à la validation du candidat. */
+export interface CVExtractedFields {
+  educationLevel?: "bac" | "bac2" | "licence" | "master" | "doctorat";
+  diplomaTitle?: string;
+  graduationYear?: string;
+  fieldOfStudy?: string;
+  employmentStatus?: "employe" | "independant" | "sans_emploi" | "etudiant";
+  currentJobTitle?: string;
+  yearsOfExperience?: "0-1" | "1-3" | "3-5" | "5-10" | "10+";
+  industrySector?: string;
+  mainTasks?: string;
+  frenchLevel?: "natif" | "c1_c2" | "b2" | "b1" | "debutant";
+  englishLevel?: "natif" | "c1_c2" | "b2" | "b1" | "debutant";
+  languageTestsTaken?: string;
+}
+
+const EDUCATION_LEVELS = new Set(["bac", "bac2", "licence", "master", "doctorat"]);
+const EMPLOYMENT_STATUSES = new Set(["employe", "independant", "sans_emploi", "etudiant"]);
+const EXPERIENCE_RANGES = new Set(["0-1", "1-3", "3-5", "5-10", "10+"]);
+const LANGUAGE_LEVELS = new Set(["natif", "c1_c2", "b2", "b1", "debutant"]);
+
+function asSafeText(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const normalized = value.replace(/\s+/g, " ").trim();
+  return normalized ? normalized.slice(0, maxLength) : undefined;
+}
+
+/** Normalise et filtre toute réponse IA avant de l'exposer au formulaire. */
+export function normalizeCVExtractedFields(raw: unknown): CVExtractedFields {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+  const source = raw as Record<string, unknown>;
+  const educationLevel = asSafeText(source.educationLevel, 20);
+  const employmentStatus = asSafeText(source.employmentStatus, 24);
+  const yearsOfExperience = asSafeText(source.yearsOfExperience, 8)?.replace(/[–—]/g, "-");
+  const frenchLevel = asSafeText(source.frenchLevel, 16);
+  const englishLevel = asSafeText(source.englishLevel, 16);
+
+  return {
+    ...(educationLevel && EDUCATION_LEVELS.has(educationLevel) ? { educationLevel: educationLevel as CVExtractedFields["educationLevel"] } : {}),
+    ...(asSafeText(source.diplomaTitle, 180) ? { diplomaTitle: asSafeText(source.diplomaTitle, 180) } : {}),
+    ...(asSafeText(source.graduationYear, 4)?.match(/^\d{4}$/) ? { graduationYear: asSafeText(source.graduationYear, 4) } : {}),
+    ...(asSafeText(source.fieldOfStudy, 160) ? { fieldOfStudy: asSafeText(source.fieldOfStudy, 160) } : {}),
+    ...(employmentStatus && EMPLOYMENT_STATUSES.has(employmentStatus) ? { employmentStatus: employmentStatus as CVExtractedFields["employmentStatus"] } : {}),
+    ...(asSafeText(source.currentJobTitle, 160) ? { currentJobTitle: asSafeText(source.currentJobTitle, 160) } : {}),
+    ...(yearsOfExperience && EXPERIENCE_RANGES.has(yearsOfExperience) ? { yearsOfExperience: yearsOfExperience as CVExtractedFields["yearsOfExperience"] } : {}),
+    ...(asSafeText(source.industrySector, 160) ? { industrySector: asSafeText(source.industrySector, 160) } : {}),
+    ...(asSafeText(source.mainTasks, 420) ? { mainTasks: asSafeText(source.mainTasks, 420) } : {}),
+    ...(frenchLevel && LANGUAGE_LEVELS.has(frenchLevel) ? { frenchLevel: frenchLevel as CVExtractedFields["frenchLevel"] } : {}),
+    ...(englishLevel && LANGUAGE_LEVELS.has(englishLevel) ? { englishLevel: englishLevel as CVExtractedFields["englishLevel"] } : {}),
+    ...(asSafeText(source.languageTestsTaken, 160) ? { languageTestsTaken: asSafeText(source.languageTestsTaken, 160) } : {}),
+  };
+}
+
+/**
+ * Extrait uniquement les informations explicitement écrites dans un CV pour
+ * aider le candidat à pré-remplir le formulaire. Aucun champ absent n'est
+ * deviné et aucune donnée n'est persistée pendant cette étape.
+ */
+export async function extractCVFieldsForForm(cvText: string): Promise<CVExtractedFields> {
+  const excerpt = cvText.replace(/\0/g, "").trim().slice(0, 24_000);
+  if (!excerpt) return {};
+
+  try {
+    const response = await invokeLLM({
+      model: "gpt-5-mini",
+      maxTokens: 1_200,
+      messages: [
+        {
+          role: "system",
+          content: "Extrais seulement les informations explicitement indiquées dans ce CV. Ne déduis jamais de niveau de langue, d'expérience, de diplôme ou de statut. Retourne null pour tout champ absent. Ne renvoie aucune donnée personnelle, familiale, de contact, de visa ou de destination.",
+        },
+        { role: "user", content: excerpt },
+      ],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "cv_form_prefill",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              educationLevel: { type: ["string", "null"] }, diplomaTitle: { type: ["string", "null"] }, graduationYear: { type: ["string", "null"] }, fieldOfStudy: { type: ["string", "null"] },
+              employmentStatus: { type: ["string", "null"] }, currentJobTitle: { type: ["string", "null"] }, yearsOfExperience: { type: ["string", "null"] }, industrySector: { type: ["string", "null"] }, mainTasks: { type: ["string", "null"] },
+              frenchLevel: { type: ["string", "null"] }, englishLevel: { type: ["string", "null"] }, languageTestsTaken: { type: ["string", "null"] },
+            },
+            required: ["educationLevel", "diplomaTitle", "graduationYear", "fieldOfStudy", "employmentStatus", "currentJobTitle", "yearsOfExperience", "industrySector", "mainTasks", "frenchLevel", "englishLevel", "languageTestsTaken"],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+    const content = response.choices[0]?.message?.content;
+    return normalizeCVExtractedFields(typeof content === "string" ? JSON.parse(content) : {});
+  } catch (error) {
+    console.error("[CV Prefill] Analyse structurée indisponible", error instanceof Error ? error.message : "erreur inconnue");
+    return {};
+  }
 }

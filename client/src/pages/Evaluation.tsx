@@ -42,8 +42,12 @@ export default function Evaluation() {
   const acquisitionCampaign = acquisitionParams.get("campaign") || acquisitionParams.get("campagne") || undefined;
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [formError, setFormError] = useState('');
+  const [isExtractingCv, setIsExtractingCv] = useState(false);
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set());
+  const [cvAnalysisNotice, setCvAnalysisNotice] = useState('');
 
   const submitMutation = trpc.evaluation.submit.useMutation();
+  const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
 
@@ -54,6 +58,43 @@ export default function Evaluation() {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+
+  const prefillKeys: Array<keyof Pick<FormState, 'educationLevel' | 'diplomaTitle' | 'graduationYear' | 'fieldOfStudy' | 'employmentStatus' | 'currentJobTitle' | 'yearsOfExperience' | 'industrySector' | 'mainTasks' | 'frenchLevel' | 'englishLevel' | 'languageTestsTaken'>> = [
+    'educationLevel', 'diplomaTitle', 'graduationYear', 'fieldOfStudy', 'employmentStatus', 'currentJobTitle', 'yearsOfExperience', 'industrySector', 'mainTasks', 'frenchLevel', 'englishLevel', 'languageTestsTaken',
+  ];
+
+  const extractAndAutoFill = async (file: File) => {
+    setIsExtractingCv(true);
+    setAutoFilledFields(new Set());
+    setCvAnalysisNotice('');
+    try {
+      const result = await extractCvMutation.mutateAsync({ cvBase64: await fileToBase64(file), cvMimeType: file.type || 'application/pdf' });
+      if (!result.success) {
+        const analysisMessage = 'message' in result ? result.message : undefined;
+        setCvAnalysisNotice(analysisMessage || 'Le CV est joint. Vous pouvez compléter le formulaire manuellement.');
+        return;
+      }
+      const filled = new Set<string>();
+      const extracted = result.fields as Partial<Record<(typeof prefillKeys)[number], string>>;
+      setForm((current) => {
+        const next = { ...current };
+        prefillKeys.forEach((key) => {
+          const value = extracted[key]?.trim();
+          if (value && !next[key]) {
+            next[key] = value;
+            filled.add(key);
+          }
+        });
+        return next;
+      });
+      setAutoFilledFields(filled);
+      setCvAnalysisNotice(filled.size ? '' : 'Aucun champ n’a été pré-rempli : vous gardez la main pour compléter le formulaire.');
+    } catch {
+      setCvAnalysisNotice('L’analyse automatique n’est pas disponible. Votre CV reste joint et vous pouvez compléter le formulaire manuellement.');
+    } finally {
+      setIsExtractingCv(false);
+    }
+  };
 
   const handleCvChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -76,10 +117,13 @@ export default function Evaluation() {
 
     setFormError('');
     setCvFile(file);
+    void extractAndAutoFill(file);
   };
 
   const removeCv = () => {
     setCvFile(null);
+    setAutoFilledFields(new Set());
+    setCvAnalysisNotice('');
     const input = document.getElementById('cv-upload') as HTMLInputElement | null;
     if (input) input.value = '';
   };
@@ -399,6 +443,19 @@ export default function Evaluation() {
                       </button>
                     </div>
                   )}
+                  {isExtractingCv && (
+                    <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800" role="status" aria-live="polite">
+                      <Loader className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
+                      <span>Lecture de votre CV en cours — pré-remplissage automatique du formulaire…</span>
+                    </div>
+                  )}
+                  {!isExtractingCv && autoFilledFields.size > 0 && (
+                    <div className="mt-3 flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-800" role="status" aria-live="polite">
+                      <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{autoFilledFields.size} champ(s) pré-rempli(s) depuis votre CV — vérifiez et corrigez si besoin.</span>
+                    </div>
+                  )}
+                  {!isExtractingCv && cvAnalysisNotice && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="status">{cvAnalysisNotice}</p>}
                 </div>
               </div>
             </div>

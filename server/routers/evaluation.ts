@@ -8,7 +8,7 @@ import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEmail } from "../_core/email";
-import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
+import { extractCVFieldsForForm, extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { computeDestinationScore } from "../destinationScoringEngine";
 import { logger } from "../_core/logger";
 import { eq } from "drizzle-orm";
@@ -424,5 +424,35 @@ export const evaluationRouter = router({
       const page = rows.slice(input.offset, input.offset + input.limit).reverse();
 
       return { items: page, total };
+    }),
+
+  /** Analyse temporaire d'un CV pour pré-remplir le formulaire, sans créer
+   * de dossier, stocker de document ni envoyer de demande. */
+  extractFromCV: publicProcedure
+    .input(z.object({
+      cvBase64: z.string().min(32).max(7_200_000),
+      cvMimeType: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      try {
+        if (input.cvMimeType && input.cvMimeType !== "application/pdf") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Le CV doit être un PDF." });
+        }
+        const base64Data = input.cvBase64.includes(",") ? input.cvBase64.split(",")[1] : input.cvBase64;
+        const cvBuffer = Buffer.from(base64Data ?? "", "base64");
+        if (!cvBuffer.length || cvBuffer.length > 5 * 1024 * 1024 || cvBuffer.subarray(0, 4).toString() !== "%PDF") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "CV PDF invalide ou trop volumineux." });
+        }
+        const cvText = await extractTextFromPDF(cvBuffer);
+        if (cvText.trim().length < 20) {
+          return { success: false, fields: {}, prefilledCount: 0, message: "Le texte du CV n’a pas pu être lu. Vous pouvez compléter le formulaire manuellement." };
+        }
+        const fields = await extractCVFieldsForForm(cvText);
+        return { success: true, fields, prefilledCount: Object.keys(fields).length };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        logger.error("evaluation.cv_prefill.failed", {}, error);
+        return { success: false, fields: {}, prefilledCount: 0, message: "L’analyse automatique n’est pas disponible. Vous pouvez compléter le formulaire manuellement." };
+      }
     }),
 });

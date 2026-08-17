@@ -191,3 +191,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Compléter les actions de procédure, communication et historique visibles depuis le poste 360° puis les couvrir par tests.
 - [x] Ajouter un test d’autorisation exécutable prouvant qu’une session absente ou invalide est rejetée pour les actions sensibles du poste 360°.
 - [x] Tester explicitement le rejet d’une session administrateur absente sur les actions sensibles du poste 360°.
+
+## Pré-remplissage IA de l’évaluation depuis le CV
+- [x] Inspecter et intégrer les trois fichiers fournis aux chemins indiqués.
+- [x] Pré-remplir les champs pertinents de l’évaluation après analyse IA d’un CV déposé.
+- [x] Afficher l’état d’analyse et le nombre de champs automatiquement complétés.
+- [x] Tester les parcours PDF/image, les erreurs et la sécurité des données CV avant publication.
+- [x] Tester le contrat serveur d’extraction CV pour un PDF valide et le rejet des formats non autorisés.
+- [x] Confirmer le périmètre « CV PDF uniquement » et tester le message visible lors du dépôt d’une image.
