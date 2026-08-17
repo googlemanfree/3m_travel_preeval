@@ -969,7 +969,7 @@ export default function Evisas() {
 
   const unifiedEvisaCatalogue = useMemo(() => {
     const seen = new Set<string>();
-    return [...ultimateWorldEvisasDatabase, ...evisasDatabaseComplete.map((entry) => ({
+    return evisasDatabaseComplete.map((entry) => ({
       country: entry.country,
       flag: entry.flag,
       region: entry.region,
@@ -980,7 +980,7 @@ export default function Evisas() {
       fee: entry.fee,
       note: entry.note,
       image: entry.image,
-    }))].filter((entry) => {
+    })).filter((entry) => {
       const key = entry.country.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
       if (seen.has(key)) return false;
       seen.add(key);

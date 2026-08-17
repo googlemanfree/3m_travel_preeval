@@ -248,7 +248,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le contraste du contexte professionnel sur les fiches e‑Visa afin de garantir une lecture confortable.
 
 ## Optimisation de compilation de production
-- [ ] Réduire le pic mémoire de rendu Vite sans dégrader le fonctionnement du site.
-- [ ] Rejouer la compilation complète avant publication.
-- [ ] Extraire les données e‑Visa dupliquées et charger les modules lourds uniquement au besoin.
-- [ ] Vérifier le découpage des routes principales et le chargement différé des fonctionnalités PDF ou IA.
+- [x] Réduire le pic mémoire de rendu Vite sans dégrader le fonctionnement du site.
+- [x] Rejouer la compilation complète avant publication.
+- [x] Extraire les données e‑Visa dupliquées et charger les modules lourds uniquement au besoin.
+- [x] Vérifier le découpage des routes principales et le chargement différé des fonctionnalités PDF ou IA.
