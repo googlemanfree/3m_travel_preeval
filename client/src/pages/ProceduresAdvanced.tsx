@@ -183,6 +183,63 @@ export default function ProceduresAdvanced() {
           </div>
         </div>
 
+        {/* Comparatif visuel des parcours */}
+        <section aria-labelledby="parcours-comparatif" className="mb-12 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="mb-6 max-w-3xl">
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Choisir son parcours</span>
+            <h2 id="parcours-comparatif" className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">Travail, Études ou Tourisme ?</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">Comparez les objectifs, les pièces à préparer et les prochaines étapes. Ces repères orientent votre choix ; l’admission, le visa, le permis ou l’emploi restent soumis aux autorités et organismes compétents.</p>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="min-w-[900px] w-full border-collapse text-left text-sm">
+              <caption className="sr-only">Comparaison des parcours Travail, Études et Tourisme</caption>
+              <thead>
+                <tr className="bg-slate-50">
+                  <th scope="col" className="w-[18%] px-4 py-4 font-black text-slate-700">Repère</th>
+                  <th scope="col" className="w-[27%] border-l border-slate-200 px-4 py-4 align-top"><span className="text-xl" aria-hidden="true">💼</span><span className="mt-1 block font-black text-slate-950">Travail</span><span className="mt-1 block font-normal text-slate-500">Projet professionnel</span></th>
+                  <th scope="col" className="w-[27%] border-l border-slate-200 px-4 py-4 align-top"><span className="text-xl" aria-hidden="true">🎓</span><span className="mt-1 block font-black text-slate-950">Études</span><span className="mt-1 block font-normal text-slate-500">Projet académique</span></th>
+                  <th scope="col" className="w-[28%] border-l border-slate-200 px-4 py-4 align-top"><span className="text-xl" aria-hidden="true">✈️</span><span className="mt-1 block font-black text-slate-950">Tourisme</span><span className="mt-1 block font-normal text-slate-500">Séjour temporaire</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                <tr>
+                  <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Objectif</th>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Explorer une voie liée à une compétence, une offre admissible ou un programme de travail.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Choisir un établissement, un programme et préparer l’admission puis le statut d’étudiant.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Préparer un court séjour pour tourisme, visite familiale, affaires ou motif autorisé.</td>
+                </tr>
+                <tr>
+                  <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Dossier à préparer</th>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">CV, expériences, compétences, justificatifs professionnels et, si nécessaire, éléments liés à une offre.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Passeport, diplômes, relevés, admission ou projet académique, ressources et justificatifs demandés.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Passeport, itinéraire, ressources, hébergement, assurance et justificatifs du motif du séjour.</td>
+                </tr>
+                <tr>
+                  <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Parcours 3M</th>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → sélection du pays → évaluation → pièces et paiement selon le dossier → orientation vers les étapes admissibles.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → choix de destination → évaluation → recherche de programme → admission et préparation du dossier.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Compte → motif et destination → checklist → réservation ou justificatifs → demande selon le consulat compétent.</td>
+                </tr>
+                <tr>
+                  <th scope="row" className="bg-slate-50 px-4 py-4 font-bold text-slate-700">Repère important</th>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">Aucun emploi, contrat ou permis n’est garanti. Les agences et employeurs décident séparément.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">L’établissement décide de l’admission et l’autorité compétente décide du visa ou permis.</td>
+                  <td className="border-l border-slate-200 px-4 py-4 leading-6 text-slate-600">La décision appartient au consulat ou à l’autorité compétente ; les réservations ne garantissent pas le visa.</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr className="bg-blue-50">
+                  <th scope="row" className="px-4 py-4 font-black text-blue-950">Commencer</th>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/evaluation?project=travail" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Évaluer mon projet Travail</Link></td>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/etudes" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Explorer les Études</Link></td>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/tourisme" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Préparer un séjour</Link></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">Les documents, délais, frais et critères varient selon la destination, la nationalité, le motif et l’autorité compétente. Vérifiez toujours les exigences officielles avant dépôt.</p>
+        </section>
+
         {/* Search and Filters */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}

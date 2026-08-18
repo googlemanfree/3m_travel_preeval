@@ -464,3 +464,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les routes, le responsive, TypeScript et les tests avant publication.
 
 ---
+
+## Comparatif des parcours
+- [x] Ajouter dans Procédures un comparatif visuel Travail / Études / Tourisme avec repères distincts et prudents.
+- [x] Relier chaque parcours à une action dédiée sans mélanger les formulaires.
+- [x] Tester l’accessibilité, le responsive, TypeScript et les régressions avant publication.
+
+---
