@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 
@@ -18,18 +18,74 @@ export default function CanadaScoreSimulator() {
   const [english, setEnglish] = useState<string>("intermediate");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec catégories
+  // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec descriptions détaillées
   const allRounds = [
-    { roundNum: "Ronde #435", category: "cec", type: "Canadian Experience Class (CEC)", date: "7 août 2026", minScore: 470, invitations: 300 },
-    { roundNum: "Ronde #434", category: "sante", type: "Catégoriel (Professions en santé)", date: "24 juillet 2026", minScore: 485, invitations: 1500 },
-    { roundNum: "Ronde #433", category: "general", type: "Général / Toutes catégories", date: "10 juillet 2026", minScore: 512, invitations: 3200 },
-    { roundNum: "Ronde #432", category: "provincial", type: "Candidats des Provinces (PNP)", date: "28 juin 2026", minScore: 720, invitations: 950 },
-    { roundNum: "Ronde #431", category: "cec", type: "Canadian Experience Class (CEC)", date: "15 juin 2026", minScore: 478, invitations: 1200 },
-    { roundNum: "Ronde #430", category: "general", type: "Général / Toutes catégories", date: "2 juin 2026", minScore: 518, invitations: 3000 }
+    {
+      roundNum: "Ronde #435",
+      category: "cec",
+      type: "Canadian Experience Class (CEC)",
+      date: "7 août 2026",
+      minScore: 470,
+      invitations: 300,
+      description: "Réservée aux candidats justifiant d'une première expérience de travail qualifiée acquise au Canada."
+    },
+    {
+      roundNum: "Ronde #434",
+      category: "sante",
+      type: "Catégoriel (Professions en santé)",
+      date: "24 juillet 2026",
+      minScore: 485,
+      invitations: 1500,
+      description: "Ciblage prioritaire des professionnels de la santé qualifiés pour combler les pénuries de main-d'œuvre."
+    },
+    {
+      roundNum: "Ronde #433",
+      category: "general",
+      type: "Général / Toutes catégories",
+      date: "10 juillet 2026",
+      minScore: 512,
+      invitations: 3200,
+      description: "Tirage toutes catégories confondues ouvert à l'ensemble du bassin Entrée Express sans restriction de secteur."
+    },
+    {
+      roundNum: "Ronde #432",
+      category: "provincial",
+      type: "Candidats des Provinces (PNP)",
+      date: "28 juin 2026",
+      minScore: 720,
+      invitations: 950,
+      description: "Inclut automatiquement un bonus de 600 points accordé suite à une nomination par une province canadienne."
+    },
+    {
+      roundNum: "Ronde #431",
+      category: "cec",
+      type: "Canadian Experience Class (CEC)",
+      date: "15 juin 2026",
+      minScore: 478,
+      invitations: 1200,
+      description: "Second tirage ciblé sur l'expérience canadienne avec un volume d'invitations soutenu."
+    },
+    {
+      roundNum: "Ronde #430",
+      category: "general",
+      type: "Général / Toutes catégories",
+      date: "2 juin 2026",
+      minScore: 518,
+      invitations: 3000,
+      description: "Tirage général de référence pour les candidats FSW, CEC et FST."
+    }
   ];
 
+  const categoryExplanations: Record<string, string> = {
+    all: "Affichage par défaut des 3 dernières rondes de tous programmes confondus pour avoir une vue d'ensemble du marché.",
+    cec: "Classe de l'expérience canadienne (CEC) : Destiné aux candidats ayant déjà travaillé au Canada (souvent seuils plus bas).",
+    provincial: "Programme des candidats des provinces (PNP) : Inclut 600 points bonus de nomination provinciale (d'où les scores > 600).",
+    sante: "Tirage ciblé Professions en santé : Destiné aux profils médicaux et paramédicaux recherchés en priorité par IRCC.",
+    general: "Tirages tous programmes (Général) : Concerne l'ensemble des bassins FSW, CEC et Métiers spécialisés."
+  };
+
   const filteredRounds = selectedCategory === "all"
-    ? allRounds.slice(0, 3) // Par défaut les 3 dernières
+    ? allRounds.slice(0, 3)
     : allRounds.filter(r => r.category === selectedCategory);
 
   // Calcul indicatif CRS
@@ -230,17 +286,18 @@ export default function CanadaScoreSimulator() {
           </div>
         </div>
 
-        {/* Graphique comparatif avec filtre par catégorie */}
+        {/* Graphique comparatif avec filtre par catégorie et infobulles explicatives */}
         <div className="space-y-4 pt-6 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
               <h4 className="font-bold text-gray-900 text-lg">Comparatif des rondes d’invitation IRCC</h4>
             </div>
+
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-gray-500" />
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-[200px] bg-white text-sm">
+                <SelectTrigger className="w-[210px] bg-white text-sm">
                   <SelectValue placeholder="Filtrer par programme" />
                 </SelectTrigger>
                 <SelectContent>
@@ -251,14 +308,35 @@ export default function CanadaScoreSimulator() {
                   <SelectItem value="general">Général (Toutes cat.)</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Infobulle globale sur les critères de catégorie */}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button type="button" className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" aria-label="Aide sur les catégories">
+                      <HelpCircle className="w-5 h-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-sm text-xs p-3 space-y-1.5">
+                    <p className="font-bold text-blue-900">Critères des catégories IRCC :</p>
+                    <p>• <b>CEC</b> : Expérience canadienne requise.</p>
+                    <p>• <b>PNP</b> : Nomination provinciale (+600 pts).</p>
+                    <p>• <b>Santé</b> : Professions ciblées par le gouvernement.</p>
+                    <p>• <b>Général</b> : Bassin global Entrée Express.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
-          <p className="text-sm text-gray-600">
-            {selectedCategory === "all"
-              ? "Visualisez le score CRS minimal requis lors des tirages récents pour situer votre score estimé :"
-              : "Filtrage actif sur les rondes historiques du programme sélectionné :"}
-          </p>
+          {/* Encart explicatif de la catégorie active */}
+          <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
+            <div className="text-xs md:text-sm text-blue-900">
+              <span className="font-semibold block mb-0.5">Règle de sélection :</span>
+              {categoryExplanations[selectedCategory] || categoryExplanations.all}
+            </div>
+          </div>
 
           {filteredRounds.length === 0 ? (
             <div className="p-8 rounded-2xl bg-gray-50 border border-dashed border-gray-300 text-center space-y-2">
@@ -281,6 +359,7 @@ export default function CanadaScoreSimulator() {
                     <div className="space-y-1">
                       <span className="text-xs text-gray-500 font-medium">{round.date}</span>
                       <h5 className="font-semibold text-gray-900 text-sm leading-snug">{round.type}</h5>
+                      <p className="text-xs text-gray-600 pt-1">{round.description}</p>
                     </div>
 
                     <div className="space-y-2 pt-2">
