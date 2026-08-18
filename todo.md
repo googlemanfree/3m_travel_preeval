@@ -431,3 +431,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer des modèles de communication partagés français–anglais, avec accès administrateur, sauvegarde et insertion dans l’éditeur riche.
 - [x] Ajouter un tableau de suivi des bilans envoyés non consultés, avec filtres, métriques et relance e-mail manuelle sécurisée.
 - [x] Tester les contrôles d’accès, les relances, les modèles bilingues, TypeScript et le build de production avant publication.
+
+## Mesure d’audience Google Analytics 4
+- [x] Vérifier le point d’entrée HTML, les balises de mesure existantes et les contraintes de chargement du site.
+- [x] Intégrer le tag Google Analytics 4 `G-4HBHHH37VL` sans doublonner les scripts de suivi existants.
+- [x] Vérifier le build, le chargement du tag et publier la version validée.
