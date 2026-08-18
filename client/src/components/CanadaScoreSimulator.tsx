@@ -208,15 +208,40 @@ export default function CanadaScoreSimulator() {
                   : "Cette simulation est purement indicative et non officielle. Pour une analyse approfondie et l'ouverture de votre dossier, réalisez votre évaluation complète en agence."}
               </p>
 
-              <Button
-                asChild
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
-              >
-                <Link href="/evaluation-primaire" className="inline-flex items-center justify-center gap-2">
-                  <span>{language === "en" ? "Launch Official Evaluation" : "Lancer mon évaluation officielle"}</span>
-                  <ArrowRight className="w-4 h-4" />
+              <div className="space-y-3">
+                <Button
+                  asChild
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
+                >
+                  <Link href="/evaluation-primaire?destination=canada" className="inline-flex items-center justify-center gap-2">
+                    <span>{language === "en" ? "Launch Official Evaluation" : "Lancer mon évaluation officielle"}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
                 </Link>
-              </Button>
+
+                {!isCompetitive && (
+                  <div className="rounded-xl bg-amber-950/60 border border-amber-500/30 p-4 text-left text-amber-200">
+                    <p className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {language === "en" ? "Score Optimization Guidance" : "Orientation personnalisée (Score à renforcer)"}
+                    </p>
+                    <p className="text-xs leading-relaxed text-amber-100/90 mb-3">
+                      {language === "en"
+                        ? "Your current estimated score suggests that federal Express Entry might be challenging without improvements. However, provincial nomination programs (PNP), French-speaking pathways, or professional upskilling can significantly strengthen your profile. Do not give up: talk to our advisors."
+                        : "Votre score estimé indique qu’Entrée express fédérale est exigeante en l’état. Pas de panique : les programmes des candidats des provinces (PCP), les volets francophones ou une optimisation des tests de langue et de l’expérience peuvent faire toute la différence. Échangez avec un conseiller 3M pour étudier vos meilleures alternatives."}
+                    </p>
+                    <a
+                      href="https://wa.me/237698104832?text=Bonjour%203M%20Travel,%20j'ai%20réalisé%20ma%20simulation%20Canada%20et%20souhaite%20l'aide%20d'un%20conseiller%20pour%20optimiser%20mon%20profil."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 shadow transition-colors"
+                    >
+                      <span>{language === "en" ? "Consult a Canada Advisor on WhatsApp" : "Consulter un conseiller Canada sur WhatsApp"}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                )}
+              </div>
             </motion.div>
           </div>
         </div>
