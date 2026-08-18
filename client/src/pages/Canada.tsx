@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
-import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, Award, AlertCircle, ArrowRight } from "lucide-react";
+import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock } from "lucide-react";
 
 const pathways = [
   { title: "Entrée express", icon: PlaneTakeoff, text: "Système fédéral de gestion de demandes pour certains travailleurs qualifiés. L’étude tient compte notamment de l’expérience, des études, des langues, de l’âge, de la situation familiale et du score du profil." },
@@ -73,46 +74,80 @@ export default function Canada() {
               }}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white shadow transition hover:bg-blue-800"
             >
-              J’ai vérifié mon score, continuer vers les voies Canada <ArrowRight className="h-4 w-4" />
+              J’ai vérifié mon score, déverrouiller les parcours <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       </ServiceSection>
 
-      {/* ÉTAPE 2 : VOIES DÉTAILLÉES (ACCESSIBLES OU DÉVERROUILLÉES) */}
-      <div id="voies-canada">
-        <ServiceSection
-          title="Étape 2 : Les principales voies à explorer"
-          introduction="Le bon parcours dépend de votre situation réelle. Cette présentation sert à orienter l’évaluation ; elle ne remplace pas les critères officiels ni la décision des autorités."
-        >
-          {!scoreCompleted && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 flex items-center justify-between gap-4">
-              <p className="text-sm">
-                <strong>Conseil :</strong> Nous vous recommandons d’effectuer d’abord le test de score ci-dessus pour identifier les programmes adaptés à vos points.
+      {/* ÉTAPE 2 : VOIES DÉTAILLÉES AVEC ANIMATION FLUIDE DE DÉVERROUILLAGE */}
+      <div id="voies-canada" className="scroll-mt-24">
+        <AnimatePresence mode="wait">
+          {!scoreCompleted ? (
+            <motion.div
+              key="locked"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+              className="my-8 rounded-2xl border border-dashed border-blue-300 bg-blue-50/60 p-8 text-center"
+            >
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-700 shadow-inner">
+                <Unlock className="h-6 w-6 opacity-70" />
+              </div>
+              <h3 className="mt-4 text-xl font-black text-slate-900">Parcours détaillés verrouillés en attente d’évaluation</h3>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
+                Veuillez effectuer votre simulation de score CRS ci-dessus et cliquer sur le bouton de validation pour déverrouiller instantanément toutes les sections détaillées du Canada.
               </p>
               <button
                 type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className="shrink-0 text-xs font-bold text-blue-700 underline hover:text-blue-900"
+                onClick={() => {
+                  setScoreCompleted(true);
+                  const el = document.getElementById("voies-canada");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-black text-white shadow-md transition hover:bg-blue-800"
               >
-                Remonter au simulateur
+                Déverrouiller immédiatement <Sparkles className="h-4 w-4" />
               </button>
-            </div>
-          )}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="unlocked"
+              initial={{ opacity: 0, y: 25, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="space-y-12"
+            >
+              {/* Badge de succès de déverrouillage */}
+              <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900 shadow-sm">
+                <CheckCircle2 className="h-7 w-7 shrink-0 text-emerald-600" />
+                <div>
+                  <h4 className="text-base font-black">Parcours Canada déverrouillés avec succès !</h4>
+                  <p className="text-xs leading-5 text-emerald-700">Vous pouvez désormais consulter l’intégralité des voies d’immigration, les critères de vérification et les étapes de l’accompagnement 3M Travel.</p>
+                </div>
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {pathways.map((pathway) => {
-              const Icon = pathway.icon;
-              return (
-                <article key={pathway.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
-                  <h3 className="mt-4 text-lg font-black text-slate-950">{pathway.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{pathway.text}</p>
-                </article>
-              );
-            })}
-          </div>
-        </ServiceSection>
+              <ServiceSection
+                title="Étape 2 : Les principales voies à explorer"
+                introduction="Le bon parcours dépend de votre situation réelle. Cette présentation sert à orienter l’évaluation ; elle ne remplace pas les critères officiels ni la décision des autorités."
+              >
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {pathways.map((pathway) => {
+                    const Icon = pathway.icon;
+                    return (
+                      <article key={pathway.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+                        <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
+                        <h3 className="mt-4 text-lg font-black text-slate-950">{pathway.title}</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{pathway.text}</p>
+                      </article>
+                    );
+                  })}
+                </div>
+              </ServiceSection>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ServiceSection
