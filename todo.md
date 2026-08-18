@@ -354,3 +354,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer le bouton et le panneau de suggestion dans l’interface de gestion des liens externes.
 - [x] Valider l’application manuelle de l’URL suggérée et consigner l’action dans l’audit.
 - [x] Exécuter les tests unitaires, de sécurité et le build de production.
+
+## Éditeur riche de type Word pour le back-office
+- [x] Créer un composant d’édition riche réutilisable avec titres, gras, italique, listes, liens et aperçu.
+- [x] Assainir le HTML avant stockage et conserver une version texte compatible avec les e-mails et l’historique.
+- [x] Intégrer l’éditeur aux messages administrateur et au contenu d’accompagnement des évaluations, tout en conservant les listes structurées e‑Visa.
+- [x] Valider l’accessibilité clavier, la prévisualisation, les exports PDF et les parcours administrateur avant publication.

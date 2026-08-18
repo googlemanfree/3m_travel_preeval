@@ -25,6 +25,7 @@ import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
 import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
+import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -37,7 +38,7 @@ const evaluationDraftSchema = z.object({
   strengths: z.array(z.string().trim().min(2).max(500)).max(6),
   weaknesses: z.array(z.string().trim().min(2).max(500)).max(6),
   recommendations: z.array(z.string().trim().min(2).max(800)).min(1).max(8),
-  message: z.string().trim().max(3000).optional(),
+  message: z.string().trim().max(12000).optional(),
   subject: z.string().trim().min(4).max(255).optional(),
   requiresSecondApproval: z.boolean().default(false),
 });
@@ -389,14 +390,17 @@ export const unifiedRequestsRouter = router({
       const previousDraft = (details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft : {}) as Record<string, unknown>;
       const nextDraft = { ...previousDraft, destination: input.destination, finalScore: input.finalScore, verdict: input.verdict, strengths: input.strengths, weaknesses: input.weaknesses, recommendations: input.recommendations, advisorValidated: false, advisorValidatedAt: null, advisorValidatedByAdminId: null };
       const nextDetails = { ...details, adminDraft: nextDraft };
-      const updatedApplication = { ...application, destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null };
+      const messageHtml = input.message ? sanitizeRichTextHtml(input.message) : null;
+      const messagePlainText = messageHtml ? richTextToPlainText(messageHtml) : "";
+      if (input.message && messagePlainText.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Le message d’accompagnement doit contenir au moins trois caractères lisibles." });
+      const updatedApplication = { ...application, destination: input.destination, scoringDetails: JSON.stringify(nextDetails), scoringTotal: input.finalScore, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null };
       const scoreBadge = input.finalScore >= 80 ? "eligible" : input.finalScore >= 60 ? "admissible" : "faible";
       const latestVersion = (await db.select({ versionNumber: evaluationBilanVersions.versionNumber }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, application.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(1))[0];
       const versionNumber = (latestVersion?.versionNumber ?? 0) + 1;
       const approvalStatus = input.requiresSecondApproval ? "pending" : "not_required" as const;
       const reportHtml = generateEvaluationReportHTML(updatedApplication);
-      await db.update(applications).set({ destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: input.message || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
-      await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDraft, subject: input.subject || null, message: input.message || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
+      await db.update(applications).set({ destination: input.destination, scoringDetails: updatedApplication.scoringDetails, scoringTotal: input.finalScore, scoringBadge: scoreBadge, evaluationDeliveryMessage: messageHtml || null, evaluationDeliverySubject: input.subject || null, evaluationDeliveryStatus: "draft", evaluationScheduledAt: null, evaluationRequiresSecondApproval: input.requiresSecondApproval, evaluationApprovalStatus: approvalStatus, evaluationApprovedAt: null, evaluationApprovedByAdminId: null, updatedAt: new Date() }).where(eq(applications.id, application.id));
+      await db.insert(evaluationBilanVersions).values({ applicationId: application.id, versionNumber, contentJson: JSON.stringify({ adminDraft: nextDraft, subject: input.subject || null, message: messageHtml || null, messagePlainText: messagePlainText || null }), reportHtml, createdByAdminAccountId: admin.id, requiresSecondApproval: input.requiresSecondApproval, approvalStatus: input.requiresSecondApproval ? "pending" : "draft" });
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_draft_saved", comment: `Version ${versionNumber} du bilan enregistrée${input.requiresSecondApproval ? " et soumise à une seconde approbation" : ""}.`, actorAdminAccountId: admin.id }); }
       return { success: true, reportHtml, versionNumber, approvalStatus, message: input.requiresSecondApproval ? "Brouillon enregistré et transmis au second approbateur." : "Brouillon enregistré et prévisualisation mise à jour." };
@@ -483,7 +487,8 @@ export const unifiedRequestsRouter = router({
       const versionNumber = latestVersion?.versionNumber ?? 1;
       const finalPdf = await createFinalEvaluationPdf(application, versionNumber, versionAuditTrail);
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
-      const availabilityHtml = `${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
+      const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
+      const availabilityHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
       await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
       const now = new Date();
       await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, updatedAt: now }).where(eq(applications.id, application.id));

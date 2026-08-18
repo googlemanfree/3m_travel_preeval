@@ -5,6 +5,7 @@
 
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
+import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -2628,7 +2629,7 @@ export const adminRouter = router({
     .input(z.object({
       sessionToken: z.string().min(1),
       candidateId: z.string().min(1),
-      content: z.string().trim().min(3).max(2_000),
+      content: z.string().trim().min(3).max(12_000),
       attachmentUrl: z.string().optional(),
       attachmentName: z.string().optional(),
       attachmentMimeType: z.string().optional(),
@@ -2658,7 +2659,9 @@ export const adminRouter = router({
         : (await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName }).from(agencyDossiers).where(eq(agencyDossiers.id, reference.id)).limit(1))[0];
       if (!sourceRecord?.email) throw new TRPCError({ code: "NOT_FOUND", message: "Adresse e-mail du candidat introuvable." });
 
-      const messageBody = input.content.trim();
+      const messageHtml = sanitizeRichTextHtml(input.content.trim());
+      const messageBody = richTextToPlainText(messageHtml);
+      if (messageBody.length < 3) throw new TRPCError({ code: "BAD_REQUEST", message: "Le message doit contenir au moins trois caractères lisibles." });
       const evisaSnapshotJson = input.evisaSnapshots?.length
         ? createEvisaCommunicationSnapshot(input.evisaSnapshots, messageBody, admin.id)
         : null;
@@ -2696,7 +2699,7 @@ export const adminRouter = router({
         await sendGenericEmail({
           to: sourceRecord.email,
           subject: "Nouveau message concernant votre dossier 3M Travel",
-          html: `<p>Bonjour ${sourceRecord.fullName},</p><p>${messageBody.replace(/\n/g, "<br>")}</p>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
+          html: `<p>Bonjour ${sourceRecord.fullName},</p><div>${messageHtml}</div>${attachmentHtml}<p>Connectez-vous à votre espace 3M Travel pour consulter votre dossier et répondre à votre conseiller.</p>`,
         });
         emailSent = true;
       } catch (error) {
@@ -2710,7 +2713,7 @@ export const adminRouter = router({
         actionType: "candidate_message_sent",
         entityType: "communication",
         entityId: String(candidateRecord?.id ?? "email"),
-        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
+        description: `Message envoyé au candidat${emailSent ? " par e-mail et espace client" : " dans l’espace client"}${messageHtml !== messageBody ? " avec mise en forme enrichie" : ""}${input.evisaSnapshots?.length ? ` avec instantané e‑Visa (${input.evisaSnapshots.map((item) => item.country).join(", ")})` : ""}.`,
       });
       return { success: true, emailSent, deliveredToClientSpace: Boolean(candidateRecord) };
     }),

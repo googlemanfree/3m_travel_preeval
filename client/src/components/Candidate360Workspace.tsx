@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { evisasDatabaseComplete } from "@/data/evisasDatabaseComplete";
 import { buildEvisaMessageSnapshot, buildEvisaMessageTemplate, type EvisaMessageSnapshot } from "@/lib/evisaMessageTemplate";
 import { mergeEvisaCatalogue } from "@/lib/evisaCatalogueMerge";
@@ -244,17 +245,14 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
               </div>
               <p className="mt-2 text-xs text-cyan-900">Le message contient le portail officiel, la date de vérification, les exigences principales et le lien vers la procédure. Relisez-le avant envoi.</p>
             </div>
-            <div>
-              <Label>Message personnalisé</Label>
-              <Textarea
-                className="mt-1 h-28"
-                value={quickMessageText}
-                onChange={(e) => setQuickMessageText(e.target.value)}
-                placeholder="Rédigez votre message ici..."
-                maxLength={2000}
-              />
-              <p className="mt-1 text-xs text-slate-500">{quickMessageText.length}/2000 caractères</p>
-            </div>
+            <RichTextEditor
+              label="Message personnalisé"
+              value={quickMessageText}
+              onChange={setQuickMessageText}
+              placeholder="Rédigez votre message avec la mise en forme souhaitée…"
+              minHeight="10rem"
+              maxCharacters={8000}
+            />
             <div>
               <Label>Pièce jointe (facultatif)</Label>
               <div className="mt-1 flex items-center gap-2">
@@ -321,7 +319,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
             <Button variant="outline" onClick={() => setQuickMessageOpen(false)}>Annuler</Button>
             <Button
               className="bg-blue-700 hover:bg-blue-800 text-white"
-              disabled={quickMessageText.trim().length < 3 || sendMessageMutation.isPending}
+              disabled={quickMessageText.replace(/<[^>]+>/g, "").trim().length < 3 || sendMessageMutation.isPending}
               onClick={() => {
                 sendMessageMutation.mutate(
                   {
