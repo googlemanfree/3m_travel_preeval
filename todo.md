@@ -506,3 +506,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Calculer les points par sous-critère (Âge, Études, Expérience, Langues) dans le simulateur Canada.
 - [x] Ajouter des barres de progression visuelles et accessibles pour chaque critère.
 - [x] Tester les calculs, le responsive, TypeScript et les tests avant publication.
+
+## Bouton de réservation de consultation Canada
+- [ ] Ajouter un appel à l’action sous les barres de progression du simulateur Canada pour réserver directement une consultation avec un conseiller.
+- [ ] Valider par les tests, TypeScript et publier la version finale.

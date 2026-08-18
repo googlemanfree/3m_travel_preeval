@@ -351,6 +351,19 @@ export default function CanadaScoreSimulator() {
                   </Link>
                 </Button>
 
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 font-bold py-3.5 rounded-xl transition-colors"
+                >
+                  <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel,%20je%20souhaite%20réserver%20une%20consultation%20stratégique%20avec%20un%20conseiller%20pour%20mon%20projet%20Canada." target="_blank" rel="noopener noreferrer">
+                    <span className="inline-flex items-center justify-center gap-2 w-full">
+                      <span>{language === "en" ? "Book Advisor Consultation" : "Réserver une consultation conseiller"}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                  </a>
+                </Button>
+
                 {!isCompetitive && (
                   <div className="rounded-xl bg-amber-950/60 border border-amber-500/30 p-4 text-left text-amber-200">
                     <p className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-1.5">
