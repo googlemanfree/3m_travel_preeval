@@ -47,6 +47,10 @@ describe("routes canoniques des pages de service", () => {
     expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
     expect(proceduresSource).toContain("Études Internationales");
     expect(proceduresSource).toContain("Simulateur de Score Canadien");
+    expect(proceduresSource).toContain('href="/?project=travail#evaluation-multi"');
+    expect(proceduresSource).toContain('href="/?project=etudes#evaluation-multi"');
+    expect(proceduresSource).toContain('href="/?project=tourisme#evaluation-multi"');
   });
 });
+
 

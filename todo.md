@@ -468,6 +468,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Comparatif des parcours
 - [x] Ajouter dans Procédures un comparatif visuel Travail / Études / Tourisme avec repères distincts et prudents.
 - [x] Relier chaque parcours à une action dédiée sans mélanger les formulaires.
+- [x] Permettre aux boutons d’action du comparatif de préremplir automatiquement le formulaire d’évaluation.
 - [x] Tester l’accessibilité, le responsive, TypeScript et les régressions avant publication.
 
 ---

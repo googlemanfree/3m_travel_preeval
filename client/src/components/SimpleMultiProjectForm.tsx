@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -24,13 +26,23 @@ interface FormData {
 }
 
 export function SimpleMultiProjectForm() {
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(location.split("?")[1] || "");
+  const projectParam = searchParams.get("project") as ProjectType | null;
+
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
     whatsappPhone: "",
     nationality: "",
-    projectType: "travail",
+    projectType: projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail",
   });
+
+  useEffect(() => {
+    if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) {
+      setFormData((prev) => ({ ...prev, projectType: projectParam }));
+    }
+  }, [projectParam]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({

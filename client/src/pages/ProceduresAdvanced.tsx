@@ -230,9 +230,9 @@ export default function ProceduresAdvanced() {
               <tfoot>
                 <tr className="bg-blue-50">
                   <th scope="row" className="px-4 py-4 font-black text-blue-950">Commencer</th>
-                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/evaluation?project=travail" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Évaluer mon projet Travail</Link></td>
-                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/etudes" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Explorer les Études</Link></td>
-                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/tourisme" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Préparer un séjour</Link></td>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/?project=travail#evaluation-multi" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Évaluer mon projet Travail</Link></td>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/?project=etudes#evaluation-multi" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Évaluer mon projet Études</Link></td>
+                  <td className="border-l border-blue-100 px-4 py-4"><Link href="/?project=tourisme#evaluation-multi" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-blue-700 px-3 py-2 text-xs font-black text-white hover:bg-blue-800">Évaluer mon projet Tourisme</Link></td>
                 </tr>
               </tfoot>
             </table>
