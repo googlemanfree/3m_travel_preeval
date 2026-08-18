@@ -347,4 +347,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les centres 404/liens au back-office sans modifier les parcours existants.
 - [x] Ajouter les tests de sécurité, routes, validations, vérification de liens et régression complète avant publication.
 - [x] Ajouter un callback Heartbeat idempotent pour vérifier périodiquement les liens externes et enregistrer les statuts, sans timer en processus.
-- [ ] Préparer la création du cron projet après publication du callback et confirmer la procédure de déploiement avec le propriétaire.
+- [x] Préparer la création du cron projet après publication du callback et confirmer la procédure de déploiement avec le propriétaire.
