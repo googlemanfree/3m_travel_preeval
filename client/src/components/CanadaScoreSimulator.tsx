@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3 } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 
@@ -16,13 +16,21 @@ export default function CanadaScoreSimulator() {
   const [experience, setExperience] = useState<string>("3-plus");
   const [french, setFrench] = useState<string>("advanced");
   const [english, setEnglish] = useState<string>("intermediate");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  // Données officielles des 3 dernières rondes d'invitation IRCC Express Entry (Août 2026)
-  const recentRounds = [
-    { roundNum: "Ronde #435", type: "Canadian Experience Class (CEC)", date: "7 août 2026", minScore: 470, invitations: 300 },
-    { roundNum: "Ronde #434", type: "Catégoriel (Professions en santé)", date: "24 juillet 2026", minScore: 485, invitations: 1500 },
-    { roundNum: "Ronde #433", type: "Général / Toutes catégories", date: "10 juillet 2026", minScore: 512, invitations: 3200 }
+  // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec catégories
+  const allRounds = [
+    { roundNum: "Ronde #435", category: "cec", type: "Canadian Experience Class (CEC)", date: "7 août 2026", minScore: 470, invitations: 300 },
+    { roundNum: "Ronde #434", category: "sante", type: "Catégoriel (Professions en santé)", date: "24 juillet 2026", minScore: 485, invitations: 1500 },
+    { roundNum: "Ronde #433", category: "general", type: "Général / Toutes catégories", date: "10 juillet 2026", minScore: 512, invitations: 3200 },
+    { roundNum: "Ronde #432", category: "provincial", type: "Candidats des Provinces (PNP)", date: "28 juin 2026", minScore: 720, invitations: 950 },
+    { roundNum: "Ronde #431", category: "cec", type: "Canadian Experience Class (CEC)", date: "15 juin 2026", minScore: 478, invitations: 1200 },
+    { roundNum: "Ronde #430", category: "general", type: "Général / Toutes catégories", date: "2 juin 2026", minScore: 518, invitations: 3000 }
   ];
+
+  const filteredRounds = selectedCategory === "all"
+    ? allRounds.slice(0, 3) // Par défaut les 3 dernières
+    : allRounds.filter(r => r.category === selectedCategory);
 
   // Calcul indicatif CRS
   const getSubScores = () => {
@@ -84,8 +92,8 @@ export default function CanadaScoreSimulator() {
             </CardTitle>
             <CardDescription className="text-blue-200 mt-1">
               {language === 'fr'
-                ? 'Évaluez vos points pour l’Entrée Express et comparez avec les dernières rondes d’invitation.'
-                : 'Evaluate your Express Entry points and compare with the latest invitation rounds.'}
+                ? 'Évaluez vos points pour l’Entrée Express et comparez avec les rondes d’invitation IRCC.'
+                : 'Evaluate your Express Entry points and compare with IRCC invitation rounds.'}
             </CardDescription>
           </div>
         </div>
@@ -222,58 +230,85 @@ export default function CanadaScoreSimulator() {
           </div>
         </div>
 
-        {/* Graphique comparatif des 3 dernières rondes IRCC Express Entry */}
+        {/* Graphique comparatif avec filtre par catégorie */}
         <div className="space-y-4 pt-6 border-t border-gray-100">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
-              <h4 className="font-bold text-gray-900 text-lg">Comparatif des 3 dernières rondes d’invitation IRCC</h4>
+              <h4 className="font-bold text-gray-900 text-lg">Comparatif des rondes d’invitation IRCC</h4>
             </div>
-            <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium">Source : IRCC Canada</span>
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-gray-500" />
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[200px] bg-white text-sm">
+                  <SelectValue placeholder="Filtrer par programme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">3 Dernières (Global)</SelectItem>
+                  <SelectItem value="cec">Canadian Exp. (CEC)</SelectItem>
+                  <SelectItem value="provincial">Provincial (PNP)</SelectItem>
+                  <SelectItem value="sante">Santé (Catégoriel)</SelectItem>
+                  <SelectItem value="general">Général (Toutes cat.)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <p className="text-sm text-gray-600">
-            Visualisez le score CRS minimal requis lors des tirages récents pour situer votre score estimé ({scores.total} pts) par rapport au marché :
+            {selectedCategory === "all"
+              ? "Visualisez le score CRS minimal requis lors des tirages récents pour situer votre score estimé :"
+              : "Filtrage actif sur les rondes historiques du programme sélectionné :"}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {recentRounds.map((round, idx) => {
-              const diff = scores.total - round.minScore;
-              const isAbove = diff >= 0;
-              return (
-                <div key={idx} className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
-                  <div className="absolute top-0 right-0 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-bl-xl border-l border-b border-blue-100">
-                    {round.roundNum}
-                  </div>
-                  <div className="space-y-1">
-                    <span className="text-xs text-gray-500 font-medium">{round.date}</span>
-                    <h5 className="font-semibold text-gray-900 text-sm leading-snug">{round.type}</h5>
-                  </div>
-
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-baseline justify-between">
-                      <span className="text-xs text-gray-500">Seuil CRS minimal :</span>
-                      <span className="text-xl font-extrabold text-blue-900">{round.minScore} pts</span>
+          {filteredRounds.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-gray-50 border border-dashed border-gray-300 text-center space-y-2">
+              <AlertCircle className="w-8 h-8 text-gray-400 mx-auto" />
+              <p className="text-sm font-medium text-gray-700">Aucune ronde enregistrée pour cette catégorie dans la période récente.</p>
+              <Button variant="outline" size="sm" onClick={() => setSelectedCategory("all")}>
+                Réinitialiser le filtre
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              {filteredRounds.map((round, idx) => {
+                const diff = scores.total - round.minScore;
+                const isAbove = diff >= 0;
+                return (
+                  <div key={idx} className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-3 relative overflow-hidden flex flex-col justify-between">
+                    <div className="absolute top-0 right-0 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-bl-xl border-l border-b border-blue-100">
+                      {round.roundNum}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-xs text-gray-500 font-medium">{round.date}</span>
+                      <h5 className="font-semibold text-gray-900 text-sm leading-snug">{round.type}</h5>
                     </div>
 
-                    {/* Barre comparative visuelle */}
-                    <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden flex">
-                      <div
-                        className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, (round.minScore / 600) * 100)}%` }}
-                      />
-                    </div>
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-gray-500">Seuil CRS minimal :</span>
+                        <span className="text-xl font-extrabold text-blue-900">{round.minScore} pts</span>
+                      </div>
 
-                    <div className="flex items-center justify-between text-xs pt-1">
-                      <span className="text-gray-500">{round.invitations} invitations</span>
-                      <span className={`font-semibold px-2 py-0.5 rounded ${isAbove ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                        {isAbove ? `+${diff} pts au-dessus` : `${diff} pts requis`}
-                      </span>
+                      {/* Barre comparative visuelle */}
+                      <div className="h-2.5 w-full bg-gray-100 rounded-full overflow-hidden flex">
+                        <div
+                          className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, (round.minScore / 600) * 100)}%` }}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs pt-1">
+                        <span className="text-gray-500">{round.invitations} invitations</span>
+                        <span className={`font-semibold px-2 py-0.5 rounded ${isAbove ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {isAbove ? `+${diff} pts au-dessus` : `${diff} pts requis`}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Barres de progression par critère et infobulles */}
