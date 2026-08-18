@@ -42,6 +42,7 @@ export function SimpleMultiProjectForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [whatsappCopied, setWhatsappCopied] = React.useState(false);
   const [emailCopied, setEmailCopied] = React.useState(false);
+  const [textCopied, setTextCopied] = React.useState(false);
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) {
@@ -305,6 +306,38 @@ export function SimpleMultiProjectForm() {
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-6V6l8 5 8-2v2z"/>
               </svg>
               {emailCopied ? "✓ Application e-mail ouverte !" : "Envoyer les détails par e-mail au conseiller"}
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const text = `Récapitulatif de projet 3M Travel :\n- Nom : ${formData.fullName || "(Non renseigné)"}\n- Email : ${formData.email || "(Non renseigné)"}\n- WhatsApp : ${formData.whatsappPhone || "(Non renseigné)"}\n- Nationalité : ${formData.nationality || "(Non renseignée)"}\n- Type de projet : ${formData.projectType.toUpperCase()}\n- Précisions / Destination : ${formData.sector || "Non spécifié"}`;
+                try {
+                  await navigator.clipboard.writeText(text);
+                  setTextCopied(true);
+                  setTimeout(() => setTextCopied(false), 3500);
+                } catch {
+                  // Fallback textarea
+                  const textarea = document.createElement("textarea");
+                  textarea.value = text;
+                  document.body.appendChild(textarea);
+                  textarea.select();
+                  document.execCommand("copy");
+                  document.body.removeChild(textarea);
+                  setTextCopied(true);
+                  setTimeout(() => setTextCopied(false), 3500);
+                }
+              }}
+              className={`w-full inline-flex items-center justify-center gap-2 font-semibold py-3 px-4 rounded-lg transition-all shadow-sm ${
+                textCopied
+                  ? "bg-amber-700 text-white scale-[1.01] ring-2 ring-amber-300"
+                  : "bg-gray-700 hover:bg-gray-800 text-white"
+              }`}
+            >
+              <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">
+                <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+              </svg>
+              {textCopied ? "✓ Récapitulatif copié dans le presse-papier !" : "Copier le récapitulatif du projet"}
             </button>
           </div>
         </form>

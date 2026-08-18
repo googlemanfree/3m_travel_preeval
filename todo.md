@@ -492,3 +492,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Animation de confirmation visuelle sur les boutons de partage
 - [x] Ajouter un feedback visuel temporaire (changement de couleur, icône de succès et effet de relief) sur les boutons WhatsApp et e-mail.
 - [x] Valider par les tests et publier la version finale.
+
+## Bouton de copie rapide du récapitulatif
+- [x] Ajouter un bouton dédié pour copier le récapitulatif du projet dans le presse-papier, avec solution de repli (fallback textarea) et notification visuelle.
+- [x] Valider par les tests et publier la version finale.
