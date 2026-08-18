@@ -37,6 +37,10 @@ const AdminDestinationMedia = lazyWithTimeout(() => import("./pages/AdminDestina
 const AdminMediaLibrary = lazyWithTimeout(() => import("./pages/AdminMediaLibrary"));
 const AdminUserDetails = lazyWithTimeout(() => import("./pages/AdminUserDetails"));
 const VisaEtudes = lazyWithTimeout(() => import("./pages/VisaEtudes"));
+const Canada = lazyWithTimeout(() => import("./pages/Canada"));
+const Schengen = lazyWithTimeout(() => import("./pages/Schengen"));
+const Billets = lazyWithTimeout(() => import("./pages/Billets"));
+const Formation = lazyWithTimeout(() => import("./pages/Formation"));
 const ProcedureLuxembourg = lazyWithTimeout(() => import("./pages/ProcedureLuxembourg"));
 const MonDossier = lazyWithTimeout(() => import("./pages/MonDossier"));
 const EvisaRequestForm = lazyWithTimeout(() => import("./pages/EvisaRequestForm"));
@@ -144,7 +148,8 @@ function Router() {
 
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
-      <Route path={"/vols"}>{() => <Redirect to="/flights" />}</Route>
+      <Route path={"/billets"} component={Billets} />
+      <Route path={"/vols"}>{() => <Redirect to="/billets" />}</Route>
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
@@ -202,12 +207,18 @@ function Router() {
 
       {/* Comment ca marche */}
       <Route path={"/how-it-works"} component={HowItWorks} />
-      <Route path={"/visa-etudes"} component={VisaEtudes} />
+      <Route path={"/canada"} component={Canada} />
+      <Route path={"/schengen"} component={Schengen} />
+      <Route path={"/etudes"} component={VisaEtudes} />
+      <Route path={"/visa-etudes"}>{() => <Redirect to="/etudes" />}</Route>
+      <Route path={"/formation"} component={Formation} />
       <Route path="/procedures" component={ProceduresAdvanced} />
       {/* Aliases legacy : certains anciens CTA utilisaient le singulier. */}
       <Route path="/procedure">{() => <Redirect to="/procedures" />}</Route>
       <Route path="/procedures/comparaison" component={CountryComparisonPage} />
       <Route path="/conformite-documents" component={DocumentCompliancePage} />
+      <Route path="/procedures/canada">{() => <Redirect to="/canada" />}</Route>
+      <Route path="/procedures/schengen">{() => <Redirect to="/schengen" />}</Route>
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path={"/procedures-complete"}>{() => <Redirect to="/procedures" />}</Route>

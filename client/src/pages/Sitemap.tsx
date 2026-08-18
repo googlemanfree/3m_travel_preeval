@@ -2,7 +2,11 @@ import { Link } from "wouter";
 
 const SITE_LINKS = [
   { label: "Accueil", href: "/" },
-  { label: "Recherche de vols", href: "/flights" },
+  { label: "Billets d’avion", href: "/billets" },
+  { label: "Canada — Résidence permanente", href: "/canada" },
+  { label: "Visa Schengen", href: "/schengen" },
+  { label: "Études à l’étranger", href: "/etudes" },
+  { label: "Formation agence de voyage", href: "/formation" },
   { label: "Procédures et destinations", href: "/procedures" },
   { label: "E-visa", href: "/evisas" },
   { label: "Assurance voyage", href: "/assurance" },

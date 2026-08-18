@@ -436,3 +436,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le point d’entrée HTML, les balises de mesure existantes et les contraintes de chargement du site.
 - [x] Intégrer le tag Google Analytics 4 `G-4HBHHH37VL` sans doublonner les scripts de suivi existants.
 - [x] Vérifier le build, le chargement du tag et publier la version validée.
+
+## Réorganisation des pages de services et contenu
+- [x] Auditer les routes et pages existantes pour les services Canada, Schengen, études, billets, formation, blog et contact.
+- [x] Définir les routes canoniques et les redirections nécessaires sans créer de pages statiques ou de contenus dupliqués.
+- [x] Intégrer à la page Canada le contenu détaillé du flyer : parcours, accompagnement en emploi, contacts et avertissements de conformité.
+- [x] Créer ou consolider les pages demandées avec les règles éditoriales, la navigation et les appels à l’action existants.
+- [x] Tester les chemins, redirections, affichage mobile et build avant publication.

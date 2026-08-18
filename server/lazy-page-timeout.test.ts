@@ -21,8 +21,9 @@ describe("lazy page timeout recovery contracts", () => {
     const lazyImports = app.match(/lazyWithTimeout\(\(\) => import\(/g) ?? [];
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
-    // Le nettoyage des chemins morts a retiré 23 imports jamais routés.
-    expect(lazyImports).toHaveLength(84);
+    // Le nettoyage des chemins morts reste préservé ; quatre pages canoniques
+    // (Canada, Schengen, Billets et Formation) sont chargées à la demande.
+    expect(lazyImports).toHaveLength(88);
     for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {
       expect(app).not.toContain(`import(\"./pages/${removedPage}\")`);
     }

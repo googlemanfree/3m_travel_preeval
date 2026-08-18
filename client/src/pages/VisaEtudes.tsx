@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { GraduationCap, CheckCircle, FileText, Users, Award, ArrowRight, AlertCircle, Globe, Clock, MessageCircle, Landmark } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import Navbar from '@/components/Navbar';
 import StudyVisaEvaluationWidget from '@/components/StudyVisaEvaluationWidget';
 import { Link } from 'wouter';
 
@@ -19,6 +18,11 @@ export default function VisaEtudes() {
     { flag: '🇧🇪', country: 'Belgique', gradient: 'from-yellow-500 to-red-600', note: 'Visa étudiant Schengen, frais de scolarité souvent abordables.', platform: 'Candidature directe auprès des établissements' },
     { flag: '🇩🇪', country: 'Allemagne', gradient: 'from-gray-700 to-red-600', note: 'Visa étudiant Schengen, nombreux programmes en anglais.', platform: 'Candidature via uni-assist pour de nombreux établissements' },
     { flag: '🇵🇱', country: 'Pologne', gradient: 'from-red-500 to-white', note: 'Visa étudiant Schengen, coût de la vie compétitif.', platform: 'Candidature directe, certains programmes via NAWA' },
+    { flag: '🇦🇺', country: 'Australie', gradient: 'from-blue-700 to-amber-400', note: 'Études dans des établissements australiens, sous réserve des règles de visa en vigueur.', platform: 'Candidature auprès de l’établissement puis procédure nationale' },
+    { flag: '🇬🇧', country: 'Royaume-Uni', gradient: 'from-blue-700 to-red-600', note: 'Programmes universitaires et professionnels en anglais.', platform: 'Candidature auprès de l’établissement puis Student visa' },
+    { flag: '🇺🇸', country: 'États-Unis', gradient: 'from-blue-700 to-red-600', note: 'Études universitaires et spécialisées avec procédures propres aux établissements.', platform: 'Admission, documents de l’établissement et procédure de visa applicable' },
+    { flag: '🇮🇪', country: 'Irlande', gradient: 'from-emerald-600 to-orange-500', note: 'Programmes anglophones et filières internationales.', platform: 'Candidature directe selon l’établissement choisi' },
+    { flag: '🇲🇦', country: 'Maroc', gradient: 'from-red-600 to-emerald-700', note: 'Plusieurs options d’enseignement supérieur francophone et international.', platform: 'Candidature auprès de l’établissement selon la filière' },
   ];
 
   const steps = [
@@ -48,8 +52,6 @@ export default function VisaEtudes() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
-
       {/* Hero */}
       <section className="relative pt-20 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-5xl mx-auto text-center relative z-10">
@@ -61,7 +63,7 @@ export default function VisaEtudes() {
               Étudiez à l'étranger, accompagné à chaque étape
             </h1>
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              De l'évaluation de votre profil à l'obtention de votre visa étudiant, 3M Travel & Services vous accompagne dans la constitution et le suivi de votre dossier — Campus France, IRCC, uni-assist et autres démarches officielles comprises.
+              De l'évaluation de votre profil à la préparation de votre dossier, 3M Travel & Services vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
             </p>
             <a href="#evaluation">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center gap-2">
