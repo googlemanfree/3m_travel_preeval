@@ -351,6 +351,26 @@ export const unifiedRequestsRouter = router({
       return { application, versions, draft: { destination: adminDraft.destination ?? application.destination ?? "europe", modelLabel: adminDraft.modelLabel ?? null, criteria: adminDraft.criteria ?? null, finalScore: adminDraft.finalScore ?? application.scoringTotal ?? 0, verdict: adminDraft.verdict ?? "", profileSummary: adminDraft.profileSummary ?? "", strengths: Array.isArray(adminDraft.strengths) ? adminDraft.strengths : [], weaknesses: Array.isArray(adminDraft.weaknesses) ? adminDraft.weaknesses : [], recommendations: Array.isArray(adminDraft.recommendations) ? adminDraft.recommendations : [], informationToVerify: Array.isArray(adminDraft.informationToVerify) ? adminDraft.informationToVerify : [], nextAdminAction: adminDraft.nextAdminAction ?? "", message: application.evaluationDeliveryMessage ?? "", subject: application.evaluationDeliverySubject ?? (isProvisionalEvaluationReference(application.dossierNumber) ? "Votre bilan d'évaluation 3M Travel" : `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`), requiresSecondApproval: application.evaluationRequiresSecondApproval, advisorValidated: adminDraft.advisorValidated === true, advisorValidatedAt: adminDraft.advisorValidatedAt ?? null, advisorValidatedByAdminId: adminDraft.advisorValidatedByAdminId ?? null } };
     }),
 
+  previewEvaluationDeliveryEmail: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
+      const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
+      const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
+      return {
+        recipient: application.email,
+        subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
+        html,
+        attachmentLabel: `Bilan d’évaluation — dossier ${application.dossierNumber}.pdf`,
+        requiresManualValidation: true,
+      };
+    }),
+
   generateDestinationEvaluationDraft: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), destination: z.enum(evaluationDestinations) }))
     .mutation(async ({ input }) => {

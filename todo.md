@@ -401,3 +401,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer ces mentions par des formulations neutres et professionnelles sans modifier les capacités internes du back-office.
 - [x] Vérifier que les messages, pièces jointes, exports et parcours candidat ne divulguent aucun détail technique interne.
 - [x] Ajouter des tests de régression de contenu et valider les canaux client avant publication.
+
+## Aperçu, modèles et validation des communications
+- [x] Cartographier les éditeurs de bilan et de message ainsi que les modèles e-mail déjà utilisés.
+- [x] Ajouter un aperçu fidèle de l’e-mail final avant l’envoi, avec rendu du contenu, objet, destinataire et pièces jointes référencées.
+- [x] Créer des modèles de messages standardisés et personnalisables par type de procédure.
+- [x] Empêcher toute diffusion automatique de bilan sans validation humaine explicite et journalisée.
+- [x] Tester les aperçus, modèles, verrouillages de diffusion et parcours administrateur avant publication.
