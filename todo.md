@@ -484,3 +484,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Test automatisé de robustesse du formulaire et des redirections
 - [x] Configurer un test Vitest dédié pour vérifier la robustesse des paramètres de projet, de destination et du lien de partage WhatsApp.
 - [x] Valider par les tests unitaires et publier la version finale.
+
+## Option d’envoi des détails par e-mail
+- [x] Ajouter un bouton d’envoi par e-mail (mailto) avec récapitulatif pré-rempli vers `hello@3mtravelagency.com` dans le formulaire d’évaluation.
+- [x] Valider par les tests et publier la version finale.
