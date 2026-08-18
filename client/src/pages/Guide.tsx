@@ -209,7 +209,7 @@ export default function Guide() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => navigate("/visa-types")}
+                  onClick={() => navigate("/procedures")}
                   className="w-full mt-4"
                 >
                   En savoir plus

@@ -221,7 +221,7 @@ export default function ConfirmEmail() {
               )}
 
               <Button
-                onClick={() => setLocation("/simple-signup")}
+                onClick={() => setLocation("/register")}
                 variant="outline"
                 className="w-full"
               >

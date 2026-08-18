@@ -233,6 +233,9 @@ function Router() {
         </AdminGuard>
       </Route>
       <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
+      <Route path={"/simple-signup"}>{() => <Redirect to="/register" />}</Route>
+      <Route path={"/schedule-agency"}>{() => <Redirect to="/contact" />}</Route>
+      <Route path={"/visa-types"}>{() => <Redirect to="/procedures" />}</Route>
       {/* Prototypes historiques : redirigés vers l’espace client synchronisé. */}
       <Route path={"/mon-espace-enhanced"}>{() => <Redirect to="/mon-espace" />}</Route>
       <Route path={"/mon-espace-v2"}>{() => <Redirect to="/mon-espace" />}</Route>

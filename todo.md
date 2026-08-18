@@ -508,5 +508,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les calculs, le responsive, TypeScript et les tests avant publication.
 
 ## Bouton de réservation de consultation Canada
-- [ ] Ajouter un appel à l’action sous les barres de progression du simulateur Canada pour réserver directement une consultation avec un conseiller.
-- [ ] Valider par les tests, TypeScript et publier la version finale.
+- [x] Ajouter un appel à l’action sous les barres de progression du simulateur Canada pour réserver directement une consultation avec un conseiller.
+- [x] Valider par les tests, TypeScript et publier la version finale.
