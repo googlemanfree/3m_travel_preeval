@@ -41,15 +41,17 @@ describe("routes canoniques des pages de service", () => {
   it("sépare les parcours de Procédures et place l’évaluation multi-projets au début de l’accueil", () => {
     const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
     const proceduresSource = readFileSync(resolve(process.cwd(), "client/src/pages/ProceduresAdvanced.tsx"), "utf8");
+    const canadaSource = readFileSync(resolve(process.cwd(), "client/src/pages/Canada.tsx"), "utf8");
     expect(homeSource).toContain('id="evaluation-multi"');
     expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf("<EmbassyNewsWidget />"));
     expect(proceduresSource).toContain("Canada : Résidence & Emploi");
     expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
     expect(proceduresSource).toContain("Études Internationales");
-    expect(proceduresSource).toContain("Simulateur de Score Canadien");
     expect(proceduresSource).toContain('href="/?project=travail#evaluation-multi"');
     expect(proceduresSource).toContain('href="/?project=etudes#evaluation-multi"');
     expect(proceduresSource).toContain('href="/?project=tourisme#evaluation-multi"');
+    expect(canadaSource).toContain("CanadaScoreSimulator");
+    expect(canadaSource).toContain("Étape 1 : Évaluez votre score CRS avant de continuer");
   });
 });
 

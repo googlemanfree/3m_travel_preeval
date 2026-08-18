@@ -12,7 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
 import { trpc } from '@/lib/trpc';
-import CanadaScoreSimulator from '@/components/CanadaScoreSimulator';
+// CanadaScoreSimulator déplacé vers la section /canada dédiée
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
@@ -171,17 +171,7 @@ export default function ProceduresAdvanced() {
           </Card>
         </div>
 
-        {/* Bloc dédié au Score Canadien dans Procédures (sans mélange) */}
-        <div className="mb-12 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-900 to-indigo-900 p-8 text-white shadow-xl">
-          <div className="max-w-3xl">
-            <span className="inline-block rounded-full bg-blue-500/30 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-200">Outil officiel intégré</span>
-            <h2 className="mt-3 text-2xl font-black sm:text-3xl">Simulateur de Score Canadien (Entrée Express)</h2>
-            <p className="mt-3 text-sm leading-6 text-blue-100">Estimez vos points CRS selon votre âge, vos diplômes, votre expérience professionnelle et votre niveau de français ou d’anglais.</p>
-          </div>
-          <div className="mt-6 rounded-xl bg-white p-6 text-slate-900 shadow-inner">
-            <CanadaScoreSimulator />
-          </div>
-        </div>
+        {/* Simulateur de Score Canadien désormais recentré dans la section /canada dédiée */}
 
         {/* Comparatif visuel des parcours */}
         <section aria-labelledby="parcours-comparatif" className="mb-12 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">

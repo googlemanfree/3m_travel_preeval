@@ -496,3 +496,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Bouton de copie rapide du récapitulatif
 - [x] Ajouter un bouton dédié pour copier le récapitulatif du projet dans le presse-papier, avec solution de repli (fallback textarea) et notification visuelle.
 - [x] Valider par les tests et publier la version finale.
+
+## Recentrage du calculateur Canada
+- [x] Déplacer le simulateur de score CRS de la page Procédures vers la section /canada dédiée.
+- [x] Imposer une étape d’évaluation du score avant d’explorer les voies détaillées (Entrée express, provinces, etc.).
+- [x] Mettre à jour les tests de contrat et valider la suite complète de 436 tests Vitest.
