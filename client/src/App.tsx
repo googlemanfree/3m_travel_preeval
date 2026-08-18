@@ -82,6 +82,7 @@ import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
 const Avis = lazyWithTimeout(() => import("./pages/Avis"));
 const Blog = lazyWithTimeout(() => import("./pages/Blog"));
+const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
 const FlightAgentDashboard = lazyWithTimeout(() => import("./pages/FlightAgentDashboard"));
@@ -248,6 +249,7 @@ function Router() {
       <Route path={"/tarifs"} component={Tarifs} />
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
+      <Route path={"/blog/etudes/:slug"} component={StudyDestinationArticle} />
       <Route path={"/evisas"} component={EvisasAdvanced} />
       {/* Alias legacy e-design/e-visa : conserve les anciens liens sans dupliquer la page. */}
       <Route path={"/e-design"}>{() => <Redirect to="/evisas" />}</Route>

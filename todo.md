@@ -443,3 +443,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer à la page Canada le contenu détaillé du flyer : parcours, accompagnement en emploi, contacts et avertissements de conformité.
 - [x] Créer ou consolider les pages demandées avec les règles éditoriales, la navigation et les appels à l’action existants.
 - [x] Tester les chemins, redirections, affichage mobile et build avant publication.
+
+## Articles SEO des destinations d’études
+- [x] Créer un article détaillé, source officielle et métadonnées SEO pour chacune des dix destinations d’études.
+- [x] Ajouter une navigation dédiée depuis le Blog vers les dix articles et vers les parcours d’études existants.
+- [x] Tester la présence des dix destinations, le responsive, TypeScript, la suite Vitest et les bundles client et serveur de production.
+
+---
