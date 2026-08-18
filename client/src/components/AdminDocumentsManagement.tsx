@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X, FileSpreadsheet, AlertTriangle } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -59,6 +59,9 @@ export function AdminDocumentsManagement() {
   const [uploadDocumentType, setUploadDocumentType] = useState("autre");
   const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
   const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [recognitionByFile, setRecognitionByFile] = useState<Record<string, { documentType: string; confidence: number; suggestedFolder: string; summary: string; reviewRequired: true }>>({});
+  const [isRecognizing, setIsRecognizing] = useState(false);
+  const [staleOnly, setStaleOnly] = useState(false);
 
   const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
   const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
@@ -67,6 +70,7 @@ export function AdminDocumentsManagement() {
   const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
   const uploadDocumentForCandidateMutation = trpc.admin.uploadDocumentForCandidate.useMutation();
+  const suggestDroppedDocumentMetadataMutation = trpc.admin.suggestDroppedDocumentMetadata.useMutation();
 
   // Récupérer les documents via tRPC
   const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
@@ -223,7 +227,7 @@ export function AdminDocumentsManagement() {
     documents.map((document) => getClassificationLabel(document.aiClassification)).filter((value) => value !== "Non classifié")
   )).sort((a, b) => a.localeCompare(b, "fr"));
 
-  const filteredDocuments = documents.filter((d) => {
+  const baseFilteredDocuments = documents.filter((d) => {
     const normalizedSearch = searchTerm.toLowerCase().trim();
     const classificationLabel = getClassificationLabel(d.aiClassification);
     const matchesSearch = !normalizedSearch ||
@@ -246,14 +250,18 @@ export function AdminDocumentsManagement() {
   const uploadTargets = Array.from(new Map(documents.filter((document) => document.candidateId).map((document) => [document.candidateId as number, { id: document.candidateId as number, label: `${document.candidateName} · ${document.dossierNumber}` }])).values()).sort((left, right) => left.label.localeCompare(right.label, "fr"));
   const dossierSummaries = Array.from(documents.reduce((summary, document) => {
     const key = document.dossierNumber || "N/A";
-    const current = summary.get(key) || { dossierNumber: key, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0 };
+    const current = summary.get(key) || { dossierNumber: key, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0, latestAt: document.submittedAt };
     current.total += 1;
     current.approved += document.verificationStatus === "approved" ? 1 : 0;
     current.pending += document.verificationStatus === "pending" ? 1 : 0;
     current.rejected += document.verificationStatus === "rejected" ? 1 : 0;
+    if (document.submittedAt > current.latestAt) current.latestAt = document.submittedAt;
     summary.set(key, current);
     return summary;
-  }, new Map<string, { dossierNumber: string; candidateName: string; total: number; approved: number; pending: number; rejected: number }>()).values()).sort((left, right) => right.pending - left.pending || left.dossierNumber.localeCompare(right.dossierNumber, "fr"));
+  }, new Map<string, { dossierNumber: string; candidateName: string; total: number; approved: number; pending: number; rejected: number; latestAt: Date }>()).values()).sort((left, right) => right.pending - left.pending || left.dossierNumber.localeCompare(right.dossierNumber, "fr"));
+  const staleDossiers = dossierSummaries.filter((dossier) => (dossier.pending > 0 || dossier.rejected > 0) && dossier.latestAt.getTime() <= Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const staleDossierNumbers = new Set(staleDossiers.map((dossier) => dossier.dossierNumber));
+  const filteredDocuments = staleOnly ? baseFilteredDocuments.filter((document) => staleDossierNumbers.has(document.dossierNumber)) : baseFilteredDocuments;
   const selectedDocuments = filteredDocuments.filter((document) => selectedDocumentKeys.includes(`${document.source}:${document.id}`));
 
   const toggleDocumentSelection = (document: Document) => {
@@ -284,6 +292,7 @@ export function AdminDocumentsManagement() {
     const rejected = Array.from(incoming).length - valid.length;
     if (rejected) toast.error(`${rejected} fichier(s) ignoré(s)`, { description: "Seuls les PDF, images et documents Word de 10 Mo maximum sont acceptés." });
     setDroppedFiles((current) => [...current, ...valid].slice(0, 10));
+    valid.forEach((file) => { void recognizeDroppedFile(file); });
   };
 
   const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
@@ -292,6 +301,25 @@ export function AdminDocumentsManagement() {
     reader.onload = () => resolve(String(reader.result));
     reader.readAsDataURL(file);
   });
+
+  const recognizeDroppedFile = async (file: File) => {
+    const key = `${file.name}-${file.size}`;
+    setIsRecognizing(true);
+    try {
+      const recognition = await suggestDroppedDocumentMetadataMutation.mutateAsync({
+        sessionToken,
+        fileName: file.name,
+        mimeType: file.type as "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        dataUrl: await toDataUrl(file),
+      });
+      setRecognitionByFile((current) => ({ ...current, [key]: recognition }));
+      if (droppedFiles.length === 0 && recognition.confidence >= 70) setUploadDocumentType(recognition.documentType);
+    } catch {
+      setRecognitionByFile((current) => ({ ...current, [key]: { documentType: "autre", confidence: 0, suggestedFolder: "À vérifier", summary: "Suggestion IA indisponible : sélectionnez manuellement le type.", reviewRequired: true } }));
+    } finally {
+      setIsRecognizing(false);
+    }
+  };
 
   const handleAdminDropUpload = async () => {
     const candidateId = Number(uploadCandidateId);
@@ -302,6 +330,7 @@ export function AdminDocumentsManagement() {
     setIsLoading(true);
     try {
       for (const file of droppedFiles) {
+        const recognition = recognitionByFile[`${file.name}-${file.size}`];
         await uploadDocumentForCandidateMutation.mutateAsync({
           sessionToken,
           candidateId,
@@ -310,6 +339,7 @@ export function AdminDocumentsManagement() {
           mimeType: file.type as "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           sizeBytes: file.size,
           dataUrl: await toDataUrl(file),
+          recognition: recognition ? { ...recognition, documentType: recognition.documentType as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "justificatif_paiement" | "autre" } : undefined,
         });
       }
       toast.success(`${droppedFiles.length} document(s) déposé(s)`, { description: "Ils apparaissent dans le dossier et sont prêts à être vérifiés." });
@@ -319,6 +349,45 @@ export function AdminDocumentsManagement() {
       toast.error("Dépôt incomplet", { description: error instanceof Error ? error.message : "Vérifiez le dossier et les fichiers sélectionnés." });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const exportMonthlyCsv = () => {
+    const rows = [
+      ["Dossier", "Candidat", "Documents", "Validés", "En attente", "Rejetés", "Complétude"],
+      ...monthlyDossiers.map((dossier) => [dossier.dossierNumber, dossier.candidateName, dossier.total, dossier.approved, dossier.pending, dossier.rejected, `${dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0}%`]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `rapport-completude-${reportMonth}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export CSV généré", { description: `${monthlyDossiers.length} dossier(s) inclus.` });
+  };
+
+  const exportMonthlyPdf = async () => {
+    try {
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
+      let y = 20;
+      pdf.setFillColor(10, 47, 83); pdf.rect(0, 0, 210, 16, "F");
+      pdf.setTextColor(255, 255, 255); pdf.setFontSize(15); pdf.text("3M Travel & Services — Rapport documentaire", 14, 10);
+      pdf.setTextColor(30, 41, 59); pdf.setFontSize(10); pdf.text(`Période : ${reportMonth} · Documents reçus : ${monthlyDocuments.length} · Validation : ${monthlyCompletionRate}%`, 14, y); y += 10;
+      monthlyDossiers.forEach((dossier) => {
+        if (y > 274) { pdf.addPage(); y = 18; }
+        const rate = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0;
+        pdf.setFillColor(248, 250, 252); pdf.roundedRect(12, y - 5, 186, 12, 2, 2, "F");
+        pdf.setTextColor(15, 23, 42); pdf.setFontSize(9); pdf.text(`${dossier.dossierNumber} — ${dossier.candidateName}`, 15, y);
+        pdf.setTextColor(71, 85, 105); pdf.text(`${dossier.approved}/${dossier.total} validé(s) · ${dossier.pending} attente · ${dossier.rejected} rejeté(s) · ${rate}%`, 15, y + 4); y += 15;
+      });
+      pdf.setTextColor(100, 116, 139); pdf.setFontSize(7); pdf.text("Document interne généré depuis le back-office 3M Travel.", 14, 289);
+      pdf.save(`rapport-completude-${reportMonth}.pdf`);
+      toast.success("Export PDF généré", { description: `${monthlyDossiers.length} dossier(s) inclus.` });
+    } catch {
+      toast.error("Export PDF impossible", { description: "Réessayez après le chargement complet de l’éditeur." });
     }
   };
 
@@ -558,15 +627,17 @@ export function AdminDocumentsManagement() {
                 <label className="mt-3 inline-flex cursor-pointer items-center rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50">Sélectionner des fichiers<input type="file" multiple className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => event.currentTarget.files && acceptDroppedFiles(event.currentTarget.files)} /></label>
               </div>
               <div className="grid gap-2 sm:grid-cols-2"><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{uploadTargets.map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</select><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option></select></div>
-              {droppedFiles.length > 0 && <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center justify-between gap-2 text-xs"><span className="truncate">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</span><button type="button" onClick={() => setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>)}</div>}
+              {droppedFiles.length > 0 && <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => { const recognition = recognitionByFile[`${file.name}-${file.size}`]; return <div key={`${file.name}-${index}`} className="flex items-start justify-between gap-2 text-xs"><div className="min-w-0"><p className="truncate font-medium">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</p>{recognition ? <p className="mt-0.5 text-violet-700">IA : {recognition.documentType} · {recognition.confidence}% — {recognition.suggestedFolder}. À confirmer avant dépôt.</p> : <p className="mt-0.5 text-slate-500">{isRecognizing ? "Analyse IA en cours…" : "Analyse IA en attente"}</p>}</div><button type="button" onClick={() => { setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index)); setRecognitionByFile((current) => { const next = { ...current }; delete next[`${file.name}-${file.size}`]; return next; }); }} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>; })}</div>}
               <Button type="button" onClick={handleAdminDropUpload} disabled={isLoading || !uploadCandidateId || !droppedFiles.length} className="w-full gap-2"><Upload className="h-4 w-4" />Déposer dans le dossier</Button>
             </CardContent>
           </Card>
           <Card className="border-violet-100 bg-violet-50/30">
             <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><CalendarDays className="h-4 w-4 text-violet-700" />Rapport mensuel</CardTitle><CardDescription>Complétude calculée à partir des statuts réels des documents.</CardDescription></CardHeader>
-            <CardContent className="space-y-3"><Input type="month" value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} aria-label="Mois du rapport documentaire" /><div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Documents reçus</p><p className="text-xl font-bold text-slate-900">{monthlyDocuments.length}</p></div><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Validés</p><p className="text-xl font-bold text-emerald-700">{monthlyCompletionRate}%</p></div></div><div className="space-y-1.5">{monthlyDossiers.slice(0, 5).map((dossier) => { const rate = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0; return <div key={dossier.dossierNumber} className="rounded-md bg-white px-2 py-1.5"><div className="flex justify-between gap-2 text-xs"><span className="truncate font-medium">{dossier.dossierNumber}</span><span>{rate}%</span></div><div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-600" style={{ width: `${rate}%` }} /></div></div>; })}{monthlyDossiers.length === 0 && <p className="text-sm text-slate-500">Aucune pièce déposée sur cette période.</p>}</div></CardContent>
+            <CardContent className="space-y-3"><Input type="month" value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} aria-label="Mois du rapport documentaire" /><div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Documents reçus</p><p className="text-xl font-bold text-slate-900">{monthlyDocuments.length}</p></div><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Validés</p><p className="text-xl font-bold text-emerald-700">{monthlyCompletionRate}%</p></div></div><div className="grid grid-cols-2 gap-2"><Button type="button" size="sm" variant="outline" onClick={exportMonthlyCsv} className="gap-1"><FileSpreadsheet className="h-3.5 w-3.5" />CSV</Button><Button type="button" size="sm" variant="outline" onClick={exportMonthlyPdf} className="gap-1"><FileText className="h-3.5 w-3.5" />PDF</Button></div><div className="space-y-1.5">{monthlyDossiers.slice(0, 5).map((dossier) => { const rate = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0; return <div key={dossier.dossierNumber} className="rounded-md bg-white px-2 py-1.5"><div className="flex justify-between gap-2 text-xs"><span className="truncate font-medium">{dossier.dossierNumber}</span><span>{rate}%</span></div><div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-600" style={{ width: `${rate}%` }} /></div></div>; })}{monthlyDossiers.length === 0 && <p className="text-sm text-slate-500">Aucune pièce déposée sur cette période.</p>}</div></CardContent>
           </Card>
         </div>
+
+        {staleDossiers.length > 0 && <Card className="border-amber-200 bg-amber-50/60"><CardContent className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" /><div><p className="font-semibold text-amber-950">{staleDossiers.length} dossier(s) incomplet(s) depuis plus de 7 jours</p><p className="text-sm text-amber-800">Aucune pièce récente n’a été déposée et des documents restent en attente ou rejetés.</p></div></div><Button type="button" size="sm" variant={staleOnly ? "default" : "outline"} onClick={() => setStaleOnly((current) => !current)}>{staleOnly ? "Afficher tous les dossiers" : "Filtrer les dossiers concernés"}</Button></CardContent></Card>}
 
         {dossierSummaries.length > 0 && <Card className="border-slate-200">
           <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Layers3 className="h-4 w-4 text-blue-600" />Vue dossiers et complétude</CardTitle><CardDescription>Sélectionnez un dossier pour concentrer le contrôle documentaire.</CardDescription></CardHeader>

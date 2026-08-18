@@ -16,6 +16,7 @@ import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email"
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
+import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
@@ -2181,6 +2182,9 @@ export const adminRouter = router({
       mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
       sizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
       dataUrl: z.string().max(15_000_000),
+      recognition: z.object({
+        documentType: z.enum(ADMIN_DOCUMENT_TYPES), confidence: z.number().min(0).max(100), suggestedFolder: z.string().max(120), summary: z.string().max(500), reviewRequired: z.literal(true),
+      }).optional(),
     }))
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);
@@ -2204,8 +2208,21 @@ export const adminRouter = router({
         mimeType: input.mimeType,
         status: "uploaded",
         correctionComment: `Document déposé par l’administration (${admin.email || "administrateur"}).`,
+        extractedData: input.recognition ? JSON.stringify({ source: "admin_ai_suggestion", ...input.recognition }) : null,
       });
       return { success: true, url: stored.url };
+    }),
+
+  suggestDroppedDocumentMetadata: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1), fileName: z.string().min(1).max(255),
+      mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
+      dataUrl: z.string().max(15_000_000),
+    }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      if (!input.dataUrl.startsWith(`data:${input.mimeType};base64,`)) throw new TRPCError({ code: "BAD_REQUEST", message: "Fichier à analyser invalide." });
+      return suggestAdminDocumentMetadata(input);
     }),
 
   // ─────────────────────────────────────────────────────────────────────────

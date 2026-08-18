@@ -381,3 +381,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une comparaison visuelle de deux versions liées d’un document PDF ou image, avec navigation claire entre l’ancienne et la nouvelle version.
 - [x] Générer un tableau mensuel de complétude par dossier à partir des statuts réels des documents, avec filtres de période et indicateurs d’avancement.
 - [x] Tester les autorisations, le dépôt, la comparaison, les données de rapport et les régressions de l’espace client avant publication.
+
+## Exports, IA et alertes du gestionnaire documentaire
+- [x] Ajouter les exports PDF et CSV du rapport mensuel de complétude, fondés sur les statuts réels affichés dans le back-office.
+- [x] Analyser automatiquement les fichiers déposés par IA afin de suggérer le type, le dossier et les métadonnées sans déclencher d’enregistrement automatique.
+- [x] Ajouter des filtres et alertes visuelles pour les dossiers incomplets depuis plus de sept jours, avec date de dernière activité.
+- [x] Créer, valider et livrer une compétence réutilisable pour la gestion documentaire administrative sécurisée.
+- [x] Tester les exports, l’IA, les alertes, les autorisations et les régressions avant publication.
