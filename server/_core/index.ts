@@ -20,6 +20,10 @@ import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { getDb } from "../db";
+import { applications, evaluationEmails } from "../../drizzle/schema";
+import { and, eq, isNull } from "drizzle-orm";
+import { verifyEvaluationEmailTrackingToken } from "../services/evaluationEmailCommunication";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -73,6 +77,26 @@ async function startServer() {
   });
   app.post("/api/scheduled/external-link-check", (req, res) => {
     void handleExternalLinkCheckJob(req, res);
+  });
+  app.get("/api/evaluation-email/open/:token.gif", async (req, res) => {
+    const transparentGif = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");
+    const emailId = verifyEvaluationEmailTrackingToken(req.params.token);
+    if (emailId) {
+      try {
+        const db = await getDb();
+        if (db) {
+          const tracked = (await db.select({ id: evaluationEmails.id, evaluationId: evaluationEmails.evaluationId }).from(evaluationEmails).where(eq(evaluationEmails.id, emailId)).limit(1))[0];
+          if (tracked) {
+            const openedAt = new Date();
+            await db.update(evaluationEmails).set({ openedAt }).where(and(eq(evaluationEmails.id, emailId), isNull(evaluationEmails.openedAt)));
+            await db.update(applications).set({ evaluationReportViewedAt: openedAt, updatedAt: openedAt }).where(and(eq(applications.id, tracked.evaluationId), isNull(applications.evaluationReportViewedAt)));
+          }
+        }
+      } catch (error) {
+        console.error("[Evaluation Email Tracking] Unable to record opening", error);
+      }
+    }
+    res.status(200).set({ "Content-Type": "image/gif", "Cache-Control": "no-store, no-cache, must-revalidate, private", Pragma: "no-cache" }).end(transparentGif);
   });
   // Initialize Cron Jobs
   try {

@@ -408,3 +408,20 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer des modèles de messages standardisés et personnalisables par type de procédure.
 - [x] Empêcher toute diffusion automatique de bilan sans validation humaine explicite et journalisée.
 - [x] Tester les aperçus, modèles, verrouillages de diffusion et parcours administrateur avant publication.
+
+## Test interne, signature et suivi d’ouverture des bilans
+- [x] Cartographier l’envoi de bilan, les conseillers responsables et les métadonnées de consultation existantes.
+- [x] Ajouter un envoi de test réservé aux adresses internes autorisées, sans modifier le statut du dossier ni notifier le client.
+- [x] Ajouter une signature dynamique du conseiller responsable à chaque modèle de bilan et e-mail final.
+- [x] Ajouter un suivi d’ouverture de l’e-mail de bilan avec image de suivi signée, journalisation et affichage dans le back-office.
+- [x] Désactiver ou aligner tout flux legacy qui enverrait un bilan sans validation humaine et planification explicite.
+- [x] Créer, valider et livrer une compétence réutilisable de communication de dossier contrôlée.
+- [x] Tester les accès, les envois, les pixels de lecture et les régressions avant publication.
+
+## Test interne, signature et suivi d’ouverture des bilans
+- [x] Cartographier l’envoi de bilan, les conseillers responsables et les métadonnées de consultation existantes.
+- [x] Ajouter un envoi de test réservé aux adresses internes autorisées, sans modifier le statut du dossier ni notifier le client.
+- [x] Ajouter une signature dynamique du conseiller responsable à chaque modèle de bilan et e-mail final.
+- [x] Ajouter un suivi d’ouverture de l’e-mail de bilan avec image de suivi signée, journalisation et affichage dans le back-office.
+- [x] Créer, valider et livrer une compétence réutilisable de communication de dossier contrôlée.
+- [x] Tester les accès, les envois, les pixels de lecture et les régressions avant publication.

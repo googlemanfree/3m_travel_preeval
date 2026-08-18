@@ -9,6 +9,7 @@ import {
   candidateMessages,
   consultationRequests,
   contactMessages,
+  evaluationEmails,
   flightBookingRequests,
   insuranceRequests,
   profileEvaluations,
@@ -26,6 +27,7 @@ import { storageGetSignedUrl } from "../storage";
 import { evaluationDestinations, generateDestinationEvaluationDraft } from "../services/destinationEvaluationDraft";
 import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
+import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -354,14 +356,14 @@ export const unifiedRequestsRouter = router({
   previewEvaluationDeliveryEmail: publicProcedure
     .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
     .query(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
+      const admin = await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
       if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
-      const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
+      const html = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
       return {
         recipient: application.email,
         subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`,
@@ -369,6 +371,31 @@ export const unifiedRequestsRouter = router({
         attachmentLabel: `Bilan d’évaluation — dossier ${application.dossierNumber}.pdf`,
         requiresManualValidation: true,
       };
+    }),
+
+  sendEvaluationTestEmail: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive(), testEmail: z.string().trim().email().max(320) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [applicationRows, internalRecipientRows] = await Promise.all([
+        db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1),
+        db.select().from(adminAccounts).where(and(eq(adminAccounts.email, input.testEmail), eq(adminAccounts.status, "active"))).limit(1),
+      ]);
+      const application = applicationRows[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier d’évaluation introuvable." });
+      if (!internalRecipientRows[0]) throw new TRPCError({ code: "FORBIDDEN", message: "L’adresse de test doit appartenir à un administrateur interne actif." });
+      const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
+      const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
+      const html = `<div style="border:2px solid #f59e0b;background:#fffbeb;padding:12px;margin-bottom:20px;font-family:Arial,sans-serif"><strong>TEST INTERNE — NE PAS DIFFUSER AU CLIENT</strong><br/>Prévisualisation du bilan destiné à ${escapeHtmlText(application.fullName)} (${escapeHtmlText(application.email)}).</div>${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Le bilan final sera disponible dans l’<a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      await sendEmail({ to: input.testEmail, subject: `[TEST INTERNE] ${application.evaluationDeliverySubject || `Bilan d’évaluation — Dossier ${application.dossierNumber}`}`, html });
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) {
+        const request = await ensureManagedRequest(source);
+        await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_email_test_sent", comment: `E-mail de test envoyé à l’adresse interne ${input.testEmail}. Aucun envoi candidat n’a été déclenché.`, actorAdminAccountId: admin.id });
+      }
+      return { success: true, message: `E-mail de test envoyé à ${input.testEmail}. Le client n’a pas été notifié.` };
     }),
 
   generateDestinationEvaluationDraft: publicProcedure
@@ -508,8 +535,17 @@ export const unifiedRequestsRouter = router({
       const finalPdf = await createFinalEvaluationPdf(application, versionNumber, versionAuditTrail);
       const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
       const messageHtml = application.evaluationDeliveryMessage ? sanitizeRichTextHtml(application.evaluationDeliveryMessage) : "";
-      const availabilityHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>`;
-      await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
+      const emailBaseHtml = `${messageHtml ? `<section style="margin-bottom:24px">${messageHtml}</section>` : ""}${generateEvaluationReportHTML(application)}<p style="margin-top:24px">Votre bilan finalisé est également disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier pour consulter les pièces demandées, les échanges et les prochaines étapes.</p>${buildAdvisorSignatureHtml(application.adminAssignedTo || admin.fullName)}`;
+      const insertedTracking = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: application.visaType || "Évaluation de profil", emailType: "admissibility_report", scheduledAt: new Date(), status: "pending", reportContent: emailBaseHtml, secureLink: candidateSpaceUrl });
+      const trackingEmailId = Number((insertedTracking as any)[0]?.insertId ?? 0);
+      const availabilityHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
+      try {
+        await sendEmail({ to: application.email, subject: application.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${application.dossierNumber}`, html: availabilityHtml });
+        if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: availabilityHtml }).where(eq(evaluationEmails.id, trackingEmailId));
+      } catch (error) {
+        if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "failed", failureReason: error instanceof Error ? error.message : String(error) }).where(eq(evaluationEmails.id, trackingEmailId));
+        throw error;
+      }
       const now = new Date();
       await db.update(applications).set({ dossierStatus: "bilan_envoye", evaluationCompletedAt: now, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, updatedAt: now }).where(eq(applications.id, application.id));
       if (latestVersion) {

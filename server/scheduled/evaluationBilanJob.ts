@@ -1,16 +1,17 @@
 import { Request, Response } from "express";
 import { getDb } from "../db";
-import { applications } from "../../drizzle/schema";
+import { applications, evaluationEmails } from "../../drizzle/schema";
 import { clientNotifications, evaluationBilanVersions } from "../../drizzle/caseTrackingSchema";
 import { desc, eq } from "drizzle-orm";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { buildCandidateSpaceAccessUrl, buildEvaluationReportUrl } from "../services/candidateAccessLink";
+import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml } from "../services/evaluationEmailCommunication";
 
-export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumber: string): string {
+export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumber: string, advisorName?: string | null): string {
   const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
-  return `${reportHtml}<p style="margin-top:24px">Votre bilan finalisé est aussi disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier. Après connexion, vous serez redirigé vers votre espace en toute sécurité.</p>`;
+  return `${reportHtml}<p style="margin-top:24px">Votre bilan finalisé est aussi disponible au format PDF dans votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a>.</p><p style="font-size:13px;color:#64748b">Connectez-vous avec l’adresse e-mail associée à votre dossier. Après connexion, vous serez redirigé vers votre espace en toute sécurité.</p>${buildAdvisorSignatureHtml(advisorName)}`;
 }
 
 export function buildEvaluationReminderEmailHtml(fullName: string, dossierNumber: string): string {
@@ -59,17 +60,26 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
     let reminderCount = 0;
 
     for (const app of apps) {
+      let trackingEmailId = 0;
+      let emailDispatched = false;
       try {
         const reportHtml = generateEvaluationReportHTML(app);
         const versionAuditTrail = await db.select({ id: evaluationBilanVersions.id, versionNumber: evaluationBilanVersions.versionNumber, createdAt: evaluationBilanVersions.createdAt, createdByAdminAccountId: evaluationBilanVersions.createdByAdminAccountId, approvalStatus: evaluationBilanVersions.approvalStatus, approvedAt: evaluationBilanVersions.approvedAt, approvedByAdminId: evaluationBilanVersions.approvedByAdminAccountId, approvalComment: evaluationBilanVersions.approvalComment, sentAt: evaluationBilanVersions.sentAt }).from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, app.id)).orderBy(desc(evaluationBilanVersions.versionNumber)).limit(30);
         const latestVersion = versionAuditTrail[0];
         const versionNumber = latestVersion?.versionNumber ?? 1;
         const finalPdf = await createFinalEvaluationPdf(app, versionNumber, versionAuditTrail);
+        const emailBaseHtml = buildEvaluationDeliveryEmailHtml(reportHtml, app.dossierNumber, app.adminAssignedTo);
+        const trackingInsert = await db.insert(evaluationEmails).values({ evaluationId: app.id, candidateEmail: app.email, candidateName: app.fullName, destinationCountry: app.destination || "Mobilité internationale", visaType: app.visaType || "Évaluation de profil", emailType: "admissibility_report", scheduledAt: now, status: "pending", reportContent: emailBaseHtml, secureLink: buildCandidateSpaceAccessUrl(app.dossierNumber) });
+        trackingEmailId = Number((trackingInsert as any)[0]?.insertId ?? 0);
+        const emailHtml = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(emailBaseHtml, trackingEmailId) : emailBaseHtml;
         await sendEmail({
           to: app.email,
           subject: app.evaluationDeliverySubject || `Votre Bilan d'Évaluation - Dossier N° ${app.dossierNumber}`,
-          html: buildEvaluationDeliveryEmailHtml(reportHtml, app.dossierNumber),
+          html: emailHtml,
         });
+        emailDispatched = true;
+
+        if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: new Date(), reportContent: emailHtml }).where(eq(evaluationEmails.id, trackingEmailId));
 
         const sentAt = new Date();
         await db.update(applications).set({ dossierStatus: "en_attente_paiement", evaluationCompletedAt: sentAt, evaluationDeliveryStatus: "sent", evaluationScheduledAt: null, evaluationReportPdfKey: finalPdf.key, evaluationReportPdfUrl: finalPdf.url, evaluationReportUrl: buildEvaluationReportUrl(app.dossierNumber) }).where(eq(applications.id, app.id));
@@ -85,6 +95,9 @@ export async function handleEvaluationBilanJob(req: Request, res: Response): Pro
         console.log(`[Evaluation Bilan Job] OK Bilan report sent for ${app.dossierNumber}`);
         successCount++;
       } catch (err) {
+        if (!emailDispatched && trackingEmailId > 0) {
+          await db.update(evaluationEmails).set({ status: "failed", failureReason: err instanceof Error ? err.message : String(err) }).where(eq(evaluationEmails.id, trackingEmailId));
+        }
         console.error(`[Evaluation Bilan Job] ERROR for ${app.dossierNumber}:`, err);
         errorCount++;
       }
