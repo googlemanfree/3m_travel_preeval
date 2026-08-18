@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -36,6 +36,9 @@ export function AdminDocumentsManagement() {
   const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || "" : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "client" | "candidate">("all");
+  const [documentTypeFilter, setDocumentTypeFilter] = useState("all");
+  const [dossierFilter, setDossierFilter] = useState("all");
   const [classificationFilter, setClassificationFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"uploadedAt" | "documentName" | "verificationStatus" | "aiClassification">("uploadedAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -46,6 +49,7 @@ export function AdminDocumentsManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [markerAnnotations, setMarkerAnnotations] = useState<Record<string, string>>({});
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
+  const [selectedDocumentKeys, setSelectedDocumentKeys] = useState<string[]>([]);
 
   const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
   const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
@@ -218,9 +222,47 @@ export function AdminDocumentsManagement() {
 
     const matchesStatus = filterStatus === "all" || d.verificationStatus === filterStatus;
     const matchesClassification = classificationFilter === "all" || classificationLabel === classificationFilter;
+    const matchesSource = sourceFilter === "all" || d.source === sourceFilter;
+    const matchesType = documentTypeFilter === "all" || d.documentType === documentTypeFilter;
+    const matchesDossier = dossierFilter === "all" || d.dossierNumber === dossierFilter;
 
-    return matchesSearch && matchesStatus && matchesClassification;
+    return matchesSearch && matchesStatus && matchesClassification && matchesSource && matchesType && matchesDossier;
   });
+
+  const documentTypes = Array.from(new Set(documents.map((document) => document.documentType).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr"));
+  const dossierSummaries = Array.from(documents.reduce((summary, document) => {
+    const key = document.dossierNumber || "N/A";
+    const current = summary.get(key) || { dossierNumber: key, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0 };
+    current.total += 1;
+    current.approved += document.verificationStatus === "approved" ? 1 : 0;
+    current.pending += document.verificationStatus === "pending" ? 1 : 0;
+    current.rejected += document.verificationStatus === "rejected" ? 1 : 0;
+    summary.set(key, current);
+    return summary;
+  }, new Map<string, { dossierNumber: string; candidateName: string; total: number; approved: number; pending: number; rejected: number }>()).values()).sort((left, right) => right.pending - left.pending || left.dossierNumber.localeCompare(right.dossierNumber, "fr"));
+  const selectedDocuments = filteredDocuments.filter((document) => selectedDocumentKeys.includes(`${document.source}:${document.id}`));
+
+  const toggleDocumentSelection = (document: Document) => {
+    const key = `${document.source}:${document.id}`;
+    setSelectedDocumentKeys((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
+  };
+
+  const handleBulkStatus = async (status: "approved" | "pending") => {
+    if (!selectedDocuments.length) return;
+    const label = status === "approved" ? "approuver" : "remettre en attente";
+    if (!window.confirm(`Confirmer l’action « ${label} » sur ${selectedDocuments.length} document(s) ? Chaque candidat concerné sera notifié.`)) return;
+    setIsLoading(true);
+    try {
+      await Promise.all(selectedDocuments.map((document) => updateDocumentStatusMutation.mutateAsync({ sessionToken, documentId: document.id, source: document.source, status, comment: status === "pending" ? "Document remis en attente de vérification par l’administration." : undefined })));
+      setSelectedDocumentKeys([]);
+      await refetch();
+      toast.success(`${selectedDocuments.length} document(s) mis à jour`, { description: "Les statuts et notifications ont été synchronisés." });
+    } catch (error) {
+      toast.error("Action groupée incomplète", { description: error instanceof Error ? error.message : "Veuillez vérifier les documents concernés." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -370,12 +412,13 @@ export function AdminDocumentsManagement() {
   const approvedDocuments = documents.filter((d) => d.verificationStatus === "approved").length;
   const pendingDocuments = documents.filter((d) => d.verificationStatus === "pending").length;
   const rejectedDocuments = documents.filter((d) => d.verificationStatus === "rejected").length;
+  const completeDossiers = dossierSummaries.filter((dossier) => dossier.total > 0 && dossier.pending === 0 && dossier.rejected === 0).length;
 
   return (
     <>
       <div className="space-y-6">
         {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Reçus</CardTitle>
@@ -415,7 +458,31 @@ export function AdminDocumentsManagement() {
               <p className="text-xs text-gray-500 mt-1">non conformes</p>
             </CardContent>
           </Card>
+          <Card className="border-sky-100 bg-sky-50/40">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-slate-700">Dossiers complets</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-sky-700">{completeDossiers}/{dossierSummaries.length}</div>
+              <p className="text-xs text-slate-500 mt-1">sans pièce en attente</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {dossierSummaries.length > 0 && <Card className="border-slate-200">
+          <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Layers3 className="h-4 w-4 text-blue-600" />Vue dossiers et complétude</CardTitle><CardDescription>Sélectionnez un dossier pour concentrer le contrôle documentaire.</CardDescription></CardHeader>
+          <CardContent className="flex gap-3 overflow-x-auto pb-2">
+            {dossierSummaries.slice(0, 12).map((dossier) => {
+              const progress = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0;
+              return <button key={dossier.dossierNumber} type="button" onClick={() => setDossierFilter((current) => current === dossier.dossierNumber ? "all" : dossier.dossierNumber)} className={`min-w-52 rounded-xl border p-3 text-left transition ${dossierFilter === dossier.dossierNumber ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-300"}`}>
+                <div className="flex items-center justify-between gap-2"><span className="font-mono text-xs font-semibold text-blue-700">{dossier.dossierNumber}</span><span className="text-xs text-slate-500">{progress}%</span></div>
+                <p className="mt-1 truncate text-sm font-medium text-slate-900">{dossier.candidateName}</p>
+                <div className="mt-2 h-1.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-blue-600" style={{ width: `${progress}%` }} /></div>
+                <p className="mt-2 text-xs text-slate-500"><span className="text-emerald-700">{dossier.approved} validé(s)</span> · <span className="text-amber-700">{dossier.pending} attente</span>{dossier.rejected ? <span className="text-red-700"> · {dossier.rejected} rejeté(s)</span> : null}</p>
+              </button>;
+            })}
+          </CardContent>
+        </Card>}
 
         {/* Tableau des documents */}
         <Card>
@@ -471,6 +538,12 @@ export function AdminDocumentsManagement() {
                   <option key={classification} value={classification}>{classification}</option>
                 ))}
               </select>
+              <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as typeof sourceFilter)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" aria-label="Filtrer par origine">
+                <option value="all">Toutes les origines</option><option value="client">Dépôt dossier</option><option value="candidate">Espace candidat</option>
+              </select>
+              <select value={documentTypeFilter} onChange={(e) => setDocumentTypeFilter(e.target.value)} className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" aria-label="Filtrer par type de document">
+                <option value="all">Tous les types</option>{documentTypes.map((type) => <option key={type} value={type}>{getDocumentTypeLabel(type)}</option>)}
+              </select>
               <div className="flex gap-2 md:col-span-2 xl:col-span-4">
                 <select
                   value={sortBy}
@@ -496,9 +569,10 @@ export function AdminDocumentsManagement() {
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Sparkles className="w-3.5 h-3.5 text-violet-500" />
-              <span>{filteredDocuments.length} document(s) affiché(s) avec classification IA recherchable.</span>
+              <Filter className="w-3.5 h-3.5 text-violet-500" />
+              <span>{filteredDocuments.length} document(s) affiché(s) avec classification IA, source, type et statut recherchables.</span>
             </div>
+            {selectedDocuments.length > 0 && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3"><div className="flex items-center gap-2 text-sm text-blue-950"><ShieldCheck className="h-4 w-4" /><strong>{selectedDocuments.length}</strong> document(s) sélectionné(s)</div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSelectedDocumentKeys([])}>Désélectionner</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("pending")} disabled={isLoading} className="gap-1 bg-amber-600 hover:bg-amber-700"><RotateCcw className="h-3.5 w-3.5" />En attente</Button><Button type="button" size="sm" onClick={() => handleBulkStatus("approved")} disabled={isLoading} className="gap-1 bg-emerald-600 hover:bg-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Tout valider</Button></div></div>}
 
             {/* Tableau */}
             {isLoadingDocs ? (
@@ -515,6 +589,7 @@ export function AdminDocumentsManagement() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
+                      <th className="w-10 py-3 px-2"><input type="checkbox" aria-label="Sélectionner tous les documents affichés" checked={filteredDocuments.length > 0 && selectedDocuments.length === filteredDocuments.length} onChange={(event) => setSelectedDocumentKeys(event.target.checked ? filteredDocuments.map((document) => `${document.source}:${document.id}`) : [])} /></th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Dossier</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Candidat</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-700">Miniature</th>
@@ -529,6 +604,7 @@ export function AdminDocumentsManagement() {
                   <tbody>
                     {filteredDocuments.map((doc) => (
                       <tr key={doc.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-2"><input type="checkbox" aria-label={`Sélectionner ${doc.documentName}`} checked={selectedDocumentKeys.includes(`${doc.source}:${doc.id}`)} onChange={() => toggleDocumentSelection(doc)} /></td>
                         <td className="py-3 px-4 font-mono text-blue-600">{doc.dossierNumber}</td>
                         <td className="py-3 px-4 font-medium text-gray-900">{doc.candidateName}</td>
                         <td className="py-3 px-4">
@@ -590,6 +666,7 @@ export function AdminDocumentsManagement() {
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
+                            <Button onClick={() => handleDownloadDocument(doc.documentUrl, doc.documentName)} variant="ghost" size="sm" title="Télécharger" className="text-slate-600 hover:text-slate-900 bg-slate-50"><Download className="w-4 h-4" /></Button>
                             <div className="flex items-center gap-1">
                               {doc.verificationStatus !== "approved" && (
                                 <Button

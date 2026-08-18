@@ -367,3 +367,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Nettoyer le collage depuis Microsoft Word en supprimant les styles, balises et attributs superflus avant insertion.
 - [x] Créer, valider et livrer une compétence réutilisable du workflow d’édition riche sécurisé.
 - [x] Tester les modèles, l’assistance IA, le collage Word, les contrôles d’accès et les régressions avant publication.
+
+## Gestionnaire de fichiers administratif
+- [x] Inventorier les vues documentaires admin, les statuts, les actions de validation et la synchronisation client existante.
+- [x] Ajouter recherche, filtres par statut/type/source et compteur de complétude dans le gestionnaire de fichiers.
+- [x] Améliorer la prévisualisation, le téléchargement, la validation/refus avec commentaire, les annotations et l’envoi au candidat.
+- [x] Tester les autorisations, les transitions de statut, les documents PDF/images et les notifications synchronisées avant publication.
+- [ ] Ajouter une chaîne explicite de versions de remplacement pour relier l’ancien document à la nouvelle soumission du candidat.
+- [ ] Générer une attestation globale de remise lorsque tous les documents requis sont validés et la rendre disponible côté client.
