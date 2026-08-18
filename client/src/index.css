@@ -525,3 +525,17 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
     bottom: 1.5rem;
   }
 }
+
+/* Dynamic Font Size scaling based on accessibility preferences */
+html {
+  font-size: 16px;
+}
+html.text-size-standard {
+  font-size: 16px;
+}
+html.text-size-large {
+  font-size: 18px;
+}
+html.text-size-xlarge {
+  font-size: 20px;
+}

@@ -1,9 +1,11 @@
 import React from "react";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
+import { useFontSizePreferences } from "@/contexts/FontSizePreferencesContext";
 import { Button } from "@/components/ui/button";
 
 export default function Accessibility() {
   const { preference, setPreference } = useAnimationPreferences();
+  const { fontSize, setFontSize } = useFontSizePreferences();
 
   return (
     <main className="min-h-screen bg-gray-50 pb-16">
@@ -15,10 +17,56 @@ export default function Accessibility() {
       </section>
 
       <section className="container max-w-4xl px-4 py-12 space-y-8">
+        {/* Section Taille de la police */}
+        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900">Taille de la police</h2>
+          <p className="leading-relaxed text-gray-700">
+            Ajustez la taille du texte de l’ensemble du site pour un confort de lecture optimal selon vos besoins. Vos préférences sont enregistrées automatiquement sur votre appareil.
+          </p>
+
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-6 space-y-4">
+            <h3 className="font-semibold text-gray-900 text-lg">Échelle typographique</h3>
+            <p className="text-sm text-gray-600">
+              Sélectionnez la taille d’affichage du texte :
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <Button
+                type="button"
+                variant={fontSize === "standard" ? "default" : "outline"}
+                onClick={() => setFontSize("standard")}
+                className="justify-center text-base"
+              >
+                Standard (100%)
+              </Button>
+              <Button
+                type="button"
+                variant={fontSize === "large" ? "default" : "outline"}
+                onClick={() => setFontSize("large")}
+                className="justify-center text-lg font-medium"
+              >
+                Grand (112.5%)
+              </Button>
+              <Button
+                type="button"
+                variant={fontSize === "xlarge" ? "default" : "outline"}
+                onClick={() => setFontSize("xlarge")}
+                className="justify-center text-xl font-semibold"
+              >
+                Très grand (125%)
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 pt-1">
+              Taille active : <span className="font-medium text-gray-800 uppercase">{fontSize}</span>.
+            </p>
+          </div>
+        </div>
+
+        {/* Section Animations */}
         <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">Préférences d’animation et de mouvement</h2>
           <p className="leading-relaxed text-gray-700">
-            Vous pouvez à tout moment désactiver ou alléger les animations de l’interface, notamment la barre de progression de chargement en haut de l’écran. Vos préférences sont enregistrées sur cet appareil.
+            Vous pouvez à tout moment désactiver ou alléger les animations de l’interface, notamment la barre de progression de chargement en haut de l’écran.
           </p>
 
           <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-6 space-y-4">
@@ -54,7 +102,7 @@ export default function Accessibility() {
               </Button>
             </div>
             <p className="text-xs text-gray-500 pt-1">
-              Statut actuel : <span className="font-medium text-gray-800 uppercase">{preference}</span>. En mode désactivé, la barre reste visible mais sans animation continue.
+              Statut actuel : <span className="font-medium text-gray-800 uppercase">{preference}</span>.
             </p>
           </div>
         </div>

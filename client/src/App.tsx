@@ -7,6 +7,7 @@ import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
+import { FontSizePreferencesProvider } from "./contexts/FontSizePreferencesContext";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
@@ -433,7 +434,8 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light" switchable>
         <AnimationPreferencesProvider>
-          <TooltipProvider>
+          <FontSizePreferencesProvider>
+            <TooltipProvider>
           <MultiServiceCartProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
@@ -457,6 +459,7 @@ function App() {
           )}
           </MultiServiceCartProvider>
           </TooltipProvider>
+          </FontSizePreferencesProvider>
         </AnimationPreferencesProvider>
       </ThemeProvider>
     </ErrorBoundary>
