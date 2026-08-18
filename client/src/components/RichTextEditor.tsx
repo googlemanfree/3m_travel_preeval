@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Eraser, Eye, Heading3, Italic, Link2, List, ListOrdered, Table2, Underline } from "lucide-react";
+import { Bold, BookOpenText, Eraser, Eye, Heading3, Italic, Link2, List, ListOrdered, Sparkles, Table2, Underline } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export function richTextToPlainText(value: string) {
   if (typeof document === "undefined") return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -53,14 +55,20 @@ type Props = {
   disabled?: boolean;
   maxCharacters?: number;
   className?: string;
+  sessionToken?: string;
+  templateScope?: "candidate_message" | "evaluation_message" | "general";
 };
 
-export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez votre contenu…", minHeight = "11rem", disabled = false, maxCharacters = 8000, className }: Props) {
+export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez votre contenu…", minHeight = "11rem", disabled = false, maxCharacters = 8000, className, sessionToken, templateScope = "general" }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [focused, setFocused] = useState(false);
   const [preview, setPreview] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ contentHtml: string; changeSummary: string } | null>(null);
   const textLength = richTextToPlainText(value).length;
   const editorValue = /<\/?[a-z][^>]*>/i.test(value) ? value : value.replace(/\n/g, "<br>");
+  const templates = trpc.richTextTemplates.list.useQuery({ sessionToken: sessionToken ?? "", scope: templateScope }, { enabled: Boolean(sessionToken) });
+  const createTemplate = trpc.richTextTemplates.create.useMutation({ onSuccess: () => { void templates.refetch(); toast.success("Modèle enregistré."); } });
+  const improve = trpc.richTextTemplates.improve.useMutation({ onSuccess: (result) => setSuggestion(result), onError: (error) => toast.error(error.message || "La reformulation IA est indisponible.") });
 
   useEffect(() => {
     if (!editorRef.current || focused || editorRef.current.innerHTML === editorValue) return;
@@ -86,6 +94,35 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
     command("createLink", href);
   };
 
+  const insertTemplate = (template: { contentHtml?: string }) => {
+    if (!template.contentHtml) return;
+    const prefix = richTextToPlainText(value) ? "<p><br></p>" : "";
+    onChange(sanitizeRichText(`${editorValue}${prefix}${template.contentHtml}`));
+    toast.success("Modèle inséré. Vous pouvez le personnaliser avant envoi.");
+  };
+
+  const saveTemplate = () => {
+    if (!sessionToken) return;
+    const name = window.prompt("Nom du modèle :");
+    if (!name?.trim()) return;
+    createTemplate.mutate({ sessionToken, name: name.trim(), scope: templateScope, contentHtml: editorValue });
+  };
+
+  const requestImprovement = () => {
+    if (!sessionToken || textLength < 3) return;
+    improve.mutate({ sessionToken, scope: templateScope, contentHtml: editorValue });
+  };
+
+  const pasteClean = (event: React.ClipboardEvent<HTMLDivElement>) => {
+    const html = event.clipboardData.getData("text/html");
+    const text = event.clipboardData.getData("text/plain");
+    event.preventDefault();
+    const cleanHtml = html ? sanitizeRichText(html) : text.split(/\r?\n/).map((line) => `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") || "<br>"}</p>`).join("");
+    document.execCommand("insertHTML", false, cleanHtml);
+    emit();
+    toast.success("Collage Word nettoyé : styles et balises superflus supprimés.");
+  };
+
   return <div className={cn("space-y-2", className)}>
     {label && <Label>{label}</Label>}
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
@@ -101,8 +138,12 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
         <Tool label="Insérer un tableau" onClick={() => command("insertHTML", "<table><tbody><tr><th>Intitulé</th><th>Détail</th></tr><tr><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table>")} disabled={disabled}><Table2 className="h-4 w-4" /></Tool>
         <Tool label="Effacer la mise en forme" onClick={() => command("removeFormat")} disabled={disabled}><Eraser className="h-4 w-4" /></Tool>
         <span className="mx-1 h-5 w-px bg-slate-300" />
+        {sessionToken && <Button type="button" variant="ghost" size="sm" onClick={saveTemplate} disabled={disabled || textLength < 3 || createTemplate.isPending} className="gap-1"><BookOpenText className="h-4 w-4" />Modèle</Button>}
+        {sessionToken && <Button type="button" variant="ghost" size="sm" onClick={requestImprovement} disabled={disabled || textLength < 3 || improve.isPending} className="gap-1"><Sparkles className="h-4 w-4" />{improve.isPending ? "Correction…" : "Assistance IA"}</Button>}
         <Button type="button" variant={preview ? "secondary" : "ghost"} size="sm" onClick={() => setPreview((current) => !current)} className="gap-1"><Eye className="h-4 w-4" />{preview ? "Éditer" : "Aperçu"}</Button>
       </div>
+      {sessionToken && templates.data?.length ? <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-white px-3 py-2"><span className="text-xs font-medium text-slate-600">Modèles :</span>{templates.data.map((template) => <Button key={template.id} type="button" size="sm" variant="outline" className="h-8" onClick={() => insertTemplate(template)}>{template.name}</Button>)}</div> : null}
+      {suggestion && <div className="border-b border-violet-200 bg-violet-50 p-3 text-sm text-violet-950"><div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-1 font-semibold"><Sparkles className="h-4 w-4" />Proposition de correction IA</p><p className="mt-1 text-xs">{suggestion.changeSummary}</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSuggestion(null)}>Ignorer</Button><Button type="button" size="sm" onClick={() => { onChange(suggestion.contentHtml); setSuggestion(null); toast.success("Proposition IA appliquée. Relisez avant envoi."); }}>Appliquer</Button></div></div></div>}
       {preview ? <div style={{ minHeight }} className="prose prose-sm max-w-none p-4 text-slate-800 prose-a:text-blue-700 prose-table:w-full prose-table:border-collapse prose-th:border prose-th:border-slate-300 prose-th:bg-slate-100 prose-th:p-2 prose-td:border prose-td:border-slate-300 prose-td:p-2" dangerouslySetInnerHTML={{ __html: sanitizeRichText(value) || `<p class="text-slate-400">${placeholder}</p>` }} /> : <div
           ref={editorRef}
           contentEditable={!disabled}
@@ -114,6 +155,7 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); emit(); }}
           onInput={emit}
+          onPaste={pasteClean}
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "b") { event.preventDefault(); command("bold"); }
             if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") { event.preventDefault(); command("italic"); }

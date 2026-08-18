@@ -252,6 +252,8 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
               placeholder="Rédigez votre message avec la mise en forme souhaitée…"
               minHeight="10rem"
               maxCharacters={8000}
+              sessionToken={sessionToken}
+              templateScope="candidate_message"
             />
             <div>
               <Label>Pièce jointe (facultatif)</Label>

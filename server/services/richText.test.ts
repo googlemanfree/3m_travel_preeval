@@ -16,6 +16,14 @@ describe("richText", () => {
     expect(safe).not.toContain("javascript:");
   });
 
+  it("nettoie les balises et styles superflus issus de Microsoft Word", () => {
+    const safe = sanitizeRichTextHtml('<p class="MsoNormal" style="margin:0"><span style="font-size:18pt">Texte <o:p>Word</o:p></span></p>');
+    expect(safe).toContain("Texte Word");
+    expect(safe).not.toContain("MsoNormal");
+    expect(safe).not.toContain("style=");
+    expect(safe).not.toContain("o:p");
+  });
+
   it("produit une version texte compatible avec notifications et historique", () => {
     expect(richTextToPlainText("<p>Bonjour <strong>candidat</strong></p><ul><li>Document</li></ul>")).toContain("Bonjour candidat");
   });

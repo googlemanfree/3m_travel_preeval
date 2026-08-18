@@ -2,6 +2,7 @@ import { boolean, date, decimal, index, int, json, mysqlEnum, mysqlTable, text, 
 export * from "./caseTrackingSchema";
 export * from "./evisaCatalogueSchema";
 export * from "./routeHealthSchema";
+export * from "./richTextSchema";
 
 /**
  * Core user table backing auth flow.

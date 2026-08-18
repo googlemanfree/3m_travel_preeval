@@ -360,3 +360,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Assainir le HTML avant stockage et conserver une version texte compatible avec les e-mails et l’historique.
 - [x] Intégrer l’éditeur aux messages administrateur et au contenu d’accompagnement des évaluations, tout en conservant les listes structurées e‑Visa.
 - [x] Valider l’accessibilité clavier, la prévisualisation, les exports PDF et les parcours administrateur avant publication.
+
+## Éditeur Word enrichi et compétence réutilisable
+- [x] Ajouter une bibliothèque de modèles pré-formatés permettant la création, la sauvegarde et l’insertion rapide de contenus administratifs.
+- [x] Ajouter une assistance IA pour corriger l’orthographe et améliorer la formulation, avec application uniquement après validation explicite.
+- [x] Nettoyer le collage depuis Microsoft Word en supprimant les styles, balises et attributs superflus avant insertion.
+- [x] Créer, valider et livrer une compétence réutilisable du workflow d’édition riche sécurisé.
+- [x] Tester les modèles, l’assistance IA, le collage Word, les contrôles d’accès et les régressions avant publication.
