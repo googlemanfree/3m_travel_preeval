@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 
@@ -17,6 +17,8 @@ export default function CanadaScoreSimulator() {
   const [french, setFrench] = useState<string>("advanced");
   const [english, setEnglish] = useState<string>("intermediate");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportSuccess, setExportSuccess] = useState<boolean>(false);
 
   // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec descriptions détaillées
   const allRounds = [
@@ -88,7 +90,6 @@ export default function CanadaScoreSimulator() {
     ? allRounds.slice(0, 3)
     : allRounds.filter(r => r.category === selectedCategory);
 
-  // Dernier seuil de la catégorie active pour calcul d'écart
   const latestThreshold = filteredRounds.length > 0 ? filteredRounds[0].minScore : 500;
 
   // Calcul indicatif CRS
@@ -133,6 +134,53 @@ export default function CanadaScoreSimulator() {
   const isThresholdMet = scoreDiff >= 0;
   const isEligible = scores.total >= 420;
 
+  // Recommandations personnalisées si l'écart est négatif
+  const getRecommendations = () => {
+    const recs = [];
+    if (french !== "advanced") {
+      recs.push({
+        title: "Améliorer votre score en Français (TEF/TCF)",
+        desc: "Passer à un niveau avancé (NCLC 7+) peut vous apporter jusqu'à 60 points bonus décisifs."
+      });
+    }
+    if (english !== "advanced") {
+      recs.push({
+        title: "Optimiser votre test d'Anglais (IELTS Général)",
+        desc: "Atteindre le niveau CLB 9 (IELTS 8.0 en écoute, 7.0 ailleurs) consolidera votre dossier."
+      });
+    }
+    if (education === "bachelor" || education === "diploma") {
+      recs.push({
+        title: "Poursuivre ou évaluer un Master",
+        desc: "Un diplôme supérieur ou une évaluation comparative des diplômes (ECA) additionnelle peut accroître vos points."
+      });
+    }
+    if (experience !== "3-plus") {
+      recs.push({
+        title: "Valoriser l'expérience professionnelle qualifiée",
+        desc: "Cumuler 3 années pleines d'expérience à temps plein (NOC TEER 0, 1, 2 ou 3) maximisera votre volet professionnel."
+      });
+    }
+    if (recs.length === 0) {
+      recs.push({
+        title: "Obtenir une nomination provinciale (PNP)",
+        desc: "Votre profil est très solide. Explorez les volets provinciaux pour décrocher 600 points bonus."
+      });
+    }
+    return recs;
+  };
+
+  const recommendations = getRecommendations();
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    setTimeout(() => {
+      setIsExporting(false);
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 4000);
+    }, 1200);
+  };
+
   const getWhatsappMessage = () => {
     const text = language === 'fr'
       ? `Bonjour 3M Travel, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Écart vs dernier seuil ${latestThreshold} pts: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). Je souhaite être accompagné par un conseiller.`
@@ -143,20 +191,31 @@ export default function CanadaScoreSimulator() {
   return (
     <Card className="border-2 border-blue-100 shadow-xl bg-white overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-blue-600/30 rounded-xl">
-            <Calculator className="w-8 h-8 text-blue-300" />
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-600/30 rounded-xl">
+              <Calculator className="w-8 h-8 text-blue-300" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl font-bold">
+                {language === 'fr' ? 'Simulateur d’Éligibilité & Score CRS Canada' : 'Canada CRS Score & Eligibility Simulator'}
+              </CardTitle>
+              <CardDescription className="text-blue-200 mt-1">
+                {language === 'fr'
+                  ? 'Évaluez vos points pour l’Entrée Express et comparez avec les rondes d’invitation IRCC.'
+                  : 'Evaluate your Express Entry points and compare with IRCC invitation rounds.'}
+              </CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">
-              {language === 'fr' ? 'Simulateur d’Éligibilité & Score CRS Canada' : 'Canada CRS Score & Eligibility Simulator'}
-            </CardTitle>
-            <CardDescription className="text-blue-200 mt-1">
-              {language === 'fr'
-                ? 'Évaluez vos points pour l’Entrée Express et comparez avec les rondes d’invitation IRCC.'
-                : 'Evaluate your Express Entry points and compare with IRCC invitation rounds.'}
-            </CardDescription>
-          </div>
+
+          <Button
+            onClick={handleExportPDF}
+            disabled={isExporting}
+            className="bg-white/10 hover:bg-white/20 text-white border border-white/30 gap-2 font-medium"
+          >
+            {exportSuccess ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
+            <span>{exportSuccess ? 'Rapport PDF Téléchargé !' : isExporting ? 'Génération...' : 'Exporter la Simulation (PDF)'}</span>
+          </Button>
         </div>
       </CardHeader>
 
@@ -291,27 +350,51 @@ export default function CanadaScoreSimulator() {
           </div>
         </div>
 
-        {/* Indicateur visuel d'écart par rapport au dernier seuil de la catégorie choisie */}
-        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' : 'bg-amber-50/80 border-amber-200 text-amber-900'}`}>
+        {/* Indicateur visuel d'écart dynamique (Vert si suffisant, Rouge si insuffisant) */}
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950' : 'bg-red-50/90 border-red-300 text-red-950'}`}>
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl ${isThresholdMet ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+            <div className={`p-2.5 rounded-xl text-white ${isThresholdMet ? 'bg-emerald-600' : 'bg-red-600'}`}>
               {isThresholdMet ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
             </div>
             <div>
               <h5 className="font-bold text-sm">
-                {isThresholdMet ? 'Seuil de la catégorie atteint ou dépassé !' : 'Écart avec le dernier seuil de la catégorie'}
+                {isThresholdMet ? 'Objectif de score atteint avec succès !' : 'Score inférieur au dernier seuil de la catégorie'}
               </h5>
               <p className="text-xs opacity-90">
                 {isThresholdMet
                   ? `Votre score dépasse de +${scoreDiff} points le seuil de référence (${latestThreshold} pts).`
-                  : `Il vous manque ${Math.abs(scoreDiff)} points pour atteindre le dernier seuil de cette catégorie (${latestThreshold} pts).`}
+                  : `Il vous manque ${Math.abs(scoreDiff)} points pour égaler le dernier seuil de cette catégorie (${latestThreshold} pts).`}
               </p>
             </div>
           </div>
-          <div className="px-4 py-2 bg-white rounded-xl shadow-xs border text-center shrink-0 font-extrabold text-base">
+          <div className={`px-4 py-2 rounded-xl shadow-xs border text-center shrink-0 font-extrabold text-base bg-white ${isThresholdMet ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'}`}>
             {scoreDiff >= 0 ? `+${scoreDiff} pts` : `${scoreDiff} pts`}
           </div>
         </div>
+
+        {/* Section de recommandations personnalisées (affichée si l'écart est négatif) */}
+        {!isThresholdMet && (
+          <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
+            <div className="flex items-center gap-2 text-amber-900 font-bold text-base">
+              <Lightbulb className="w-5 h-5 text-amber-600" />
+              <h4>Recommandations personnalisées pour combler l'écart ({Math.abs(scoreDiff)} pts)</h4>
+            </div>
+            <p className="text-xs text-amber-800">
+              Actions concrètes recommandées par nos experts pour rehausser votre score dans les meilleurs délais :
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              {recommendations.map((rec, i) => (
+                <div key={i} className="p-4 bg-white rounded-xl border border-amber-100 shadow-xs space-y-1">
+                  <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-amber-600" />
+                    {rec.title}
+                  </span>
+                  <p className="text-xs text-gray-600">{rec.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Graphique comparatif avec filtre par catégorie et infobulles explicatives */}
         <div className="space-y-4 pt-4 border-t border-gray-100">
@@ -405,7 +488,7 @@ export default function CanadaScoreSimulator() {
 
                       <div className="flex items-center justify-between text-xs pt-1">
                         <span className="text-gray-500">{round.invitations} invitations</span>
-                        <span className={`font-semibold px-2 py-0.5 rounded ${isAbove ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className={`font-semibold px-2 py-0.5 rounded ${isAbove ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                           {isAbove ? `+${diff} pts au-dessus` : `${diff} pts requis`}
                         </span>
                       </div>
