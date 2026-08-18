@@ -1,11 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import React, { useState } from "react";
 import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
@@ -51,348 +50,273 @@ export default function CanadaScoreSimulator() {
       eduPts, maxEdu: 140,
       expPts, maxExp: 70,
       langPts, maxLang: 110,
-      bonusPts, maxBonus: 45,
       total
     };
   };
 
-  const subScores = getSubScores();
-  const estimatedScore = subScores.total;
-  const isCompetitive = estimatedScore >= 450;
+  const scores = getSubScores();
+  const isEligible = scores.total >= 420;
+
+  const getWhatsappMessage = () => {
+    const text = language === 'fr'
+      ? `Bonjour 3M Travel, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Éligible: ${isEligible ? 'Oui' : 'Non'}). Je souhaite être accompagné par un conseiller.`
+      : `Hello 3M Travel, I have evaluated my profile for Canada. My estimated score is ${scores.total} points (Eligible: ${isEligible ? 'Yes' : 'No'}). I would like to get advisor support.`;
+    return encodeURIComponent(text);
+  };
 
   return (
-    <section className="py-16 bg-gradient-to-b from-slate-50 via-blue-50/30 to-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-3">
-            <Calculator className="w-4 h-4 text-blue-600" />
-            {language === "en" ? "Interactive Tool" : "Outil Interactif 3M Travel"}
+    <Card className="border-2 border-blue-100 shadow-xl bg-white overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-blue-600/30 rounded-xl">
+            <Calculator className="w-8 h-8 text-blue-300" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-[#0a2540] tracking-tight">
-            {language === "en" ? "Canada Immigration CRS Score Simulator" : "Simulateur Interactif de Score Canada (CRS)"}
-          </h2>
-          <p className="text-slate-600 mt-2 max-w-2xl mx-auto text-sm md:text-base font-medium">
-            {language === "en"
-              ? "Evaluate your estimated Express Entry score instantly and discover your eligibility for Canadian permanent residency."
-              : "Estimez instantanément vos points Entrée Express et découvrez vos chances d'éligibilité pour la résidence permanente au Canada."}
-          </p>
+          <div>
+            <CardTitle className="text-2xl font-bold">
+              {language === 'fr' ? 'Simulateur d’Éligibilité & Score CRS Canada' : 'Canada CRS Score & Eligibility Simulator'}
+            </CardTitle>
+            <CardDescription className="text-blue-200 mt-1">
+              {language === 'fr'
+                ? 'Évaluez vos points pour l’Entrée Express et déverrouillez les programmes d’immigration.'
+                : 'Evaluate your Express Entry points and unlock immigration pathways.'}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="p-6 md:p-8 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Âge */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">
+              {language === 'fr' ? 'Tranche d’âge' : 'Age Group'}
+            </Label>
+            <Select value={age} onValueChange={setAge}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner l'âge" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="18-19">18 - 19 ans</SelectItem>
+                <SelectItem value="20-29">20 - 29 ans (Optimal)</SelectItem>
+                <SelectItem value="30">30 ans</SelectItem>
+                <SelectItem value="31-35">31 - 35 ans</SelectItem>
+                <SelectItem value="36-40">36 - 40 ans</SelectItem>
+                <SelectItem value="41-plus">41 ans et plus</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Niveau d'études */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">
+              {language === 'fr' ? 'Niveau d’études' : 'Education Level'}
+            </Label>
+            <Select value={education} onValueChange={setEducation}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner le diplôme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="phd">Doctorat / PhD</SelectItem>
+                <SelectItem value="master">Master / Bac+5</SelectItem>
+                <SelectItem value="bachelor">Licence / Bac+3</SelectItem>
+                <SelectItem value="diploma">BTS / DUT / Diplôme collégial</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Expérience */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">
+              {language === 'fr' ? 'Expérience professionnelle' : 'Work Experience'}
+            </Label>
+            <Select value={experience} onValueChange={setExperience}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Années d'expérience" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="3-plus">3 ans ou plus</SelectItem>
+                <SelectItem value="2">2 ans</SelectItem>
+                <SelectItem value="1">1 an</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Français */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">
+              {language === 'fr' ? 'Maîtrise du Français (TEF/TCF)' : 'French Proficiency'}
+            </Label>
+            <Select value={french} onValueChange={setFrench}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Niveau de français" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="advanced">Avancé (NCLC 7+)</SelectItem>
+                <SelectItem value="intermediate">Intermédiaire (NCLC 5-6)</SelectItem>
+                <SelectItem value="beginner">Débutant ou Aucun</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Anglais */}
+          <div className="space-y-2">
+            <Label className="font-semibold text-gray-800">
+              {language === 'fr' ? 'Maîtrise de l’Anglais (IELTS/CELPIP)' : 'English Proficiency'}
+            </Label>
+            <Select value={english} onValueChange={setEnglish}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Niveau d'anglais" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="advanced">Avancé (CLB 9+)</SelectItem>
+                <SelectItem value="intermediate">Intermédiaire (CLB 7-8)</SelectItem>
+                <SelectItem value="beginner">Débutant ou Aucun</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          {/* Formulaire de sélection */}
-          <Card className="lg:col-span-7 bg-white/95 backdrop-blur shadow-xl border border-slate-200/80 rounded-2xl p-6 md:p-8">
-            <CardHeader className="px-0 pt-0 pb-6">
-              <CardTitle className="text-xl font-bold text-[#0a2540]">
-                {language === "en" ? "Your Profile Criteria" : "Critères de Votre Profil"}
-              </CardTitle>
-              <CardDescription>
-                {language === "en" ? "Select your background for a quick estimate" : "Sélectionnez vos caractéristiques principales pour une estimation rapide"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-0 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-700 uppercase">
-                    {language === "en" ? "Age Range" : "Tranche d’âge"}
-                  </Label>
-                  <Select value={age} onValueChange={setAge}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="18-19">18 - 19 ans</SelectItem>
-                      <SelectItem value="20-29">20 - 29 ans (Optimal)</SelectItem>
-                      <SelectItem value="30">30 ans</SelectItem>
-                      <SelectItem value="31-35">31 - 35 ans</SelectItem>
-                      <SelectItem value="36-40">36 - 40 ans</SelectItem>
-                      <SelectItem value="41-plus">41 ans et plus</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* Résultat et Score */}
+        <div className="mt-8 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+              <Award className="w-4 h-4" /> Score CRS Indicatif
+            </span>
+            <div className="text-4xl md:text-5xl font-extrabold text-blue-900">
+              {scores.total} <span className="text-lg font-normal text-gray-600">/ 600 pts</span>
+            </div>
+            <p className="text-sm text-gray-600 max-w-md">
+              {isEligible
+                ? 'Félicitations ! Votre profil atteint le seuil compétitif estimé pour l’accès prioritaire aux programmes.'
+                : 'Votre score est perfectible. Suivez nos recommandations ci-dessous pour booster votre dossier.'}
+            </p>
+          </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-700 uppercase">
-                    {language === "en" ? "Highest Education" : "Niveau d’études"}
-                  </Label>
-                  <Select value={education} onValueChange={setEducation}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="phd">Doctorat / Ph.D.</SelectItem>
-                      <SelectItem value="master">Master / Bac+5 ou plus</SelectItem>
-                      <SelectItem value="bachelor">Licence / Bac+3</SelectItem>
-                      <SelectItem value="diploma">BTS / DUT / Bac+2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            {isEligible ? (
+              <a
+                href="#canadian-pathways"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all"
+              >
+                <span>Découvrir les programmes</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            ) : (
+              <a
+                href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg transition-all"
+              >
+                <span>Consulter un conseiller (WhatsApp)</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Barres de progression par critère et infobulles */}
+        <div className="space-y-4 pt-4 border-t border-gray-100">
+          <h4 className="font-bold text-gray-900 text-lg">Analyse détaillée par sous-critères</h4>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Âge */}
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-gray-700">Âge</span>
+                <span className="text-blue-700 font-bold">{scores.agePts} / {scores.maxAge} pts</span>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-700 uppercase">
-                    {language === "en" ? "Work Experience" : "Expérience professionnelle"}
-                  </Label>
-                  <Select value={experience} onValueChange={setExperience}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="3-plus">3 ans et plus (Temps plein)</SelectItem>
-                      <SelectItem value="2">2 ans</SelectItem>
-                      <SelectItem value="1">1 an</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-700 uppercase">
-                    {language === "en" ? "French Proficiency" : "Maîtrise du Français"}
-                  </Label>
-                  <Select value={french} onValueChange={setFrench}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="advanced">Avancé (NCLC 7+ / B2-C2)</SelectItem>
-                      <SelectItem value="intermediate">Intermédiaire</SelectItem>
-                      <SelectItem value="none">Débutant / Aucun</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.agePts / scores.maxAge) * 100}%` }} />
               </div>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Le capital points d’âge est maximal entre 20 et 29 ans. Pensez à déposer rapidement votre dossier.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-700 uppercase">
-                  {language === "en" ? "English Proficiency" : "Maîtrise de l’Anglais (Optionnel)"}
-                </Label>
-                <Select value={english} onValueChange={setEnglish}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="advanced">Courant (CLB 9+)</SelectItem>
-                    <SelectItem value="intermediate">Intermédiaire (CLB 7-8)</SelectItem>
-                    <SelectItem value="none">Basique / Aucun</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Diplômes */}
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-gray-700">Diplômes / Études</span>
+                <span className="text-blue-700 font-bold">{scores.eduPts} / {scores.maxEdu} pts</span>
               </div>
-
-              {/* Barres de progression visuelles par critère avec infobulles d’actions */}
-              <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    {language === "en" ? "Score Breakdown & Actionable Advice" : "Répartition & Conseils par Critère"}
-                  </p>
-                  <span className="text-[11px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">
-                    {language === "en" ? "Hover / Tap for advice" : "Survolez pour les conseils"}
-                  </span>
-                </div>
-
-                {/* Âge */}
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-                        <div className="flex justify-between text-xs font-semibold mb-1">
-                          <span className="text-slate-700 inline-flex items-center gap-1.5">
-                            {language === "en" ? "Age" : "Âge"}
-                            <Info className="w-3.5 h-3.5 text-blue-500" />
-                          </span>
-                          <span className="text-blue-600 font-bold">{subScores.agePts} / {subScores.maxAge} pts</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.agePts / subScores.maxAge) * 100}%` }} />
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-blue-400/30">
-                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Age optimization tip" : "Conseil actionnable — Âge"}</p>
-                      <p className="text-slate-200">
-                        {age === "41-plus" || age === "36-40"
-                          ? (language === "en" ? "Age scores decrease after 35. Compensate by maximizing your language test scores (TEF/TCF) or acquiring Canadian work experience." : "L'âge rapporte le maximum entre 20 et 29 ans. Compensez l'écart en maximisant vos scores aux tests de langues (TEF/TCF) ou via une expérience au Canada.")
-                          : (language === "en" ? "Your age bracket is in the optimal zone. Focus on maintaining high standards in education and language tests." : "Votre tranche d'âge est dans la zone optimale. Maintenez l'avance en consolidant vos diplômes et vos certifications linguistiques.")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Éducation */}
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-                        <div className="flex justify-between text-xs font-semibold mb-1">
-                          <span className="text-slate-700 inline-flex items-center gap-1.5">
-                            {language === "en" ? "Education" : "Diplômes & Études"}
-                            <Info className="w-3.5 h-3.5 text-indigo-500" />
-                          </span>
-                          <span className="text-indigo-600 font-bold">{subScores.eduPts} / {subScores.maxEdu} pts</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.eduPts / subScores.maxEdu) * 100}%` }} />
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-indigo-400/30">
-                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Education optimization tip" : "Conseil actionnable — Diplômes"}</p>
-                      <p className="text-slate-200">
-                        {education === "diploma" || education === "bachelor"
-                          ? (language === "en" ? "Consider an ECA (Educational Credential Assessment) or a Master’s degree / postgraduate diploma to boost your educational points significantly." : "Obtenez une Évaluation des Diplômes d'Études (ECA) officielle ou envisagez un certificat/master post-universitaire pour gagner de précieux points.")
-                          : (language === "en" ? "Your educational level is excellent for Express Entry. Ensure your ECA is fully up to date." : "Votre niveau d'études est très solide pour Entrée Express. Veillez à ce que votre Évaluation des Diplômes (ECA) soit prête.")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Expérience */}
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-                        <div className="flex justify-between text-xs font-semibold mb-1">
-                          <span className="text-slate-700 inline-flex items-center gap-1.5">
-                            {language === "en" ? "Experience" : "Expérience professionnelle"}
-                            <Info className="w-3.5 h-3.5 text-sky-500" />
-                          </span>
-                          <span className="text-sky-600 font-bold">{subScores.expPts} / {subScores.maxExp} pts</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.expPts / subScores.maxExp) * 100}%` }} />
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-sky-400/30">
-                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Experience optimization tip" : "Conseil actionnable — Expérience"}</p>
-                      <p className="text-slate-200">
-                        {experience === "1" || experience === "2"
-                          ? (language === "en" ? "Reaching 3+ years of continuous skilled full-time experience maximizes your points. Document every employment certificate carefully." : "Atteindre 3 ans ou plus d'expérience qualifiée à temps plein maximise vos points. Documentez chaque certificat de travail avec précision.")
-                          : (language === "en" ? "Your work experience history is solid. Ensure all roles fall under NOC TEER 0, 1, 2, or 3." : "Votre historique professionnel est optimal. Assurez-vous que vos postes relèvent des catégories TEER 0, 1, 2 ou 3.")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
-                {/* Langues */}
-                <TooltipProvider delayDuration={150}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
-                        <div className="flex justify-between text-xs font-semibold mb-1">
-                          <span className="text-slate-700 inline-flex items-center gap-1.5">
-                            {language === "en" ? "Languages (FR/EN)" : "Langues (Français / Anglais)"}
-                            <Info className="w-3.5 h-3.5 text-emerald-500" />
-                          </span>
-                          <span className="text-emerald-600 font-bold">{subScores.langPts} / {subScores.maxLang} pts</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.langPts / subScores.maxLang) * 100}%` }} />
-                        </div>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-emerald-400/30">
-                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Language optimization tip" : "Conseil actionnable — Langues"}</p>
-                      <p className="text-slate-200">
-                        {french !== "advanced"
-                          ? (language === "en" ? "French is a major booster in Canada (Express Entry francophone draws & PNP). Preparing the TEF Canada or TCF Canada can add massive points." : "Le français est un levier majeur (tirages ciblés francophones et volets provinciaux). Passer le TEF Canada ou TCF Canada peut transformer votre profil.")
-                          : (language === "en" ? "Your French proficiency is strong! Adding English (IELTS/CELPIP) will unlock dual-language bonus points." : "Votre maîtrise du français est un atout clé ! L'ajout de l'anglais (IELTS/CELPIP) vous permettra de débloquer des points de bilinguisme.")}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.eduPts / scores.maxEdu) * 100}%` }} />
               </div>
-            </CardContent>
-          </Card>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Un Master ou un Doctorat ou une double diplomation augmente significativement votre score académique.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
 
-          {/* Résultat et appel à l’action */}
-          <div className="lg:col-span-5">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-[#0a2540] to-[#1e3a8a] text-white rounded-3xl p-8 shadow-2xl border border-blue-400/30 relative overflow-hidden text-center"
+            {/* Expérience */}
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-gray-700">Expérience Pro</span>
+                <span className="text-blue-700 font-bold">{scores.expPts} / {scores.maxExp} pts</span>
+              </div>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.expPts / scores.maxExp) * 100}%` }} />
+              </div>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Justifier de 3 ans ou plus d’expérience qualifiée (NOC TEER 0, 1, 2 ou 3) maximise ce volet.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Langues */}
+            <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-gray-700">Compétences Linguistiques</span>
+                <span className="text-blue-700 font-bold">{scores.langPts} / {scores.maxLang} pts</span>
+              </div>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${(scores.langPts / scores.maxLang) * 100}%` }} />
+              </div>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    <p>Le bilinguisme (Français NCLC 7 + Anglais CLB 9) est le moyen le plus rapide de gagner jusqu'à 60 points bonus.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center justify-between">
+            <a
+              href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1.5"
             >
-              <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-2xl pointer-events-none" />
-              
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 backdrop-blur mb-6 text-yellow-300 shadow-inner">
-                <Award className="w-8 h-8" />
-              </div>
-
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-300 mb-1">
-                {language === "en" ? "Estimated CRS Score" : "Score CRS Estimé"}
-              </p>
-              
-              <div className="text-5xl md:text-6xl font-black mb-4 tracking-tight">
-                {estimatedScore} <span className="text-xl font-normal text-blue-200">/ 1200</span>
-              </div>
-
-              <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-6 ${
-                isCompetitive ? "bg-emerald-500/20 text-emerald-300 border border-emerald-400/40" : "bg-amber-500/20 text-amber-300 border border-amber-400/40"
-              }`}>
-                <CheckCircle2 className="w-4 h-4" />
-                {isCompetitive 
-                  ? (language === "en" ? "Competitive Profile for Express Entry" : "Profil très compétitif pour Entrée Express")
-                  : (language === "en" ? "Good Potential — Optimization Recommended" : "Bon potentiel — Voie provinciale conseillée")}
-              </div>
-
-              <p className="text-xs text-slate-300 mb-6 leading-relaxed">
-                {language === "en"
-                  ? "This simulation is indicative and provided by 3M Travel Agency. Official evaluation requires supporting document verification."
-                  : "Cette simulation est purement indicative et non officielle. Pour une analyse approfondie et l'ouverture de votre dossier, réalisez votre évaluation complète en agence."}
-              </p>
-
-              <div className="space-y-3">
-                <Button
-                  asChild
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
-                >
-                  <Link href="/evaluation-primaire?destination=canada">
-                    <span className="inline-flex items-center justify-center gap-2 w-full">
-                      <span>{language === "en" ? "Launch Official Evaluation" : "Lancer mon évaluation officielle"}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  variant="outline"
-                  className="w-full bg-white/10 hover:bg-white/20 text-white border-white/30 font-bold py-3.5 rounded-xl transition-colors"
-                >
-                  <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel,%20je%20souhaite%20réserver%20une%20consultation%20stratégique%20avec%20un%20conseiller%20pour%20mon%20projet%20Canada." target="_blank" rel="noopener noreferrer">
-                    <span className="inline-flex items-center justify-center gap-2 w-full">
-                      <span>{language === "en" ? "Book Advisor Consultation" : "Réserver une consultation conseiller"}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </a>
-                </Button>
-
-                {!isCompetitive && (
-                  <div className="rounded-xl bg-amber-950/60 border border-amber-500/30 p-4 text-left text-amber-200">
-                    <p className="text-xs font-bold uppercase tracking-wider text-amber-300 mb-1 flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      {language === "en" ? "Score Optimization Guidance" : "Orientation personnalisée (Score à renforcer)"}
-                    </p>
-                    <p className="text-xs leading-relaxed text-amber-100/90 mb-3">
-                      {language === "en"
-                        ? "Your current estimated score suggests that federal Express Entry might be challenging without improvements. However, provincial nomination programs (PNP), French-speaking pathways, or professional upskilling can significantly strengthen your profile. Do not give up: talk to our advisors."
-                        : "Votre score estimé indique qu’Entrée express fédérale est exigeante en l’état. Pas de panique : les programmes des candidats des provinces (PCP), les volets francophones ou une optimisation des tests de langue et de l’expérience peuvent faire toute la différence. Échangez avec un conseiller 3M pour étudier vos meilleures alternatives."}
-                    </p>
-                    <a
-                      href="https://wa.me/237698104832?text=Bonjour%203M%20Travel,%20j'ai%20réalisé%20ma%20simulation%20Canada%20et%20souhaite%20l'aide%20d'un%20conseiller%20pour%20optimiser%20mon%20profil."
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 shadow transition-colors"
-                    >
-                      <span>{language === "en" ? "Consult a Canada Advisor on WhatsApp" : "Consulter un conseiller Canada sur WhatsApp"}</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                )}
-              </div>
-            </motion.div>
+              <span>Réserver une consultation conseiller &gt;</span>
+            </a>
           </div>
         </div>
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
