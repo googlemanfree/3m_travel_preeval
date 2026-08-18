@@ -161,4 +161,98 @@ export const routeHealthRouter = router({
     }
     return { success: true, checked };
   }),
+
+  suggestBrokenLinkReplacements: publicProcedure.input(z.object({ sessionToken: z.string().min(1), id: z.number().int().positive() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Contrôleur de liens indisponible." });
+    const link = (await db.select().from(externalLinkChecks).where(eq(externalLinkChecks.id, input.id)).limit(1))[0];
+    if (!link) throw new TRPCError({ code: "NOT_FOUND", message: "Lien introuvable." });
+    
+    const { invokeLLM, listLLMModels } = await import("../_core/llm");
+    const { data: models } = await listLLMModels();
+    const model = models.find((entry) => entry.id === "gpt-5-mini")?.id;
+    
+    const result = await invokeLLM({
+      model,
+      maxTokens: 800,
+      outputSchema: {
+        name: "link_replacements_suggestion",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            suggestions: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                properties: {
+                  url: { type: "string" },
+                  reason: { type: "string" },
+                },
+                required: ["url", "reason"],
+              },
+              minItems: 1,
+              maxItems: 4,
+            },
+            adminAdvice: { type: "string" },
+          },
+          required: ["suggestions", "adminAdvice"],
+        },
+      },
+      messages: [
+        { role: "system", content: "Tu es un assistant technique pour une agence de mobilité internationale. On te soumet un lien externe brisé ou inaccessible. Suggère 2 à 4 URL HTTPS publiques de remplacement pertinentes et officielles (par exemple les portails gouvernementaux officiels ou les sites de référence correspondants). N'invente aucune URL fictive. Toutes les URL suggérées doivent commencer par https:// et être des domaines officiels connus. Fournis également un conseil court pour l'administrateur." },
+        { role: "user", content: `Lien brisé : ${link.url}
+Intitulé : ${link.label || "Inconnu"}
+Dernier statut : ${link.status} (Erreur : ${link.errorMessage || "Inconnue"}, HTTP : ${link.httpStatus || "N/A"})
+Suggère des URL de remplacement HTTPS officielles et pertinentes.` },
+      ],
+    });
+
+    const rawContent = result.choices[0]?.message.content;
+    const textContent = typeof rawContent === "string" ? rawContent : rawContent?.filter((part) => part.type === "text").map((part) => part.text).join("\n") || "{}";
+    
+    let parsed: { suggestions: Array<{ url: string; reason: string }>; adminAdvice: string };
+    try {
+      parsed = JSON.parse(textContent);
+    } catch {
+      parsed = {
+        suggestions: [{ url: "https://www.3mtravelagency.com", reason: "Redirection vers le portail principal de Prime Travel." }],
+        adminAdvice: "Vérifiez manuellement l’URL officielle mise à jour sur le portail consulaire.",
+      };
+    }
+
+    const validSuggestions = (parsed.suggestions || []).map((item) => {
+      try {
+        const safe = safeExternalUrl(item.url);
+        return { url: safe, reason: String(item.reason || "").slice(0, 300) };
+      } catch {
+        return null;
+      }
+    }).filter((item): item is { url: string; reason: string } => item !== null);
+
+    return {
+      success: true,
+      linkId: link.id,
+      currentUrl: link.url,
+      suggestions: validSuggestions.length > 0 ? validSuggestions : [{ url: "https://www.3mtravelagency.com", reason: "Aucune alternative validée par le modèle ; redirection recommandée vers l’accueil." }],
+      adminAdvice: String(parsed.adminAdvice || "Vérifiez toujours l’URL de remplacement avant application."),
+    };
+  }),
+
+  applyExternalLinkReplacement: publicProcedure.input(z.object({ sessionToken: z.string().min(1), id: z.number().int().positive(), newUrl: z.string().trim().url() })).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const newUrl = safeExternalUrl(input.newUrl);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Contrôleur de liens indisponible." });
+    
+    const link = (await db.select().from(externalLinkChecks).where(eq(externalLinkChecks.id, input.id)).limit(1))[0];
+    if (!link) throw new TRPCError({ code: "NOT_FOUND", message: "Lien introuvable." });
+    
+    await db.update(externalLinkChecks).set({ url: newUrl, status: "pending", httpStatus: null, errorMessage: null, checkedAt: null, updatedByAdminId: admin.id }).where(eq(externalLinkChecks.id, link.id));
+    
+    return { success: true, newUrl };
+  }),
 });

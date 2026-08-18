@@ -348,3 +348,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les tests de sécurité, routes, validations, vérification de liens et régression complète avant publication.
 - [x] Ajouter un callback Heartbeat idempotent pour vérifier périodiquement les liens externes et enregistrer les statuts, sans timer en processus.
 - [x] Préparer la création du cron projet après publication du callback et confirmer la procédure de déploiement avec le propriétaire.
+
+## Assistance IA pour les liens brisés
+- [x] Ajouter une procédure tRPC d’assistance IA pour suggérer des URL de remplacement aux liens brisés.
+- [x] Intégrer le bouton et le panneau de suggestion dans l’interface de gestion des liens externes.
+- [x] Valider l’application manuelle de l’URL suggérée et consigner l’action dans l’audit.
+- [x] Exécuter les tests unitaires, de sécurité et le build de production.

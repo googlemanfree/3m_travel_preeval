@@ -40,4 +40,13 @@ describe("route health security and contracts", () => {
     expect(job).toContain("user.taskUid");
     expect(server).toContain("/api/scheduled/external-link-check");
   });
+
+  it("exposes broken link AI replacement suggestion and application procedures", () => {
+    const routerCode = read("server/routers/routeHealthRouter.ts");
+    const managerCode = read("client/src/components/AdminRouteHealthManager.tsx");
+    expect(routerCode).toContain("suggestBrokenLinkReplacements");
+    expect(routerCode).toContain("applyExternalLinkReplacement");
+    expect(managerCode).toContain("Assistance IA");
+    expect(managerCode).toContain("Appliquer");
+  });
 });

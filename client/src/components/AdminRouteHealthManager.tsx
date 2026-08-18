@@ -65,6 +65,16 @@ export function AdminRouteHealthManager({ sessionToken }: { sessionToken: string
     onError: (error) => toast({ title: "Contrôle global impossible", description: error.message, variant: "destructive" }),
   });
 
+  const [aiSuggestions, setAiSuggestions] = useState<{ linkId: number; currentUrl: string; suggestions: Array<{ url: string; reason: string }>; adminAdvice: string } | null>(null);
+  const suggestAi = trpc.routeHealth.suggestBrokenLinkReplacements.useMutation({
+    onSuccess: (data) => { setAiSuggestions(data); toast({ title: "Suggestions IA prêtes", description: "Des alternatives officielles ont été générées pour ce lien." }); },
+    onError: (error) => toast({ title: "Assistance IA impossible", description: error.message, variant: "destructive" }),
+  });
+  const applyReplacement = trpc.routeHealth.applyExternalLinkReplacement.useMutation({
+    onSuccess: (result) => { setAiSuggestions(null); toast({ title: "Lien mis à jour", description: `Nouvelle URL enregistrée : ${result.newUrl}` }); void utils.routeHealth.listExternalLinks.invalidate(); },
+    onError: (error) => toast({ title: "Mise à jour impossible", description: error.message, variant: "destructive" }),
+  });
+
   const add404Link = () => {
     const label = newLinkLabel.trim();
     const href = newLinkHref.trim();
@@ -122,7 +132,23 @@ export function AdminRouteHealthManager({ sessionToken }: { sessionToken: string
 
         <TabsContent value="external-links" className="space-y-4 mt-4">
           <Card><CardHeader><CardTitle className="text-base">Ajouter un lien à surveiller</CardTitle></CardHeader><CardContent><div className="grid gap-2 md:grid-cols-[1fr_2fr_auto]"><Input placeholder="Nom du portail" value={externalLabel} onChange={(event) => setExternalLabel(event.target.value)} /><Input placeholder="https://portail-officiel.example" value={externalUrl} onChange={(event) => setExternalUrl(event.target.value)} /><Button onClick={() => addExternalLink.mutate({ sessionToken, url: externalUrl, label: externalLabel })} disabled={addExternalLink.isPending} className="gap-2"><Plus className="w-4 h-4" />Ajouter</Button></div></CardContent></Card>
-          <Card><CardHeader><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><CardTitle className="text-base">État des liens externes</CardTitle><Button variant="outline" onClick={() => checkAll.mutate({ sessionToken })} disabled={checkAll.isPending || !(linksQuery.data?.length)} className="gap-2"><Link2 className="w-4 h-4" />{checkAll.isPending ? "Vérification…" : "Vérifier tous les liens"}</Button></div></CardHeader><CardContent><div className="space-y-2">{(linksQuery.data ?? []).map((link) => { const status = link.status as LinkStatus; return <div key={link.id} className="flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><p className="font-medium text-slate-900">{link.label || "Lien externe"}</p><a href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-700 break-all"><ExternalLink className="w-3 h-3 shrink-0" />{link.url}</a><p className="text-xs text-slate-500">{link.checkedAt ? `Contrôlé le ${new Date(link.checkedAt).toLocaleString("fr-FR")}` : "Jamais contrôlé"}{link.errorMessage ? ` · ${link.errorMessage}` : ""}</p></div><div className="flex items-center gap-2"><Badge variant="outline" className={statusClass[status]}>{status === "ok" ? <CheckCircle2 className="w-3 h-3 mr-1" /> : status !== "pending" ? <AlertCircle className="w-3 h-3 mr-1" /> : null}{statusLabel[status]}</Badge><Button size="sm" variant="outline" onClick={() => checkLink.mutate({ sessionToken, id: link.id })} disabled={checkLink.isPending}>Vérifier</Button></div></div>; })}</div></CardContent></Card>
+          <Card><CardHeader><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><CardTitle className="text-base">État des liens externes</CardTitle><Button variant="outline" onClick={() => checkAll.mutate({ sessionToken })} disabled={checkAll.isPending || !(linksQuery.data?.length)} className="gap-2"><Link2 className="w-4 h-4" />{checkAll.isPending ? "Vérification…" : "Vérifier tous les liens"}</Button></div></CardHeader><CardContent className="space-y-4">
+            {aiSuggestions && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
+                <div className="flex items-center justify-between"><h3 className="text-sm font-semibold text-blue-900">Suggestions IA pour : <span className="font-mono text-xs">{aiSuggestions.currentUrl}</span></h3><Button variant="ghost" size="sm" onClick={() => setAiSuggestions(null)}>Fermer</Button></div>
+                <p className="text-xs text-blue-700">{aiSuggestions.adminAdvice}</p>
+                <div className="space-y-2">
+                  {aiSuggestions.suggestions.map((item, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white rounded-lg border p-2.5">
+                      <div className="min-w-0"><p className="font-mono text-xs text-slate-900 break-all">{item.url}</p><p className="text-xs text-slate-500">{item.reason}</p></div>
+                      <Button size="sm" onClick={() => applyReplacement.mutate({ sessionToken, id: aiSuggestions.linkId, newUrl: item.url })} disabled={applyReplacement.isPending} className="shrink-0">Appliquer</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">{(linksQuery.data ?? []).map((link) => { const status = link.status as LinkStatus; const isBroken = status === "broken" || status === "error" || status === "timeout"; return <div key={link.id} className="flex flex-col gap-3 rounded-lg border p-3 lg:flex-row lg:items-center lg:justify-between"><div className="min-w-0"><p className="font-medium text-slate-900">{link.label || "Lien externe"}</p><a href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-700 break-all"><ExternalLink className="w-3 h-3 shrink-0" />{link.url}</a><p className="text-xs text-slate-500">{link.checkedAt ? `Contrôlé le ${new Date(link.checkedAt).toLocaleString("fr-FR")}` : "Jamais contrôlé"}{link.errorMessage ? ` · ${link.errorMessage}` : ""}</p></div><div className="flex items-center gap-2"><Badge variant="outline" className={statusClass[status]}>{status === "ok" ? <CheckCircle2 className="w-3 h-3 mr-1" /> : status !== "pending" ? <AlertCircle className="w-3 h-3 mr-1" /> : null}{statusLabel[status]}</Badge>{isBroken && <Button size="sm" variant="secondary" onClick={() => suggestAi.mutate({ sessionToken, id: link.id })} disabled={suggestAi.isPending} className="gap-1 text-blue-700 bg-blue-50 hover:bg-blue-100"><Wrench className="w-3 h-3" />Assistance IA</Button>}<Button size="sm" variant="outline" onClick={() => checkLink.mutate({ sessionToken, id: link.id })} disabled={checkLink.isPending}>Vérifier</Button></div></div>; })}</div>
+          </CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>
