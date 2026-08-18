@@ -480,3 +480,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Bouton de partage WhatsApp du projet pré-rempli
 - [x] Intégrer un bouton WhatsApp dans le formulaire d’évaluation pour transmettre le récapitulatif du projet au conseiller.
 - [x] Valider par les tests, TypeScript et publier la version finale.
+
+## Test automatisé de robustesse du formulaire et des redirections
+- [x] Configurer un test Vitest dédié pour vérifier la robustesse des paramètres de projet, de destination et du lien de partage WhatsApp.
+- [x] Valider par les tests unitaires et publier la version finale.
