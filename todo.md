@@ -373,5 +373,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter recherche, filtres par statut/type/source et compteur de complétude dans le gestionnaire de fichiers.
 - [x] Améliorer la prévisualisation, le téléchargement, la validation/refus avec commentaire, les annotations et l’envoi au candidat.
 - [x] Tester les autorisations, les transitions de statut, les documents PDF/images et les notifications synchronisées avant publication.
-- [ ] Ajouter une chaîne explicite de versions de remplacement pour relier l’ancien document à la nouvelle soumission du candidat.
-- [ ] Générer une attestation globale de remise lorsque tous les documents requis sont validés et la rendre disponible côté client.
+- [x] Ajouter une chaîne explicite de versions de remplacement pour relier l’ancien document à la nouvelle soumission du candidat.
+- [x] Générer une attestation globale de remise lorsque tous les documents requis sont validés et la rendre disponible côté client.

@@ -517,11 +517,25 @@ export const candidateRouter = router({
         fileSizeBytes: z.number().optional(),
         mimeType: z.string().optional(),
         correctionComment: z.string().trim().min(3).max(1000).optional(),
+        replacesFileId: z.number().int().positive().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      if (input.replacesFileId) {
+        const [replaced] = await db.select({ id: candidateFiles.id, status: candidateFiles.status, fileType: candidateFiles.fileType })
+          .from(candidateFiles)
+          .where(and(eq(candidateFiles.id, input.replacesFileId), eq(candidateFiles.candidateId, ctx.candidate.id)))
+          .limit(1);
+        if (!replaced || replaced.status !== "rejected") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Seul un document rejeté de votre dossier peut être remplacé." });
+        }
+        if (replaced.fileType !== input.fileType) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Le type de la nouvelle pièce doit correspondre au document à remplacer." });
+        }
+      }
 
       let extractionJson: string | null = null;
       try {
@@ -542,6 +556,7 @@ export const candidateRouter = router({
         mimeType: input.mimeType ?? null,
         status: "uploaded",
         correctionComment: input.correctionComment ?? null,
+        replacesFileId: input.replacesFileId ?? null,
         extractedData: extractionJson,
       });
 

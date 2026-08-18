@@ -30,6 +30,7 @@ interface Document {
   suggestedFolder?: string | null;
   readabilityScore?: number | null;
   readabilityIssues?: any | null;
+  replacesId?: number | null;
 }
 
 export function AdminDocumentsManagement() {
@@ -182,6 +183,7 @@ export function AdminDocumentsManagement() {
     submittedAt: new Date(doc.submittedAt),
     verifiedAt: doc.verifiedAt ? new Date(doc.verifiedAt) : undefined,
     rejectionReason: doc.verificationComment,
+    replacesId: doc.replacesId ?? null,
     aiClassification: doc.aiClassification ?? null,
     aiClassificationConfidence: doc.aiClassificationConfidence ?? null,
     suggestedFolder: doc.suggestedFolder ?? null,
@@ -621,7 +623,7 @@ export function AdminDocumentsManagement() {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-gray-600">{getDocumentTypeLabel(doc.documentType)}</td>
-                        <td className="py-3 px-4 text-gray-600 truncate max-w-xs">{doc.documentName}</td>
+                        <td className="py-3 px-4 text-gray-600 max-w-xs"><p className="truncate">{doc.documentName}</p>{doc.replacesId ? <span className="mt-1 inline-flex rounded bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">Correction de la version #{doc.replacesId}</span> : null}</td>
                         <td className="py-3 px-4">
                           <div className="flex flex-col items-start gap-1">
                             <Badge variant="outline" className="border-violet-200 text-violet-700 bg-violet-50 gap-1">

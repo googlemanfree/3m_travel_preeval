@@ -393,6 +393,43 @@ export default function ClientDashboard() {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
+  const allDocumentsVerified = documents.length > 0 && documents.every((document) => document.status === "verified");
+  const downloadDocumentCompletionCertificate = () => {
+    if (!allDocumentsVerified || !dossier) return;
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    pdf.setTextColor(230, 238, 248);
+    pdf.setFontSize(36);
+    pdf.text("3M TRAVEL & SERVICES", 22, 150, { angle: 35 });
+    pdf.setTextColor(30, 58, 138);
+    pdf.setFontSize(17);
+    pdf.setFont("helvetica", "bold");
+    pdf.text("ATTESTATION DE REMISE DE PIÈCES", 105, 28, { align: "center" });
+    pdf.setDrawColor(30, 58, 138);
+    pdf.line(24, 34, 186, 34);
+    pdf.setTextColor(31, 41, 55);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+    pdf.text(`Dossier : ${dossier.numero}`, 24, 50);
+    pdf.text(`Candidat : ${candidate?.fullName || "Candidat"}`, 24, 58);
+    pdf.text(`Date de délivrance : ${new Date().toLocaleDateString("fr-FR")}`, 24, 66);
+    pdf.text("L’agence atteste que les pièces ci-dessous ont été reçues et validées dans l’espace sécurisé du candidat.", 24, 80, { maxWidth: 162 });
+    let y = 94;
+    documents.forEach((document, index) => {
+      pdf.setFillColor(248, 250, 252);
+      pdf.roundedRect(24, y - 6, 162, 10, 2, 2, "F");
+      pdf.setTextColor(22, 101, 52);
+      pdf.text("✓", 28, y);
+      pdf.setTextColor(31, 41, 55);
+      pdf.text(`${index + 1}. ${document.name}`, 35, y, { maxWidth: 142 });
+      y += 13;
+    });
+    pdf.setTextColor(75, 85, 99);
+    pdf.setFontSize(9);
+    pdf.text("Document généré depuis votre espace 3M Travel & Services. Il constitue une preuve de réception et de validation des pièces listées.", 24, Math.min(y + 12, 260), { maxWidth: 162 });
+    pdf.save(`attestation-remise-${dossier.numero}.pdf`);
+    toast.success("Attestation de remise téléchargée.");
+  };
+
   const handleCorrectionSubmission = async () => {
     if (!correctionTarget || !correctionFile) {
       toast.error("Sélectionnez la version corrigée du document.");
@@ -426,6 +463,7 @@ export default function ClientDashboard() {
         fileSizeBytes: payload.fileSizeBytes ?? correctionFile.size,
         mimeType: payload.mimeType || correctionFile.type,
         correctionComment: `Correction de « ${correctionTarget.name} » : ${explanation}`,
+        replacesFileId: Number(correctionTarget.id),
       });
       if (savedDocument.documentId && payload.fileUrl) setRecentDocument({ id: savedDocument.documentId, name: payload.fileName || correctionFile.name, url: payload.fileUrl });
       await trpcUtils.candidate.getMyDocuments.invalidate();
@@ -1423,10 +1461,7 @@ export default function ClientDashboard() {
             {/* Documents Téléversés */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileCheck className="w-5 h-5" />
-                  Documents Téléversés
-                </CardTitle>
+                <div className="flex flex-wrap items-center justify-between gap-3"><CardTitle className="flex items-center gap-2"><FileCheck className="w-5 h-5" />Documents Téléversés</CardTitle>{allDocumentsVerified ? <Button type="button" variant="outline" onClick={downloadDocumentCompletionCertificate} className="gap-2 border-emerald-200 text-emerald-800 hover:bg-emerald-50"><Download className="h-4 w-4" />Attestation de remise</Button> : <p className="text-xs text-slate-500">L’attestation sera disponible après validation de toutes les pièces.</p>}</div>
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
