@@ -488,3 +488,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Option d’envoi des détails par e-mail
 - [x] Ajouter un bouton d’envoi par e-mail (mailto) avec récapitulatif pré-rempli vers `hello@3mtravelagency.com` dans le formulaire d’évaluation.
 - [x] Valider par les tests et publier la version finale.
+
+## Animation de confirmation visuelle sur les boutons de partage
+- [x] Ajouter un feedback visuel temporaire (changement de couleur, icône de succès et effet de relief) sur les boutons WhatsApp et e-mail.
+- [x] Valider par les tests et publier la version finale.
