@@ -476,3 +476,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Présélection de destination dans le formulaire d’évaluation
 - [x] Permettre au formulaire d’évaluation d’accepter et de pré-remplir la destination choisie depuis les articles d’études ou les guides de pays.
 - [x] Tester l’accessibilité, le responsive, TypeScript et les tests avant publication.
+
+## Bouton de partage WhatsApp du projet pré-rempli
+- [x] Intégrer un bouton WhatsApp dans le formulaire d’évaluation pour transmettre le récapitulatif du projet au conseiller.
+- [x] Valider par les tests, TypeScript et publier la version finale.
