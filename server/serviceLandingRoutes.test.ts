@@ -37,5 +37,16 @@ describe("routes canoniques des pages de service", () => {
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/canada</loc>");
     expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/maroc</loc>");
   });
+
+  it("sépare les parcours de Procédures et place l’évaluation multi-projets au début de l’accueil", () => {
+    const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
+    const proceduresSource = readFileSync(resolve(process.cwd(), "client/src/pages/ProceduresAdvanced.tsx"), "utf8");
+    expect(homeSource).toContain('id="evaluation-multi"');
+    expect(homeSource.indexOf('id="evaluation-multi"')).toBeLessThan(homeSource.indexOf("<EmbassyNewsWidget />"));
+    expect(proceduresSource).toContain("Canada : Résidence & Emploi");
+    expect(proceduresSource).toContain("Visa Schengen & Court Séjour");
+    expect(proceduresSource).toContain("Études Internationales");
+    expect(proceduresSource).toContain("Simulateur de Score Canadien");
+  });
 });
 

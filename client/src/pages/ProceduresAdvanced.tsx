@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'wouter';
 import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
 import { trpc } from '@/lib/trpc';
+import CanadaScoreSimulator from '@/components/CanadaScoreSimulator';
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
 
@@ -146,6 +148,40 @@ export default function ProceduresAdvanced() {
             Filtres avancés, comparaisons interactives et calculateur de budget pour trouver la meilleure destination.
           </p>
         </motion.div>
+
+        {/* Blocs distincts des services et du score canadien */}
+        <div className="mb-12 grid gap-6 md:grid-cols-3">
+          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
+            <span className="text-3xl" aria-hidden="true">🇨🇦</span>
+            <h2 className="mt-3 text-lg font-black text-slate-900">Canada : Résidence & Emploi</h2>
+            <p className="mt-2 text-sm text-slate-600">Entrée express, programmes provinciaux, volets régionaux et accompagnement emploi rigoureux.</p>
+            <Link href="/canada" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Canada →</Link>
+          </Card>
+          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
+            <span className="text-3xl" aria-hidden="true">🇪🇺</span>
+            <h2 className="mt-3 text-lg font-black text-slate-900">Visa Schengen & Court Séjour</h2>
+            <p className="mt-2 text-sm text-slate-600">Tourisme, affaires, visite familiale, études courtes ou transit à travers les 29 pays de l’espace Schengen.</p>
+            <Link href="/schengen" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Découvrir le guide Schengen →</Link>
+          </Card>
+          <Card className="p-6 border-blue-200 bg-white/90 shadow-sm hover:shadow-md transition-shadow">
+            <span className="text-3xl" aria-hidden="true">🎓</span>
+            <h2 className="mt-3 text-lg font-black text-slate-900">Études Internationales</h2>
+            <p className="mt-2 text-sm text-slate-600">10 destinations de référence (Canada, France, Belgique, Allemagne, USA, UK, etc.) et accompagnement rentrée.</p>
+            <Link href="/etudes" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900">Explorer les 10 destinations →</Link>
+          </Card>
+        </div>
+
+        {/* Bloc dédié au Score Canadien dans Procédures (sans mélange) */}
+        <div className="mb-12 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-900 to-indigo-900 p-8 text-white shadow-xl">
+          <div className="max-w-3xl">
+            <span className="inline-block rounded-full bg-blue-500/30 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-200">Outil officiel intégré</span>
+            <h2 className="mt-3 text-2xl font-black sm:text-3xl">Simulateur de Score Canadien (Entrée Express)</h2>
+            <p className="mt-3 text-sm leading-6 text-blue-100">Estimez vos points CRS selon votre âge, vos diplômes, votre expérience professionnelle et votre niveau de français ou d’anglais.</p>
+          </div>
+          <div className="mt-6 rounded-xl bg-white p-6 text-slate-900 shadow-inner">
+            <CanadaScoreSimulator />
+          </div>
+        </div>
 
         {/* Search and Filters */}
         <motion.div

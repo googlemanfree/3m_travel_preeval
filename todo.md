@@ -457,3 +457,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Valider l’intégration par test automatisé Vitest et compilation de production.
 
 ---
+
+## Hiérarchie Accueil et Procédures
+- [x] Centraliser dans Procédures les blocs distincts Canada, Schengen, Études et le simulateur de score canadien.
+- [x] Placer l’évaluation multi-projets au premier niveau de l’accueil, juste après le héros.
+- [x] Vérifier les routes, le responsive, TypeScript et les tests avant publication.
+
+---

@@ -569,6 +569,18 @@ export default function Home() {
         whatsappNumber={WHATSAPP_NUMBER}
       />
 
+      {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
+      <section id="evaluation-multi" className="py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
+        <div className="max-w-4xl mx-auto px-4">
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Évaluation prioritaire</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluation Multi-Projets</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">Choisissez votre projet (Travail, Études ou Tourisme) et recevez une orientation personnalisée avant d’engager une démarche.</p>
+          </motion.div>
+          <SimpleMultiProjectForm />
+        </div>
+      </section>
+
       {/* ─── ACTUALITÉS OFFICIELLES DES AMBASSADES (CANADA / EUROPE) ──────── */}
       <EmbassyNewsWidget />
 
@@ -1193,20 +1205,6 @@ export default function Home() {
               </Button>
             </a>
           </div>
-        </div>
-      </section>
-
-      {/* ─── FORMULAIRE MULTI-PROJETS SIMPLIFIÉ ─────────────────────────────── */}
-      <section className="py-16 md:py-24 bg-gradient-to-b from-white to-blue-50">
-        <div className="max-w-4xl mx-auto px-4">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-12">
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Nouvelle Évaluation</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Évaluation Multi-Projets</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Choisissez votre type de projet (Travail, Études, Tourisme) et obtenez une évaluation personnalisée en 24h.
-            </p>
-          </motion.div>
-          <SimpleMultiProjectForm />
         </div>
       </section>
 
