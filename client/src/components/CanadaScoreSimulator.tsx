@@ -176,51 +176,128 @@ export default function CanadaScoreSimulator() {
                 </Select>
               </div>
 
-              {/* Barres de progression visuelles par critère */}
-              <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                  {language === "en" ? "Score Breakdown by Criterion" : "Répartition et Écart par Critère"}
-                </p>
-
-                <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-slate-700">{language === "en" ? "Age" : "Âge"}</span>
-                    <span className="text-blue-600 font-bold">{subScores.agePts} / {subScores.maxAge} pts</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.agePts / subScores.maxAge) * 100}%` }} />
-                  </div>
+              {/* Barres de progression visuelles par critère avec infobulles d’actions */}
+              <div className="mt-8 pt-6 border-t border-slate-100 space-y-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {language === "en" ? "Score Breakdown & Actionable Advice" : "Répartition & Conseils par Critère"}
+                  </p>
+                  <span className="text-[11px] text-blue-600 font-semibold bg-blue-50 px-2 py-0.5 rounded-full">
+                    {language === "en" ? "Hover / Tap for advice" : "Survolez pour les conseils"}
+                  </span>
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-slate-700">{language === "en" ? "Education" : "Diplômes & Études"}</span>
-                    <span className="text-blue-600 font-bold">{subScores.eduPts} / {subScores.maxEdu} pts</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.eduPts / subScores.maxEdu) * 100}%` }} />
-                  </div>
-                </div>
+                {/* Âge */}
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span className="text-slate-700 inline-flex items-center gap-1.5">
+                            {language === "en" ? "Age" : "Âge"}
+                            <Info className="w-3.5 h-3.5 text-blue-500" />
+                          </span>
+                          <span className="text-blue-600 font-bold">{subScores.agePts} / {subScores.maxAge} pts</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.agePts / subScores.maxAge) * 100}%` }} />
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-blue-400/30">
+                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Age optimization tip" : "Conseil actionnable — Âge"}</p>
+                      <p className="text-slate-200">
+                        {age === "41-plus" || age === "36-40"
+                          ? (language === "en" ? "Age scores decrease after 35. Compensate by maximizing your language test scores (TEF/TCF) or acquiring Canadian work experience." : "L'âge rapporte le maximum entre 20 et 29 ans. Compensez l'écart en maximisant vos scores aux tests de langues (TEF/TCF) ou via une expérience au Canada.")
+                          : (language === "en" ? "Your age bracket is in the optimal zone. Focus on maintaining high standards in education and language tests." : "Votre tranche d'âge est dans la zone optimale. Maintenez l'avance en consolidant vos diplômes et vos certifications linguistiques.")}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-                <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-slate-700">{language === "en" ? "Experience" : "Expérience professionnelle"}</span>
-                    <span className="text-blue-600 font-bold">{subScores.expPts} / {subScores.maxExp} pts</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.expPts / subScores.maxExp) * 100}%` }} />
-                  </div>
-                </div>
+                {/* Éducation */}
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span className="text-slate-700 inline-flex items-center gap-1.5">
+                            {language === "en" ? "Education" : "Diplômes & Études"}
+                            <Info className="w-3.5 h-3.5 text-indigo-500" />
+                          </span>
+                          <span className="text-indigo-600 font-bold">{subScores.eduPts} / {subScores.maxEdu} pts</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.eduPts / subScores.maxEdu) * 100}%` }} />
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-indigo-400/30">
+                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Education optimization tip" : "Conseil actionnable — Diplômes"}</p>
+                      <p className="text-slate-200">
+                        {education === "diploma" || education === "bachelor"
+                          ? (language === "en" ? "Consider an ECA (Educational Credential Assessment) or a Master’s degree / postgraduate diploma to boost your educational points significantly." : "Obtenez une Évaluation des Diplômes d'Études (ECA) officielle ou envisagez un certificat/master post-universitaire pour gagner de précieux points.")
+                          : (language === "en" ? "Your educational level is excellent for Express Entry. Ensure your ECA is fully up to date." : "Votre niveau d'études est très solide pour Entrée Express. Veillez à ce que votre Évaluation des Diplômes (ECA) soit prête.")}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-                <div>
-                  <div className="flex justify-between text-xs font-semibold mb-1">
-                    <span className="text-slate-700">{language === "en" ? "Languages (FR/EN)" : "Langues (Français / Anglais)"}</span>
-                    <span className="text-blue-600 font-bold">{subScores.langPts} / {subScores.maxLang} pts</span>
-                  </div>
-                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.langPts / subScores.maxLang) * 100}%` }} />
-                  </div>
-                </div>
+                {/* Expérience */}
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span className="text-slate-700 inline-flex items-center gap-1.5">
+                            {language === "en" ? "Experience" : "Expérience professionnelle"}
+                            <Info className="w-3.5 h-3.5 text-sky-500" />
+                          </span>
+                          <span className="text-sky-600 font-bold">{subScores.expPts} / {subScores.maxExp} pts</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.expPts / subScores.maxExp) * 100}%` }} />
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-sky-400/30">
+                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Experience optimization tip" : "Conseil actionnable — Expérience"}</p>
+                      <p className="text-slate-200">
+                        {experience === "1" || experience === "2"
+                          ? (language === "en" ? "Reaching 3+ years of continuous skilled full-time experience maximizes your points. Document every employment certificate carefully." : "Atteindre 3 ans ou plus d'expérience qualifiée à temps plein maximise vos points. Documentez chaque certificat de travail avec précision.")
+                          : (language === "en" ? "Your work experience history is solid. Ensure all roles fall under NOC TEER 0, 1, 2, or 3." : "Votre historique professionnel est optimal. Assurez-vous que vos postes relèvent des catégories TEER 0, 1, 2 ou 3.")}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                {/* Langues */}
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help p-2 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                        <div className="flex justify-between text-xs font-semibold mb-1">
+                          <span className="text-slate-700 inline-flex items-center gap-1.5">
+                            {language === "en" ? "Languages (FR/EN)" : "Langues (Français / Anglais)"}
+                            <Info className="w-3.5 h-3.5 text-emerald-500" />
+                          </span>
+                          <span className="text-emerald-600 font-bold">{subScores.langPts} / {subScores.maxLang} pts</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.langPts / subScores.maxLang) * 100}%` }} />
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs p-3 text-xs bg-[#0a2540] text-white border-emerald-400/30">
+                      <p className="font-bold text-yellow-300 mb-1">💡 {language === "en" ? "Language optimization tip" : "Conseil actionnable — Langues"}</p>
+                      <p className="text-slate-200">
+                        {french !== "advanced"
+                          ? (language === "en" ? "French is a major booster in Canada (Express Entry francophone draws & PNP). Preparing the TEF Canada or TCF Canada can add massive points." : "Le français est un levier majeur (tirages ciblés francophones et volets provinciaux). Passer le TEF Canada ou TCF Canada peut transformer votre profil.")
+                          : (language === "en" ? "Your French proficiency is strong! Adding English (IELTS/CELPIP) will unlock dual-language bonus points." : "Votre maîtrise du français est un atout clé ! L'ajout de l'anglais (IELTS/CELPIP) vous permettra de débloquer des points de bilinguisme.")}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </CardContent>
           </Card>
