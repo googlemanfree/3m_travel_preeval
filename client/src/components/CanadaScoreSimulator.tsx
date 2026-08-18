@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 
@@ -78,15 +78,18 @@ export default function CanadaScoreSimulator() {
 
   const categoryExplanations: Record<string, string> = {
     all: "Affichage par défaut des 3 dernières rondes de tous programmes confondus pour avoir une vue d'ensemble du marché.",
-    cec: "Classe de l'expérience canadienne (CEC) : Destiné aux candidats ayant déjà travaillé au Canada (souvent seuils plus bas).",
-    provincial: "Programme des candidats des provinces (PNP) : Inclut 600 points bonus de nomination provinciale (d'où les scores > 600).",
-    sante: "Tirage ciblé Professions en santé : Destiné aux profils médicaux et paramédicaux recherchés en priorité par IRCC.",
+    cec: "Classe de l'expérience canadienne (CEC) : Destiné aux candidats ayant déjà travaillé au Canada (seuils compétitifs).",
+    provincial: "Programme des candidats des provinces (PNP) : Inclut 600 points bonus de nomination provinciale.",
+    sante: "Tirage ciblé Professions en santé : Destiné aux profils médicaux et paramédicaux recherchés en priorité.",
     general: "Tirages tous programmes (Général) : Concerne l'ensemble des bassins FSW, CEC et Métiers spécialisés."
   };
 
   const filteredRounds = selectedCategory === "all"
     ? allRounds.slice(0, 3)
     : allRounds.filter(r => r.category === selectedCategory);
+
+  // Dernier seuil de la catégorie active pour calcul d'écart
+  const latestThreshold = filteredRounds.length > 0 ? filteredRounds[0].minScore : 500;
 
   // Calcul indicatif CRS
   const getSubScores = () => {
@@ -126,12 +129,14 @@ export default function CanadaScoreSimulator() {
   };
 
   const scores = getSubScores();
+  const scoreDiff = scores.total - latestThreshold;
+  const isThresholdMet = scoreDiff >= 0;
   const isEligible = scores.total >= 420;
 
   const getWhatsappMessage = () => {
     const text = language === 'fr'
-      ? `Bonjour 3M Travel, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Éligible: ${isEligible ? 'Oui' : 'Non'}). Je souhaite être accompagné par un conseiller.`
-      : `Hello 3M Travel, I have evaluated my profile for Canada. My estimated score is ${scores.total} points (Eligible: ${isEligible ? 'Yes' : 'No'}). I would like to get advisor support.`;
+      ? `Bonjour 3M Travel, j’ai évalué mon profil pour le Canada. Mon score estimé est de ${scores.total} points (Écart vs dernier seuil ${latestThreshold} pts: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). Je souhaite être accompagné par un conseiller.`
+      : `Hello 3M Travel, I have evaluated my profile for Canada. My estimated score is ${scores.total} points (Diff vs threshold ${latestThreshold}: ${scoreDiff >= 0 ? '+' + scoreDiff : scoreDiff}). I would like to get advisor support.`;
     return encodeURIComponent(text);
   };
 
@@ -286,8 +291,30 @@ export default function CanadaScoreSimulator() {
           </div>
         </div>
 
+        {/* Indicateur visuel d'écart par rapport au dernier seuil de la catégorie choisie */}
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' : 'bg-amber-50/80 border-amber-200 text-amber-900'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`p-2.5 rounded-xl ${isThresholdMet ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+              {isThresholdMet ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
+            </div>
+            <div>
+              <h5 className="font-bold text-sm">
+                {isThresholdMet ? 'Seuil de la catégorie atteint ou dépassé !' : 'Écart avec le dernier seuil de la catégorie'}
+              </h5>
+              <p className="text-xs opacity-90">
+                {isThresholdMet
+                  ? `Votre score dépasse de +${scoreDiff} points le seuil de référence (${latestThreshold} pts).`
+                  : `Il vous manque ${Math.abs(scoreDiff)} points pour atteindre le dernier seuil de cette catégorie (${latestThreshold} pts).`}
+              </p>
+            </div>
+          </div>
+          <div className="px-4 py-2 bg-white rounded-xl shadow-xs border text-center shrink-0 font-extrabold text-base">
+            {scoreDiff >= 0 ? `+${scoreDiff} pts` : `${scoreDiff} pts`}
+          </div>
+        </div>
+
         {/* Graphique comparatif avec filtre par catégorie et infobulles explicatives */}
-        <div className="space-y-4 pt-6 border-t border-gray-100">
+        <div className="space-y-4 pt-4 border-t border-gray-100">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
