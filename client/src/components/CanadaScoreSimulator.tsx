@@ -213,11 +213,13 @@ export default function CanadaScoreSimulator() {
                   asChild
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-[1.02]"
                 >
-                  <Link href="/evaluation-primaire?destination=canada" className="inline-flex items-center justify-center gap-2">
-                    <span>{language === "en" ? "Launch Official Evaluation" : "Lancer mon évaluation officielle"}</span>
-                    <ArrowRight className="w-4 h-4" />
+                  <Link href="/evaluation-primaire?destination=canada">
+                    <span className="inline-flex items-center justify-center gap-2 w-full">
+                      <span>{language === "en" ? "Launch Official Evaluation" : "Lancer mon évaluation officielle"}</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
                   </Link>
-                </Link>
+                </Button>
 
                 {!isCompetitive && (
                   <div className="rounded-xl bg-amber-950/60 border border-amber-500/30 p-4 text-left text-amber-200">
