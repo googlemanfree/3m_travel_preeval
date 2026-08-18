@@ -338,3 +338,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Exécuter les scénarios de navigation et analyser les erreurs de route, appels réseau, boutons sans effet et chargements bloqués.
 - [x] Corriger les chemins inaccessibles, redirections défectueuses, routes manquantes et actions de formulaire non réactives détectés.
 - [x] Ajouter ou renforcer les tests de régression des parcours corrigés, puis valider les routes critiques sur ordinateur et mobile.
+
+## Nettoyage App.tsx, page 404 et vérification des liens externes
+- [x] Comparer le App.tsx fourni avec les routes réellement montées et retirer uniquement les imports de pages jamais routées.
+- [x] Ajouter une configuration 404 administrable avec titre, message et liens de redirection utiles, protégée et auditée.
+- [x] Enregistrer les erreurs 404 avec chemin demandé, référent, date et compteur, puis ajouter un tableau de surveillance administrateur.
+- [x] Ajouter un vérificateur de liens externes avec statut HTTP, date du dernier contrôle, erreur et relance manuelle sécurisée.
+- [x] Intégrer les centres 404/liens au back-office sans modifier les parcours existants.
+- [x] Ajouter les tests de sécurité, routes, validations, vérification de liens et régression complète avant publication.
+- [x] Ajouter un callback Heartbeat idempotent pour vérifier périodiquement les liens externes et enregistrer les statuts, sans timer en processus.
+- [ ] Préparer la création du cron projet après publication du callback et confirmer la procédure de déploiement avec le propriétaire.

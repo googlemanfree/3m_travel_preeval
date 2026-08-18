@@ -71,6 +71,7 @@ import { unifiedRequestsRouter } from "./routers/unifiedRequests";
 import { tourismRouter } from "./routers/tourism";
 import { exchangeRatesRouter } from "./routers/exchangeRatesRouter";
 import { evisaCatalogueRouter } from "./routers/evisaCatalogueRouter";
+import { routeHealthRouter } from "./routers/routeHealthRouter";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -138,6 +139,7 @@ export const appRouter = router({
   export: exportRouter,
   evisa: evisaRouter,
   evisaCatalogue: evisaCatalogueRouter,
+  routeHealth: routeHealthRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,
   reassurance: reassuranceRouter,

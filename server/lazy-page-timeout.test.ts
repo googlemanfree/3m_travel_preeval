@@ -21,7 +21,11 @@ describe("lazy page timeout recovery contracts", () => {
     const lazyImports = app.match(/lazyWithTimeout\(\(\) => import\(/g) ?? [];
 
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
-    expect(lazyImports).toHaveLength(107);
+    // Le nettoyage des chemins morts a retiré 23 imports jamais routés.
+    expect(lazyImports).toHaveLength(84);
+    for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {
+      expect(app).not.toContain(`import(\"./pages/${removedPage}\")`);
+    }
     expect(app).not.toContain("React.lazy(() => import(");
   });
 });
