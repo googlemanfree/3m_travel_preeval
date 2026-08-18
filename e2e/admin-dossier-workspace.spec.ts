@@ -206,8 +206,7 @@ test("confirme la synchronisation d’une étape du bureau vers l’espace clien
   await page.goto("/admin/dossiers");
   await page.getByText(candidate.folderCode, { exact: true }).click();
   const workspace = page.getByRole("dialog", { name: "Poste de pilotage dossier 360°" });
-  await workspace.getByText("À qualifier", { exact: true }).click();
-  await page.getByRole("option", { name: "Documents à vérifier" }).click();
+  await workspace.getByRole("button", { name: /Vérifier pièces/i }).click();
   await workspace.getByRole("button", { name: "Enregistrer le pilotage" }).click();
   await expect(page.getByText("Dossier mis à jour")).toBeVisible();
   await expect.poll(() => workflowMutationSeen).toBe(true);
@@ -261,8 +260,10 @@ test("permet l’envoi d’un message rapide ou d’une notification personnalis
   await dialog.getByRole("combobox", { name: "Insérer les informations e‑Visa officielles" }).click();
   await page.getByRole("option", { name: /Togo/i }).click();
   await dialog.getByRole("button", { name: "Insérer dans le message" }).click();
-  await expect(dialog.locator("textarea")).toHaveValue(/https:\/\/voyage\.gouv\.tg\//);
-  await expect(dialog.locator("textarea")).toHaveValue(/\/evisas\/request\?destination=togo/);
+  const editor = dialog.locator('[contenteditable="true"]');
+  await expect(editor).toContainText("https://voyage.gouv.tg/");
+  await expect(editor).toContainText("/evisas/request?destination=togo");
+  await dialog.getByRole("button", { name: "Envoyer maintenant" }).scrollIntoViewIfNeeded();
   await dialog.getByRole("button", { name: "Envoyer maintenant" }).click();
   await expect.poll(() => messageSent).toBe(true);
 });

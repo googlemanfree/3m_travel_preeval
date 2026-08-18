@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bell, CalendarClock, CheckCircle2, ClipboardCheck, CreditCard, FileCheck2, FileText,
   FolderKanban, History, Mail, MessageSquare, Plus, Save, Send, ShieldAlert, UserCheck,
+  ArrowRight, CircleAlert, Gauge, Sparkles, TimerReset, UserRoundCheck, Zap,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
@@ -181,6 +182,20 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     comment: comment.trim() || undefined,
   });
 
+  const setDueShortcut = (hours: number) => {
+    const target = new Date(Date.now() + hours * 60 * 60 * 1000);
+    setDueAt(target.toISOString().slice(0, 16));
+  };
+
+  const quickWorkflowOptions = [
+    { value: "qualifying", label: "Qualifier", description: "Vérifier le projet", icon: Sparkles, tone: "border-violet-200 bg-violet-50 text-violet-800" },
+    { value: "waiting_customer", label: "Relancer client", description: "Attendre les pièces", icon: Bell, tone: "border-amber-200 bg-amber-50 text-amber-800" },
+    { value: "documents_review", label: "Vérifier pièces", description: "Contrôle documentaire", icon: FileCheck2, tone: "border-sky-200 bg-sky-50 text-sky-800" },
+    { value: "processing", label: "Traiter", description: "Dossier en cours", icon: Gauge, tone: "border-blue-200 bg-blue-50 text-blue-800" },
+    { value: "submitted", label: "Soumettre", description: "Envoyé au partenaire", icon: ArrowRight, tone: "border-indigo-200 bg-indigo-50 text-indigo-800" },
+    { value: "completed", label: "Finaliser", description: "Étape terminée", icon: CheckCircle2, tone: "border-emerald-200 bg-emerald-50 text-emerald-800" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm">
@@ -194,7 +209,7 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
       </div>
 
       <Dialog open={quickMessageOpen} onOpenChange={setQuickMessageOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Envoyer un message personnalisé</DialogTitle>
             <DialogDescription>
@@ -396,31 +411,43 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4 pt-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border p-4">
-              <h4 className="flex items-center gap-2 font-semibold text-slate-900"><UserCheck className="h-4 w-4 text-blue-700" />Pilotage du dossier</h4>
-              <div className="mt-3 grid gap-3">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div><Label>Étape de traitement</Label><Select value={workflowStatus} onValueChange={setWorkflowStatus}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
-                  <div><Label>Priorité</Label><Select value={priority} onValueChange={setPriority}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div><Label>Conseiller responsable</Label><Select value={advisorId} onValueChange={setAdvisorId}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unassigned">À attribuer</SelectItem>{data.advisors.map((advisor: any) => <SelectItem key={advisor.id} value={String(advisor.id)}>{advisor.fullName} · {advisor.adminType}</SelectItem>)}</SelectContent></Select></div>
-                  <div><Label>Échéance / relance</Label><Input className="mt-1" type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></div>
-                </div>
-                <div><Label>Étiquettes personnalisées</Label><Input className="mt-1" value={labels} onChange={(event) => setLabels(event.target.value)} placeholder="Ex. prioritaire, Canada, appel requis" /><p className="mt-1 text-xs text-slate-500">Séparez les étiquettes par des virgules.</p></div>
-                <div><Label>Commentaire interne</Label><Textarea className="mt-1" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Précisez l’action, le blocage ou la décision prise…" /></div>
-                <Button onClick={saveOperationalState} disabled={updateMutation.isPending} className="bg-blue-700 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Synchronisation…" : "Enregistrer le pilotage"}</Button>
-              </div>
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-6">
+            <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 xl:flex-row xl:items-start xl:justify-between">
+              <div className="flex items-start gap-3"><div className="rounded-xl bg-blue-700 p-2.5 text-white"><Gauge className="h-5 w-5" /></div><div><div className="flex flex-wrap items-center gap-2"><h4 className="text-lg font-bold text-slate-950">Pilotage du dossier</h4><StateBadge status={workflowStatus} /><Badge className={priority === "urgent" ? "border-rose-200 bg-rose-50 text-rose-800" : priority === "high" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-slate-200 bg-slate-50 text-slate-700"}>{PRIORITY_LABELS[priority]}</Badge></div><p className="mt-1 max-w-2xl text-sm text-slate-600">Modifiez les paramètres, préparez les relances et enregistrez une seule mise à jour synchronisée pour l’espace candidat.</p></div></div>
+              <div className="grid grid-cols-2 gap-2 sm:flex"><Button type="button" variant="outline" onClick={() => setQuickMessageOpen(true)} className="gap-2"><Mail className="h-4 w-4" />Message</Button><Button type="button" variant="outline" disabled={!pendingRequirements.length || documentReminderMutation.isPending} onClick={() => documentReminderMutation.mutate({ sessionToken, candidateId: candidate.id })} className="gap-2"><Bell className="h-4 w-4" />Relancer pièces</Button></div>
             </div>
-            <div className="rounded-xl border p-4">
-              <h4 className="flex items-center gap-2 font-semibold text-slate-900"><ClipboardCheck className="h-4 w-4 text-blue-700" />Actions à réaliser</h4>
-              <div className="mt-3 space-y-2">
-                {data.tasks.filter((task: any) => task.taskStatus !== "completed" && task.taskStatus !== "cancelled").length ? data.tasks.filter((task: any) => task.taskStatus !== "completed" && task.taskStatus !== "cancelled").map((task: any) => <div key={task.id} className="flex items-start justify-between gap-2 rounded-lg bg-slate-50 p-3"><div><p className="text-sm font-medium text-slate-800">{task.title}</p><p className="text-xs text-slate-500">Échéance : {formatDate(task.dueAt)}</p></div><Button size="sm" variant="outline" onClick={() => completeTaskMutation.mutate({ sessionToken, taskId: task.id })}>Terminer</Button></div>) : <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-500">Aucune action ouverte.</p>}
-                <div className="border-t pt-3"><Label>Nouvelle action</Label><Input className="mt-1" value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Ex. Appeler le candidat pour compléter le passeport" /><Input className="mt-2" type="datetime-local" value={taskDueAt} onChange={(event) => setTaskDueAt(event.target.value)} /><Button className="mt-2" size="sm" variant="outline" disabled={!taskTitle.trim() || createTaskMutation.isPending} onClick={() => createTaskMutation.mutate({ sessionToken, candidateId: candidate.id, title: taskTitle.trim(), description: undefined, assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId), dueAt: taskDueAt ? new Date(taskDueAt) : null })}><Plus className="mr-1 h-4 w-4" />Ajouter</Button></div>
-              </div>
+
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              {quickWorkflowOptions.map((option) => { const Icon = option.icon; const active = workflowStatus === option.value; return <button type="button" key={option.value} onClick={() => setWorkflowStatus(option.value)} className={`min-h-[86px] rounded-xl border p-3 text-left transition-colors ${active ? "border-blue-600 bg-blue-700 text-white shadow-sm" : option.tone}`}><Icon className="h-4 w-4" /><p className="mt-2 text-sm font-semibold">{option.label}</p><p className={`mt-0.5 text-xs ${active ? "text-blue-100" : "opacity-75"}`}>{option.description}</p></button>; })}
             </div>
-          </div>
+            <p className="mt-2 text-xs text-slate-500">Les raccourcis préparent l’étape. Cliquez sur « Enregistrer le pilotage » pour appliquer et notifier le candidat.</p>
+
+            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+              <div className="space-y-4">
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div><Label>Étape de traitement</Label><Select value={workflowStatus} onValueChange={setWorkflowStatus}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
+                  <div><Label>Priorité</Label><Select value={priority} onValueChange={setPriority}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
+                  <div><Label>Conseiller responsable</Label><Select value={advisorId} onValueChange={setAdvisorId}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unassigned">À attribuer</SelectItem>{data.advisors.map((advisor: any) => <SelectItem key={advisor.id} value={String(advisor.id)}>{advisor.fullName} · {advisor.adminType}</SelectItem>)}</SelectContent></Select></div>
+                </div>
+                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                  <div><Label>Échéance / relance</Label><Input className="mt-1 h-11" type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></div>
+                  <div className="flex items-end gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(24)}>24 h</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(72)}>3 j</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(168)}>7 j</Button></div>
+                </div>
+                <div><Label>Étiquettes personnalisées</Label><Input className="mt-1 h-11" value={labels} onChange={(event) => setLabels(event.target.value)} placeholder="Ex. prioritaire, Canada, appel requis" /><p className="mt-1 text-xs text-slate-500">Séparez les étiquettes par des virgules pour filtrer et retrouver le dossier plus vite.</p></div>
+                <div><Label>Commentaire interne et décision</Label><Textarea className="mt-1 min-h-30" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Précisez l’action effectuée, le blocage rencontré, la décision prise et ce qui est attendu du candidat…" /></div>
+                <Button onClick={saveOperationalState} disabled={updateMutation.isPending} className="h-12 w-full bg-blue-700 text-base hover:bg-blue-800"><Save className="mr-2 h-4 w-4" />{updateMutation.isPending ? "Synchronisation en cours…" : "Enregistrer le pilotage et synchroniser"}</Button>
+              </div>
+
+              <aside className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-600" /><h5 className="font-semibold text-slate-900">Bureau d’action immédiate</h5></div>
+                <div className="rounded-xl border border-blue-100 bg-white p-3"><p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Prochaine action</p><p className="mt-1 font-semibold text-slate-900">{nextAction.label}</p><p className="mt-1 text-sm text-slate-600">{nextAction.description}</p></div>
+                <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-white p-3"><TimerReset className="h-4 w-4 text-slate-600" /><p className="mt-2 text-xs text-slate-500">Échéance</p><p className="mt-1 text-sm font-semibold text-slate-900">{formatDate(operationalCase.dueAt)}</p></div><div className="rounded-lg bg-white p-3"><UserRoundCheck className="h-4 w-4 text-slate-600" /><p className="mt-2 text-xs text-slate-500">Conseiller</p><p className="mt-1 text-sm font-semibold text-slate-900">{advisorId === "unassigned" ? "À attribuer" : data.advisors.find((advisor: any) => String(advisor.id) === advisorId)?.fullName || "Attribué"}</p></div></div>
+                {pendingRequirements.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-3"><div className="flex gap-2"><CircleAlert className="mt-0.5 h-4 w-4 text-amber-700" /><div><p className="font-semibold text-amber-950">{pendingRequirements.length} pièce(s) à suivre</p><p className="mt-1 text-xs text-amber-800">Le candidat peut être relancé depuis ce bureau.</p></div></div></div>}
+                <div className="border-t border-slate-200 pt-3"><div className="flex items-center justify-between"><h5 className="flex items-center gap-2 text-sm font-semibold text-slate-900"><ClipboardCheck className="h-4 w-4 text-blue-700" />Actions ouvertes</h5><Badge className="border-slate-200 bg-white text-slate-700">{data.metrics.openTasks}</Badge></div><div className="mt-2 space-y-2">{data.tasks.filter((task: any) => task.taskStatus !== "completed" && task.taskStatus !== "cancelled").slice(0, 3).map((task: any) => <div key={task.id} className="rounded-lg border border-slate-200 bg-white p-2.5"><p className="text-sm font-medium text-slate-800">{task.title}</p><div className="mt-2 flex items-center justify-between gap-2"><span className="text-xs text-slate-500">{formatDate(task.dueAt)}</span><Button size="sm" variant="outline" onClick={() => completeTaskMutation.mutate({ sessionToken, taskId: task.id })}>Terminer</Button></div></div>) || <p className="rounded-lg bg-white p-3 text-sm text-slate-500">Aucune action ouverte.</p>}</div></div>
+                <div className="border-t border-slate-200 pt-3"><Label>Créer une action de suivi</Label><Input className="mt-1 bg-white" value={taskTitle} onChange={(event) => setTaskTitle(event.target.value)} placeholder="Ex. Appeler le candidat" /><Input className="mt-2 bg-white" type="datetime-local" value={taskDueAt} onChange={(event) => setTaskDueAt(event.target.value)} /><Button className="mt-2 w-full" size="sm" variant="outline" disabled={!taskTitle.trim() || createTaskMutation.isPending} onClick={() => createTaskMutation.mutate({ sessionToken, candidateId: candidate.id, title: taskTitle.trim(), description: undefined, assignedAdminId: advisorId === "unassigned" ? null : Number(advisorId), dueAt: taskDueAt ? new Date(taskDueAt) : null })}><Plus className="mr-1 h-4 w-4" />Ajouter l’action</Button></div>
+              </aside>
+            </div>
+          </section>
         </TabsContent>
 
         <TabsContent value="evaluation" className="space-y-3 pt-4">

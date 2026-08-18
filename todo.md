@@ -388,3 +388,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des filtres et alertes visuelles pour les dossiers incomplets depuis plus de sept jours, avec date de dernière activité.
 - [x] Créer, valider et livrer une compétence réutilisable pour la gestion documentaire administrative sécurisée.
 - [x] Tester les exports, l’IA, les alertes, les autorisations et les régressions avant publication.
+
+## Poste de commande de pilotage des dossiers
+- [x] Cartographier les données et mutations de pilotage synchronisées avec l’espace client.
+- [x] Recomposer le bloc de pilotage en interface pleine largeur avec hiérarchie visuelle, statut, priorité, conseiller, échéance et prochaine action.
+- [x] Ajouter des actions rapides de relance, attribution, suivi, annotations, étiquettes et accès aux centres documents/paiements/communications.
+- [x] Préserver les formulaires complets, l’historique, les contrôles d’accès et l’enregistrement explicite des modifications.
+- [x] Tester l’affichage PC/mobile, les actions de pilotage et les régressions avant publication.
