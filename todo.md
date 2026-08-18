@@ -501,3 +501,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Déplacer le simulateur de score CRS de la page Procédures vers la section /canada dédiée.
 - [x] Imposer une étape d’évaluation du score avant d’explorer les voies détaillées (Entrée express, provinces, etc.).
 - [x] Mettre à jour les tests de contrat et valider la suite complète de 436 tests Vitest.
+
+## Barres de progression par critère
+- [x] Calculer les points par sous-critère (Âge, Études, Expérience, Langues) dans le simulateur Canada.
+- [x] Ajouter des barres de progression visuelles et accessibles pour chaque critère.
+- [x] Tester les calculs, le responsive, TypeScript et les tests avant publication.

@@ -17,39 +17,45 @@ export default function CanadaScoreSimulator() {
   const [english, setEnglish] = useState<string>("intermediate");
 
   // Calcul indicatif CRS
-  const calculateScore = () => {
-    let score = 0;
-    // Âge
-    if (age === "20-29") score += 110;
-    else if (age === "30" || age === "18-19" || age === "31-35") score += 95;
-    else if (age === "36-40") score += 70;
-    else score += 30;
+  const getSubScores = () => {
+    let agePts = 110;
+    if (age === "20-29") agePts = 110;
+    else if (age === "30" || age === "18-19" || age === "31-35") agePts = 95;
+    else if (age === "36-40") agePts = 70;
+    else agePts = 30;
 
-    // Éducation
-    if (education === "phd") score += 140;
-    else if (education === "master") score += 135;
-    else if (education === "bachelor") score += 120;
-    else score += 90;
+    let eduPts = 120;
+    if (education === "phd") eduPts = 140;
+    else if (education === "master") eduPts = 135;
+    else if (education === "bachelor") eduPts = 120;
+    else eduPts = 90;
 
-    // Expérience
-    if (experience === "3-plus") score += 70;
-    else if (experience === "2") score += 53;
-    else score += 35;
+    let expPts = 70;
+    if (experience === "3-plus") expPts = 70;
+    else if (experience === "2") expPts = 53;
+    else expPts = 35;
 
-    // Français & Anglais
-    if (french === "advanced") score += 60;
-    else if (french === "intermediate") score += 30;
-    
-    if (english === "advanced") score += 50;
-    else if (english === "intermediate") score += 30;
+    let langPts = 0;
+    if (french === "advanced") langPts += 60;
+    else if (french === "intermediate") langPts += 30;
+    if (english === "advanced") langPts += 50;
+    else if (english === "intermediate") langPts += 30;
 
-    // Bonus francophonie / province
-    score += 45;
+    const bonusPts = 45;
+    const total = Math.min(600, agePts + eduPts + expPts + langPts + bonusPts);
 
-    return Math.min(600, score);
+    return {
+      agePts, maxAge: 110,
+      eduPts, maxEdu: 140,
+      expPts, maxExp: 70,
+      langPts, maxLang: 110,
+      bonusPts, maxBonus: 45,
+      total
+    };
   };
 
-  const estimatedScore = calculateScore();
+  const subScores = getSubScores();
+  const estimatedScore = subScores.total;
   const isCompetitive = estimatedScore >= 450;
 
   return (
@@ -168,6 +174,53 @@ export default function CanadaScoreSimulator() {
                     <SelectItem value="none">Basique / Aucun</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Barres de progression visuelles par critère */}
+              <div className="mt-8 pt-6 border-t border-slate-100 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  {language === "en" ? "Score Breakdown by Criterion" : "Répartition et Écart par Critère"}
+                </p>
+
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700">{language === "en" ? "Age" : "Âge"}</span>
+                    <span className="text-blue-600 font-bold">{subScores.agePts} / {subScores.maxAge} pts</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.agePts / subScores.maxAge) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700">{language === "en" ? "Education" : "Diplômes & Études"}</span>
+                    <span className="text-blue-600 font-bold">{subScores.eduPts} / {subScores.maxEdu} pts</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.eduPts / subScores.maxEdu) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700">{language === "en" ? "Experience" : "Expérience professionnelle"}</span>
+                    <span className="text-blue-600 font-bold">{subScores.expPts} / {subScores.maxExp} pts</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-sky-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.expPts / subScores.maxExp) * 100}%` }} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs font-semibold mb-1">
+                    <span className="text-slate-700">{language === "en" ? "Languages (FR/EN)" : "Langues (Français / Anglais)"}</span>
+                    <span className="text-blue-600 font-bold">{subScores.langPts} / {subScores.maxLang} pts</span>
+                  </div>
+                  <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-600 rounded-full transition-all duration-500" style={{ width: `${(subScores.langPts / subScores.maxLang) * 100}%` }} />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
