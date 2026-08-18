@@ -15,6 +15,7 @@ import { evaluations, users, applications, profileEvaluations, aiReportHistory, 
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
+import { storagePut } from "../storage";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
@@ -2144,10 +2145,10 @@ export const adminRouter = router({
 
         const documents = [
           ...clientRows.map((doc: any) => ({
-            id: doc.id, source: "client" as const, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
+            id: doc.id, source: "client" as const, candidateId: null, candidateEmail: doc.candidateEmail, dossierNumber: "N/A", candidateName: doc.candidateEmail || "N/A", documentType: doc.documentType, documentName: doc.documentName, documentUrl: doc.documentUrl, status: doc.status, verificationStatus: doc.verificationStatus, submittedAt: doc.receiptGeneratedAt || doc.createdAt, verifiedAt: doc.verifiedAt, verifiedByAdmin: doc.verifiedByAdmin, humanVerified: Boolean(doc.verifiedAt && doc.verifiedByAdmin), verificationComment: doc.verificationComment, receiptNumber: doc.receiptNumber, replacesId: doc.replacesDocumentId ?? null, aiClassification: doc.aiClassification ?? null, aiClassificationConfidence: doc.aiClassificationConfidence ?? null, aiClassifiedAt: doc.aiClassifiedAt ?? null, suggestedFolder: doc.suggestedFolder ?? null, extractedData: doc.extractedData ?? null, readabilityScore: doc.readabilityScore ?? null, readabilityIssues: doc.readabilityIssues ?? null,
           })),
           ...candidateRows.map((doc) => ({
-            id: doc.id, source: "candidate" as const, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
+            id: doc.id, source: "candidate" as const, candidateId: doc.candidateId, candidateEmail: doc.candidateEmail, dossierNumber: doc.candidateId ? (dossierByCandidate.get(doc.candidateId) || "N/A") : "N/A", candidateName: doc.candidateName || doc.candidateEmail || "N/A", documentType: doc.fileType, documentName: doc.fileName, documentUrl: doc.fileUrl, status: doc.status === "verified" ? "verified" : doc.status === "rejected" ? "rejected" : "pending", verificationStatus: doc.status === "verified" ? "approved" : doc.status === "rejected" ? "rejected" : "pending", submittedAt: doc.uploadedAt, verifiedAt: undefined, verifiedByAdmin: undefined, humanVerified: false, verificationComment: doc.rejectionReason, receiptNumber: null, replacesId: doc.replacesFileId ?? null, aiClassification: null, aiClassificationConfidence: null, aiClassifiedAt: null, suggestedFolder: null, extractedData: doc.extractedData ?? null, readabilityScore: null, readabilityIssues: null,
           })),
         ];
         const normalizedSearch = input.search?.trim().toLowerCase();
@@ -2169,6 +2170,42 @@ export const adminRouter = router({
         console.error("[Admin List Documents] Error:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la récupération des documents" });
       }
+    }),
+
+  uploadDocumentForCandidate: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      fileType: z.enum(["cv", "passeport", "diplome", "releve_notes", "photo", "justificatif_domicile", "extrait_naissance", "casier_judiciaire", "justificatif_paiement", "autre"]),
+      fileName: z.string().min(1).max(255),
+      mimeType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]),
+      sizeBytes: z.number().int().positive().max(10 * 1024 * 1024),
+      dataUrl: z.string().max(15_000_000),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const candidate = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Candidat introuvable." });
+      const match = input.dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+      if (!match || match[1] !== input.mimeType) throw new TRPCError({ code: "BAD_REQUEST", message: "Format de fichier invalide." });
+      const buffer = Buffer.from(match[2], "base64");
+      if (!buffer.length || buffer.length !== input.sizeBytes || buffer.length > 10 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier doit peser au maximum 10 Mo." });
+      const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-180) || "document";
+      const stored = await storagePut(`admin-documents/${input.candidateId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
+      await db.insert(candidateFiles).values({
+        candidateId: input.candidateId,
+        fileType: input.fileType,
+        fileName: input.fileName,
+        fileUrl: stored.url,
+        fileKey: stored.key,
+        fileSizeBytes: buffer.length,
+        mimeType: input.mimeType,
+        status: "uploaded",
+        correctionComment: `Document déposé par l’administration (${admin.email || "administrateur"}).`,
+      });
+      return { success: true, url: stored.url };
     }),
 
   // ─────────────────────────────────────────────────────────────────────────

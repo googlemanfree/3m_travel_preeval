@@ -375,3 +375,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les autorisations, les transitions de statut, les documents PDF/images et les notifications synchronisées avant publication.
 - [x] Ajouter une chaîne explicite de versions de remplacement pour relier l’ancien document à la nouvelle soumission du candidat.
 - [x] Générer une attestation globale de remise lorsque tous les documents requis sont validés et la rendre disponible côté client.
+
+## Dépôt, comparaison et rapport documentaire
+- [x] Ajouter une zone de glisser-déposer sécurisée dans le gestionnaire administratif avec contrôle de type, taille et destination du fichier.
+- [x] Ajouter une comparaison visuelle de deux versions liées d’un document PDF ou image, avec navigation claire entre l’ancienne et la nouvelle version.
+- [x] Générer un tableau mensuel de complétude par dossier à partir des statuts réels des documents, avec filtres de période et indicateurs d’avancement.
+- [x] Tester les autorisations, le dépôt, la comparaison, les données de rapport et les régressions de l’espace client avant publication.

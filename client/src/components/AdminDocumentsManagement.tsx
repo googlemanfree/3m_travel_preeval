@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter } from "lucide-react";
+import { FileText, CheckCircle2, Clock, XCircle, Download, Eye, ArrowUpDown, Sparkles, Layers3, ShieldCheck, RotateCcw, Filter, Upload, GitCompareArrows, CalendarDays, X } from "lucide-react";
 import { DocumentPreviewModal } from "./DocumentPreviewModal";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
@@ -13,6 +13,8 @@ import { trpc } from "@/lib/trpc";
 interface Document {
   id: number;
   source: "client" | "candidate";
+  candidateId?: number | null;
+  candidateEmail?: string | null;
   dossierNumber: string;
   candidateName: string;
   documentType: string;
@@ -51,6 +53,12 @@ export function AdminDocumentsManagement() {
   const [markerAnnotations, setMarkerAnnotations] = useState<Record<string, string>>({});
   const [activeMarkerId, setActiveMarkerId] = useState<string | null>(null);
   const [selectedDocumentKeys, setSelectedDocumentKeys] = useState<string[]>([]);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [uploadCandidateId, setUploadCandidateId] = useState("");
+  const [uploadDocumentType, setUploadDocumentType] = useState("autre");
+  const [comparisonDocuments, setComparisonDocuments] = useState<{ previous: Document; current: Document } | null>(null);
+  const [reportMonth, setReportMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   const approveDocumentMutation = trpc.admin.approveDocument.useMutation();
   const rejectDocumentMutation = trpc.admin.rejectDocument.useMutation();
@@ -58,6 +66,7 @@ export function AdminDocumentsManagement() {
   const rejectCandidateFileMutation = trpc.admin.rejectCandidateFile.useMutation();
   const updateDocumentStatusMutation = trpc.admin.updateDocumentStatus.useMutation();
   const saveMarkerAnnotationsMutation = trpc.admin.savePassportMarkerAnnotations.useMutation();
+  const uploadDocumentForCandidateMutation = trpc.admin.uploadDocumentForCandidate.useMutation();
 
   // Récupérer les documents via tRPC
   const { data: documentsData, isLoading: isLoadingDocs, refetch } = trpc.admin.listDocuments.useQuery(
@@ -173,6 +182,8 @@ export function AdminDocumentsManagement() {
   const documents: Document[] = documentsData?.map((doc: any) => ({
     id: doc.id,
     source: doc.source === "candidate" ? "candidate" : "client",
+    candidateId: doc.candidateId ?? null,
+    candidateEmail: doc.candidateEmail ?? null,
     dossierNumber: doc.dossierNumber || "N/A",
     candidateName: doc.candidateName || "N/A",
     documentType: doc.documentType || "unknown",
@@ -232,6 +243,7 @@ export function AdminDocumentsManagement() {
   });
 
   const documentTypes = Array.from(new Set(documents.map((document) => document.documentType).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr"));
+  const uploadTargets = Array.from(new Map(documents.filter((document) => document.candidateId).map((document) => [document.candidateId as number, { id: document.candidateId as number, label: `${document.candidateName} · ${document.dossierNumber}` }])).values()).sort((left, right) => left.label.localeCompare(right.label, "fr"));
   const dossierSummaries = Array.from(documents.reduce((summary, document) => {
     const key = document.dossierNumber || "N/A";
     const current = summary.get(key) || { dossierNumber: key, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0 };
@@ -264,6 +276,60 @@ export function AdminDocumentsManagement() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const acceptDroppedFiles = (incoming: FileList | File[]) => {
+    const supportedTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]);
+    const valid = Array.from(incoming).filter((file) => supportedTypes.has(file.type) && file.size <= 10 * 1024 * 1024);
+    const rejected = Array.from(incoming).length - valid.length;
+    if (rejected) toast.error(`${rejected} fichier(s) ignoré(s)`, { description: "Seuls les PDF, images et documents Word de 10 Mo maximum sont acceptés." });
+    setDroppedFiles((current) => [...current, ...valid].slice(0, 10));
+  };
+
+  const toDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(file);
+  });
+
+  const handleAdminDropUpload = async () => {
+    const candidateId = Number(uploadCandidateId);
+    if (!candidateId || !droppedFiles.length) {
+      toast.error("Sélectionnez un dossier et au moins un fichier.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      for (const file of droppedFiles) {
+        await uploadDocumentForCandidateMutation.mutateAsync({
+          sessionToken,
+          candidateId,
+          fileType: uploadDocumentType as "cv" | "passeport" | "diplome" | "releve_notes" | "photo" | "justificatif_domicile" | "extrait_naissance" | "casier_judiciaire" | "justificatif_paiement" | "autre",
+          fileName: file.name,
+          mimeType: file.type as "application/pdf" | "image/jpeg" | "image/png" | "image/webp" | "application/msword" | "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          sizeBytes: file.size,
+          dataUrl: await toDataUrl(file),
+        });
+      }
+      toast.success(`${droppedFiles.length} document(s) déposé(s)`, { description: "Ils apparaissent dans le dossier et sont prêts à être vérifiés." });
+      setDroppedFiles([]);
+      await refetch();
+    } catch (error) {
+      toast.error("Dépôt incomplet", { description: error instanceof Error ? error.message : "Vérifiez le dossier et les fichiers sélectionnés." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openVersionComparison = (document: Document) => {
+    if (!document.replacesId) return;
+    const previous = documents.find((candidate) => candidate.source === document.source && candidate.id === document.replacesId);
+    if (!previous) {
+      toast.error("Version précédente indisponible", { description: "La version remplacée n’est pas visible dans le périmètre chargé." });
+      return;
+    }
+    setComparisonDocuments({ previous, current: document });
   };
 
   const getStatusColor = (status: string) => {
@@ -415,6 +481,17 @@ export function AdminDocumentsManagement() {
   const pendingDocuments = documents.filter((d) => d.verificationStatus === "pending").length;
   const rejectedDocuments = documents.filter((d) => d.verificationStatus === "rejected").length;
   const completeDossiers = dossierSummaries.filter((dossier) => dossier.total > 0 && dossier.pending === 0 && dossier.rejected === 0).length;
+  const monthlyDocuments = documents.filter((document) => document.submittedAt.toISOString().slice(0, 7) === reportMonth);
+  const monthlyDossiers = Array.from(monthlyDocuments.reduce((summary, document) => {
+    const current = summary.get(document.dossierNumber) || { dossierNumber: document.dossierNumber, candidateName: document.candidateName, total: 0, approved: 0, pending: 0, rejected: 0 };
+    current.total += 1;
+    current.approved += document.verificationStatus === "approved" ? 1 : 0;
+    current.pending += document.verificationStatus === "pending" ? 1 : 0;
+    current.rejected += document.verificationStatus === "rejected" ? 1 : 0;
+    summary.set(document.dossierNumber, current);
+    return summary;
+  }, new Map<string, { dossierNumber: string; candidateName: string; total: number; approved: number; pending: number; rejected: number }>()).values());
+  const monthlyCompletionRate = monthlyDocuments.length ? Math.round((monthlyDocuments.filter((document) => document.verificationStatus === "approved").length / monthlyDocuments.length) * 100) : 0;
 
   return (
     <>
@@ -468,6 +545,26 @@ export function AdminDocumentsManagement() {
               <div className="text-2xl font-bold text-sky-700">{completeDossiers}/{dossierSummaries.length}</div>
               <p className="text-xs text-slate-500 mt-1">sans pièce en attente</p>
             </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+          <Card className="border-dashed border-2 border-blue-200 bg-blue-50/30">
+            <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Upload className="h-4 w-4 text-blue-700" />Dépôt rapide administrateur</CardTitle><CardDescription>Glissez des pièces reçues en agence, choisissez le dossier, puis envoyez-les dans la file documentaire.</CardDescription></CardHeader>
+            <CardContent className="space-y-3">
+              <div onDragOver={(event) => { event.preventDefault(); setIsDraggingFiles(true); }} onDragLeave={() => setIsDraggingFiles(false)} onDrop={(event) => { event.preventDefault(); setIsDraggingFiles(false); acceptDroppedFiles(event.dataTransfer.files); }} className={`rounded-xl border-2 border-dashed p-5 text-center transition ${isDraggingFiles ? "border-blue-600 bg-blue-100" : "border-blue-200 bg-white"}`}>
+                <Upload className="mx-auto h-7 w-7 text-blue-600" />
+                <p className="mt-2 text-sm font-semibold text-slate-900">Déposez vos fichiers ici</p><p className="text-xs text-slate-500">PDF, images ou Word · 10 Mo maximum par fichier</p>
+                <label className="mt-3 inline-flex cursor-pointer items-center rounded-md border border-blue-200 bg-white px-3 py-2 text-sm font-medium text-blue-800 hover:bg-blue-50">Sélectionner des fichiers<input type="file" multiple className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" onChange={(event) => event.currentTarget.files && acceptDroppedFiles(event.currentTarget.files)} /></label>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2"><select value={uploadCandidateId} onChange={(event) => setUploadCandidateId(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="">Choisir le dossier destinataire</option>{uploadTargets.map((target) => <option key={target.id} value={target.id}>{target.label}</option>)}</select><select value={uploadDocumentType} onChange={(event) => setUploadDocumentType(event.target.value)} className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"><option value="autre">Autre document</option><option value="cv">CV</option><option value="passeport">Passeport</option><option value="diplome">Diplôme</option><option value="justificatif_domicile">Justificatif de domicile</option><option value="justificatif_paiement">Justificatif de paiement</option></select></div>
+              {droppedFiles.length > 0 && <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-2">{droppedFiles.map((file, index) => <div key={`${file.name}-${index}`} className="flex items-center justify-between gap-2 text-xs"><span className="truncate">{file.name} · {(file.size / 1024 / 1024).toFixed(2)} Mo</span><button type="button" onClick={() => setDroppedFiles((current) => current.filter((_, currentIndex) => currentIndex !== index))} aria-label={`Retirer ${file.name}`} className="text-slate-500 hover:text-red-600"><X className="h-3.5 w-3.5" /></button></div>)}</div>}
+              <Button type="button" onClick={handleAdminDropUpload} disabled={isLoading || !uploadCandidateId || !droppedFiles.length} className="w-full gap-2"><Upload className="h-4 w-4" />Déposer dans le dossier</Button>
+            </CardContent>
+          </Card>
+          <Card className="border-violet-100 bg-violet-50/30">
+            <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><CalendarDays className="h-4 w-4 text-violet-700" />Rapport mensuel</CardTitle><CardDescription>Complétude calculée à partir des statuts réels des documents.</CardDescription></CardHeader>
+            <CardContent className="space-y-3"><Input type="month" value={reportMonth} onChange={(event) => setReportMonth(event.target.value)} aria-label="Mois du rapport documentaire" /><div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Documents reçus</p><p className="text-xl font-bold text-slate-900">{monthlyDocuments.length}</p></div><div className="rounded-lg bg-white p-3"><p className="text-xs text-slate-500">Validés</p><p className="text-xl font-bold text-emerald-700">{monthlyCompletionRate}%</p></div></div><div className="space-y-1.5">{monthlyDossiers.slice(0, 5).map((dossier) => { const rate = dossier.total ? Math.round((dossier.approved / dossier.total) * 100) : 0; return <div key={dossier.dossierNumber} className="rounded-md bg-white px-2 py-1.5"><div className="flex justify-between gap-2 text-xs"><span className="truncate font-medium">{dossier.dossierNumber}</span><span>{rate}%</span></div><div className="mt-1 h-1.5 rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-600" style={{ width: `${rate}%` }} /></div></div>; })}{monthlyDossiers.length === 0 && <p className="text-sm text-slate-500">Aucune pièce déposée sur cette période.</p>}</div></CardContent>
           </Card>
         </div>
 
@@ -669,6 +766,7 @@ export function AdminDocumentsManagement() {
                               <Eye className="w-4 h-4" />
                             </Button>
                             <Button onClick={() => handleDownloadDocument(doc.documentUrl, doc.documentName)} variant="ghost" size="sm" title="Télécharger" className="text-slate-600 hover:text-slate-900 bg-slate-50"><Download className="w-4 h-4" /></Button>
+                            {doc.replacesId ? <Button onClick={() => openVersionComparison(doc)} variant="ghost" size="sm" title="Comparer avec la version remplacée" className="text-violet-700 hover:text-violet-800 bg-violet-50"><GitCompareArrows className="w-4 h-4" /></Button> : null}
                             <div className="flex items-center gap-1">
                               {doc.verificationStatus !== "approved" && (
                                 <Button
@@ -861,6 +959,14 @@ export function AdminDocumentsManagement() {
                 </>
               )}
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={comparisonDocuments !== null} onOpenChange={(open) => !open && setComparisonDocuments(null)}>
+          <DialogContent className="max-w-6xl">
+            <DialogHeader><DialogTitle className="flex items-center gap-2"><GitCompareArrows className="h-5 w-5 text-violet-700" />Comparer les versions du document</DialogTitle><DialogDescription>La nouvelle version apparaît à droite. Vérifiez la lisibilité, les données et le contenu avant validation.</DialogDescription></DialogHeader>
+            {comparisonDocuments && <div className="grid gap-4 md:grid-cols-2"><div className="rounded-xl border border-orange-200 bg-orange-50/40 p-3"><p className="mb-2 text-sm font-semibold text-orange-900">Version remplacée · {comparisonDocuments.previous.documentName}</p><div className="h-[52vh] overflow-hidden rounded-lg border bg-white">{comparisonDocuments.previous.documentUrl.match(/\.(png|jpe?g|webp)(\?|$)/i) ? <img src={comparisonDocuments.previous.documentUrl} alt="Version remplacée" className="h-full w-full object-contain" /> : <iframe title="Version remplacée" src={comparisonDocuments.previous.documentUrl} className="h-full w-full" />}</div></div><div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3"><p className="mb-2 text-sm font-semibold text-emerald-900">Nouvelle version · {comparisonDocuments.current.documentName}</p><div className="h-[52vh] overflow-hidden rounded-lg border bg-white">{comparisonDocuments.current.documentUrl.match(/\.(png|jpe?g|webp)(\?|$)/i) ? <img src={comparisonDocuments.current.documentUrl} alt="Nouvelle version" className="h-full w-full object-contain" /> : <iframe title="Nouvelle version" src={comparisonDocuments.current.documentUrl} className="h-full w-full" />}</div></div></div>}
+            <DialogFooter><Button type="button" variant="outline" onClick={() => setComparisonDocuments(null)}>Fermer la comparaison</Button></DialogFooter>
           </DialogContent>
         </Dialog>
 
