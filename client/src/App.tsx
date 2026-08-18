@@ -435,7 +435,7 @@ function App() {
               </PageTransition>
               {/* Menu d'actions flottantes unifié */}
               <FloatingActionMenu />
-              {/* Copilote IA flottant */}
+              {/* Guide d’information flottant */}
               <AiCopilotWidgetEnhanced />
             </>
           )}

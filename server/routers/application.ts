@@ -832,7 +832,7 @@ export const applicationRouter = router({
           reportId,
           emailSent: emailSendSuccess,
           message: emailSendSuccess
-            ? 'Rapport d\'évaluation IA généré et envoyé avec succès'
+            ? 'Rapport d\'évaluation généré et envoyé avec succès'
             : 'Rapport généré mais l\'envoi par email a échoué',
         };
       } catch (err) {
@@ -853,7 +853,7 @@ export const applicationRouter = router({
         
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
-          message: 'Erreur lors de l\'évaluation IA du CV',
+          message: 'Erreur lors de la préparation de l\'évaluation du CV',
         });
       }
     }),

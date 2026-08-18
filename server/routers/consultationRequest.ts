@@ -57,7 +57,7 @@ export const consultationRequestRouter = router({
           to: "hello@3mtravelagency.com",
           subject: `📋 Nouvelle demande de consultation — ${input.fullName}`,
           html: `<p><strong>${input.fullName}</strong> (${input.email}, ${input.phone || "N/A"}) — Destination : ${input.targetCountry || "non précisée"}.</p>
-                 <p>${input.cvFileUrl ? "CV joint — analyse IA en cours, à valider dans le tableau de bord admin." : "Pas de CV joint — à examiner manuellement."}</p>`,
+                 <p>${input.cvFileUrl ? "CV joint — analyse du dossier en cours, à valider dans le tableau de bord admin." : "Pas de CV joint — à examiner manuellement."}</p>`,
         });
       } catch (err) {
         logger.error("consultation_request.team_notification_failed", { requestId }, err);

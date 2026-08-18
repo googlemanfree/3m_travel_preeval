@@ -395,3 +395,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des actions rapides de relance, attribution, suivi, annotations, étiquettes et accès aux centres documents/paiements/communications.
 - [x] Préserver les formulaires complets, l’historique, les contrôles d’accès et l’enregistrement explicite des modifications.
 - [x] Tester l’affichage PC/mobile, les actions de pilotage et les régressions avant publication.
+
+## Confidentialité des assistances internes
+- [x] Rechercher les mentions client-visible d’IA, d’analyse IA ou de suggestion IA dans les pages, e-mails, notifications et PDF.
+- [x] Remplacer ces mentions par des formulations neutres et professionnelles sans modifier les capacités internes du back-office.
+- [x] Vérifier que les messages, pièces jointes, exports et parcours candidat ne divulguent aucun détail technique interne.
+- [x] Ajouter des tests de régression de contenu et valider les canaux client avant publication.

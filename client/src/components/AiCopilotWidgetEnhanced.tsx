@@ -39,7 +39,7 @@ const QUICK_ACTIONS = [
 const WELCOME_MESSAGE: ChatMessage = {
   role: "assistant",
   content:
-    "Bonjour ! Je suis Aureol, l’assistant IA de 3M Travel 🤖 Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
+    "Bonjour ! Je suis Aureol, votre guide 3M Travel. Je peux répondre à vos questions sur les évaluations, les visas, les destinations et nos procédures. Comment puis-je vous aider ?",
   feedback: null,
   showActions: true,
 };
@@ -157,7 +157,7 @@ export default function AiCopilotWidgetEnhanced() {
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
               onClick={() => setIsOpen(true)}
-              aria-label="Ouvrir Aureol, l’assistant IA 3M Travel"
+              aria-label="Ouvrir Aureol, le guide 3M Travel"
               className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg flex items-center justify-center text-white hover:shadow-xl transition-shadow hover:scale-110 focus-visible:ring-4 focus-visible:ring-blue-200 focus-visible:ring-offset-2"
             >
               <MessageSquare className="w-6 h-6" />
@@ -184,7 +184,7 @@ export default function AiCopilotWidgetEnhanced() {
                     Aureol
                   </p>
                   <p className="text-xs text-blue-100 leading-tight">
-                    Assistant IA — procédures et visas
+                    Guide d’information — procédures et visas
                   </p>
                 </div>
               </div>

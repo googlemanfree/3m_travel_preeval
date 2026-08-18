@@ -329,7 +329,7 @@ export const evaluationRouter = router({
             );
 
             await db.update(evaluations).set({
-              aiReportContent: `${scoreSummary}\\n\\n--- RAPPORT IA ---\\n${report}`,
+              aiReportContent: `${scoreSummary}\n\n--- ANALYSE DU DOSSIER ---\n${report}`,
               aiProcessedAt: new Date(),
               aiProcessingError: null,
             }).where(eq(evaluations.id, evaluationId));

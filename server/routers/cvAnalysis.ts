@@ -112,7 +112,7 @@ ${evaluationData.recommendations}
 ${evaluationData.summary}
 
 ---
-*Rapport généré par l'IA le ${new Date().toLocaleDateString("fr-FR")}*
+*Rapport préparé le ${new Date().toLocaleDateString("fr-FR")}*
 `;
 
         return {
@@ -129,7 +129,7 @@ ${evaluationData.summary}
         console.error("Erreur lors de l'analyse du CV:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Erreur lors de l'analyse du CV par l'IA",
+          message: "Impossible de préparer l’analyse du CV pour le moment",
         });
       }
     }),
