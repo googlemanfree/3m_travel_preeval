@@ -440,9 +440,9 @@ function App() {
           <ChunkReloadNotice />
           {sessionRestored && (
             <>
-              {/* Header global visible sur toutes les pages */}
-              <Navbar />
+              {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
               <NavigationProgress />
+              <Navbar />
               {/* Contenu des pages avec transition douce entre les routes */}
               <PageTransition>
                 <React.Suspense fallback={<PageLoadingFallback />}>
