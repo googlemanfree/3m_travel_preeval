@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import React from "react";
 import { useLocation } from "wouter";
-import { useEffect } from "react";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -29,21 +28,31 @@ export function SimpleMultiProjectForm() {
   const [location] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const projectParam = searchParams.get("project") as ProjectType | null;
+  const destinationParam = searchParams.get("destination") || "";
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = React.useState<FormData>({
     fullName: "",
     email: "",
     whatsappPhone: "",
     nationality: "",
-    projectType: projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : "travail",
+    projectType: projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : (destinationParam ? "etudes" : "travail"),
+    sector: destinationParam ? `Destination souhaitée : ${destinationParam}` : undefined,
   });
 
-  useEffect(() => {
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) {
       setFormData((prev) => ({ ...prev, projectType: projectParam }));
     }
-  }, [projectParam]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    if (destinationParam) {
+      setFormData((prev) => ({
+        ...prev,
+        projectType: "etudes",
+        sector: prev.sector ? prev.sector : `Destination souhaitée : ${destinationParam}`,
+      }));
+    }
+  }, [projectParam, destinationParam]);
 
   const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({
     onSuccess: () => {
@@ -150,12 +159,12 @@ export function SimpleMultiProjectForm() {
                 name="nationality"
                 value={formData.nationality}
                 onChange={handleInputChange}
-                placeholder="Camerounais"
+                placeholder="Camerounaise"
                 className="mt-2"
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <Label htmlFor="projectType" className="text-gray-700 font-semibold">
                 Type de projet *
               </Label>
@@ -164,10 +173,10 @@ export function SimpleMultiProjectForm() {
                 onValueChange={(value) => handleSelectChange("projectType", value)}
               >
                 <SelectTrigger className="mt-2">
-                  <SelectValue />
+                  <SelectValue placeholder="Sélectionner un projet" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="travail">Visa Travail</SelectItem>
+                  <SelectItem value="travail">Visa Travail / Professionnel</SelectItem>
                   <SelectItem value="etudes">Visa Études</SelectItem>
                   <SelectItem value="tourisme">Visa Tourisme</SelectItem>
                 </SelectContent>
@@ -178,14 +187,14 @@ export function SimpleMultiProjectForm() {
               <>
                 <div>
                   <Label htmlFor="sector" className="text-gray-700 font-semibold">
-                    Secteur d'activité
+                    Secteur d'activité / Destination souhaitée
                   </Label>
                   <Input
                     id="sector"
                     name="sector"
                     value={formData.sector || ""}
                     onChange={handleInputChange}
-                    placeholder="Ex: Informatique"
+                    placeholder="Ex: Informatique ou Destination : Canada"
                     className="mt-2"
                   />
                 </div>
@@ -226,6 +235,20 @@ export function SimpleMultiProjectForm() {
                       <SelectItem value="master">Master</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="sector" className="text-gray-700 font-semibold">
+                    Destination souhaitée (ou filière)
+                  </Label>
+                  <Input
+                    id="sector"
+                    name="sector"
+                    value={formData.sector || ""}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Canada, France, Allemagne..."
+                    className="mt-2"
+                  />
                 </div>
               </>
             )}

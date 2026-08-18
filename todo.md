@@ -472,3 +472,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester l’accessibilité, le responsive, TypeScript et les régressions avant publication.
 
 ---
+
+## Présélection de destination dans le formulaire d’évaluation
+- [x] Permettre au formulaire d’évaluation d’accepter et de pré-remplir la destination choisie depuis les articles d’études ou les guides de pays.
+- [x] Tester l’accessibilité, le responsive, TypeScript et les tests avant publication.
