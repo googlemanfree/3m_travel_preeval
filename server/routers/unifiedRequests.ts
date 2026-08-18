@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   adminAccounts,
@@ -28,6 +28,7 @@ import { evaluationDestinations, generateDestinationEvaluationDraft } from "../s
 import { buildCandidateSpaceAccessUrl } from "../services/candidateAccessLink";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml, escapeHtmlText } from "../services/evaluationEmailCommunication";
+import { buildEvaluationReminderEmailHtml, buildEvaluationReminderEmailSubject, type EvaluationReminderLanguage } from "../services/evaluationReminderCommunication";
 
 const sourceTypes = ["application", "evaluation", "consultation", "flight", "insurance", "translation", "contact", "agency_dossier", "tourism"] as const;
 const workflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -559,6 +560,49 @@ export const unifiedRequestsRouter = router({
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_sent", comment: "Bilan validé et envoyé immédiatement au candidat.", actorAdminAccountId: admin.id }); }
       return { success: true, dossierNumber: application.dossierNumber, message: "Bilan validé et envoyé immédiatement dans l’espace client et par e-mail." };
+    }),
+
+  listUnviewedEvaluationReports: publicProcedure
+    .input(sessionInput)
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const rows = await db.select({ id: applications.id, dossierNumber: applications.dossierNumber, fullName: applications.fullName, email: applications.email, destination: applications.destination, adminAssignedTo: applications.adminAssignedTo, evaluationCompletedAt: applications.evaluationCompletedAt, evaluationReportReminderSentAt: applications.evaluationReportReminderSentAt }).from(applications).where(and(eq(applications.evaluationDeliveryStatus, "sent"), isNull(applications.evaluationReportViewedAt))).orderBy(asc(applications.evaluationCompletedAt)).limit(500);
+      const now = Date.now();
+      return { generatedAt: new Date(now), rows: rows.map((row) => ({ ...row, hoursSinceSent: row.evaluationCompletedAt ? Math.max(0, Math.floor((now - row.evaluationCompletedAt.getTime()) / 3_600_000)) : 0, advisorName: row.adminAssignedTo })) };
+    }),
+
+  sendEvaluationReminder: publicProcedure
+    .input(sessionInput.extend({ applicationId: z.number().int().positive(), language: z.enum(["fr", "en"]).default("fr") }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.applicationId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
+      if (application.evaluationDeliveryStatus !== "sent" || application.evaluationReportViewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Ce bilan n’est plus éligible à une relance." });
+      const now = new Date();
+      const minimumNextReminder = application.evaluationReportReminderSentAt ? new Date(application.evaluationReportReminderSentAt.getTime() + 24 * 60 * 60 * 1000) : null;
+      if (minimumNextReminder && minimumNextReminder > now) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Une relance a déjà été envoyée. Réessayez après le ${minimumNextReminder.toLocaleString("fr-FR")}.` });
+      const language = input.language as EvaluationReminderLanguage;
+      const candidateSpaceUrl = buildCandidateSpaceAccessUrl(application.dossierNumber);
+      const baseHtml = buildEvaluationReminderEmailHtml(application.fullName, application.dossierNumber, language);
+      const trackingInsert = await db.insert(evaluationEmails).values({ evaluationId: application.id, candidateEmail: application.email, candidateName: application.fullName, destinationCountry: application.destination || "Mobilité internationale", visaType: application.visaType || "Évaluation de profil", emailType: "reminder", scheduledAt: now, status: "pending", reportContent: baseHtml, secureLink: candidateSpaceUrl });
+      const trackingEmailId = Number((trackingInsert as any)[0]?.insertId ?? 0);
+      const html = trackingEmailId > 0 ? appendEvaluationOpenTrackingPixel(baseHtml, trackingEmailId) : baseHtml;
+      try {
+        await sendEmail({ to: application.email, subject: buildEvaluationReminderEmailSubject(application.dossierNumber, language), html });
+        if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "sent", sentAt: now, reportContent: html }).where(eq(evaluationEmails.id, trackingEmailId));
+      } catch (error) {
+        if (trackingEmailId > 0) await db.update(evaluationEmails).set({ status: "failed", failureReason: error instanceof Error ? error.message : String(error) }).where(eq(evaluationEmails.id, trackingEmailId));
+        throw error;
+      }
+      await db.update(applications).set({ evaluationReportReminderSentAt: now, updatedAt: now }).where(eq(applications.id, application.id));
+      if (application.candidateId) await db.insert(clientNotifications).values({ candidateId: application.candidateId, type: "evaluation_reminder", title: language === "en" ? "Reminder: your evaluation report is available" : "Rappel : votre bilan vous attend", body: language === "en" ? `Your evaluation report for file ${application.dossierNumber} is still available in your client area.` : `Votre bilan pour le dossier ${application.dossierNumber} reste disponible dans votre espace client.`, actionUrl: "/mon-espace", isRead: false, emailSentAt: now });
+      const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
+      if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_reminder_sent", comment: `Relance de consultation envoyée par e-mail en ${language === "en" ? "anglais" : "français"}.`, actorAdminAccountId: admin.id }); }
+      return { success: true, message: language === "en" ? "The reminder was sent by e-mail and recorded in the file." : "La relance a été envoyée par e-mail et enregistrée dans le dossier." };
     }),
 
   getCustomer360: publicProcedure

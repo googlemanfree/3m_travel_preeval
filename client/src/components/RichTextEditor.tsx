@@ -64,10 +64,12 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
   const [focused, setFocused] = useState(false);
   const [preview, setPreview] = useState(false);
   const [suggestion, setSuggestion] = useState<{ contentHtml: string; changeSummary: string } | null>(null);
+  const [templateLanguage, setTemplateLanguage] = useState<"fr" | "en">("fr");
   const textLength = richTextToPlainText(value).length;
   const editorValue = /<\/?[a-z][^>]*>/i.test(value) ? value : value.replace(/\n/g, "<br>");
-  const templates = trpc.richTextTemplates.list.useQuery({ sessionToken: sessionToken ?? "", scope: templateScope }, { enabled: Boolean(sessionToken) });
+  const templates = trpc.richTextTemplates.list.useQuery({ sessionToken: sessionToken ?? "", scope: templateScope, language: templateLanguage }, { enabled: Boolean(sessionToken) });
   const createTemplate = trpc.richTextTemplates.create.useMutation({ onSuccess: () => { void templates.refetch(); toast.success("Modèle enregistré."); } });
+  const bootstrapTemplates = trpc.richTextTemplates.bootstrapSharedBilingual.useMutation({ onSuccess: (result) => { void templates.refetch(); toast.success(result.created ? `${result.created} modèle(s) partagé(s) installés.` : "Les modèles partagés sont déjà disponibles."); }, onError: (error) => toast.error(error.message || "Les modèles partagés n’ont pas pu être installés.") });
   const improve = trpc.richTextTemplates.improve.useMutation({ onSuccess: (result) => setSuggestion(result), onError: (error) => toast.error(error.message || "La reformulation IA est indisponible.") });
 
   useEffect(() => {
@@ -105,7 +107,7 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
     if (!sessionToken) return;
     const name = window.prompt("Nom du modèle :");
     if (!name?.trim()) return;
-    createTemplate.mutate({ sessionToken, name: name.trim(), scope: templateScope, contentHtml: editorValue });
+    createTemplate.mutate({ sessionToken, name: name.trim(), scope: templateScope, language: templateLanguage, contentHtml: editorValue });
   };
 
   const requestImprovement = () => {
@@ -142,7 +144,7 @@ export function RichTextEditor({ label, value, onChange, placeholder = "Rédigez
         {sessionToken && <Button type="button" variant="ghost" size="sm" onClick={requestImprovement} disabled={disabled || textLength < 3 || improve.isPending} className="gap-1"><Sparkles className="h-4 w-4" />{improve.isPending ? "Correction…" : "Assistance IA"}</Button>}
         <Button type="button" variant={preview ? "secondary" : "ghost"} size="sm" onClick={() => setPreview((current) => !current)} className="gap-1"><Eye className="h-4 w-4" />{preview ? "Éditer" : "Aperçu"}</Button>
       </div>
-      {sessionToken && templates.data?.length ? <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-white px-3 py-2"><span className="text-xs font-medium text-slate-600">Modèles :</span>{templates.data.map((template) => <Button key={template.id} type="button" size="sm" variant="outline" className="h-8" onClick={() => insertTemplate(template)}>{template.name}</Button>)}</div> : null}
+      {sessionToken && <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-white px-3 py-2"><span className="text-xs font-medium text-slate-600">Modèles : français &amp; anglais</span><Button type="button" size="sm" variant={templateLanguage === "fr" ? "secondary" : "outline"} className="h-8" onClick={() => setTemplateLanguage("fr")}>Français</Button><Button type="button" size="sm" variant={templateLanguage === "en" ? "secondary" : "outline"} className="h-8" onClick={() => setTemplateLanguage("en")}>English</Button><Button type="button" size="sm" variant="outline" className="h-8" disabled={bootstrapTemplates.isPending} onClick={() => bootstrapTemplates.mutate({ sessionToken })}>{bootstrapTemplates.isPending ? "Installation…" : "Installer les modèles"}</Button>{templates.data?.map((template) => <Button key={template.id} type="button" size="sm" variant="outline" className="h-8" onClick={() => insertTemplate(template)}>{template.name.replace(/^(FR|EN)\s+—\s+/, "")}</Button>)}{templates.data?.length === 0 && <span className="text-xs text-slate-500">Aucun modèle {templateLanguage === "fr" ? "français" : "anglais"} pour cette procédure.</span>}</div>}
       {suggestion && <div className="border-b border-violet-200 bg-violet-50 p-3 text-sm text-violet-950"><div className="flex items-start justify-between gap-3"><div><p className="flex items-center gap-1 font-semibold"><Sparkles className="h-4 w-4" />Proposition de correction IA</p><p className="mt-1 text-xs">{suggestion.changeSummary}</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setSuggestion(null)}>Ignorer</Button><Button type="button" size="sm" onClick={() => { onChange(suggestion.contentHtml); setSuggestion(null); toast.success("Proposition IA appliquée. Relisez avant envoi."); }}>Appliquer</Button></div></div></div>}
       {preview ? <div style={{ minHeight }} className="prose prose-sm max-w-none p-4 text-slate-800 prose-a:text-blue-700 prose-table:w-full prose-table:border-collapse prose-th:border prose-th:border-slate-300 prose-th:bg-slate-100 prose-th:p-2 prose-td:border prose-td:border-slate-300 prose-td:p-2" dangerouslySetInnerHTML={{ __html: sanitizeRichText(value) || `<p class="text-slate-400">${placeholder}</p>` }} /> : <div
           ref={editorRef}

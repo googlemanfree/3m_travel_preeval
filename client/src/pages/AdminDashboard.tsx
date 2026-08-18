@@ -81,6 +81,7 @@ import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
+import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -1007,6 +1008,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
             <TabsTrigger value="evaluation-review" className="gap-1.5 font-bold text-amber-700">Bilans à valider</TabsTrigger>
+            <TabsTrigger value="evaluation-reminders" className="gap-1.5 font-bold text-violet-700">Bilans à relancer</TabsTrigger>
             <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
             <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
             <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
@@ -1040,6 +1042,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="evaluation-review" className="space-y-6">
             <AdvisorEvaluationReviewQueue sessionToken={sessionToken} onOpenDossier={(dossierNumber) => { setSearch(dossierNumber); setActiveAdminTab("candidates"); toast({ title: "Dossier filtré", description: `Ouvrez ${dossierNumber} dans la liste pour relire et valider son bilan.` }); }} />
+          </TabsContent>
+
+          <TabsContent value="evaluation-reminders" className="space-y-6">
+            <BilanReminderDashboard sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="rag" className="space-y-6">

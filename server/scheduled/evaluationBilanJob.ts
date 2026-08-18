@@ -8,6 +8,7 @@ import { sendEmail } from "../_core/email";
 import { createFinalEvaluationPdf } from "../evaluationBilanPdfService";
 import { buildCandidateSpaceAccessUrl, buildEvaluationReportUrl } from "../services/candidateAccessLink";
 import { appendEvaluationOpenTrackingPixel, buildAdvisorSignatureHtml } from "../services/evaluationEmailCommunication";
+import { buildEvaluationReminderEmailHtml as buildSharedEvaluationReminderEmailHtml } from "../services/evaluationReminderCommunication";
 
 export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumber: string, advisorName?: string | null): string {
   const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
@@ -15,8 +16,7 @@ export function buildEvaluationDeliveryEmailHtml(reportHtml: string, dossierNumb
 }
 
 export function buildEvaluationReminderEmailHtml(fullName: string, dossierNumber: string): string {
-  const candidateSpaceUrl = buildCandidateSpaceAccessUrl(dossierNumber);
-  return `<p>Bonjour ${fullName},</p><p>Votre bilan d’évaluation est disponible depuis plus de 72 heures et n’a pas encore été consulté.</p><p>Connectez-vous à votre <a href="${candidateSpaceUrl}">Espace client sécurisé</a> pour le lire et télécharger votre PDF.</p><p>L’équipe 3M Travel & Services reste disponible pour vous accompagner.</p>`;
+  return buildSharedEvaluationReminderEmailHtml(fullName, dossierNumber, "fr");
 }
 
 export function shouldSendEvaluationReminder(application: { evaluationDeliveryStatus: string; evaluationCompletedAt: Date | null; evaluationReportViewedAt: Date | null; evaluationReportReminderSentAt: Date | null }, now = new Date()): boolean {

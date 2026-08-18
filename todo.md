@@ -425,3 +425,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un suivi d’ouverture de l’e-mail de bilan avec image de suivi signée, journalisation et affichage dans le back-office.
 - [x] Créer, valider et livrer une compétence réutilisable de communication de dossier contrôlée.
 - [x] Tester les accès, les envois, les pixels de lecture et les régressions avant publication.
+
+## Routes simplifiées, modèles bilingues et relances de bilan
+- [x] Examiner l’archive fournie et confirmer que `client/src/App.tsx` contient déjà exactement le nettoyage des imports non routés, sans modifier les routes actives.
+- [x] Créer des modèles de communication partagés français–anglais, avec accès administrateur, sauvegarde et insertion dans l’éditeur riche.
+- [x] Ajouter un tableau de suivi des bilans envoyés non consultés, avec filtres, métriques et relance e-mail manuelle sécurisée.
+- [x] Tester les contrôles d’accès, les relances, les modèles bilingues, TypeScript et le build de production avant publication.
