@@ -450,3 +450,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester la présence des dix destinations, le responsive, TypeScript, la suite Vitest et les bundles client et serveur de production.
 
 ---
+
+## Optimisation SEO technique
+- [x] Auditer les métadonnées et titres de pages publiques.
+- [x] Mettre à jour `sitemap.xml` avec toutes les routes canoniques et les dix articles d’études.
+- [x] Valider l’intégration par test automatisé Vitest et compilation de production.
+
+---

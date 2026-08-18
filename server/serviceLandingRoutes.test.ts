@@ -27,4 +27,15 @@ describe("routes canoniques des pages de service", () => {
       expect(article.documents.length).toBeGreaterThanOrEqual(6);
     }
   });
+
+  it("inclut le sitemap XML avec l’ensemble des routes publiques et articles d’études", () => {
+    const sitemapPath = resolve(process.cwd(), "client/public/sitemap.xml");
+    const sitemapContent = readFileSync(sitemapPath, "utf8");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/canada</loc>");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/schengen</loc>");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/etudes</loc>");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/canada</loc>");
+    expect(sitemapContent).toContain("<loc>https://www.3mtravelagency.com/blog/etudes/maroc</loc>");
+  });
 });
+
