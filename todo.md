@@ -605,3 +605,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des actions rapides par ligne pour affecter un conseiller et changer le statut.
 - [x] Envoyer une notification e-mail au conseiller lorsque la réservation est créée ou affectée.
 - [x] Tester TypeScript, Vitest et le flux client → conseiller → admin avant publication.
+
+## Calendrier de vols, e-mails de statut et notes rapides
+- [x] Ajouter une vue calendrier interactive des départs de vols imminents dans l’administration.
+- [x] Envoyer un e-mail au client quand le statut de sa réservation de vol change.
+- [x] Ajouter une action rapide pour enregistrer une note interne sur chaque réservation.
+- [x] Tester TypeScript, Vitest, les droits et le responsive avant publication.

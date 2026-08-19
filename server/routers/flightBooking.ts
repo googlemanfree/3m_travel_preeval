@@ -28,6 +28,15 @@ const requestStatus = [
   "cancelled",
 ] as const;
 const requestPriority = ["low", "normal", "high", "urgent"] as const;
+const customerStatusLabels: Record<(typeof requestStatus)[number], string> = {
+  pending_review: "En cours de vérification",
+  assigned: "Prise en charge par un conseiller",
+  needs_info: "Informations complémentaires requises",
+  revalidated: "Réservation revalidée",
+  awaiting_payment: "En attente de paiement",
+  issued: "Document de voyage disponible",
+  cancelled: "Réservation annulée",
+};
 
 type FlightPassengerData = Record<string, unknown>;
 
@@ -383,9 +392,22 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
+      if (existing.status === input.status) return { success: true, unchanged: true, notificationEmailSent: false };
       await db.update(flightBookingRequests).set({ status: input.status, agentNotes: input.details ?? existing.agentNotes }).where(eq(flightBookingRequests.id, input.requestId));
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "status_changed", changedBy: admin.email, oldValue: existing.status, newValue: input.status, details: input.details ?? null });
-      return { success: true };
+      let notificationEmailSent = false;
+      try {
+        const flightSummary = getFlightEmailSummary((existing.flightData ?? {}) as FlightTimingData);
+        await sendEmail({
+          to: existing.candidateEmail,
+          subject: `[3M Travel] Mise à jour de votre réservation ${existing.requestRef}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Votre réservation a été mise à jour</h2><p>Bonjour,</p><p>Le statut de votre réservation <strong>${existing.requestRef}</strong> a évolué.</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:16px"><p style="margin:0 0 8px"><strong>Nouveau statut :</strong> ${customerStatusLabels[input.status]}</p><p style="margin:0"><strong>Trajet :</strong> ${flightSummary.origin} → ${flightSummary.destination}<br/><strong>Départ :</strong> ${flightSummary.departure}</p></div>${input.details ? `<p style="margin-top:18px"><strong>Information de l’agence :</strong><br/>${input.details.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : ""}<p style="margin-top:18px">Vous pouvez consulter le suivi de votre dossier dans votre espace client ou répondre à l’agence si une information complémentaire est nécessaire.</p><p>Cordialement,<br/><strong>3M Travel & Services</strong></p></div>`,
+        });
+        notificationEmailSent = true;
+      } catch (error) {
+        console.error("[FlightBooking] customer status notification failed", error);
+      }
+      return { success: true, notificationEmailSent };
     }),
 
   listReservationPayments: publicProcedure

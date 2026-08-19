@@ -6,6 +6,7 @@ const router = readFileSync(new URL("./routers/flightBooking.ts", import.meta.ur
 const checkout = readFileSync(new URL("../client/src/pages/FlightBookingCheckout.tsx", import.meta.url), "utf8");
 const agentDashboard = readFileSync(new URL("../client/src/pages/FlightAgentDashboard.tsx", import.meta.url), "utf8");
 const scanUploader = readFileSync(new URL("../client/src/components/PassportScanUploader.tsx", import.meta.url), "utf8");
+const departureCalendar = readFileSync(new URL("../client/src/components/FlightDepartureCalendar.tsx", import.meta.url), "utf8");
 
 
 describe("flight booking agent workflow", () => {
@@ -58,5 +59,16 @@ describe("flight booking agent workflow", () => {
     expect(agentDashboard).toContain("Filtrer par trajet");
     expect(agentDashboard).toContain("Urgence départ");
     expect(agentDashboard).toContain("filteredRequests");
+  });
+
+  it("expose les départs en calendrier et alerte le client lors d’un changement réel de statut", () => {
+    expect(departureCalendar).toContain("Calendrier des départs vols");
+    expect(departureCalendar).toContain("départ(s) imminent(s)");
+    expect(departureCalendar).toContain("onSelectRequest");
+    expect(router).toContain("customerStatusLabels");
+    expect(router).toContain("customer status notification failed");
+    expect(router).toContain("unchanged: true");
+    expect(agentDashboard).toContain("Ajouter une note interne");
+    expect(agentDashboard).toContain("window.prompt");
   });
 });
