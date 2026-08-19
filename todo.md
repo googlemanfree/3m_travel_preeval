@@ -566,3 +566,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Décision de mesure d’audience
 - [x] Conserver Facebook Pixel inactif, conformément à la décision actuelle de ne pas l’intégrer.
+
+## Fiches détaillées des destinations
+- [x] Créer une route dynamique ouvrant une fiche dédiée pour chaque destination présente dans les guides 3M.
+- [x] Afficher les procédures, documents, guides PDF, sources officielles et état de vérification associés à la destination.
+- [x] Relier chaque liste ou carte de destination à sa fiche détaillée et au formulaire approprié.
+- [x] Tester les liens, les données manquantes, les redirections et le responsive avant publication.
+
+## 107 pages destination premium synchronisées
+- [x] Normaliser les 107 identifiants de destination et garantir une URL publique dédiée par fiche.
+- [x] Construire un modèle premium unique affichant guides, procédures, documents, portail officiel et appel à l’action adapté.
+- [x] Synchroniser les changements du registre administratif vers les pages publiques de destination.
+- [x] Tester systématiquement les 107 URL, les liens de démarrage et le comportement mobile avant publication.

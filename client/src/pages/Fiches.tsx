@@ -11,6 +11,7 @@ import {
 import Footer from "@/components/Footer";
 import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
+import { getDestinationDetailForProcedure } from "@/lib/publicDestinationCatalog";
 import { useLocation } from "wouter";
 
 const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -91,6 +92,7 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
   const [, navigate] = useLocation();
   const config = VISA_TYPE_CONFIG[proc.visaType] ?? VISA_TYPE_CONFIG["Autre"];
   const flag = COUNTRY_FLAGS[proc.country] ?? "🌍";
+  const destination = getDestinationDetailForProcedure(proc.country, proc.visaType);
 
   const sections = [
     { label: "Conditions d'éligibilité", icon: <CheckCircle className="w-4 h-4 text-emerald-600" />, content: cleanText(proc.eligibilityConditions) },
@@ -141,10 +143,10 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
             <Button
               size="sm"
               className="text-xs bg-blue-700 hover:bg-blue-800 text-white flex items-center gap-1"
-              onClick={() => navigate("/open-dossier")}
+              onClick={() => navigate(destination ? `/destinations/${destination.procedure.id}` : "/evaluation")}
             >
               <ArrowRight className="w-3 h-3" />
-              Démarrer
+              {destination ? "Voir la fiche" : "Démarrer"}
             </Button>
           </div>
         </div>

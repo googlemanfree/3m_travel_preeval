@@ -1,11 +1,11 @@
 import React from 'react';
 import { useRoute } from 'wouter';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { procedures107Complete } from '@/data/procedures107Complete';
+import { getPublicDestinationDetail } from '@/lib/publicDestinationCatalog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
@@ -16,14 +16,20 @@ import { Heart } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function CountryDetailPage() {
-  const [, params] = useRoute<{ countryId: string }>('/procedures/:countryId');
-  const countryId = params?.countryId;
+  const [, procedureParams] = useRoute<{ countryId: string }>('/procedures/:countryId');
+  const [, destinationParams] = useRoute<{ countryId: string }>('/destinations/:countryId');
+  const countryId = procedureParams?.countryId ?? destinationParams?.countryId;
 
-  const country = procedures107Complete.find(c => c.id === countryId);
+  const destinationDetail = getPublicDestinationDetail(countryId);
+  const country = destinationDetail?.procedure;
   const { language } = useLanguage();
   const { data: destinationMedia } = trpc.destinationMedia.getByDestination.useQuery(
     { destinationId: countryId ?? "unknown" },
     { enabled: Boolean(countryId), staleTime: 5 * 60 * 1000 }
+  );
+  const { data: publicPortal } = trpc.consularRegistry.getPublicPortal.useQuery(
+    { countryCode: destinationDetail?.consular.countryCode ?? "unknown" },
+    { enabled: Boolean(destinationDetail?.consular.countryCode), staleTime: 60 * 1000 },
   );
 
   const [isFavorite, setIsFavorite] = useState(false);
@@ -70,6 +76,11 @@ export default function CountryDetailPage() {
       </div>
     );
   }
+
+  const portal = publicPortal?.hasOverride
+    ? publicPortal
+    : destinationDetail?.consular;
+  const evaluationUrl = `/evaluation?destination=${encodeURIComponent(country.name)}&procedure=${encodeURIComponent(country.visaType)}`;
 
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
@@ -140,7 +151,7 @@ export default function CountryDetailPage() {
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{country.name}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
-                  <Globe className="w-4 h-4" /> Programme officiel d'immigration & visa {country.visaType}
+                  <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel — {country.visaType}
                 </p>
               </div>
             </div>
@@ -159,7 +170,7 @@ export default function CountryDetailPage() {
                 {isFavorite ? 'Dans vos favoris' : 'Favori'}
               </Button>
 
-              <a href={`/evaluation-primaire?destination=${country.id}`} className="w-full sm:w-auto flex-1 md:flex-initial">
+              <a href={evaluationUrl} className="w-full sm:w-auto flex-1 md:flex-initial">
                 <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-6 py-3 rounded-xl shadow-lg transition-all hover:scale-105">
                   🚀 Lancer ma Procédure
                 </Button>
@@ -276,7 +287,7 @@ export default function CountryDetailPage() {
               </div>
 
               <div className="pt-4 border-t">
-                <a href={`/evaluation-primaire?destination=${country.id}`}>
+                <a href={evaluationUrl}>
                   <Button className="w-full bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-800 hover:to-indigo-900 text-white font-bold py-3.5 rounded-xl shadow-md">
                     🚀 Commencer mon Dossier
                   </Button>
@@ -293,6 +304,54 @@ export default function CountryDetailPage() {
                 </Button>
               </a>
             </Card>
+
+            <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
+              <div className="flex items-start gap-3">
+                {portal?.officialPortalUrl && portal.verificationStatus === "verifie" ? (
+                  <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" />
+                )}
+                <div>
+                  <h3 className="font-bold text-slate-900">Portail institutionnel</h3>
+                  <p className="text-sm text-slate-600 mt-1">
+                    {portal?.officialPortalUrl && portal.verificationStatus === "verifie"
+                      ? "Lien indiqué comme vérifié dans le registre administratif."
+                      : "Le portail est en cours de vérification par l’administration."}
+                  </p>
+                </div>
+              </div>
+              {portal?.officialPortalUrl ? (
+                <a href={portal.officialPortalUrl} target="_blank" rel="noopener noreferrer" className="block">
+                  <Button variant="outline" className="w-full border-blue-200 text-blue-800 hover:bg-blue-50 font-bold">
+                    <ExternalLink className="w-4 h-4 mr-2" /> {portal.officialPortalLabel || "Consulter le portail officiel"}
+                  </Button>
+                </a>
+              ) : (
+                <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+                  Ne transmettez ni paiement ni document à un site tiers avant validation du lien par l’administration.
+                </p>
+              )}
+              {portal?.officialVerifiedAt && <p className="text-xs text-slate-500">Dernière vérification : {portal.officialVerifiedAt}</p>}
+            </Card>
+
+            {destinationDetail?.sources.length ? (
+              <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
+                <div>
+                  <h3 className="font-bold text-slate-900">Guides 3M associés</h3>
+                  <p className="text-sm text-slate-600 mt-1">{destinationDetail.consular.sourceSummary}</p>
+                </div>
+                <div className="space-y-2">
+                  {destinationDetail.sources.map((resource) => (
+                    <a key={resource.id} href={getLocalizedPdfUrl(resource, language)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50">
+                      <FileText className="w-4 h-4 shrink-0 text-blue-700" />
+                      <span className="min-w-0 flex-1 truncate">{resource.title}</span>
+                      <Download className="w-4 h-4 shrink-0 text-slate-400" />
+                    </a>
+                  ))}
+                </div>
+              </Card>
+            ) : null}
           </div>
 
         </div>

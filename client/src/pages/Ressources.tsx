@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { PDF_CATEGORIES, type PdfResource, type PdfCategory, getLocalizedPdfUrl } from "@shared/pdfResources";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getDestinationDetailForResource } from "@/lib/publicDestinationCatalog";
 
 // ─── Icônes par catégorie ─────────────────────────────────────────────────────
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -31,6 +32,7 @@ function ResourceCard({ resource, color }: { resource: PdfResource; color: strin
   const { language } = useLanguage();
   const displayTitle = language === 'en' && resource.titleEn ? resource.titleEn : resource.title;
   const displayCountry = language === 'en' && resource.countryEn ? resource.countryEn : resource.country;
+  const destination = getDestinationDetailForResource(resource);
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -51,17 +53,25 @@ function ResourceCard({ resource, color }: { resource: PdfResource; color: strin
           </div>
         </div>
       </div>
-      <a
-        href={getLocalizedPdfUrl(resource, language)}
-        target="_blank"
-        rel="noopener noreferrer"
-        download
-        className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all duration-150 active:scale-95 ${c.btn}`}
-        title={language === 'en' ? `Download ${displayTitle}` : `Télécharger ${displayTitle}`}
-      >
-        <Download className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">{language === 'en' ? 'Download' : 'Télécharger'}</span>
-      </a>
+      <div className="flex shrink-0 items-center gap-1.5">
+        {destination && (
+          <a href={`/destinations/${destination.procedure.id}`} className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 transition-all duration-150 hover:bg-blue-50 active:scale-95" title="Voir la fiche destination">
+            <ExternalLink className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Fiche</span>
+          </a>
+        )}
+        <a
+          href={getLocalizedPdfUrl(resource, language)}
+          target="_blank"
+          rel="noopener noreferrer"
+          download
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-xs font-semibold transition-all duration-150 active:scale-95 ${c.btn}`}
+          title={language === 'en' ? `Download ${displayTitle}` : `Télécharger ${displayTitle}`}
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">{language === 'en' ? 'Download' : 'Télécharger'}</span>
+        </a>
+      </div>
     </motion.div>
   );
 }

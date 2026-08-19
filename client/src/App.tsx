@@ -222,6 +222,7 @@ function Router() {
       <Route path="/procedures/canada">{() => <Redirect to="/canada" />}</Route>
       <Route path="/procedures/schengen">{() => <Redirect to="/schengen" />}</Route>
       <Route path={"/procedures/luxembourg"} component={ProcedureLuxembourg} />
+      <Route path="/destinations/:countryId" component={CountryDetailPage} />
       <Route path="/procedures/:countryId" component={CountryDetailPage} />
       <Route path={"/procedures-complete"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/procedures-enhanced"}>{() => <Redirect to="/procedures" />}</Route>

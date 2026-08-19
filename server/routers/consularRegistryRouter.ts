@@ -32,6 +32,24 @@ const serialise = (row: typeof managedConsularPortals.$inferSelect) => ({
 });
 
 export const consularRegistryRouter = router({
+  getPublicPortal: publicProcedure
+    .input(z.object({ countryCode: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).min(2).max(120) }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return null;
+      const row = (await db.select().from(managedConsularPortals).where(eq(managedConsularPortals.countryCode, input.countryCode)).limit(1))[0];
+      if (!row) return null;
+      return {
+        hasOverride: true,
+        officialPortalUrl: row.officialPortalUrl ?? "",
+        officialPortalLabel: row.officialPortalLabel ?? "",
+        officialVerifiedAt: row.officialVerifiedAt ?? "",
+        verificationStatus: row.verificationStatus,
+        revalidateDueAt: row.revalidateDueAt?.toISOString() ?? "",
+        updatedAt: row.updatedAt.toISOString(),
+      };
+    }),
+
   listOverrides: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
     .query(async ({ input }) => {
