@@ -66,6 +66,7 @@ const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminC
 const AdminEvaluations = lazyWithTimeout(() => import("./pages/AdminEvaluations"));
 const Tourism = lazyWithTimeout(() => import("./pages/Tourism"));
 import { FloatingActionMenu } from "./components/FloatingActionMenu";
+import { SmartFlightAssistant } from "./components/SmartFlightAssistant";
 const ConfirmEmail = lazyWithTimeout(() => import("./pages/ConfirmEmail"));
 const SubmitDocuments = lazyWithTimeout(() => import("./pages/SubmitDocuments"));
 const HowItWorks = lazyWithTimeout(() => import("./pages/HowItWorks"));
@@ -456,6 +457,8 @@ function App() {
               <FloatingActionMenu />
               {/* Guide d’information flottant */}
               <AiCopilotWidgetEnhanced />
+              {/* Assistant intelligent de réservation de vol */}
+              <SmartFlightAssistant />
             </>
           )}
           </MultiServiceCartProvider>
