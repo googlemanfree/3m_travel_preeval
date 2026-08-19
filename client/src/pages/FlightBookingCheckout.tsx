@@ -597,6 +597,89 @@ export default function FlightBookingCheckout() {
             )}
           </AnimatePresence>
 
+          {isSeatModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" role="presentation">
+              <motion.div role="dialog" aria-modal="true" aria-labelledby="seat-selection-title" className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl space-y-5" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 id="seat-selection-title" className="text-lg font-black text-slate-900">Sélection interactive de la cabine</h3>
+                    <p className="text-xs text-slate-500">Choisissez votre emplacement exact à bord (Boeing / Airbus)</p>
+                  </div>
+                  <button type="button" aria-label="Fermer la sélection de siège" onClick={() => setIsSeatModalOpen(false)} className="rounded-full p-2 hover:bg-slate-100 text-slate-500">
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 max-h-[60vh] overflow-y-auto p-2">
+                  <div className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest pb-2">Front de l'appareil (Cockpit)</div>
+                  {[10, 11, 12, 14, 15, 16, 18, 19, 20].map((row) => (
+                    <div key={row} className="flex items-center justify-center gap-3">
+                      <span className="w-8 text-right font-mono text-xs font-bold text-slate-400">{row}</span>
+                      <div className="flex gap-1.5">
+                        {["A", "B", "C"].map((col) => {
+                          const seatId = `${row}${col}`;
+                          const isSelected = selectedSeat === seatId;
+                          const isOccupied = [`10B`, `12C`, `15A`].includes(seatId);
+                          return (
+                            <button
+                              key={seatId}
+                              type="button"
+                              disabled={isOccupied}
+                              onClick={() => {
+                                setSelectedSeat(seatId);
+                                setFormData(prev => ({ ...prev, seatPreference: col === "A" ? "Hublot" : col === "C" ? "Couloir" : "Milieu" }));
+                              }}
+                              className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
+                                isOccupied ? "bg-slate-200 text-slate-400 cursor-not-allowed" :
+                                isSelected ? "bg-blue-600 text-white shadow-md scale-105" :
+                                "bg-slate-50 border border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50"
+                              }`}
+                            >
+                              {seatId}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="w-6" />
+                      <div className="flex gap-1.5">
+                        {["H", "J", "K"].map((col) => {
+                          const seatId = `${row}${col}`;
+                          const isSelected = selectedSeat === seatId;
+                          const isOccupied = [`11K`, `14H`, `19J`].includes(seatId);
+                          return (
+                            <button
+                              key={seatId}
+                              type="button"
+                              disabled={isOccupied}
+                              onClick={() => {
+                                setSelectedSeat(seatId);
+                                setFormData(prev => ({ ...prev, seatPreference: col === "K" ? "Hublot" : col === "H" ? "Couloir" : "Milieu" }));
+                              }}
+                              className={`h-9 w-9 rounded-lg text-xs font-bold transition-all ${
+                                isOccupied ? "bg-slate-200 text-slate-400 cursor-not-allowed" :
+                                isSelected ? "bg-blue-600 text-white shadow-md scale-105" :
+                                "bg-slate-50 border border-slate-200 text-slate-700 hover:border-blue-400 hover:bg-blue-50"
+                              }`}
+                            >
+                              {seatId}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+                  <div className="text-xs text-slate-500">Siège sélectionné : <span className="font-bold text-blue-700 font-mono">{selectedSeat}</span></div>
+                  <Button type="button" onClick={() => setIsSeatModalOpen(false)} className="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow">
+                    Confirmer le siège
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
           {/* Fenêtre modale de confirmation */}
           <AnimatePresence>
             {showConfirmModal && (
