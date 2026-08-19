@@ -4,11 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X } from 'lucide-react';
+import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X, ExternalLink } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
+import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
+import { getCountriesForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -17,6 +19,7 @@ interface FormState {
   employmentStatus: string; currentJobTitle: string; yearsOfExperience: string; industrySector: string; mainTasks: string;
   frenchLevel: string; englishLevel: string; languageTestsTaken: string;
   destinationCategory: string; destinationCountry: string; visaType: string; travelReason: string; availableBudget: string;
+  projectType: EvaluationProjectType; projectDetails: Record<string, string>;
   priorVisaRefusal: boolean; priorVisaRefusalCountry: string; criminalRecord: boolean; familyAbroad: boolean;
   message: string;
 }
@@ -28,6 +31,7 @@ const initialForm: FormState = {
   employmentStatus: '', currentJobTitle: '', yearsOfExperience: '', industrySector: '', mainTasks: '',
   frenchLevel: '', englishLevel: '', languageTestsTaken: '',
   destinationCategory: 'canada', destinationCountry: '', visaType: 'canada_rp', travelReason: '', availableBudget: '',
+  projectType: 'immigration', projectDetails: {},
   priorVisaRefusal: false, priorVisaRefusalCountry: '', criminalRecord: false, familyAbroad: false,
   message: '',
 };
@@ -40,9 +44,35 @@ function PrefillLabel({ children, active }: { children: React.ReactNode; active:
   return <div className="flex min-h-5 items-center justify-between gap-2"><Label>{children}</Label>{active && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-800"><Sparkles className="h-3 w-3" />Pré-rempli par IA</span>}</div>;
 }
 
+function ProjectDetailsSection({ projectType, values, onChange, countryFields, procedure }: { projectType: EvaluationProjectType; values: Record<string, string>; onChange: (key: string, value: string) => void; countryFields: ReturnType<typeof getCountryProcedureFields>; procedure?: ProcedureGuide }) {
+  const config = PROJECT_EVALUATION_CONFIG[projectType];
+  const fields = [...config.requiredDetails, ...countryFields.filter((field) => field.key !== 'selectedProcedure')];
+  return <section className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 md:p-5" aria-labelledby="project-details-title">
+    <div className="mb-4">
+      <p className="text-xs font-bold uppercase tracking-wide text-blue-700">{config.subtitle}</p>
+      <h2 id="project-details-title" className="mt-1 text-lg font-bold text-slate-900">Informations utiles pour votre projet {config.label}</h2>
+      <p className="mt-1 text-sm leading-6 text-slate-600">{config.objective}</p>
+      <p className="mt-3 rounded-lg border border-blue-100 bg-white/80 px-3 py-2 text-xs leading-5 text-slate-700"><strong>Dossier à préparer :</strong> {config.dossierHint}</p>
+      {procedure && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-950">
+        <span><strong>Référence sélectionnée :</strong> {procedure.procedureLabel} — {procedure.country}</span>
+        {procedure.guideUrl && <a href={procedure.guideUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 font-semibold text-emerald-800 underline underline-offset-2"><FileText className="h-3.5 w-3.5" />Consulter le guide 3M<ExternalLink className="h-3 w-3" /></a>}
+      </div>}
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2">
+      {fields.map((field) => <div key={field.key} className={field.kind === 'textarea' ? 'sm:col-span-2' : ''}>
+        <Label htmlFor={`project-${field.key}`}>{field.label}{field.required ? ' *' : ''}</Label>
+        {field.kind === 'select' ? <select id={`project-${field.key}`} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"><option value="">Sélectionner…</option>{field.options?.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select> : field.kind === 'textarea' ? <Textarea id={`project-${field.key}`} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} placeholder={field.placeholder} rows={3} className="mt-1 bg-white" /> : <Input id={`project-${field.key}`} type={field.kind === 'date' ? 'date' : 'text'} value={values[field.key] ?? ''} onChange={(event) => onChange(field.key, event.target.value)} placeholder={field.placeholder} className="mt-1 bg-white" />}
+      </div>)}
+    </div>
+  </section>;
+}
+
 export default function Evaluation() {
-  const [form, setForm] = useState<FormState>(initialForm);
-  const formRef = useRef<FormState>(initialForm);
+  const projectFromUrl = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('project');
+  const initialProject = isEvaluationProjectType(projectFromUrl) ? projectFromUrl : initialForm.projectType;
+  const initialProjectForm = { ...initialForm, projectType: initialProject, visaType: PROJECT_EVALUATION_CONFIG[initialProject].recommendedVisaTypes[0] ?? initialForm.visaType };
+  const [form, setForm] = useState<FormState>(initialProjectForm);
+  const formRef = useRef<FormState>(initialProjectForm);
   const acquisitionParams = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const rawSource = acquisitionParams.get("source")?.toLowerCase();
   const acquisitionSource = rawSource === "whatsapp" || rawSource === "wa" ? "whatsapp" : rawSource === "facebook" || rawSource === "fb" ? "facebook" : "direct";
@@ -65,11 +95,48 @@ export default function Evaluation() {
   const submitMutation = trpc.evaluation.submit.useMutation();
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
+  const availableCountries = getCountriesForProject(form.projectType);
+  const isLibraryCountry = availableCountries.includes(form.destinationCountry);
+  const countrySelectionValue = !form.destinationCountry ? '' : isLibraryCountry ? form.destinationCountry : '__custom';
+  const availableProcedures = form.destinationCountry ? getProceduresForCountry(form.projectType, form.destinationCountry) : [];
+  const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
+  const countryProcedureFields = getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure);
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     const next = { ...formRef.current, [key]: value };
     formRef.current = next;
     setForm(next);
+  };
+
+  const updateProjectDetails = (key: string, value: string) => update('projectDetails', { ...formRef.current.projectDetails, [key]: value });
+
+  const selectProjectType = (projectType: EvaluationProjectType) => {
+    const recommendedVisa = PROJECT_EVALUATION_CONFIG[projectType].recommendedVisaTypes[0];
+    const next = { ...formRef.current, projectType, projectDetails: {}, destinationCountry: '', destinationCategory: 'autre', visaType: recommendedVisa ?? formRef.current.visaType };
+    formRef.current = next;
+    setForm(next);
+  };
+
+  const selectDestinationCountry = (country: string) => {
+    const procedures = getProceduresForCountry(formRef.current.projectType, country);
+    const procedure = procedures[0];
+    const next = {
+      ...formRef.current,
+      destinationCountry: country,
+      destinationCategory: getSuggestedDestinationCategory(country),
+      projectDetails: procedure ? { procedureId: procedure.id, selectedProcedure: procedure.procedureLabel } : {},
+    };
+    formRef.current = next;
+    setForm(next);
+  };
+
+  const selectProcedure = (procedureId: string) => {
+    const procedure = getProcedureById(procedureId);
+    update('projectDetails', {
+      ...formRef.current.projectDetails,
+      procedureId,
+      selectedProcedure: procedure?.procedureLabel ?? '',
+    });
   };
 
   const fileToBase64 = (file: File): Promise<string> =>
@@ -245,6 +312,16 @@ export default function Evaluation() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return setFormError('Adresse email invalide.');
     if (form.phone.trim().length < 8) return setFormError('Numéro de téléphone invalide.');
     if (!form.destinationCategory) return setFormError('Merci de sélectionner une destination.');
+    if (!form.destinationCountry.trim()) return setFormError('Merci de sélectionner ou préciser le pays de destination.');
+    const availableCountryProcedures = getProceduresForCountry(form.projectType, form.destinationCountry);
+    if (availableCountryProcedures.length > 0 && !form.projectDetails.procedureId) return setFormError('Merci de sélectionner la procédure correspondant au pays choisi.');
+    const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
+    const requiredProjectFields = [
+      ...PROJECT_EVALUATION_CONFIG[form.projectType].requiredDetails,
+      ...getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure),
+    ];
+    const missingProjectFields = requiredProjectFields.filter((field) => field.required && !form.projectDetails[field.key]?.trim());
+    if (missingProjectFields.length) return setFormError(`Merci de compléter les informations requises pour votre projet : ${missingProjectFields.map((field) => field.label).join(', ')}.`);
 
     let cvBase64: string | undefined;
     if (cvFile) {
@@ -282,6 +359,8 @@ export default function Evaluation() {
       visaType: form.visaType as any,
       travelReason: form.travelReason || undefined,
       availableBudget: form.availableBudget || undefined,
+      projectType: form.projectType,
+      projectDetails: form.projectDetails,
       priorVisaRefusal: form.priorVisaRefusal,
       priorVisaRefusalCountry: form.priorVisaRefusalCountry || undefined,
       criminalRecord: form.criminalRecord,
@@ -316,7 +395,7 @@ export default function Evaluation() {
             <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-green-700">Confirmation reçue</p>
             <h2 className="mb-3 text-2xl font-bold text-gray-900">Votre évaluation a bien été envoyée</h2>
             <p className="text-sm leading-6 text-gray-600">
-              Merci pour votre confiance. Notre équipe, assistée par IA, analyse maintenant votre profil. Le résultat sera envoyé par email et disponible dans votre espace candidat.
+              Merci pour votre confiance. Notre équipe analyse maintenant votre profil. Le résultat sera envoyé par email et disponible dans votre espace candidat.
             </p>
             <div className="mt-6 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm text-blue-900" role="status" aria-live="polite">
               <strong>Prochaine étape :</strong> surveillez votre boîte email et votre espace candidat pour consulter votre rapport.
@@ -342,9 +421,9 @@ export default function Evaluation() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
-            <Sparkles className="w-3 h-3" /> Analyse assistée par IA
-          </span>
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold">
+              <Sparkles className="w-3 h-3" /> Évaluation structurée du profil
+            </span>
           <h1 className="text-3xl font-bold text-gray-900 mt-4 mb-2">Évaluation complète de votre profil</h1>
           <p className="text-gray-600">Ces informations nous permettent d'évaluer votre éligibilité pour n'importe quelle destination — Canada RP, Europe, et bien d'autres.</p>
           {acquisitionSource !== "direct" && (
@@ -453,6 +532,12 @@ export default function Evaluation() {
             <SectionTitle>Projet & pays cible</SectionTitle>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
+                <Label>Projet à évaluer *</Label>
+                <select value={form.projectType} onChange={(e) => isEvaluationProjectType(e.target.value) && selectProjectType(e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
+                  {(Object.keys(PROJECT_EVALUATION_CONFIG) as EvaluationProjectType[]).map((projectType) => <option key={projectType} value={projectType}>{PROJECT_EVALUATION_CONFIG[projectType].label} — {PROJECT_EVALUATION_CONFIG[projectType].subtitle}</option>)}
+                </select>
+              </div>
+              <div>
                 <Label>Catégorie de destination *</Label>
                 <select value={form.destinationCategory} onChange={(e) => update('destinationCategory', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
                   <option value="canada">Canada</option>
@@ -461,10 +546,33 @@ export default function Evaluation() {
                 </select>
               </div>
               <div>
-                <Label>Pays précis ou zone souhaitée</Label>
-                <Input value={form.destinationCountry} onChange={(e) => update('destinationCountry', e.target.value)} placeholder="Ex: Canada, Luxembourg, Japon, Allemagne…" className="mt-1" />
-                <p className="mt-1 text-xs text-slate-500">Si vous hésitez, laissez ce champ vide : nous comparerons les possibilités disponibles dans le monde entier.</p>
+                <Label>Destination ciblée *</Label>
+                <select value={countrySelectionValue} onChange={(event) => {
+                  if (event.target.value === '__custom') {
+                    const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', projectDetails: {} };
+                    formRef.current = next;
+                    setForm(next);
+                    return;
+                  }
+                  selectDestinationCountry(event.target.value);
+                }} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
+                  <option value="">Sélectionner une destination</option>
+                  {availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}
+                  <option value="__custom">Autre destination à étudier</option>
+                </select>
+                <p className="mt-1 text-xs text-slate-500">Les destinations et procédures disponibles sont tirées de la bibliothèque 3M Travel.</p>
               </div>
+              {countrySelectionValue === '__custom' && <div>
+                <Label>Précisez la destination</Label>
+                <Input value={form.destinationCountry} onChange={(event) => update('destinationCountry', event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" className="mt-1" />
+              </div>}
+              {availableProcedures.length > 0 && <div>
+                <Label>Procédure à évaluer *</Label>
+                <select value={form.projectDetails.procedureId ?? ''} onChange={(event) => selectProcedure(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
+                  <option value="">Sélectionner une procédure</option>
+                  {availableProcedures.map((procedure) => <option key={procedure.id} value={procedure.id}>{procedure.procedureLabel}</option>)}
+                </select>
+              </div>}
               <div>
                 <Label>Type de visa recherché *</Label>
                 <select value={form.visaType} onChange={(e) => update('visaType', e.target.value)} className="mt-1 w-full h-10 px-3 border border-gray-300 rounded-md text-sm">
@@ -480,15 +588,9 @@ export default function Evaluation() {
               <div><Label>Budget disponible (FCFA)</Label><Input value={form.availableBudget} onChange={(e) => update('availableBudget', e.target.value)} className="mt-1" /></div>
             </div>
             <div><Label>Motif du séjour</Label><Input value={form.travelReason} onChange={(e) => update('travelReason', e.target.value)} placeholder="Travail, études, recrutement, visite, installation…" className="mt-1" /></div>
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-4">
-              <p className="text-sm font-semibold text-indigo-950">Vous pouvez indiquer n’importe quel pays</p>
-              <p className="mt-1 text-xs leading-5 text-indigo-900">Canada, Europe, Asie, Amériques, Afrique, Golfe, Océanie : votre demande est analysée selon votre profil et les opportunités à vérifier.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {["Canada", "Luxembourg", "Allemagne", "États-Unis", "Chine", "Australie"].map((country) => (
-                  <button type="button" key={country} onClick={() => update('destinationCountry', country)} className="min-h-9 rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-xs font-semibold text-indigo-800 transition hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">{country}</button>
-                ))}
-              </div>
-            </div>
+            {form.destinationCountry && availableProcedures.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><strong>Destination à comparer :</strong> aucun guide spécifique n’est encore associé à cette combinaison. Votre dossier est néanmoins enregistré pour vérification par un conseiller.</div>}
+
+            <ProjectDetailsSection projectType={form.projectType} values={form.projectDetails} onChange={updateProjectDetails} countryFields={countryProcedureFields} procedure={selectedProcedure} />
 
             <SectionTitle>Historique & antécédents</SectionTitle>
             <div className="space-y-3">

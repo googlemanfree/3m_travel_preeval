@@ -451,6 +451,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre les recommandations actionnables avec une checklist interactive persistante.
 - [x] Tester TypeScript, Vitest, le responsive et les parcours d’export avant publication.
 
+## Évaluations contextualisées, registre consulaire et traitement administratif
+- [x] Auditer les formulaires d’évaluation existants, leurs pré-remplissages et les données reçues côté administration.
+- [x] Définir des parcours et exigences spécifiques pour Travail, Études, Tourisme, e-Visa et autres procédures.
+- [x] Compléter le registre des Consulats & Liens officiels à partir des 107 guides de la bibliothèque, avec type de procédure, source, date de vérification et état de disponibilité.
+- [x] Enrichir les outils administratifs de recherche, filtrage, consultation des exigences, actions dossier et suivi de traitement.
+- [x] Tester les formulaires par projet, les contrôles d’accès administratifs, les routes et la qualité des données avant publication.
+
 ## Réorganisation des pages de services et contenu
 - [x] Auditer les routes et pages existantes pour les services Canada, Schengen, études, billets, formation, blog et contact.
 - [x] Définir les routes canoniques et les redirections nécessaires sans créer de pages statiques ou de contenus dupliqués.
@@ -524,3 +531,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Bouton de réservation de consultation Canada
 - [x] Ajouter un appel à l’action sous les barres de progression du simulateur Canada pour réserver directement une consultation avec un conseiller.
 - [x] Valider par les tests, TypeScript et publier la version finale.
+
+## Évaluations contextualisées, registre consulaire et traitement administratif
+- [x] Finaliser les parcours et exigences spécifiques pour Travail, Études, Tourisme, e‑Visa et Installation.
+- [x] Synchroniser les réponses contextualisées vers les dossiers et les vues administratives.
+- [x] Enrichir les outils de recherche, filtrage, exigences et actions de traitement administratif.
+- [x] Tester les formulaires par projet, les routes et les contrôles d’accès avant publication.
+
+## Base documentaire des 107 destinations
+- [x] Inventorier les PDF de destination présents dans les ressources et extraire les pays, procédures, exigences et portails institutionnels cités.
+- [x] Vérifier et normaliser les liens officiels disponibles avant leur publication dans le registre administratif.
+- [x] Produire la couverture des 107 guides de la bibliothèque avec un statut explicite : vérifié ou à compléter.
+
+## Formulaires par pays et procédure
+- [x] Cartographier chaque PDF de la bibliothèque Ressources vers une destination et ses procédures disponibles.
+- [x] Définir les champs, validations et pièces attendues spécifiques à chaque couple pays-procédure.
+- [x] Adapter le formulaire public à la destination et à la procédure choisies, avec transmission structurée vers le dossier administratif.

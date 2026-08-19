@@ -103,6 +103,9 @@ export const evaluations = mysqlTable("evaluations", {
   ]).notNull(),
   travelReason: varchar("travelReason", { length: 255 }),
   availableBudget: varchar("availableBudget", { length: 100 }),
+  // Parcours d’évaluation contextualisé
+  projectType: varchar("projectType", { length: 50 }),
+  projectDetailsJson: text("projectDetailsJson"),
   // Historique & antécédents
   priorVisaRefusal: boolean("priorVisaRefusal").default(false),
   priorVisaRefusalCountry: varchar("priorVisaRefusalCountry", { length: 150 }),

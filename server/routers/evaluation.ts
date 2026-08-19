@@ -59,6 +59,9 @@ const evaluationInput = z.object({
   visaType: visaTypeEnum,
   travelReason: z.string().optional(),
   availableBudget: z.string().optional(),
+  // Parcours choisi et réponses propres au projet
+  projectType: z.enum(["travail", "etudes", "tourisme", "evisa", "immigration"]).optional(),
+  projectDetails: z.record(z.string(), z.string().max(1000)).optional(),
   // Historique & antécédents
   priorVisaRefusal: z.boolean().optional(),
   priorVisaRefusalCountry: z.string().optional(),
@@ -266,6 +269,8 @@ export const evaluationRouter = router({
         visaType: input.visaType,
         travelReason: input.travelReason,
         availableBudget: input.availableBudget,
+        projectType: input.projectType,
+        projectDetailsJson: input.projectDetails ? JSON.stringify(input.projectDetails) : undefined,
         priorVisaRefusal: input.priorVisaRefusal,
         priorVisaRefusalCountry: input.priorVisaRefusalCountry,
         criminalRecord: input.criminalRecord,
