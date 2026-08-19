@@ -628,3 +628,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les filtres de période, le logo, le filigrane de sécurité et le téléchargement direct au rapport PDF d'audit des vols
 - [x] Moderniser le système de réservation de vols style Air France (parcours multi-étapes, classes de cabine, familles de tarifs, options bagages et interface premium)
 - [x] Intégrer une carte interactive de cabine pour la sélection de siège, la gestion des favoris d'itinéraire, le partage simplifié et le récapitulatif flottant du panier en temps réel
+- [x] Ajouter les options bagages et repas au panier, la carte cabine à codes couleurs, le compte à rebours de maintien tarifaire et les logos harmonisés des compagnies

@@ -98,6 +98,29 @@ export default function FlightBookingCheckout() {
   const currentStep = submitted ? 4 : showConfirmModal ? 3 : 2;
   const progressPercent = ((currentStep - 1) / (bookingSteps.length - 1)) * 100;
 
+  const [selectedSeat, setSelectedSeat] = useState<string>("12A");
+  const [isSeatModalOpen, setIsSeatModalOpen] = useState(false);
+  const [extraBaggage, setExtraBaggage] = useState<number>(0);
+  const [specialMeal, setSpecialMeal] = useState<string>("Standard");
+  const [timeLeft, setTimeLeft] = useState<number>(900);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimeLeft = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const baggagePrice = extraBaggage * 45000;
+  const mealPrice = specialMeal !== "Standard" ? 15000 : 0;
+  const totalWithOptions = (selectedFlight?.totalPrice || 0) + baggagePrice + mealPrice;
+
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
