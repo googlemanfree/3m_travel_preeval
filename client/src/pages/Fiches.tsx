@@ -11,7 +11,7 @@ import {
 import Footer from "@/components/Footer";
 import { procedureData, type ProcedureInfo } from "@shared/procedureData";
 import { getAllResources, type PdfResource } from "@shared/pdfResources";
-import { getDestinationDetailForProcedure } from "@/lib/publicDestinationCatalog";
+import { getDestinationDetailForProcedure, isDestinationRecentlyUpdated } from "@/lib/publicDestinationCatalog";
 import { useLocation } from "wouter";
 
 const VISA_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -116,6 +116,7 @@ function FicheCard({ proc, pdfUrl }: FicheCardProps) {
                   {config.icon}
                   {config.label}
                 </Badge>
+                {destination && isDestinationRecentlyUpdated(destination) && <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs">Mis à jour</Badge>}
               </div>
               {proc.processingTime && proc.processingTime !== "Sur demande" && (
                 <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">

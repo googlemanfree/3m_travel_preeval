@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Award,
   Calendar,
+  ArrowLeftRight,
   Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -35,6 +36,7 @@ import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/Agen
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
+import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -44,7 +46,7 @@ export default function EvaluationSpace() {
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "documents" | "profile" | "messages" | "testimonials">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "documents" | "profile" | "messages" | "testimonials">("overview");
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -79,7 +81,7 @@ export default function EvaluationSpace() {
   useEffect(() => {
     if (searchParams.get("section")) {
       const s = searchParams.get("section") as any;
-      if (["overview", "dossier", "flights", "documents", "profile", "messages"].includes(s)) {
+      if (["overview", "dossier", "flights", "comparisons", "documents", "profile", "messages", "testimonials"].includes(s)) {
         setActiveTab(s);
       }
     }
@@ -216,6 +218,7 @@ export default function EvaluationSpace() {
             { id: "overview", label: "Vue d'ensemble", icon: TrendingUp },
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
             { id: "flights", label: "Vols Favoris & Réservations", icon: Plane },
+            { id: "comparisons", label: "Comparaisons", icon: ArrowLeftRight },
             { id: "documents", label: "Centre Documentaire", icon: FileText },
             { id: "profile", label: "Mon Profil & Avatar", icon: User },
             { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
@@ -848,6 +851,8 @@ Ce rapport est généré automatiquement par l'espace client
               </Card>
             </div>
           )}
+
+          {activeTab === "comparisons" && <SavedDestinationComparisonsPanel />}
 
           {activeTab === "documents" && (
             <div className="space-y-6">

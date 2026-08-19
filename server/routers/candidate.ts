@@ -24,6 +24,7 @@ import {
   applications,
   favoriteFlights,
   evaluations,
+  savedDestinationComparisons,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
@@ -1596,6 +1597,56 @@ export const candidateRouter = router({
       },
     };
   }),
+
+  saveDestinationComparison: candidateProcedure
+    .input(z.object({
+      primaryDestinationId: z.string().trim().min(2).max(180),
+      secondaryDestinationId: z.string().trim().min(2).max(180),
+    }).refine((input) => input.primaryDestinationId !== input.secondaryDestinationId, {
+      message: "Choisissez deux destinations différentes.",
+      path: ["secondaryDestinationId"],
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const where = and(
+        eq(savedDestinationComparisons.candidateId, ctx.candidate.id),
+        eq(savedDestinationComparisons.primaryDestinationId, input.primaryDestinationId),
+        eq(savedDestinationComparisons.secondaryDestinationId, input.secondaryDestinationId),
+      );
+      const existing = await db.select().from(savedDestinationComparisons).where(where).limit(1);
+      if (existing[0]) {
+        await db.update(savedDestinationComparisons).set({ updatedAt: new Date() }).where(eq(savedDestinationComparisons.id, existing[0].id));
+        return { comparison: { ...existing[0], updatedAt: new Date() }, alreadySaved: true };
+      }
+      const inserted = await db.insert(savedDestinationComparisons).values({
+        candidateId: ctx.candidate.id,
+        primaryDestinationId: input.primaryDestinationId,
+        secondaryDestinationId: input.secondaryDestinationId,
+      }).$returningId();
+      const [comparison] = await db.select().from(savedDestinationComparisons).where(eq(savedDestinationComparisons.id, inserted[0].id)).limit(1);
+      return { comparison, alreadySaved: false };
+    }),
+
+  listSavedDestinationComparisons: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    return db.select().from(savedDestinationComparisons)
+      .where(eq(savedDestinationComparisons.candidateId, ctx.candidate.id))
+      .orderBy(desc(savedDestinationComparisons.updatedAt));
+  }),
+
+  removeSavedDestinationComparison: candidateProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const row = await db.select({ id: savedDestinationComparisons.id }).from(savedDestinationComparisons)
+        .where(and(eq(savedDestinationComparisons.id, input.id), eq(savedDestinationComparisons.candidateId, ctx.candidate.id))).limit(1);
+      if (!row[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Comparaison introuvable." });
+      await db.delete(savedDestinationComparisons).where(eq(savedDestinationComparisons.id, input.id));
+      return { success: true };
+    }),
 
   shareFlightFavoriteEmail: candidateProcedure
     .input(z.object({

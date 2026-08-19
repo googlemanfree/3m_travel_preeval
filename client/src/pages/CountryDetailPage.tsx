@@ -5,7 +5,7 @@ import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { getGuideLastUpdatedAt, getPublicDestinationDetail } from '@/lib/publicDestinationCatalog';
+import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated } from '@/lib/publicDestinationCatalog';
 import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
 import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -153,6 +153,9 @@ export default function CountryDetailPage() {
                   <Badge className="bg-white/10 text-white border border-white/20 text-xs font-semibold">
                     {regionBadge} {regionLabel}
                   </Badge>
+                  {destinationDetail && isDestinationRecentlyUpdated(destinationDetail) && (
+                    <Badge className="border border-emerald-300/40 bg-emerald-400/20 text-emerald-100 text-xs font-bold">Mis à jour</Badge>
+                  )}
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{country.name}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
@@ -360,7 +363,10 @@ export default function CountryDetailPage() {
                       <FileText className="w-4 h-4 shrink-0 text-blue-700" />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate">{resource.title}</span>
-                        <span className="mt-0.5 block text-[11px] font-normal text-slate-500">{getGuideLastUpdatedAt(resource)}</span>
+                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] font-normal text-slate-500">
+                          {getGuideLastUpdatedAt(resource)}
+                          {destinationDetail && isDestinationRecentlyUpdated(destinationDetail) && <span className="rounded-full bg-emerald-100 px-1.5 py-0.5 font-semibold text-emerald-800">Mis à jour</span>}
+                        </span>
                       </span>
                       <Download className="w-4 h-4 shrink-0 text-slate-400" />
                     </a>

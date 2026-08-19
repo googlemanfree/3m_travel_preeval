@@ -585,3 +585,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher la date de dernière mise à jour de la fiche et de chaque guide PDF associé.
 - [x] Créer et valider une compétence réutilisable pour le workflow des fiches destination premium.
 - [x] Tester TypeScript, Vitest et les interactions responsive avant publication.
+
+## Rappels planifiés, comparaisons sauvegardées et mises à jour récentes
+- [x] Ajouter la sélection de date et de créneau à la demande de rappel destination.
+- [x] Permettre aux utilisateurs connectés de sauvegarder et consulter leurs comparaisons de destinations.
+- [x] Afficher un badge « Mis à jour » pour les fiches et guides récemment actualisés.
+- [x] Mettre à jour et valider la compétence réutilisable des fiches destination.
+- [x] Tester TypeScript, Vitest, les droits d’accès et le responsive avant publication.

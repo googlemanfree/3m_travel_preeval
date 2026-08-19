@@ -12,6 +12,8 @@ describe("interactions des fiches destination premium", () => {
     expect(callback).toContain("237698104832");
     expect(callback).toContain("destination");
     expect(callback).toContain("procedure");
+    expect(callback).toContain("Date souhaitée");
+    expect(callback).toContain("Créneau souhaité");
   });
 
   it("compare deux fiches depuis le catalogue public sans données fictives", () => {
@@ -19,6 +21,7 @@ describe("interactions des fiches destination premium", () => {
     expect(comparison).toContain("PUBLIC_DESTINATION_DETAILS");
     expect(comparison).toContain("Délai indicatif");
     expect(comparison).toContain("Documents demandés");
+    expect(comparison).toContain("saveDestinationComparison");
   });
 
   it("affiche les dates de mise à jour des fiches et des guides associés", () => {
@@ -27,5 +30,16 @@ describe("interactions des fiches destination premium", () => {
     expect(page).toContain("Dernière mise à jour");
     expect(page).toContain("getGuideLastUpdatedAt");
     expect(catalog).toContain("lastUpdatedAt");
+    expect(catalog).toContain("isDestinationRecentlyUpdated");
+    expect(page).toContain("Mis à jour");
+  });
+
+  it("isole les comparaisons sauvegardées par candidat côté serveur", () => {
+    const candidateRouter = readProjectFile("server/routers/candidate.ts");
+    const schema = readProjectFile("drizzle/destinationComparisonSchema.ts");
+    expect(candidateRouter).toContain("listSavedDestinationComparisons");
+    expect(candidateRouter).toContain("candidateId");
+    expect(candidateRouter).toContain("removeSavedDestinationComparison");
+    expect(schema).toContain("saved_destination_comparisons_candidate_pair_unique");
   });
 });
