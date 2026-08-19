@@ -578,3 +578,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Construire un modèle premium unique affichant guides, procédures, documents, portail officiel et appel à l’action adapté.
 - [x] Synchroniser les changements du registre administratif vers les pages publiques de destination.
 - [x] Tester systématiquement les 107 URL, les liens de démarrage et le comportement mobile avant publication.
+
+## Fiches destination : rappel, comparaison et mises à jour
+- [x] Ajouter un bouton de demande de rappel rapide contextualisé sur chaque fiche destination.
+- [x] Ajouter un comparateur permettant de sélectionner et comparer deux destinations.
+- [x] Afficher la date de dernière mise à jour de la fiche et de chaque guide PDF associé.
+- [x] Créer et valider une compétence réutilisable pour le workflow des fiches destination premium.
+- [x] Tester TypeScript, Vitest et les interactions responsive avant publication.

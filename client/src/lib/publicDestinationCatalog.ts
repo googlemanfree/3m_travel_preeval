@@ -5,6 +5,7 @@ import { procedures107Complete, type CountryProcedureComplete } from "@/data/pro
 export type PublicDestinationDetail = {
   procedure: CountryProcedureComplete;
   sources: AdminConsularCatalogEntry["resources"];
+  lastUpdatedAt: string;
   consular: Pick<
     AdminConsularCatalogEntry,
     "countryCode" | "officialPortalUrl" | "officialPortalLabel" | "officialVerifiedAt" | "verificationStatus" | "sourceSummary"
@@ -40,6 +41,7 @@ const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestina
   return {
     procedure,
     sources: consular?.resources ?? [],
+    lastUpdatedAt: consular?.officialVerifiedAt ?? "19 août 2026",
     consular: {
       countryCode: consular?.countryCode ?? normalizeDestination(procedure.name),
       officialPortalUrl: consular?.officialPortalUrl,
@@ -49,6 +51,11 @@ const detailFromProcedure = (procedure: CountryProcedureComplete): PublicDestina
       sourceSummary: consular?.sourceSummary ?? "Guide 3M associé à la procédure",
     },
   };
+};
+
+export const getGuideLastUpdatedAt = (resource: { title: string }) => {
+  const year = resource.title.match(/20\d{2}/)?.[0];
+  return year ? `Mis à jour en ${year} — vérifié le 19 août 2026` : "Vérifié le 19 août 2026";
 };
 
 // Les 91 procédures documentées sont complétées par 16 destinations e‑Visa

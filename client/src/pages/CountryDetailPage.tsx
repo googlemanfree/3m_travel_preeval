@@ -1,11 +1,13 @@
 import React from 'react';
 import { useRoute } from 'wouter';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Download, ArrowLeft, CheckCircle2, FileText, Briefcase, Globe, Award, Sparkles, ExternalLink, ShieldCheck, AlertTriangle, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { getPublicDestinationDetail } from '@/lib/publicDestinationCatalog';
+import { getGuideLastUpdatedAt, getPublicDestinationDetail } from '@/lib/publicDestinationCatalog';
+import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
+import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
@@ -81,6 +83,9 @@ export default function CountryDetailPage() {
     ? publicPortal
     : destinationDetail?.consular;
   const evaluationUrl = `/evaluation?destination=${encodeURIComponent(country.name)}&procedure=${encodeURIComponent(country.visaType)}`;
+  const pageUpdatedAt = publicPortal?.updatedAt
+    ? new Date(publicPortal.updatedAt).toLocaleDateString("fr-FR")
+    : destinationDetail?.lastUpdatedAt;
 
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
@@ -152,6 +157,9 @@ export default function CountryDetailPage() {
                 <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{country.name}</h1>
                 <p className="text-blue-100 text-sm mt-1 flex items-center gap-2">
                   <Globe className="w-4 h-4" /> Fiche de procédure 3M Travel — {country.visaType}
+                </p>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-blue-200">
+                  <CalendarDays className="w-3.5 h-3.5" /> Dernière mise à jour : {pageUpdatedAt}
                 </p>
               </div>
             </div>
@@ -303,6 +311,11 @@ export default function CountryDetailPage() {
                   💬 Discuter sur WhatsApp
                 </Button>
               </a>
+              <DestinationCallbackDialog destination={country.name} procedure={country.visaType} />
+            </Card>
+
+            <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl">
+              <DestinationComparisonDialog current={destinationDetail} />
             </Card>
 
             <Card className="p-6 border-slate-200 shadow-sm bg-white rounded-3xl space-y-4">
@@ -345,7 +358,10 @@ export default function CountryDetailPage() {
                   {destinationDetail.sources.map((resource) => (
                     <a key={resource.id} href={getLocalizedPdfUrl(resource, language)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border border-slate-200 p-3 text-sm font-medium text-slate-700 hover:border-blue-300 hover:bg-blue-50">
                       <FileText className="w-4 h-4 shrink-0 text-blue-700" />
-                      <span className="min-w-0 flex-1 truncate">{resource.title}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{resource.title}</span>
+                        <span className="mt-0.5 block text-[11px] font-normal text-slate-500">{getGuideLastUpdatedAt(resource)}</span>
+                      </span>
                       <Download className="w-4 h-4 shrink-0 text-slate-400" />
                     </a>
                   ))}

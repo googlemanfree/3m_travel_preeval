@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PUBLIC_DESTINATION_DETAILS,
   PUBLIC_DESTINATION_PAGE_COUNT,
+  getGuideLastUpdatedAt,
   getDestinationDetailForProcedure,
   getDestinationDetailForResource,
   getPublicDestinationDetail,
@@ -33,5 +34,9 @@ describe("catalogue public des fiches destination", () => {
   it("relie une ressource pays-procédure à sa fiche dédiée", () => {
     const detail = getDestinationDetailForResource({ country: "France", category: "visiteur" });
     expect(detail?.procedure.id).toBe("france-visiteur");
+  });
+
+  it("produit une date lisible pour les guides 3M associés", () => {
+    expect(getGuideLastUpdatedAt({ title: "Visa Études — Canada 2026" })).toContain("2026");
   });
 });
