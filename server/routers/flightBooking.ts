@@ -16,6 +16,7 @@ import { sendEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import QRCode from "qrcode";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
 
 const MAX_SCAN_BYTES = 6 * 1024 * 1024;
@@ -789,6 +790,14 @@ export const flightBookingRouter = router({
       doc.text(`Généré par : ${admin.email}`, 115, 49);
       doc.text(`Date : ${new Date().toLocaleString("fr-FR")}`, 115, 56);
 
+      // Génération du QR code d'authenticité
+      try {
+        const qrDataUrl = await QRCode.toDataURL(`https://3mtravelagency.com/verify?ref=${existing.requestRef}&t=${Date.now()}`);
+        doc.addImage(qrDataUrl, "PNG", 165, 38, 25, 25);
+      } catch (err) {
+        console.error("[QR Code Error]:", err);
+      }
+
       const tableRows = historyEntries.map(h => [
         new Date(h.createdAt).toLocaleString("fr-FR"),
         h.action,
@@ -797,19 +806,19 @@ export const flightBookingRouter = router({
       ]);
 
       (doc as any).autoTable({
-        startY: 65,
+        startY: 68,
         head: [["Date / Heure", "Action", "Auteur / Agent", "Détails & Initiales"]],
         body: tableRows,
         styles: { fontSize: 8, cellPadding: 3, fillColor: [255, 255, 255] },
         headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: "bold" },
-        columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 35 }, 2: { cellWidth: 40 }, 3: { cellWidth: 70 } },
+        columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 35 }, 2: { cellWidth: 40 }, 3: { cellWidth: 60 } },
         didDrawPage: () => {
           // Filigrane de sécurité officiel
           doc.saveGraphicsState();
           doc.setFont("helvetica", "bold");
           doc.setFontSize(48);
           doc.setTextColor(230, 235, 245);
-          doc.setGState(new (doc as any).GState({ opacity: 0.25 }));
+          doc.setGState(new (doc as any).GState({ opacity: 0.22 }));
           doc.text("3M TRAVEL & SERVICES - CERTIFIÉ", 25, 150, { angle: 45 });
           doc.restoreGraphicsState();
         }
@@ -818,6 +827,49 @@ export const flightBookingRouter = router({
       const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
       const { url } = await storagePut(`audit-reports/${existing.requestRef}-audit-${Date.now()}.pdf`, pdfBuffer, "application/pdf");
       return { success: true, auditReportUrl: url, reference: existing.requestRef };
+    }),
+
+  exportAuditHistoryCsv: publicProcedure
+    .input(z.object({ 
+      sessionToken: z.string().min(1), 
+      requestId: z.number().int().positive(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      
+      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+
+      if (input.startDate) {
+        const startTimestamp = new Date(input.startDate).getTime();
+        if (!isNaN(startTimestamp)) {
+          historyEntries = historyEntries.filter(h => new Date(h.createdAt).getTime() >= startTimestamp);
+        }
+      }
+      if (input.endDate) {
+        const endTimestamp = new Date(input.endDate).setHours(23, 59, 59, 999);
+        if (!isNaN(endTimestamp)) {
+          historyEntries = historyEntries.filter(h => new Date(h.createdAt).getTime() <= endTimestamp);
+        }
+      }
+
+      const header = ["Date / Heure", "Action", "Auteur / Agent", "Détails & Initiales"];
+      const rows = historyEntries.map(h => [
+        new Date(h.createdAt).toLocaleString("fr-FR"),
+        h.action,
+        h.changedBy,
+        h.details || ""
+      ]);
+
+      const csvContent = [header, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+      const buffer = Buffer.from("\uFEFF" + csvContent, "utf-8");
+      const { url } = await storagePut(`audit-reports/${existing.requestRef}-audit-${Date.now()}.csv`, buffer, "text/csv;charset=utf-8");
+      return { success: true, csvUrl: url, reference: existing.requestRef };
     }),
 
   markPnrAsViewed: candidateProcedure

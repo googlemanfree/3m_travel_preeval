@@ -221,19 +221,31 @@ export default function FlightAgentDashboard() {
 
   const [auditStartDate, setAuditStartDate] = useState("");
   const [auditEndDate, setAuditEndDate] = useState("");
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   const exportAuditPdfMutation = trpc.flightBooking.exportAuditHistoryPdf.useMutation({
     onSuccess: (data) => {
+      setPdfPreviewUrl(data.auditReportUrl);
       toast({ 
-        title: "Rapport d'audit PDF généré avec succès", 
-        description: "Le document sécurisé est prêt. Cliquez ici pour l'ouvrir.",
-        action: <Button size="sm" onClick={() => window.open(data.auditReportUrl, "_blank")} className="bg-blue-600 text-white">Télécharger PDF</Button>
+        title: "Rapport d'audit PDF généré", 
+        description: "Prévisualisation et téléchargement direct disponibles.",
       });
-      if (data.auditReportUrl) {
-        window.open(data.auditReportUrl, "_blank");
-      }
     },
     onError: (error) => toast({ title: "Export d'audit impossible", description: error.message, variant: "destructive" }),
+  });
+
+  const exportAuditCsvMutation = trpc.flightBooking.exportAuditHistoryCsv.useMutation({
+    onSuccess: (data) => {
+      toast({ 
+        title: "Rapport d'audit CSV / Excel généré", 
+        description: "Le fichier a été préparé avec succès.",
+        action: <Button size="sm" onClick={() => window.open(data.csvUrl, "_blank")} className="bg-emerald-600 text-white">Télécharger CSV</Button>
+      });
+      if (data.csvUrl) {
+        window.open(data.csvUrl, "_blank");
+      }
+    },
+    onError: (error) => toast({ title: "Export CSV impossible", description: error.message, variant: "destructive" }),
   });
 
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
@@ -395,10 +407,16 @@ export default function FlightAgentDashboard() {
                         <span>au</span>
                         <input type="date" value={auditEndDate} onChange={(e) => setAuditEndDate(e.target.value)} className="rounded border border-slate-200 px-2 py-1 text-xs" />
                       </div>
-                      <Button type="button" size="sm" variant="outline" disabled={exportAuditPdfMutation.isPending} onClick={() => exportAuditPdfMutation.mutate({ sessionToken, requestId: selectedRequestId, startDate: auditStartDate || undefined, endDate: auditEndDate || undefined })} className="h-8 text-xs font-bold border-slate-200 bg-blue-50 text-blue-800 hover:bg-blue-100">
-                        {exportAuditPdfMutation.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
-                        {exportAuditPdfMutation.isPending ? "Génération..." : "Exporter PDF"}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        <Button type="button" size="sm" variant="outline" disabled={exportAuditPdfMutation.isPending} onClick={() => exportAuditPdfMutation.mutate({ sessionToken, requestId: selectedRequestId, startDate: auditStartDate || undefined, endDate: auditEndDate || undefined })} className="h-8 text-xs font-bold border-slate-200 bg-blue-50 text-blue-800 hover:bg-blue-100">
+                          {exportAuditPdfMutation.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Eye className="mr-1.5 h-3.5 w-3.5" />}
+                          {exportAuditPdfMutation.isPending ? "Génération..." : "Prévisualiser PDF"}
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" disabled={exportAuditCsvMutation.isPending} onClick={() => exportAuditCsvMutation.mutate({ sessionToken, requestId: selectedRequestId, startDate: auditStartDate || undefined, endDate: auditEndDate || undefined })} className="h-8 text-xs font-bold border-slate-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100">
+                          {exportAuditCsvMutation.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
+                          {exportAuditCsvMutation.isPending ? "Export..." : "CSV/Excel"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="max-h-40 space-y-2 overflow-auto">{detailQuery.data.history.map((entry) => <div key={entry.id} className="rounded-lg bg-slate-50 p-2 text-xs"><span className="font-bold text-slate-800">{entry.action}</span><span className="ml-2 text-slate-500">{entry.changedBy} · {new Date(entry.createdAt).toLocaleString("fr-FR")}</span>{entry.details && <p className="mt-1 text-slate-600">{entry.details}</p>}</div>)}</div>
@@ -408,6 +426,7 @@ export default function FlightAgentDashboard() {
           </Card>
         </div>
         {previewPnr && <DocumentPreviewModal isOpen={Boolean(previewPnr)} onClose={() => setPreviewPnr(null)} documentTitle={previewPnr.title} documentUrl={previewPnr.url} fileType="application/pdf" />}
+        {pdfPreviewUrl && <DocumentPreviewModal isOpen={Boolean(pdfPreviewUrl)} onClose={() => setPdfPreviewUrl(null)} documentTitle="Prévisualisation du Rapport d'Audit & QR Code" documentUrl={pdfPreviewUrl} fileType="application/pdf" />}
 
         {isIssuanceModalOpen && detailQuery.data?.request && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
