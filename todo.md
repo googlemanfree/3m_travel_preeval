@@ -643,3 +643,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter le bouton "Détails du vol" (escales et bagages), l'auto-complétion IATA pour les aéroports, le curseur de prix interactif et les filtres par compagnie aérienne sur la page /flights, et créer la compétence réutilisable flight-search-experience
 - [x] Intégrer les alertes e-mail de baisse de prix sur les vols (abonnement, suivi par l'utilisateur, notifications et désinscription sécurisée)
 - [x] Configurer l'application en Progressive Web App (PWA) avec manifeste, service worker et cache sécurisé pour l'accès hors ligne aux billets sur mobile
+- [x] Intégrer les notifications push natives pour alerter les utilisateurs des changements d'horaires de vol sur mobile (consentement, service worker push et envoi ciblé)

@@ -25,6 +25,26 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : { title: '3M Travel & Services', body: 'Mise à jour concernant votre vol' };
+  const options = {
+    body: data.body,
+    icon: '/favicon.png',
+    badge: '/favicon.png',
+    data: { url: data.url || '/' }
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url)
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
