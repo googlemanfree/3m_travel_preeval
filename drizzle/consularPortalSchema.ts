@@ -10,6 +10,8 @@ export const managedConsularPortals = mysqlTable("managed_consular_portals", {
   officialVerifiedAt: varchar("officialVerifiedAt", { length: 80 }),
   verificationStatus: mysqlEnum("verificationStatus", ["verifie", "a_completer"]).default("a_completer").notNull(),
   verificationNote: text("verificationNote"),
+  revalidateDueAt: timestamp("revalidateDueAt"),
+  lastRevalidationAlertAt: timestamp("lastRevalidationAlertAt"),
   updatedByAdminId: int("updatedByAdminId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

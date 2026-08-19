@@ -73,6 +73,7 @@ import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
+import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
 import { AdminCurrencyRates } from "@/components/AdminCurrencyRates";
 import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrectionHistory";
 import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueManager";
@@ -1011,6 +1012,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="evaluation-reminders" className="gap-1.5 font-bold text-violet-700">Bilans à relancer</TabsTrigger>
             <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
             <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
+            <TabsTrigger value="destination-analytics" className="gap-1.5 font-bold text-indigo-700">📊 Destinations</TabsTrigger>
             <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
             <TabsTrigger value="route-health" className="gap-1.5 font-bold text-rose-700">404 & Liens</TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
@@ -1034,6 +1036,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="consular" className="space-y-6">
             <AdminConsularRegistry sessionToken={sessionToken} />
+          </TabsContent>
+
+          <TabsContent value="destination-analytics" className="space-y-6">
+            <AdminDestinationAnalytics sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">

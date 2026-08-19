@@ -554,3 +554,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une recherche de destination avec autocomplétion, drapeaux et clavier dans le formulaire.
 - [x] Mettre à jour et valider la compétence réutilisable associée à ce workflow.
 - [x] Exécuter les tests Vitest, TypeScript et une vérification visuelle avant publication.
+
+## Procédures, revalidation consulaire et analyse des destinations
+- [x] Auditer et compléter la page Procédures avec les composants publics déjà disponibles, sans altérer son style.
+- [x] Vérifier l’intégration Google Analytics sans créer de doublon ; Facebook Pixel reste volontairement inactif.
+- [x] Ajouter ou relier le calculateur CRS, les listes documentaires par visa et le contact WhatsApp vers +237698104832.
+- [x] Créer une file de liens consulaires à revalider avec échéances et alertes administratives.
+- [x] Automatiser le préremplissage de la checklist Client 360° selon le contexte pays-procédure.
+- [x] Créer un tableau de bord de tendances des destinations demandées pour l’administration.
+- [x] Tester TypeScript, Vitest, les droits et le responsive avant publication.
+
+## Décision de mesure d’audience
+- [ ] Conserver Facebook Pixel inactif jusqu’à réception d’un identifiant officiel et d’une instruction explicite d’activation.

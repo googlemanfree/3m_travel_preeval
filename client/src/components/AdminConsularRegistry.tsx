@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Globe, ExternalLink, Search, ShieldCheck, FileText, Building2, CircleAlert, CheckCircle2, SlidersHorizontal, BookOpen, Pencil, Save } from "lucide-react";
+import { Globe, ExternalLink, Search, ShieldCheck, FileText, Building2, CircleAlert, CheckCircle2, SlidersHorizontal, BookOpen, Pencil, Save, CalendarClock, BellRing } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,11 +24,14 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
   const [verifiedAt, setVerifiedAt] = useState("");
   const [verificationStatus, setVerificationStatus] = useState<EditableVerificationStatus>("a_completer");
   const [verificationNote, setVerificationNote] = useState("");
+  const [revalidateDueAt, setRevalidateDueAt] = useState("");
   const { toast } = useToast();
   const overridesQuery = trpc.consularRegistry.listOverrides.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
+  const revalidationQueueQuery = trpc.consularRegistry.listRevalidationQueue.useQuery({ sessionToken, daysAhead: 30 }, { enabled: Boolean(sessionToken) });
   const saveOverrideMutation = trpc.consularRegistry.upsertOverride.useMutation({
     onSuccess: () => {
       void overridesQuery.refetch();
+      void revalidationQueueQuery.refetch();
       setEditingEntry(null);
       toast({ title: "Fiche consulaire mise à jour", description: "Le lien et son statut de vérification ont été enregistrés dans le journal administratif." });
     },
@@ -47,6 +50,7 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
         officialVerifiedAt: override.officialVerifiedAt || undefined,
         verificationStatus: override.verificationStatus,
         verificationNote: override.verificationNote || undefined,
+        revalidateDueAt: override.revalidateDueAt || undefined,
       };
     });
   }, [overridesQuery.data]);
@@ -70,6 +74,10 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
 
   const verifiedCount = catalog.filter((entry) => entry.verificationStatus === "verifie").length;
   const followUpCount = catalog.length - verifiedCount;
+  const revalidationQueue = useMemo(() => {
+    const deadline = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    return catalog.filter((entry: any) => entry.verificationStatus === "a_completer" || !entry.revalidateDueAt || new Date(entry.revalidateDueAt).getTime() <= deadline);
+  }, [catalog]);
 
   const openEditor = (entry: (typeof ADMIN_CONSULAR_CATALOG)[number]) => {
     setEditingEntry(entry);
@@ -78,6 +86,7 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
     setVerifiedAt(entry.officialVerifiedAt ?? "");
     setVerificationStatus(entry.verificationStatus as EditableVerificationStatus);
     setVerificationNote(entry.verificationNote ?? "");
+    setRevalidateDueAt((entry as any).revalidateDueAt ? new Date((entry as any).revalidateDueAt).toISOString().slice(0, 10) : "");
   };
 
   const savePortal = () => {
@@ -92,6 +101,7 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
         officialVerifiedAt: verifiedAt.trim(),
         verificationStatus,
         verificationNote: verificationNote.trim(),
+        revalidateDueAt: revalidateDueAt ? new Date(`${revalidateDueAt}T12:00:00`).toISOString() : "",
       },
     });
   };
@@ -117,6 +127,11 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
         </div>
       </div>
 
+      <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-4" aria-label="Liens consulaires à revalider">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="rounded-lg bg-amber-100 p-2 text-amber-800"><BellRing className="h-4 w-4" /></div><div><h3 className="font-semibold text-amber-950">File de revalidation des liens officiels</h3><p className="mt-1 text-sm text-amber-900">{revalidationQueue.length} fiche(s) à contrôler maintenant ou dans les 30 prochains jours. Les échéances renseignées apparaissent ici.</p></div></div><Button type="button" size="sm" variant="outline" className="border-amber-300 bg-white text-amber-950" onClick={() => setSelectedStatus("a_completer")}>Ouvrir les fiches à revalider</Button></div>
+        {revalidationQueue.slice(0, 5).length > 0 && <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-5">{revalidationQueue.slice(0, 5).map((entry: any) => <button key={entry.countryCode} type="button" onClick={() => openEditor(entry)} className="rounded-lg border border-amber-200 bg-white px-3 py-2 text-left text-xs text-amber-950 hover:border-amber-400"><span className="block font-semibold">{entry.countryName}</span><span className="mt-1 block text-amber-800">{entry.revalidateDueAt ? `Échéance : ${new Date(entry.revalidateDueAt).toLocaleDateString("fr-FR")}` : "Échéance à définir"}</span></button>)}</div>}
+      </section>
+
       <div className="flex flex-wrap gap-2" aria-label="Filtrer par région">{regions.map((region) => <Button key={region} type="button" variant={selectedRegion === region ? "default" : "outline"} size="sm" onClick={() => setSelectedRegion(region)} className={selectedRegion === region ? "bg-blue-600 text-white" : "border-slate-200 dark:border-slate-800"}>{region === "all" ? "Toutes les régions" : region}</Button>)}</div>
       <div className="flex items-center justify-between gap-3 text-sm text-slate-500"><span><strong className="text-slate-900 dark:text-white">{filtered.length}</strong> destination{filtered.length > 1 ? "s" : ""} affichée{filtered.length > 1 ? "s" : ""}</span><span>Ouvrez toujours le portail officiel juste avant toute soumission.</span></div>
 
@@ -130,6 +145,7 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
               {entry.officialPortalUrl ? <a href={entry.officialPortalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-between rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"><span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />{entry.officialPortalLabel ?? "Portail officiel"}</span><ExternalLink className="h-3.5 w-3.5" /></a> : <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950"><CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />Lien institutionnel à renseigner et valider dans le catalogue e‑Visa ou la fiche consulaire.</div>}
               {entry.evisaUrl && entry.evisaUrl !== entry.officialPortalUrl && <a href={entry.evisaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-between rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"><span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" />Accès e‑Visa / autorisation</span><ExternalLink className="h-3.5 w-3.5" /></a>}
               {entry.officialVerifiedAt && <p className="text-[11px] text-slate-500">Vérifié le {entry.officialVerifiedAt}</p>}
+              {(entry as any).revalidateDueAt && <p className="flex items-center gap-1 text-[11px] text-amber-800"><CalendarClock className="h-3 w-3" />À revalider avant le {new Date((entry as any).revalidateDueAt).toLocaleDateString("fr-FR")}</p>}
               <Button type="button" variant="outline" size="sm" className="w-full border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => openEditor(entry)} disabled={!sessionToken}><Pencil className="mr-1.5 h-3.5 w-3.5" />Mettre à jour / vérifier</Button>
             </div>
           </CardContent>
@@ -145,6 +161,7 @@ export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }
             <div className="grid gap-2"><Label htmlFor="portal-url">URL officielle</Label><Input id="portal-url" type="url" value={portalUrl} onChange={(event) => setPortalUrl(event.target.value)} placeholder="https://…" /></div>
             <div className="grid gap-2"><Label htmlFor="portal-label">Libellé du portail</Label><Input id="portal-label" value={portalLabel} onChange={(event) => setPortalLabel(event.target.value)} placeholder="Ex. Portail officiel des visas" /></div>
             <div className="grid gap-2"><Label htmlFor="portal-date">Date de vérification</Label><Input id="portal-date" value={verifiedAt} onChange={(event) => setVerifiedAt(event.target.value)} placeholder="Ex. 19 août 2026" /></div>
+            <div className="grid gap-2"><Label htmlFor="portal-revalidation-date">Échéance de revalidation</Label><Input id="portal-revalidation-date" type="date" value={revalidateDueAt} onChange={(event) => setRevalidateDueAt(event.target.value)} /><p className="text-xs text-slate-500">Laissez vide si aucun rappel programmé n’est nécessaire.</p></div>
             <div className="grid gap-2"><Label htmlFor="portal-status">Statut</Label><select id="portal-status" value={verificationStatus} onChange={(event) => setVerificationStatus(event.target.value as EditableVerificationStatus)} className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="verifie">Portail vérifié</option><option value="a_completer">Lien à compléter / recontrôler</option></select></div>
             <div className="grid gap-2"><Label htmlFor="portal-note">Note de contrôle</Label><Textarea id="portal-note" value={verificationNote} onChange={(event) => setVerificationNote(event.target.value)} placeholder="Source consultée, motif de la mise à jour ou point à recontrôler…" /></div>
           </div>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'wouter';
-import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator } from 'lucide-react';
+import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,14 @@ import { trpc } from '@/lib/trpc';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
 const REGIONS = ['Tous', 'Europe', 'Asie', 'Afrique', 'Amérique du Nord', 'Amérique du Sud', 'Océanie', 'Moyen-Orient'];
+
+const VISA_DOCUMENT_CHECKLISTS = {
+  travail: ["Passeport valide", "CV adapté au poste", "Diplômes et certifications", "Justificatifs d’expérience", "Offre ou projet professionnel, si disponible", "Preuves de ressources selon la procédure"],
+  etudes: ["Passeport valide", "Diplômes et relevés", "Lettre d’admission ou projet académique", "Preuves de ressources et prise en charge", "Projet d’études", "Justificatifs demandés par l’établissement ou le consulat"],
+  visiteur: ["Passeport valide", "Itinéraire et réservations cohérents", "Hébergement ou lettre d’invitation", "Assurance voyage, si requise", "Preuves de ressources", "Justificatifs du retour et du motif de séjour"],
+} as const;
+
+const visaChecklistLabels = { travail: "Travail", etudes: "Études", visiteur: "Visiteur / tourisme" } as const;
 
 export default function ProceduresAdvanced() {
   const { language } = useLanguage();
@@ -43,6 +51,7 @@ export default function ProceduresAdvanced() {
   const [maxCostFilter, setMaxCostFilter] = useState(10000);
   const [maxTimeFilter, setMaxTimeFilter] = useState(52);
   const [difficultyFilter, setDifficultyFilter] = useState<'tous' | 'facile' | 'moyen' | 'difficile'>('tous');
+  const [documentVisaType, setDocumentVisaType] = useState<keyof typeof VISA_DOCUMENT_CHECKLISTS>('travail');
 
   // Budget calculator state
   const [selectedCountryForBudget, setSelectedCountryForBudget] = useState<string | null>(null);
@@ -171,7 +180,23 @@ export default function ProceduresAdvanced() {
           </Card>
         </div>
 
-        {/* Simulateur de Score Canadien désormais recentré dans la section /canada dédiée */}
+        {/* Outils d’orientation : le simulateur CRS reste volontairement dans la section Canada pour éviter toute confusion. */}
+        <section className="mb-12 grid gap-6 lg:grid-cols-2" aria-label="Outils de préparation du dossier">
+          <Card className="border-blue-200 !bg-gradient-to-br !from-blue-700 !to-indigo-800 p-6 text-white shadow-lg">
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-white/15 p-3"><Calculator className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-100">Projet Canada</p><h2 className="mt-1 text-2xl font-black">Vérifier votre score CRS</h2><p className="mt-2 max-w-xl text-sm leading-6 text-blue-50">Le calculateur Canada compare votre profil, les seuils historiques et les actions utiles. Il s’agit d’un repère d’orientation, non d’une décision d’immigration.</p></div></div>
+            <Link href="/canada" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-black text-blue-800 hover:bg-blue-50">Ouvrir le calculateur CRS <ExternalLink className="h-4 w-4" /></Link>
+          </Card>
+          <Card className="border-emerald-200 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="mt-2 text-sm leading-6 text-slate-600">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
+            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M Travel et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
+          </Card>
+        </section>
+
+        <section className="mb-12 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="documents-par-visa">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div className="max-w-2xl"><span className="text-xs font-black uppercase tracking-[0.18em] text-blue-700">Préparer son dossier</span><h2 id="documents-par-visa" className="mt-2 flex items-center gap-2 text-2xl font-black text-slate-950"><CheckSquare className="h-6 w-6 text-blue-700" />Documents par type de visa</h2><p className="mt-2 text-sm leading-6 text-slate-600">Utilisez cette liste comme repère de préparation. Les exigences finales dépendent du pays, de la nationalité, du motif et du portail officiel concerné.</p></div><div className="flex flex-wrap gap-2">{(Object.keys(VISA_DOCUMENT_CHECKLISTS) as Array<keyof typeof VISA_DOCUMENT_CHECKLISTS>).map((type) => <Button key={type} type="button" variant={documentVisaType === type ? "default" : "outline"} onClick={() => setDocumentVisaType(type)} className={documentVisaType === type ? "bg-blue-700 hover:bg-blue-800" : "border-slate-200 text-slate-700"}>{visaChecklistLabels[type]}</Button>)}</div></div>
+          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{VISA_DOCUMENT_CHECKLISTS[documentVisaType].map((document) => <li key={document} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"><CheckSquare className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" /><span>{document}</span></li>)}</ul>
+          <p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950">Après l’évaluation, la checklist détaillée est adaptée au pays et à la procédure sélectionnés dans votre dossier.</p>
+        </section>
 
         {/* Comparatif visuel des parcours */}
         <section aria-labelledby="parcours-comparatif" className="mb-12 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">

@@ -14,6 +14,7 @@ const portalInput = z.object({
   officialVerifiedAt: z.string().trim().max(80).optional().or(z.literal("")),
   verificationStatus: z.enum(["verifie", "a_completer"]),
   verificationNote: z.string().trim().max(3000).optional().or(z.literal("")),
+  revalidateDueAt: z.string().trim().max(80).optional().or(z.literal("")),
 }).superRefine((value, ctx) => {
   if (value.verificationStatus === "verifie" && !value.officialPortalUrl) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["officialPortalUrl"], message: "Un lien HTTPS est obligatoire pour confirmer une fiche." });
@@ -26,6 +27,8 @@ const serialise = (row: typeof managedConsularPortals.$inferSelect) => ({
   officialPortalLabel: row.officialPortalLabel ?? "",
   officialVerifiedAt: row.officialVerifiedAt ?? "",
   verificationNote: row.verificationNote ?? "",
+  revalidateDueAt: row.revalidateDueAt?.toISOString() ?? "",
+  lastRevalidationAlertAt: row.lastRevalidationAlertAt?.toISOString() ?? "",
 });
 
 export const consularRegistryRouter = router({
@@ -55,6 +58,7 @@ export const consularRegistryRouter = router({
         officialVerifiedAt: value.officialVerifiedAt || null,
         verificationStatus: value.verificationStatus,
         verificationNote: value.verificationNote || null,
+        revalidateDueAt: value.revalidateDueAt ? new Date(value.revalidateDueAt) : null,
         updatedByAdminId: admin.id,
       } as const;
       let portalId: number;
@@ -78,5 +82,20 @@ export const consularRegistryRouter = router({
         actorAdminId: admin.id,
       });
       return { success: true, portal: serialise(current) };
+    }),
+
+  listRevalidationQueue: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), daysAhead: z.number().int().min(1).max(180).default(30) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Registre consulaire indisponible." });
+      const now = new Date();
+      const deadline = new Date(now.getTime() + input.daysAhead * 24 * 60 * 60 * 1000);
+      const rows = await db.select().from(managedConsularPortals);
+      return rows
+        .filter((row) => row.verificationStatus === "a_completer" || !row.revalidateDueAt || row.revalidateDueAt <= deadline)
+        .sort((left, right) => (left.revalidateDueAt?.getTime() ?? 0) - (right.revalidateDueAt?.getTime() ?? 0))
+        .map(serialise);
     }),
 });
