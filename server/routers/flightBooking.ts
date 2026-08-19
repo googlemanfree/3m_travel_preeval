@@ -674,6 +674,81 @@ export const flightBookingRouter = router({
       return { success: true, issuedPdfUrl: url };
     }),
 
+  exportAuditHistoryPdf: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+
+      const rowsHtml = historyEntries.map(h => `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${new Date(h.createdAt).toLocaleString("fr-FR")}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-weight: bold; color: #1e3a8a;">${h.action}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${h.changedBy}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #cbd5e1; font-size: 11px; color: #475569;">${h.details || "—"}</td>
+        </tr>
+      `).join("");
+
+      const html = `
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="utf-8">
+          <title>Rapport d'Audit - Dossier ${existing.requestRef}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #0f172a; padding: 30px; background: #ffffff; }
+            .header { background: #1e3a8a; color: white; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+            h1 { margin: 0; font-size: 22px; }
+            p { margin: 5px 0; font-size: 13px; color: #cbd5e1; }
+            .meta { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 25px; }
+            .meta p { color: #334155; font-size: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th { background: #f1f5f9; color: #1e293b; text-align: left; padding: 10px; font-size: 12px; border-bottom: 2px solid #cbd5e1; }
+            .footer { margin-top: 40px; text-align: center; font-size: 10px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>3M Travel & Services — Rapport d’Audit & Initiales</h1>
+            <p>Historique infalsifiable des validations, contrôles et émissions PNR</p>
+          </div>
+          <div class="meta">
+            <p><strong>Référence Dossier :</strong> ${existing.requestRef}</p>
+            <p><strong>Client :</strong> ${existing.candidateEmail}</p>
+            <p><strong>Référence PNR / GDS :</strong> ${existing.pnrReference || "Non émis"}</p>
+            <p><strong>Statut Actuel :</strong> ${existing.status}</p>
+            <p><strong>Généré par :</strong> ${admin.email} le ${new Date().toLocaleString("fr-FR")}</p>
+          </div>
+          <h3>Journal complet des événements et initiales</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Date / Heure</th>
+                <th>Action</th>
+                <th>Auteur / Agent</th>
+                <th>Détails & Initiales</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          <div class="footer">
+            <p>Document officiel certifié généré par le système sécurisé de 3M Travel & Services SARL — Tous droits réservés.</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const buffer = Buffer.from(html, "utf-8");
+      const { url } = await storagePut(`audit-reports/${existing.requestRef}-audit-${Date.now()}.html`, buffer, "text/html");
+      return { success: true, auditReportUrl: url, reference: existing.requestRef };
+    }),
+
   markPnrAsViewed: candidateProcedure
     .input(z.object({ requestId: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {

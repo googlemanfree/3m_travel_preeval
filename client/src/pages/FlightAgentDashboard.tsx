@@ -219,6 +219,16 @@ export default function FlightAgentDashboard() {
     onError: (error) => toast({ title: "Téléversement PNR impossible", description: error.message, variant: "destructive" }),
   });
 
+  const exportAuditPdfMutation = trpc.flightBooking.exportAuditHistoryPdf.useMutation({
+    onSuccess: (data) => {
+      toast({ title: "Rapport d'audit PDF généré", description: "Ouverture du rapport d'audit et des initiales dans un nouvel onglet." });
+      if (data.auditReportUrl) {
+        window.open(data.auditReportUrl, "_blank");
+      }
+    },
+    onError: (error) => toast({ title: "Export d'audit impossible", description: error.message, variant: "destructive" }),
+  });
+
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
   const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending || issuanceChecklistMutation.isPending;
   const requests = queueQuery.data?.requests ?? [];
@@ -368,7 +378,15 @@ export default function FlightAgentDashboard() {
                 <div className="space-y-2"><Label htmlFor="request-status">Statut opérationnel</Label><select id="request-status" value={detailQuery.data.request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: selectedRequestId, status: event.target.value as RequestStatus, details: note || undefined })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"><option value="pending_review">À traiter</option>{Object.entries(STATUS_LABELS).filter(([value]) => value !== "pending_review").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="agent-note">Note interne</Label><Textarea id="agent-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. tarif revalidé auprès du GDS, bagage à confirmer…" className="min-h-24 rounded-xl" /><Button type="button" disabled={isBusy || !note.trim()} onClick={() => noteMutation.mutate({ sessionToken, requestId: selectedRequestId, note: note.trim() })} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white"><MessageSquare className="mr-2 h-4 w-4" /> Enregistrer la note</Button></div>
-                <div><p className="mb-2 text-sm font-black text-slate-900">Historique</p><div className="max-h-40 space-y-2 overflow-auto">{detailQuery.data.history.map((entry) => <div key={entry.id} className="rounded-lg bg-slate-50 p-2 text-xs"><span className="font-bold text-slate-800">{entry.action}</span><span className="ml-2 text-slate-500">{entry.changedBy} · {new Date(entry.createdAt).toLocaleString("fr-FR")}</span>{entry.details && <p className="mt-1 text-slate-600">{entry.details}</p>}</div>)}</div></div>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-black text-slate-900">Historique & Initiales</p>
+                    <Button type="button" size="sm" variant="outline" disabled={exportAuditPdfMutation.isPending} onClick={() => exportAuditPdfMutation.mutate({ sessionToken, requestId: selectedRequestId })} className="h-8 text-xs font-bold border-slate-200">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Exporter rapport PDF
+                    </Button>
+                  </div>
+                  <div className="max-h-40 space-y-2 overflow-auto">{detailQuery.data.history.map((entry) => <div key={entry.id} className="rounded-lg bg-slate-50 p-2 text-xs"><span className="font-bold text-slate-800">{entry.action}</span><span className="ml-2 text-slate-500">{entry.changedBy} · {new Date(entry.createdAt).toLocaleString("fr-FR")}</span>{entry.details && <p className="mt-1 text-slate-600">{entry.details}</p>}</div>)}</div>
+                </div>
               </div>
             ) : <div className="py-12 text-center text-red-600">Demande introuvable.</div>}
           </Card>

@@ -624,3 +624,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une checklist de contrôle interne avant émission d’un document de voyage.
 - [x] Créer et valider une compétence réutilisable du workflow de traitement des vols.
 - [x] Tester TypeScript, Vitest, les droits administratifs et le responsive avant publication.
+- [x] Implémenter l'export PDF du journal d'audit des validations et initiales pour les réservations de vols
