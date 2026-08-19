@@ -641,3 +641,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter le sélecteur de devises global (EUR, USD, XAF) avec mise à jour automatique des prix et options, et intégrer la section de téléchargement de factures et billets PDF dans le tableau de bord personnel client
 - [x] Refondre complètement la page /flights avec un design haut de gamme inspiré des standards des grandes compagnies aériennes (en-tête immersif, barres de recherche avancées, distinction élégante des classes de cabine et cartes de vol premium)
 - [x] Ajouter le bouton "Détails du vol" (escales et bagages), l'auto-complétion IATA pour les aéroports, le curseur de prix interactif et les filtres par compagnie aérienne sur la page /flights, et créer la compétence réutilisable flight-search-experience
+- [x] Intégrer les alertes e-mail de baisse de prix sur les vols (abonnement, suivi par l'utilisateur, notifications et désinscription sécurisée)
