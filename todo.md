@@ -648,3 +648,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer le support multilingue pour l'espagnol et l'allemand dans l'interface, le parcours de réservation, les messages PWA et les notifications de vol
 - [x] Améliorer la page d'accueil (design plus premium, lisibilité renforcée, accès directs aux services clés, réassurance et conversion optimisée)
 - [x] Intégrer un widget de chatbot intelligent en bas de l'écran pour guider les utilisateurs dans leurs réservations et procédures (assistant virtuel, suggestions rapides et transfert conseiller)
+- [x] Configurer le chatbot pour qu'il traduise et réponde automatiquement dans la langue actuellement sélectionnée par l'utilisateur sur le site (français, anglais, espagnol, allemand)
