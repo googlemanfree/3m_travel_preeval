@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
@@ -19,6 +21,8 @@ export default function CanadaScoreSimulator() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
+  const [isCopying, setIsCopying] = useState<boolean>(false);
+  const [copySuccess, setCopySuccess] = useState<boolean>(false);
 
   // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec descriptions détaillées
   const allRounds = [
@@ -174,11 +178,126 @@ export default function CanadaScoreSimulator() {
 
   const handleExportPDF = () => {
     setIsExporting(true);
-    setTimeout(() => {
-      setIsExporting(false);
+    try {
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const generatedAt = new Date().toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+
+      doc.setFillColor(15, 45, 91);
+      doc.rect(0, 0, 210, 32, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.text("3M Travel & Services", 15, 14);
+      doc.setFontSize(11);
+      doc.text("Synthèse de simulation CRS — Canada", 15, 22);
+
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(10);
+      doc.text(`Document généré le ${generatedAt}. Les résultats sont indicatifs et ne constituent pas une garantie d'invitation.`, 15, 42, { maxWidth: 180 });
+
+      doc.setFillColor(isThresholdMet ? 236 : 254, isThresholdMet ? 253 : 242, isThresholdMet ? 245 : 242);
+      doc.roundedRect(15, 51, 180, 29, 3, 3, "F");
+      doc.setTextColor(isThresholdMet ? 6 : 153, isThresholdMet ? 95 : 27, isThresholdMet ? 70 : 27);
+      doc.setFontSize(11);
+      doc.text("Score CRS simulé", 21, 62);
+      doc.setFontSize(20);
+      doc.text(`${scores.total} pts`, 21, 73);
+      doc.setFontSize(11);
+      doc.text(`Dernier seuil comparé : ${latestThreshold} pts`, 105, 62);
+      doc.setFontSize(16);
+      doc.text(`Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} pts`, 105, 73);
+
+      doc.setTextColor(31, 41, 55);
+      doc.setFontSize(13);
+      doc.text("Répartition détaillée du score CRS", 15, 93);
+      autoTable(doc, {
+        startY: 98,
+        head: [["Composante", "Points obtenus", "Maximum indicatif"]],
+        body: [
+          ["Âge", `${scores.agePts} pts`, `${scores.maxAge} pts`],
+          ["Études", `${scores.eduPts} pts`, `${scores.maxEdu} pts`],
+          ["Expérience professionnelle", `${scores.expPts} pts`, `${scores.maxExp} pts`],
+          ["Compétences linguistiques", `${scores.langPts} pts`, `${scores.maxLang} pts`],
+          ["Total simulé", `${scores.total} pts`, "600 pts"],
+        ],
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [30, 64, 175] },
+        alternateRowStyles: { fillColor: [239, 246, 255] },
+      });
+
+      const afterScoreTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 145;
+      doc.setFontSize(13);
+      doc.text("Rondes IRCC comparées", 15, afterScoreTable + 14);
+      autoTable(doc, {
+        startY: afterScoreTable + 19,
+        head: [["Ronde", "Catégorie", "Date", "Seuil CRS", "Invitations"]],
+        body: filteredRounds.map((round) => [
+          round.roundNum,
+          round.type,
+          round.date,
+          `${round.minScore} pts`,
+          String(round.invitations),
+        ]),
+        styles: { fontSize: 8, cellPadding: 2.5 },
+        headStyles: { fillColor: [15, 45, 91] },
+        columnStyles: { 1: { cellWidth: 65 } },
+      });
+
+      const afterRoundsTable = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 200;
+      if (!isThresholdMet) {
+        doc.setFontSize(13);
+        doc.text("Pistes d'amélioration personnalisées", 15, afterRoundsTable + 14);
+        autoTable(doc, {
+          startY: afterRoundsTable + 19,
+          head: [["Action recommandée", "Détail"]],
+          body: recommendations.map((recommendation) => [recommendation.title, recommendation.desc]),
+          styles: { fontSize: 8, cellPadding: 2.5 },
+          headStyles: { fillColor: [180, 83, 9] },
+          columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 122 } },
+        });
+      }
+
+      doc.save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 4000);
-    }, 1200);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCopyResults = async () => {
+    setIsCopying(true);
+    const summary = [
+      "Simulation CRS Canada — 3M Travel & Services",
+      `Score estimé : ${scores.total} / 600 points`,
+      `Catégorie comparée : ${selectedCategory === "all" ? "3 dernières rondes (global)" : categoryExplanations[selectedCategory]}`,
+      `Dernier seuil : ${latestThreshold} points`,
+      `Écart : ${scoreDiff >= 0 ? "+" : ""}${scoreDiff} points`,
+      "Rondes comparées :",
+      ...filteredRounds.map((round) => `${round.roundNum} — ${round.type} — ${round.minScore} pts (${round.date})`),
+      "Résultat indicatif : à confirmer avec un conseiller 3M Travel.",
+    ].join("\n");
+
+    try {
+      await navigator.clipboard.writeText(summary);
+    } catch {
+      const textArea = document.createElement("textarea");
+      textArea.value = summary;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+    } finally {
+      setCopySuccess(true);
+      setIsCopying(false);
+      setTimeout(() => setCopySuccess(false), 3500);
+    }
   };
 
   const getWhatsappMessage = () => {
@@ -351,7 +470,16 @@ export default function CanadaScoreSimulator() {
         </div>
 
         {/* Indicateur visuel d'écart dynamique (Vert si suffisant, Rouge si insuffisant) */}
-        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950' : 'bg-red-50/90 border-red-300 text-red-950'}`}>
+        <motion.div
+          initial={false}
+          animate={{
+            backgroundColor: isThresholdMet ? "rgba(236, 253, 245, 0.9)" : "rgba(254, 242, 242, 0.9)",
+            borderColor: isThresholdMet ? "rgb(110, 231, 183)" : "rgb(252, 165, 165)",
+          }}
+          transition={{ duration: 0.28, ease: [0.23, 1, 0.32, 1] }}
+          className={`p-4 rounded-2xl border flex flex-col sm:flex-row items-center justify-between gap-4 ${isThresholdMet ? 'text-emerald-950' : 'text-red-950'}`}
+          aria-live="polite"
+        >
           <div className="flex items-center gap-3">
             <div className={`p-2.5 rounded-xl text-white ${isThresholdMet ? 'bg-emerald-600' : 'bg-red-600'}`}>
               {isThresholdMet ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
@@ -370,7 +498,7 @@ export default function CanadaScoreSimulator() {
           <div className={`px-4 py-2 rounded-xl shadow-xs border text-center shrink-0 font-extrabold text-base bg-white ${isThresholdMet ? 'text-emerald-700 border-emerald-200' : 'text-red-700 border-red-200'}`}>
             {scoreDiff >= 0 ? `+${scoreDiff} pts` : `${scoreDiff} pts`}
           </div>
-        </div>
+        </motion.div>
 
         {/* Section de recommandations personnalisées (affichée si l'écart est négatif) */}
         {!isThresholdMet && (
@@ -437,6 +565,19 @@ export default function CanadaScoreSimulator() {
                 </Tooltip>
               </TooltipProvider>
             </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopyResults}
+              disabled={isCopying}
+              className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
+            >
+              {copySuccess ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              {copySuccess ? "Résultats copiés" : isCopying ? "Copie..." : "Copier les résultats"}
+            </Button>
           </div>
 
           {/* Encart explicatif de la catégorie active */}

@@ -437,6 +437,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer le tag Google Analytics 4 `G-4HBHHH37VL` sans doublonner les scripts de suivi existants.
 - [x] Vérifier le build, le chargement du tag et publier la version validée.
 
+## Simulateur CRS : transition, partage et rapport PDF détaillé
+- [x] Ajouter une transition fluide et accessible lorsque l’indicateur d’écart passe du rouge au vert ou inversement.
+- [x] Ajouter un bouton de copie sécurisé pour partager le score, l’écart, la catégorie et les rondes comparées.
+- [x] Générer un véritable rapport PDF incluant le score total, les sous-scores, le seuil sélectionné, l’écart et les rondes affichées.
+- [x] Mettre à jour, valider et livrer la compétence réutilisable `crs-immigration-workflow`.
+- [x] Exécuter les tests Vitest, la compilation TypeScript et les vérifications de rendu avant publication.
+
 ## Réorganisation des pages de services et contenu
 - [x] Auditer les routes et pages existantes pour les services Canada, Schengen, études, billets, formation, blog et contact.
 - [x] Définir les routes canoniques et les redirections nécessaires sans créer de pages statiques ou de contenus dupliqués.
