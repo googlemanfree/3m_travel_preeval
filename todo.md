@@ -634,3 +634,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter l'export PDF du plan de cabine avec les passagers assignés et la section de recherche par numéro de réservation pour consulter ou modifier les choix
 - [x] Intégrer l'enregistrement en ligne (check-in) avec carte d'embarquement définitive et la barre de progression du statut du vol dans l'espace de gestion de réservation
 - [x] Ajouter la barre de recherche, les filtres rapides, les badges de statut colorés et la section de notes internes pour les conseillers dans le tableau de bord administrateur des réservations de vols
+- [x] Ajouter l'export CSV/Excel des réservations filtrées, l'historique détaillé des actions conseillers, l'e-mail automatique de changement de statut et la compétence flight-admin-workflow
