@@ -646,3 +646,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer les notifications push natives pour alerter les utilisateurs des changements d'horaires de vol sur mobile (consentement, service worker push et envoi ciblé)
 - [x] Améliorer l'interface hors ligne de la PWA pour afficher automatiquement les prochains vols mis en cache pour l'utilisateur, avec statut de connexion et date de synchronisation
 - [x] Intégrer le support multilingue pour l'espagnol et l'allemand dans l'interface, le parcours de réservation, les messages PWA et les notifications de vol
+- [x] Améliorer la page d'accueil (design plus premium, lisibilité renforcée, accès directs aux services clés, réassurance et conversion optimisée)
