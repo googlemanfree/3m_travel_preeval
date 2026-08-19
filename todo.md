@@ -617,3 +617,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher ces données dans une fiche opérationnelle structurée et lisible côté administration.
 - [x] Ajouter un test de non-régression garantissant la visibilité des champs essentiels.
 - [x] Vérifier TypeScript, Vitest et le responsive avant publication.
+
+## Émission de vol : aperçu, impression et contrôle
+- [x] Ajouter l’aperçu intégré du PNR ou PDF émis dans la fiche de réservation.
+- [x] Ajouter une impression propre de la fiche opérationnelle détaillée.
+- [x] Ajouter une checklist de contrôle interne avant émission d’un document de voyage.
+- [x] Créer et valider une compétence réutilisable du workflow de traitement des vols.
+- [x] Tester TypeScript, Vitest, les droits administratifs et le responsive avant publication.

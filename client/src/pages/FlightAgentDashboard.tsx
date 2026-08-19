@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Clock3, Download, FileText, Inbox, MessageSquare, Plane, RefreshCw, Search, UserRound } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, Download, Eye, FileText, Inbox, MessageSquare, Plane, Printer, RefreshCw, Search, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FlightDepartureCalendar } from "@/components/FlightDepartureCalendar";
+import { DocumentPreviewModal } from "@/components/DocumentPreviewModal";
 import { trpc } from "@/lib/trpc";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -66,6 +68,13 @@ function getFlightSummary(value: unknown) {
 }
 
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
+const ISSUANCE_CHECKS = [
+  ["identity_verified", "Identité et nom du passager vérifiés"],
+  ["passport_valid", "Passeport valide pour le voyage"],
+  ["fare_revalidated", "Tarif, disponibilité et conditions revalidés"],
+  ["payment_verified", "Paiement ou modalité de règlement vérifiés"],
+  ["pnr_document_ready", "PNR ou billet final prêt avant émission"],
+] as const;
 
 function getRecord(value: unknown) {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -96,7 +105,7 @@ function FlightRequestOverview({ request }: { request: any }) {
   const currency = flight.currency;
   const paymentMethod = request.paymentMethod === "orange_money" ? "Orange Money" : request.paymentMethod === "agency" ? "Paiement en agence" : "En attente";
 
-  return <div className="space-y-4">
+  return <div id="flight-request-detail" className="space-y-4">
     <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950 via-blue-800 to-sky-700 p-4 text-white">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Itinéraire demandé</p><p className="mt-2 text-xl font-black">{textValue(flight.originCity, textValue(flight.origin, "Départ"))} <span className="px-1 text-sky-200">→</span> {textValue(flight.destinationCity, textValue(flight.destination, "Destination"))}</p><p className="mt-1 text-sm text-blue-100">{textValue(airline.name)} · {textValue(flight.flightNumber)} · {textValue(flight.cabinClass)}</p></div><div className="rounded-xl bg-white/15 p-3 text-right"><p className="text-xs font-bold text-sky-100">Départ</p><p className="text-sm font-black">{textValue(flight.departureDate)} · {textValue(flight.departureTime)}</p></div></div>
     </section>
@@ -120,6 +129,7 @@ export default function FlightAgentDashboard() {
   const [airlineFilter, setAirlineFilter] = useState("ALL");
   const [routeFilter, setRouteFilter] = useState("ALL");
   const [quickAssignees, setQuickAssignees] = useState<Record<number, string>>({});
+  const [previewPnr, setPreviewPnr] = useState<{ url: string; title: string } | null>(null);
 
   const summaryQuery = trpc.flightBooking.getQueueSummary.useQuery(
     { sessionToken },
@@ -169,9 +179,17 @@ export default function FlightAgentDashboard() {
     },
     onError: (error) => toast({ title: "Note non enregistrée", description: error.message, variant: "destructive" }),
   });
+  const issuanceChecklistMutation = trpc.flightBooking.updateIssuanceChecklist.useMutation({
+    onSuccess: () => {
+      toast({ title: "Contrôle d’émission actualisé", description: "La checklist interne est enregistrée dans le dossier." });
+      void utils.flightBooking.getRequest.invalidate();
+      void utils.flightBooking.getQueue.invalidate();
+    },
+    onError: (error) => toast({ title: "Checklist non mise à jour", description: error.message, variant: "destructive" }),
+  });
 
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
-  const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending;
+  const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending || issuanceChecklistMutation.isPending;
   const requests = queueQuery.data?.requests ?? [];
   const airlineOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).airline))).sort(), [requests]);
   const routeOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).route))).sort(), [requests]);
@@ -203,6 +221,23 @@ export default function FlightAgentDashboard() {
     link.click();
     URL.revokeObjectURL(url);
     toast({ title: "Export CSV prêt", description: `${filteredRequests.length} demande(s) exportée(s).` });
+  };
+
+  const printOperationalFile = () => {
+    const detail = document.getElementById("flight-request-detail");
+    if (!detail) {
+      toast({ title: "Sélectionnez une réservation", description: "La fiche détaillée doit être ouverte avant impression.", variant: "destructive" });
+      return;
+    }
+    const popup = window.open("", "flight-operational-print", "width=1000,height=760");
+    if (!popup) {
+      toast({ title: "Impression bloquée", description: "Autorisez les fenêtres contextuelles puis réessayez.", variant: "destructive" });
+      return;
+    }
+    popup.document.write(`<!DOCTYPE html><html lang="fr"><head><title>Fiche opérationnelle 3M Travel</title><style>body{font-family:Arial,sans-serif;color:#0f172a;padding:28px}#flight-request-detail{max-width:900px;margin:auto}section{break-inside:avoid;margin-bottom:18px}.grid{display:grid!important}.sm\\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))!important}.bg-gradient-to-r{background:#0f3b8f!important;color:#fff!important}.text-white{color:#fff!important}@media print{body{padding:0}}</style></head><body><h1 style="font-size:20px">3M Travel — Fiche opérationnelle de réservation</h1><p style="color:#475569">Imprimée le ${new Date().toLocaleString("fr-FR")}</p>${detail.outerHTML}</body></html>`);
+    popup.document.close();
+    popup.focus();
+    window.setTimeout(() => popup.print(), 250);
   };
 
   if (!sessionToken) {
@@ -262,9 +297,10 @@ export default function FlightAgentDashboard() {
               <div className="flex min-h-[420px] flex-col items-center justify-center text-center text-slate-500"><FileText className="mb-3 h-10 w-10 text-slate-300" /><p className="font-bold text-slate-700">Sélectionnez une demande</p><p className="mt-1 max-w-xs text-xs">Les passagers, le vol choisi et l'historique apparaîtront ici pour traitement.</p></div>
             ) : detailQuery.isLoading ? <div className="py-12 text-center text-slate-500">Chargement du dossier…</div> : detailQuery.data ? (
               <div className="space-y-5">
-                <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span></div>
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
+                {(() => { const currentChecklist = getRecord(detailQuery.data.request.issuanceChecklist) as Record<string, boolean>; const completed = ISSUANCE_CHECKS.filter(([key]) => currentChecklist[key]).length; return <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4"><div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div><h3 className="text-sm font-black text-emerald-950">Contrôle avant émission</h3><p className="mt-1 text-xs text-emerald-800">Validez chaque point avant de téléverser ou transmettre le billet final.</p></div><span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-800">{completed}/{ISSUANCE_CHECKS.length} contrôles</span></div><div className="mt-3 space-y-2">{ISSUANCE_CHECKS.map(([key, label]) => <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-slate-800"><Checkbox checked={Boolean(currentChecklist[key])} disabled={isBusy} onCheckedChange={(checked) => issuanceChecklistMutation.mutate({ sessionToken, requestId: selectedRequestId, key, checked: checked === true })} /><span>{label}</span></label>)}</div></section>; })()}
                 <div className="space-y-2"><Label htmlFor="agent-email">Affecter à un agent</Label><div className="flex gap-2"><Input id="agent-email" type="email" value={agentEmail} onChange={(event) => setAgentEmail(event.target.value)} placeholder="agent@3mtravelagency.com" className="h-12 rounded-xl" /><Button type="button" disabled={isBusy || !agentEmail} onClick={() => assignMutation.mutate({ sessionToken, requestId: selectedRequestId, assignedAgentEmail: agentEmail })} className="h-12 rounded-xl bg-blue-700 font-bold text-white">Affecter</Button></div></div>
                 <div className="space-y-2"><Label htmlFor="request-status">Statut opérationnel</Label><select id="request-status" value={detailQuery.data.request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: selectedRequestId, status: event.target.value as RequestStatus, details: note || undefined })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"><option value="pending_review">À traiter</option>{Object.entries(STATUS_LABELS).filter(([value]) => value !== "pending_review").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
@@ -274,6 +310,7 @@ export default function FlightAgentDashboard() {
             ) : <div className="py-12 text-center text-red-600">Demande introuvable.</div>}
           </Card>
         </div>
+        {previewPnr && <DocumentPreviewModal isOpen={Boolean(previewPnr)} onClose={() => setPreviewPnr(null)} documentTitle={previewPnr.title} documentUrl={previewPnr.url} fileType="application/pdf" />}
       </div>
     </main>
   );

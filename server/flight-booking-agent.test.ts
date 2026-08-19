@@ -80,4 +80,13 @@ describe("flight booking agent workflow", () => {
     expect(agentDashboard).toContain("PNR / référence compagnie");
     expect(agentDashboard).toContain("Correspondance(s)");
   });
+
+  it("propose l’aperçu PNR, l’impression et les contrôles obligatoires avant émission", () => {
+    expect(agentDashboard).toContain("DocumentPreviewModal");
+    expect(agentDashboard).toContain("Aperçu PNR");
+    expect(agentDashboard).toContain("printOperationalFile");
+    expect(agentDashboard).toContain("Contrôle avant émission");
+    expect(agentDashboard).toContain("PNR ou billet final prêt avant émission");
+    expect(router).toContain("updateIssuanceChecklist");
+  });
 });

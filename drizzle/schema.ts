@@ -1554,6 +1554,7 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   agentNotes: text("agentNotes"),
   pnrReference: varchar("pnrReference", { length: 120 }),
   issuedPdfUrl: text("issuedPdfUrl"),
+  issuanceChecklist: json("issuanceChecklist"),
   pnrViewedAt: timestamp("pnrViewedAt"),
   pnrDownloadedAt: timestamp("pnrDownloadedAt"),
   paymentMethod: varchar("paymentMethod", { length: 50 }),

@@ -28,6 +28,7 @@ const requestStatus = [
   "cancelled",
 ] as const;
 const requestPriority = ["low", "normal", "high", "urgent"] as const;
+const issuanceCheckKeys = ["identity_verified", "passport_valid", "fare_revalidated", "payment_verified", "pnr_document_ready"] as const;
 const customerStatusLabels: Record<(typeof requestStatus)[number], string> = {
   pending_review: "En cours de vérification",
   assigned: "Prise en charge par un conseiller",
@@ -483,6 +484,21 @@ export const flightBookingRouter = router({
       await db.update(flightBookingRequests).set({ agentNotes: input.note }).where(eq(flightBookingRequests.id, input.requestId));
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "note_added", changedBy: admin.email, oldValue: existing.agentNotes, newValue: input.note, details: "Note interne ajoutée par un agent." });
       return { success: true };
+    }),
+
+  updateIssuanceChecklist: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), key: z.enum(issuanceCheckKeys), checked: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const current = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
+      const issuanceChecklist = { ...current, [input.key]: input.checked };
+      await db.update(flightBookingRequests).set({ issuanceChecklist }).where(eq(flightBookingRequests.id, input.requestId));
+      await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "issuance_check_updated", changedBy: admin.email, oldValue: String(Boolean(current[input.key])), newValue: String(input.checked), details: `Contrôle d'émission ${input.key} ${input.checked ? "validé" : "retiré"}.` });
+      return { success: true, issuanceChecklist };
     }),
 
   clientValidate: candidateProcedure
