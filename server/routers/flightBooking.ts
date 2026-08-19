@@ -82,6 +82,31 @@ function buildRequestRef() {
   return `3M-FL-${Date.now().toString(36).toUpperCase()}-${randomUUID().slice(0, 4).toUpperCase()}`.slice(0, 32);
 }
 
+type FlightTimingData = Record<string, unknown>;
+
+export function getAutomaticFlightPriority(flightData: FlightTimingData) {
+  const departureDate = typeof flightData.departureDate === "string" ? flightData.departureDate : "";
+  const departureTime = typeof flightData.departureTime === "string" ? flightData.departureTime : "23:59";
+  const departureAt = new Date(`${departureDate}T${departureTime.length >= 5 ? departureTime : "23:59"}`);
+  if (Number.isNaN(departureAt.getTime())) return "normal" as const;
+
+  const hoursUntilDeparture = (departureAt.getTime() - Date.now()) / 3_600_000;
+  if (hoursUntilDeparture <= 48) return "urgent" as const;
+  if (hoursUntilDeparture <= 7 * 24) return "high" as const;
+  if (hoursUntilDeparture >= 45 * 24) return "low" as const;
+  return "normal" as const;
+}
+
+function getFlightEmailSummary(flightData: FlightTimingData) {
+  const airline = typeof flightData.airline === "object" && flightData.airline && typeof (flightData.airline as Record<string, unknown>).name === "string"
+    ? (flightData.airline as Record<string, unknown>).name as string
+    : "Compagnie à confirmer";
+  const origin = typeof flightData.originCity === "string" ? flightData.originCity : typeof flightData.origin === "string" ? flightData.origin : "Départ";
+  const destination = typeof flightData.destinationCity === "string" ? flightData.destinationCity : typeof flightData.destination === "string" ? flightData.destination : "Destination";
+  const departure = typeof flightData.departureDate === "string" ? flightData.departureDate : "À confirmer";
+  return { airline, origin, destination, departure };
+}
+
 function assertAdminSession(sessionToken: string) {
   if (!sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
   return requireValidAdminSession(sessionToken);
@@ -223,6 +248,8 @@ export const flightBookingRouter = router({
         : await findCandidateFromAuthorizationHeader((ctx.req as any)?.headers?.authorization as string | undefined);
       const requester = resolveBookingRequester(input.passengerData[0] ?? {}, candidate ? { id: candidate.id, email: candidate.email } : null);
       const requestRef = buildRequestRef();
+      const priority = getAutomaticFlightPriority(input.flightData);
+      const flightSummary = getFlightEmailSummary(input.flightData);
       const inserted = await db.insert(flightBookingRequests).values({
         requestRef,
         candidateId: requester.candidateId,
@@ -231,7 +258,7 @@ export const flightBookingRouter = router({
         flightData: input.flightData,
         passengerData: input.passengerData,
         candidatePhone: extractCandidatePhone(input.passengerData),
-        priority: "normal",
+        priority,
         status: "pending_review",
       });
       const requestId = Number((inserted as any)[0]?.insertId ?? 0);
@@ -241,9 +268,20 @@ export const flightBookingRouter = router({
         changedBy: requester.email,
         oldValue: null,
         newValue: "pending_review",
-        details: requester.isGuest ? "Demande de réservation invitée créée depuis le checkout en ligne." : "Demande de réservation créée depuis le checkout candidat.",
+        details: `${requester.isGuest ? "Demande de réservation invitée créée depuis le checkout en ligne." : "Demande de réservation créée depuis le checkout candidat."} Priorité automatique : ${priority}.`,
       });
-      return { success: true, requestId, requestRef, status: "pending_review" as const, requiresAccountActivation: requester.isGuest };
+      let notificationEmailSent = false;
+      try {
+        await sendEmail({
+          to: "hello@3mtravelagency.com",
+          subject: `[3M Travel] Nouvelle réservation ${requestRef} — ${flightSummary.origin} → ${flightSummary.destination}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Nouvelle demande de réservation de vol</h2><p>Une demande est prête à être traitée dans le tableau de bord administrateur.</p><p><strong>Référence :</strong> ${requestRef}<br/><strong>Client :</strong> ${requester.fullName} · ${requester.email}<br/><strong>Trajet :</strong> ${flightSummary.origin} → ${flightSummary.destination}<br/><strong>Compagnie :</strong> ${flightSummary.airline}<br/><strong>Départ :</strong> ${flightSummary.departure}<br/><strong>Priorité :</strong> ${priority}</p><p>Ouvrez l’onglet <strong>Réservations vols</strong> pour affecter un conseiller et traiter la demande.</p></div>`,
+        });
+        notificationEmailSent = true;
+      } catch (error) {
+        console.error("[FlightBooking] advisor notification failed", error);
+      }
+      return { success: true, requestId, requestRef, status: "pending_review" as const, priority, notificationEmailSent, requiresAccountActivation: requester.isGuest };
     }),
 
   getMyRequests: candidateProcedure.query(async ({ ctx }) => {
@@ -322,7 +360,19 @@ export const flightBookingRouter = router({
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
       await db.update(flightBookingRequests).set({ assignedAgentEmail: input.assignedAgentEmail, status: "assigned" }).where(eq(flightBookingRequests.id, input.requestId));
       await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "assigned", changedBy: admin.email, oldValue: existing.assignedAgentEmail, newValue: input.assignedAgentEmail, details: "Demande affectée à un agent." });
-      return { success: true };
+      let notificationEmailSent = false;
+      try {
+        const flightSummary = getFlightEmailSummary((existing.flightData ?? {}) as FlightTimingData);
+        await sendEmail({
+          to: input.assignedAgentEmail,
+          subject: `[3M Travel] Réservation ${existing.requestRef} affectée à votre file`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px;color:#172554"><h2 style="margin-top:0;color:#1d4ed8">Nouvelle réservation affectée</h2><p>La demande <strong>${existing.requestRef}</strong> vous a été affectée.</p><p><strong>Client :</strong> ${existing.candidateEmail}<br/><strong>Trajet :</strong> ${flightSummary.origin} → ${flightSummary.destination}<br/><strong>Compagnie :</strong> ${flightSummary.airline}<br/><strong>Départ :</strong> ${flightSummary.departure}<br/><strong>Priorité :</strong> ${existing.priority}</p><p>Connectez-vous au tableau de bord pour mettre à jour le statut et ajouter vos notes internes.</p></div>`,
+        });
+        notificationEmailSent = true;
+      } catch (error) {
+        console.error("[FlightBooking] assigned advisor notification failed", error);
+      }
+      return { success: true, notificationEmailSent };
     }),
 
   updateStatus: publicProcedure

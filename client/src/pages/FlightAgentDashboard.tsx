@@ -51,6 +51,21 @@ function displayJson(value: unknown) {
   return JSON.stringify(value, null, 2);
 }
 
+function getFlightSummary(value: unknown) {
+  const flight = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const airlineData = flight.airline && typeof flight.airline === "object" ? flight.airline as Record<string, unknown> : {};
+  const airline = typeof airlineData.name === "string" ? airlineData.name : "Compagnie à confirmer";
+  const origin = typeof flight.originCity === "string" ? flight.originCity : typeof flight.origin === "string" ? flight.origin : "Départ";
+  const destination = typeof flight.destinationCity === "string" ? flight.destinationCity : typeof flight.destination === "string" ? flight.destination : "Destination";
+  const departureDate = typeof flight.departureDate === "string" ? flight.departureDate : "";
+  const departureTime = typeof flight.departureTime === "string" ? flight.departureTime : "23:59";
+  const departureAt = new Date(`${departureDate}T${departureTime}`);
+  const hoursUntilDeparture = Number.isNaN(departureAt.getTime()) ? null : Math.round((departureAt.getTime() - Date.now()) / 3_600_000);
+  return { airline, route: `${origin} → ${destination}`, hoursUntilDeparture };
+}
+
+const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
+
 export default function FlightAgentDashboard() {
   const { toast } = useToast();
   const sessionToken = getAdminToken();
@@ -59,6 +74,9 @@ export default function FlightAgentDashboard() {
   const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
   const [agentEmail, setAgentEmail] = useState("");
   const [note, setNote] = useState("");
+  const [airlineFilter, setAirlineFilter] = useState("ALL");
+  const [routeFilter, setRouteFilter] = useState("ALL");
+  const [quickAssignees, setQuickAssignees] = useState<Record<number, string>>({});
 
   const summaryQuery = trpc.flightBooking.getQueueSummary.useQuery(
     { sessionToken },
@@ -111,15 +129,21 @@ export default function FlightAgentDashboard() {
 
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
   const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending;
+  const requests = queueQuery.data?.requests ?? [];
+  const airlineOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).airline))).sort(), [requests]);
+  const routeOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).route))).sort(), [requests]);
+  const filteredRequests = useMemo(() => requests
+    .filter((request) => airlineFilter === "ALL" || getFlightSummary(request.flightData).airline === airlineFilter)
+    .filter((request) => routeFilter === "ALL" || getFlightSummary(request.flightData).route === routeFilter)
+    .sort((first, second) => (PRIORITY_ORDER[first.priority] ?? 9) - (PRIORITY_ORDER[second.priority] ?? 9) || new Date(first.createdAt).getTime() - new Date(second.createdAt).getTime()), [requests, airlineFilter, routeFilter]);
 
   const exportCsv = () => {
-    const requests = queueQuery.data?.requests ?? [];
-    if (!requests.length) {
+    if (!filteredRequests.length) {
       toast({ title: "Aucune donnée à exporter", description: "Aucune demande ne correspond aux filtres actuels." });
       return;
     }
     const header = ["Référence", "Client", "Vol", "Statut", "Priorité", "Créée le"];
-    const rows = requests.map((request) => [
+    const rows = filteredRequests.map((request) => [
       request.requestRef,
       request.candidateEmail,
       request.flightId,
@@ -135,7 +159,7 @@ export default function FlightAgentDashboard() {
     link.download = `demandes-vols-${new Date().toISOString().slice(0, 10)}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Export CSV prêt", description: `${requests.length} demande(s) exportée(s).` });
+    toast({ title: "Export CSV prêt", description: `${filteredRequests.length} demande(s) exportée(s).` });
   };
 
   if (!sessionToken) {
@@ -173,16 +197,16 @@ export default function FlightAgentDashboard() {
         <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
           <Card className="overflow-hidden border-0 shadow-sm">
             <div className="flex flex-col gap-3 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-900"><Plane className="h-5 w-5 text-blue-600" /> Demandes de réservation</h2><p className="mt-1 text-xs text-slate-500">{queueQuery.data?.total ?? 0} dossier(s) correspondant au filtre</p></div>
-              <div className="flex flex-wrap items-center gap-2"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" /><select aria-label="Filtrer par statut" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | RequestStatus)} className="h-12 min-w-48 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div><select aria-label="Filtrer par priorité" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as "ALL" | RequestPriority)} className="h-12 min-w-40 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Toutes priorités</option>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><Button type="button" variant="outline" onClick={exportCsv} className="h-12 rounded-xl border-slate-200 font-bold"><Download className="mr-2 h-4 w-4" /> CSV</Button></div>
+              <div><h2 className="flex items-center gap-2 text-lg font-black text-slate-900"><Plane className="h-5 w-5 text-blue-600" /> Demandes de réservation</h2><p className="mt-1 text-xs text-slate-500">{filteredRequests.length} dossier(s) affiché(s), triés par priorité de départ</p></div>
+              <div className="flex flex-wrap items-center gap-2"><div className="relative"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" /><select aria-label="Filtrer par statut" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "ALL" | RequestStatus)} className="h-12 min-w-48 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Tous les statuts</option>{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div><select aria-label="Filtrer par priorité" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value as "ALL" | RequestPriority)} className="h-12 min-w-40 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Toutes priorités</option>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select><select aria-label="Filtrer par compagnie" value={airlineFilter} onChange={(event) => setAirlineFilter(event.target.value)} className="h-12 min-w-44 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Toutes compagnies</option>{airlineOptions.map((airline) => <option key={airline} value={airline}>{airline}</option>)}</select><select aria-label="Filtrer par trajet" value={routeFilter} onChange={(event) => setRouteFilter(event.target.value)} className="h-12 min-w-48 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-blue-500"><option value="ALL">Tous les trajets</option>{routeOptions.map((route) => <option key={route} value={route}>{route}</option>)}</select><Button type="button" variant="outline" onClick={exportCsv} className="h-12 rounded-xl border-slate-200 font-bold"><Download className="mr-2 h-4 w-4" /> CSV</Button></div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Référence</th><th className="px-5 py-3">Client</th><th className="px-5 py-3">Vol</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Priorité</th><th className="px-5 py-3">Créée</th></tr></thead>
+              <table className="w-full min-w-[1080px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><tr><th className="px-5 py-3">Référence</th><th className="px-5 py-3">Client</th><th className="px-5 py-3">Vol / Trajet</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Priorité</th><th className="px-5 py-3">Actions rapides</th><th className="px-5 py-3">Créée</th></tr></thead>
                 <tbody className="divide-y divide-slate-100">
-                  {queueQuery.isLoading && <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-500"><Clock3 className="mx-auto mb-2 h-5 w-5 animate-pulse" />Chargement de la file…</td></tr>}
-                  {!queueQuery.isLoading && !queueQuery.data?.requests.length && <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-500">Aucune demande pour ce filtre.</td></tr>}
-                  {queueQuery.data?.requests.map((request) => <tr key={request.id} onClick={() => { setSelectedRequestId(request.id); setAgentEmail(request.assignedAgentEmail || ""); setNote(request.agentNotes || ""); }} className={`cursor-pointer transition hover:bg-blue-50 ${selectedRequestId === request.id ? "bg-blue-50" : ""}`}><td className="px-5 py-4 font-mono font-bold text-blue-700">{request.requestRef}</td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.candidateEmail}</span><span className="text-xs text-slate-500">Candidat #{request.candidateId}</span></td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.flightId}</span><span className="text-xs text-slate-500">Voir détails</span></td><td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[request.status as RequestStatus] || request.status}</span></td><td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${PRIORITY_STYLES[request.priority as RequestPriority] || PRIORITY_STYLES.normal}`}>{PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}</span></td><td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(request.createdAt).toLocaleString("fr-FR")}</td></tr>)}
+                  {queueQuery.isLoading && <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-500"><Clock3 className="mx-auto mb-2 h-5 w-5 animate-pulse" />Chargement de la file…</td></tr>}
+                  {!queueQuery.isLoading && !filteredRequests.length && <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-500">Aucune demande pour ces filtres.</td></tr>}
+                  {filteredRequests.map((request) => { const summary = getFlightSummary(request.flightData); const isUrgent = request.priority === "urgent" || (summary.hoursUntilDeparture !== null && summary.hoursUntilDeparture <= 48); return <tr key={request.id} onClick={() => { setSelectedRequestId(request.id); setAgentEmail(request.assignedAgentEmail || ""); setNote(request.agentNotes || ""); }} className={`cursor-pointer transition hover:bg-blue-50 ${selectedRequestId === request.id ? "bg-blue-50" : ""}`}><td className="px-5 py-4 font-mono font-bold text-blue-700">{request.requestRef}</td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.candidateEmail}</span><span className="text-xs text-slate-500">Candidat #{request.candidateId}</span></td><td className="px-5 py-4"><span className="block font-bold text-slate-900">{request.flightId}</span><span className="block text-xs font-semibold text-slate-600">{summary.airline} · {summary.route}</span></td><td className="px-5 py-4"><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">{STATUS_LABELS[request.status as RequestStatus] || request.status}</span></td><td className="px-5 py-4"><div className="space-y-1"><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${PRIORITY_STYLES[request.priority as RequestPriority] || PRIORITY_STYLES.normal}`}>{PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}</span>{isUrgent && <span className="block w-fit rounded-full bg-red-100 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-red-700">⚠ Urgence départ {summary.hoursUntilDeparture !== null ? `dans ${Math.max(0, summary.hoursUntilDeparture)} h` : "proche"}</span>}</div></td><td className="px-5 py-4"><div className="flex min-w-64 items-center gap-1.5" onClick={(event) => event.stopPropagation()}><Input aria-label={`Conseiller pour ${request.requestRef}`} value={quickAssignees[request.id] ?? request.assignedAgentEmail ?? ""} onChange={(event) => setQuickAssignees((previous) => ({ ...previous, [request.id]: event.target.value }))} placeholder="conseiller@email.com" className="h-9 min-w-0 text-xs" /><Button type="button" size="sm" disabled={isBusy || !(quickAssignees[request.id] ?? request.assignedAgentEmail)} onClick={() => assignMutation.mutate({ sessionToken, requestId: request.id, assignedAgentEmail: quickAssignees[request.id] ?? request.assignedAgentEmail ?? "" })} className="h-9 bg-blue-700 px-2 text-xs font-bold text-white">Affecter</Button><select aria-label={`Statut de ${request.requestRef}`} value={request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: request.id, status: event.target.value as RequestStatus })} className="h-9 max-w-32 rounded-lg border border-slate-200 bg-white px-1 text-xs font-semibold text-slate-700">{Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div></td><td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(request.createdAt).toLocaleString("fr-FR")}</td></tr>; })}
                 </tbody>
               </table>
             </div>

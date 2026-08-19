@@ -598,3 +598,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la cause empêchant l’arrivée ou l’affichage des réservations de vols côté administration.
 - [x] Ajouter un test de non-régression client → administration pour les réservations de vols.
 - [x] Vérifier TypeScript, Vitest et publier le correctif après contrôle des droits administratifs.
+
+## File de vols : urgence, filtres, actions rapides et notification
+- [x] Calculer automatiquement la priorité selon la date de départ et afficher une urgence visible.
+- [x] Ajouter des filtres par compagnie, trajet et statut dans la file de réservations.
+- [x] Ajouter des actions rapides par ligne pour affecter un conseiller et changer le statut.
+- [x] Envoyer une notification e-mail au conseiller lorsque la réservation est créée ou affectée.
+- [x] Tester TypeScript, Vitest et le flux client → conseiller → admin avant publication.
