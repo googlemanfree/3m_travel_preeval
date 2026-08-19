@@ -638,3 +638,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer le tableau de bord analytique des ventes par compagnie et classe de cabine, ainsi que l'envoi automatique de SMS de confirmation avec PNR et lien de billet
 - [x] Exiger l'inscription et la connexion du candidat avant de finaliser toute réservation de vol, avec conservation du panier d'itinéraire
 - [x] Créer le tableau de bord personnel client (historique de réservations et préférences), ajouter les connexions sociales (Google/Facebook) et la récupération de mot de passe par e-mail, automatiser les alertes SMS PNR à l'émission et permettre l'export PDF du plan de cabine groupe pour l'embarquement
+- [x] Ajouter le sélecteur de devises global (EUR, USD, XAF) avec mise à jour automatique des prix et options, et intégrer la section de téléchargement de factures et billets PDF dans le tableau de bord personnel client
