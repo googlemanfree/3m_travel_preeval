@@ -565,4 +565,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester TypeScript, Vitest, les droits et le responsive avant publication.
 
 ## Décision de mesure d’audience
-- [ ] Conserver Facebook Pixel inactif jusqu’à réception d’un identifiant officiel et d’une instruction explicite d’activation.
+- [x] Conserver Facebook Pixel inactif, conformément à la décision actuelle de ne pas l’intégrer.
