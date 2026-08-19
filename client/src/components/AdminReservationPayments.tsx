@@ -235,6 +235,11 @@ export function AdminReservationPayments() {
                                 const dataUrl = reader.result as string;
                                 const pnrRef = prompt("Entrez la référence PNR / GDS :", p.pnrReference || "PNR-" + Math.floor(Math.random() * 90000 + 10000));
                                 if (!pnrRef) return;
+                                const advisorInitials = prompt("Entrez vos initiales de conseiller (ex. JDM) :");
+                                if (!advisorInitials || !advisorInitials.trim()) {
+                                  alert("Initiales de conseiller requises pour valider l'émission.");
+                                  return;
+                                }
 
                                 // Ouvrir une fenêtre de prévisualisation PDF sécurisée pour l'administrateur
                                 const win = window.open("", "_blank", "width=800,height=700");
@@ -273,7 +278,7 @@ export function AdminReservationPayments() {
                                               const res = await fetch("/api/trpc/flightBooking.adminUploadPnrDocument", {
                                                 method: "POST",
                                                 headers: { "Content-Type": "application/json" },
-                                                body: JSON.stringify({ json: { sessionToken: "${sessionToken}", requestId: ${p.id}, pnrReference: "${pnrRef}", fileBase64: "${base64}", fileName: "${file.name}" } }),
+                                                body: JSON.stringify({ json: { sessionToken: "${sessionToken}", requestId: ${p.id}, pnrReference: "${pnrRef}", fileBase64: "${base64}", fileName: "${file.name}", advisorInitials: "${advisorInitials.trim().toUpperCase()}" } }),
                                               });
                                               const json = await res.json();
                                               if (json.error) {

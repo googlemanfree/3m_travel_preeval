@@ -188,6 +188,37 @@ export default function FlightAgentDashboard() {
     onError: (error) => toast({ title: "Checklist non mise à jour", description: error.message, variant: "destructive" }),
   });
 
+  const [isIssuanceModalOpen, setIsIssuanceModalOpen] = useState(false);
+  const [advisorInitialsInput, setAdvisorInitialsInput] = useState("");
+  const [issuancePnrInput, setIssuancePnrInput] = useState("");
+  const [issuancePdfFile, setIssuancePdfFile] = useState<{ base64: string; name: string } | null>(null);
+
+  const updatePnrMutation = trpc.flightBooking.updatePnrAndIssuedPdf.useMutation({
+    onSuccess: () => {
+      setIsIssuanceModalOpen(false);
+      setAdvisorInitialsInput("");
+      setIssuancePdfFile(null);
+      toast({ title: "Billet émis avec succès", description: "Le PNR a été validé et enregistré avec vos initiales." });
+      void utils.flightBooking.getRequest.invalidate();
+      void utils.flightBooking.getQueue.invalidate();
+      void utils.flightBooking.getQueueSummary.invalidate();
+    },
+    onError: (error) => toast({ title: "Émission impossible", description: error.message, variant: "destructive" }),
+  });
+
+  const adminUploadPnrMutation = trpc.flightBooking.adminUploadPnrDocument.useMutation({
+    onSuccess: () => {
+      setIsIssuanceModalOpen(false);
+      setAdvisorInitialsInput("");
+      setIssuancePdfFile(null);
+      toast({ title: "Document PNR émis et envoyé", description: "Le fichier PDF a été transmis au client avec vos initiales." });
+      void utils.flightBooking.getRequest.invalidate();
+      void utils.flightBooking.getQueue.invalidate();
+      void utils.flightBooking.getQueueSummary.invalidate();
+    },
+    onError: (error) => toast({ title: "Téléversement PNR impossible", description: error.message, variant: "destructive" }),
+  });
+
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
   const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending || issuanceChecklistMutation.isPending;
   const requests = queueQuery.data?.requests ?? [];
@@ -300,7 +331,39 @@ export default function FlightAgentDashboard() {
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
-                {(() => { const currentChecklist = getRecord(detailQuery.data.request.issuanceChecklist) as Record<string, boolean>; const completed = ISSUANCE_CHECKS.filter(([key]) => currentChecklist[key]).length; return <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4"><div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div><h3 className="text-sm font-black text-emerald-950">Contrôle avant émission</h3><p className="mt-1 text-xs text-emerald-800">Validez chaque point avant de téléverser ou transmettre le billet final.</p></div><span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-800">{completed}/{ISSUANCE_CHECKS.length} contrôles</span></div><div className="mt-3 space-y-2">{ISSUANCE_CHECKS.map(([key, label]) => <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-slate-800"><Checkbox checked={Boolean(currentChecklist[key])} disabled={isBusy} onCheckedChange={(checked) => issuanceChecklistMutation.mutate({ sessionToken, requestId: selectedRequestId, key, checked: checked === true })} /><span>{label}</span></label>)}</div></section>; })()}
+                {(() => { 
+                  const currentChecklist = getRecord(detailQuery.data.request.issuanceChecklist) as Record<string, boolean>; 
+                  const completed = ISSUANCE_CHECKS.filter(([key]) => currentChecklist[key]).length; 
+                  const allComplete = completed === ISSUANCE_CHECKS.length;
+                  return (
+                    <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+                      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                        <div>
+                          <h3 className="text-sm font-black text-emerald-950">Contrôle avant émission</h3>
+                          <p className="mt-1 text-xs text-emerald-800">Validez chaque point avant de téléverser ou transmettre le billet final.</p>
+                        </div>
+                        <span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-emerald-800">{completed}/{ISSUANCE_CHECKS.length} contrôles</span>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {ISSUANCE_CHECKS.map(([key, label]) => (
+                          <label key={key} className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-slate-800">
+                            <Checkbox checked={Boolean(currentChecklist[key])} disabled={isBusy} onCheckedChange={(checked) => issuanceChecklistMutation.mutate({ sessionToken, requestId: selectedRequestId, key, checked: checked === true })} />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="mt-4 border-t border-emerald-200/60 pt-3">
+                        {allComplete ? (
+                          <Button type="button" onClick={() => { setIssuancePnrInput(detailQuery.data.request.pnrReference || ""); setIsIssuanceModalOpen(true); }} className="w-full bg-emerald-700 font-bold text-white hover:bg-emerald-800">
+                            Valider définitivement et émettre le billet (Initiales requises)
+                          </Button>
+                        ) : (
+                          <p className="text-xs font-bold text-amber-800">⚠ La validation finale et l'émission du billet seront activées dès que tous les {ISSUANCE_CHECKS.length} points de contrôle de la checklist seront cochés.</p>
+                        )}
+                      </div>
+                    </section>
+                  ); 
+                })()}
                 <div className="space-y-2"><Label htmlFor="agent-email">Affecter à un agent</Label><div className="flex gap-2"><Input id="agent-email" type="email" value={agentEmail} onChange={(event) => setAgentEmail(event.target.value)} placeholder="agent@3mtravelagency.com" className="h-12 rounded-xl" /><Button type="button" disabled={isBusy || !agentEmail} onClick={() => assignMutation.mutate({ sessionToken, requestId: selectedRequestId, assignedAgentEmail: agentEmail })} className="h-12 rounded-xl bg-blue-700 font-bold text-white">Affecter</Button></div></div>
                 <div className="space-y-2"><Label htmlFor="request-status">Statut opérationnel</Label><select id="request-status" value={detailQuery.data.request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: selectedRequestId, status: event.target.value as RequestStatus, details: note || undefined })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"><option value="pending_review">À traiter</option>{Object.entries(STATUS_LABELS).filter(([value]) => value !== "pending_review").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
@@ -311,6 +374,71 @@ export default function FlightAgentDashboard() {
           </Card>
         </div>
         {previewPnr && <DocumentPreviewModal isOpen={Boolean(previewPnr)} onClose={() => setPreviewPnr(null)} documentTitle={previewPnr.title} documentUrl={previewPnr.url} fileType="application/pdf" />}
+
+        {isIssuanceModalOpen && detailQuery.data?.request && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-black text-slate-900">Validation finale & Émission</h3>
+                <button type="button" onClick={() => setIsIssuanceModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              </div>
+              <p className="text-xs text-slate-600">
+                Tous les points de la checklist ont été vérifiés. Veuillez saisir vos initiales de conseiller pour confirmer l'émission définitive de ce billet (Dossier {detailQuery.data.request.requestRef}).
+              </p>
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="advisor-initials">Initiales du conseiller (ex. JDM) *</Label>
+                  <Input id="advisor-initials" value={advisorInitialsInput} onChange={(e) => setAdvisorInitialsInput(e.target.value.toUpperCase())} placeholder="Ex. JDM" maxLength={10} className="mt-1 font-mono uppercase font-bold" />
+                </div>
+                <div>
+                  <Label htmlFor="issuance-pnr">Référence PNR / GDS</Label>
+                  <Input id="issuance-pnr" value={issuancePnrInput} onChange={(e) => setIssuancePnrInput(e.target.value)} placeholder="Ex. PNR98765" className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="issuance-file">Document PNR final (PDF, facultatif)</Label>
+                  <Input id="issuance-file" type="file" accept="application/pdf" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const base64 = (reader.result as string).split(",")[1];
+                      setIssuancePdfFile({ base64, name: file.name });
+                    };
+                    reader.readAsDataURL(file);
+                  }} className="mt-1 text-xs" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsIssuanceModalOpen(false)}>Annuler</Button>
+                <Button type="button" disabled={updatePnrMutation.isPending || adminUploadPnrMutation.isPending || !advisorInitialsInput.trim()} onClick={() => {
+                  if (!advisorInitialsInput.trim()) {
+                    toast({ title: "Initiales requises", description: "Veuillez saisir vos initiales de conseiller.", variant: "destructive" });
+                    return;
+                  }
+                  if (issuancePdfFile) {
+                    adminUploadPnrMutation.mutate({
+                      sessionToken,
+                      requestId: selectedRequestId,
+                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
+                      fileBase64: issuancePdfFile.base64,
+                      fileName: issuancePdfFile.name,
+                      advisorInitials: advisorInitialsInput.trim().toUpperCase(),
+                    });
+                  } else {
+                    updatePnrMutation.mutate({
+                      sessionToken,
+                      requestId: selectedRequestId,
+                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
+                      advisorInitials: advisorInitialsInput.trim().toUpperCase(),
+                    });
+                  }
+                }} className="bg-emerald-600 font-bold text-white hover:bg-emerald-700">
+                  Confirmer l'émission définitive
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

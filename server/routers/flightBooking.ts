@@ -550,13 +550,18 @@ export const flightBookingRouter = router({
     }),
 
   updatePnrAndIssuedPdf: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), pnrReference: z.string().trim().min(2).max(120), issuedPdfUrl: z.string().url().optional() }))
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive(), pnrReference: z.string().trim().min(2).max(120), issuedPdfUrl: z.string().url().optional(), advisorInitials: z.string().trim().min(1).max(10) }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
+      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      if (!allChecked) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
+      }
       await db.update(flightBookingRequests).set({
         pnrReference: input.pnrReference,
         issuedPdfUrl: input.issuedPdfUrl || existing.issuedPdfUrl,
@@ -568,7 +573,7 @@ export const flightBookingRouter = router({
         changedBy: admin.email,
         oldValue: existing.status,
         newValue: "issued",
-        details: `PNR / référence GDS saisi par l'agent: ${input.pnrReference}`,
+        details: `PNR / référence GDS émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.pnrReference}`,
       });
       return { success: true };
     }),
@@ -599,6 +604,7 @@ export const flightBookingRouter = router({
       pnrReference: z.string().trim().min(1),
       fileBase64: z.string().min(1),
       fileName: z.string().min(1),
+      advisorInitials: z.string().trim().min(1).max(10),
     }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
@@ -606,6 +612,12 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+
+      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
+      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      if (!allChecked) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
+      }
 
       const buffer = Buffer.from(input.fileBase64, "base64");
       if (buffer.length > 8 * 1024 * 1024) {
@@ -629,7 +641,7 @@ export const flightBookingRouter = router({
         changedBy: admin.email,
         oldValue: existing.status,
         newValue: "issued",
-        details: `Document PNR final téléversé par l'agent: ${input.fileName} (Ref: ${input.pnrReference})`,
+        details: `Document PNR final téléversé et émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.fileName} (Ref: ${input.pnrReference})`,
       });
 
       // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
