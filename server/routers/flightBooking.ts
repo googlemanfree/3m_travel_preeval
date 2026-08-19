@@ -14,6 +14,8 @@ import { candidateProcedure, findCandidateFromAuthorizationHeader, getOrCreateCa
 import { getDb } from "../db";
 import { sendEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import { analyzeDocumentReadability } from "../documentReadabilityService";
 
 const MAX_SCAN_BYTES = 6 * 1024 * 1024;
@@ -744,8 +746,48 @@ export const flightBookingRouter = router({
         </html>
       `;
 
-      const buffer = Buffer.from(html, "utf-8");
-      const { url } = await storagePut(`audit-reports/${existing.requestRef}-audit-${Date.now()}.html`, buffer, "text/html");
+      // Génération d'un véritable PDF avec jsPDF
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(30, 58, 138);
+      doc.text("3M Travel & Services - Rapport d'Audit & Initiales", 15, 20);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("Historique infalsifiable des validations, contrôles et émissions PNR", 15, 27);
+
+      doc.setDrawColor(203, 213, 225);
+      doc.line(15, 32, 195, 32);
+
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Référence Dossier : ${existing.requestRef}`, 15, 42);
+      doc.text(`Client : ${existing.candidateEmail}`, 15, 49);
+      doc.text(`Référence PNR / GDS : ${existing.pnrReference || "Non émis"}`, 15, 56);
+      doc.text(`Statut Actuel : ${existing.status}`, 115, 42);
+      doc.text(`Généré par : ${admin.email}`, 115, 49);
+      doc.text(`Date : ${new Date().toLocaleString("fr-FR")}`, 115, 56);
+
+      const tableRows = historyEntries.map(h => [
+        new Date(h.createdAt).toLocaleString("fr-FR"),
+        h.action,
+        h.changedBy,
+        h.details || "—"
+      ]);
+
+      (doc as any).autoTable({
+        startY: 65,
+        head: [["Date / Heure", "Action", "Auteur / Agent", "Détails & Initiales"]],
+        body: tableRows,
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: "bold" },
+        columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 35 }, 2: { cellWidth: 40 }, 3: { cellWidth: 70 } },
+      });
+
+      const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+      const { url } = await storagePut(`audit-reports/${existing.requestRef}-audit-${Date.now()}.pdf`, pdfBuffer, "application/pdf");
       return { success: true, auditReportUrl: url, reference: existing.requestRef };
     }),
 
