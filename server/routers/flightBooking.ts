@@ -677,14 +677,33 @@ export const flightBookingRouter = router({
     }),
 
   exportAuditHistoryPdf: publicProcedure
-    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .input(z.object({ 
+      sessionToken: z.string().min(1), 
+      requestId: z.number().int().positive(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    }))
     .mutation(async ({ input }) => {
       const admin = await assertAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
-      const historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+      
+      let historyEntries = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
+
+      if (input.startDate) {
+        const startTimestamp = new Date(input.startDate).getTime();
+        if (!isNaN(startTimestamp)) {
+          historyEntries = historyEntries.filter(h => new Date(h.createdAt).getTime() >= startTimestamp);
+        }
+      }
+      if (input.endDate) {
+        const endTimestamp = new Date(input.endDate).setHours(23, 59, 59, 999);
+        if (!isNaN(endTimestamp)) {
+          historyEntries = historyEntries.filter(h => new Date(h.createdAt).getTime() <= endTimestamp);
+        }
+      }
 
       const rowsHtml = historyEntries.map(h => `
         <tr>
@@ -781,9 +800,19 @@ export const flightBookingRouter = router({
         startY: 65,
         head: [["Date / Heure", "Action", "Auteur / Agent", "Détails & Initiales"]],
         body: tableRows,
-        styles: { fontSize: 8, cellPadding: 3 },
+        styles: { fontSize: 8, cellPadding: 3, fillColor: [255, 255, 255] },
         headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: "bold" },
         columnStyles: { 0: { cellWidth: 35 }, 1: { cellWidth: 35 }, 2: { cellWidth: 40 }, 3: { cellWidth: 70 } },
+        didDrawPage: () => {
+          // Filigrane de sécurité officiel
+          doc.saveGraphicsState();
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(48);
+          doc.setTextColor(230, 235, 245);
+          doc.setGState(new (doc as any).GState({ opacity: 0.25 }));
+          doc.text("3M TRAVEL & SERVICES - CERTIFIÉ", 25, 150, { angle: 45 });
+          doc.restoreGraphicsState();
+        }
       });
 
       const pdfBuffer = Buffer.from(doc.output("arraybuffer"));

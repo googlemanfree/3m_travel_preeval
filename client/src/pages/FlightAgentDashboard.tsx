@@ -219,9 +219,16 @@ export default function FlightAgentDashboard() {
     onError: (error) => toast({ title: "Téléversement PNR impossible", description: error.message, variant: "destructive" }),
   });
 
+  const [auditStartDate, setAuditStartDate] = useState("");
+  const [auditEndDate, setAuditEndDate] = useState("");
+
   const exportAuditPdfMutation = trpc.flightBooking.exportAuditHistoryPdf.useMutation({
     onSuccess: (data) => {
-      toast({ title: "Rapport d'audit PDF généré", description: "Ouverture du rapport d'audit et des initiales dans un nouvel onglet." });
+      toast({ 
+        title: "Rapport d'audit PDF généré avec succès", 
+        description: "Le document sécurisé est prêt. Cliquez ici pour l'ouvrir.",
+        action: <Button size="sm" onClick={() => window.open(data.auditReportUrl, "_blank")} className="bg-blue-600 text-white">Télécharger PDF</Button>
+      });
       if (data.auditReportUrl) {
         window.open(data.auditReportUrl, "_blank");
       }
@@ -379,11 +386,20 @@ export default function FlightAgentDashboard() {
                 <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="agent-note">Note interne</Label><Textarea id="agent-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. tarif revalidé auprès du GDS, bagage à confirmer…" className="min-h-24 rounded-xl" /><Button type="button" disabled={isBusy || !note.trim()} onClick={() => noteMutation.mutate({ sessionToken, requestId: selectedRequestId, note: note.trim() })} className="h-12 w-full rounded-xl bg-slate-900 font-bold text-white"><MessageSquare className="mr-2 h-4 w-4" /> Enregistrer la note</Button></div>
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
                     <p className="text-sm font-black text-slate-900">Historique & Initiales</p>
-                    <Button type="button" size="sm" variant="outline" disabled={exportAuditPdfMutation.isPending} onClick={() => exportAuditPdfMutation.mutate({ sessionToken, requestId: selectedRequestId })} className="h-8 text-xs font-bold border-slate-200">
-                      <Download className="mr-1.5 h-3.5 w-3.5" /> Exporter rapport PDF
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center gap-1 text-xs">
+                        <span>Du</span>
+                        <input type="date" value={auditStartDate} onChange={(e) => setAuditStartDate(e.target.value)} className="rounded border border-slate-200 px-2 py-1 text-xs" />
+                        <span>au</span>
+                        <input type="date" value={auditEndDate} onChange={(e) => setAuditEndDate(e.target.value)} className="rounded border border-slate-200 px-2 py-1 text-xs" />
+                      </div>
+                      <Button type="button" size="sm" variant="outline" disabled={exportAuditPdfMutation.isPending} onClick={() => exportAuditPdfMutation.mutate({ sessionToken, requestId: selectedRequestId, startDate: auditStartDate || undefined, endDate: auditEndDate || undefined })} className="h-8 text-xs font-bold border-slate-200 bg-blue-50 text-blue-800 hover:bg-blue-100">
+                        {exportAuditPdfMutation.isPending ? <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Download className="mr-1.5 h-3.5 w-3.5" />}
+                        {exportAuditPdfMutation.isPending ? "Génération..." : "Exporter PDF"}
+                      </Button>
+                    </div>
                   </div>
                   <div className="max-h-40 space-y-2 overflow-auto">{detailQuery.data.history.map((entry) => <div key={entry.id} className="rounded-lg bg-slate-50 p-2 text-xs"><span className="font-bold text-slate-800">{entry.action}</span><span className="ml-2 text-slate-500">{entry.changedBy} · {new Date(entry.createdAt).toLocaleString("fr-FR")}</span>{entry.details && <p className="mt-1 text-slate-600">{entry.details}</p>}</div>)}</div>
                 </div>
