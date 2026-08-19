@@ -632,3 +632,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre l'attribution individuelle de sièges et repas pour chaque passager d'un groupe avec infobulles de suppléments tarifaires sur la carte cabine
 - [x] Ajouter le récapitulatif final multi-passagers, l'e-mail de confirmation avec billet QR, la carte cabine enrichie (toilettes, issues de secours) et la compétence réutilisable flight-booking-experience
 - [x] Ajouter l'export PDF du plan de cabine avec les passagers assignés et la section de recherche par numéro de réservation pour consulter ou modifier les choix
+- [x] Intégrer l'enregistrement en ligne (check-in) avec carte d'embarquement définitive et la barre de progression du statut du vol dans l'espace de gestion de réservation
