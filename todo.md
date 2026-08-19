@@ -637,3 +637,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter l'export CSV/Excel des réservations filtrées, l'historique détaillé des actions conseillers, l'e-mail automatique de changement de statut et la compétence flight-admin-workflow
 - [x] Intégrer le tableau de bord analytique des ventes par compagnie et classe de cabine, ainsi que l'envoi automatique de SMS de confirmation avec PNR et lien de billet
 - [x] Exiger l'inscription et la connexion du candidat avant de finaliser toute réservation de vol, avec conservation du panier d'itinéraire
+- [x] Créer le tableau de bord personnel client (historique de réservations et préférences), ajouter les connexions sociales (Google/Facebook) et la récupération de mot de passe par e-mail, automatiser les alertes SMS PNR à l'émission et permettre l'export PDF du plan de cabine groupe pour l'embarquement
