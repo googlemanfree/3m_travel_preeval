@@ -71,4 +71,13 @@ describe("flight booking agent workflow", () => {
     expect(agentDashboard).toContain("Ajouter une note interne");
     expect(agentDashboard).toContain("window.prompt");
   });
+
+  it("présente les informations commerciales, voyageur, paiement et émission dans la fiche agent", () => {
+    expect(agentDashboard).toContain("FlightRequestOverview");
+    expect(agentDashboard).toContain("Vol et conditions tarifaires");
+    expect(agentDashboard).toContain("Client et passager(s)");
+    expect(agentDashboard).toContain("Traitement, paiement et émission");
+    expect(agentDashboard).toContain("PNR / référence compagnie");
+    expect(agentDashboard).toContain("Correspondance(s)");
+  });
 });

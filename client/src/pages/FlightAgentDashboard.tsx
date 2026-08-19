@@ -67,6 +67,48 @@ function getFlightSummary(value: unknown) {
 
 const PRIORITY_ORDER: Record<string, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
 
+function getRecord(value: unknown) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function getPassengers(value: unknown) {
+  return Array.isArray(value) ? value.map(getRecord) : [];
+}
+
+function textValue(value: unknown, fallback = "Non renseigné") {
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
+function amountValue(value: unknown, currency: unknown) {
+  return typeof value === "number" ? `${new Intl.NumberFormat("fr-FR").format(value)} ${typeof currency === "string" ? currency : "XAF"}` : "À confirmer";
+}
+
+function DetailItem({ label, value }: { label: string; value: React.ReactNode }) {
+  return <div className="rounded-xl border border-slate-100 bg-slate-50 p-3"><p className="text-[10px] font-black uppercase tracking-wide text-slate-500">{label}</p><div className="mt-1 text-sm font-bold text-slate-900">{value}</div></div>;
+}
+
+function FlightRequestOverview({ request }: { request: any }) {
+  const flight = getRecord(request.flightData);
+  const airline = getRecord(flight.airline);
+  const passengers = getPassengers(request.passengerData);
+  const primaryPassenger = passengers[0] ?? {};
+  const stopDetails = Array.isArray(flight.stopDetails) ? flight.stopDetails.map(getRecord) : [];
+  const currency = flight.currency;
+  const paymentMethod = request.paymentMethod === "orange_money" ? "Orange Money" : request.paymentMethod === "agency" ? "Paiement en agence" : "En attente";
+
+  return <div className="space-y-4">
+    <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950 via-blue-800 to-sky-700 p-4 text-white">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-sky-200">Itinéraire demandé</p><p className="mt-2 text-xl font-black">{textValue(flight.originCity, textValue(flight.origin, "Départ"))} <span className="px-1 text-sky-200">→</span> {textValue(flight.destinationCity, textValue(flight.destination, "Destination"))}</p><p className="mt-1 text-sm text-blue-100">{textValue(airline.name)} · {textValue(flight.flightNumber)} · {textValue(flight.cabinClass)}</p></div><div className="rounded-xl bg-white/15 p-3 text-right"><p className="text-xs font-bold text-sky-100">Départ</p><p className="text-sm font-black">{textValue(flight.departureDate)} · {textValue(flight.departureTime)}</p></div></div>
+    </section>
+
+    <section><h3 className="mb-2 text-sm font-black text-slate-900">Vol et conditions tarifaires</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Compagnie / numéro" value={`${textValue(airline.name)} · ${textValue(flight.flightNumber)}`} /><DetailItem label="Arrivée prévue" value={textValue(flight.arrivalTime)} /><DetailItem label="Durée / escales" value={`${textValue(flight.duration)} · ${typeof flight.stops === "number" ? `${flight.stops} escale(s)` : "Escales à confirmer"}`} /><DetailItem label="Bagages" value={textValue(flight.baggage)} /><DetailItem label="Tarif total" value={amountValue(flight.totalPrice, currency)} /><DetailItem label="Prix par passager" value={amountValue(flight.pricePerPax, currency)} /><DetailItem label="Taxes et frais" value={amountValue(flight.gdsTaxesAndFees, currency)} /><DetailItem label="Conditions" value={`${flight.refundable === true ? "Remboursable" : "Conditions à confirmer"} · ${typeof flight.seatsLeft === "number" ? `${flight.seatsLeft} place(s) restante(s)` : "Disponibilité à confirmer"}`} /></div>{stopDetails.length > 0 && <div className="mt-2 rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs text-amber-900"><strong>Correspondance(s) :</strong> {stopDetails.map((stop) => `${textValue(stop.airport, "Aéroport")} (${textValue(stop.airportName, "")}) · ${textValue(stop.duration, "durée à confirmer")}`).join(" | ")}</div>}</section>
+
+    <section><h3 className="mb-2 text-sm font-black text-slate-900">Client et passager(s)</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Passager principal" value={textValue(primaryPassenger.fullName, request.candidateEmail)} /><DetailItem label="Contact" value={<><span className="block break-all">{textValue(primaryPassenger.email, request.candidateEmail)}</span><span className="text-xs text-slate-600">{textValue(primaryPassenger.phone, request.candidatePhone || "Non renseigné")}</span></>} /><DetailItem label="Passeport" value={`${textValue(primaryPassenger.passportNumber)} · exp. ${textValue(primaryPassenger.passportExpiry)}`} /><DetailItem label="Nationalité / naissance" value={`${textValue(primaryPassenger.nationality)} · ${textValue(primaryPassenger.dateOfBirth)}`} /></div>{passengers.length > 1 && <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700"><strong>Autres passagers :</strong> {passengers.slice(1).map((passenger) => textValue(passenger.fullName)).join(" · ")}</div>}</section>
+
+    <section><h3 className="mb-2 text-sm font-black text-slate-900">Traitement, paiement et émission</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Statut / priorité" value={`${STATUS_LABELS[request.status as RequestStatus] || request.status} · ${PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}`} /><DetailItem label="Conseiller affecté" value={textValue(request.assignedAgentEmail, "Non affecté")} /><DetailItem label="Paiement client" value={`${paymentMethod}${request.paymentTransactionId ? ` · ${request.paymentTransactionId}` : ""}`} /><DetailItem label="Validation client" value={request.clientValidated ? "Confirmée" : "En attente"} /><DetailItem label="PNR / référence compagnie" value={textValue(request.pnrReference)} /><DetailItem label="Document émis" value={request.issuedPdfUrl ? <a href={String(request.issuedPdfUrl)} target="_blank" rel="noreferrer" className="text-blue-700 underline">Ouvrir le document</a> : "Non disponible"} /></div></section>
+  </div>;
+}
+
 export default function FlightAgentDashboard() {
   const { toast } = useToast();
   const sessionToken = getAdminToken();
@@ -221,9 +263,8 @@ export default function FlightAgentDashboard() {
             ) : detailQuery.isLoading ? <div className="py-12 text-center text-slate-500">Chargement du dossier…</div> : detailQuery.data ? (
               <div className="space-y-5">
                 <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span></div>
-                <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl bg-slate-50 p-3"><p className="text-[11px] font-bold uppercase text-slate-500">Client</p><p className="mt-1 break-all text-sm font-bold text-slate-900">{detailQuery.data.request.candidateEmail}</p></div><div className="rounded-xl bg-slate-50 p-3"><p className="text-[11px] font-bold uppercase text-slate-500">Vol sélectionné</p><p className="mt-1 text-sm font-bold text-slate-900">{detailQuery.data.request.flightId}</p></div></div>
-                <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données du vol</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson(detailQuery.data.request.flightData)}</pre></details>
-                <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les passagers et passeports</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson(detailQuery.data.request.passengerData)}</pre></details>
+                <FlightRequestOverview request={detailQuery.data.request} />
+                <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
                 <div className="space-y-2"><Label htmlFor="agent-email">Affecter à un agent</Label><div className="flex gap-2"><Input id="agent-email" type="email" value={agentEmail} onChange={(event) => setAgentEmail(event.target.value)} placeholder="agent@3mtravelagency.com" className="h-12 rounded-xl" /><Button type="button" disabled={isBusy || !agentEmail} onClick={() => assignMutation.mutate({ sessionToken, requestId: selectedRequestId, assignedAgentEmail: agentEmail })} className="h-12 rounded-xl bg-blue-700 font-bold text-white">Affecter</Button></div></div>
                 <div className="space-y-2"><Label htmlFor="request-status">Statut opérationnel</Label><select id="request-status" value={detailQuery.data.request.status} disabled={isBusy} onChange={(event) => statusMutation.mutate({ sessionToken, requestId: selectedRequestId, status: event.target.value as RequestStatus, details: note || undefined })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800"><option value="pending_review">À traiter</option>{Object.entries(STATUS_LABELS).filter(([value]) => value !== "pending_review").map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
                 <div className="space-y-2"><Label htmlFor="request-priority">Priorité opérationnelle</Label><select id="request-priority" value={detailQuery.data.request.priority} disabled={isBusy} onChange={(event) => priorityMutation.mutate({ sessionToken, requestId: selectedRequestId, priority: event.target.value as RequestPriority })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">{Object.entries(PRIORITY_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>

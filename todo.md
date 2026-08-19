@@ -611,3 +611,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Envoyer un e-mail au client quand le statut de sa réservation de vol change.
 - [x] Ajouter une action rapide pour enregistrer une note interne sur chaque réservation.
 - [x] Tester TypeScript, Vitest, les droits et le responsive avant publication.
+
+## Fiche administrative détaillée de réservation de vol
+- [x] Auditer les données de vol, passager, paiement et suivi actuellement présentes dans la réservation.
+- [x] Afficher ces données dans une fiche opérationnelle structurée et lisible côté administration.
+- [x] Ajouter un test de non-régression garantissant la visibilité des champs essentiels.
+- [x] Vérifier TypeScript, Vitest et le responsive avant publication.
