@@ -73,6 +73,7 @@ import { exchangeRatesRouter } from "./routers/exchangeRatesRouter";
 import { evisaCatalogueRouter } from "./routers/evisaCatalogueRouter";
 import { routeHealthRouter } from "./routers/routeHealthRouter";
 import { richTextTemplatesRouter } from "./routers/richTextTemplatesRouter";
+import { consularRegistryRouter } from "./routers/consularRegistryRouter";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -140,6 +141,7 @@ export const appRouter = router({
   export: exportRouter,
   evisa: evisaRouter,
   evisaCatalogue: evisaCatalogueRouter,
+  consularRegistry: consularRegistryRouter,
   routeHealth: routeHealthRouter,
   richTextTemplates: richTextTemplatesRouter,
   evisaFavorites: evisaFavoritesRouter,

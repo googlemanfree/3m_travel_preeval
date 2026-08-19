@@ -7,10 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle2, Loader, AlertCircle, Sparkles, FileText, Upload, X, ExternalLink } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { motion } from 'framer-motion';
+import { DestinationAutocomplete } from '@/components/DestinationAutocomplete';
 import Cropper, { type Area } from 'react-easy-crop';
 import { createCroppedCvFile, type CropPixels } from '@/lib/cvImageCrop';
 import { isEvaluationProjectType, PROJECT_EVALUATION_CONFIG, type EvaluationProjectType } from '@/lib/projectEvaluationConfig';
-import { getCountriesForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
+import { getCountriesForProject, getDestinationOptionsForProject, getCountryProcedureFields, getProcedureById, getProceduresForCountry, getSuggestedDestinationCategory, type ProcedureGuide } from '@/lib/destinationProcedureCatalog';
 
 interface FormState {
   fullName: string; email: string; phone: string; dateOfBirth: string; nationality: string;
@@ -91,13 +92,14 @@ export default function Evaluation() {
   const [cropPosition, setCropPosition] = useState({ x: 0, y: 0 });
   const [cropZoom, setCropZoom] = useState(1);
   const [cropPixels, setCropPixels] = useState<CropPixels | null>(null);
+  const [customDestinationMode, setCustomDestinationMode] = useState(false);
 
   const submitMutation = trpc.evaluation.submit.useMutation();
   const extractCvMutation = trpc.evaluation.extractFromCV.useMutation();
   const inspectPdfMutation = trpc.evaluation.inspectPdfPages.useMutation();
   const availableCountries = getCountriesForProject(form.projectType);
+  const destinationOptions = getDestinationOptionsForProject(form.projectType);
   const isLibraryCountry = availableCountries.includes(form.destinationCountry);
-  const countrySelectionValue = !form.destinationCountry ? '' : isLibraryCountry ? form.destinationCountry : '__custom';
   const availableProcedures = form.destinationCountry ? getProceduresForCountry(form.projectType, form.destinationCountry) : [];
   const selectedProcedure = getProcedureById(form.projectDetails.procedureId);
   const countryProcedureFields = getCountryProcedureFields(form.projectType, form.destinationCountry, selectedProcedure);
@@ -115,6 +117,7 @@ export default function Evaluation() {
     const next = { ...formRef.current, projectType, projectDetails: {}, destinationCountry: '', destinationCategory: 'autre', visaType: recommendedVisa ?? formRef.current.visaType };
     formRef.current = next;
     setForm(next);
+    setCustomDestinationMode(false);
   };
 
   const selectDestinationCountry = (country: string) => {
@@ -128,6 +131,14 @@ export default function Evaluation() {
     };
     formRef.current = next;
     setForm(next);
+    setCustomDestinationMode(false);
+  };
+
+  const chooseCustomDestination = () => {
+    const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', projectDetails: {} };
+    formRef.current = next;
+    setForm(next);
+    setCustomDestinationMode(true);
   };
 
   const selectProcedure = (procedureId: string) => {
@@ -546,23 +557,11 @@ export default function Evaluation() {
                 </select>
               </div>
               <div>
-                <Label>Destination ciblée *</Label>
-                <select value={countrySelectionValue} onChange={(event) => {
-                  if (event.target.value === '__custom') {
-                    const next = { ...formRef.current, destinationCountry: '', destinationCategory: 'autre', projectDetails: {} };
-                    formRef.current = next;
-                    setForm(next);
-                    return;
-                  }
-                  selectDestinationCountry(event.target.value);
-                }} className="mt-1 h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm">
-                  <option value="">Sélectionner une destination</option>
-                  {availableCountries.map((country) => <option key={country} value={country}>{country}</option>)}
-                  <option value="__custom">Autre destination à étudier</option>
-                </select>
-                <p className="mt-1 text-xs text-slate-500">Les destinations et procédures disponibles sont tirées de la bibliothèque 3M Travel.</p>
+                <Label htmlFor="evaluation-destination">Destination ciblée *</Label>
+                <DestinationAutocomplete id="evaluation-destination" value={customDestinationMode ? '' : form.destinationCountry} options={destinationOptions} onSelect={selectDestinationCountry} onCustom={chooseCustomDestination} />
+                <p className="mt-1 text-xs text-slate-500">Recherchez par pays, sélectionnez une destination avec son drapeau, puis choisissez la procédure associée.</p>
               </div>
-              {countrySelectionValue === '__custom' && <div>
+              {customDestinationMode && <div>
                 <Label>Précisez la destination</Label>
                 <Input value={form.destinationCountry} onChange={(event) => update('destinationCountry', event.target.value)} placeholder="Ex. Japon, Brésil, Cameroun…" className="mt-1" />
               </div>}

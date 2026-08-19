@@ -1033,7 +1033,7 @@ export default function AdminDashboard() {
           <TabsContent value="route-health" className="space-y-6"><AdminRouteHealthManager sessionToken={sessionToken} /></TabsContent>
 
           <TabsContent value="consular" className="space-y-6">
-            <AdminConsularRegistry />
+            <AdminConsularRegistry sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="calendar" className="space-y-6">

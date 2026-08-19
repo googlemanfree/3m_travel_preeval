@@ -7,14 +7,15 @@ const readProjectFile = (relativePath: string) =>
   readFileSync(resolve(projectRoot, relativePath), "utf8");
 
 describe("évaluation mondiale", () => {
-  it("propose une destination précise, une procédure associée et une alternative à étudier", () => {
+  it("propose une destination recherchable, une procédure associée et une alternative à étudier", () => {
     const page = readProjectFile("client/src/pages/Evaluation.tsx");
 
     expect(page).toContain('value="autre">Monde — laissez-nous comparer les possibilités</option>');
     expect(page).toContain("getCountriesForProject(form.projectType)");
+    expect(page).toContain("getDestinationOptionsForProject(form.projectType)");
     expect(page).toContain("getProceduresForCountry(form.projectType, form.destinationCountry)");
-    expect(page).toContain("Autre destination à étudier");
-    expect(page).toContain("Les destinations et procédures disponibles sont tirées de la bibliothèque 3M Travel.");
+    expect(page).toContain("DestinationAutocomplete");
+    expect(page).toContain("Recherchez par pays, sélectionnez une destination avec son drapeau");
   });
 
   it("préserve le lien partagé historique Canada", () => {

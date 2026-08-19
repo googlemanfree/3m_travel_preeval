@@ -1,25 +1,63 @@
 import { useMemo, useState } from "react";
-import { Globe, ExternalLink, Search, ShieldCheck, FileText, Building2, CircleAlert, CheckCircle2, SlidersHorizontal, BookOpen } from "lucide-react";
+import { Globe, ExternalLink, Search, ShieldCheck, FileText, Building2, CircleAlert, CheckCircle2, SlidersHorizontal, BookOpen, Pencil, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_CONSULAR_CATALOG, ADMIN_CONSULAR_RESOURCE_TOTAL } from "@/lib/adminConsularCatalog";
+import { trpc } from "@/lib/trpc";
 
 type VerificationFilter = "all" | "verifie" | "a_completer";
+type EditableVerificationStatus = Exclude<VerificationFilter, "all">;
 
-export function AdminConsularRegistry() {
+export function AdminConsularRegistry({ sessionToken }: { sessionToken: string }) {
   const [search, setSearch] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState<VerificationFilter>("all");
+  const [editingEntry, setEditingEntry] = useState<(typeof ADMIN_CONSULAR_CATALOG)[number] | null>(null);
+  const [portalUrl, setPortalUrl] = useState("");
+  const [portalLabel, setPortalLabel] = useState("");
+  const [verifiedAt, setVerifiedAt] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState<EditableVerificationStatus>("a_completer");
+  const [verificationNote, setVerificationNote] = useState("");
+  const { toast } = useToast();
+  const overridesQuery = trpc.consularRegistry.listOverrides.useQuery({ sessionToken }, { enabled: Boolean(sessionToken) });
+  const saveOverrideMutation = trpc.consularRegistry.upsertOverride.useMutation({
+    onSuccess: () => {
+      void overridesQuery.refetch();
+      setEditingEntry(null);
+      toast({ title: "Fiche consulaire mise à jour", description: "Le lien et son statut de vérification ont été enregistrés dans le journal administratif." });
+    },
+    onError: (error) => toast({ title: "Mise à jour impossible", description: error.message, variant: "destructive" }),
+  });
+
+  const catalog = useMemo(() => {
+    const overrides = new Map((overridesQuery.data ?? []).map((override: any) => [override.countryCode, override]));
+    return ADMIN_CONSULAR_CATALOG.map((entry) => {
+      const override = overrides.get(entry.countryCode);
+      if (!override) return entry;
+      return {
+        ...entry,
+        officialPortalUrl: override.officialPortalUrl || undefined,
+        officialPortalLabel: override.officialPortalLabel || undefined,
+        officialVerifiedAt: override.officialVerifiedAt || undefined,
+        verificationStatus: override.verificationStatus,
+        verificationNote: override.verificationNote || undefined,
+      };
+    });
+  }, [overridesQuery.data]);
 
   const regions = useMemo(
-    () => ["all", ...Array.from(new Set(ADMIN_CONSULAR_CATALOG.map((entry) => entry.region))).sort((left, right) => left.localeCompare(right, "fr"))],
-    [],
+    () => ["all", ...Array.from(new Set(catalog.map((entry) => entry.region))).sort((left, right) => left.localeCompare(right, "fr"))],
+    [catalog],
   );
   const filtered = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase("fr");
-    return ADMIN_CONSULAR_CATALOG.filter((entry) => {
+    return catalog.filter((entry) => {
       const matchesSearch = !normalizedSearch || [entry.countryName, entry.region, entry.procedures.join(" "), entry.sourceSummary]
         .join(" ")
         .toLocaleLowerCase("fr")
@@ -28,10 +66,35 @@ export function AdminConsularRegistry() {
         && (selectedRegion === "all" || entry.region === selectedRegion)
         && (selectedStatus === "all" || entry.verificationStatus === selectedStatus);
     });
-  }, [search, selectedRegion, selectedStatus]);
+  }, [catalog, search, selectedRegion, selectedStatus]);
 
-  const verifiedCount = ADMIN_CONSULAR_CATALOG.filter((entry) => entry.verificationStatus === "verifie").length;
-  const followUpCount = ADMIN_CONSULAR_CATALOG.length - verifiedCount;
+  const verifiedCount = catalog.filter((entry) => entry.verificationStatus === "verifie").length;
+  const followUpCount = catalog.length - verifiedCount;
+
+  const openEditor = (entry: (typeof ADMIN_CONSULAR_CATALOG)[number]) => {
+    setEditingEntry(entry);
+    setPortalUrl(entry.officialPortalUrl ?? "");
+    setPortalLabel(entry.officialPortalLabel ?? "");
+    setVerifiedAt(entry.officialVerifiedAt ?? "");
+    setVerificationStatus(entry.verificationStatus as EditableVerificationStatus);
+    setVerificationNote(entry.verificationNote ?? "");
+  };
+
+  const savePortal = () => {
+    if (!editingEntry) return;
+    saveOverrideMutation.mutate({
+      sessionToken,
+      portal: {
+        countryCode: editingEntry.countryCode,
+        countryName: editingEntry.countryName,
+        officialPortalUrl: portalUrl.trim(),
+        officialPortalLabel: portalLabel.trim(),
+        officialVerifiedAt: verifiedAt.trim(),
+        verificationStatus,
+        verificationNote: verificationNote.trim(),
+      },
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -67,12 +130,27 @@ export function AdminConsularRegistry() {
               {entry.officialPortalUrl ? <a href={entry.officialPortalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-between rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"><span className="flex items-center gap-1.5"><Building2 className="h-3.5 w-3.5" />{entry.officialPortalLabel ?? "Portail officiel"}</span><ExternalLink className="h-3.5 w-3.5" /></a> : <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-950"><CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />Lien institutionnel à renseigner et valider dans le catalogue e‑Visa ou la fiche consulaire.</div>}
               {entry.evisaUrl && entry.evisaUrl !== entry.officialPortalUrl && <a href={entry.evisaUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-full items-center justify-between rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-100"><span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5" />Accès e‑Visa / autorisation</span><ExternalLink className="h-3.5 w-3.5" /></a>}
               {entry.officialVerifiedAt && <p className="text-[11px] text-slate-500">Vérifié le {entry.officialVerifiedAt}</p>}
+              <Button type="button" variant="outline" size="sm" className="w-full border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200" onClick={() => openEditor(entry)} disabled={!sessionToken}><Pencil className="mr-1.5 h-3.5 w-3.5" />Mettre à jour / vérifier</Button>
             </div>
           </CardContent>
         </Card>)}
       </div>
 
       {filtered.length === 0 && <div className="rounded-xl border border-slate-200 bg-white py-12 text-center dark:border-slate-800 dark:bg-slate-900"><BookOpen className="mx-auto mb-3 h-10 w-10 text-slate-300" /><p className="font-medium text-slate-700 dark:text-slate-300">Aucune fiche ne correspond aux filtres choisis.</p><Button type="button" variant="outline" onClick={() => { setSearch(""); setSelectedRegion("all"); setSelectedStatus("all"); }} className="mt-4">Réinitialiser les filtres</Button></div>}
+
+      <Dialog open={Boolean(editingEntry)} onOpenChange={(open) => { if (!open) setEditingEntry(null); }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader><DialogTitle>Vérifier le lien institutionnel — {editingEntry?.countryName}</DialogTitle><DialogDescription>Enregistrez uniquement un portail gouvernemental ou consulaire en HTTPS. Chaque modification est journalisée avec son auteur.</DialogDescription></DialogHeader>
+          <div className="grid gap-4 py-2">
+            <div className="grid gap-2"><Label htmlFor="portal-url">URL officielle</Label><Input id="portal-url" type="url" value={portalUrl} onChange={(event) => setPortalUrl(event.target.value)} placeholder="https://…" /></div>
+            <div className="grid gap-2"><Label htmlFor="portal-label">Libellé du portail</Label><Input id="portal-label" value={portalLabel} onChange={(event) => setPortalLabel(event.target.value)} placeholder="Ex. Portail officiel des visas" /></div>
+            <div className="grid gap-2"><Label htmlFor="portal-date">Date de vérification</Label><Input id="portal-date" value={verifiedAt} onChange={(event) => setVerifiedAt(event.target.value)} placeholder="Ex. 19 août 2026" /></div>
+            <div className="grid gap-2"><Label htmlFor="portal-status">Statut</Label><select id="portal-status" value={verificationStatus} onChange={(event) => setVerificationStatus(event.target.value as EditableVerificationStatus)} className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="verifie">Portail vérifié</option><option value="a_completer">Lien à compléter / recontrôler</option></select></div>
+            <div className="grid gap-2"><Label htmlFor="portal-note">Note de contrôle</Label><Textarea id="portal-note" value={verificationNote} onChange={(event) => setVerificationNote(event.target.value)} placeholder="Source consultée, motif de la mise à jour ou point à recontrôler…" /></div>
+          </div>
+          <DialogFooter><Button type="button" variant="outline" onClick={() => setEditingEntry(null)}>Annuler</Button><Button type="button" className="bg-blue-700 hover:bg-blue-800" onClick={savePortal} disabled={saveOverrideMutation.isPending || !sessionToken}><Save className="mr-2 h-4 w-4" />{saveOverrideMutation.isPending ? "Enregistrement…" : "Enregistrer la vérification"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

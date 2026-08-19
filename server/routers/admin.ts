@@ -124,6 +124,15 @@ export function parseCandidate360Labels(value: string | null | undefined) {
   }
 }
 
+function parseEvaluationProjectDetails(value: string | null | undefined) {
+  try {
+    const parsed = JSON.parse(value ?? "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
 export function determineCandidate360NextAction(input: { workflowStatus: string; paymentStatus?: string | null; pendingDocuments: number; openTasks: number; dueAt?: Date | null }) {
   if (input.paymentStatus && !["SUCCESS", "success", "completed", "paye"].includes(input.paymentStatus)) {
     return { key: "payment", label: "Vérifier le paiement", description: "Le paiement ou son justificatif doit être contrôlé avant la suite du dossier.", urgency: "high" as const };
@@ -2475,7 +2484,7 @@ export const adminRouter = router({
       if (!sourceRecord) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable." });
       const email = sourceRecord.email;
       const candidateRecord = (await db.select().from(candidates).where(eq(candidates.email, email)).limit(1))[0];
-      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, advisors, requestHistory] = await Promise.all([
+      const [requirements, operationalDocuments, legacyDocuments, tasks, notes, statusHistory, activityLogs, notifications, messages, advisors, requestHistory, latestEvaluations] = await Promise.all([
         db.select().from(documentRequirements).where(eq(documentRequirements.caseId, operationalCase.id)).orderBy(asc(documentRequirements.requestedAt)),
         db.select().from(caseDocuments).where(eq(caseDocuments.caseId, operationalCase.id)).orderBy(desc(caseDocuments.uploadedAt)),
         db.select().from(clientDocuments).where(eq(clientDocuments.candidateEmail, email)).orderBy(desc(clientDocuments.uploadedAt)).limit(100),
@@ -2487,6 +2496,7 @@ export const adminRouter = router({
         candidateRecord ? db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidateRecord.id)).orderBy(desc(candidateMessages.createdAt)).limit(30) : Promise.resolve([]),
         db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email, adminType: adminAccounts.adminType }).from(adminAccounts).where(eq(adminAccounts.status, "active")).orderBy(asc(adminAccounts.fullName)),
         db.select().from(unifiedClientRequestHistory).where(eq(unifiedClientRequestHistory.requestId, operationalCase.id)).orderBy(desc(unifiedClientRequestHistory.createdAt)).limit(30),
+        db.select().from(evaluations).where(eq(evaluations.email, email)).orderBy(desc(evaluations.createdAt)).limit(1),
       ]);
       const pendingDocuments = requirements.filter((requirement) => ["pending", "rejected"].includes(requirement.status)).length;
       const openTasks = tasks.filter((task) => ["open", "in_progress"].includes(task.taskStatus)).length;
@@ -2502,6 +2512,10 @@ export const adminRouter = router({
         ? await db.select().from(evaluationBilanVersions).where(eq(evaluationBilanVersions.applicationId, reference.id)).orderBy(desc(evaluationBilanVersions.versionNumber))
         : [];
       const nextAction = determineCandidate360NextAction({ workflowStatus: operationalCase.currentStatus, paymentStatus: paymentSnapshot?.status, pendingDocuments, openTasks, dueAt: operationalCase.dueAt });
+      const latestEvaluation = latestEvaluations[0];
+      const projectDetails = parseEvaluationProjectDetails(latestEvaluation?.projectDetailsJson);
+      const procedureLabel = [projectDetails.procedureName, projectDetails.procedureLabel, projectDetails.selectedProcedureLabel, projectDetails.procedure]
+        .find((value): value is string => typeof value === "string" && value.trim().length > 0) ?? latestEvaluation?.visaType ?? null;
       return {
         operationalCase: { ...operationalCase, labels: parseCandidate360Labels(operationalCase.labelsJson) },
         nextAction,
@@ -2527,6 +2541,14 @@ export const adminRouter = router({
         activity: [...activityLogs.map((item) => ({ type: item.actionType, description: item.description, createdAt: item.createdAt, actor: item.actorRole })), ...requestHistory.map((item) => ({ type: item.actionType, description: item.comment, createdAt: item.createdAt, actor: "admin" }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 50),
         communications: { notifications, messages },
         evaluationVersions,
+        evaluationContext: latestEvaluation ? {
+          projectType: latestEvaluation.projectType ?? null,
+          destinationCountry: latestEvaluation.destinationCountry ?? null,
+          visaType: latestEvaluation.visaType ?? null,
+          procedureLabel,
+          submittedAt: latestEvaluation.createdAt,
+          details: projectDetails,
+        } : null,
         advisors,
         currentAdmin: { id: admin.id, fullName: admin.fullName, email: admin.email },
       };

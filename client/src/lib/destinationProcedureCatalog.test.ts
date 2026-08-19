@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getCountriesForProject, getCountryProcedureFields, getProceduresForCountry } from "./destinationProcedureCatalog";
+import { getCountriesForProject, getCountryProcedureFields, getDestinationOptionsForProject, getProceduresForCountry } from "./destinationProcedureCatalog";
 
 describe("catalogue de procédures par destination", () => {
   it("relie la bibliothèque Travail au Canada et à sa procédure", () => {
@@ -10,6 +10,12 @@ describe("catalogue de procédures par destination", () => {
   it("expose les destinations e‑Visa issues du catalogue administré", () => {
     expect(getCountriesForProject("evisa")).toContain("Kenya");
     expect(getProceduresForCountry("evisa", "Kenya")[0]?.officialPortalUrl).toContain("etakenya.go.ke");
+  });
+
+  it("fournit une option unique avec drapeau pour l’autocomplétion de destination", () => {
+    const canada = getDestinationOptionsForProject("immigration").find((option) => option.country === "Canada");
+    expect(canada).toEqual({ country: "Canada", flag: "🍁" });
+    expect(new Set(getDestinationOptionsForProject("evisa").map((option) => option.country)).size).toBe(getDestinationOptionsForProject("evisa").length);
   });
 
   it("ajoute les informations spécifiques Canada pour une évaluation études", () => {

@@ -547,3 +547,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Cartographier chaque PDF de la bibliothèque Ressources vers une destination et ses procédures disponibles.
 - [x] Définir les champs, validations et pièces attendues spécifiques à chaque couple pays-procédure.
 - [x] Adapter le formulaire public à la destination et à la procédure choisies, avec transmission structurée vers le dossier administratif.
+
+## Registre éditable, fiche Client 360° et recherche de destination
+- [x] Ajouter l’édition rapide, la validation et la traçabilité des liens institutionnels dans le registre administrateur.
+- [x] Afficher le contexte pays-procédure et une progression visuelle exploitable dans la fiche Client 360°.
+- [x] Ajouter une recherche de destination avec autocomplétion, drapeaux et clavier dans le formulaire.
+- [x] Mettre à jour et valider la compétence réutilisable associée à ce workflow.
+- [x] Exécuter les tests Vitest, TypeScript et une vérification visuelle avant publication.

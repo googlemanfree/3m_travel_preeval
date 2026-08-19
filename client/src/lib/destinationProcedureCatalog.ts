@@ -5,6 +5,7 @@ import type { EvaluationProjectType, ProjectDetailField } from "./projectEvaluat
 export type ProcedureGuide = {
   id: string;
   country: string;
+  flag: string;
   projectType: EvaluationProjectType;
   procedureLabel: string;
   guideTitle: string;
@@ -49,6 +50,7 @@ function resourceToProcedure(resource: PdfResource): ProcedureGuide | null {
   return {
     id: `guide-${resource.id}`,
     country: normalizeDestinationCountry(resource.country),
+    flag: resource.flag,
     projectType,
     procedureLabel: projectType === "travail" ? "Visa Travail" : projectType === "etudes" ? "Visa Études" : "Visa Visiteur / Tourisme",
     guideTitle: resource.title,
@@ -65,6 +67,7 @@ const libraryProcedures = getAllResources()
 const evisaProcedures: ProcedureGuide[] = evisasDatabaseComplete.map((destination) => ({
   id: `evisa-${destination.id}`,
   country: normalizeDestinationCountry(destination.country),
+  flag: destination.flag || "🌐",
   projectType: "evisa",
   procedureLabel: destination.type || "e‑Visa / autorisation de voyage",
   guideTitle: `Procédure ${destination.type || "e‑Visa"} — ${destination.country}`,
@@ -80,6 +83,7 @@ const immigrationProcedures: ProcedureGuide[] = [
   {
     id: "immigration-canada",
     country: "Canada",
+    flag: "🍁",
     projectType: "immigration",
     procedureLabel: "Résidence permanente et programmes économiques",
     guideTitle: "Dossier Client Immigration 2026",
@@ -90,6 +94,7 @@ const immigrationProcedures: ProcedureGuide[] = [
   {
     id: "immigration-australie",
     country: "Australie",
+    flag: "🇦🇺",
     projectType: "immigration",
     procedureLabel: "Résidence permanente",
     guideTitle: "Résidence Permanente — Australie (FR)",
@@ -100,6 +105,7 @@ const immigrationProcedures: ProcedureGuide[] = [
   {
     id: "immigration-nouvelle-zelande",
     country: "Nouvelle-Zélande",
+    flag: "🇳🇿",
     projectType: "immigration",
     procedureLabel: "Résidence permanente",
     guideTitle: "Résidence Permanente — Nouvelle-Zélande (FR)",
@@ -120,6 +126,17 @@ export const getCountriesForProject = (projectType: EvaluationProjectType): stri
     .filter((procedure) => procedure.projectType === projectType)
     .map((procedure) => procedure.country)))
     .sort((left, right) => left.localeCompare(right, "fr"));
+
+export type DestinationOption = { country: string; flag: string };
+
+export const getDestinationOptionsForProject = (projectType: EvaluationProjectType): DestinationOption[] => {
+  const options = new Map<string, DestinationOption>();
+  destinationProcedures.filter((procedure) => procedure.projectType === projectType).forEach((procedure) => {
+    const key = normalize(procedure.country);
+    if (!options.has(key)) options.set(key, { country: procedure.country, flag: procedure.flag || "🌐" });
+  });
+  return Array.from(options.values()).sort((left, right) => left.country.localeCompare(right.country, "fr"));
+};
 
 export const getProceduresForCountry = (projectType: EvaluationProjectType, country: string): ProcedureGuide[] => {
   const normalizedCountry = normalize(normalizeDestinationCountry(country));

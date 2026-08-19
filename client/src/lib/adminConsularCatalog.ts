@@ -13,6 +13,7 @@ export type AdminConsularCatalogEntry = {
   officialPortalLabel?: string;
   evisaUrl?: string;
   officialVerifiedAt?: string;
+  verificationNote?: string;
   verificationStatus: PortalVerificationStatus;
   resources: PdfResource[];
   procedures: string[];
