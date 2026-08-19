@@ -106,6 +106,9 @@ export default function FlightBookingCheckout() {
     passportExpiry: "",
     nationality: "Camerounaise",
     dateOfBirth: "",
+    seatPreference: "Hublot",
+    mealPreference: "Standard",
+    frequentFlyer: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -399,6 +402,32 @@ export default function FlightBookingCheckout() {
                   <div className="space-y-2">
                     <Label htmlFor="dateOfBirth" className="text-xs font-bold uppercase tracking-wider text-slate-600">Date de Naissance</Label>
                     <Input id="dateOfBirth" name="dateOfBirth" type="date" value={formData.dateOfBirth} onChange={handleChange} className="h-12 rounded-xl" />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3 pt-2 border-t border-slate-100">
+                  <div className="space-y-2">
+                    <Label htmlFor="seatPreference" className="text-xs font-bold uppercase tracking-wider text-slate-600">Préférence de siège</Label>
+                    <select id="seatPreference" name="seatPreference" value={formData.seatPreference} onChange={(e) => setFormData({ ...formData, seatPreference: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">
+                      <option value="Hublot">Hublot</option>
+                      <option value="Couloir">Couloir</option>
+                      <option value="Milieu">Milieu</option>
+                      <option value="Sortie de secours">Sortie de secours (+ espace jambes)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mealPreference" className="text-xs font-bold uppercase tracking-wider text-slate-600">Préférence de repas</Label>
+                    <select id="mealPreference" name="mealPreference" value={formData.mealPreference} onChange={(e) => setFormData({ ...formData, mealPreference: e.target.value })} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-800">
+                      <option value="Standard">Standard</option>
+                      <option value="Halal">Halal</option>
+                      <option value="Végétarien">Végétarien</option>
+                      <option value="Kasher">Kasher</option>
+                      <option value="Diététique / Sans sel">Diététique / Sans sel</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="frequentFlyer" className="text-xs font-bold uppercase tracking-wider text-slate-600">Programme de fidélité (SkyTeam / Autre)</Label>
+                    <Input id="frequentFlyer" name="frequentFlyer" value={formData.frequentFlyer} onChange={handleChange} placeholder="Ex : AF123456789" className="h-12 rounded-xl font-mono" />
                   </div>
                 </div>
 

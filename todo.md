@@ -626,3 +626,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester TypeScript, Vitest, les droits administratifs et le responsive avant publication.
 - [x] Implémenter l'export PDF du journal d'audit des validations et initiales pour les réservations de vols
 - [x] Ajouter les filtres de période, le logo, le filigrane de sécurité et le téléchargement direct au rapport PDF d'audit des vols
+- [ ] Moderniser le système de réservation de vols style Air France (parcours multi-étapes, classes de cabine, familles de tarifs, options bagages et interface premium)
