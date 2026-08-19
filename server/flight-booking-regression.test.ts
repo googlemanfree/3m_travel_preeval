@@ -45,4 +45,16 @@ describe("flight booking regression contracts", () => {
     expect(flightsRouter).toContain("isDemo: true");
     expect(flightsPage).toContain("Tarif indicatif — Simulation");
   });
+
+  it("expose la file opérationnelle des réservations dans le tableau de bord administrateur", () => {
+    const adminDashboard = readProjectFile("client/src/pages/AdminDashboard.tsx");
+    const flightQueue = readProjectFile("client/src/pages/FlightAgentDashboard.tsx");
+
+    expect(adminDashboard).toContain('import FlightAgentDashboard from "@/pages/FlightAgentDashboard"');
+    expect(adminDashboard).toContain('<TabsContent value="flights"');
+    expect(adminDashboard).toContain("Réservations vols");
+    expect(adminDashboard).toContain("flightBooking.getQueueSummary");
+    expect(flightQueue).toContain("flightBooking.getQueue.useQuery");
+    expect(flightQueue).toContain("Demandes de réservation");
+  });
 });

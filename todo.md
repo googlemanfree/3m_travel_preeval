@@ -592,3 +592,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher un badge « Mis à jour » pour les fiches et guides récemment actualisés.
 - [x] Mettre à jour et valider la compétence réutilisable des fiches destination.
 - [x] Tester TypeScript, Vitest, les droits d’accès et le responsive avant publication.
+
+## Synchronisation des réservations de vols vers l’administration
+- [x] Tracer la confirmation de vol côté client, la création persistante et le chargement dans le tableau admin.
+- [x] Corriger la cause empêchant l’arrivée ou l’affichage des réservations de vols côté administration.
+- [x] Ajouter un test de non-régression client → administration pour les réservations de vols.
+- [x] Vérifier TypeScript, Vitest et publier le correctif après contrôle des droits administratifs.

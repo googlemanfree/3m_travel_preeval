@@ -81,6 +81,7 @@ import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
+import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -649,6 +650,10 @@ export default function AdminDashboard() {
     { sessionToken },
     { enabled: !!sessionToken }
   );
+  const { data: flightQueueSummary, refetch: refetchFlightQueueSummary } = trpc.flightBooking.getQueueSummary.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken, retry: false, refetchInterval: 30_000 },
+  );
 
   useEffect(() => {
     if (!isLoading && !isLoadingCountryDistribution && !isLoadingFaqSatisfaction && (data || countryDistribution || faqSatisfaction) && !lastSyncedAt) {
@@ -733,7 +738,7 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction()]);
+      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary()]);
       const syncedAt = new Date();
       setLastSyncedAt(syncedAt);
       toast({
@@ -749,7 +754,7 @@ export default function AdminDashboard() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, toast]);
+  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -1020,7 +1025,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
             <TabsTrigger value="activations">Activations</TabsTrigger>
-            <TabsTrigger value="flights">Paramètres Vols</TabsTrigger>
+            <TabsTrigger value="flights" className="gap-1.5 font-bold text-sky-700">
+              <Plane className="h-4 w-4" /> Réservations vols
+              {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}
+            </TabsTrigger>
             <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
             <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
             <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
@@ -1044,6 +1052,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="calendar" className="space-y-6">
             <AdminCalendarView />
+          </TabsContent>
+
+          <TabsContent value="flights" className="space-y-6">
+            <FlightAgentDashboard />
           </TabsContent>
 
           <TabsContent value="evaluation-review" className="space-y-6">
