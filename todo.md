@@ -645,3 +645,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Configurer l'application en Progressive Web App (PWA) avec manifeste, service worker et cache sécurisé pour l'accès hors ligne aux billets sur mobile
 - [x] Intégrer les notifications push natives pour alerter les utilisateurs des changements d'horaires de vol sur mobile (consentement, service worker push et envoi ciblé)
 - [x] Améliorer l'interface hors ligne de la PWA pour afficher automatiquement les prochains vols mis en cache pour l'utilisateur, avec statut de connexion et date de synchronisation
+- [x] Intégrer le support multilingue pour l'espagnol et l'allemand dans l'interface, le parcours de réservation, les messages PWA et les notifications de vol
