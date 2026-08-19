@@ -1,0 +1,16 @@
+{
+  "name": "3M Travel & Services",
+  "short_name": "3M Travel",
+  "description": "Plateforme premium de mobilité internationale et de réservation de voyages",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#1E3A8A",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
