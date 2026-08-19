@@ -1,15 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy } from "lucide-react";
+import { Calculator, Award, ArrowRight, CheckCircle2, AlertCircle, BarChart3, Filter, HelpCircle, TrendingUp, TrendingDown, Download, Lightbulb, Check, Copy, Eye, ListChecks } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Link } from "wouter";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
+import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE } from "@/data/crsHistoricalRounds";
 
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
@@ -23,6 +27,16 @@ export default function CanadaScoreSimulator() {
   const [exportSuccess, setExportSuccess] = useState<boolean>(false);
   const [isCopying, setIsCopying] = useState<boolean>(false);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [pdfPreviewError, setPdfPreviewError] = useState<string | null>(null);
+  const [completedRecommendations, setCompletedRecommendations] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("3m-crs-recommendation-checklist") ?? "{}");
+    } catch {
+      return {};
+    }
+  });
 
   // Données officielles enrichies des rondes d'invitation IRCC Express Entry (Août 2026) avec descriptions détaillées
   const allRounds = [
@@ -176,9 +190,17 @@ export default function CanadaScoreSimulator() {
 
   const recommendations = getRecommendations();
 
-  const handleExportPDF = () => {
-    setIsExporting(true);
-    try {
+  useEffect(() => {
+    localStorage.setItem("3m-crs-recommendation-checklist", JSON.stringify(completedRecommendations));
+  }, [completedRecommendations]);
+
+  const toggleRecommendation = (title: string) => {
+    setCompletedRecommendations((current) => ({ ...current, [title]: !current[title] }));
+  };
+
+  const completedRecommendationCount = recommendations.filter((recommendation) => completedRecommendations[recommendation.title]).length;
+
+  const createPdfDocument = () => {
       const doc = new jsPDF({ unit: "mm", format: "a4" });
       const generatedAt = new Date().toLocaleDateString("fr-FR", {
         day: "2-digit",
@@ -260,7 +282,26 @@ export default function CanadaScoreSimulator() {
         });
       }
 
-      doc.save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
+      return doc;
+  };
+
+  const handlePreviewPDF = () => {
+    setPdfPreviewError(null);
+    setIsPreviewOpen(true);
+    try {
+      if (pdfPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(pdfPreviewUrl);
+      const previewBlob = createPdfDocument().output("blob");
+      setPdfPreviewUrl(URL.createObjectURL(previewBlob));
+    } catch {
+      setPdfPreviewUrl(null);
+      setPdfPreviewError("La prévisualisation n’a pas pu être générée. Vous pouvez réessayer ou télécharger le rapport directement.");
+    }
+  };
+
+  const handleExportPDF = () => {
+    setIsExporting(true);
+    try {
+      createPdfDocument().save(`simulation-crs-canada-${new Date().toISOString().slice(0, 10)}.pdf`);
       setExportSuccess(true);
       setTimeout(() => setExportSuccess(false), 4000);
     } finally {
@@ -328,15 +369,41 @@ export default function CanadaScoreSimulator() {
           </div>
 
           <Button
-            onClick={handleExportPDF}
-            disabled={isExporting}
+            onClick={handlePreviewPDF}
             className="bg-white/10 hover:bg-white/20 text-white border border-white/30 gap-2 font-medium"
           >
-            {exportSuccess ? <Check className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
-            <span>{exportSuccess ? 'Rapport PDF Téléchargé !' : isExporting ? 'Génération...' : 'Exporter la Simulation (PDF)'}</span>
+            <Eye className="w-4 h-4" />
+            <span>Prévisualiser le rapport PDF</span>
           </Button>
         </div>
       </CardHeader>
+
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="max-w-5xl h-[88vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-3 border-b">
+            <DialogTitle>Prévisualisation du rapport de simulation CRS</DialogTitle>
+            <DialogDescription>
+              Vérifiez les sous-scores, le seuil, l’écart et les rondes comparées avant de télécharger votre document.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 bg-slate-100 p-3 min-h-0">
+            {pdfPreviewUrl ? (
+              <iframe title="Prévisualisation du rapport CRS" src={pdfPreviewUrl} className="w-full h-full bg-white rounded-md border" />
+            ) : pdfPreviewError ? (
+              <div className="h-full flex items-center justify-center text-sm text-red-700 text-center px-8">{pdfPreviewError}</div>
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">Préparation de la prévisualisation…</div>
+            )}
+          </div>
+          <DialogFooter className="p-4 border-t bg-white flex-row justify-end gap-2">
+            <Button variant="outline" onClick={() => setIsPreviewOpen(false)}>Fermer</Button>
+            <Button onClick={handleExportPDF} disabled={isExporting} className="gap-2">
+              {exportSuccess ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              {exportSuccess ? "Téléchargement lancé" : isExporting ? "Préparation…" : "Télécharger le PDF"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <CardContent className="p-6 md:p-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -503,22 +570,35 @@ export default function CanadaScoreSimulator() {
         {/* Section de recommandations personnalisées (affichée si l'écart est négatif) */}
         {!isThresholdMet && (
           <div className="p-6 rounded-2xl bg-amber-50/70 border border-amber-200 space-y-4">
-            <div className="flex items-center gap-2 text-amber-900 font-bold text-base">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-amber-900 font-bold text-base">
+              <div className="flex items-center gap-2">
               <Lightbulb className="w-5 h-5 text-amber-600" />
               <h4>Recommandations personnalisées pour combler l'écart ({Math.abs(scoreDiff)} pts)</h4>
+              </div>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">
+                <ListChecks className="w-3.5 h-3.5" /> {completedRecommendationCount}/{recommendations.length} action{recommendations.length > 1 ? "s" : ""} suivie{completedRecommendationCount > 1 ? "s" : ""}
+              </span>
             </div>
             <p className="text-xs text-amber-800">
-              Actions concrètes recommandées par nos experts pour rehausser votre score dans les meilleurs délais :
+              Cochez les actions que vous avez prévues ou commencées. Votre suivi est conservé sur cet appareil.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
               {recommendations.map((rec, i) => (
-                <div key={i} className="p-4 bg-white rounded-xl border border-amber-100 shadow-xs space-y-1">
-                  <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-amber-600" />
-                    {rec.title}
+                <label key={i} className={`p-4 bg-white rounded-xl border shadow-xs space-y-2 cursor-pointer transition-colors ${completedRecommendations[rec.title] ? "border-emerald-300 bg-emerald-50/50" : "border-amber-100 hover:border-amber-300"}`}>
+                  <span className="flex items-start gap-2.5">
+                    <Checkbox
+                      checked={Boolean(completedRecommendations[rec.title])}
+                      onCheckedChange={() => toggleRecommendation(rec.title)}
+                      aria-label={`Marquer comme suivie : ${rec.title}`}
+                      className="mt-0.5"
+                    />
+                    <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                      {completedRecommendations[rec.title] ? <Check className="w-4 h-4 text-emerald-600" /> : <CheckCircle2 className="w-4 h-4 text-amber-600" />}
+                      {rec.title}
+                    </span>
                   </span>
-                  <p className="text-xs text-gray-600">{rec.desc}</p>
-                </div>
+                  <p className="text-xs text-gray-600 pl-6">{rec.desc}</p>
+                </label>
               ))}
             </div>
           </div>
@@ -639,6 +719,35 @@ export default function CanadaScoreSimulator() {
               })}
             </div>
           )}
+
+          <div className="pt-3 mt-2 border-t border-blue-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+              <div>
+                <h5 className="font-bold text-gray-900">Évolution des seuils CRS CEC sur six mois</h5>
+                <p className="text-xs text-gray-600">Une série homogène Canadian Experience Class pour suivre la tendance mensuelle sans mélanger les catégories de tirage.</p>
+              </div>
+              <span className="text-xs font-semibold text-blue-800 bg-blue-50 rounded-full px-2.5 py-1">Mars → Août 2026</span>
+            </div>
+            <div className="h-[280px] w-full" aria-label="Graphique de l'évolution des seuils CRS CEC de mars à août 2026">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={[...CEC_SIX_MONTH_CRS_HISTORY]} margin={{ top: 15, right: 18, left: -14, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dbeafe" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#475569" }} axisLine={{ stroke: "#cbd5e1" }} tickLine={false} />
+                  <YAxis domain={[500, 530]} tick={{ fontSize: 12, fill: "#475569" }} axisLine={false} tickLine={false} width={42} />
+                  <RechartsTooltip
+                    formatter={(value: number) => [`${value} points`, "Seuil CRS"]}
+                    labelFormatter={(_, payload) => payload?.[0]?.payload ? `${payload[0].payload.date} · ${payload[0].payload.round}` : ""}
+                    contentStyle={{ borderRadius: 12, borderColor: "#bfdbfe", fontSize: 12 }}
+                  />
+                  <Legend verticalAlign="top" height={30} wrapperStyle={{ fontSize: 12 }} />
+                  <Line type="monotone" dataKey="minScore" name="Seuil CRS CEC" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: "#2563eb", strokeWidth: 2, stroke: "#ffffff" }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — données vérifiées le {new Date(CRS_HISTORY_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. Les seuils peuvent varier à chaque ronde.
+            </p>
+          </div>
         </div>
 
         {/* Barres de progression par critère et infobulles */}

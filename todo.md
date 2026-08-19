@@ -444,6 +444,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre à jour, valider et livrer la compétence réutilisable `crs-immigration-workflow`.
 - [x] Exécuter les tests Vitest, la compilation TypeScript et les vérifications de rendu avant publication.
 
+## Simulateur CRS : historique six mois, prévisualisation et checklist
+- [x] Vérifier et intégrer les données de seuils CRS sur les six derniers mois avec source et date de vérification.
+- [x] Ajouter un graphique d’évolution lisible des seuils historiques au comparateur CRS.
+- [x] Ajouter une modale de prévisualisation du rapport PDF avant son téléchargement effectif.
+- [x] Rendre les recommandations actionnables avec une checklist interactive persistante.
+- [x] Tester TypeScript, Vitest, le responsive et les parcours d’export avant publication.
+
 ## Réorganisation des pages de services et contenu
 - [x] Auditer les routes et pages existantes pour les services Canada, Schengen, études, billets, formation, blog et contact.
 - [x] Définir les routes canoniques et les redirections nécessaires sans créer de pages statiques ou de contenus dupliqués.
