@@ -687,4 +687,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer des visuels hôteliers premium et des contenus de prestations sans créer de fausses disponibilités
 - [x] Afficher les offres tarifaires disponibles juste sous le formulaire de demande de disponibilité
 - [x] Vérifier la nouvelle expérience 3M Booking sur ordinateur et mobile, puis valider les régressions
+- [x] Ajouter les filtres piscine, Wi‑Fi et parking dans les résultats 3M Booking
+- [x] Synchroniser les équipements choisis avec la demande transmise au back-office
+- [x] Vérifier les filtres d’équipements sur ordinateur et mobile, avec tests de non-régression
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

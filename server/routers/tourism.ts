@@ -13,12 +13,19 @@ import { candidateProcedure, findCandidateFromAuthorizationHeader } from "./cand
 
 const serviceType = z.enum(["hotel", "vehicle", "pack"]);
 export type TourismServiceType = z.infer<typeof serviceType>;
+const hotelAmenity = z.enum(["pool", "wifi", "parking"]);
+export type HotelAmenity = z.infer<typeof hotelAmenity>;
+const hotelAmenitySearchTerms: Record<HotelAmenity, string> = { pool: "piscine", wifi: "Wi-Fi", parking: "parking" };
 export function buildTourismServiceTypes(pack: string | undefined, selected: TourismServiceType[]) {
   const required: Record<string, TourismServiceType[]> = { escapade: ["hotel", "pack"], explorer: ["hotel", "vehicle", "pack"], business: ["hotel", "vehicle", "pack"] };
   return Array.from(new Set([...(selected || []), ...(pack ? required[pack] || ["pack"] : [])]));
 }
 export function buildTourismPlace(place: { name: string; formatted_address: string; rating?: number; price_level?: number }) {
   return { name: place.name, address: place.formatted_address, rating: place.rating, priceLevel: place.price_level };
+}
+export function buildHotelDiscoveryQuery(destination: string, amenities: HotelAmenity[]) {
+  const preferredAmenities = amenities.map((amenity) => hotelAmenitySearchTerms[amenity]).join(" ");
+  return `hôtels ${preferredAmenities} à ${destination}`.replace(/\s+/g, " ").trim();
 }
 const requestSchema = z.object({
   fullName: z.string().trim().min(2).max(255), email: z.string().email().max(320), phone: z.string().trim().min(6).max(50), destination: z.string().trim().min(2).max(160),
@@ -42,9 +49,9 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
 }
 
 export const tourismRouter = router({
-  discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160) })).mutation(async ({ input }) => {
+  discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160), amenities: z.array(hotelAmenity).max(3).default([]) })).mutation(async ({ input }) => {
     let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
-    try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `attractions touristiques et hôtels à ${input.destination}` }); places = (google.results || []).slice(0, 5).map(buildTourismPlace); } catch { /* suggestions facultatives */ }
+    try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: buildHotelDiscoveryQuery(input.destination, input.amenities) }); places = (google.results || []).slice(0, 5).map(buildTourismPlace); } catch { /* suggestions facultatives */ }
     let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M Travel avant toute réservation.";
     try {
       const ai = await invokeLLM({
@@ -60,7 +67,7 @@ export const tourismRouter = router({
         briefing = rawContent.map(part => ('text' in part ? part.text : '')).join(' ');
       }
     } catch { /* repli transparent */ }
-    return { places, briefing, sourceNote: "Suggestions de lieux à titre informatif. Tarifs et disponibilités à confirmer par l’agence." };
+    return { places, selectedAmenities: input.amenities, briefing, sourceNote: "Suggestions de lieux à titre informatif. Les équipements, tarifs et disponibilités sont à confirmer par l’agence." };
   }),
   create: publicProcedure.input(requestSchema).mutation(async ({ input, ctx }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
