@@ -662,3 +662,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre en place l'envoi automatique de la confirmation PDF par e-mail dès la validation et l'émission de la réservation de vol (depuis hello@3mtravelagency.com)
 - [x] Traduire à la demande les avis clients authentiques dans la langue active, avec conservation de leur source et de leur langue originale
 - [x] Corriger la connexion WebSocket Vite et la réponse HTML inattendue reçue par le client tRPC
+- [x] Corriger l’affichage du graphique de fidélité lorsque son conteneur est masqué et supprimer l’avertissement de taille

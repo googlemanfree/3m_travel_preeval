@@ -14,6 +14,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { CEC_SIX_MONTH_CRS_HISTORY, CRS_HISTORY_SOURCE } from "@/data/crsHistoricalRounds";
+import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
 
 export default function CanadaScoreSimulator() {
   const { language } = useLanguage();
@@ -728,7 +729,7 @@ export default function CanadaScoreSimulator() {
               </div>
               <span className="text-xs font-semibold text-blue-800 bg-blue-50 rounded-full px-2.5 py-1">Mars → Août 2026</span>
             </div>
-            <div className="h-[280px] w-full" aria-label="Graphique de l'évolution des seuils CRS CEC de mars à août 2026">
+            <SafeResponsiveChart className="h-[280px] w-full" label="Graphique de l'évolution des seuils CRS CEC de mars à août 2026">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={[...CEC_SIX_MONTH_CRS_HISTORY]} margin={{ top: 15, right: 18, left: -14, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#dbeafe" />
@@ -743,7 +744,7 @@ export default function CanadaScoreSimulator() {
                   <Line type="monotone" dataKey="minScore" name="Seuil CRS CEC" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: "#2563eb", strokeWidth: 2, stroke: "#ffffff" }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </SafeResponsiveChart>
             <p className="text-[11px] text-slate-500">
               Source : <a className="underline hover:text-blue-700" href={CRS_HISTORY_SOURCE.url} target="_blank" rel="noreferrer">{CRS_HISTORY_SOURCE.organization}</a> — données vérifiées le {new Date(CRS_HISTORY_SOURCE.verifiedAt).toLocaleDateString("fr-FR")}. Les seuils peuvent varier à chaque ronde.
             </p>

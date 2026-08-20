@@ -36,7 +36,14 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
-      const page = await vite.transformIndexHtml(url, template);
+      // Le proxy de prévisualisation ne relaie pas le WebSocket HMR. Vite injecte
+      // néanmoins son client dans index.html ; le retirer ici évite les erreurs
+      // de connexion vers localhost:5173 tout en conservant l’actualisation via
+      // rechargement de page.
+      const page = (await vite.transformIndexHtml(url, template)).replace(
+        `<script type="module" src="/@vite/client"></script>`,
+        ""
+      );
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

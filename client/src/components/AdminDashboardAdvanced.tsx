@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
 import {
   BarChart,
   Bar,
@@ -284,7 +285,8 @@ export function AdminDashboardAdvanced() {
               <CardTitle>Dossiers par Statut</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <SafeResponsiveChart className="h-[300px]" label="Graphique des dossiers par statut">
+                <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={applicationsChart.data}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
@@ -292,7 +294,8 @@ export function AdminDashboardAdvanced() {
                   <Tooltip />
                   <Bar dataKey="value" fill="#3b82f6" />
                 </BarChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </SafeResponsiveChart>
             </CardContent>
           </Card>
         )}
@@ -304,7 +307,8 @@ export function AdminDashboardAdvanced() {
               <CardTitle>Transactions par Statut</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <SafeResponsiveChart className="h-[300px]" label="Graphique des transactions par statut">
+                <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={transactionsChart.data}
@@ -322,7 +326,8 @@ export function AdminDashboardAdvanced() {
                   </Pie>
                   <Tooltip />
                 </PieChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </SafeResponsiveChart>
             </CardContent>
           </Card>
         )}
@@ -334,7 +339,8 @@ export function AdminDashboardAdvanced() {
               <CardTitle>Revenus (30 derniers jours)</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <SafeResponsiveChart className="h-[300px]" label="Graphique des revenus">
+                <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueChart.data}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -349,7 +355,8 @@ export function AdminDashboardAdvanced() {
                     dot={{ fill: "#10b981" }}
                   />
                 </LineChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </SafeResponsiveChart>
             </CardContent>
           </Card>
         )}
@@ -361,7 +368,8 @@ export function AdminDashboardAdvanced() {
               <CardTitle>Top 10 Destinations</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <SafeResponsiveChart className="h-[300px]" label="Graphique des destinations les plus demandées">
+                <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={destinationChart.data} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
@@ -369,7 +377,8 @@ export function AdminDashboardAdvanced() {
                   <Tooltip />
                   <Bar dataKey="count" fill="#8b5cf6" />
                 </BarChart>
-              </ResponsiveContainer>
+                </ResponsiveContainer>
+              </SafeResponsiveChart>
             </CardContent>
           </Card>
         )}

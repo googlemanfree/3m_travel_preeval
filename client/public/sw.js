@@ -1,7 +1,5 @@
-const CACHE_NAME = '3m-travel-pwa-v1';
+const CACHE_NAME = '3m-travel-pwa-v2';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
   '/manifest.json'
 ];
 
@@ -49,6 +47,18 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
   const url = new URL(event.request.url);
+
+  // Ne jamais mettre en cache le client Vite, les sources de développement ou
+  // les scripts de prévisualisation : une ancienne version provoquerait une
+  // tentative de WebSocket vers localhost:5173 après un redémarrage.
+  if (
+    url.pathname.startsWith('/@vite/') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/__manus__/')
+  ) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   
   // Pour les requêtes API tRPC ou données de vol, tenter le réseau puis stocker/fallback sur le cache local
   if (url.pathname.startsWith('/api/')) {
@@ -78,22 +88,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Les navigations utilisent d’abord le réseau afin d’éviter de servir une
+  // page HTML ancienne. La dernière page consultée reste disponible hors ligne.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match('/')))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+      if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.url.startsWith('http')) {
-            cache.put(event.request, networkResponse.clone());
-          }
+          if (event.request.url.startsWith('http')) cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
       });
     })
   );
