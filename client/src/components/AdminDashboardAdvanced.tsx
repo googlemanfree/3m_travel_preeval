@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
+import { AdminSystemStatus } from "@/components/AdminSystemStatus";
 import {
   BarChart,
   Bar,
@@ -182,6 +183,8 @@ export function AdminDashboardAdvanced() {
           </Button>
         </div>
       </div>
+
+      <AdminSystemStatus />
 
       {/* KPIs Principaux */}
       {kpis && (

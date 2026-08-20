@@ -78,6 +78,7 @@ import { AdminCurrencyRates } from "@/components/AdminCurrencyRates";
 import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrectionHistory";
 import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueManager";
 import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
+import { AdminSystemStatus } from "@/components/AdminSystemStatus";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1020,6 +1021,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="destination-analytics" className="gap-1.5 font-bold text-indigo-700">📊 Destinations</TabsTrigger>
             <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
             <TabsTrigger value="route-health" className="gap-1.5 font-bold text-rose-700">404 & Liens</TabsTrigger>
+            <TabsTrigger value="system-status" className="gap-1.5 font-bold text-emerald-700">État système</TabsTrigger>
             <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
             <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -1041,6 +1043,7 @@ export default function AdminDashboard() {
           </TabsContent>
           <TabsContent value="evisa-catalogue" className="space-y-6"><AdminEvisaCatalogueManager sessionToken={sessionToken} /></TabsContent>
           <TabsContent value="route-health" className="space-y-6"><AdminRouteHealthManager sessionToken={sessionToken} /></TabsContent>
+          <TabsContent value="system-status" className="space-y-6"><AdminSystemStatus /></TabsContent>
 
           <TabsContent value="consular" className="space-y-6">
             <AdminConsularRegistry sessionToken={sessionToken} />

@@ -668,3 +668,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Supprimer définitivement l’injection du client HMR Vite qui provoque l’erreur WebSocket dans la prévisualisation
 - [x] Ajouter une bannière de nouvelle version, la réinitialisation manuelle du cache dans l’espace client, un indicateur hors ligne et la compétence réutilisable PWA
 - [x] Identifier et supprimer le dernier chargement résiduel du client HMR Vite dans les sessions de prévisualisation
+- [x] Ajouter une page d’état système, un diagnostic réseau réservé aux administrateurs, un indicateur de connectivité temps réel et une compétence réutilisable
