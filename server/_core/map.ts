@@ -173,6 +173,7 @@ export type PlacesSearchResult = {
     };
     rating?: number;
     user_ratings_total?: number;
+    price_level?: number;
     business_status?: string;
     types: string[];
   }>;
@@ -313,7 +314,6 @@ export type RoadsResult = {
  * Output: Image URL (not JSON) - use directly in <img src={url} />
  * Note: Construct URL manually with getMapsConfig() for auth
  */
-
 
 
 

@@ -17,6 +17,9 @@ export function buildTourismServiceTypes(pack: string | undefined, selected: Tou
   const required: Record<string, TourismServiceType[]> = { escapade: ["hotel", "pack"], explorer: ["hotel", "vehicle", "pack"], business: ["hotel", "vehicle", "pack"] };
   return Array.from(new Set([...(selected || []), ...(pack ? required[pack] || ["pack"] : [])]));
 }
+export function buildTourismPlace(place: { name: string; formatted_address: string; rating?: number; price_level?: number }) {
+  return { name: place.name, address: place.formatted_address, rating: place.rating, priceLevel: place.price_level };
+}
 const requestSchema = z.object({
   fullName: z.string().trim().min(2).max(255), email: z.string().email().max(320), phone: z.string().trim().min(6).max(50), destination: z.string().trim().min(2).max(160),
   departureDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), returnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), travelersCount: z.number().int().min(1).max(12),
@@ -40,8 +43,8 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
 
 export const tourismRouter = router({
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160) })).mutation(async ({ input }) => {
-    let places: Array<{ name: string; address: string; rating?: number }> = [];
-    try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `attractions touristiques et hôtels à ${input.destination}` }); places = (google.results || []).slice(0, 5).map(p => ({ name: p.name, address: p.formatted_address, rating: p.rating })); } catch { /* suggestions facultatives */ }
+    let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
+    try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: `attractions touristiques et hôtels à ${input.destination}` }); places = (google.results || []).slice(0, 5).map(buildTourismPlace); } catch { /* suggestions facultatives */ }
     let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M Travel avant toute réservation.";
     try {
       const ai = await invokeLLM({

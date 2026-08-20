@@ -683,4 +683,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher un suivi hôtel clair dans l’espace client avec statut, dates, établissement et prochaine étape
 - [x] Vérifier la synchronisation des changements de statut administrateur vers le suivi hôtel client
 - [x] Couvrir le suivi hôtel par des tests d’accès, de propriété et de statut
+- [x] Remplacer l’entrée publique « Billets » par « 3M Booking » et revoir sa hiérarchie visuelle
+- [x] Intégrer des visuels hôteliers premium et des contenus de prestations sans créer de fausses disponibilités
+- [x] Afficher les offres tarifaires disponibles juste sous le formulaire de demande de disponibilité
+- [x] Vérifier la nouvelle expérience 3M Booking sur ordinateur et mobile, puis valider les régressions
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

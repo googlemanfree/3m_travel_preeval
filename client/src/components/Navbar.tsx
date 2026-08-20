@@ -30,7 +30,7 @@ import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
 const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: boolean }[] = [
   { href: "/", label: "Accueil", icon: Home },
-  { href: "/billets", label: "Billets", icon: Plane },
+  { href: "/billets", label: "3M Booking", icon: Plane },
   { href: "/procedures", label: "Procédures", icon: BookOpen },
   { href: "/ressources", label: "Ressources", icon: Globe2 },
   { href: "/guide-procedures", label: "Guide PDF", icon: FileText },
