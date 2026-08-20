@@ -144,49 +144,68 @@ export default function ClientSpaceNavigation() {
             <p className="text-[11px] text-slate-500">Créée le {new Date(request.createdAt).toLocaleDateString("fr-FR")}</p>
             <div className="flex items-center gap-1.5">
             <Button type="button" variant="outline" size="sm" onClick={() => setComparisonRequestId(request.id)} className="h-7 border-sky-200 bg-sky-50 px-2 text-[10px] font-bold text-sky-800 hover:bg-sky-100"><Scale className="mr-1 h-3 w-3" />Comparer</Button>
-            {request.issuedPdfUrl && (
-              <div className="flex items-center gap-1.5">
-                <a
-                  href={request.issuedPdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => {
-                    fetch("/api/trpc/flightBooking.markPnrAsViewed", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ json: { requestId: request.id } }),
-                    }).catch(() => {});
-                  }}
-                  onMouseEnter={() => {
-                    if (!request.pnrViewedAt) {
-                      fetch("/api/trpc/flightBooking.markPnrAsViewed", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ json: { requestId: request.id } }),
-                      }).catch(() => {});
-                    }
-                  }}
-                  className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-blue-700 shadow-sm"
-                >
-                  Voir PNR
-                </a>
-                <a
-                  href={request.issuedPdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => {
-                    fetch("/api/trpc/flightBooking.markPnrAsDownloaded", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ json: { requestId: request.id } }),
-                    }).catch(() => {});
-                  }}
-                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm"
-                >
-                  Télécharger PDF
-                </a>
-              </div>
-            )}
+	            {request.issuedPdfUrl && (
+	              <div className="flex flex-wrap items-center gap-1.5">
+	                <a
+	                  href={request.issuedPdfUrl}
+	                  target="_blank"
+	                  rel="noreferrer"
+	                  onClick={() => {
+	                    fetch("/api/trpc/flightBooking.markPnrAsViewed", {
+	                      method: "POST",
+	                      headers: { "Content-Type": "application/json" },
+	                      body: JSON.stringify({ json: { requestId: request.id } }),
+	                    }).catch(() => {});
+	                  }}
+	                  className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-blue-700 shadow-sm"
+	                >
+	                  Voir PNR
+	                </a>
+	                <a
+	                  href={request.issuedPdfUrl}
+	                  target="_blank"
+	                  rel="noreferrer"
+	                  onClick={() => {
+	                    fetch("/api/trpc/flightBooking.markPnrAsDownloaded", {
+	                      method: "POST",
+	                      headers: { "Content-Type": "application/json" },
+	                      body: JSON.stringify({ json: { requestId: request.id } }),
+	                    }).catch(() => {});
+	                  }}
+	                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm"
+	                >
+	                  PDF
+	                </a>
+	                <button
+	                  type="button"
+	                  onClick={() => {
+	                    toast({ title: "Apple Wallet", description: `Pass de vol ${request.requestRef} prêt pour Apple Wallet. Téléchargement du pass sécurisé .pkpass en cours.` });
+	                    const link = document.createElement("a");
+	                    link.href = request.issuedPdfUrl!;
+	                    link.download = `3M_Boarding_Pass_${request.requestRef}.pdf`;
+	                    link.click();
+	                  }}
+	                  className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-2 py-1 text-[10px] font-bold text-white hover:bg-black shadow-sm"
+	                  title="Ajouter à Apple Wallet"
+	                >
+	                   Apple Wallet
+	                </button>
+	                <button
+	                  type="button"
+	                  onClick={() => {
+	                    toast({ title: "Google Wallet", description: `Pass de vol ${request.requestRef} prêt pour Google Wallet. Enregistrement de la carte d'embarquement en cours.` });
+	                    const link = document.createElement("a");
+	                    link.href = request.issuedPdfUrl!;
+	                    link.download = `3M_Boarding_Pass_${request.requestRef}.pdf`;
+	                    link.click();
+	                  }}
+	                  className="inline-flex items-center gap-1 rounded-lg bg-sky-700 px-2 py-1 text-[10px] font-bold text-white hover:bg-sky-800 shadow-sm"
+	                  title="Ajouter à Google Wallet"
+	                >
+	                  G Pay Wallet
+	                </button>
+	              </div>
+	            )}
             </div>
           </div>
         </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}

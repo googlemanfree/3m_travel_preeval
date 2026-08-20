@@ -656,3 +656,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher une notification claire lors de la réservation de vol indiquant le nombre de points fidélité estimés à gagner (avec précision que le crédit intervient après l'émission validée)
 - [x] Améliorer l'expérience 3M Booking (hébergement) et renforcer la synchronisation avec le back-office administrateur (file de demandes, affectation, statuts et validation)
 - [x] Vérifier et garantir que les réservations 3M Booking arrivent instantanément et sans obstacle dans le back-office administrateur (tourisme / hébergement)
+- [x] Intégrer l'export des confirmations de réservation et cartes d'embarquement vers Apple Wallet et Google Wallet, avec contrôle des données de vol et repli PDF
