@@ -663,3 +663,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Traduire à la demande les avis clients authentiques dans la langue active, avec conservation de leur source et de leur langue originale
 - [x] Corriger la connexion WebSocket Vite et la réponse HTML inattendue reçue par le client tRPC
 - [x] Corriger l’affichage du graphique de fidélité lorsque son conteneur est masqué et supprimer l’avertissement de taille
+- [x] Ajouter dans l’espace client un bouton pour exporter le relevé détaillé 3M Rewards au format PDF

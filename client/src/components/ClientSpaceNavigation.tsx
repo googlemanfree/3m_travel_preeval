@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { CalendarDays, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale } from "lucide-react";
+import { CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -42,6 +42,19 @@ export default function ClientSpaceNavigation() {
     { requestId: comparisonRequestId ?? 0 },
     { enabled: Boolean(candidate) && Boolean(comparisonRequestId), retry: false },
   );
+  const exportLoyaltyStatement = trpc.flightBooking.exportMyLoyaltyStatementPdf.useMutation({
+    onSuccess: ({ statementUrl }) => {
+      const link = document.createElement("a");
+      link.href = statementUrl;
+      link.download = `releve-3m-rewards-${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Votre relevé 3M Rewards est prêt au téléchargement.");
+    },
+    onError: () => toast.error("Le relevé n’a pas pu être généré. Veuillez réessayer."),
+  });
 
   const dossierNumber = dossierQuery.data?.data?.application?.dossierNumber ?? null;
   const filteredRequests = useMemo(() => {
@@ -100,6 +113,19 @@ export default function ClientSpaceNavigation() {
           {loyaltyQuery.isLoading ? <p className="text-sm font-bold text-slate-500">Chargement…</p> : <div className="grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.availablePoints ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Points</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-sm font-black capitalize text-blue-800">{loyaltyQuery.data?.account.tier ?? "explorer"}</p><p className="text-[10px] font-bold uppercase text-slate-500">Niveau</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.issuedBookings ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Billets émis</p></div></div>}
         </div>
         {loyaltyQuery.data?.nextTierAt && <p className="mt-4 rounded-xl border border-amber-100 bg-white/75 px-3 py-2 text-xs font-semibold text-amber-900">Encore {Math.max(0, loyaltyQuery.data.nextTierAt - (loyaltyQuery.data.account.lifetimePoints ?? 0))} points avant le niveau {loyaltyQuery.data.nextTier}.</p>}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-100 bg-white/75 p-3">
+          <p className="text-xs text-slate-600">Téléchargez votre relevé personnel comprenant le solde et toutes les opérations 3M Rewards enregistrées.</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-10 shrink-0 rounded-xl border-amber-300 bg-white font-bold text-amber-900 hover:bg-amber-50"
+            onClick={() => exportLoyaltyStatement.mutate()}
+            disabled={!candidate || exportLoyaltyStatement.isPending}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {exportLoyaltyStatement.isPending ? "Préparation…" : "Exporter le relevé PDF"}
+          </Button>
+        </div>
 
         {/* Graphique interactif de fidélité */}
         <div className="mt-5 rounded-2xl border border-amber-200/60 bg-white p-4 shadow-sm">

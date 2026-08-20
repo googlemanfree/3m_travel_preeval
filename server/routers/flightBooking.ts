@@ -399,6 +399,85 @@ export const flightBookingRouter = router({
     };
   }),
 
+  exportMyLoyaltyStatementPdf: candidateProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+
+    const [account] = await db.select().from(flightLoyaltyAccounts)
+      .where(eq(flightLoyaltyAccounts.candidateId, ctx.candidate.id)).limit(1);
+    const transactions = await db.select().from(flightLoyaltyTransactions)
+      .where(eq(flightLoyaltyTransactions.candidateId, ctx.candidate.id))
+      .orderBy(flightLoyaltyTransactions.createdAt);
+
+    const availablePoints = account?.availablePoints ?? 0;
+    const lifetimePoints = account?.lifetimePoints ?? 0;
+    const issuedBookings = account?.issuedBookings ?? 0;
+    const tier = account?.tier ?? "explorer";
+    const exportedAt = new Date();
+
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    doc.setFillColor(15, 45, 91);
+    doc.rect(0, 0, 210, 34, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("3M Travel & Services", 15, 15);
+    doc.setFontSize(11);
+    doc.text("Relevé détaillé 3M Rewards", 15, 23);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Document personnel généré le ${exportedAt.toLocaleString("fr-FR")}`, 15, 29);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.text("Synthèse du compte", 15, 46);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Niveau : ${tier}`, 15, 54);
+    doc.text(`Solde disponible : ${availablePoints.toLocaleString("fr-FR")} points`, 15, 61);
+    doc.text(`Points cumulés : ${lifetimePoints.toLocaleString("fr-FR")}`, 15, 68);
+    doc.text(`Billets émis : ${issuedBookings.toLocaleString("fr-FR")}`, 115, 54);
+    doc.text(`Transactions enregistrées : ${transactions.length.toLocaleString("fr-FR")}`, 115, 61);
+    doc.setFontSize(8);
+    doc.setTextColor(71, 85, 105);
+    doc.text("Les points sont crédités après l’émission humaine et validée d’un billet. Les conditions du programme restent applicables.", 15, 76, { maxWidth: 180 });
+
+    (doc as any).autoTable({
+      startY: 86,
+      head: [["Date", "Référence", "Nature", "Points", "Motif"]],
+      body: transactions.length
+        ? transactions.map((transaction) => [
+            new Date(transaction.createdAt).toLocaleDateString("fr-FR"),
+            `#${transaction.requestId}`,
+            transaction.points >= 0 ? "Gain" : "Utilisation",
+            `${transaction.points >= 0 ? "+" : ""}${transaction.points.toLocaleString("fr-FR")}`,
+            transaction.reason,
+          ])
+        : [["—", "—", "—", "0", "Aucune transaction de fidélité enregistrée."]],
+      styles: { fontSize: 8, cellPadding: 2.7 },
+      headStyles: { fillColor: [30, 64, 175], textColor: [255, 255, 255], fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: { 0: { cellWidth: 27 }, 1: { cellWidth: 23 }, 2: { cellWidth: 26 }, 3: { cellWidth: 25 }, 4: { cellWidth: 79 } },
+      didDrawPage: () => {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Relevé personnel 3M Rewards — à conserver pour votre suivi de voyage.", 15, 290);
+      },
+    });
+
+    const pdfBuffer = Buffer.from(doc.output("arraybuffer"));
+    const { url } = await storagePut(
+      `loyalty-statements/${ctx.candidate.id}/3m-rewards-${exportedAt.toISOString().slice(0, 10)}-${Date.now()}.pdf`,
+      pdfBuffer,
+      "application/pdf",
+    );
+
+    console.info("[3M Rewards] Relevé PDF généré", { candidateId: ctx.candidate.id, transactionCount: transactions.length });
+    return { success: true, statementUrl: url };
+  }),
+
   getMyPartnerQuotes: candidateProcedure
     .input(z.object({ requestId: z.number().int().positive() }))
     .query(async ({ ctx, input }) => {
