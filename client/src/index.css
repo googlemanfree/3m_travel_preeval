@@ -499,20 +499,25 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 }
 
 /*
- * Sur mobile, les CTA et les barres d'action occupent souvent les derniers
- * pixels de l'écran. Les deux contrôles globaux sont donc empilés au-dessus
- * de cette zone, avec un espace constant de 1rem entre eux.
+ * Sur mobile, les trois points de contact globaux sont empilés verticalement :
+ * WhatsApp reste toujours au plus près du bord inférieur, l'assistant de vol
+ * se place au-dessus et Aureol ferme la pile. Cette disposition évite tout
+ * chevauchement, y compris avec la zone sûre des appareils iOS.
  */
 .safe-bottom-floating-whatsapp {
-  bottom: calc(11rem + env(safe-area-inset-bottom));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.safe-bottom-floating-flight {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-chat {
-  bottom: calc(15rem + env(safe-area-inset-bottom));
+  bottom: calc(10.5rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-panel {
-  bottom: calc(15rem + env(safe-area-inset-bottom));
+  bottom: calc(10.5rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 768px) {
@@ -523,6 +528,10 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
   .safe-bottom-floating-chat,
   .safe-bottom-floating-panel {
     bottom: 1.5rem;
+  }
+
+  .safe-bottom-floating-flight {
+    bottom: 6rem;
   }
 }
 

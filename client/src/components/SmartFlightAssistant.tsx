@@ -159,7 +159,7 @@ export const SmartFlightAssistant = () => {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="safe-bottom-floating-flight fixed right-4 z-50 md:right-6">
       <AnimatePresence>
         {!isOpen && (
           <motion.button
