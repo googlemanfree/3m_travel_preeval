@@ -290,7 +290,7 @@ export function SecureDocumentUploadWithAI({
           </p>
           <p className="text-xs text-blue-600 font-medium mb-4 flex items-center gap-1">
             <Zap className="w-3 h-3" />
-            Analyse IA de lisibilité automatique
+            Vérification automatique de la lisibilité
           </p>
 
           <Button
@@ -472,7 +472,7 @@ export function SecureDocumentUploadWithAI({
       <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-blue-700">
-          Analyse IA sécurisée: Vos documents sont chiffrés et analysés automatiquement pour vérifier leur lisibilité. Seuls les documents acceptables seront traités.
+          Vérification sécurisée : vos documents sont chiffrés et contrôlés automatiquement pour confirmer leur lisibilité. Seuls les documents exploitables seront traités.
         </p>
       </div>
     </div>

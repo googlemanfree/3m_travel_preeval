@@ -169,7 +169,7 @@ export function ValidationStep({
           <h3 className={`font-semibold ${entryMode === 'ai' ? 'text-emerald-950' : 'text-amber-950'}`}>{entryMode === 'ai' ? 'Vérifiez les informations extraites' : 'Saisissez les informations de votre passeport'}</h3>
           <p className={`mt-1 text-sm ${entryMode === 'ai' ? 'text-emerald-800' : 'text-amber-800'}`}>
             {entryMode === 'ai'
-              ? 'L’IA a préparé ces données à partir de votre passeport. Modifiez directement les champs qui ne correspondent pas à votre document, puis confirmez.'
+              ? 'Les données ont été préremplies à partir de votre passeport. Modifiez directement les champs qui ne correspondent pas à votre document, puis confirmez.'
               : analysisNotice || 'Complétez les informations visibles sur la page biographique de votre passeport, puis confirmez pour poursuivre votre demande.'}
           </p>
         </div>

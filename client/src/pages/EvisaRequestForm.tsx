@@ -219,7 +219,7 @@ export default function EvisaRequestForm() {
     {
       id: 'upload',
       label: 'Téléchargement',
-      description: 'Téléchargez votre passeport pour l\'analyse IA',
+      description: 'Téléchargez votre passeport pour préparer les informations du formulaire',
     },
     {
       id: 'validation',
@@ -453,7 +453,7 @@ export default function EvisaRequestForm() {
             Demande d'E-Visa - {formData.countryName}
           </h1>
           <p className="text-gray-600 mb-4">
-            Formulaire intelligent et assisté par IA avec validation par nos experts.
+            Formulaire sécurisé avec validation par nos experts.
           </p>
 
           {/* Message brouillon sauvegardé */}
@@ -544,10 +544,10 @@ export default function EvisaRequestForm() {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-blue-600" />
-                  Téléchargement du Passeport (Analyse IA)
+                  Téléchargement du passeport
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Téléchargez votre passeport et l'IA extraira automatiquement vos informations pour pré-remplir le formulaire.
+                  Téléchargez votre passeport : les informations utiles seront préremplies afin que vous puissiez les vérifier avant de poursuivre.
                 </p>
                 <FileUploadField
                   onFileSelect={handleFileSelect}

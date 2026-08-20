@@ -509,15 +509,15 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 }
 
 .safe-bottom-floating-flight {
-  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  bottom: calc(6.5rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-chat {
-  bottom: calc(10.5rem + env(safe-area-inset-bottom));
+  bottom: calc(12rem + env(safe-area-inset-bottom));
 }
 
 .safe-bottom-floating-panel {
-  bottom: calc(10.5rem + env(safe-area-inset-bottom));
+  bottom: calc(12rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 768px) {

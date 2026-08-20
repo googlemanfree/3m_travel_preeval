@@ -285,7 +285,7 @@ export default function TravelSearchHero() {
             {activeTab === "evaluation" && (
               <motion.div key="evaluation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="text-center py-4">
                 <ClipboardCheck className="w-8 h-8 text-[#2563eb] mx-auto mb-3" />
-                <p className="text-gray-600 mb-4 text-sm">Évaluez gratuitement votre profil pour l'immigration, analysé par notre IA — résultat par email et dans votre espace.</p>
+                <p className="text-gray-600 mb-4 text-sm">Évaluez gratuitement votre profil pour l'immigration, avec un bilan transmis par e-mail et dans votre espace personnel.</p>
                 <Button onClick={() => setLocation("/evaluation")} className="bg-[#2563eb] hover:bg-[#1e3a8a] font-bold">
                   Démarrer mon évaluation gratuite
                 </Button>

@@ -13,11 +13,11 @@ export function PassportAssistanceWidget() {
           </div>
           <div>
             <h4 className="text-sm font-bold text-blue-950 flex items-center gap-2">
-              Assistant Intelligent de Saisie Passeport 🛂
+              Guide de saisie du passeport 🛂
               <span className="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-semibold">Conseils d’experts 3M</span>
             </h4>
             <p className="text-xs text-blue-700 mt-0.5">
-              Cliquez pour consulter les critères consulaires et maximiser le taux de reconnaissance IA à 100%.
+              Cliquez pour consulter les critères consulaires et optimiser la lecture de votre document.
             </p>
           </div>
         </div>

@@ -669,3 +669,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une bannière de nouvelle version, la réinitialisation manuelle du cache dans l’espace client, un indicateur hors ligne et la compétence réutilisable PWA
 - [x] Identifier et supprimer le dernier chargement résiduel du client HMR Vite dans les sessions de prévisualisation
 - [x] Ajouter une page d’état système, un diagnostic réseau réservé aux administrateurs, un indicateur de connectivité temps réel et une compétence réutilisable
+- [x] Réaliser un audit complet des routes, parcours, console, API, PWA et synchronisations client-admin, puis corriger les erreurs reproductibles
+- [x] Supprimer le double en-tête de la page legacy `/evisa` en s’appuyant uniquement sur la navigation globale
+- [x] Réespacer la pile mobile WhatsApp, assistant de vol et messagerie pour empêcher tout chevauchement visuel
+- [x] Corriger les avertissements serveur résiduels identifiés par l’audit (santé tRPC et suppression de cookie Express)
+- [x] Exécuter les tests, le contrôle TypeScript, les validations des routes prioritaires et la revue console finale
+- [x] Retirer les mentions d’outils internes encore visibles dans les textes publics identifiés par la revue des pages

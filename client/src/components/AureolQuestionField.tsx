@@ -34,7 +34,7 @@ export default function AureolQuestionField() {
             <div className="max-w-2xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-blue-700">
                 <Sparkles className="h-4 w-4" />
-                Assistant IA Aureol
+                Aureol · Guide procédures
               </div>
               <h2 id="aureol-question-title" className="text-2xl font-extrabold text-slate-900 md:text-3xl">
                 Une question sur votre procédure ?

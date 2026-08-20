@@ -52,11 +52,23 @@ describe("auth.logout", () => {
     expect(clearedCookies).toHaveLength(1);
     expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
     expect(clearedCookies[0]?.options).toMatchObject({
-      maxAge: -1,
       secure: true,
       sameSite: "none",
       httpOnly: true,
       path: "/",
     });
+    expect(clearedCookies[0]?.options.expires).toEqual(new Date(0));
+  });
+});
+
+describe("health.check", () => {
+  it("retourne un état minimal compatible avec les contrôles de disponibilité", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.health.check();
+
+    expect(result.ok).toBe(true);
+    expect(result.checkedAt).toBeInstanceOf(Date);
   });
 });

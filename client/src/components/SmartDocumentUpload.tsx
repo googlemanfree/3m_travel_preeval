@@ -281,7 +281,7 @@ export function SmartDocumentUpload({
           </p>
           <p className="text-xs text-blue-600 font-medium mb-4 flex items-center gap-1">
             <Zap className="w-3 h-3" />
-            Classification IA automatique
+            Identification automatique du type de document
           </p>
 
           <Button
@@ -475,7 +475,7 @@ export function SmartDocumentUpload({
       <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
         <Lock className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-blue-700">
-          Classification IA sécurisée: Vos documents sont analysés automatiquement pour identifier leur type et les classer dans le bon dossier. Les données sont chiffrées et sécurisées.
+          Traitement sécurisé : vos documents sont contrôlés automatiquement afin d’identifier leur type et de les classer dans le bon dossier. Les données sont chiffrées et protégées.
         </p>
       </div>
     </div>

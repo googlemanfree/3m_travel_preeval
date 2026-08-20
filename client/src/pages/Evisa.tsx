@@ -5,7 +5,6 @@ import GlobalMobilityIllustration from '@/components/illustrations/GlobalMobilit
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import Navbar from '@/components/Navbar';
 import { Link } from 'wouter';
 
 type Continent = 'tous' | 'afrique' | 'asie' | 'ameriques' | 'europe';
@@ -205,8 +204,6 @@ export default function Evisa() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <Navbar />
-
       {/* Hero + Search */}
       <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">

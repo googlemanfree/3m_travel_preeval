@@ -31,8 +31,19 @@ export async function setupVite(app: Express, server: Server) {
         prune: () => {}, decline: () => {}, invalidate: () => {}, on: () => {}, send: () => {}
       });
       export const injectQuery = (url) => url;
-      export const updateStyle = () => {};
-      export const removeStyle = () => {};
+      export const updateStyle = (id, css) => {
+        const selector = 'style[data-3m-vite-css="' + CSS.escape(id) + '"]';
+        let style = document.querySelector(selector);
+        if (!style) {
+          style = document.createElement('style');
+          style.dataset['3mViteCss'] = id;
+          document.head.appendChild(style);
+        }
+        style.textContent = css;
+      };
+      export const removeStyle = (id) => {
+        document.querySelector('style[data-3m-vite-css="' + CSS.escape(id) + '"]')?.remove();
+      };
       export const waitForRequestsIdle = () => Promise.resolve();
     `;
     res.status(200).set({ "Content-Type": "application/javascript", "Cache-Control": "no-store" }).end(shim);

@@ -122,9 +122,9 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
       addText(`Évaluation: ${candidate.scoringBadge.toUpperCase()}`, 11, true, [76, 175, 80]);
       yPosition += 3;
 
-      // ─── RÉSUMÉ IA ───
+      // ─── RÉSUMÉ DU PROFIL ───
       if (aiSummary) {
-        addSection("Résumé IA - Analyse du Profil");
+        addSection("Résumé du profil");
 
         if (aiSummary.overallAssessment) {
           addText("Évaluation Générale:", 11, true);
@@ -159,7 +159,7 @@ export function PDFExporter({ candidate, aiSummary, interviewQuestions }: PDFExp
 
       // ─── QUESTIONS D'ENTRETIEN ───
       if (interviewQuestions && interviewQuestions.length > 0) {
-        addSection("Questions d'Entretien Générées par l'IA");
+        addSection("Questions d’entretien proposées");
 
         interviewQuestions.forEach((q, index) => {
           const categoryLabel = {

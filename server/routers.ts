@@ -83,13 +83,21 @@ import { evaluationRouter as evaluationRouterNew } from "./routers/evaluationRou
 export const appRouter = router({
   // Système et authentification
   system: systemRouter,
+  // Alias de compatibilité pour les vérifications de disponibilité déjà
+  // déployées. Aucun état sensible n’est exposé par cette procédure publique.
+  health: router({
+    check: publicProcedure.query(() => ({
+      ok: true,
+      checkedAt: new Date(),
+    })),
+  }),
   signup: signupRouter,
   simpleAuth: simpleAuthRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, expires: new Date(0) });
       return {
         success: true,
       } as const;

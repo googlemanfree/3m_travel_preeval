@@ -42,7 +42,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 function PrefillLabel({ children, active }: { children: React.ReactNode; active: boolean }) {
-  return <div className="flex min-h-5 items-center justify-between gap-2"><Label>{children}</Label>{active && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-800"><Sparkles className="h-3 w-3" />Pré-rempli par IA</span>}</div>;
+  return <div className="flex min-h-5 items-center justify-between gap-2"><Label>{children}</Label>{active && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-800"><Sparkles className="h-3 w-3" />Pré-rempli depuis le CV</span>}</div>;
 }
 
 function ProjectDetailsSection({ projectType, values, onChange, countryFields, procedure }: { projectType: EvaluationProjectType; values: Record<string, string>; onChange: (key: string, value: string) => void; countryFields: ReturnType<typeof getCountryProcedureFields>; procedure?: ProcedureGuide }) {
@@ -312,7 +312,7 @@ export default function Evaluation() {
     setAutoFilledFields(new Set());
     setAutoFilledValues({});
     setPrefillOriginalValues({});
-    setCvAnalysisNotice('Le pré-remplissage IA a été annulé. Vos modifications manuelles sont conservées.');
+    setCvAnalysisNotice('Le pré-remplissage a été annulé. Vos modifications manuelles sont conservées.');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -701,7 +701,7 @@ export default function Evaluation() {
                     <div className="mt-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-3 text-sm text-indigo-800" role="status" aria-live="polite">
                       <div className="flex items-center gap-2">
                         <Sparkles className="h-4 w-4 shrink-0" aria-hidden="true" />
-                        <span>{autoFilledFields.size} champ(s) pré-rempli(s) depuis votre CV — repérez le badge « Pré-rempli par IA » et vérifiez chaque valeur.</span>
+                        <span>{autoFilledFields.size} champ(s) pré-rempli(s) depuis votre CV — repérez le badge « Pré-rempli depuis le CV » et vérifiez chaque valeur.</span>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button type="button" size="sm" variant="outline" disabled={!cvFile || isExtractingCv} onClick={reanalyzeCv} className="border-indigo-300 bg-white text-indigo-800 hover:bg-indigo-100">

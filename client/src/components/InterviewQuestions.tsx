@@ -90,7 +90,7 @@ export function InterviewQuestions({ candidate, aiSummary }: InterviewQuestionsP
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-amber-500" />
-          <Label className="text-lg font-semibold">Questions d'Entretien Générées par l'IA</Label>
+          <Label className="text-lg font-semibold">Questions d’entretien proposées</Label>
         </div>
         <Button
           onClick={generateQuestions}
