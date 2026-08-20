@@ -20,6 +20,38 @@ export async function setupVite(app: Express, server: Server) {
     server: serverOptions,
     appType: "custom",
   });
+  // Les modules CSS Vite peuvent encore demander /@vite/client même si l’entrée
+  // React a été nettoyée. Le proxy de prévisualisation ne transporte pas HMR :
+  // fournir une API no-op compatible évite l’ouverture d’un WebSocket sans
+  // désactiver la transformation des styles par Vite.
+  app.use("/@vite/client", (_req, res) => {
+    const shim = `
+      export const createHotContext = () => ({
+        data: {}, accept: () => {}, acceptExports: () => {}, dispose: () => {},
+        prune: () => {}, decline: () => {}, invalidate: () => {}, on: () => {}, send: () => {}
+      });
+      export const injectQuery = (url) => url;
+      export const updateStyle = () => {};
+      export const removeStyle = () => {};
+      export const waitForRequestsIdle = () => Promise.resolve();
+    `;
+    res.status(200).set({ "Content-Type": "application/javascript", "Cache-Control": "no-store" }).end(shim);
+  });
+  // En mode middleware, Vite injecte encore `import "/@vite/client"` dans
+  // l’entrée React. Le proxy de prévisualisation ne relaie pas ce WebSocket :
+  // servir cette unique entrée sans le client HMR évite l’erreur console tout
+  // en laissant Vite transformer les autres modules normalement.
+  app.use(async (req, res, next) => {
+    if (req.path !== "/src/main.tsx") return next();
+    try {
+      const transformed = await vite.transformRequest("/src/main.tsx");
+      if (!transformed?.code) return next();
+      const code = transformed.code.replace(/import\s+["']\/@vite\/client(?:\?[^"']*)?["'];?\s*/g, "");
+      res.status(200).set({ "Content-Type": "application/javascript" }).end(code);
+    } catch (error) {
+      next(error);
+    }
+  });
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
