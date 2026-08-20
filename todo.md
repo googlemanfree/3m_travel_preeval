@@ -675,3 +675,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger les avertissements serveur résiduels identifiés par l’audit (santé tRPC et suppression de cookie Express)
 - [x] Exécuter les tests, le contrôle TypeScript, les validations des routes prioritaires et la revue console finale
 - [x] Retirer les mentions d’outils internes encore visibles dans les textes publics identifiés par la revue des pages
+- [x] Vérifier la visibilité et le point d’entrée de 3M Booking dans le parcours Billets, puis renforcer son accès si nécessaire
+- [x] Auditer les contrats de synchronisation entre demandes client et espaces administrateurs pour les services prioritaires
+- [x] Revalider les tests et les parcours améliorés avant la prochaine publication
+- [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

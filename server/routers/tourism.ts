@@ -43,7 +43,7 @@ export const tourismRouter = router({
         briefing = rawContent.map(part => ('text' in part ? part.text : '')).join(' ');
       }
     } catch { /* repli transparent */ }
-    return { places, briefing, sourceNote: "Suggestions Google et aperçu IA à titre informatif. Tarifs et disponibilités à confirmer par l’agence." };
+    return { places, briefing, sourceNote: "Suggestions de lieux à titre informatif. Tarifs et disponibilités à confirmer par l’agence." };
   }),
   create: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });

@@ -853,23 +853,23 @@ export default function Flights() {
         </div>
       </div>
 
-      <FlightQuoteRequest />
-
       <section id="3m-booking" className="scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
         <ThreeMBookingExperience />
       </section>
 
-      {/* AI Flight Planner Assistant Section */}
+      <FlightQuoteRequest />
+
+      {/* Travel planner section */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card bg-gradient-to-r from-blue-900/90 via-indigo-900/90 to-slate-900/90 text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-blue-500/20 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
             <div className="space-y-2 max-w-xl">
               <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-400/30 px-3 py-1 rounded-full text-xs font-semibold text-blue-200">
-                <Sparkles className="w-3.5 h-3.5 text-blue-300 animate-pulse" /> Assistant IA Aureol • Planificateur de Vol & Voyage
+                <Sparkles className="w-3.5 h-3.5 text-blue-300 animate-pulse" /> Aureol · Conseiller voyage
               </div>
               <h2 className="text-xl md:text-2xl font-black">Besoin d'un itinéraire sur-mesure ou de conseils pour votre correspondance ?</h2>
-              <p className="text-blue-100 text-xs md:text-sm">Interrogez notre assistant intelligent pour obtenir un plan de vol optimal et des recommandations de voyage adaptées.</p>
+              <p className="text-blue-100 text-xs md:text-sm">Décrivez votre projet pour préparer un itinéraire et des recommandations adaptés à votre voyage.</p>
             </div>
             
             <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3">
@@ -880,14 +880,14 @@ export default function Flights() {
                 }}
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold text-xs px-6 py-3.5 rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4" /> Planifier avec Aureol IA
+                <Sparkles className="w-4 h-4" /> Planifier avec Aureol
               </button>
             </div>
           </div>
         </motion.div>
       </div>
 
-      {/* AI Planner Modal */}
+      {/* Travel planner modal */}
       <div id="ai-planner-modal" className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md hidden items-center justify-center p-4">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-900 rounded-3xl max-w-xl w-full p-6 md:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
@@ -896,8 +896,8 @@ export default function Flights() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Aureol • Assistant Planification Vol</h3>
-                <p className="text-xs text-slate-500">Générez un itinéraire intelligent basé sur vos critères</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Aureol • Préparer mon itinéraire</h3>
+                <p className="text-xs text-slate-500">Préparez un itinéraire selon vos critères de voyage</p>
               </div>
             </div>
             <button
@@ -1153,7 +1153,7 @@ function AIPlannerForm() {
 
           <button type="submit" disabled={planMutation.isPending} className="w-full mt-3 bg-[#1E3A8A] hover:bg-blue-900 text-white font-bold py-3 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2">
             {planMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            {planMutation.isPending ? "Génération par Aureol IA..." : "Générer mon plan de voyage"}
+            {planMutation.isPending ? "Préparation de votre plan..." : "Préparer mon plan de voyage"}
           </button>
         </form>
       ) : (

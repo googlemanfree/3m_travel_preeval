@@ -81,7 +81,13 @@ export function ThreeMBookingExperience() {
       hotelCategory,
       budgetXaf: budget ? Number(budget) : undefined,
       notes: requestNote,
-      enrichment: { selectedPlace, rooms, source: "3M Booking" },
+      enrichment: {
+        selectedPlace,
+        rooms,
+        source: "3M Booking",
+        briefing: discoverMutation.data?.briefing ?? null,
+        places: discoverMutation.data?.places ?? [],
+      },
     });
   }
 

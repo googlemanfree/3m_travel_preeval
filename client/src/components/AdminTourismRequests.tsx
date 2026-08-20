@@ -308,8 +308,9 @@ export function AdminTourismRequests() {
                   const enrichment = JSON.parse(selectedRequest.enrichmentJson);
                   return (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                      <span className="text-xs font-bold text-amber-900">Aperçu IA & Google Places associé :</span>
-                      <p className="mt-1 text-xs text-slate-700">{enrichment.briefing}</p>
+                      <span className="text-xs font-bold text-amber-900">Recherche associée à la demande :</span>
+                      {enrichment.selectedPlace && <p className="mt-1 text-xs font-semibold text-slate-800">Établissement retenu : {enrichment.selectedPlace.name}{enrichment.selectedPlace.address ? ` — ${enrichment.selectedPlace.address}` : ""}</p>}
+                      {enrichment.briefing && <p className="mt-1 text-xs text-slate-700">{enrichment.briefing}</p>}
                       {enrichment.places?.length > 0 && (
                         <div className="mt-3 grid grid-cols-2 gap-2">
                           {enrichment.places.map((p: any) => (
