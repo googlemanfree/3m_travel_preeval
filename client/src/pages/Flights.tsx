@@ -8,7 +8,7 @@ import {
   Plane, ArrowLeftRight, Calendar, Users, ChevronDown, Search,
   Filter, X, ArrowRight, Clock, MapPin, Star, MessageCircle,
   Briefcase, Baby, ChevronLeft, ChevronRight, AlertCircle, Wifi,
-  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag,
+  Luggage, RefreshCw, SlidersHorizontal, Sparkles, ShoppingBag, BedDouble,
 } from "lucide-react";
 import { Link } from "wouter";
 import Footer from "@/components/Footer";
@@ -732,6 +732,13 @@ export default function Flights() {
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-black text-white mb-2">Recherche de Vols</h1>
             <p className="text-blue-200 text-sm">Comparez les meilleurs tarifs en temps réel · Toutes destinations mondiales</p>
+            <a
+              href="#3m-booking"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/35 bg-slate-950/25 px-4 py-2 text-xs font-black text-white shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-[#1E3A8A]"
+            >
+              <BedDouble className="h-4 w-4" /> 3M Booking — Hôtels & séjours
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </motion.div>
 
           {/* Trip type tabs */}
@@ -848,7 +855,9 @@ export default function Flights() {
 
       <FlightQuoteRequest />
 
-      <ThreeMBookingExperience />
+      <section id="3m-booking" className="scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
+        <ThreeMBookingExperience />
+      </section>
 
       {/* AI Flight Planner Assistant Section */}
       <div className="max-w-7xl mx-auto px-4 py-6">
