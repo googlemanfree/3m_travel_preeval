@@ -470,6 +470,16 @@ export default function FlightBookingCheckout() {
                 </div>
                 <div className="my-4 border-t border-slate-100" />
                 <div className="flex items-end justify-between gap-3"><span className="text-sm font-semibold text-slate-600">Total {selection?.isSimulated ? "indicatif" : "estimé"}</span><span className="text-right text-2xl font-black text-blue-950">{selectedFlight ? formatXaf(selectedFlight.totalPrice) : "À confirmer"}</span></div>
+                
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  <div className="flex items-center gap-2 font-black text-amber-950">
+                    <span>🎁 Programme 3M Rewards</span>
+                  </div>
+                  <p className="mt-1 leading-relaxed">
+                    Vous allez gagner <strong className="text-amber-950 font-black">+100 points</strong> fidélité avec cet achat. <span className="block mt-0.5 text-[11px] text-amber-800">Le crédit effectif sera disponible sur votre compte dès l'émission validée et confirmée par l'agence.</span>
+                  </p>
+                </div>
+
                 <p className="text-[11px] leading-5 text-slate-400">Le tarif affiché doit être revalidé par l’agence avant l’émission du billet électronique.</p>
               </div>
             </form>

@@ -653,3 +653,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger l’alignement responsive des actions flottantes pour rendre WhatsApp, le chatbot et les raccourcis entièrement visibles
 - [x] Créer dans Billets une expérience originale 3M Booking de recherche d’hébergement, inspirée des bonnes pratiques des grandes plateformes sans reprendre leur design ou leurs contenus
 - [x] Permettre aux utilisateurs d'utiliser leurs points de fidélité pour obtenir des réductions directes sur leurs réservations de vol (vérification du solde, taux de conversion, plafond de réduction et trace d'audit)
+- [x] Afficher une notification claire lors de la réservation de vol indiquant le nombre de points fidélité estimés à gagner (avec précision que le crédit intervient après l'émission validée)
