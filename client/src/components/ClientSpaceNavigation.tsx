@@ -99,6 +99,76 @@ export default function ClientSpaceNavigation() {
           {loyaltyQuery.isLoading ? <p className="text-sm font-bold text-slate-500">Chargement…</p> : <div className="grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.availablePoints ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Points</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-sm font-black capitalize text-blue-800">{loyaltyQuery.data?.account.tier ?? "explorer"}</p><p className="text-[10px] font-bold uppercase text-slate-500">Niveau</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.issuedBookings ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Billets émis</p></div></div>}
         </div>
         {loyaltyQuery.data?.nextTierAt && <p className="mt-4 rounded-xl border border-amber-100 bg-white/75 px-3 py-2 text-xs font-semibold text-amber-900">Encore {Math.max(0, loyaltyQuery.data.nextTierAt - (loyaltyQuery.data.account.lifetimePoints ?? 0))} points avant le niveau {loyaltyQuery.data.nextTier}.</p>}
+
+        {/* Graphique interactif de fidélité */}
+        <div className="mt-5 rounded-2xl border border-amber-200/60 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">Évolution de votre solde de points</h4>
+              <p className="text-[11px] text-slate-500">Suivi chronologique des gains et utilisations de points 3M Rewards</p>
+            </div>
+            <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-black uppercase text-amber-800">
+              {loyaltyQuery.data?.transactions?.length ?? 0} transaction(s)
+            </span>
+          </div>
+
+          <div className="mt-4">
+            {loyaltyQuery.isLoading ? (
+              <div className="py-8 text-center text-xs text-slate-400">Chargement du graphique…</div>
+            ) : !loyaltyQuery.data?.transactions || loyaltyQuery.data.transactions.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-xs text-slate-500">
+                Aucune transaction de fidélité enregistrée pour le moment. Réservez un vol et faites valider votre billet pour cumuler vos premiers points !
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Représentation graphique en barres / points cumulés */}
+                <div className="h-36 w-full flex items-end gap-3 pt-6 px-2 border-b border-slate-200 pb-2">
+                  {(() => {
+                    const txs = [...loyaltyQuery.data.transactions].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                    let runningTotal = 0;
+                    const pointsSeries = txs.map(tx => {
+                      runningTotal += tx.pointsChange;
+                      return {
+                        date: new Date(tx.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+                        change: tx.pointsChange,
+                        total: runningTotal,
+                        description: tx.description
+                      };
+                    });
+                    const maxPts = Math.max(100, ...pointsSeries.map(p => p.total));
+
+                    return pointsSeries.map((item, idx) => {
+                      const heightPercent = Math.max(15, Math.min(100, Math.round((item.total / maxPts) * 100)));
+                      const isPositive = item.change >= 0;
+                      return (
+                        <div key={idx} className="flex-1 flex flex-col items-center h-full justify-end group relative">
+                          {/* Infobulle au survol */}
+                          <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-bold rounded-lg px-2 py-1 pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                            {item.date} : {isPositive ? `+${item.change}` : item.change} pts (Solde : {item.total})
+                          </div>
+                          <div className="text-[10px] font-black text-slate-600 mb-1">{item.total}</div>
+                          <div
+                            className={`w-full max-w-[36px] rounded-t-lg transition-all ${isPositive ? 'bg-amber-500 hover:bg-amber-600' : 'bg-rose-500 hover:bg-rose-600'}`}
+                            style={{ height: `${heightPercent}%` }}
+                          />
+                          <div className="mt-2 text-[10px] font-semibold text-slate-500 truncate max-w-[50px]">{item.date}</div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                  <span>Historique des flux de points 3M Rewards</span>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Gains</span>
+                    <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Utilisation</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </Card>
 
       <Card className="border-sky-100 bg-sky-50/70 p-5 shadow-sm">
