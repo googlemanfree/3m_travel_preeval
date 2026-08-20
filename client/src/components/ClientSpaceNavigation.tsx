@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, WifiOff } from "lucide-react";
+import { BedDouble, CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, WifiOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -10,6 +10,7 @@ import { resetPwaCache } from "@/lib/pwaClient";
 
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
+  { href: "/flights#3m-booking", label: "Mes séjours", description: "Suivre une demande d’hôtel", icon: BedDouble, tone: "bg-orange-50 text-orange-700" },
   { href: "/mon-dossier", label: "Mon dossier", description: "Voir l’avancement de votre dossier", icon: FolderOpen, tone: "bg-indigo-50 text-indigo-700" },
   { href: "/document-upload", label: "Mes documents", description: "Déposer ou consulter vos fichiers", icon: FileText, tone: "bg-emerald-50 text-emerald-700" },
   { href: "/mes-vols-favoris", label: "Vols favoris", description: "Gérer vos itinéraires enregistrés", icon: Heart, tone: "bg-rose-50 text-rose-700" },
@@ -28,6 +29,25 @@ const statusLabels: Record<string, string> = {
   cancelled: "Annulée",
 };
 
+const hotelStatusTone: Record<string, string> = {
+  amber: "bg-amber-100 text-amber-900",
+  blue: "bg-blue-100 text-blue-900",
+  violet: "bg-violet-100 text-violet-900",
+  emerald: "bg-emerald-100 text-emerald-900",
+  slate: "bg-slate-200 text-slate-900",
+  rose: "bg-rose-100 text-rose-900",
+};
+
+function selectedHotelFromEnrichment(enrichmentJson: string | null) {
+  try {
+    const enrichment = enrichmentJson ? JSON.parse(enrichmentJson) : null;
+    const selectedPlace = enrichment?.selectedPlace;
+    return selectedPlace?.name ? { name: String(selectedPlace.name), address: selectedPlace.address ? String(selectedPlace.address) : null } : null;
+  } catch {
+    return null;
+  }
+}
+
 type DateFilter = "all" | "7" | "30" | "older";
 
 export default function ClientSpaceNavigation() {
@@ -35,6 +55,7 @@ export default function ClientSpaceNavigation() {
   const { candidate } = useCandidateAuth();
   const dossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, { enabled: Boolean(candidate) });
   const requestsQuery = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled: Boolean(candidate) });
+  const hotelRequestsQuery = trpc.tourism.myRequests.useQuery(undefined, { enabled: Boolean(candidate) });
   const loyaltyQuery = trpc.flightBooking.getMyLoyalty.useQuery(undefined, { enabled: Boolean(candidate) });
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
@@ -332,6 +353,41 @@ export default function ClientSpaceNavigation() {
             </div>
           </div>
         </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}
+      </Card>
+
+      <Card className="border-orange-100 bg-orange-50/60 p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="flex items-center gap-2 text-base font-black text-orange-950"><BedDouble className="h-5 w-5 text-orange-700" /> Mes séjours & hébergements</h3>
+            <p className="mt-1 text-xs text-orange-900">Suivez les demandes d’hôtel transmises via 3M Booking, de la réception jusqu’à la confirmation.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" onClick={() => hotelRequestsQuery.refetch()} disabled={hotelRequestsQuery.isFetching} className="h-11 rounded-xl border-orange-200 bg-white font-bold text-orange-900 hover:bg-orange-50"><RefreshCw className={`mr-2 h-4 w-4 ${hotelRequestsQuery.isFetching ? "animate-spin" : ""}`} /> Actualiser</Button>
+            <a href="/flights#3m-booking" className="inline-flex h-11 items-center justify-center rounded-xl bg-orange-500 px-4 text-sm font-bold text-white hover:bg-orange-600"><Plus className="mr-2 h-4 w-4" /> Nouvelle demande</a>
+          </div>
+        </div>
+
+        {hotelRequestsQuery.isLoading ? <p className="mt-4 text-xs text-orange-800">Chargement de vos séjours…</p> : !hotelRequestsQuery.data?.length ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-orange-200 bg-white/75 p-5 text-center">
+            <BedDouble className="mx-auto h-8 w-8 text-orange-300" />
+            <p className="mt-2 text-sm font-bold text-slate-800">Aucune demande d’hébergement pour le moment.</p>
+            <p className="mt-1 text-xs text-slate-600">Utilisez 3M Booking pour transmettre une demande d’hôtel ou de séjour à l’agence.</p>
+          </div>
+        ) : <div className="mt-4 grid gap-3 md:grid-cols-2">{hotelRequestsQuery.data.map((request) => {
+          const meta = request.tracking;
+          const selectedHotel = selectedHotelFromEnrichment(request.enrichmentJson);
+          const isCancelled = request.status === "cancelled";
+          return <article key={request.id} className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="font-mono text-xs font-black text-orange-800">{request.reference}</p><h4 className="mt-1 text-sm font-black text-slate-900">{selectedHotel?.name ?? `Séjour à ${request.destination}`}</h4><p className="mt-1 text-xs text-slate-600">{request.destination}{selectedHotel?.address ? ` · ${selectedHotel.address}` : ""}</p></div>
+              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${hotelStatusTone[meta.tone] ?? hotelStatusTone.amber}`}>{meta.label}</span>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-700"><p><span className="block font-bold text-slate-500">Séjour</span>{request.departureDate ? new Date(request.departureDate).toLocaleDateString("fr-FR") : "Dates à préciser"}{request.returnDate ? ` → ${new Date(request.returnDate).toLocaleDateString("fr-FR")}` : ""}</p><p><span className="block font-bold text-slate-500">Voyageurs</span>{request.travelersCount} voyageur(s)</p></div>
+            <div className="mt-4"><div className="flex items-center gap-1.5" aria-label={`Progression : ${meta.label}`}>{[1, 2, 3, 4].map((step) => <span key={step} className={`h-1.5 flex-1 rounded-full ${!isCancelled && step <= meta.step ? "bg-orange-500" : "bg-slate-200"}`} />)}</div><p className="mt-2 text-xs font-medium text-slate-700">{meta.detail}</p></div>
+            {request.quotedPriceXaf && <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900">Devis validé par l’agence : {request.quotedPriceXaf.toLocaleString("fr-FR")} XAF</div>}
+            <p className="mt-3 text-[11px] text-slate-500">Dernière mise à jour : {new Date(request.updatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</p>
+          </article>;
+        })}</div>}
       </Card>
 
       {comparisonRequestId && <Card className="border-sky-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Comparateur transparent</p><h3 className="mt-1 text-base font-black text-slate-900">Devis partenaires vérifiés</h3><p className="mt-1 text-xs text-slate-600">Seuls les devis saisis et vérifiés par l’agence sont affichés. Aucun prix tiers n’est estimé ou inventé.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setComparisonRequestId(null)}>Fermer</Button></div>{partnerQuotesQuery.isLoading ? <p className="mt-4 text-sm text-slate-500">Chargement des devis…</p> : partnerQuotesQuery.data?.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{quote.partnerName}</p><p className="mt-1 text-xs text-slate-500">Vérifié le {new Date(quote.verifiedAt).toLocaleDateString("fr-FR")}</p></div><p className="text-base font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</p></div>{quote.fareDetails && <p className="mt-3 text-xs text-slate-700"><strong>Tarif :</strong> {quote.fareDetails}</p>}{quote.baggageDetails && <p className="mt-2 text-xs text-slate-700"><strong>Bagages :</strong> {quote.baggageDetails}</p>}{quote.terms && <p className="mt-2 text-xs text-slate-600"><strong>Conditions :</strong> {quote.terms}</p>}</div>)}</div> : <p className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">Aucun devis partenaire vérifié n’est encore disponible pour cette réservation. Votre conseiller peut ajouter une comparaison dès réception d’une offre réelle.</p>}</Card>}

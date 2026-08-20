@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, or } from "drizzle-orm";
 import { adminNotifications, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
@@ -9,6 +9,7 @@ import { makeRequest, type PlacesSearchResult } from "../_core/map";
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireAdminSessionFromCookie } from "./adminAuth";
+import { candidateProcedure, findCandidateFromAuthorizationHeader } from "./candidate";
 
 const serviceType = z.enum(["hotel", "vehicle", "pack"]);
 export type TourismServiceType = z.infer<typeof serviceType>;
@@ -23,6 +24,19 @@ const requestSchema = z.object({
 }).refine(v => !v.returnDate || !v.departureDate || v.returnDate >= v.departureDate, { message: "La date de retour doit être postérieure à la date de départ." });
 
 const statusSchema = z.enum(["new", "contacted", "quote_sent", "confirmed", "completed", "cancelled"]);
+
+export const tourismTrackingMeta: Record<z.infer<typeof statusSchema>, { label: string; detail: string; tone: string; step: number }> = {
+  new: { label: "Demande reçue", detail: "Votre demande a été transmise à l’équipe 3M.", tone: "amber", step: 1 },
+  contacted: { label: "Prise en charge", detail: "Un conseiller vérifie les disponibilités avec vous.", tone: "blue", step: 2 },
+  quote_sent: { label: "Devis disponible", detail: "Votre proposition est prête à être confirmée avec l’agence.", tone: "violet", step: 3 },
+  confirmed: { label: "Séjour confirmé", detail: "Votre réservation est confirmée par l’agence.", tone: "emerald", step: 4 },
+  completed: { label: "Séjour finalisé", detail: "Cette demande a été finalisée.", tone: "slate", step: 4 },
+  cancelled: { label: "Demande annulée", detail: "Cette demande a été annulée. Contactez l’agence si nécessaire.", tone: "rose", step: 0 },
+};
+
+export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
+  return tourismTrackingMeta[status];
+}
 
 export const tourismRouter = router({
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160) })).mutation(async ({ input }) => {
@@ -45,12 +59,44 @@ export const tourismRouter = router({
     } catch { /* repli transparent */ }
     return { places, briefing, sourceNote: "Suggestions de lieux à titre informatif. Tarifs et disponibilités à confirmer par l’agence." };
   }),
-  create: publicProcedure.input(requestSchema).mutation(async ({ input }) => {
+  create: publicProcedure.input(requestSchema).mutation(async ({ input, ctx }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const linkedCandidate = await findCandidateFromAuthorizationHeader((ctx.req as any)?.headers?.authorization as string | undefined);
+    const owner = linkedCandidate
+      ? { candidateId: linkedCandidate.id, fullName: linkedCandidate.fullName, email: linkedCandidate.email }
+      : { candidateId: null, fullName: input.fullName, email: input.email };
     const reference = `TRM-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-    await db.insert(tourismServiceRequests).values({ reference, fullName: input.fullName, email: input.email, phone: input.phone, destination: input.destination, departureDate: input.departureDate ? new Date(`${input.departureDate}T00:00:00Z`) : null, returnDate: input.returnDate ? new Date(`${input.returnDate}T00:00:00Z`) : null, travelersCount: input.travelersCount, serviceTypesJson: JSON.stringify(buildTourismServiceTypes(input.packType, input.serviceTypes)), packType: input.packType || null, hotelCategory: input.hotelCategory || null, vehicleCategory: input.vehicleCategory || null, pickupLocation: input.pickupLocation || null, budgetXaf: input.budgetXaf ?? null, notes: input.notes || null, enrichmentJson: input.enrichment ? JSON.stringify(input.enrichment) : null });
-    await db.insert(adminNotifications).values({ type: "new_contact_message", title: "Nouvelle demande Tourisme", message: `${input.fullName} — ${input.destination} — ${reference}`, relatedId: reference, targetAdminType: "accompagnement" });
+    await db.insert(tourismServiceRequests).values({ reference, candidateId: owner.candidateId, fullName: owner.fullName, email: owner.email, phone: input.phone, destination: input.destination, departureDate: input.departureDate ? new Date(`${input.departureDate}T00:00:00Z`) : null, returnDate: input.returnDate ? new Date(`${input.returnDate}T00:00:00Z`) : null, travelersCount: input.travelersCount, serviceTypesJson: JSON.stringify(buildTourismServiceTypes(input.packType, input.serviceTypes)), packType: input.packType || null, hotelCategory: input.hotelCategory || null, vehicleCategory: input.vehicleCategory || null, pickupLocation: input.pickupLocation || null, budgetXaf: input.budgetXaf ?? null, notes: input.notes || null, enrichmentJson: input.enrichment ? JSON.stringify(input.enrichment) : null });
+    await db.insert(adminNotifications).values({ type: "new_contact_message", title: "Nouvelle demande Tourisme", message: `${owner.fullName} — ${input.destination} — ${reference}`, relatedId: reference, targetAdminType: "accompagnement" });
     return { reference };
+  }),
+
+  myRequests: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const requests = await db
+      .select({
+        id: tourismServiceRequests.id,
+        reference: tourismServiceRequests.reference,
+        destination: tourismServiceRequests.destination,
+        departureDate: tourismServiceRequests.departureDate,
+        returnDate: tourismServiceRequests.returnDate,
+        travelersCount: tourismServiceRequests.travelersCount,
+        serviceTypesJson: tourismServiceRequests.serviceTypesJson,
+        packType: tourismServiceRequests.packType,
+        hotelCategory: tourismServiceRequests.hotelCategory,
+        vehicleCategory: tourismServiceRequests.vehicleCategory,
+        budgetXaf: tourismServiceRequests.budgetXaf,
+        quotedPriceXaf: tourismServiceRequests.quotedPriceXaf,
+        enrichmentJson: tourismServiceRequests.enrichmentJson,
+        status: tourismServiceRequests.status,
+        createdAt: tourismServiceRequests.createdAt,
+        updatedAt: tourismServiceRequests.updatedAt,
+      })
+      .from(tourismServiceRequests)
+      .where(or(eq(tourismServiceRequests.candidateId, ctx.candidate.id), eq(tourismServiceRequests.email, ctx.candidate.email)))
+      .orderBy(desc(tourismServiceRequests.updatedAt));
+    return requests.map((request) => ({ ...request, tracking: getTourismTrackingMeta(request.status) }));
   }),
 
   adminList: publicProcedure.query(async ({ ctx }) => {

@@ -678,4 +678,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la visibilité et le point d’entrée de 3M Booking dans le parcours Billets, puis renforcer son accès si nécessaire
 - [x] Auditer les contrats de synchronisation entre demandes client et espaces administrateurs pour les services prioritaires
 - [x] Revalider les tests et les parcours améliorés avant la prochaine publication
+- [x] Ajouter une procédure sécurisée permettant au client connecté de consulter uniquement ses demandes 3M Booking
+- [x] Relier les nouvelles demandes 3M Booking au compte candidat afin de garantir la propriété du suivi
+- [x] Afficher un suivi hôtel clair dans l’espace client avec statut, dates, établissement et prochaine étape
+- [x] Vérifier la synchronisation des changements de statut administrateur vers le suivi hôtel client
+- [x] Couvrir le suivi hôtel par des tests d’accès, de propriété et de statut
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
