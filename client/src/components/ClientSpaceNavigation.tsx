@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale } from "lucide-react";
+import { CalendarDays, Download, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale, RefreshCw, WifiOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { resetPwaCache } from "@/lib/pwaClient";
 
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
@@ -97,6 +98,30 @@ export default function ClientSpaceNavigation() {
               <span className="mt-1 block text-xs leading-5 text-slate-500">{description}</span>
             </a>
           ))}
+        </div>
+      </Card>
+
+      <Card className="border-slate-200 bg-slate-50 p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <span className="rounded-2xl bg-slate-200 p-3 text-slate-700"><WifiOff className="h-5 w-5" /></span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-600">Application & connexion</p>
+              <h3 className="mt-1 text-base font-black text-slate-900">Actualiser les données de l’application</h3>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Utilisez cette action si une page semble ne pas afficher les dernières informations. Vos données de dossier restent sauvegardées sur votre compte.</p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 shrink-0 rounded-xl border-slate-300 bg-white font-bold text-slate-800 hover:bg-slate-100"
+            onClick={() => {
+              toast.info("Mise à jour de l’application…");
+              resetPwaCache().catch(() => toast.error("La mise à jour automatique n’a pas pu être lancée."));
+            }}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" /> Réinitialiser le cache
+          </Button>
         </div>
       </Card>
 

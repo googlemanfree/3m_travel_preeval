@@ -666,3 +666,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter dans l’espace client un bouton pour exporter le relevé détaillé 3M Rewards au format PDF
 - [x] Corriger globalement les contenus obsolètes, le cache PWA et le WebSocket Vite afin que les modifications publiées soient réellement visibles
 - [x] Supprimer définitivement l’injection du client HMR Vite qui provoque l’erreur WebSocket dans la prévisualisation
+- [x] Ajouter une bannière de nouvelle version, la réinitialisation manuelle du cache dans l’espace client, un indicateur hors ligne et la compétence réutilisable PWA

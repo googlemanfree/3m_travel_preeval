@@ -102,6 +102,7 @@ import PageTransition from "./components/PageTransition";
 import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
 import NavigationProgress from "./components/NavigationProgress";
+import PwaStatusNotice from "./components/PwaStatusNotice";
 
 const FlightFavorites = lazyWithTimeout(() => import("./pages/FlightFavorites"));
 const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAIEvaluationDashboard"));
@@ -442,6 +443,7 @@ function App() {
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
           <ChunkReloadNotice />
+          <PwaStatusNotice />
           {sessionRestored && (
             <>
               {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
