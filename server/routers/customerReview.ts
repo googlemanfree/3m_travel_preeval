@@ -5,6 +5,7 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { requireValidAdminSession } from "./adminAuth";
+import { invokeLLM } from "../_core/llm";
 
 const displayNameChoiceSchema = z.enum(["full_name", "first_name_only", "initials"]);
 type DisplayNameChoice = z.infer<typeof displayNameChoiceSchema>;
@@ -87,6 +88,65 @@ export const customerReviewRouter = router({
       displayName: getDisplayName(review.fullName, review.displayNameChoice),
     }));
   }),
+
+  translateApproved: publicProcedure
+    .input(z.object({
+      reviewId: z.number().int().positive(),
+      targetLanguage: z.enum(["fr", "en"]),
+    }))
+    .mutation(async ({ input }) => {
+      const db = await requireDb();
+      const [review] = await db
+        .select()
+        .from(customerReviews)
+        .where(and(
+          eq(customerReviews.id, input.reviewId),
+          eq(customerReviews.status, "approved"),
+          eq(customerReviews.consentToPublish, true),
+        ))
+        .limit(1);
+
+      if (!review) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Cet avis approuvé n’est pas disponible pour la traduction.",
+        });
+      }
+
+      const targetLabel = input.targetLanguage === "fr" ? "français" : "anglais";
+      const completion = await invokeLLM({
+        model: "gpt-5-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Vous êtes un traducteur professionnel. Traduisez uniquement le texte fourni, sans ajouter, supprimer, résumer, commenter, modifier le ton, inventer de faits ou inclure des guillemets. Conservez les noms propres et le sens exact du témoignage.",
+          },
+          {
+            role: "user",
+            content: `Traduisez le témoignage client suivant en ${targetLabel} :\n\n${review.reviewText}`,
+          },
+        ],
+        maxTokens: 1300,
+      });
+
+      const translatedText = typeof completion.choices?.[0]?.message?.content === "string"
+        ? completion.choices[0].message.content.trim()
+        : "";
+
+      if (!translatedText) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "La traduction de cet avis est momentanément indisponible.",
+        });
+      }
+
+      return {
+        reviewId: review.id,
+        translatedText,
+        targetLanguage: input.targetLanguage,
+        originalText: review.reviewText,
+      };
+    }),
 
   getPendingReviews: publicProcedure
     .input(z.object({ sessionToken: z.string() }))

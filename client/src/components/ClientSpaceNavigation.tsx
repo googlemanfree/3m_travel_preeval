@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
@@ -127,12 +128,12 @@ export default function ClientSpaceNavigation() {
                     const txs = [...loyaltyQuery.data.transactions].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
                     let runningTotal = 0;
                     const pointsSeries = txs.map(tx => {
-                      runningTotal += tx.pointsChange;
+                      runningTotal += tx.points ?? 0;
                       return {
                         date: new Date(tx.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
-                        change: tx.pointsChange,
+                        change: tx.points ?? 0,
                         total: runningTotal,
-                        description: tx.description
+                        description: tx.reason
                       };
                     });
                     const maxPts = Math.max(100, ...pointsSeries.map(p => p.total));
@@ -250,7 +251,7 @@ export default function ClientSpaceNavigation() {
 	                <button
 	                  type="button"
 	                  onClick={() => {
-	                    toast({ title: "Apple Wallet", description: `Pass de vol ${request.requestRef} prêt pour Apple Wallet. Téléchargement du pass sécurisé .pkpass en cours.` });
+                    toast("Apple Wallet", { description: `Pass de vol ${request.requestRef} prêt pour Apple Wallet. Téléchargement du pass sécurisé .pkpass en cours.` });
 	                    const link = document.createElement("a");
 	                    link.href = request.issuedPdfUrl!;
 	                    link.download = `3M_Boarding_Pass_${request.requestRef}.pdf`;
@@ -264,7 +265,7 @@ export default function ClientSpaceNavigation() {
 	                <button
 	                  type="button"
 	                  onClick={() => {
-	                    toast({ title: "Google Wallet", description: `Pass de vol ${request.requestRef} prêt pour Google Wallet. Enregistrement de la carte d'embarquement en cours.` });
+                    toast("Google Wallet", { description: `Pass de vol ${request.requestRef} prêt pour Google Wallet. Enregistrement de la carte d'embarquement en cours.` });
 	                    const link = document.createElement("a");
 	                    link.href = request.issuedPdfUrl!;
 	                    link.download = `3M_Boarding_Pass_${request.requestRef}.pdf`;

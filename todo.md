@@ -660,3 +660,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer un graphique interactif dans l'espace client pour afficher clairement l'évolution du cumul des points de fidélité au fil du temps
 - [x] Permettre aux utilisateurs de télécharger leur confirmation de réservation au format PDF directement depuis leur espace client (avec suivi de l'état d'émission)
 - [x] Mettre en place l'envoi automatique de la confirmation PDF par e-mail dès la validation et l'émission de la réservation de vol (depuis hello@3mtravelagency.com)
+- [x] Traduire à la demande les avis clients authentiques dans la langue active, avec conservation de leur source et de leur langue originale

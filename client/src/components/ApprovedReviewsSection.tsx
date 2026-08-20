@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Filter, Quote, Star } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useEffect } from "react";
 
 interface Review {
   id?: number;
@@ -73,8 +74,12 @@ export default function ApprovedReviewsSection() {
   const { language } = useLanguage();
   const { data: reviews, isLoading } = trpc.customerReview.listApproved.useQuery();
   const { data: stats } = trpc.customerReview.getStats.useQuery();
+  const translateReview = trpc.customerReview.translateApproved.useMutation();
   const [destinationFilter, setDestinationFilter] = useState<DestinationFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translationPending, setTranslationPending] = useState<Record<string, boolean>>({});
+  const [showOriginal, setShowOriginal] = useState<Record<number, boolean>>({});
 
   const approvedReviews = useMemo(() => (reviews ?? []) as Review[], [reviews]);
 
@@ -108,6 +113,43 @@ export default function ApprovedReviewsSection() {
       .slice(0, 6);
   }, [approvedReviews, destinationFilter, searchQuery]);
 
+  useEffect(() => {
+    // Les témoignages approuvés sont soumis majoritairement en français. Pour
+    // l’interface anglaise, la traduction est déclenchée automatiquement mais
+    // le texte original reste toujours accessible par le lecteur.
+    if (language !== "en" || displayedReviews.length === 0) return;
+
+    const reviewsToTranslate = displayedReviews.filter((review) => {
+      if (!review.id) return false;
+      const key = `${review.id}-${language}`;
+      return !translations[key] && !translationPending[key];
+    });
+
+    if (reviewsToTranslate.length === 0) return;
+
+    setTranslationPending((current) => ({
+      ...current,
+      ...Object.fromEntries(reviewsToTranslate.map((review) => [`${review.id}-${language}`, true])),
+    }));
+
+    void Promise.all(
+      reviewsToTranslate.map(async (review) => {
+        const key = `${review.id}-${language}`;
+        try {
+          const result = await translateReview.mutateAsync({
+            reviewId: review.id!,
+            targetLanguage: language,
+          });
+          setTranslations((current) => ({ ...current, [key]: result.translatedText }));
+        } catch {
+          // En cas d’indisponibilité temporaire, l’avis original reste affiché.
+        } finally {
+          setTranslationPending((current) => ({ ...current, [key]: false }));
+        }
+      }),
+    );
+  }, [displayedReviews, language, translateReview, translationPending, translations]);
+
   const labels = language === "en"
     ? {
         loading: "Loading approved reviews...",
@@ -126,6 +168,11 @@ export default function ApprovedReviewsSection() {
         empty: "No approved review matches your search.",
         share: "You can also share your experience.",
         leave: "Leave a review",
+        translated: "Automatic translation",
+        original: "Show original",
+        translatedView: "Show translation",
+        translating: "Translating…",
+        originalText: "Original review",
       }
     : {
         loading: "Chargement des avis approuvés...",
@@ -144,6 +191,11 @@ export default function ApprovedReviewsSection() {
         empty: "Aucun avis approuvé ne correspond à votre recherche.",
         share: "Vous aussi, partagez votre expérience.",
         leave: "Laisser un avis",
+        translated: "Traduction automatique",
+        original: "Voir le texte original",
+        translatedView: "Voir la traduction",
+        translating: "Traduction en cours…",
+        originalText: "Avis original",
       };
 
   if (isLoading) {
@@ -284,7 +336,39 @@ export default function ApprovedReviewsSection() {
                     />
                   ))}
                 </div>
-                <p className="text-slate-700 text-sm mb-4 line-clamp-4">“{review.reviewText}”</p>
+                {(() => {
+                  const translationKey = `${review.id}-${language}`;
+                  const translatedText = review.id ? translations[translationKey] : undefined;
+                  const isTranslationPending = review.id ? translationPending[translationKey] : false;
+                  const displayOriginal = review.id ? showOriginal[review.id] : false;
+                  const displayedText = language === "en" && translatedText && !displayOriginal
+                    ? translatedText
+                    : review.reviewText;
+
+                  return (
+                    <>
+                      <p className="text-slate-700 text-sm mb-3 line-clamp-4">“{displayedText}”</p>
+                      {language === "en" && (
+                        <div className="mb-4 flex min-h-6 items-center gap-2">
+                          {isTranslationPending ? (
+                            <span className="text-[10px] font-semibold text-slate-400">{labels.translating}</span>
+                          ) : translatedText ? (
+                            <>
+                              <span className="rounded-full bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700">{labels.translated}</span>
+                              <button
+                                type="button"
+                                onClick={() => setShowOriginal((current) => ({ ...current, [review.id!]: !displayOriginal }))}
+                                className="text-[10px] font-bold text-blue-700 underline underline-offset-2 hover:text-blue-900"
+                              >
+                                {displayOriginal ? labels.translatedView : labels.original}
+                              </button>
+                            </>
+                          ) : null}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 <div className="border-t pt-4">
                   <p className="font-semibold text-slate-900">{review.displayName}</p>
                   <p className="text-xs text-slate-500">
