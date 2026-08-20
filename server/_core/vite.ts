@@ -8,7 +8,10 @@ import viteConfig from "../../vite.config";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
-    hmr: { server },
+    // Le proxy de prévisualisation ne relaie pas de WebSocket Vite fiable dans
+    // ce mode middleware. Désactiver HMR évite les tentatives vers localhost:5173
+    // et laisse l’actualisation de page normale sans bruit console.
+    hmr: false,
     allowedHosts: true as const,
   };
   const vite = await createViteServer({
