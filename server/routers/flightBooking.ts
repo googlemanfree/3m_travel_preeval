@@ -724,6 +724,44 @@ export const flightBookingRouter = router({
         details: `PNR / référence GDS émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.pnrReference}`,
       });
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
+
+      // Envoi automatique de la confirmation PDF par e-mail au client
+      try {
+        const clientEmail = existing.candidateEmail;
+        const pdfLink = input.issuedPdfUrl || existing.issuedPdfUrl;
+        if (clientEmail) {
+          await sendEmail({
+            to: clientEmail,
+            subject: `[3M Travel] Confirmation de votre billet et reçu PNR - ${existing.requestRef}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; color: #1E293B; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #E2E8F0; border-radius: 8px;">
+                <div style="background: #1E3A8A; color: #ffffff; padding: 16px 20px; border-radius: 6px 6px 0 0; text-align: center;">
+                  <h2 style="margin: 0; font-size: 20px;">3M Travel & Services</h2>
+                  <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9;">Confirmation Officielle de Réservation & PNR</p>
+                </div>
+                <div style="padding: 24px 20px;">
+                  <p>Bonjour,</p>
+                  <p>Votre réservation de vol a été validée et émise par notre service de billetterie. Vous trouverez ci-dessous votre référence de réservation officielle :</p>
+                  <div style="background: #F8FAFC; border-left: 4px solid #10B981; padding: 12px 16px; margin: 16px 0; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 14px;"><strong>Référence Dossier :</strong> ${existing.requestRef}</p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Référence PNR / GDS :</strong> <span style="font-family: monospace; color: #059669; font-weight: bold; font-size: 16px;">${input.pnrReference}</span></p>
+                    <p style="margin: 6px 0 0 0; font-size: 14px;"><strong>Vol ID :</strong> ${existing.flightId}</p>
+                  </div>
+                  ${pdfLink ? `<p style="text-align: center; margin: 24px 0;"><a href="${pdfLink}" style="background: #059669; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">📥 Télécharger votre Billet / Confirmation PDF</a></p>` : ''}
+                  <p>Vous pouvez également retrouver ce document et gérer vos options de voyage à tout moment depuis votre <a href="https://www.3mtravelagency.com/mon-espace" style="color: #2563EB; text-decoration: underline;">Espace Client 3M</a>.</p>
+                  <p style="margin-top: 24px; font-size: 13px; color: #64748B;">Cordialement,<br><strong>L'équipe Billetterie & Mobilité - 3M Travel & Services</strong><br><a href="mailto:hello@3mtravelagency.com" style="color: #2563EB;">hello@3mtravelagency.com</a></p>
+                </div>
+                <div style="background: #F1F5F9; padding: 12px 20px; text-align: center; font-size: 11px; color: #64748B; border-radius: 0 0 6px 6px;">
+                  Ceci est un message automatisé officiel. Merci de ne pas y répondre directement.
+                </div>
+              </div>
+            `,
+          });
+        }
+      } catch (err) {
+        console.error("[Email Notification Error] Échec de l'envoi de la confirmation PNR par e-mail:", err);
+      }
+
       return { success: true, loyalty };
     }),
 
