@@ -5,6 +5,9 @@ import { z } from "zod";
 import {
   flightBookingRequestHistory,
   flightBookingRequests,
+  flightLoyaltyAccounts,
+  flightLoyaltyTransactions,
+  flightPartnerQuotes,
   passportScanRequests,
 } from "../../drizzle/schema";
 import { invokeLLM } from "../_core/llm";
@@ -118,6 +121,62 @@ function getFlightEmailSummary(flightData: FlightTimingData) {
   const destination = typeof flightData.destinationCity === "string" ? flightData.destinationCity : typeof flightData.destination === "string" ? flightData.destination : "Destination";
   const departure = typeof flightData.departureDate === "string" ? flightData.departureDate : "À confirmer";
   return { airline, origin, destination, departure };
+}
+
+const LOYALTY_POINTS_PER_ISSUED_BOOKING = 100;
+
+export function resolveLoyaltyTier(lifetimePoints: number) {
+  if (lifetimePoints >= 3000) return "platinum" as const;
+  if (lifetimePoints >= 1500) return "gold" as const;
+  if (lifetimePoints >= 500) return "silver" as const;
+  return "explorer" as const;
+}
+
+async function awardLoyaltyPointsForIssuedBooking(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  booking: typeof flightBookingRequests.$inferSelect,
+  requestId: number,
+) {
+  if (!booking.candidateId) return { awarded: false, points: 0 };
+
+  const [existingTransaction] = await db.select()
+    .from(flightLoyaltyTransactions)
+    .where(eq(flightLoyaltyTransactions.requestId, requestId))
+    .limit(1);
+  if (existingTransaction) return { awarded: false, points: 0 };
+
+  await db.insert(flightLoyaltyTransactions).values({
+    candidateId: booking.candidateId,
+    requestId,
+    points: LOYALTY_POINTS_PER_ISSUED_BOOKING,
+    reason: `Billet émis et validé — ${booking.requestRef}`,
+  });
+
+  const [account] = await db.select()
+    .from(flightLoyaltyAccounts)
+    .where(eq(flightLoyaltyAccounts.candidateId, booking.candidateId))
+    .limit(1);
+  const lifetimePoints = (account?.lifetimePoints ?? 0) + LOYALTY_POINTS_PER_ISSUED_BOOKING;
+  const tier = resolveLoyaltyTier(lifetimePoints);
+
+  if (account) {
+    await db.update(flightLoyaltyAccounts).set({
+      availablePoints: account.availablePoints + LOYALTY_POINTS_PER_ISSUED_BOOKING,
+      lifetimePoints,
+      issuedBookings: account.issuedBookings + 1,
+      tier,
+    }).where(eq(flightLoyaltyAccounts.id, account.id));
+  } else {
+    await db.insert(flightLoyaltyAccounts).values({
+      candidateId: booking.candidateId,
+      availablePoints: LOYALTY_POINTS_PER_ISSUED_BOOKING,
+      lifetimePoints,
+      issuedBookings: 1,
+      tier,
+    });
+  }
+
+  return { awarded: true, points: LOYALTY_POINTS_PER_ISSUED_BOOKING, tier };
 }
 
 function assertAdminSession(sessionToken: string) {
@@ -319,6 +378,41 @@ export const flightBookingRouter = router({
       .orderBy(desc(flightBookingRequests.createdAt));
   }),
 
+  getMyLoyalty: candidateProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [account] = await db.select().from(flightLoyaltyAccounts)
+      .where(eq(flightLoyaltyAccounts.candidateId, ctx.candidate.id)).limit(1);
+    const transactions = await db.select().from(flightLoyaltyTransactions)
+      .where(eq(flightLoyaltyTransactions.candidateId, ctx.candidate.id))
+      .orderBy(desc(flightLoyaltyTransactions.createdAt)).limit(6);
+    return {
+      account: account ?? {
+        availablePoints: 0,
+        lifetimePoints: 0,
+        issuedBookings: 0,
+        tier: "explorer" as const,
+      },
+      transactions,
+      nextTier: account?.tier === "explorer" ? "silver" : account?.tier === "silver" ? "gold" : account?.tier === "gold" ? "platinum" : null,
+      nextTierAt: account?.tier === "explorer" ? 500 : account?.tier === "silver" ? 1500 : account?.tier === "gold" ? 3000 : null,
+    };
+  }),
+
+  getMyPartnerQuotes: candidateProcedure
+    .input(z.object({ requestId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [booking] = await db.select().from(flightBookingRequests)
+        .where(and(eq(flightBookingRequests.id, input.requestId), eq(flightBookingRequests.candidateId, ctx.candidate.id)))
+        .limit(1);
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      return db.select().from(flightPartnerQuotes)
+        .where(and(eq(flightPartnerQuotes.requestId, input.requestId), eq(flightPartnerQuotes.isActive, true)))
+        .orderBy(flightPartnerQuotes.quotedAmountXaf);
+    }),
+
   getQueueSummary: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1) }))
     .query(async ({ input }) => {
@@ -361,6 +455,57 @@ export const flightBookingRouter = router({
       if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de vol introuvable." });
       const history = await db.select().from(flightBookingRequestHistory).where(eq(flightBookingRequestHistory.requestId, input.requestId)).orderBy(desc(flightBookingRequestHistory.createdAt));
       return { request, history };
+    }),
+
+  listPartnerQuotes: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), requestId: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      return db.select().from(flightPartnerQuotes)
+        .where(eq(flightPartnerQuotes.requestId, input.requestId))
+        .orderBy(desc(flightPartnerQuotes.verifiedAt));
+    }),
+
+  addPartnerQuote: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      requestId: z.number().int().positive(),
+      partnerName: z.string().trim().min(2).max(160),
+      quotedAmountXaf: z.number().int().positive(),
+      currency: z.string().trim().min(3).max(8).default("XAF"),
+      fareDetails: z.string().trim().max(2000).optional(),
+      baggageDetails: z.string().trim().max(1000).optional(),
+      terms: z.string().trim().max(2000).optional(),
+      sourceReference: z.string().trim().min(2).max(255),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await assertAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [booking] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
+      if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
+      const [created] = await db.insert(flightPartnerQuotes).values({
+        requestId: input.requestId,
+        partnerName: input.partnerName,
+        quotedAmountXaf: input.quotedAmountXaf,
+        currency: input.currency.toUpperCase(),
+        fareDetails: input.fareDetails || null,
+        baggageDetails: input.baggageDetails || null,
+        terms: input.terms || null,
+        sourceReference: input.sourceReference,
+        verifiedBy: admin.email,
+      });
+      await db.insert(flightBookingRequestHistory).values({
+        requestId: input.requestId,
+        action: "partner_quote_verified",
+        changedBy: admin.email,
+        oldValue: null,
+        newValue: String((created as any).insertId ?? ""),
+        details: `Devis partenaire vérifié : ${input.partnerName} — ${input.quotedAmountXaf.toLocaleString("fr-FR")} ${input.currency.toUpperCase()} — Source: ${input.sourceReference}`,
+      });
+      return { success: true };
     }),
 
   assignRequest: publicProcedure
@@ -578,7 +723,8 @@ export const flightBookingRouter = router({
         newValue: "issued",
         details: `PNR / référence GDS émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.pnrReference}`,
       });
-      return { success: true };
+      const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
+      return { success: true, loyalty };
     }),
 
   generatePaymentReceiptPdf: publicProcedure
@@ -647,6 +793,8 @@ export const flightBookingRouter = router({
         details: `Document PNR final téléversé et émis par l'agent ${admin.email} (Initiales conseiller: ${input.advisorInitials.toUpperCase()}): ${input.fileName} (Ref: ${input.pnrReference})`,
       });
 
+      const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
+
       // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
       try {
         await sendEmail({
@@ -674,7 +822,7 @@ export const flightBookingRouter = router({
         console.error("[Email Notification Error] Impossible d'envoyer l'e-mail PNR:", err);
       }
 
-      return { success: true, issuedPdfUrl: url };
+      return { success: true, issuedPdfUrl: url, loyalty };
     }),
 
   exportAuditHistoryPdf: publicProcedure

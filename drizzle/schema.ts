@@ -1599,6 +1599,62 @@ export const flightBookingRequestHistory = mysqlTable("flight_booking_request_hi
 export type FlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferSelect;
 export type InsertFlightBookingRequestHistory = typeof flightBookingRequestHistory.$inferInsert;
 
+/**
+ * Compte de fidélité associé à un candidat. Les récompenses sont accordées
+ * uniquement à l'émission humaine et validée d'un billet.
+ */
+export const flightLoyaltyAccounts = mysqlTable("flight_loyalty_accounts", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull().unique(),
+  availablePoints: int("availablePoints").notNull().default(0),
+  lifetimePoints: int("lifetimePoints").notNull().default(0),
+  issuedBookings: int("issuedBookings").notNull().default(0),
+  tier: mysqlEnum("tier", ["explorer", "silver", "gold", "platinum"]).notNull().default("explorer"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("idx_flight_loyalty_tier").on(table.tier)]);
+export type FlightLoyaltyAccount = typeof flightLoyaltyAccounts.$inferSelect;
+export type InsertFlightLoyaltyAccount = typeof flightLoyaltyAccounts.$inferInsert;
+
+/** Journal infalsifiable des points de fidélité liés à une émission de billet. */
+export const flightLoyaltyTransactions = mysqlTable("flight_loyalty_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  candidateId: int("candidateId").notNull(),
+  requestId: int("requestId").notNull().unique(),
+  points: int("points").notNull(),
+  reason: varchar("reason", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_flight_loyalty_candidate_created").on(table.candidateId, table.createdAt),
+]);
+export type FlightLoyaltyTransaction = typeof flightLoyaltyTransactions.$inferSelect;
+export type InsertFlightLoyaltyTransaction = typeof flightLoyaltyTransactions.$inferInsert;
+
+/**
+ * Devis saisis et vérifiés par un administrateur depuis les agences partenaires.
+ * Aucun prix tiers n'est créé automatiquement : chaque ligne garde sa source,
+ * son auteur et sa date de vérification pour assurer une comparaison transparente.
+ */
+export const flightPartnerQuotes = mysqlTable("flight_partner_quotes", {
+  id: int("id").autoincrement().primaryKey(),
+  requestId: int("requestId").notNull(),
+  partnerName: varchar("partnerName", { length: 160 }).notNull(),
+  quotedAmountXaf: int("quotedAmountXaf").notNull(),
+  currency: varchar("currency", { length: 8 }).notNull().default("XAF"),
+  fareDetails: text("fareDetails"),
+  baggageDetails: text("baggageDetails"),
+  terms: text("terms"),
+  sourceReference: varchar("sourceReference", { length: 255 }).notNull(),
+  verifiedBy: varchar("verifiedBy", { length: 320 }).notNull(),
+  verifiedAt: timestamp("verifiedAt").defaultNow().notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_flight_partner_quotes_request_active").on(table.requestId, table.isActive),
+]);
+export type FlightPartnerQuote = typeof flightPartnerQuotes.$inferSelect;
+export type InsertFlightPartnerQuote = typeof flightPartnerQuotes.$inferInsert;
+
 
 export const agencyDossierDocuments = mysqlTable("agency_dossier_documents", {
   id: int("id").autoincrement().primaryKey(),

@@ -649,5 +649,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Améliorer la page d'accueil (design plus premium, lisibilité renforcée, accès directs aux services clés, réassurance et conversion optimisée)
 - [x] Intégrer un widget de chatbot intelligent en bas de l'écran pour guider les utilisateurs dans leurs réservations et procédures (assistant virtuel, suggestions rapides et transfert conseiller)
 - [x] Configurer le chatbot pour qu'il traduise et réponde automatiquement dans la langue actuellement sélectionnée par l'utilisateur sur le site (français, anglais, espagnol, allemand)
-- [ ] Mettre en place un programme de fidélité pour voyageurs fréquents et un comparateur de prix fondé sur les devis réels d'agences partenaires approuvées
+- [x] Mettre en place un programme de fidélité pour voyageurs fréquents et un comparateur de prix fondé sur les devis réels d'agences partenaires approuvées
 - [x] Corriger l’alignement responsive des actions flottantes pour rendre WhatsApp, le chatbot et les raccourcis entièrement visibles
+- [x] Créer dans Billets une expérience originale 3M Booking de recherche d’hébergement, inspirée des bonnes pratiques des grandes plateformes sans reprendre leur design ou leurs contenus

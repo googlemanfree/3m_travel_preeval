@@ -130,6 +130,7 @@ export default function FlightAgentDashboard() {
   const [routeFilter, setRouteFilter] = useState("ALL");
   const [quickAssignees, setQuickAssignees] = useState<Record<number, string>>({});
   const [previewPnr, setPreviewPnr] = useState<{ url: string; title: string } | null>(null);
+  const [partnerQuoteDraft, setPartnerQuoteDraft] = useState({ partnerName: "", amount: "", sourceReference: "", fareDetails: "", baggageDetails: "", terms: "" });
 
   const summaryQuery = trpc.flightBooking.getQueueSummary.useQuery(
     { sessionToken },
@@ -140,6 +141,10 @@ export default function FlightAgentDashboard() {
     { enabled: Boolean(sessionToken), refetchInterval: 30_000, retry: false },
   );
   const detailQuery = trpc.flightBooking.getRequest.useQuery(
+    { sessionToken, requestId: selectedRequestId ?? 0 },
+    { enabled: Boolean(sessionToken) && Boolean(selectedRequestId), retry: false },
+  );
+  const partnerQuotesQuery = trpc.flightBooking.listPartnerQuotes.useQuery(
     { sessionToken, requestId: selectedRequestId ?? 0 },
     { enabled: Boolean(sessionToken) && Boolean(selectedRequestId), retry: false },
   );
@@ -178,6 +183,15 @@ export default function FlightAgentDashboard() {
       void utils.flightBooking.getQueue.invalidate();
     },
     onError: (error) => toast({ title: "Note non enregistrée", description: error.message, variant: "destructive" }),
+  });
+  const addPartnerQuoteMutation = trpc.flightBooking.addPartnerQuote.useMutation({
+    onSuccess: () => {
+      setPartnerQuoteDraft({ partnerName: "", amount: "", sourceReference: "", fareDetails: "", baggageDetails: "", terms: "" });
+      toast({ title: "Devis partenaire vérifié", description: "La comparaison est maintenant disponible pour le client concerné." });
+      void utils.flightBooking.listPartnerQuotes.invalidate();
+      void utils.flightBooking.getRequest.invalidate();
+    },
+    onError: (error) => toast({ title: "Devis non enregistré", description: error.message, variant: "destructive" }),
   });
   const issuanceChecklistMutation = trpc.flightBooking.updateIssuanceChecklist.useMutation({
     onSuccess: () => {
@@ -239,7 +253,6 @@ export default function FlightAgentDashboard() {
       toast({ 
         title: "Rapport d'audit CSV / Excel généré", 
         description: "Le fichier a été préparé avec succès.",
-        action: <Button size="sm" onClick={() => window.open(data.csvUrl, "_blank")} className="bg-emerald-600 text-white">Télécharger CSV</Button>
       });
       if (data.csvUrl) {
         window.open(data.csvUrl, "_blank");
@@ -360,6 +373,12 @@ export default function FlightAgentDashboard() {
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
+                <section className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div><h3 className="text-sm font-black text-sky-950">Comparateur de devis partenaires</h3><p className="mt-1 text-xs text-sky-800">Saisissez uniquement une offre réellement reçue, avec sa référence source. Le client verra uniquement les devis vérifiés et actifs.</p></div><span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-sky-800">{partnerQuotesQuery.data?.length ?? 0} devis</span></div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2"><Input aria-label="Agence partenaire" value={partnerQuoteDraft.partnerName} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, partnerName: event.target.value }))} placeholder="Agence partenaire" /><Input aria-label="Montant du devis en XAF" type="number" min="1" value={partnerQuoteDraft.amount} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, amount: event.target.value }))} placeholder="Montant réel (XAF)" /><Input aria-label="Référence de la source" value={partnerQuoteDraft.sourceReference} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, sourceReference: event.target.value }))} placeholder="Référence source / lien / dossier" /><Input aria-label="Détails tarifaires" value={partnerQuoteDraft.fareDetails} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, fareDetails: event.target.value }))} placeholder="Conditions tarifaires (facultatif)" /><Input aria-label="Détails des bagages" value={partnerQuoteDraft.baggageDetails} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, baggageDetails: event.target.value }))} placeholder="Bagages inclus (facultatif)" /><Input aria-label="Conditions du devis" value={partnerQuoteDraft.terms} onChange={(event) => setPartnerQuoteDraft((draft) => ({ ...draft, terms: event.target.value }))} placeholder="Conditions / validité (facultatif)" /></div>
+                  <Button type="button" disabled={addPartnerQuoteMutation.isPending || !partnerQuoteDraft.partnerName.trim() || !partnerQuoteDraft.sourceReference.trim() || Number(partnerQuoteDraft.amount) <= 0} onClick={() => addPartnerQuoteMutation.mutate({ sessionToken, requestId: selectedRequestId, partnerName: partnerQuoteDraft.partnerName.trim(), quotedAmountXaf: Number(partnerQuoteDraft.amount), sourceReference: partnerQuoteDraft.sourceReference.trim(), fareDetails: partnerQuoteDraft.fareDetails.trim() || undefined, baggageDetails: partnerQuoteDraft.baggageDetails.trim() || undefined, terms: partnerQuoteDraft.terms.trim() || undefined })} className="mt-3 h-11 w-full bg-sky-700 font-bold text-white hover:bg-sky-800">{addPartnerQuoteMutation.isPending ? "Vérification…" : "Enregistrer le devis partenaire vérifié"}</Button>
+                  {partnerQuotesQuery.data?.length ? <div className="mt-3 space-y-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs"><span className="font-black text-slate-900">{quote.partnerName}</span><span className="font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</span><span className="text-slate-500">Source : {quote.sourceReference}</span></div>)}</div> : null}
+                </section>
                 {(() => { 
                   const currentChecklist = getRecord(detailQuery.data.request.issuanceChecklist) as Record<string, boolean>; 
                   const completed = ISSUANCE_CHECKS.filter(([key]) => currentChecklist[key]).length; 

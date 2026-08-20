@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
-import { CalendarDays, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound } from "lucide-react";
+import { CalendarDays, FileText, Filter, FolderOpen, Heart, Home, Plane, Plus, ReceiptText, MessageCircle, UserRound, Trophy, Scale } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -33,8 +33,14 @@ export default function ClientSpaceNavigation() {
   const { candidate } = useCandidateAuth();
   const dossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, { enabled: Boolean(candidate) });
   const requestsQuery = trpc.flightBooking.getMyRequests.useQuery(undefined, { enabled: Boolean(candidate) });
+  const loyaltyQuery = trpc.flightBooking.getMyLoyalty.useQuery(undefined, { enabled: Boolean(candidate) });
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [comparisonRequestId, setComparisonRequestId] = useState<number | null>(null);
+  const partnerQuotesQuery = trpc.flightBooking.getMyPartnerQuotes.useQuery(
+    { requestId: comparisonRequestId ?? 0 },
+    { enabled: Boolean(candidate) && Boolean(comparisonRequestId), retry: false },
+  );
 
   const dossierNumber = dossierQuery.data?.data?.application?.dossierNumber ?? null;
   const filteredRequests = useMemo(() => {
@@ -80,6 +86,21 @@ export default function ClientSpaceNavigation() {
         </div>
       </Card>
 
+      <Card className="overflow-hidden border-amber-100 bg-gradient-to-r from-amber-50 via-white to-sky-50 p-5 shadow-sm">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="flex items-start gap-3">
+            <span className="rounded-2xl bg-amber-100 p-3 text-amber-700"><Trophy className="h-6 w-6" /></span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-700">3M Travel Rewards</p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">Vos récompenses de voyage</h3>
+              <p className="mt-1 text-xs text-slate-600">Les points sont ajoutés uniquement après l’émission humaine et validée d’un billet.</p>
+            </div>
+          </div>
+          {loyaltyQuery.isLoading ? <p className="text-sm font-bold text-slate-500">Chargement…</p> : <div className="grid grid-cols-3 gap-2 text-center"><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.availablePoints ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Points</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-sm font-black capitalize text-blue-800">{loyaltyQuery.data?.account.tier ?? "explorer"}</p><p className="text-[10px] font-bold uppercase text-slate-500">Niveau</p></div><div className="rounded-xl bg-white/90 px-3 py-2 shadow-sm"><p className="text-lg font-black text-slate-900">{loyaltyQuery.data?.account.issuedBookings ?? 0}</p><p className="text-[10px] font-bold uppercase text-slate-500">Billets émis</p></div></div>}
+        </div>
+        {loyaltyQuery.data?.nextTierAt && <p className="mt-4 rounded-xl border border-amber-100 bg-white/75 px-3 py-2 text-xs font-semibold text-amber-900">Encore {Math.max(0, loyaltyQuery.data.nextTierAt - (loyaltyQuery.data.account.lifetimePoints ?? 0))} points avant le niveau {loyaltyQuery.data.nextTier}.</p>}
+      </Card>
+
       <Card className="border-sky-100 bg-sky-50/70 p-5 shadow-sm">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div><h3 className="flex items-center gap-2 text-base font-black text-sky-950"><ReceiptText className="h-5 w-5 text-sky-700" /> Mes demandes de vols</h3><p className="mt-1 text-xs text-sky-800">Suivi des demandes transmises à l’agence pour revalidation.</p></div>
@@ -121,6 +142,8 @@ export default function ClientSpaceNavigation() {
           )}
           <div className="mt-2 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
             <p className="text-[11px] text-slate-500">Créée le {new Date(request.createdAt).toLocaleDateString("fr-FR")}</p>
+            <div className="flex items-center gap-1.5">
+            <Button type="button" variant="outline" size="sm" onClick={() => setComparisonRequestId(request.id)} className="h-7 border-sky-200 bg-sky-50 px-2 text-[10px] font-bold text-sky-800 hover:bg-sky-100"><Scale className="mr-1 h-3 w-3" />Comparer</Button>
             {request.issuedPdfUrl && (
               <div className="flex items-center gap-1.5">
                 <a
@@ -164,9 +187,12 @@ export default function ClientSpaceNavigation() {
                 </a>
               </div>
             )}
+            </div>
           </div>
         </div>)}</div> : <p className="mt-4 text-xs text-sky-800">Aucune demande ne correspond aux filtres sélectionnés.</p>}
       </Card>
+
+      {comparisonRequestId && <Card className="border-sky-100 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">Comparateur transparent</p><h3 className="mt-1 text-base font-black text-slate-900">Devis partenaires vérifiés</h3><p className="mt-1 text-xs text-slate-600">Seuls les devis saisis et vérifiés par l’agence sont affichés. Aucun prix tiers n’est estimé ou inventé.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => setComparisonRequestId(null)}>Fermer</Button></div>{partnerQuotesQuery.isLoading ? <p className="mt-4 text-sm text-slate-500">Chargement des devis…</p> : partnerQuotesQuery.data?.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{partnerQuotesQuery.data.map((quote) => <div key={quote.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-slate-900">{quote.partnerName}</p><p className="mt-1 text-xs text-slate-500">Vérifié le {new Date(quote.verifiedAt).toLocaleDateString("fr-FR")}</p></div><p className="text-base font-black text-emerald-700">{quote.quotedAmountXaf.toLocaleString("fr-FR")} {quote.currency}</p></div>{quote.fareDetails && <p className="mt-3 text-xs text-slate-700"><strong>Tarif :</strong> {quote.fareDetails}</p>}{quote.baggageDetails && <p className="mt-2 text-xs text-slate-700"><strong>Bagages :</strong> {quote.baggageDetails}</p>}{quote.terms && <p className="mt-2 text-xs text-slate-600"><strong>Conditions :</strong> {quote.terms}</p>}</div>)}</div> : <p className="mt-4 rounded-xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">Aucun devis partenaire vérifié n’est encore disponible pour cette réservation. Votre conseiller peut ajouter une comparaison dès réception d’une offre réelle.</p>}</Card>}
     </section>
   );
 }

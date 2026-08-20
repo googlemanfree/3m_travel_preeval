@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { FlightQuoteRequest } from "@/components/FlightQuoteRequest";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
+import { ThreeMBookingExperience } from "@/components/ThreeMBookingExperience";
 
 function EmailSummaryButton({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false);
@@ -846,6 +847,8 @@ export default function Flights() {
       </div>
 
       <FlightQuoteRequest />
+
+      <ThreeMBookingExperience />
 
       {/* AI Flight Planner Assistant Section */}
       <div className="max-w-7xl mx-auto px-4 py-6">
