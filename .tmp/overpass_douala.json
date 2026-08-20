@@ -1,0 +1,2153 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-08-20T19:27:47Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 2120512794,
+  "lat": 4.0531526,
+  "lon": 9.6951374,
+  "tags": {
+    "name": "Planet Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 2558391460,
+  "lat": 4.0846478,
+  "lon": 9.7556917,
+  "tags": {
+    "addr:city": "Douala",
+    "name": "Vénus",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 2608216926,
+  "lat": 4.0544656,
+  "lon": 9.6953268,
+  "tags": {
+    "name": "Hotel Prince de Galles",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 3053355291,
+  "lat": 4.0830794,
+  "lon": 9.7453102,
+  "tags": {
+    "name": "Lively Hotel",
+    "tourism": "hotel",
+    "type": "Lively Hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 3255758368,
+  "lat": 4.0797937,
+  "lon": 9.6587461,
+  "tags": {
+    "name": "Residence Inn",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4268513292,
+  "lat": 4.0392885,
+  "lon": 9.6898416,
+  "tags": {
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4310405390,
+  "lat": 4.0338066,
+  "lon": 9.6884022,
+  "tags": {
+    "name": "Hotel Tchero",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4332399879,
+  "lat": 4.0993901,
+  "lon": 9.7369844,
+  "tags": {
+    "name": "kremlin hôtel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4332399881,
+  "lat": 4.0997891,
+  "lon": 9.7382803,
+  "tags": {
+    "name": "Hôtel le Ghope",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4333925421,
+  "lat": 4.0871545,
+  "lon": 9.7438247,
+  "tags": {
+    "name": "Résidence Maria Coretti",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4333925426,
+  "lat": 4.0919808,
+  "lon": 9.7462234,
+  "tags": {
+    "name": "Hotel Bijoux",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4333925427,
+  "lat": 4.0921476,
+  "lon": 9.7466139,
+  "tags": {
+    "name": "Hotel Nanfan's",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4389097686,
+  "lat": 4.0828263,
+  "lon": 9.7742802,
+  "tags": {
+    "name": "Gasland Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4394643443,
+  "lat": 4.0854881,
+  "lon": 9.7235339,
+  "tags": {
+    "name": "Hôtel le Boa",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4394643447,
+  "lat": 4.0851698,
+  "lon": 9.7244146,
+  "tags": {
+    "name": "Serena Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4394643451,
+  "lat": 4.0821231,
+  "lon": 9.7297342,
+  "tags": {
+    "name": "Hotel Joanes",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4397256995,
+  "lat": 4.0780212,
+  "lon": 9.7322607,
+  "tags": {
+    "name": "Disney Palace",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468044,
+  "lat": 4.0120226,
+  "lon": 9.7329993,
+  "tags": {
+    "addr:city": "Douala III",
+    "addr:street": "carrefour Nelson Mandela (Elf axe lourd)",
+    "guest_house": "hotel",
+    "internet_access": "no",
+    "name": "BEUTEUMEN Building (GSEC SARL)",
+    "payment:cash": "yes",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468050,
+  "lat": 4.0099569,
+  "lon": 9.7362826,
+  "tags": {
+    "name": "Street into scolaire bilingue Celine New Town aeroport",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468057,
+  "lat": 4.0089620,
+  "lon": 9.7450174,
+  "tags": {
+    "name": "Street into Wisdom bilingual College",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468058,
+  "lat": 4.0089692,
+  "lon": 9.7458311,
+  "tags": {
+    "name": "Résidence Inn",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468077,
+  "lat": 4.0016747,
+  "lon": 9.7610480,
+  "tags": {
+    "name": "Hotel Maillot",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468290,
+  "lat": 4.0476578,
+  "lon": 9.7632860,
+  "tags": {
+    "name": "Street into Mission Evangelique vie et paix du Cameroon",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4413468300,
+  "lat": 4.0475685,
+  "lon": 9.7692418,
+  "tags": {
+    "name": "Ruccotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4419001730,
+  "lat": 4.0533178,
+  "lon": 9.7366704,
+  "tags": {
+    "name": "Dream Palace Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4522318303,
+  "lat": 4.0546309,
+  "lon": 9.6982135,
+  "tags": {
+    "name": "Le Majestic d'Akwa",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4535709013,
+  "lat": 4.0498310,
+  "lon": 9.7019765,
+  "tags": {
+    "name": "Hotel Man",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4749623121,
+  "lat": 4.0760451,
+  "lon": 9.6732349,
+  "tags": {
+    "addr:postcode": "00237",
+    "addr:street": "Ancien Rue, Bonaberi",
+    "email": "dkhotelcm@yahoo.com",
+    "internet_access": "wlan",
+    "name": "DK Hotel",
+    "name:en": "DK Hotel",
+    "name:fr": "DK Hotel",
+    "opening_hours": "24/7",
+    "phone": "33394701",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 4909359126,
+  "lat": 4.0857876,
+  "lon": 9.7577820,
+  "tags": {
+    "name": "Royal Oaks residence",
+    "name:en": "Royal Oaks residence",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 5207347021,
+  "lat": 4.0173211,
+  "lon": 9.7066278,
+  "tags": {
+    "name": "house",
+    "name:en": "house",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 5922372585,
+  "lat": 4.0810300,
+  "lon": 9.7847812,
+  "tags": {
+    "name": "Hôtel la Cachette",
+    "name:en": "La Cachette des Copains",
+    "name:fr": "La Cachette des Copains",
+    "phone": "+237696836724",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 5994652585,
+  "lat": 4.0325328,
+  "lon": 9.7252478,
+  "tags": {
+    "name": "Hôtel Barcelone",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6154795288,
+  "lat": 4.0900583,
+  "lon": 9.7424927,
+  "tags": {
+    "name": "Hotel saint James",
+    "name:en": "Saint James hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6300268085,
+  "lat": 4.0680427,
+  "lon": 9.7252198,
+  "tags": {
+    "internet_access": "wlan",
+    "name": "Hotel Amities",
+    "opening_hours": "24/7",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6459051285,
+  "lat": 4.0686332,
+  "lon": 9.7266054,
+  "tags": {
+    "name": "Cela hôtel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6521004185,
+  "lat": 4.0456072,
+  "lon": 9.6869587,
+  "tags": {
+    "addr:street": "Rue Kitchener",
+    "internet_access": "wlan",
+    "name": "Hotels la Falaise",
+    "opening_hours": "24/7",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6534453787,
+  "lat": 4.0437368,
+  "lon": 9.7078657,
+  "tags": {
+    "addr:street": "rue 1.360",
+    "internet_access": "wlan",
+    "name": "Hila hôtel",
+    "opening_hours": "24/7",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6612162985,
+  "lat": 4.0421145,
+  "lon": 9.6911000,
+  "tags": {
+    "name": "Djeuga palace",
+    "name:fr": "Black&White Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6633202285,
+  "lat": 4.0456245,
+  "lon": 9.6995998,
+  "tags": {
+    "name": "Hôtel DORIS",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6685468787,
+  "lat": 4.0563862,
+  "lon": 9.7358761,
+  "tags": {
+    "addr:street": "route EPMB MAKÉPÉ MATURITÉ",
+    "name": "Hôtel le Select",
+    "opening_hours": "24/7",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 6695921885,
+  "lat": 4.0910736,
+  "lon": 9.7467647,
+  "tags": {
+    "addr:street": "Rue 5.137",
+    "name": "Hotel Nanfang’s",
+    "opening_hours": "24/7",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 7713479687,
+  "lat": 4.0757927,
+  "lon": 9.6735841,
+  "tags": {
+    "name": "Hôtel Bonambappe",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 7832097586,
+  "lat": 4.0431732,
+  "lon": 9.7079109,
+  "tags": {
+    "name": "Hila hôtel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 7847553587,
+  "lat": 4.0655441,
+  "lon": 9.7118549,
+  "tags": {
+    "name": "Manengouba",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 7929530785,
+  "lat": 4.0500847,
+  "lon": 9.6978535,
+  "tags": {
+    "addr:street": "Rue Mermoz(N° 1.382)",
+    "email": "hoteloubangui@yahoo.fr",
+    "internet_access": "wlan",
+    "name": "Hôtel l’Oubangui",
+    "name:en": "The Oubangui Hotel",
+    "opening_hours": "24/7",
+    "phone": "+237233433652",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 8004931185,
+  "lat": 4.0574531,
+  "lon": 9.7500991,
+  "tags": {
+    "name": "Terrase Ndongbong",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 8119494617,
+  "lat": 4.0445520,
+  "lon": 9.7064791,
+  "tags": {
+    "name": "Noubou Hôtel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 8148288220,
+  "lat": 4.0694245,
+  "lon": 9.7200881,
+  "tags": {
+    "name": "Hotel Déborah",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 9151105517,
+  "lat": 4.0571427,
+  "lon": 9.6994240,
+  "tags": {
+    "addr:street": "Adresse Boulevard de la Liberté Akwa Douala Littoral BP 3633 Cameroon",
+    "email": "contact@krystalpalacedouala.com",
+    "name": "Hôtel Krystal Palace",
+    "name:en": "Krystal Palace hotel",
+    "phone": "2 33 50 68 00",
+    "tourism": "hotel",
+    "website": "https://www.krystalpalacedouala.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 9151148017,
+  "lat": 4.0281564,
+  "lon": 9.6985767,
+  "tags": {
+    "addr:street": "Rue njo-njo Bonapriso BP 5300 Douala Cameroun",
+    "email": "reservations@lafalaisebonapriso.com",
+    "name": "Hôtel La Falaise Bonapriso",
+    "name:en": "La Falaise Bonapriso hotel",
+    "phone": "+(237) 233 43 99 12",
+    "tourism": "hotel",
+    "website": "https://www.lafalaisebonapriso.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 9151169717,
+  "lat": 4.0351821,
+  "lon": 9.6874276,
+  "tags": {
+    "addr:street": "Av. du Général de Gaulle, Douala",
+    "name": "ONOMO Hotel Douala",
+    "tourism": "hotel",
+    "website": "https://www.onomohotels.com/"
+  }
+},
+{
+  "type": "node",
+  "id": 9992410617,
+  "lat": 4.0878233,
+  "lon": 9.7575089,
+  "tags": {
+    "addr:street": "Avenue de Logpom",
+    "name": "Le Plessis Trévise",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 10215220426,
+  "lat": 4.0545945,
+  "lon": 9.6970137,
+  "tags": {
+    "name": "Procure - Centre d'accueil missionnaire",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 10582520905,
+  "lat": 4.0257069,
+  "lon": 9.7020515,
+  "tags": {
+    "name": "Noubou",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 12009142778,
+  "lat": 4.0987461,
+  "lon": 9.6529450,
+  "tags": {
+    "name": "Miami Motel Bonaberi",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 12118856202,
+  "lat": 4.0785916,
+  "lon": 9.7935417,
+  "tags": {
+    "name": "Fali Concorde Hôtel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 12432304501,
+  "lat": 4.0423691,
+  "lon": 9.6885172,
+  "tags": {
+    "addr:housenumber": "729",
+    "addr:street": "Rue Christian Tobie Kuoh (N°1.077)",
+    "name": "K Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13206753072,
+  "lat": 4.0844500,
+  "lon": 9.7733910,
+  "tags": {
+    "name": "Repos Roi",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13326816592,
+  "lat": 4.0160137,
+  "lon": 9.7271657,
+  "tags": {
+    "name": "Saffana Hotel",
+    "phone": "+237243173630",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13514218008,
+  "lat": 4.0437730,
+  "lon": 9.7115169,
+  "tags": {
+    "internet_access": "no",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13760089515,
+  "lat": 4.0428287,
+  "lon": 9.7137085,
+  "tags": {
+    "check_date": "2026-04-25",
+    "name": "Opium Paradise",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13760089520,
+  "lat": 4.0424590,
+  "lon": 9.7148303,
+  "tags": {
+    "check_date": "2026-04-25",
+    "name": "Hotel Ellisam",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13760089521,
+  "lat": 4.0423023,
+  "lon": 9.7153800,
+  "tags": {
+    "check_date": "2026-04-25",
+    "name": "Hotel Jonavi",
+    "phone": "+237 6 97 67 27 81",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13760185442,
+  "lat": 4.0791123,
+  "lon": 9.7534877,
+  "tags": {
+    "name": "Foprolux Palace",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 13913338971,
+  "lat": 4.0344836,
+  "lon": 9.7252423,
+  "tags": {
+    "name": "Le Château",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "node",
+  "id": 14088153692,
+  "lat": 4.0427526,
+  "lon": 9.7024621,
+  "tags": {
+    "name": "Faya Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 213148935,
+  "center": {
+    "lat": 4.0483533,
+    "lon": 9.6917120
+  },
+  "tags": {
+    "amenity": "restaurant",
+    "building": "yes",
+    "fax": "+237 33422794",
+    "name": "Seamen's Mission",
+    "name:de": "Deutsche Seemansmission",
+    "name:en": "Seamen's Mission",
+    "name:es": "Restaurante del hotel Seamen's Mission",
+    "name:fr": "Foyer du Marin",
+    "operator": "Deutsche Seemannsmission e.V.",
+    "phone": "+237 33422794",
+    "tourism": "hotel",
+    "website": "https://www.seemannsmission.org/"
+  }
+},
+{
+  "type": "way",
+  "id": 298313638,
+  "center": {
+    "lat": 4.0942057,
+    "lon": 9.6462879
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Ngoute",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 298313881,
+  "center": {
+    "lat": 4.0938557,
+    "lon": 9.6428530
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Le Sentier",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 298378189,
+  "center": {
+    "lat": 4.0688679,
+    "lon": 9.6568205
+  },
+  "tags": {
+    "building": "yes",
+    "construction": "yes",
+    "name": "Residence Inn",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 298378653,
+  "center": {
+    "lat": 4.0951887,
+    "lon": 9.6527276
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Pente Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 298379221,
+  "center": {
+    "lat": 4.0684552,
+    "lon": 9.6553202
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Pouble",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 298440060,
+  "center": {
+    "lat": 4.0711800,
+    "lon": 9.6656245
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Mambanda City",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299453581,
+  "center": {
+    "lat": 4.0795369,
+    "lon": 9.6669137
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel KDV",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299453602,
+  "center": {
+    "lat": 4.0796550,
+    "lon": 9.6708302
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Royal Palace",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299539569,
+  "center": {
+    "lat": 4.0742955,
+    "lon": 9.6780873
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Liberté Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299539844,
+  "center": {
+    "lat": 4.0392409,
+    "lon": 9.6875931
+  },
+  "tags": {
+    "addr:postcode": "12086 Dla",
+    "brand": "Ibis",
+    "brand:wikidata": "Q920166",
+    "brand:wikipedia": "en:Ibis (hotel)",
+    "building": "yes",
+    "contact:phone": "233425800/233425817",
+    "contact:website": "www.ibishotel.com",
+    "name": "Ibis",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299539951,
+  "center": {
+    "lat": 4.0375492,
+    "lon": 9.6896972
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Omega 104",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299546498,
+  "center": {
+    "lat": 4.0423493,
+    "lon": 9.6955611
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Serena Palace",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299548310,
+  "center": {
+    "lat": 4.0352920,
+    "lon": 9.6830092
+  },
+  "tags": {
+    "addr:housenumber": "35",
+    "addr:street": "Avenue des Cocotiers",
+    "building": "yes",
+    "name": "Pullmann Douala Rabingha",
+    "phone": "233435000",
+    "tourism": "hotel",
+    "website": "www.pullmanhotels.com"
+  }
+},
+{
+  "type": "way",
+  "id": 299550544,
+  "center": {
+    "lat": 4.0485084,
+    "lon": 9.6930277
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Le Lido",
+    "source": "Plan polyvalent Douala",
+    "standing": "low",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299551197,
+  "center": {
+    "lat": 4.0425117,
+    "lon": 9.6956996
+  },
+  "tags": {
+    "addr:postcode": "4330 Dla",
+    "building": "construction",
+    "construction": "yes",
+    "contact:email": "hotel_serena@yahoo.com",
+    "contact:fax": "233423782",
+    "contact:phone": "233423774",
+    "name": "Serena Palace",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299551334,
+  "center": {
+    "lat": 4.0470894,
+    "lon": 9.6935361
+  },
+  "tags": {
+    "building": "yes",
+    "contact:phone": "233432838",
+    "name": "Résidence La Falaise",
+    "phone": "+237 33 43 28 32",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel",
+    "website": "http://residencelafalaise.net/"
+  }
+},
+{
+  "type": "way",
+  "id": 299551387,
+  "center": {
+    "lat": 4.0486022,
+    "lon": 9.6915099
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Seamen's Mission",
+    "name:de": "Deutsche Seemansmission",
+    "name:en": "Seamen's Mission",
+    "name:fr": "Foyer du Marin",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299551904,
+  "center": {
+    "lat": 4.0410161,
+    "lon": 9.6895775
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Beau Rivage",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299607096,
+  "center": {
+    "lat": 4.0587442,
+    "lon": 9.7008563
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel le Ndé",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299607270,
+  "center": {
+    "lat": 4.0549241,
+    "lon": 9.6976720
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Le Majestic Akwa",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299608218,
+  "center": {
+    "lat": 4.0459366,
+    "lon": 9.6999580
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Doris",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299608863,
+  "center": {
+    "lat": 4.0636475,
+    "lon": 9.7051074
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Maxim's de Paris",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299609031,
+  "center": {
+    "lat": 4.0195430,
+    "lon": 9.7012461
+  },
+  "tags": {
+    "addr:postcode": "204 Kribi",
+    "building": "yes",
+    "contact:fax": "23733461365",
+    "contact:phone": "699936862",
+    "contact:website": "www.hoteldesanges.com",
+    "name": "Hôtel Des Anges",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299613530,
+  "center": {
+    "lat": 4.0422720,
+    "lon": 9.6983610
+  },
+  "tags": {
+    "addr:postcode": "15688 Dla",
+    "building": "yes",
+    "contact:email": "adamaouahotel@gmail.com",
+    "contact:fax": "233432418",
+    "contact:phone": "699008325",
+    "name": "Adamaoua Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299614853,
+  "center": {
+    "lat": 4.0633226,
+    "lon": 9.7055384
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Pacific",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299615930,
+  "center": {
+    "lat": 4.0613468,
+    "lon": 9.7064838
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Deido Palace",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299616388,
+  "center": {
+    "lat": 4.0211581,
+    "lon": 9.7026992
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Le Sportif",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299694954,
+  "center": {
+    "lat": 4.0458302,
+    "lon": 9.7090328
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel La Côte",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299705922,
+  "center": {
+    "lat": 4.0551358,
+    "lon": 9.7076272
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Vallée des Princes",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299769363,
+  "center": {
+    "lat": 4.0483319,
+    "lon": 9.7196686
+  },
+  "tags": {
+    "building": "yes",
+    "name": "hotel belavie",
+    "name:fr": "hotel belavie",
+    "source": "Plan polyvalent Douala",
+    "standing": "low",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299770492,
+  "center": {
+    "lat": 4.0603615,
+    "lon": 9.7233429
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Capitol Hôtel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299776513,
+  "center": {
+    "lat": 4.0751700,
+    "lon": 9.7174802
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Madiba",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299823789,
+  "center": {
+    "lat": 4.0162186,
+    "lon": 9.7275114
+  },
+  "tags": {
+    "building": "yes",
+    "contact:email": "mondialhotel@yahoo.fr",
+    "contact:phone": "677943402",
+    "name": "Mondial Hôtel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299830131,
+  "center": {
+    "lat": 4.0706245,
+    "lon": 9.7238797
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Le Temps",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299833271,
+  "center": {
+    "lat": 4.0834532,
+    "lon": 9.7276273
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Mbanya",
+    "name:fr": "Hotel Mbanya",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299875018,
+  "center": {
+    "lat": 4.0827055,
+    "lon": 9.7298579
+  },
+  "tags": {
+    "building": "yes",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299875491,
+  "center": {
+    "lat": 4.0095693,
+    "lon": 9.7321661
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Kampa",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299875587,
+  "center": {
+    "lat": 4.0106422,
+    "lon": 9.7313205
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hunter Sgare",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299875615,
+  "center": {
+    "lat": 4.0775104,
+    "lon": 9.7314470
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Fly City",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299930064,
+  "center": {
+    "lat": 4.0882925,
+    "lon": 9.7359035
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Denver Plaza",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299930442,
+  "center": {
+    "lat": 4.0995384,
+    "lon": 9.7348814
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hibiscus",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299931092,
+  "center": {
+    "lat": 4.0841235,
+    "lon": 9.7352313
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Peninsula Plaza",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299931558,
+  "center": {
+    "lat": 4.0500812,
+    "lon": 9.7334576
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Canovas Prestige",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299931574,
+  "center": {
+    "lat": 4.0277264,
+    "lon": 9.7354331
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel Carington",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299931911,
+  "center": {
+    "lat": 4.0227160,
+    "lon": 9.7361119
+  },
+  "tags": {
+    "building": "yes",
+    "contact:phone": "676780050",
+    "name": "Hôtel Manengole",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299931949,
+  "center": {
+    "lat": 4.0985058,
+    "lon": 9.7359036
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Yangs",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299937284,
+  "center": {
+    "lat": 4.0102830,
+    "lon": 9.7327248
+  },
+  "tags": {
+    "addr:postcode": "3748 Dla",
+    "building": "yes",
+    "contact:email": "jethotel@gmail.com",
+    "contact:fax": "233 37 52 82",
+    "contact:phone": "233375132",
+    "contact:website": "www.jethotelcam.com",
+    "name": "Jet Hôtel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299938860,
+  "center": {
+    "lat": 4.0120214,
+    "lon": 9.7329979
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Befemen Building",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 299940481,
+  "center": {
+    "lat": 4.0283869,
+    "lon": 9.7359460
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Chicago Palace",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300011168,
+  "center": {
+    "lat": 4.0526275,
+    "lon": 9.7367123
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Facebook club",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300011561,
+  "center": {
+    "lat": 4.0565140,
+    "lon": 9.7371396
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Mont ESSEC",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300025079,
+  "center": {
+    "lat": 4.0837964,
+    "lon": 9.7399514
+  },
+  "tags": {
+    "building": "yes",
+    "contact:phone": "+237233471944",
+    "name": "Hôtel Santa Barbara",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300094365,
+  "center": {
+    "lat": 4.0839111,
+    "lon": 9.7423652
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300096909,
+  "center": {
+    "lat": 4.0847831,
+    "lon": 9.7436567
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hôtel de France",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300206611,
+  "center": {
+    "lat": 4.0833874,
+    "lon": 9.7501454
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Campagne",
+    "source": "Plan polyvalent Douala",
+    "standing": "low",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300245979,
+  "center": {
+    "lat": 4.0854020,
+    "lon": 9.7542457
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Dianna",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300249395,
+  "center": {
+    "lat": 4.0855813,
+    "lon": 9.7546176
+  },
+  "tags": {
+    "building": "public",
+    "name": "Hotel Sial",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300250629,
+  "center": {
+    "lat": 4.0854388,
+    "lon": 9.7546898
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Moulin Rouge",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300253827,
+  "center": {
+    "lat": 4.0847945,
+    "lon": 9.7558727
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Vénus",
+    "source": "Plan polyvalent Douala",
+    "standing": "low",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300257330,
+  "center": {
+    "lat": 4.0465529,
+    "lon": 9.7546586
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Eva Hotel pk8",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300306296,
+  "center": {
+    "lat": 4.0034036,
+    "lon": 9.7568183
+  },
+  "tags": {
+    "building": "yes",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300448040,
+  "center": {
+    "lat": 4.0473938,
+    "lon": 9.7693539
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Ruccotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 300458710,
+  "center": {
+    "lat": 4.0816392,
+    "lon": 9.7722825
+  },
+  "tags": {
+    "building": "yes",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 301118742,
+  "center": {
+    "lat": 4.0340055,
+    "lon": 9.6836981
+  },
+  "tags": {
+    "addr:postcode": "2345 Dla",
+    "contact:email": "hotelsawa@yahoo.fr",
+    "contact:fax": "233423871",
+    "contact:phone": "233501400",
+    "contact:website": "www.hotelsawa.com",
+    "name": "Hotel Sawa",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 363336781,
+  "center": {
+    "lat": 4.1056619,
+    "lon": 9.6195103
+  },
+  "tags": {
+    "building": "yes",
+    "building:levels": "5",
+    "name": "Authentica Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 363349393,
+  "center": {
+    "lat": 4.1096354,
+    "lon": 9.6218835
+  },
+  "tags": {
+    "addr:postcode": "15628 Dla",
+    "building": "yes",
+    "contact:phone": "233219683",
+    "name": "Le Mogapole",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 409822011,
+  "center": {
+    "lat": 4.0159749,
+    "lon": 9.7276581
+  },
+  "tags": {
+    "addr:postcode": "12274 Dla",
+    "building": "yes",
+    "contact:email": "saffanahotel@yahoo.fr",
+    "contact:phone": "243173630",
+    "name": "Safana",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 409961541,
+  "center": {
+    "lat": 4.0962157,
+    "lon": 9.6384636
+  },
+  "tags": {
+    "addr:postcode": "13111 Dla",
+    "contact:phone": "699583450",
+    "name": "Hotel Le Bien",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 409970611,
+  "center": {
+    "lat": 4.0920673,
+    "lon": 9.6414693
+  },
+  "tags": {
+    "addr:postcode": "9103 Dla",
+    "contact:email": "hotelaugusta1@yahoo.com",
+    "contact:phone": "233397817",
+    "contact:website": "www.hotelaugusta1.com",
+    "name": "Hotel Augusta",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 409980632,
+  "center": {
+    "lat": 4.0796811,
+    "lon": 9.6708971
+  },
+  "tags": {
+    "addr:postcode": "12714 Dla",
+    "contact:email": "samvelateckakeedi@yahoo.fr",
+    "contact:phone": "699289722",
+    "contact:website": "www.ntasin.name/royalpalace.com",
+    "name": "Hotel Royal",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410001958,
+  "center": {
+    "lat": 4.0202128,
+    "lon": 9.6990015
+  },
+  "tags": {
+    "addr:postcode": "204 Kribi",
+    "building": "yes",
+    "contact:fax": "23733461365",
+    "contact:phone": "699936862",
+    "contact:website": "www.hoteldesanges.com",
+    "name": "Hotel des Anges",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410002563,
+  "center": {
+    "lat": 4.0254408,
+    "lon": 9.6940725
+  },
+  "tags": {
+    "addr:housenumber": "85",
+    "addr:street": "Rue Dominique Savio(N°1.225)",
+    "brand": "STAR LAND JOTEL",
+    "name": "Star Land Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410036071,
+  "center": {
+    "lat": 4.0860389,
+    "lon": 9.7620532
+  },
+  "tags": {
+    "addr:postcode": "8527 Dla",
+    "contact:email": "valleedesroishtl@yahoo.fr",
+    "contact:fax": "233477437",
+    "contact:phone": "233471996",
+    "contact:website": "www.hotelvalleedesrois.com",
+    "name": "Vallée des Rois",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410036663,
+  "center": {
+    "lat": 4.0852686,
+    "lon": 9.7556641
+  },
+  "tags": {
+    "addr:postcode": "12132 Dla",
+    "building": "yes",
+    "contact:email": "makepepalace@yahoo.fr",
+    "contact:fax": "233474888",
+    "contact:phone": "233474888",
+    "contact:website": "www.hotelmakepepalaca.com",
+    "name": "Makepe Palace",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410036801,
+  "center": {
+    "lat": 4.0869827,
+    "lon": 9.7467503
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Vital",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410037014,
+  "center": {
+    "lat": 4.0833020,
+    "lon": 9.7460714
+  },
+  "tags": {
+    "addr:postcode": "2848 Dla",
+    "alt_name": "Hotel CA",
+    "contact:phone": "233475846",
+    "name": "Hotel Clichy Atlantic",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410049696,
+  "center": {
+    "lat": 4.0378934,
+    "lon": 9.7499700
+  },
+  "tags": {
+    "contact:email": "hotelkedjalesportif@yahoo.fr",
+    "contact:phone": "233371089",
+    "name": "Hotel Sportif Bassa VIP",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410224144,
+  "center": {
+    "lat": 4.0386100,
+    "lon": 9.6838690
+  },
+  "tags": {
+    "contact:phone": "670307779",
+    "name": "Nations Of Hotel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 410226820,
+  "center": {
+    "lat": 4.0464512,
+    "lon": 9.6879498
+  },
+  "tags": {
+    "contact:fax": "233426891",
+    "contact:phone": "233424646",
+    "contact:website": "http://www.hotellafalaise.net",
+    "name": "La Falaise Bonanjo",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 449437626,
+  "center": {
+    "lat": 4.0110781,
+    "lon": 9.7321906
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Emilia Hôtel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 454357969,
+  "center": {
+    "lat": 4.0417846,
+    "lon": 9.6927692
+  },
+  "tags": {
+    "addr:postcode": "17546 Dla",
+    "contact:email": "somateldla@yahoo.fr",
+    "contact:phone": "233436695",
+    "name": "Somatel",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 454412798,
+  "center": {
+    "lat": 4.0349287,
+    "lon": 9.7351067
+  },
+  "tags": {
+    "building": "yes",
+    "contact:phone": "233373897",
+    "name": "Hotel du Plateau",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 455142070,
+  "center": {
+    "lat": 4.0943341,
+    "lon": 9.6513932
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Laguna Palace",
+    "source": "bing",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 455148247,
+  "center": {
+    "lat": 4.0910952,
+    "lon": 9.6578457
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Casyan Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 456011466,
+  "center": {
+    "lat": 4.0499868,
+    "lon": 9.6955191
+  },
+  "tags": {
+    "name": "Akwa Palace",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 456102680,
+  "center": {
+    "lat": 4.0949233,
+    "lon": 9.6457491
+  },
+  "tags": {
+    "name": "Hôtel du Rail",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 456133538,
+  "center": {
+    "lat": 4.0447921,
+    "lon": 9.7496588
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Belavie",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 456201212,
+  "center": {
+    "lat": 4.0503831,
+    "lon": 9.7016774
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Akena City Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 456202069,
+  "center": {
+    "lat": 4.0528405,
+    "lon": 9.7035664
+  },
+  "tags": {
+    "addr:postcode": "12449 Dla",
+    "contact:email": "reservation@hotelbanopalace.net",
+    "contact:fax": "233437762",
+    "contact:phone": "233437757",
+    "contact:website": "http://www.hotelbanopalace.com/",
+    "name": "Bano Palace",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 457396217,
+  "center": {
+    "lat": 4.0575222,
+    "lon": 9.7089965
+  },
+  "tags": {
+    "addr:postcode": "12563 Dla",
+    "building": "yes",
+    "contact:email": "lewathotel@yahoo.fr",
+    "contact:phone": "233400024",
+    "name": "Lewat Hotel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 457427462,
+  "center": {
+    "lat": 4.0463862,
+    "lon": 9.6999920
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Bete Akwa",
+    "source": "bing",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "way",
+  "id": 868844762,
+  "center": {
+    "lat": 4.0191495,
+    "lon": 9.7196266
+  },
+  "tags": {
+    "brand": "Best Western",
+    "building": "yes",
+    "building:levels": "5",
+    "name": "Best Western Plus",
+    "rooms": "182",
+    "tourism": "hotel"
+  }
+},
+{
+  "type": "relation",
+  "id": 3982268,
+  "center": {
+    "lat": 4.0507699,
+    "lon": 9.6933375
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Beauséjour Mirabel",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel",
+    "type": "multipolygon"
+  }
+},
+{
+  "type": "relation",
+  "id": 3983271,
+  "center": {
+    "lat": 4.0199895,
+    "lon": 9.6991951
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Sky",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel",
+    "type": "multipolygon"
+  }
+},
+{
+  "type": "relation",
+  "id": 3988595,
+  "center": {
+    "lat": 4.0249571,
+    "lon": 9.7346384
+  },
+  "tags": {
+    "building": "yes",
+    "name": "Hotel Neupateng",
+    "source": "Plan polyvalent Douala",
+    "tourism": "hotel",
+    "type": "multipolygon"
+  }
+}
+
+  ]
+}

@@ -218,6 +218,13 @@
       "when": 1786789260832,
       "tag": "0030_acquisition_provenance",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "5",
+      "when": 1787253531832,
+      "tag": "0031_add_hotel_catalog",
+      "breakpoints": true
     }
   ]
 }

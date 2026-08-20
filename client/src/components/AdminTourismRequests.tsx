@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
+import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +28,8 @@ export function AdminTourismRequests() {
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [catalogCity, setCatalogCity] = useState("douala");
+  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery();
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -37,6 +39,14 @@ export function AdminTourismRequests() {
   const updateDetails = trpc.tourism.updateDetails.useMutation({
     onSuccess: () => { refetch(); toast.success("Détails et devis enregistrés."); setSelectedRequest(null); },
     onError: e => toast.error(e.message || "Erreur lors de l’enregistrement."),
+  });
+  const importCatalog = trpc.tourism.importCatalogCity.useMutation({
+    onSuccess: (data) => { refetchCatalog(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
+    onError: e => toast.error(e.message || "Import du catalogue indisponible."),
+  });
+  const verifyCatalog = trpc.tourism.verifyCatalogEntry.useMutation({
+    onSuccess: () => { refetchCatalog(); toast.success("Statut du catalogue mis à jour."); },
+    onError: e => toast.error(e.message || "Mise à jour du catalogue impossible."),
   });
 
   const filteredRequests = (requests ?? []).filter(req => {
@@ -166,6 +176,37 @@ export function AdminTourismRequests() {
             </SelectContent>
           </Select>
         </div>
+      </Card>
+
+      <Card className="border-slate-200 bg-white">
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier ouvert</p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">Importer et vérifier les établissements</h3>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">Chaque source, site officiel et équipement est conservé. Les tarifs et disponibilités restent soumis à validation humaine.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Select value={catalogCity} onValueChange={setCatalogCity}>
+                <SelectTrigger className="min-w-48"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="douala">Douala</SelectItem><SelectItem value="yaounde">Yaoundé</SelectItem><SelectItem value="kribi">Kribi</SelectItem><SelectItem value="limbe">Limbe</SelectItem><SelectItem value="libreville">Libreville</SelectItem><SelectItem value="brazzaville">Brazzaville</SelectItem><SelectItem value="ndjamena">N'Djamena</SelectItem><SelectItem value="malabo">Malabo</SelectItem><SelectItem value="bangui">Bangui</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
+                {importCatalog.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Importer la ville
+              </Button>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+            {(catalogHotels ?? []).slice(0, 8).map(hotel => {
+              const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+            })}
+            {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
+          </div>
+          <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Vérifiez chaque fiche et le lien avant sa publication dans 3M Booking.</p>
+        </CardContent>
       </Card>
 
       {/* Liste des demandes */}
@@ -309,7 +350,7 @@ export function AdminTourismRequests() {
                   return (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
                       <span className="text-xs font-bold text-amber-900">Recherche associée à la demande :</span>
-                      {enrichment.selectedPlace && <p className="mt-1 text-xs font-semibold text-slate-800">Établissement retenu : {enrichment.selectedPlace.name}{enrichment.selectedPlace.address ? ` — ${enrichment.selectedPlace.address}` : ""}</p>}
+                      {enrichment.selectedPlace && <><p className="mt-1 text-xs font-semibold text-slate-800">Établissement retenu : {enrichment.selectedPlace.name}{enrichment.selectedPlace.address ? ` — ${enrichment.selectedPlace.address}` : ""}</p>{(enrichment.selectedPlace.officialBookingUrl || enrichment.selectedPlace.officialWebsiteUrl) && <a href={enrichment.selectedPlace.officialBookingUrl || enrichment.selectedPlace.officialWebsiteUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex min-h-9 items-center gap-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white hover:bg-blue-800"><ExternalLink className="h-3.5 w-3.5" />{enrichment.selectedPlace.officialBookingUrl ? "Ouvrir la réservation officielle" : "Ouvrir le site officiel"}</a>}{enrichment.selectedPlace.sourceUrl && <a href={enrichment.selectedPlace.sourceUrl} target="_blank" rel="noreferrer" className="ml-2 inline-flex min-h-9 items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100"><ExternalLink className="h-3.5 w-3.5" />Voir la source</a>}</>}
                       {enrichment.briefing && <p className="mt-1 text-xs text-slate-700">{enrichment.briefing}</p>}
                       {enrichment.places?.length > 0 && (
                         <div className="mt-3 grid grid-cols-2 gap-2">

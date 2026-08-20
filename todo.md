@@ -690,4 +690,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les filtres piscine, Wi‑Fi et parking dans les résultats 3M Booking
 - [x] Synchroniser les équipements choisis avec la demande transmise au back-office
 - [x] Vérifier les filtres d’équipements sur ordinateur et mobile, avec tests de non-régression
+- [x] Cartographier les sources officielles et partenaires vérifiables pour les hôtels du Cameroun et d’Afrique centrale
+- [x] Définir un catalogue hôtelier administrable avec provenance, date de vérification, équipements et conditions tarifaires
+- [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office
+- [x] Mettre en place des garde-fous pour éviter d’afficher des tarifs ou disponibilités non confirmés
+- [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
+- [ ] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
+- [ ] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
+- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale
+- [x] Identifier une source ouverte ou gratuite permettant de démarrer un catalogue hôtelier Cameroun et Afrique centrale
+- [x] Concevoir la table de catalogue hôtelier avec source OSM, URL officielle, équipements et date de vérification
+- [x] Importer de manière contrôlée les hôtels OpenStreetMap des neuf villes prioritaires
+- [x] Créer les procédures administrateur de consultation, vérification et gestion du catalogue hôtelier
+- [x] Permettre la sélection d’un hôtel du catalogue dans 3M Booking et transmettre sa provenance au back-office
+- [x] Afficher l’attribution OpenStreetMap et exclure tout tarif ou disponibilité non vérifiés
+- [x] Afficher le lien officiel de réservation de l’hôtel sélectionné dans chaque demande côté administration
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

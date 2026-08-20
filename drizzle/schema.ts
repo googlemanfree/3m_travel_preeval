@@ -597,6 +597,38 @@ export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
   index("idx_tourism_service_requests_candidate_created").on(table.candidateId, table.createdAt),
 ]);
 
+/** Catalogue hôtelier issu de sources ouvertes ou vérifié par l’équipe 3M. Les prix et disponibilités ne sont jamais stockés comme garantis. */
+export const hotelCatalog = mysqlTable("hotel_catalog", {
+  id: int("id").autoincrement().primaryKey(),
+  source: mysqlEnum("source", ["openstreetmap", "official", "manual"]).default("openstreetmap").notNull(),
+  sourceId: varchar("sourceId", { length: 120 }).notNull().unique(),
+  sourceUrl: text("sourceUrl"),
+  sourceAttribution: varchar("sourceAttribution", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  country: varchar("country", { length: 100 }).notNull(),
+  city: varchar("city", { length: 120 }).notNull(),
+  address: text("address"),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  officialWebsiteUrl: text("officialWebsiteUrl"),
+  officialBookingUrl: text("officialBookingUrl"),
+  phone: varchar("phone", { length: 80 }),
+  stars: int("stars"),
+  amenitiesJson: text("amenitiesJson"),
+  verificationStatus: mysqlEnum("verificationStatus", ["imported", "verified", "inactive"]).default("imported").notNull(),
+  lastImportedAt: timestamp("lastImportedAt").defaultNow().notNull(),
+  lastVerifiedAt: timestamp("lastVerifiedAt"),
+  verifiedByAdminEmail: varchar("verifiedByAdminEmail", { length: 320 }),
+  rawSourceJson: text("rawSourceJson"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  index("idx_hotel_catalog_country_city_status").on(table.country, table.city, table.verificationStatus),
+]);
+
+export type HotelCatalogEntry = typeof hotelCatalog.$inferSelect;
+export type InsertHotelCatalogEntry = typeof hotelCatalog.$inferInsert;
+
 /** Vues de filtres candidates enregistrées par un administrateur authentifié. */
 export const adminSavedViews = mysqlTable("admin_saved_views", {
   id: int("id").autoincrement().primaryKey(),

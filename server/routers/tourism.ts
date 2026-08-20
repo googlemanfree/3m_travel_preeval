@@ -1,8 +1,8 @@
 import { randomInt } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { desc, eq, or } from "drizzle-orm";
-import { adminNotifications, tourismServiceRequests } from "../../drizzle/schema";
+import { and, desc, eq, like, or } from "drizzle-orm";
+import { adminNotifications, hotelCatalog, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
 import { makeRequest, type PlacesSearchResult } from "../_core/map";
@@ -16,6 +16,71 @@ export type TourismServiceType = z.infer<typeof serviceType>;
 const hotelAmenity = z.enum(["pool", "wifi", "parking"]);
 export type HotelAmenity = z.infer<typeof hotelAmenity>;
 const hotelAmenitySearchTerms: Record<HotelAmenity, string> = { pool: "piscine", wifi: "Wi-Fi", parking: "parking" };
+export const OSM_CATALOG_ATTRIBUTION = "© OpenStreetMap contributors, ODbL";
+
+const osmCityScopes = {
+  douala: { city: "Douala", country: "Cameroun", bbox: "4.000,9.550,4.150,9.850" },
+  yaounde: { city: "Yaoundé", country: "Cameroun", bbox: "3.750,11.400,3.980,11.650" },
+  kribi: { city: "Kribi", country: "Cameroun", bbox: "2.850,9.860,2.990,9.970" },
+  limbe: { city: "Limbe", country: "Cameroun", bbox: "4.000,9.150,4.080,9.280" },
+  libreville: { city: "Libreville", country: "Gabon", bbox: "0.310,9.350,0.550,9.570" },
+  brazzaville: { city: "Brazzaville", country: "République du Congo", bbox: "-4.360,15.150,-4.150,15.360" },
+  ndjamena: { city: "N'Djamena", country: "Tchad", bbox: "12.000,15.000,12.200,15.200" },
+  malabo: { city: "Malabo", country: "Guinée équatoriale", bbox: "3.700,8.690,3.820,8.860" },
+  bangui: { city: "Bangui", country: "République centrafricaine", bbox: "4.280,18.480,4.480,18.700" },
+} as const;
+const osmCityKey = z.enum(["douala", "yaounde", "kribi", "limbe", "libreville", "brazzaville", "ndjamena", "malabo", "bangui"]);
+
+type OSMHotelElement = { type: "node" | "way" | "relation"; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
+
+function safeExternalUrl(value?: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = new URL(value.startsWith("www.") ? `https://${value}` : value);
+    return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function mapOsmHotelElement(element: OSMHotelElement, scope: { city: string; country: string }) {
+  const tags = element.tags ?? {};
+  const amenities = [
+    ...(tags.swimming_pool === "yes" || tags.pool === "yes" || tags.leisure === "swimming_pool" ? ["pool"] : []),
+    ...(tags.internet_access === "wlan" || tags.internet_access === "wifi" || tags.wifi === "yes" ? ["wifi"] : []),
+    ...(tags.parking === "yes" || tags.amenity === "parking" ? ["parking"] : []),
+  ] as HotelAmenity[];
+  const latitude = element.lat ?? element.center?.lat;
+  const longitude = element.lon ?? element.center?.lon;
+  const address = [tags["addr:housenumber"], tags["addr:street"], tags["addr:postcode"], tags["addr:city"]].filter(Boolean).join(" ") || null;
+  return {
+    source: "openstreetmap" as const,
+    sourceId: `osm:${element.type}:${element.id}`,
+    sourceUrl: `https://www.openstreetmap.org/${element.type}/${element.id}`,
+    sourceAttribution: OSM_CATALOG_ATTRIBUTION,
+    name: tags.name?.trim() || `Hôtel OpenStreetMap ${element.id}`,
+    country: scope.country,
+    city: scope.city,
+    address,
+    latitude: latitude === undefined ? null : String(latitude),
+    longitude: longitude === undefined ? null : String(longitude),
+    officialWebsiteUrl: safeExternalUrl(tags.website || tags["contact:website"]),
+    officialBookingUrl: safeExternalUrl(tags["booking:website"] || tags["reservation:website"]),
+    phone: tags.phone || tags["contact:phone"] || null,
+    stars: Number.isInteger(Number(tags.stars)) ? Number(tags.stars) : null,
+    amenitiesJson: JSON.stringify(amenities),
+    rawSourceJson: JSON.stringify({ type: element.type, id: element.id, tags }),
+  };
+}
+
+function parseCatalogAmenities(raw: string | null): HotelAmenity[] {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.filter((item): item is HotelAmenity => item === "pool" || item === "wifi" || item === "parking") : [];
+  } catch {
+    return [];
+  }
+}
 export function buildTourismServiceTypes(pack: string | undefined, selected: TourismServiceType[]) {
   const required: Record<string, TourismServiceType[]> = { escapade: ["hotel", "pack"], explorer: ["hotel", "vehicle", "pack"], business: ["hotel", "vehicle", "pack"] };
   return Array.from(new Set([...(selected || []), ...(pack ? required[pack] || ["pack"] : [])]));
@@ -51,6 +116,25 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
 export const tourismRouter = router({
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160), amenities: z.array(hotelAmenity).max(3).default([]) })).mutation(async ({ input }) => {
     let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
+    let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
+    const db = await getDb();
+    if (db) {
+      const query = `%${input.destination.trim()}%`;
+      const rows = await db.select().from(hotelCatalog).where(and(eq(hotelCatalog.verificationStatus, "verified"), or(like(hotelCatalog.city, query), like(hotelCatalog.country, query), like(hotelCatalog.name, query)))).limit(36);
+      catalogPlaces = rows.map((hotel) => ({
+        id: hotel.id,
+        name: hotel.name,
+        address: hotel.address,
+        city: hotel.city,
+        country: hotel.country,
+        stars: hotel.stars,
+        amenities: parseCatalogAmenities(hotel.amenitiesJson),
+        officialWebsiteUrl: hotel.officialWebsiteUrl,
+        officialBookingUrl: hotel.officialBookingUrl,
+        sourceUrl: hotel.sourceUrl,
+        sourceAttribution: hotel.sourceAttribution,
+      })).filter((hotel) => input.amenities.every((amenity) => hotel.amenities.includes(amenity))).slice(0, 12);
+    }
     try { const google = await makeRequest<PlacesSearchResult>("/maps/api/place/textsearch/json", { query: buildHotelDiscoveryQuery(input.destination, input.amenities) }); places = (google.results || []).slice(0, 5).map(buildTourismPlace); } catch { /* suggestions facultatives */ }
     let briefing = "Les disponibilités, tarifs et conditions sont confirmés par 3M Travel avant toute réservation.";
     try {
@@ -67,7 +151,7 @@ export const tourismRouter = router({
         briefing = rawContent.map(part => ('text' in part ? part.text : '')).join(' ');
       }
     } catch { /* repli transparent */ }
-    return { places, selectedAmenities: input.amenities, briefing, sourceNote: "Suggestions de lieux à titre informatif. Les équipements, tarifs et disponibilités sont à confirmer par l’agence." };
+    return { catalogPlaces, places, selectedAmenities: input.amenities, briefing, sourceNote: "Les données de catalogue sont issues de sources indiquées. Les équipements, tarifs et disponibilités sont à confirmer par l’agence." };
   }),
   create: publicProcedure.input(requestSchema).mutation(async ({ input, ctx }) => {
     const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -114,6 +198,45 @@ export const tourismRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     return db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt));
+  }),
+
+  adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const city = input?.city?.trim();
+    return city ? db.select().from(hotelCatalog).where(eq(hotelCatalog.city, city)).orderBy(desc(hotelCatalog.updatedAt)).limit(100) : db.select().from(hotelCatalog).orderBy(desc(hotelCatalog.updatedAt)).limit(100);
+  }),
+
+  importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey })).mutation(async ({ input, ctx }) => {
+    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const scope = osmCityScopes[input.cityKey];
+    const query = `[out:json][timeout:25];(nwr["tourism"="hotel"](${scope.bbox}););out center tags;`;
+    let payload: { elements?: OSMHotelElement[] };
+    try {
+      const response = await fetch("https://overpass-api.de/api/interpreter", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8", "User-Agent": "3M-Booking-Catalog/1.0 (hello@3mtravelagency.com)" }, body: new URLSearchParams({ data: query }).toString(), signal: AbortSignal.timeout(25_000) });
+      if (!response.ok) throw new Error(`Overpass ${response.status}`);
+      payload = await response.json() as { elements?: OSMHotelElement[] };
+    } catch {
+      throw new TRPCError({ code: "BAD_GATEWAY", message: "La source ouverte est temporairement indisponible. Réessayez plus tard." });
+    }
+    const entries = (payload.elements ?? []).filter((element) => element.tags?.name).slice(0, 500).map((element) => mapOsmHotelElement(element, scope));
+    for (const entry of entries) {
+      await db.insert(hotelCatalog).values(entry).onDuplicateKeyUpdate({ set: {
+        sourceUrl: entry.sourceUrl, sourceAttribution: entry.sourceAttribution, name: entry.name, country: entry.country, city: entry.city, address: entry.address, latitude: entry.latitude, longitude: entry.longitude, officialWebsiteUrl: entry.officialWebsiteUrl, officialBookingUrl: entry.officialBookingUrl, phone: entry.phone, stars: entry.stars, amenitiesJson: entry.amenitiesJson, rawSourceJson: entry.rawSourceJson, lastImportedAt: new Date(),
+      } });
+    }
+    return { city: scope.city, imported: entries.length, importedBy: admin.email };
+  }),
+
+  verifyCatalogEntry: publicProcedure.input(z.object({ id: z.number().int().positive(), verificationStatus: z.enum(["imported", "verified", "inactive"]), officialWebsiteUrl: z.string().url().max(1000).nullable().optional(), officialBookingUrl: z.string().url().max(1000).nullable().optional() })).mutation(async ({ input, ctx }) => {
+    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(hotelCatalog).set({ verificationStatus: input.verificationStatus, officialWebsiteUrl: input.officialWebsiteUrl, officialBookingUrl: input.officialBookingUrl, lastVerifiedAt: new Date(), verifiedByAdminEmail: admin.email }).where(eq(hotelCatalog.id, input.id));
+    return { success: true };
   }),
 
   updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema })).mutation(async ({ input, ctx }) => {
