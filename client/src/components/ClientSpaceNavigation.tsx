@@ -231,21 +231,22 @@ export default function ClientSpaceNavigation() {
 	                >
 	                  Voir PNR
 	                </a>
-	                <a
-	                  href={request.issuedPdfUrl}
-	                  target="_blank"
-	                  rel="noreferrer"
-	                  onClick={() => {
-	                    fetch("/api/trpc/flightBooking.markPnrAsDownloaded", {
-	                      method: "POST",
-	                      headers: { "Content-Type": "application/json" },
-	                      body: JSON.stringify({ json: { requestId: request.id } }),
-	                    }).catch(() => {});
-	                  }}
-	                  className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-emerald-700 shadow-sm"
-	                >
-	                  PDF
-	                </a>
+                <a
+                  href={request.issuedPdfUrl}
+                  download={`3M_Confirmation_Reservation_${request.requestRef}.pdf`}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => {
+                    fetch("/api/trpc/flightBooking.markPnrAsDownloaded", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ json: { requestId: request.id } }),
+                    }).catch(() => {});
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-1.5 text-[11px] font-black text-white hover:bg-emerald-800 shadow-md"
+                >
+                  📥 Télécharger la confirmation PDF
+                </a>
 	                <button
 	                  type="button"
 	                  onClick={() => {
