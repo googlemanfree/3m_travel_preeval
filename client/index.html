@@ -24,6 +24,20 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // Les domaines de prévisualisation Manus reposent déjà sur un serveur
+          // de développement. Ne pas y conserver de service worker : un ancien
+          // cache peut réinjecter /@vite/client et déclencher un faux échec HMR.
+          const isPreviewHost = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(window.location.hostname);
+          if (isPreviewHost) {
+            Promise.all([
+              navigator.serviceWorker.getRegistrations().then(registrations => Promise.all(registrations.map(registration => registration.unregister()))),
+              caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))),
+            ]).catch(() => {
+              // Le mode prévisualisation reste fonctionnel même si le nettoyage échoue.
+            });
+            return;
+          }
+
           navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.

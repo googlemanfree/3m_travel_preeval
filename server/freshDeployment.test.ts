@@ -12,7 +12,10 @@ describe("Chargement frais après déploiement", () => {
     expect(source).toContain("updateViaCache: 'none'");
     expect(source).toContain("registration.update()");
     expect(source).toContain("controllerchange");
-    expect(worker).toContain("3m-travel-pwa-v3");
+    expect(source).toContain("isPreviewHost");
+    expect(source).toContain("registration.unregister()");
+    expect(worker).toContain("3m-travel-pwa-v4");
+    expect(worker).toContain("IS_PREVIEW_HOST");
     expect(worker).toContain("SKIP_WAITING");
   });
 

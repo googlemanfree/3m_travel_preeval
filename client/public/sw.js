@@ -1,9 +1,14 @@
-const CACHE_NAME = '3m-travel-pwa-v3';
+const CACHE_NAME = '3m-travel-pwa-v4';
+const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
+  if (IS_PREVIEW_HOST) {
+    self.skipWaiting();
+    return;
+  }
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -49,6 +54,13 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // La prévisualisation utilise Vite ; il ne faut jamais y intercepter ni
+  // mettre en cache les scripts du serveur de développement.
+  if (IS_PREVIEW_HOST) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
   
   const url = new URL(event.request.url);
 
