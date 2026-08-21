@@ -182,9 +182,9 @@ export function AdminTourismRequests() {
         <CardContent className="p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier ouvert</p>
-              <h3 className="mt-1 text-lg font-black text-slate-900">Importer et vérifier les établissements</h3>
-              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">Chaque source, site officiel et équipement est conservé. Les tarifs et disponibilités restent soumis à validation humaine.</p>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier gratuit</p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">Trois étapes simples pour traiter un hôtel</h3>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">1. Importez une ville. 2. Vérifiez le site officiel et validez l’hôtel. 3. Répondez à la demande avec un devis confirmé. Aucun tarif ni disponibilité ne sont publiés automatiquement.</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Select value={catalogCity} onValueChange={setCatalogCity}>
@@ -205,7 +205,7 @@ export function AdminTourismRequests() {
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>
-          <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Vérifiez chaque fiche et le lien avant sa publication dans 3M Booking.</p>
+          <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Cette liste gratuite sert à préparer les demandes ; vérifiez toujours le site officiel avant d’envoyer un devis au client.</p>
         </CardContent>
       </Card>
 
