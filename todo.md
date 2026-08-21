@@ -731,6 +731,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un indicateur de navigation fluide et respectueux des préférences d’accessibilité
 - [x] Uniformiser les notifications de succès et d’erreur pour les actions administratives
 - [x] Ajouter une recherche instantanée aux données administratives prioritaires et vérifier son accessibilité
+- [x] Analyser la connexion administrateur, le jeton de session et la redirection du tableau de bord
+- [x] Corriger la persistance de session administrateur entre connexion et navigation
+- [x] Ajouter un test de non-régression du maintien de session administrateur — 474 tests réussis
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

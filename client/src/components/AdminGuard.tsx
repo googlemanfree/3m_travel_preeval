@@ -13,7 +13,10 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
-  const adminSession = trpc.adminAuth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: true });
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined
+    : undefined;
+  const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
   const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
 
