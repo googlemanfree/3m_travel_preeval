@@ -697,7 +697,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
-- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale
+- [x] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — écarté : solution payante non retenue
 - [x] Identifier une source ouverte ou gratuite permettant de démarrer un catalogue hôtelier Cameroun et Afrique centrale
 - [x] Concevoir la table de catalogue hôtelier avec source OSM, URL officielle, équipements et date de vérification
 - [x] Importer de manière contrôlée les hôtels OpenStreetMap des neuf villes prioritaires
@@ -705,12 +705,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre la sélection d’un hôtel du catalogue dans 3M Booking et transmettre sa provenance au back-office
 - [x] Afficher l’attribution OpenStreetMap et exclure tout tarif ou disponibilité non vérifiés
 - [x] Afficher le lien officiel de réservation de l’hôtel sélectionné dans chaque demande côté administration
-- [ ] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
-- [ ] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel
+- [x] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
+- [x] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel — 795 hôtels importés, dont 713 fiches à compléter ou vérifier avant publication client
 - [x] Inspecter les connecteurs et les fournisseurs B2B hôteliers accessibles pour 3M Booking
 - [x] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
-- [ ] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle
-- [ ] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client
+- [x] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle — écarté : solution payante non retenue
+- [x] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client — écarté : parcours gratuit retenu
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
