@@ -823,6 +823,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Journaliser les incidents de remise déclenchés et permettre leur accusé de réception par un administrateur
 - [x] Inclure l’historique des alertes et accusés dans le rapport PDF hebdomadaire
 - [x] Tester les paramètres, incidents, accusés et rapports avant publication
+- [x] Permettre aux administrateurs d’ajouter des commentaires détaillés aux incidents de remise e-mail
+- [x] Calculer et afficher le délai moyen de résolution des incidents par conseiller
+- [x] Tester les commentaires, calculs de délai, autorisations et régressions avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

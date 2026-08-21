@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
@@ -47,6 +48,7 @@ export default function AdminEmailDeliveryManagement() {
   const [previewLog, setPreviewLog] = useState<{ recipientEmail: string; subject: string; contentPreviewHtml: string | null; createdAt: Date | string; deliveryType: string } | null>(null);
   const [thresholdAdvisorEmail, setThresholdAdvisorEmail] = useState("");
   const [thresholdValue, setThresholdValue] = useState("3");
+  const [incidentCommentDrafts, setIncidentCommentDrafts] = useState<Record<number, string>>({});
   const utils = trpc.useUtils();
   // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
   // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
@@ -104,6 +106,14 @@ export default function AdminEmailDeliveryManagement() {
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
+  const addIncidentCommentMutation = trpc.admin.addEmailDeliveryIncidentComment.useMutation({
+    onSuccess: () => {
+      setIncidentCommentDrafts({});
+      toast.success("Commentaire ajouté à l’incident.");
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
@@ -116,6 +126,7 @@ export default function AdminEmailDeliveryManagement() {
   const advisors = data?.advisors ?? [];
   const advisorThresholds = data?.advisorThresholds ?? [];
   const emailDeliveryIncidents = data?.emailDeliveryIncidents ?? [];
+  const incidentResolutionByAdvisor = data?.incidentResolutionByAdvisor ?? [];
   const rateChartData = deliverySuccessRates30Days.map((metric) => ({
     service: deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType,
     taux: metric.successRate ?? 0,
@@ -269,6 +280,8 @@ export default function AdminEmailDeliveryManagement() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Seuils d’alerte personnalisés par conseiller</p>
                 {advisorThresholds.length ? <div className="mt-2 flex flex-wrap gap-2">{advisorThresholds.map((threshold) => <Badge key={threshold.advisorEmail} variant="outline" className={threshold.failuresToday >= threshold.dailyFailureThreshold ? "border-rose-300 bg-rose-50 text-rose-800" : "bg-slate-50 text-slate-700"}>{threshold.advisorEmail} · {threshold.failuresToday}/{threshold.dailyFailureThreshold} échec(s) aujourd’hui</Badge>)}</div> : <p className="mt-2 text-sm text-slate-500">Aucun seuil personnalisé n’est encore défini.</p>}
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Délai moyen de résolution par conseiller</p>
+                {incidentResolutionByAdvisor.length ? <div className="mt-2 flex flex-wrap gap-2">{incidentResolutionByAdvisor.map((entry) => <Badge key={entry.advisorEmail} variant="outline" className="bg-blue-50 text-blue-800">{entry.advisorEmail} · {entry.averageResolutionMinutes < 60 ? `${entry.averageResolutionMinutes} min` : `${(entry.averageResolutionMinutes / 60).toFixed(1)} h`} · {entry.resolvedCount} incident(s)</Badge>)}</div> : <p className="mt-2 text-sm text-slate-500">Le délai moyen apparaîtra après les premiers incidents pris en charge.</p>}
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <label className="flex-1 text-xs font-medium text-slate-600">Conseiller
@@ -286,7 +299,7 @@ export default function AdminEmailDeliveryManagement() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Journal des incidents de seuil</p>
                 <Badge variant="outline" className="border-amber-200 bg-white text-amber-800">{emailDeliveryIncidents.filter((incident) => incident.status === "open").length} ouvert(s)</Badge>
               </div>
-              {emailDeliveryIncidents.length ? <div className="mt-3 space-y-2">{emailDeliveryIncidents.slice(0, 12).map((incident) => <div key={incident.id} className="flex flex-col gap-2 rounded-lg border border-amber-100 bg-white p-3 text-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium text-slate-900">{incident.advisorEmail} · {incident.failureCount}/{incident.thresholdValue} échec(s)</p><p className="text-xs text-slate-500">Déclenché le {new Date(incident.triggeredAt).toLocaleString("fr-FR")}{incident.acknowledgedAt ? ` · pris en charge le ${new Date(incident.acknowledgedAt).toLocaleString("fr-FR")}` : ""}</p></div>{incident.status === "acknowledged" ? <Badge className="w-fit bg-emerald-600">Pris en charge</Badge> : <Button size="sm" variant="outline" disabled={acknowledgeIncidentMutation.isPending} onClick={() => acknowledgeIncidentMutation.mutate({ sessionToken, incidentId: incident.id })}>{acknowledgeIncidentMutation.isPending ? "Mise à jour…" : "Accuser réception"}</Button>}</div>)}</div> : <p className="mt-3 text-sm text-emerald-800">Aucun incident de seuil n’est actuellement journalisé.</p>}
+              {emailDeliveryIncidents.length ? <div className="mt-3 space-y-3">{emailDeliveryIncidents.slice(0, 12).map((incident) => <div key={incident.id} className="rounded-lg border border-amber-100 bg-white p-3 text-sm"><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium text-slate-900">{incident.advisorEmail} · {incident.failureCount}/{incident.thresholdValue} échec(s)</p><p className="text-xs text-slate-500">Déclenché le {new Date(incident.triggeredAt).toLocaleString("fr-FR")}{incident.acknowledgedAt ? ` · pris en charge le ${new Date(incident.acknowledgedAt).toLocaleString("fr-FR")}` : ""}</p></div>{incident.status === "acknowledged" ? <Badge className="w-fit bg-emerald-600">Pris en charge</Badge> : <Button size="sm" variant="outline" disabled={acknowledgeIncidentMutation.isPending} onClick={() => acknowledgeIncidentMutation.mutate({ sessionToken, incidentId: incident.id })}>{acknowledgeIncidentMutation.isPending ? "Mise à jour…" : "Accuser réception"}</Button>}</div><div className="mt-3 space-y-2 border-t border-slate-100 pt-3">{incident.comments?.length ? incident.comments.map((comment) => <div key={comment.id} className="rounded bg-slate-50 px-3 py-2 text-xs text-slate-700"><span className="font-semibold">{comment.createdByAdminEmail}</span> · {new Date(comment.createdAt).toLocaleString("fr-FR")}<br />{comment.commentText}</div>) : <p className="text-xs text-slate-500">Aucun commentaire pour cet incident.</p>}<Textarea value={incidentCommentDrafts[incident.id] ?? ""} onChange={(event) => setIncidentCommentDrafts((current) => ({ ...current, [incident.id]: event.target.value }))} placeholder="Ajouter un commentaire de suivi…" className="min-h-18 text-sm" /><div className="flex justify-end"><Button size="sm" variant="outline" disabled={(incidentCommentDrafts[incident.id] ?? "").trim().length < 2 || addIncidentCommentMutation.isPending} onClick={() => addIncidentCommentMutation.mutate({ sessionToken, incidentId: incident.id, commentText: (incidentCommentDrafts[incident.id] ?? "").trim() })}>{addIncidentCommentMutation.isPending ? "Ajout…" : "Ajouter le commentaire"}</Button></div></div></div>)}</div> : <p className="mt-3 text-sm text-emerald-800">Aucun incident de seuil n’est actuellement journalisé.</p>}
             </div>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">

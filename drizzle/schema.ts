@@ -1472,6 +1472,19 @@ export const emailDeliveryIncidents = mysqlTable("email_delivery_incidents", {
 export type EmailDeliveryIncident = typeof emailDeliveryIncidents.$inferSelect;
 export type InsertEmailDeliveryIncident = typeof emailDeliveryIncidents.$inferInsert;
 
+/** Commentaires administratifs associés aux incidents de remise e-mail. */
+export const emailDeliveryIncidentComments = mysqlTable("email_delivery_incident_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  commentText: text("commentText").notNull(),
+  createdByAdminEmail: varchar("createdByAdminEmail", { length: 320 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_email_incident_comment_incident_time").on(table.incidentId, table.createdAt),
+]);
+export type EmailDeliveryIncidentComment = typeof emailDeliveryIncidentComments.$inferSelect;
+export type InsertEmailDeliveryIncidentComment = typeof emailDeliveryIncidentComments.$inferInsert;
+
 /**
  * Historique des recherches de vols effectuées par les utilisateurs.
  */

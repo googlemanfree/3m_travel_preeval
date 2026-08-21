@@ -10,7 +10,7 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, emailDeliveryAdvisorThresholds, emailDeliveryIncidents, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, emailDeliveryAdvisorThresholds, emailDeliveryIncidents, emailDeliveryIncidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -2552,6 +2552,23 @@ export const adminRouter = router({
         .limit(1000);
       const advisorThresholds = await db.select().from(emailDeliveryAdvisorThresholds);
       const emailDeliveryIncidentsHistory = await db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.triggeredAt)).limit(50);
+      const emailDeliveryIncidentCommentsHistory = await db.select().from(emailDeliveryIncidentComments).orderBy(desc(emailDeliveryIncidentComments.createdAt)).limit(200);
+      const incidentCommentsById = emailDeliveryIncidentCommentsHistory.reduce<Record<number, typeof emailDeliveryIncidentCommentsHistory>>((acc, comment) => {
+        (acc[comment.incidentId] ??= []).push(comment);
+        return acc;
+      }, {});
+      const resolutionByAdvisor = Object.entries(emailDeliveryIncidentsHistory.reduce<Record<string, { totalMs: number; resolved: number }>>((acc, incident) => {
+        if (!incident.acknowledgedAt) return acc;
+        const current = acc[incident.advisorEmail] ?? { totalMs: 0, resolved: 0 };
+        current.totalMs += incident.acknowledgedAt.getTime() - incident.triggeredAt.getTime();
+        current.resolved += 1;
+        acc[incident.advisorEmail] = current;
+        return acc;
+      }, {})).map(([advisorEmail, { totalMs, resolved }]) => ({
+        advisorEmail,
+        resolvedCount: resolved,
+        averageResolutionMinutes: Math.round(totalMs / resolved / 60_000),
+      }));
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
@@ -2640,7 +2657,8 @@ export const adminRouter = router({
           lastAlertedAt: threshold.lastAlertedAt,
           failuresToday: advisorFailureCounts[threshold.advisorEmail] ?? 0,
         })),
-        emailDeliveryIncidents: emailDeliveryIncidentsHistory,
+        emailDeliveryIncidents: emailDeliveryIncidentsHistory.map((incident) => ({ ...incident, comments: incidentCommentsById[incident.id] ?? [] })),
+        incidentResolutionByAdvisor: resolutionByAdvisor,
       };
     }),
 
@@ -2677,6 +2695,19 @@ export const adminRouter = router({
         await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: String(input.incidentId), details: JSON.stringify({ action: "email_delivery_incident_acknowledged", advisorEmail: incident.advisorEmail }) });
       }
       return { success: true, incidentId: input.incidentId };
+    }),
+
+  addEmailDeliveryIncidentComment: publicProcedure
+    .input(z.object({ sessionToken: z.string(), incidentId: z.number().int().positive(), commentText: z.string().trim().min(2).max(2_000) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const incident = (await db.select().from(emailDeliveryIncidents).where(eq(emailDeliveryIncidents.id, input.incidentId)).limit(1))[0];
+      if (!incident) throw new TRPCError({ code: "NOT_FOUND", message: "Incident introuvable" });
+      await db.insert(emailDeliveryIncidentComments).values({ incidentId: incident.id, commentText: input.commentText, createdByAdminEmail: admin.email });
+      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: String(incident.id), details: JSON.stringify({ action: "email_delivery_incident_comment_added" }) });
+      return { success: true, incidentId: incident.id };
     }),
 
   updateEmailDeliveryRecipient: publicProcedure

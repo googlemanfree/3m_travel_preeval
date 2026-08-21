@@ -107,7 +107,11 @@ describe("Centre e-mail administrateur", () => {
     expect(app).toContain('path={"/admin/email-settings"}');
     expect(admin).toContain("acknowledgeEmailDeliveryIncident");
     expect(admin).toContain("emailDeliveryIncidentsHistory");
+    expect(admin).toContain("addEmailDeliveryIncidentComment");
+    expect(admin).toContain("incidentResolutionByAdvisor");
     expect(management).toContain("Journal des incidents de seuil");
     expect(management).toContain("Accuser réception");
+    expect(management).toContain("Délai moyen de résolution par conseiller");
+    expect(management).toContain("Ajouter le commentaire");
   });
 });
