@@ -852,6 +852,15 @@ export default function AdminDashboard() {
               >
                 <ImagePlus className="w-4 h-4" /> Visuels destinations
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/emails")}
+                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+                title="Ouvrir le suivi des e-mails et l’état de santé SMTP"
+              >
+                <Mail className="w-4 h-4" /><span className="hidden xl:inline">Suivi e-mails</span>
+              </Button>
             </div>
             <Button
               variant="outline"

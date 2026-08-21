@@ -23,7 +23,7 @@ describe("lazy page timeout recovery contracts", () => {
     expect(app).toContain('import { lazyWithTimeout } from "./lib/lazyWithTimeout";');
     // Le nettoyage des chemins morts reste préservé ; les pages de service
     // et les articles d’études sont chargés à la demande.
-    expect(lazyImports).toHaveLength(89);
+    expect(lazyImports).toHaveLength(90);
     for (const removedPage of ["Assurance", "SignUp", "Procedures", "ProceduresComplete", "ProceduresEnhanced", "AIEvaluation", "EvaluationRapideEnhanced", "ClientSpace", "AdminDossierManagement", "PrimaryEvaluationForm", "AdminEvaluationValidation", "ClientSpaceEnhanced", "EvisasPage", "EvisasEnhanced", "EvisasV3", "AdminPaymentValidation", "ClientDashboard", "Dashboard", "ClientSpaceEnhancedV2"]) {
       expect(app).not.toContain(`import(\"./pages/${removedPage}\")`);
     }

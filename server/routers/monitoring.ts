@@ -12,6 +12,7 @@ import {
   exportMetrics,
   resetMetrics,
 } from "../_core/monitoring";
+import { getSmtpHealth } from "../_core/email";
 
 export const monitoringRouter = router({
   /** État synthétique, réservé aux administrateurs connectés. */
@@ -34,7 +35,7 @@ export const monitoringRouter = router({
       databaseMessage = "Le test de connexion à la base a échoué";
     }
 
-    const summary = getPerformanceSummary();
+    const [smtp, summary] = await Promise.all([getSmtpHealth(), Promise.resolve(getPerformanceSummary())]);
     const apiLatencyMs = Date.now() - startedAt;
     const serverStatus = databaseStatus === "operational" ? "operational" : "degraded";
 
@@ -51,6 +52,7 @@ export const monitoringRouter = router({
         latencyMs: databaseLatencyMs,
         message: databaseMessage,
       },
+      smtp,
       traffic: {
         totalRequests: summary.totalRequests,
         errorRate: summary.errorRate,
@@ -62,13 +64,13 @@ export const monitoringRouter = router({
   /** Lance un diagnostic ponctuel et recontrôle immédiatement les dépendances internes. */
   runConnectivityDiagnostic: adminProcedure.mutation(async () => {
     const startedAt = Date.now();
-    const db = await getDb();
+    const [db, smtp] = await Promise.all([getDb(), getSmtpHealth()]);
     if (!db) {
       return {
         ok: false,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["La base de données n’est pas disponible."],
+        findings: ["La base de données n’est pas disponible.", `Messagerie : ${smtp.message}`],
       };
     }
 
@@ -78,14 +80,14 @@ export const monitoringRouter = router({
         ok: true,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["API tRPC accessible.", "Base de données accessible.", "Les métriques serveur sont disponibles."],
+        findings: ["API tRPC accessible.", "Base de données accessible.", `Messagerie : ${smtp.message}`, "Les métriques serveur sont disponibles."],
       };
     } catch {
       return {
         ok: false,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["API tRPC accessible.", "Le test de connexion à la base de données a échoué."],
+        findings: ["API tRPC accessible.", "Le test de connexion à la base de données a échoué.", `Messagerie : ${smtp.message}`],
       };
     }
   }),

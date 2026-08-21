@@ -36,6 +36,46 @@ export interface SendEmailOptions {
   replyTo?: string;
 }
 
+export type SmtpHealthStatus = "operational" | "degraded" | "unavailable";
+
+/**
+ * Vérifie la disponibilité SMTP sans transmettre de message et sans exposer
+ * l’hôte, le compte ou tout autre secret de configuration au back-office.
+ */
+export async function getSmtpHealth(): Promise<{
+  status: SmtpHealthStatus;
+  latencyMs: number | null;
+  message: string;
+  checkedAt: Date;
+}> {
+  const startedAt = Date.now();
+  if (!transporter) {
+    return {
+      status: "unavailable",
+      latencyMs: null,
+      message: "La configuration de messagerie est incomplète.",
+      checkedAt: new Date(),
+    };
+  }
+
+  try {
+    await transporter.verify();
+    return {
+      status: "operational",
+      latencyMs: Date.now() - startedAt,
+      message: "La connexion de messagerie est vérifiée.",
+      checkedAt: new Date(),
+    };
+  } catch {
+    return {
+      status: "degraded",
+      latencyMs: Date.now() - startedAt,
+      message: "La messagerie ne peut pas être vérifiée actuellement.",
+      checkedAt: new Date(),
+    };
+  }
+}
+
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   if (!transporter) {
     const err = new Error("SMTP transporter is not initialized. Please configure SMTP secrets.");

@@ -19,6 +19,8 @@ import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
+const EMAIL_DELIVERY_DEMO_NOTE = "DÉMONSTRATION REMISE E-MAIL 3M — dossier isolé de contrôle interne";
+
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
 export function deriveCandidateActivationStatus(
@@ -1811,6 +1813,79 @@ export const adminRouter = router({
           message: "Erreur lors de l'importation du dossier agence",
         });
       }
+    }),
+
+  getEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [demo] = await db.select().from(agencyDossiers)
+        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
+        .orderBy(desc(agencyDossiers.id))
+        .limit(1);
+      return demo ? {
+        id: demo.id,
+        folderCode: `3M-DEMO-${String(demo.id).padStart(4, "0")}`,
+        status: demo.status,
+        readyForDeliveryTest: demo.welcomeEmailSent !== true,
+      } : null;
+    }),
+
+  prepareEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [existing] = await db.select().from(agencyDossiers)
+        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
+        .orderBy(desc(agencyDossiers.id))
+        .limit(1);
+      if (existing) return { id: existing.id, folderCode: `3M-DEMO-${String(existing.id).padStart(4, "0")}`, created: false };
+
+      const internalRecipient = process.env.SMTP_USER || process.env.SMTP_FROM || "hello@3mtravelagency.com";
+      const result = await db.insert(agencyDossiers).values({
+        fullName: "Démonstration remise e-mail 3M",
+        email: internalRecipient,
+        phone: "+237000000000",
+        destination: "Démonstration interne",
+        visaType: "Contrôle de remise e-mail",
+        status: "nouveau",
+        source: "manual_admin",
+        createdByAdmin: admin.email || "admin",
+        adminNotes: `${EMAIL_DELIVERY_DEMO_NOTE}. Ne pas utiliser pour un client. Créé le ${new Date().toLocaleString("fr-FR")}.`,
+        welcomeEmailSent: false,
+      });
+      const id = Number((result as any)[0]?.insertId || 0);
+      return { id, folderCode: `3M-DEMO-${String(id).padStart(4, "0")}`, created: true };
+    }),
+
+  sendEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const [demo] = await db.select().from(agencyDossiers)
+        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
+        .orderBy(desc(agencyDossiers.id))
+        .limit(1);
+      if (!demo) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Préparez d’abord le dossier de démonstration." });
+
+      const folderCode = `3M-DEMO-${String(demo.id).padStart(4, "0")}`;
+      await sendGenericEmail({
+        to: demo.email,
+        subject: `[Démonstration] Remise e-mail ${folderCode} — 3M Travel & Services`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>Contrôle de remise e-mail</h2><p>Ce message confirme le bon acheminement de la démonstration interne <strong>${folderCode}</strong>.</p><p>Aucune démarche client, pièce client ou procédure réelle n’est associée à ce dossier.</p></div>`,
+      });
+      await db.update(agencyDossiers).set({
+        welcomeEmailSent: true,
+        lastStatusChangeAt: new Date(),
+        lastStatusChangeBy: admin.email || "admin",
+      }).where(eq(agencyDossiers.id, demo.id));
+      return { folderCode, sent: true };
     }),
 
   /**
