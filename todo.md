@@ -724,4 +724,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diagnostiquer l’écart entre la session administrateur visible et les appels du suivi e-mail
 - [x] Corriger la propagation de session du module d’administration concerné
 - [x] Tester la régression du suivi e-mail : jeton de session administrateur réutilisé et 467 tests réussis
+- [x] Cartographier les routes, tests automatisés et contrôles de session à couvrir dans la vérification complète
+- [x] Vérifier les parcours publics, client et administrateur accessibles sur ordinateur et mobile
+- [x] Vérifier les API, journaux, PWA et protections d’accès puis corriger toute anomalie reproductible
+- [x] Exécuter la régression complète et publier le bilan de vérification
+- [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
+- [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
