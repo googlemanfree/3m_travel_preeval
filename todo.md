@@ -695,8 +695,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office
 - [x] Mettre en place des garde-fous pour éviter d’afficher des tarifs ou disponibilités non confirmés
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
-- [ ] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
-- [ ] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
+- [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
+- [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
 - [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale
 - [x] Identifier une source ouverte ou gratuite permettant de démarrer un catalogue hôtelier Cameroun et Afrique centrale
 - [x] Concevoir la table de catalogue hôtelier avec source OSM, URL officielle, équipements et date de vérification
@@ -707,8 +707,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher le lien officiel de réservation de l’hôtel sélectionné dans chaque demande côté administration
 - [ ] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
 - [ ] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel
-- [ ] Inspecter les connecteurs et les fournisseurs B2B hôteliers accessibles pour 3M Booking
-- [ ] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
+- [x] Inspecter les connecteurs et les fournisseurs B2B hôteliers accessibles pour 3M Booking
+- [x] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
 - [ ] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle
 - [ ] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
@@ -719,3 +719,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les attributs `src` vides détectés dans la console : non reproduits lors d’une session fraîche après correction de route
 - [x] Vérifier la pile d’actions flottantes mobile : aucun chevauchement entre les commandes n’est reproduit sur les parcours publics contrôlés
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
+- [x] Auditer les parcours assurance, vol, e‑Visa et procédures ainsi que leurs notifications, documents et synchronisations existantes
+- [x] Créer le circuit assurance : demande, référence, coupon de réservation, traitement administrateur et remise du PDF au client
+- [x] Harmoniser les confirmations e-mail et espace client des services soumis puis traités par l’administration
+- [x] Corriger les boutons et liens sans destination opérationnelle dans les parcours de service prioritaires
+- [x] Tester les circuits assurance, vol, e‑Visa et procédures de bout en bout avant publication
+- [ ] Préserver les sessions 24 heures publiées tout en intégrant les améliorations assurance et e‑Visa locales
+- [ ] Vérifier l’absence de perte de contenu, de route ou de contrôle d’accès après la fusion

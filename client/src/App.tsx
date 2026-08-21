@@ -158,7 +158,7 @@ function Router() {
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"} component={EvisaDemande} />
+      <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />

@@ -93,7 +93,15 @@ export const caseTrackingRouter = router({
   getMyInsuranceRequests: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    return db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, departureDate: insuranceRequests.departureDate, returnDate: insuranceRequests.returnDate, coveragePlan: insuranceRequests.coveragePlan, status: insuranceRequests.status, attestationFileName: insuranceRequests.attestationFileName, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, ctx.candidate.email)).orderBy(desc(insuranceRequests.createdAt));
+    return db.select({ id: insuranceRequests.id, reference: insuranceRequests.reference, destinationCountry: insuranceRequests.destinationCountry, departureDate: insuranceRequests.departureDate, returnDate: insuranceRequests.returnDate, coveragePlan: insuranceRequests.coveragePlan, status: insuranceRequests.status, couponFileName: insuranceRequests.couponFileName, attestationFileName: insuranceRequests.attestationFileName, createdAt: insuranceRequests.createdAt }).from(insuranceRequests).where(eq(insuranceRequests.email, ctx.candidate.email)).orderBy(desc(insuranceRequests.createdAt));
+  }),
+
+  downloadMyInsuranceCoupon: candidateProcedure.input(z.object({ insuranceRequestId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const rows = await db.select({ fileKey: insuranceRequests.couponFileKey, fileName: insuranceRequests.couponFileName }).from(insuranceRequests).where(and(eq(insuranceRequests.id, input.insuranceRequestId), eq(insuranceRequests.email, ctx.candidate.email))).limit(1);
+    if (!rows[0]?.fileKey) throw new TRPCError({ code: "NOT_FOUND", message: "Coupon introuvable ou non autorisé." });
+    return { url: await storageGetSignedUrl(rows[0].fileKey), fileName: rows[0].fileName };
   }),
 
   downloadMyInsuranceAttestation: candidateProcedure.input(z.object({ insuranceRequestId: z.number().int().positive() })).query(async ({ ctx, input }) => {

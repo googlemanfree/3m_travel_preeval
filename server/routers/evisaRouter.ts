@@ -105,10 +105,7 @@ export const evisaRouter = router({
         await connection.end();
 
         if (!evisa || (evisa as any[]).length === 0) {
-          throw new TRPCError({
-            code: 'NOT_FOUND',
-            message: 'E-visa non trouvé',
-          });
+          return { success: false, data: null };
         }
 
         return { success: true, data: (evisa as any[])[0] };
