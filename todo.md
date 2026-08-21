@@ -692,7 +692,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les filtres d’équipements sur ordinateur et mobile, avec tests de non-régression
 - [x] Cartographier les sources officielles et partenaires vérifiables pour les hôtels du Cameroun et d’Afrique centrale
 - [x] Définir un catalogue hôtelier administrable avec provenance, date de vérification, équipements et conditions tarifaires
-- [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office
+- [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office — en attente de validation humaine d’au moins une fiche et de son lien officiel
 - [x] Mettre en place des garde-fous pour éviter d’afficher des tarifs ou disponibilités non confirmés
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
@@ -750,6 +750,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher les résultats de disponibilité de vols immédiatement sous le formulaire de recherche
 - [x] Enrichir les cartes de résultats avec horaires, escales, bagages, cabine et conditions tarifaires disponibles
 - [x] Vérifier le rendu des résultats de vols sur ordinateur et mobile, puis exécuter les régressions — 484 tests réussis
+- [x] Empêcher une recherche de vols de rester indéfiniment en attente en prévoyant un repli explicite et rapide
+- [x] Auditer la création de réservation de vol, la transmission à l’administration et les données opérationnelles disponibles
+- [x] Renforcer la fiche administrateur avec les informations nécessaires à la réservation et au suivi PNR
+- [x] Ajouter une action administrateur de relance PNR avec état de synchronisation e-mail et espace client
+- [x] Vérifier ou fiabiliser la remise synchronisée du PNR dans l’espace client et par e-mail
+- [x] Tester le parcours de réservation de bout en bout avec contrôles d’autorisation et de non-régression — 487 tests réussis
 - [x] Retirer l’option obsolète de suppression de cookie Express sans modifier la portée de session
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur

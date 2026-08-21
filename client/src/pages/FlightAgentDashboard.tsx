@@ -114,7 +114,7 @@ function FlightRequestOverview({ request }: { request: any }) {
 
     <section><h3 className="mb-2 text-sm font-black text-slate-900">Client et passager(s)</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Passager principal" value={textValue(primaryPassenger.fullName, request.candidateEmail)} /><DetailItem label="Contact" value={<><span className="block break-all">{textValue(primaryPassenger.email, request.candidateEmail)}</span><span className="text-xs text-slate-600">{textValue(primaryPassenger.phone, request.candidatePhone || "Non renseigné")}</span></>} /><DetailItem label="Passeport" value={`${textValue(primaryPassenger.passportNumber)} · exp. ${textValue(primaryPassenger.passportExpiry)}`} /><DetailItem label="Nationalité / naissance" value={`${textValue(primaryPassenger.nationality)} · ${textValue(primaryPassenger.dateOfBirth)}`} /></div>{passengers.length > 1 && <div className="mt-2 rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-700"><strong>Autres passagers :</strong> {passengers.slice(1).map((passenger) => textValue(passenger.fullName)).join(" · ")}</div>}</section>
 
-    <section><h3 className="mb-2 text-sm font-black text-slate-900">Traitement, paiement et émission</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Statut / priorité" value={`${STATUS_LABELS[request.status as RequestStatus] || request.status} · ${PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}`} /><DetailItem label="Conseiller affecté" value={textValue(request.assignedAgentEmail, "Non affecté")} /><DetailItem label="Paiement client" value={`${paymentMethod}${request.paymentTransactionId ? ` · ${request.paymentTransactionId}` : ""}`} /><DetailItem label="Validation client" value={request.clientValidated ? "Confirmée" : "En attente"} /><DetailItem label="PNR / référence compagnie" value={textValue(request.pnrReference)} /><DetailItem label="Document émis" value={request.issuedPdfUrl ? <a href={String(request.issuedPdfUrl)} target="_blank" rel="noreferrer" className="text-blue-700 underline">Ouvrir le document</a> : "Non disponible"} /></div></section>
+    <section><h3 className="mb-2 text-sm font-black text-slate-900">Traitement, paiement et émission</h3><div className="grid gap-2 sm:grid-cols-2"><DetailItem label="Statut / priorité" value={`${STATUS_LABELS[request.status as RequestStatus] || request.status} · ${PRIORITY_LABELS[request.priority as RequestPriority] || request.priority}`} /><DetailItem label="Conseiller affecté" value={textValue(request.assignedAgentEmail, "Non affecté")} /><DetailItem label="Paiement client" value={`${paymentMethod}${request.paymentTransactionId ? ` · ${request.paymentTransactionId}` : ""}`} /><DetailItem label="Validation client" value={request.clientValidated ? "Confirmée" : "En attente"} /><DetailItem label="PNR / référence compagnie" value={textValue(request.pnrReference)} /><DetailItem label="Document émis" value={request.issuedPdfUrl ? <a href={String(request.issuedPdfUrl)} target="_blank" rel="noreferrer" className="text-blue-700 underline">Ouvrir le document</a> : "Non disponible"} /><DetailItem label="Espace client" value={request.issuedPdfUrl ? "Document disponible" : "En attente du PDF final"} /><DetailItem label="Consultation client" value={request.pnrDownloadedAt ? `Téléchargé le ${new Date(request.pnrDownloadedAt).toLocaleString("fr-FR")}` : request.pnrViewedAt ? `Consulté le ${new Date(request.pnrViewedAt).toLocaleString("fr-FR")}` : "Pas encore consulté"} /></div></section>
   </div>;
 }
 
@@ -208,11 +208,16 @@ export default function FlightAgentDashboard() {
   const [issuancePdfFile, setIssuancePdfFile] = useState<{ base64: string; name: string } | null>(null);
 
   const updatePnrMutation = trpc.flightBooking.updatePnrAndIssuedPdf.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsIssuanceModalOpen(false);
       setAdvisorInitialsInput("");
       setIssuancePdfFile(null);
-      toast({ title: "Billet émis avec succès", description: "Le PNR a été validé et enregistré avec vos initiales." });
+      toast({
+        title: "Billet émis avec succès",
+        description: data.delivery.clientSpaceReady
+          ? data.delivery.emailNotificationDispatched ? "PNR synchronisé dans l’espace client et notification e-mail transmise." : "PNR disponible dans l’espace client ; la notification e-mail doit être relancée."
+          : "Référence PNR enregistrée ; ajoutez le PDF final pour rendre le document téléchargeable côté client.",
+      });
       void utils.flightBooking.getRequest.invalidate();
       void utils.flightBooking.getQueue.invalidate();
       void utils.flightBooking.getQueueSummary.invalidate();
@@ -221,16 +226,29 @@ export default function FlightAgentDashboard() {
   });
 
   const adminUploadPnrMutation = trpc.flightBooking.adminUploadPnrDocument.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsIssuanceModalOpen(false);
       setAdvisorInitialsInput("");
       setIssuancePdfFile(null);
-      toast({ title: "Document PNR émis et envoyé", description: "Le fichier PDF a été transmis au client avec vos initiales." });
+      toast({
+        title: "Document PNR émis",
+        description: data.delivery.emailNotificationDispatched
+          ? "PDF disponible dans l’espace client et notification e-mail transmise."
+          : "PDF disponible dans l’espace client ; la notification e-mail doit être relancée.",
+      });
       void utils.flightBooking.getRequest.invalidate();
       void utils.flightBooking.getQueue.invalidate();
       void utils.flightBooking.getQueueSummary.invalidate();
     },
     onError: (error) => toast({ title: "Téléversement PNR impossible", description: error.message, variant: "destructive" }),
+  });
+
+  const pnrReminderMutation = trpc.flightBooking.sendPnrReminderEmail.useMutation({
+    onSuccess: () => {
+      toast({ title: "Relance PNR transmise", description: "L’e-mail de rappel a été journalisé dans le dossier client." });
+      void utils.flightBooking.getRequest.invalidate();
+    },
+    onError: (error) => toast({ title: "Relance PNR impossible", description: error.message, variant: "destructive" }),
   });
 
   const [auditStartDate, setAuditStartDate] = useState("");
@@ -262,7 +280,7 @@ export default function FlightAgentDashboard() {
   });
 
   const selectedRequest = useMemo(() => queueQuery.data?.requests.find((request) => request.id === selectedRequestId), [queueQuery.data?.requests, selectedRequestId]);
-  const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending || issuanceChecklistMutation.isPending;
+  const isBusy = statusMutation.isPending || priorityMutation.isPending || assignMutation.isPending || noteMutation.isPending || issuanceChecklistMutation.isPending || updatePnrMutation.isPending || adminUploadPnrMutation.isPending || pnrReminderMutation.isPending;
   const requests = queueQuery.data?.requests ?? [];
   const airlineOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).airline))).sort(), [requests]);
   const routeOptions = useMemo(() => Array.from(new Set(requests.map((request) => getFlightSummary(request.flightData).route))).sort(), [requests]);
@@ -370,7 +388,7 @@ export default function FlightAgentDashboard() {
               <div className="flex min-h-[420px] flex-col items-center justify-center text-center text-slate-500"><FileText className="mb-3 h-10 w-10 text-slate-300" /><p className="font-bold text-slate-700">Sélectionnez une demande</p><p className="mt-1 max-w-xs text-xs">Les passagers, le vol choisi et l'historique apparaîtront ici pour traitement.</p></div>
             ) : detailQuery.isLoading ? <div className="py-12 text-center text-slate-500">Chargement du dossier…</div> : detailQuery.data ? (
               <div className="space-y-5">
-                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}{detailQuery.data.request.issuedPdfUrl && !detailQuery.data.request.pnrDownloadedAt && <Button type="button" size="sm" variant="outline" disabled={pnrReminderMutation.isPending} onClick={() => pnrReminderMutation.mutate({ sessionToken, requestId: detailQuery.data.request.id })}><MessageSquare className="mr-1.5 h-4 w-4" /> {pnrReminderMutation.isPending ? "Relance…" : "Relancer le PNR"}</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
                 <section className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">

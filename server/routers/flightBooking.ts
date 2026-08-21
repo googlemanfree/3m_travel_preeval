@@ -805,9 +805,10 @@ export const flightBookingRouter = router({
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
 
       // Envoi automatique de la confirmation PDF par e-mail au client
+      const pdfLink = input.issuedPdfUrl || existing.issuedPdfUrl;
+      let emailNotificationDispatched = false;
       try {
         const clientEmail = existing.candidateEmail;
-        const pdfLink = input.issuedPdfUrl || existing.issuedPdfUrl;
         if (clientEmail) {
           await sendEmail({
             to: clientEmail,
@@ -836,12 +837,36 @@ export const flightBookingRouter = router({
               </div>
             `,
           });
+          emailNotificationDispatched = true;
+          await db.insert(flightBookingRequestHistory).values({
+            requestId: input.requestId,
+            action: "pnr_email_dispatched",
+            changedBy: admin.email,
+            oldValue: null,
+            newValue: "email_dispatched",
+            details: `Notification PNR transmise à ${clientEmail}. Document espace client : ${pdfLink ? "disponible" : "référence PNR uniquement"}.`,
+          });
         }
       } catch (err) {
         console.error("[Email Notification Error] Échec de l'envoi de la confirmation PNR par e-mail:", err);
+        await db.insert(flightBookingRequestHistory).values({
+          requestId: input.requestId,
+          action: "pnr_email_dispatch_failed",
+          changedBy: admin.email,
+          oldValue: null,
+          newValue: "email_not_dispatched",
+          details: "La remise dans l’espace client est enregistrée, mais la notification e-mail doit être relancée par l’équipe.",
+        });
       }
 
-      return { success: true, loyalty };
+      return {
+        success: true,
+        loyalty,
+        delivery: {
+          clientSpaceReady: Boolean(pdfLink),
+          emailNotificationDispatched,
+        },
+      };
     }),
 
   generatePaymentReceiptPdf: publicProcedure
@@ -913,6 +938,7 @@ export const flightBookingRouter = router({
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
 
       // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
+      let emailNotificationDispatched = false;
       try {
         await sendEmail({
           to: existing.candidateEmail,
@@ -933,13 +959,38 @@ export const flightBookingRouter = router({
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
               <p style="font-size: 11px; color: #64748b; text-align: center;">Ceci est un message automatique, veuillez ne pas y répondre directement.</p>
             </div>
-          `,
+            `,
+          });
+        emailNotificationDispatched = true;
+        await db.insert(flightBookingRequestHistory).values({
+          requestId: input.requestId,
+          action: "pnr_email_dispatched",
+          changedBy: admin.email,
+          oldValue: null,
+          newValue: "email_dispatched",
+          details: `Document PNR disponible dans l’espace client et notification transmise à ${existing.candidateEmail}.`,
         });
       } catch (err) {
         console.error("[Email Notification Error] Impossible d'envoyer l'e-mail PNR:", err);
+        await db.insert(flightBookingRequestHistory).values({
+          requestId: input.requestId,
+          action: "pnr_email_dispatch_failed",
+          changedBy: admin.email,
+          oldValue: null,
+          newValue: "email_not_dispatched",
+          details: "Document PNR disponible dans l’espace client, mais notification e-mail à relancer par l’équipe.",
+        });
       }
 
-      return { success: true, issuedPdfUrl: url, loyalty };
+      return {
+        success: true,
+        issuedPdfUrl: url,
+        loyalty,
+        delivery: {
+          clientSpaceReady: true,
+          emailNotificationDispatched,
+        },
+      };
     }),
 
   exportAuditHistoryPdf: publicProcedure
