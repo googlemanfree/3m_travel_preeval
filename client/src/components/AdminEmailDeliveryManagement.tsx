@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
 import { toast } from "sonner";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
+import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
 import {
   Select,
   SelectContent,
@@ -38,6 +40,7 @@ export default function AdminEmailDeliveryManagement() {
   const [search, setSearch] = useState("");
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
+  const [selectedFailedLogIds, setSelectedFailedLogIds] = useState<Set<number>>(() => new Set());
   const utils = trpc.useUtils();
   // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
   // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
@@ -82,7 +85,16 @@ export default function AdminEmailDeliveryManagement() {
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
   const failedLogs = logs.filter((log) => log.status === "failed");
+  const selectedFailedLogs = failedLogs.filter((log) => selectedFailedLogIds.has(log.id));
   const lastSuccessfulByType = data?.lastSuccessfulByType ?? [];
+  const dailyFailures = data?.dailyFailures ?? [];
+  const deliverySuccessRates30Days = data?.deliverySuccessRates30Days ?? [];
+  const rateChartData = deliverySuccessRates30Days.map((metric) => ({
+    service: deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType,
+    taux: metric.successRate ?? 0,
+    envoyes: metric.sent,
+    echecs: metric.failed,
+  }));
 
   const exportFilteredCsv = () => {
     const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -98,6 +110,15 @@ export default function AdminEmailDeliveryManagement() {
     link.click();
     URL.revokeObjectURL(url);
     toast.success("Export CSV téléchargé selon les filtres actifs.");
+  };
+
+  const toggleFailedLog = (logId: number, checked: boolean) => {
+    setSelectedFailedLogIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(logId);
+      else next.delete(logId);
+      return next;
+    });
   };
 
   return (
@@ -119,11 +140,11 @@ export default function AdminEmailDeliveryManagement() {
               <Download className="h-4 w-4" />Exporter CSV
             </Button>
             <Button variant="outline" size="sm" onClick={() => {
-              const selected = failedLogs.slice(0, 25);
-              if (!selected.length || !window.confirm(`Relancer ${selected.length} e-mail(s) en échec ? Les envois réels seront effectués et journalisés.`)) return;
+              const selected = selectedFailedLogs.slice(0, 25);
+              if (!selected.length || !window.confirm(`Relancer ${selected.length} e-mail(s) sélectionné(s) ? Les envois réels seront effectués et journalisés.`)) return;
               bulkResendMutation.mutate({ sessionToken, logIds: selected.map((log) => log.id), confirmed: true });
-            }} disabled={!sessionToken || failedLogs.length === 0 || bulkResendMutation.isPending} className="gap-2 border-amber-300 text-amber-800 hover:bg-amber-50">
-              <Send className={`h-4 w-4 ${bulkResendMutation.isPending ? "animate-pulse" : ""}`} />Relancer les échecs ({Math.min(failedLogs.length, 25)})
+            }} disabled={!sessionToken || selectedFailedLogs.length === 0 || bulkResendMutation.isPending} className="gap-2 border-amber-300 text-amber-800 hover:bg-amber-50">
+              <Send className={`h-4 w-4 ${bulkResendMutation.isPending ? "animate-pulse" : ""}`} />Relancer la sélection ({Math.min(selectedFailedLogs.length, 25)})
             </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2">
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Actualiser
@@ -157,6 +178,18 @@ export default function AdminEmailDeliveryManagement() {
                   {lastSuccessfulByType.map((entry) => <Badge key={entry.deliveryType} variant="outline" className="gap-1.5 bg-white px-2.5 py-1 text-slate-700"><span>{deliveryTypeLabel[entry.deliveryType] ?? entry.deliveryType}</span><span className="text-slate-500">· {new Date(entry.createdAt).toLocaleString("fr-FR")}</span></Badge>)}
                 </div>
               ) : <p className="text-sm text-slate-500">Aucune remise réussie n’est encore journalisée.</p>}
+            </div>
+
+            <div className="grid gap-4 border-t p-5 lg:grid-cols-[1.1fr_1.9fr]">
+              <div className="rounded-xl border border-rose-100 bg-rose-50/70 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-rose-700">Échecs d’envoi aujourd’hui</p>
+                <p className="mt-1 text-3xl font-black text-rose-950">{dailyFailures.length}</p>
+                {dailyFailures.length ? <ul className="mt-3 space-y-2 text-xs text-rose-900">{dailyFailures.slice(0, 4).map((log) => <li key={log.id} className="rounded-lg border border-rose-100 bg-white/80 p-2"><span className="font-semibold">{deliveryTypeLabel[log.deliveryType] ?? "Autre"}</span> · {log.recipientEmail}<br /><span className="text-rose-700">{log.errorDetails || "Échec sans détail fournisseur"}</span></li>)}</ul> : <p className="mt-3 text-sm text-emerald-800">Aucun échec journalisé aujourd’hui.</p>}
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Taux de réussite par service · 30 jours</p>
+                {rateChartData.length ? <SafeResponsiveChart className="h-[240px] w-full" label="Graphique du taux de réussite des e-mails par service sur 30 jours"><ResponsiveContainer width="100%" height="100%"><BarChart data={rateChartData} margin={{ top: 12, right: 10, left: -20, bottom: 28 }}><CartesianGrid strokeDasharray="3 3" vertical={false} /><XAxis dataKey="service" angle={-20} textAnchor="end" interval={0} height={50} tick={{ fontSize: 11 }} /><YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} /><RechartsTooltip formatter={(value: number, name) => [name === "taux" ? `${value}%` : value, name === "taux" ? "Réussite" : name]} /><Bar dataKey="taux" name="taux" fill="#2563eb" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></SafeResponsiveChart> : <p className="py-16 text-center text-sm text-slate-500">Les données de remise sur 30 jours apparaîtront après les premiers envois.</p>}
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
@@ -210,11 +243,12 @@ export default function AdminEmailDeliveryManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th><th className="px-5 py-3">Actions</th></tr>
+                    <tr><th className="px-3 py-3"><input type="checkbox" aria-label="Sélectionner tous les e-mails en échec affichés" checked={failedLogs.length > 0 && failedLogs.every((log) => selectedFailedLogIds.has(log.id))} onChange={(event) => setSelectedFailedLogIds(event.target.checked ? new Set(failedLogs.map((log) => log.id)) : new Set())} /></th><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th><th className="px-5 py-3">Actions</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {logs.map((log) => (
                       <tr key={log.id} className="align-top hover:bg-slate-50/70">
+                        <td className="px-3 py-3"><input type="checkbox" aria-label={`Sélectionner l’e-mail en échec à destination de ${log.recipientEmail}`} disabled={log.status !== "failed"} checked={log.status === "failed" && selectedFailedLogIds.has(log.id)} onChange={(event) => toggleFailedLog(log.id, event.target.checked)} /></td>
                         <td className="px-5 py-3 font-medium text-slate-800">
                           {editingLogId === log.id ? (
                             <div className="flex min-w-[250px] items-center gap-2">

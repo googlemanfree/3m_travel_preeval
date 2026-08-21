@@ -2534,11 +2534,44 @@ export const adminRouter = router({
           return latest ? { deliveryType, createdAt: latest.createdAt } : null;
         })
         .filter((entry): entry is { deliveryType: EmailDeliveryType; createdAt: Date } => Boolean(entry));
+      const metricsLogs = await db
+        .select()
+        .from(emailDeliveryLogs)
+        .orderBy(desc(emailDeliveryLogs.createdAt))
+        .limit(1000);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const dailyFailures = metricsLogs
+        .filter((log) => log.status === "failed" && log.createdAt >= todayStart)
+        .map((log) => ({
+          id: log.id,
+          recipientEmail: log.recipientEmail,
+          subject: log.subject,
+          errorDetails: log.errorDetails,
+          createdAt: log.createdAt,
+          deliveryType: classifyEmailDeliveryType(log.subject),
+        }));
+      const deliverySuccessRates30Days = EMAIL_DELIVERY_TYPES
+        .map((deliveryType) => {
+          const serviceLogs = metricsLogs.filter((log) => log.createdAt >= thirtyDaysAgo && classifyEmailDeliveryType(log.subject) === deliveryType);
+          const sent = serviceLogs.filter((log) => log.status === "sent").length;
+          return {
+            deliveryType,
+            total: serviceLogs.length,
+            sent,
+            failed: serviceLogs.filter((log) => log.status === "failed").length,
+            successRate: serviceLogs.length ? Math.round((sent / serviceLogs.length) * 100) : null,
+          };
+        })
+        .filter((metric) => metric.total > 0);
 
       return {
         logs: logs.map((log) => ({ ...log, deliveryType: classifyEmailDeliveryType(log.subject) })),
         summary: summarizeEmailDeliveryLogs(logs),
         lastSuccessfulByType,
+        dailyFailures,
+        deliverySuccessRates30Days,
       };
     }),
 

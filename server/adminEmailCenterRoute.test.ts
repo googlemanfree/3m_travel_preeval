@@ -59,6 +59,17 @@ describe("Centre e-mail administrateur", () => {
     expect(management).toContain("exportFilteredCsv");
     expect(management).toContain("Exporter CSV");
     expect(management).toContain("Dernières remises réussies par service");
-    expect(management).toContain("Relancer les échecs");
+    expect(management).toContain("Relancer la sélection");
+  });
+
+  it("expose les échecs du jour, les taux sur 30 jours et la sélection manuelle", () => {
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    expect(admin).toContain("dailyFailures");
+    expect(admin).toContain("deliverySuccessRates30Days");
+    expect(management).toContain("Échecs d’envoi aujourd’hui");
+    expect(management).toContain("Taux de réussite par service · 30 jours");
+    expect(management).toContain("selectedFailedLogIds");
+    expect(management).toContain("Sélectionner tous les e-mails en échec affichés");
   });
 });

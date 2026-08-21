@@ -804,6 +804,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une relance groupée des e-mails en échec avec confirmation administrative et suivi du résultat
 - [x] Créer et valider une compétence réutilisable de pilotage des remises e-mail
 - [x] Tester les exports, les indicateurs, la relance groupée et les régressions avant publication
+- [x] Afficher un résumé détaillé des échecs d’e-mails de la journée dans le tableau de bord
+- [x] Ajouter un graphique des taux de réussite de remise par service sur les 30 derniers jours
+- [x] Permettre la sélection manuelle des e-mails en échec avant relance groupée
+- [x] Tester les indicateurs, le graphique, les sélections et les relances ciblées avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
