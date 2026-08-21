@@ -777,8 +777,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Harmoniser les confirmations e-mail et espace client des services soumis puis traités par l’administration
 - [x] Corriger les boutons et liens sans destination opérationnelle dans les parcours de service prioritaires
 - [x] Tester les circuits assurance, vol, e‑Visa et procédures de bout en bout avant publication
-- [ ] Préserver les sessions 24 heures publiées tout en intégrant les améliorations assurance et e‑Visa locales
-- [ ] Vérifier l’absence de perte de contenu, de route ou de contrôle d’accès après la fusion
+- [x] Préserver les sessions 24 heures publiées tout en intégrant les améliorations assurance et e‑Visa locales
+- [x] Vérifier l’absence de perte de contenu, de route ou de contrôle d’accès après la fusion
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
