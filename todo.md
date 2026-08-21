@@ -734,6 +734,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Analyser la connexion administrateur, le jeton de session et la redirection du tableau de bord
 - [x] Corriger la persistance de session administrateur entre connexion et navigation
 - [x] Ajouter un test de non-régression du maintien de session administrateur — 474 tests réussis
+- [x] Précontrôler les liens et la provenance des fiches hôtel sans modifier leur statut de validation humaine
+- [x] Afficher une liste prioritaire de fiches techniquement prêtes à être vérifiées par un conseiller
+- [x] Vérifier que le précontrôle ne permet aucune approbation automatique côté client ou administration — 476 tests réussis
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

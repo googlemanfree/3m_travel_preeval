@@ -30,6 +30,7 @@ export function AdminTourismRequests() {
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
   const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery();
+  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery({ limit: 8 });
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -41,11 +42,11 @@ export function AdminTourismRequests() {
     onError: e => toast.error(e.message || "Erreur lors de l’enregistrement."),
   });
   const importCatalog = trpc.tourism.importCatalogCity.useMutation({
-    onSuccess: (data) => { refetchCatalog(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
+    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
     onError: e => toast.error(e.message || "Import du catalogue indisponible."),
   });
   const verifyCatalog = trpc.tourism.verifyCatalogEntry.useMutation({
-    onSuccess: () => { refetchCatalog(); toast.success("Statut du catalogue mis à jour."); },
+    onSuccess: () => { refetchCatalog(); refetchPrecheck(); toast.success("Statut du catalogue mis à jour."); },
     onError: e => toast.error(e.message || "Mise à jour du catalogue impossible."),
   });
 
@@ -198,6 +199,26 @@ export function AdminTourismRequests() {
               </Button>
             </div>
           </div>
+          {precheckHotels && precheckHotels.length > 0 && (
+            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Précontrôle technique</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">{precheckHotels.length} fiche(s) avec source et lien officiel à contrôler</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">Le précontrôle vérifie uniquement la présence des informations techniques. Un conseiller doit toujours ouvrir le lien, confirmer l’établissement puis cliquer sur « Valider ».</p>
+                </div>
+                <Badge variant="outline" className="w-fit border-amber-200 bg-amber-50 text-amber-700">Validation humaine requise</Badge>
+              </div>
+              <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                {precheckHotels.map(hotel => (
+                  <div key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3">
+                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{hotel.name}</p><p className="text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div>
+                    <div className="flex shrink-0 items-center gap-1.5"><Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Lien présent</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending}>Valider</Button></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();

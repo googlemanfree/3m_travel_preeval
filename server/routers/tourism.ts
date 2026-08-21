@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, isNotNull, like, or } from "drizzle-orm";
 import { adminNotifications, hotelCatalog, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
@@ -206,6 +206,33 @@ export const tourismRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const city = input?.city?.trim();
     return city ? db.select().from(hotelCatalog).where(eq(hotelCatalog.city, city)).orderBy(desc(hotelCatalog.updatedAt)).limit(100) : db.select().from(hotelCatalog).orderBy(desc(hotelCatalog.updatedAt)).limit(100);
+  }),
+
+  /**
+   * Précontrôle technique : identifie les fiches importées qui possèdent une
+   * provenance OpenStreetMap et un lien officiel à ouvrir par un conseiller.
+   * Cette procédure ne modifie jamais `verificationStatus`.
+   */
+  adminCatalogPrecheck: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(50).default(12) }).optional()).query(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const entries = await db.select().from(hotelCatalog).where(and(
+      eq(hotelCatalog.verificationStatus, "imported"),
+      isNotNull(hotelCatalog.sourceUrl),
+      or(isNotNull(hotelCatalog.officialWebsiteUrl), isNotNull(hotelCatalog.officialBookingUrl)),
+    )).orderBy(desc(hotelCatalog.stars), desc(hotelCatalog.updatedAt)).limit(input?.limit ?? 12);
+
+    return entries.map(entry => ({
+      ...entry,
+      precheck: {
+        sourcePresent: Boolean(entry.sourceUrl),
+        officialLinkPresent: Boolean(entry.officialBookingUrl || entry.officialWebsiteUrl),
+        contactPresent: Boolean(entry.phone),
+        starsPresent: entry.stars !== null,
+        requiresHumanValidation: true,
+      },
+    }));
   }),
 
   importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey })).mutation(async ({ input, ctx }) => {
