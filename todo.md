@@ -826,6 +826,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre aux administrateurs d’ajouter des commentaires détaillés aux incidents de remise e-mail
 - [x] Calculer et afficher le délai moyen de résolution des incidents par conseiller
 - [x] Tester les commentaires, calculs de délai, autorisations et régressions avant publication
+- [x] Diagnostiquer le blocage « espace ne répond pas encore » lors de l’actualisation du dossier client
+- [x] Corriger la restauration de session et les gardes de profil afin d’éviter les faux blocages au rechargement
+- [x] Tester les actualisations avec profils incomplets et dossiers actifs avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

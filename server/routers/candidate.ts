@@ -140,7 +140,15 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
 // Le portrait est une barrière serveur : seules les mutations d’onboarding
 // peuvent être appelées avant la vérification humaine.
-const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
+const PORTRAIT_ONBOARDING_PATHS = new Set([
+  "candidate.getProfile",
+  "candidate.updateProfile",
+  "candidate.updateAvatar",
+  // Le tableau de bord doit rester accessible au rechargement afin que le
+  // candidat puisse voir son dossier et compléter son profil, sans faux écran
+  // de panne. Les ressources sensibles restent protégées par la garde serveur.
+  "candidate.getClientDashboardSummary",
+]);
 
 export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
