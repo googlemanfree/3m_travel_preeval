@@ -97,4 +97,17 @@ describe("Centre e-mail administrateur", () => {
     expect(management).toContain("Les adresses e-mail, numéros de téléphone");
     expect(management).toContain("contentPreviewHtml");
   });
+
+  it("propose des paramètres de seuils et un journal d’incidents accusables", () => {
+    const schema = fs.readFileSync(path.join(root, "drizzle/schema.ts"), "utf8");
+    const app = fs.readFileSync(path.join(root, "client/src/App.tsx"), "utf8");
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    expect(schema).toContain("emailDeliveryIncidents");
+    expect(app).toContain('path={"/admin/email-settings"}');
+    expect(admin).toContain("acknowledgeEmailDeliveryIncident");
+    expect(admin).toContain("emailDeliveryIncidentsHistory");
+    expect(management).toContain("Journal des incidents de seuil");
+    expect(management).toContain("Accuser réception");
+  });
 });

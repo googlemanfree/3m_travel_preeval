@@ -1454,6 +1454,24 @@ export const emailDeliveryAdvisorThresholds = mysqlTable("email_delivery_advisor
 export type EmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferSelect;
 export type InsertEmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferInsert;
 
+/** Incidents créés lorsqu’un seuil de remise e-mail est atteint. */
+export const emailDeliveryIncidents = mysqlTable("email_delivery_incidents", {
+  id: int("id").autoincrement().primaryKey(),
+  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull(),
+  thresholdId: int("thresholdId").notNull(),
+  failureCount: int("failureCount").notNull(),
+  thresholdValue: int("thresholdValue").notNull(),
+  status: mysqlEnum("status", ["open", "acknowledged"]).default("open").notNull(),
+  triggeredAt: timestamp("triggeredAt").defaultNow().notNull(),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  acknowledgedByAdminEmail: varchar("acknowledgedByAdminEmail", { length: 320 }),
+}, table => [
+  index("idx_email_incident_advisor_time").on(table.advisorEmail, table.triggeredAt),
+  index("idx_email_incident_status_time").on(table.status, table.triggeredAt),
+]);
+export type EmailDeliveryIncident = typeof emailDeliveryIncidents.$inferSelect;
+export type InsertEmailDeliveryIncident = typeof emailDeliveryIncidents.$inferInsert;
+
 /**
  * Historique des recherches de vols effectuées par les utilisateurs.
  */

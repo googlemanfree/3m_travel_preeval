@@ -97,6 +97,13 @@ export default function AdminEmailDeliveryManagement() {
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
+  const acknowledgeIncidentMutation = trpc.admin.acknowledgeEmailDeliveryIncident.useMutation({
+    onSuccess: () => {
+      toast.success("Incident marqué comme pris en charge.");
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
@@ -108,6 +115,7 @@ export default function AdminEmailDeliveryManagement() {
   const weeklySuccessRateComparison = data?.weeklySuccessRateComparison ?? [];
   const advisors = data?.advisors ?? [];
   const advisorThresholds = data?.advisorThresholds ?? [];
+  const emailDeliveryIncidents = data?.emailDeliveryIncidents ?? [];
   const rateChartData = deliverySuccessRates30Days.map((metric) => ({
     service: deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType,
     taux: metric.successRate ?? 0,
@@ -148,6 +156,20 @@ export default function AdminEmailDeliveryManagement() {
         const change = metric.change === null ? "sans comparaison" : `${metric.change >= 0 ? "+" : ""}${metric.change} pts`;
         doc.text(`${label} : semaine en cours ${current} | semaine précédente ${previous} | ${change}`, 14, y);
         y += 8;
+        if (y > 275) { doc.addPage(); y = 18; }
+      });
+    }
+    y += 8;
+    doc.setFontSize(12);
+    doc.text("Historique des alertes de seuil", 14, y);
+    y += 8;
+    doc.setFontSize(9);
+    if (!emailDeliveryIncidents.length) {
+      doc.text("Aucune alerte de seuil n’a été journalisée durant la période disponible.", 14, y);
+    } else {
+      emailDeliveryIncidents.slice(0, 20).forEach((incident) => {
+        doc.text(`${new Date(incident.triggeredAt).toLocaleString("fr-FR")} · ${incident.advisorEmail} · ${incident.failureCount}/${incident.thresholdValue} · ${incident.status === "acknowledged" ? "prise en charge" : "ouverte"}`, 14, y);
+        y += 6;
         if (y > 275) { doc.addPage(); y = 18; }
       });
     }
@@ -257,6 +279,14 @@ export default function AdminEmailDeliveryManagement() {
                 </label>
                 <Button size="sm" disabled={!thresholdAdvisorEmail || saveThresholdMutation.isPending} onClick={() => saveThresholdMutation.mutate({ sessionToken, advisorEmail: thresholdAdvisorEmail, dailyFailureThreshold: Number(thresholdValue) })}>{saveThresholdMutation.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
               </div>
+            </div>
+
+            <div className="border-t bg-amber-50/40 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Journal des incidents de seuil</p>
+                <Badge variant="outline" className="border-amber-200 bg-white text-amber-800">{emailDeliveryIncidents.filter((incident) => incident.status === "open").length} ouvert(s)</Badge>
+              </div>
+              {emailDeliveryIncidents.length ? <div className="mt-3 space-y-2">{emailDeliveryIncidents.slice(0, 12).map((incident) => <div key={incident.id} className="flex flex-col gap-2 rounded-lg border border-amber-100 bg-white p-3 text-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium text-slate-900">{incident.advisorEmail} · {incident.failureCount}/{incident.thresholdValue} échec(s)</p><p className="text-xs text-slate-500">Déclenché le {new Date(incident.triggeredAt).toLocaleString("fr-FR")}{incident.acknowledgedAt ? ` · pris en charge le ${new Date(incident.acknowledgedAt).toLocaleString("fr-FR")}` : ""}</p></div>{incident.status === "acknowledged" ? <Badge className="w-fit bg-emerald-600">Pris en charge</Badge> : <Button size="sm" variant="outline" disabled={acknowledgeIncidentMutation.isPending} onClick={() => acknowledgeIncidentMutation.mutate({ sessionToken, incidentId: incident.id })}>{acknowledgeIncidentMutation.isPending ? "Mise à jour…" : "Accuser réception"}</Button>}</div>)}</div> : <p className="mt-3 text-sm text-emerald-800">Aucun incident de seuil n’est actuellement journalisé.</p>}
             </div>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">

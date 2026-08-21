@@ -95,6 +95,7 @@ const PaymentAgencyConfirmation = lazyWithTimeout(() => import("./pages/PaymentA
 const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomerReviews"));
 const AdminInsuranceRequests = lazyWithTimeout(() => import("./pages/AdminInsuranceRequests"));
 const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
+const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
 const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTracking"));
 const SubmitReview = lazyWithTimeout(() => import("./pages/SubmitReview"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
@@ -319,6 +320,11 @@ function Router() {
       <Route path={"/admin/emails"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminEmailCenter />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/email-settings"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEmailSettings />
         </AdminGuard>
       </Route>
       <Route path={"/admin/ai-evaluations"}>

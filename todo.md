@@ -819,6 +819,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Masquer automatiquement les données sensibles dans les aperçus d’e-mails en échec
 - [x] Créer et valider une compétence réutilisable de supervision e-mail sécurisée
 - [x] Tester les seuils, alertes, exports PDF, masquage et régressions avant publication
+- [x] Créer une page sécurisée de paramètres des seuils d’alerte par conseiller
+- [x] Journaliser les incidents de remise déclenchés et permettre leur accusé de réception par un administrateur
+- [x] Inclure l’historique des alertes et accusés dans le rapport PDF hebdomadaire
+- [x] Tester les paramètres, incidents, accusés et rapports avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
