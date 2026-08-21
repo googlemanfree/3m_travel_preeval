@@ -791,7 +791,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger et tester toute anomalie reproductible avant publication
 - [x] Créer une route directe sécurisée vers le suivi e-mail administrateur
 - [x] Ajouter un tableau de santé SMTP réservé au back-office, sans exposer de secrets
-- [ ] Préparer un dossier de démonstration isolé pour les tests de remise e-mail réels
+- [x] Préparer un dossier de démonstration isolé pour les tests de remise e-mail réels
 - [x] Créer et valider une compétence réutilisable pour le contrôle de remise e-mail
 - [x] Tester les accès, la santé SMTP, le dossier de démonstration et les régressions avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
