@@ -29,6 +29,16 @@ function parseServiceTypes(value: string | null | undefined): string[] {
   }
 }
 
+function escapeCsv(value: unknown): string {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function catalogStatusMeta(status: string | null | undefined) {
+  if (status === "verified") return { label: "Vérifié", className: "border-emerald-200 bg-emerald-50 text-emerald-700" };
+  if (status === "inactive") return { label: "Masqué", className: "border-slate-200 bg-slate-50 text-slate-600" };
+  return { label: "À vérifier", className: "border-amber-200 bg-amber-50 text-amber-700" };
+}
+
 export function AdminTourismRequests() {
   const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined : undefined;
   const adminInput = useMemo(() => sessionToken ? { sessionToken } : undefined, [sessionToken]);
@@ -98,6 +108,62 @@ export function AdminTourismRequests() {
     document.body.removeChild(link);
   };
 
+  const exportHotelsCsv = () => {
+    const headers = ["Hôtel", "Ville", "Pays", "Étoiles", "Équipements", "Site officiel", "Réservation officielle", "Source", "Statut", "Vérifié le"];
+    const rows = (catalogHotels ?? []).map((hotel) => [
+      hotel.name,
+      hotel.city,
+      hotel.country,
+      hotel.stars ?? "",
+      (() => { try { return (JSON.parse(hotel.amenitiesJson || "[]") as string[]).join(", "); } catch { return ""; } })(),
+      hotel.officialWebsiteUrl ?? "",
+      hotel.officialBookingUrl ?? "",
+      hotel.sourceUrl ?? "OpenStreetMap",
+      catalogStatusMeta(hotel.verificationStatus).label,
+      hotel.lastVerifiedAt ? new Date(hotel.lastVerifiedAt).toLocaleDateString("fr-FR") : "",
+    ].map(escapeCsv));
+    const blob = new Blob([[headers.map(escapeCsv).join(","), ...rows.map((row) => row.join(","))].join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `catalogue_hotels_3m_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success("Export CSV hôtel téléchargé", { description: `${catalogHotels?.length ?? 0} fiche(s) exportée(s).` });
+  };
+
+  const exportHotelsPdf = async () => {
+    try {
+      const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      pdf.setFontSize(16);
+      pdf.text("3M Travel & Services — Catalogue hôtelier", 14, 16);
+      pdf.setFontSize(9);
+      pdf.setTextColor(80);
+      pdf.text("Export interne — disponibilité et tarifs à confirmer par un conseiller", 14, 22);
+      autoTable(pdf, {
+        startY: 28,
+        head: [["Hôtel", "Ville / Pays", "Équipements", "Lien officiel", "Statut"]],
+        body: (catalogHotels ?? []).map((hotel) => [
+          hotel.name,
+          `${hotel.city}, ${hotel.country}${hotel.stars ? ` · ${hotel.stars}★` : ""}`,
+          (() => { try { return (JSON.parse(hotel.amenitiesJson || "[]") as string[]).join(", "); } catch { return "—"; } })(),
+          hotel.officialBookingUrl || hotel.officialWebsiteUrl || "À compléter",
+          catalogStatusMeta(hotel.verificationStatus).label,
+        ]),
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [30, 58, 138] },
+        columnStyles: { 0: { cellWidth: 46 }, 1: { cellWidth: 39 }, 2: { cellWidth: 44 }, 3: { cellWidth: 95 }, 4: { cellWidth: 24 } },
+      });
+      pdf.save(`catalogue_hotels_3m_${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success("Export PDF hôtel téléchargé", { description: `${catalogHotels?.length ?? 0} fiche(s) exportée(s).` });
+    } catch {
+      toast.error("Export PDF indisponible", { description: "Réessayez après actualisation de la page." });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -114,9 +180,9 @@ export function AdminTourismRequests() {
           <Button variant="outline" onClick={() => refetch()} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
-          <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800">
-            <Download className="h-4 w-4" /> Exporter CSV
-          </Button>
+          <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800"><Download className="h-4 w-4" /> Demandes CSV</Button>
+          <Button variant="outline" onClick={exportHotelsCsv} className="gap-2"><Download className="h-4 w-4" /> Hôtels CSV</Button>
+          <Button variant="outline" onClick={exportHotelsPdf} className="gap-2"><FileText className="h-4 w-4" /> Hôtels PDF</Button>
         </div>
       </div>
 
@@ -225,7 +291,7 @@ export function AdminTourismRequests() {
                 {precheckHotels.map(hotel => (
                   <div key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3">
                     <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{hotel.name}</p><p className="text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div>
-                    <div className="flex shrink-0 items-center gap-1.5"><Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Lien présent</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending}>Valider</Button></div>
+                    <div className="flex shrink-0 items-center gap-1.5"><Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Prêt à contrôler</Badge><Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">À vérifier</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending}>Valider</Button></div>
                   </div>
                 ))}
               </div>
@@ -234,7 +300,8 @@ export function AdminTourismRequests() {
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
-              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+              const catalogStatus = catalogStatusMeta(hotel.verificationStatus);
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={catalogStatus.className}>{catalogStatus.label}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>
@@ -264,7 +331,7 @@ export function AdminTourismRequests() {
               <tbody className="divide-y divide-slate-100 text-sm">
                 {filteredRequests.map(req => {
                   const st = statusLabels[req.status] || statusLabels.new;
-                  const services = JSON.parse(req.serviceTypesJson || "[]") as string[];
+                  const services = parseServiceTypes(req.serviceTypesJson);
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/50 transition">
                       <td className="p-4">

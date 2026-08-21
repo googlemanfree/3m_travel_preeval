@@ -743,6 +743,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier l’erreur de rendu responsable de la page blanche administrateur
 - [x] Corriger le rendu de session ou de tableau concerné et ajouter un test de non-régression
 - [x] Vérifier le retour du tableau administrateur sur ordinateur et mobile — 480 tests réussis et accès protégé contrôlé
+- [x] Ajouter un export CSV et un export PDF traçable des fiches hôtels depuis Tourisme & Devis
+- [x] Ajouter recherche instantanée et filtre par pays au Catalogue e-Visa
+- [x] Ajouter des badges de couleur cohérents pour les statuts de précontrôle hôtelier
+- [x] Tester les exports, filtres et badges administratifs avant publication — 482 tests réussis
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
