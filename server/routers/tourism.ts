@@ -153,7 +153,7 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
 export const tourismRouter = router({
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160), amenities: z.array(hotelAmenity).max(3).default([]) })).mutation(async ({ input }) => {
     let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
-    let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
+    let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; imageUrl: string | null; imageSourceUrl: string | null; imageAttribution: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
     const db = await getDb();
     if (db) {
       const query = `%${input.destination.trim()}%`;
@@ -168,6 +168,9 @@ export const tourismRouter = router({
         amenities: parseCatalogAmenities(hotel.amenitiesJson),
         officialWebsiteUrl: hotel.officialWebsiteUrl,
         officialBookingUrl: hotel.officialBookingUrl,
+        imageUrl: hotel.imageUrl,
+        imageSourceUrl: hotel.imageSourceUrl,
+        imageAttribution: hotel.imageAttribution,
         sourceUrl: hotel.sourceUrl,
         sourceAttribution: hotel.sourceAttribution,
       })).filter((hotel) => input.amenities.every((amenity) => hotel.amenities.includes(amenity))).slice(0, 12);
@@ -269,6 +272,56 @@ export const tourismRouter = router({
     }));
   }),
 
+  /** Synthèse sans modification : elle alimente les alertes de validation humaine. */
+  adminCatalogReadiness: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const entries = await db.select({
+      id: hotelCatalog.id,
+      name: hotelCatalog.name,
+      city: hotelCatalog.city,
+      country: hotelCatalog.country,
+      sourceUrl: hotelCatalog.sourceUrl,
+      sourceAttribution: hotelCatalog.sourceAttribution,
+      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
+      officialBookingUrl: hotelCatalog.officialBookingUrl,
+      phone: hotelCatalog.phone,
+      updatedAt: hotelCatalog.updatedAt,
+    }).from(hotelCatalog).where(and(
+      eq(hotelCatalog.verificationStatus, "imported"),
+      isNotNull(hotelCatalog.sourceUrl),
+      or(isNotNull(hotelCatalog.officialWebsiteUrl), isNotNull(hotelCatalog.officialBookingUrl)),
+    )).limit(500);
+    const readyEntries = entries.filter((entry) => buildHotelTechnicalPrecheck(entry).readyForHumanConfirmation);
+    const latestReadyAt = readyEntries.reduce<Date | null>((latest, entry) => !latest || entry.updatedAt > latest ? entry.updatedAt : latest, null);
+    return { readyCount: readyEntries.length, latestReadyAt };
+  }),
+
+  /** Historique exploitable des validations effectuées par les conseillers. */
+  exportValidationHistory: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const entries = await db.select({
+      id: hotelCatalog.id,
+      name: hotelCatalog.name,
+      city: hotelCatalog.city,
+      country: hotelCatalog.country,
+      verificationStatus: hotelCatalog.verificationStatus,
+      lastVerifiedAt: hotelCatalog.lastVerifiedAt,
+      verifiedByAdminEmail: hotelCatalog.verifiedByAdminEmail,
+      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
+      officialBookingUrl: hotelCatalog.officialBookingUrl,
+      sourceUrl: hotelCatalog.sourceUrl,
+      sourceAttribution: hotelCatalog.sourceAttribution,
+    }).from(hotelCatalog).where(and(
+      eq(hotelCatalog.verificationStatus, "verified"),
+      isNotNull(hotelCatalog.lastVerifiedAt),
+    )).orderBy(desc(hotelCatalog.lastVerifiedAt), desc(hotelCatalog.updatedAt));
+    return entries;
+  }),
+
   importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey, sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
     const admin = await requireTourismAdminSession(ctx, input.sessionToken);
     const db = await getDb();
@@ -297,6 +350,25 @@ export const tourismRouter = router({
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(hotelCatalog).set({ verificationStatus: input.verificationStatus, officialWebsiteUrl: input.officialWebsiteUrl, officialBookingUrl: input.officialBookingUrl, lastVerifiedAt: new Date(), verifiedByAdminEmail: admin.email }).where(eq(hotelCatalog.id, input.id));
+    return { success: true };
+  }),
+
+  /** Le visuel est enregistré séparément de la confirmation pour ne jamais contourner celle-ci. */
+  updateCatalogImage: publicProcedure.input(z.object({
+    id: z.number().int().positive(),
+    imageUrl: z.string().url().max(2000).nullable(),
+    imageSourceUrl: z.string().url().max(2000).nullable(),
+    imageAttribution: z.string().trim().max(255).nullable(),
+    sessionToken: z.string().min(1).optional(),
+  }).refine((value) => !value.imageUrl || Boolean(value.imageSourceUrl), { message: "La page source du visuel est obligatoire lorsque vous ajoutez une image." })).mutation(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    await db.update(hotelCatalog).set({
+      imageUrl: input.imageUrl,
+      imageSourceUrl: input.imageSourceUrl,
+      imageAttribution: input.imageAttribution,
+    }).where(eq(hotelCatalog.id, input.id));
     return { success: true };
   }),
 

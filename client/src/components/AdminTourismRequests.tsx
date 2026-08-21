@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
+import { BedDouble, BellRing, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, ImagePlus, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,8 +51,14 @@ export function AdminTourismRequests() {
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
+  const [editingHotelImage, setEditingHotelImage] = useState<any | null>(null);
+  const [hotelImageUrl, setHotelImageUrl] = useState("");
+  const [hotelImageSourceUrl, setHotelImageSourceUrl] = useState("");
+  const [hotelImageAttribution, setHotelImageAttribution] = useState("");
   const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
   const { data: precheckHotels, refetch: refetchPrecheck, isLoading: isPrecheckLoading, error: precheckError } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
+  const { data: catalogReadiness, refetch: refetchReadiness } = trpc.tourism.adminCatalogReadiness.useQuery(adminInput, { refetchInterval: 30_000 });
+  const { data: validationHistory, isFetching: isValidationHistoryLoading, refetch: refetchValidationHistory } = trpc.tourism.exportValidationHistory.useQuery(adminInput, { enabled: false });
   const readyPrecheckCount = (precheckHotels ?? []).filter(hotel => hotel.precheck.readyForHumanConfirmation).length;
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
@@ -65,13 +71,24 @@ export function AdminTourismRequests() {
     onError: e => toast.error(e.message || "Erreur lors de l’enregistrement."),
   });
   const importCatalog = trpc.tourism.importCatalogCity.useMutation({
-    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
+    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
     onError: e => toast.error(e.message || "Import du catalogue indisponible."),
   });
   const verifyCatalog = trpc.tourism.verifyCatalogEntry.useMutation({
-    onSuccess: () => { refetchCatalog(); refetchPrecheck(); toast.success("Statut du catalogue mis à jour."); },
+    onSuccess: () => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); toast.success("Statut du catalogue mis à jour."); },
     onError: e => toast.error(e.message || "Mise à jour du catalogue impossible."),
   });
+  const updateCatalogImage = trpc.tourism.updateCatalogImage.useMutation({
+    onSuccess: () => { refetchCatalog(); toast.success("Visuel hôtelier enregistré avec sa provenance."); setEditingHotelImage(null); },
+    onError: e => toast.error(e.message || "Le visuel n’a pas pu être enregistré."),
+  });
+
+  const openImageEditor = (hotel: any) => {
+    setEditingHotelImage(hotel);
+    setHotelImageUrl(hotel.imageUrl || "");
+    setHotelImageSourceUrl(hotel.imageSourceUrl || hotel.officialWebsiteUrl || "");
+    setHotelImageAttribution(hotel.imageAttribution || "");
+  };
 
   const filteredRequests = (requests ?? []).filter(req => {
     const matchSearch = search === "" || String(req.fullName || "").toLowerCase().includes(search.toLowerCase()) || String(req.destination || "").toLowerCase().includes(search.toLowerCase()) || String(req.reference || "").toLowerCase().includes(search.toLowerCase()) || String(req.email || "").toLowerCase().includes(search.toLowerCase());
@@ -165,6 +182,37 @@ export function AdminTourismRequests() {
     }
   };
 
+  const exportValidationHistoryCsv = async () => {
+    const result = validationHistory ?? (await refetchValidationHistory()).data;
+    if (!result?.length) {
+      toast.error("Aucune validation à exporter", { description: "Les validations confirmées apparaîtront ici dès qu’un conseiller aura traité une fiche." });
+      return;
+    }
+    const headers = ["Hôtel", "Ville", "Pays", "Statut", "Validé le", "Conseiller", "Site officiel", "Lien de réservation", "Source", "Attribution"];
+    const rows = result.map((hotel) => [
+      hotel.name,
+      hotel.city,
+      hotel.country,
+      catalogStatusMeta(hotel.verificationStatus).label,
+      hotel.lastVerifiedAt ? new Date(hotel.lastVerifiedAt).toLocaleString("fr-FR") : "",
+      hotel.verifiedByAdminEmail ?? "",
+      hotel.officialWebsiteUrl ?? "",
+      hotel.officialBookingUrl ?? "",
+      hotel.sourceUrl ?? "",
+      hotel.sourceAttribution ?? "",
+    ].map(escapeCsv));
+    const blob = new Blob([[headers.map(escapeCsv).join(","), ...rows.map((row) => row.join(","))].join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `historique_validations_hotels_3m_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast.success("Historique CSV téléchargé", { description: `${result.length} validation(s) avec conseiller et date.` });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -178,7 +226,7 @@ export function AdminTourismRequests() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => refetch()} className="gap-2">
+          <Button variant="outline" onClick={() => { refetch(); refetchReadiness(); }} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
           <Button variant="outline" onClick={() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50">
@@ -186,9 +234,18 @@ export function AdminTourismRequests() {
           </Button>
           <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800"><Download className="h-4 w-4" /> Demandes CSV</Button>
           <Button variant="outline" onClick={exportHotelsCsv} className="gap-2"><Download className="h-4 w-4" /> Hôtels CSV</Button>
+          <Button variant="outline" onClick={exportValidationHistoryCsv} disabled={isValidationHistoryLoading} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"><UserCheck className="h-4 w-4" /> Validations CSV</Button>
           <Button variant="outline" onClick={exportHotelsPdf} className="gap-2"><FileText className="h-4 w-4" /> Hôtels PDF</Button>
         </div>
       </div>
+
+      {(catalogReadiness?.readyCount ?? 0) > 0 && <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
+        <div className="flex items-start gap-3">
+          <span className="rounded-xl bg-amber-200 p-2 text-amber-900"><BellRing className="h-5 w-5" /></span>
+          <div><p className="font-black">{catalogReadiness.readyCount} fiche{catalogReadiness.readyCount > 1 ? "s" : ""} hôtel prête{catalogReadiness.readyCount > 1 ? "s" : ""} à être confirmée{catalogReadiness.readyCount > 1 ? "s" : ""}</p><p className="mt-1 text-sm leading-5 text-amber-800">La provenance et le lien officiel sont renseignés. Ouvrez le précontrôle pour effectuer la confirmation humaine.</p></div>
+        </div>
+        <Button type="button" onClick={() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="shrink-0 bg-amber-500 text-slate-950 hover:bg-amber-400"><UserCheck className="mr-2 h-4 w-4" /> Examiner</Button>
+      </div>}
 
       {/* Cartes de synthèse */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -311,13 +368,26 @@ export function AdminTourismRequests() {
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
               const catalogStatus = catalogStatusMeta(hotel.verificationStatus);
-              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={catalogStatus.className}>{catalogStatus.label}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3">{hotel.imageUrl && <img src={hotel.imageUrl} alt="" className="h-11 w-14 rounded-lg object-cover" />}<div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div></div><Badge variant="outline" className={catalogStatus.className}>{catalogStatus.label}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => openImageEditor(hotel)}><ImagePlus className="mr-1 h-3.5 w-3.5" />Visuel</Button><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>
           <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Cette liste gratuite sert à préparer les demandes ; vérifiez toujours le site officiel avant d’envoyer un devis au client.</p>
         </CardContent>
       </Card>
+
+      <Dialog open={!!editingHotelImage} onOpenChange={(open) => { if (!open) setEditingHotelImage(null); }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-slate-900"><ImagePlus className="h-5 w-5 text-blue-700" /> Visuel de {editingHotelImage?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-900">Ajoutez uniquement un visuel que l’établissement a fourni, publié officiellement ou dont vous détenez l’autorisation d’utilisation. La page source est obligatoire afin de préserver la traçabilité.</p>
+            <div><Label htmlFor="hotel-image-url">URL directe de l’image</Label><Input id="hotel-image-url" type="url" value={hotelImageUrl} onChange={(event) => setHotelImageUrl(event.target.value)} placeholder="https://…/photo.jpg" className="mt-1" /></div>
+            <div><Label htmlFor="hotel-image-source">Page source du visuel</Label><Input id="hotel-image-source" type="url" value={hotelImageSourceUrl} onChange={(event) => setHotelImageSourceUrl(event.target.value)} placeholder="https://site-officiel…" className="mt-1" /></div>
+            <div><Label htmlFor="hotel-image-attribution">Crédit / attribution</Label><Input id="hotel-image-attribution" value={hotelImageAttribution} onChange={(event) => setHotelImageAttribution(event.target.value)} placeholder="Ex. Établissement — site officiel" className="mt-1" /></div>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={() => setEditingHotelImage(null)}>Annuler</Button><Button onClick={() => updateCatalogImage.mutate({ id: editingHotelImage.id, imageUrl: hotelImageUrl.trim() || null, imageSourceUrl: hotelImageSourceUrl.trim() || null, imageAttribution: hotelImageAttribution.trim() || null, sessionToken })} disabled={updateCatalogImage.isPending} className="bg-blue-700 text-white hover:bg-blue-800">{updateCatalogImage.isPending ? "Enregistrement…" : "Enregistrer le visuel"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Liste des demandes */}
       {isLoading ? (

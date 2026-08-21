@@ -696,6 +696,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Obtenir la confirmation humaine finale d’une fiche techniquement prête avant sa publication client
 - [x] Rendre la file de précontrôle hôtelier visible avec une action rapide de confirmation dans Tourisme & Devis
 - [x] Vérifier le rendu connecté de l’action rapide de confirmation hôtelier dans Tourisme & Devis
+- [x] Alerter visuellement l’administrateur lorsqu’une fiche hôtel est techniquement prête à confirmer
+- [x] Exporter en CSV l’historique complet des validations hôtelières, avec conseiller et date
+- [x] Ajouter un filtre client n’affichant que les hôtels confirmés
+- [x] Associer des visuels hôteliers propres à chaque fiche en respectant leur provenance et leurs droits d’usage
+- [x] Tester les alertes, exports, filtre client et rendu des visuels avant publication
 - [x] Conserver la confirmation humaine finale avant toute publication d’hôtel dans 3M Booking
 - [x] Automatiser le précontrôle des fiches hôtel tout en conservant une confirmation humaine finale en un clic
 - [x] Définir et automatiser le précontrôle technique des liens, coordonnées et provenance des fiches hôtel

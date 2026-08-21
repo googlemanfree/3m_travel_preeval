@@ -656,6 +656,10 @@ export default function AdminDashboard() {
     { sessionToken },
     { enabled: !!sessionToken, retry: false, refetchInterval: 30_000 },
   );
+  const { data: hotelCatalogReadiness, refetch: refetchHotelCatalogReadiness } = trpc.tourism.adminCatalogReadiness.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken, retry: false, refetchInterval: 30_000 },
+  );
 
   useEffect(() => {
     if (!isLoading && !isLoadingCountryDistribution && !isLoadingFaqSatisfaction && (data || countryDistribution || faqSatisfaction) && !lastSyncedAt) {
@@ -855,19 +859,20 @@ export default function AdminDashboard() {
               <Plus className="w-4 h-4" />
               Saisir dossier agence
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                setActiveAdminTab("tourism");
-                window.setTimeout(() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
-              }}
-              className="gap-1.5 border-emerald-300/70 text-emerald-100 hover:bg-emerald-400/20"
-              title="Accéder aux fiches hôtel précontrôlées à confirmer"
-            >
-              <UserCheck className="w-4 h-4" />
-              <span className="hidden xl:inline">Confirmer hôtels</span>
-            </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setActiveAdminTab("tourism");
+                  window.setTimeout(() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+                }}
+                className="gap-1.5 border-emerald-300/70 text-emerald-100 hover:bg-emerald-400/20"
+                title={hotelCatalogReadiness?.readyCount ? `${hotelCatalogReadiness.readyCount} fiche(s) hôtel prête(s) à confirmer` : "Accéder aux fiches hôtel précontrôlées à confirmer"}
+              >
+                <UserCheck className="w-4 h-4" />
+                <span className="hidden xl:inline">Confirmer hôtels</span>
+                {(hotelCatalogReadiness?.readyCount ?? 0) > 0 && <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-amber-300 px-1 text-[11px] font-black text-slate-950" aria-label={`${hotelCatalogReadiness?.readyCount} fiche(s) prête(s) à confirmer`}>{hotelCatalogReadiness?.readyCount}</span>}
+              </Button>
             
             {/* Notifications */}
             <AdminNotificationBell />
