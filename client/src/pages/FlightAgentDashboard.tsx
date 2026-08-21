@@ -485,7 +485,7 @@ export default function FlightAgentDashboard() {
                   <Input id="issuance-pnr" value={issuancePnrInput} onChange={(e) => setIssuancePnrInput(e.target.value)} placeholder="Ex. PNR98765" className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="issuance-file">Document PNR final (PDF, facultatif)</Label>
+                  <Label htmlFor="issuance-file">Document PNR ou billet final (PDF, requis)</Label>
                   <Input id="issuance-file" type="file" accept="application/pdf" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
@@ -500,30 +500,21 @@ export default function FlightAgentDashboard() {
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={() => setIsIssuanceModalOpen(false)}>Annuler</Button>
-                <Button type="button" disabled={updatePnrMutation.isPending || adminUploadPnrMutation.isPending || !advisorInitialsInput.trim()} onClick={() => {
-                  if (!advisorInitialsInput.trim()) {
-                    toast({ title: "Initiales requises", description: "Veuillez saisir vos initiales de conseiller.", variant: "destructive" });
+                <Button type="button" disabled={updatePnrMutation.isPending || adminUploadPnrMutation.isPending || !advisorInitialsInput.trim() || !issuancePnrInput.trim() || !issuancePdfFile} onClick={() => {
+                  if (!advisorInitialsInput.trim() || !issuancePnrInput.trim() || !issuancePdfFile) {
+                    toast({ title: "Billet final requis", description: "Saisissez les initiales, le PNR et joignez le PDF final afin de le publier dans l’espace client et de l’envoyer par e-mail.", variant: "destructive" });
                     return;
                   }
-                  if (issuancePdfFile) {
-                    adminUploadPnrMutation.mutate({
-                      sessionToken,
-                      requestId: selectedRequestId,
-                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
-                      fileBase64: issuancePdfFile.base64,
-                      fileName: issuancePdfFile.name,
-                      advisorInitials: advisorInitialsInput.trim().toUpperCase(),
-                    });
-                  } else {
-                    updatePnrMutation.mutate({
-                      sessionToken,
-                      requestId: selectedRequestId,
-                      pnrReference: issuancePnrInput.trim() || detailQuery.data.request.pnrReference || "PNR-DEF",
-                      advisorInitials: advisorInitialsInput.trim().toUpperCase(),
-                    });
-                  }
+                  adminUploadPnrMutation.mutate({
+                    sessionToken,
+                    requestId: selectedRequestId,
+                    pnrReference: issuancePnrInput.trim(),
+                    fileBase64: issuancePdfFile.base64,
+                    fileName: issuancePdfFile.name,
+                    advisorInitials: advisorInitialsInput.trim().toUpperCase(),
+                  });
                 }} className="bg-emerald-600 font-bold text-white hover:bg-emerald-700">
-                  Confirmer l'émission définitive
+                  Publier dans l’espace client et envoyer l’e-mail
                 </Button>
               </div>
             </div>

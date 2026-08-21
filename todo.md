@@ -776,3 +776,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
 - [x] Tester la recherche, les suggestions, le suivi des visuels et la compétence avant publication
+- [x] Diagnostiquer les erreurs et les boutons inaccessibles du parcours d’envoi de billet administrateur
+- [x] Corriger l’envoi de billet, les autorisations et les retours d’interface côté administrateur
+- [x] Tester l’accès client au billet et la livraison e-mail après action administrateur
+- [x] Garantir qu’une validation de billet publie le PDF dans l’espace client et déclenche l’e-mail de remise au client

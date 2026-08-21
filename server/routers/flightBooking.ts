@@ -35,6 +35,10 @@ const requestStatus = [
 ] as const;
 const requestPriority = ["low", "normal", "high", "urgent"] as const;
 const issuanceCheckKeys = ["identity_verified", "passport_valid", "fare_revalidated", "payment_verified", "pnr_document_ready"] as const;
+export function hasCompleteIssuanceChecklist(value: unknown) {
+  const checklist = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, boolean> : {};
+  return issuanceCheckKeys.every((key) => checklist[key] === true);
+}
 const customerStatusLabels: Record<(typeof requestStatus)[number], string> = {
   pending_review: "En cours de vérification",
   assigned: "Prise en charge par un conseiller",
@@ -784,9 +788,7 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
-      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
-      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
-      if (!allChecked) {
+      if (!hasCompleteIssuanceChecklist(existing.issuanceChecklist)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
       await db.update(flightBookingRequests).set({
@@ -904,9 +906,7 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
 
-      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
-      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
-      if (!allChecked) {
+      if (!hasCompleteIssuanceChecklist(existing.issuanceChecklist)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
 
