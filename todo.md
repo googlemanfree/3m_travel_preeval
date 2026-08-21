@@ -832,6 +832,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diagnostiquer les redirections client et administrateur vers le login malgré une session encore valide
 - [x] Supprimer les redirections de repli lors d’erreurs transitoires tout en conservant l’expiration et la déconnexion réelles
 - [x] Tester les sessions valides, les erreurs temporaires et les expirations confirmées avant publication
+- [x] Afficher un indicateur discret confirmant la restauration d’une session valide
+- [x] Afficher l’heure d’expiration de session dans les menus client et administrateur
+- [x] Ajouter un renouvellement manuel sécurisé de session avant expiration
+- [x] Créer et valider une compétence réutilisable de continuité de session
+- [x] Tester les indicateurs, heures d’expiration, renouvellements et régressions avant publication
 - [x] Diagnostiquer la demande de reconnexion affichée malgré une session client encore valide
 - [x] Préserver la session valide dans l’écran de repli et ne proposer la reconnexion qu’après invalidation réelle
 - [x] Tester les erreurs transitoires, les actualisations et les expirations réelles avant publication

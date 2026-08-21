@@ -43,11 +43,22 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const { candidate, isAuthenticated, logout } = useCandidateAuth();
+  const { candidate, isAuthenticated, logout, sessionExpiresAt, setSessionExpiresAt, login } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showSessionRestored, setShowSessionRestored] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "documents" | "profile" | "messages" | "testimonials">("overview");
+
+  const renewSessionMutation = trpc.candidate.renewSession.useMutation({
+    onSuccess: (data) => {
+      const expiresAt = new Date(data.expiresAt).getTime();
+      localStorage.setItem("3m_candidate_token", data.token);
+      localStorage.setItem("3m_candidate_session_expires_at", String(expiresAt));
+      if (candidate) login(data.token, candidate);
+      setSessionExpiresAt(expiresAt);
+    },
+  });
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -72,6 +83,11 @@ export default function EvaluationSpace() {
     const timeout = window.setTimeout(() => setLoadingTimeoutReached(true), 12_000);
     return () => window.clearTimeout(timeout);
   }, [isLoading]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setShowSessionRestored(false), 6_000);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -181,6 +197,23 @@ export default function EvaluationSpace() {
           </div>
 
           <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:w-auto sm:justify-end">
+            {showSessionRestored && sessionExpiresAt && (
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800">
+                Session restaurée · jusqu’à {new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            {sessionExpiresAt && (
+              <Button
+                onClick={() => renewSessionMutation.mutate()}
+                disabled={renewSessionMutation.isPending}
+                variant="outline"
+                size="sm"
+                className="h-11 gap-2 text-gray-700 bg-white hover:bg-gray-50"
+              >
+                <Clock className="w-4 h-4" />
+                {renewSessionMutation.isPending ? "Renouvellement…" : `Expire ${new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
+              </Button>
+            )}
             <Button
               onClick={handleManualRefresh}
               variant="outline"

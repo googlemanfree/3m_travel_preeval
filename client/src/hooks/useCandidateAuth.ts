@@ -38,9 +38,17 @@ function readCandidate(): CandidateInfo | null {
   } catch { return null; }
 }
 
+function readSessionExpiry(): number | null {
+  try {
+    const expiry = Number(localStorage.getItem(EXPIRY_KEY) ?? sessionStorage.getItem(EXPIRY_KEY) ?? 0);
+    return expiry > Date.now() ? expiry : null;
+  } catch { return null; }
+}
+
 export function useCandidateAuth() {
   const [token, setToken] = useState<string | null>(readToken);
   const [candidate, setCandidate] = useState<CandidateInfo | null>(readCandidate);
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<number | null>(readSessionExpiry);
 
   /**
    * Appelé par Login.tsx qui gère lui-même l'écriture dans localStorage/sessionStorage
@@ -49,6 +57,7 @@ export function useCandidateAuth() {
   const login = useCallback((newToken: string, info: CandidateInfo) => {
     setToken(newToken);
     setCandidate(info);
+    setSessionExpiresAt(readSessionExpiry());
   }, []);
 
   const logout = useCallback(() => {
@@ -60,11 +69,12 @@ export function useCandidateAuth() {
     sessionStorage.removeItem(EXPIRY_KEY);
     setToken(null);
     setCandidate(null);
+    setSessionExpiresAt(null);
   }, []);
 
   const isAuthenticated = !!token;
 
-  return { token, candidate, isAuthenticated, login, logout };
+  return { token, candidate, isAuthenticated, login, logout, sessionExpiresAt, setSessionExpiresAt };
 }
 
 /** Récupère le token candidat depuis localStorage ou sessionStorage (pour les appels tRPC directs) */

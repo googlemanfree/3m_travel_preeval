@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { AlertCircle, Lock } from "lucide-react";
+import { AlertCircle, Clock, Lock, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import { trpc } from "@/lib/trpc";
@@ -22,6 +22,10 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
   const sessionTemporarilyUnavailable = Boolean(sessionToken) && (adminSession.isError || queryTimedOut);
   const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
+  const renewSession = trpc.adminAuth.renewSession.useMutation({
+    onSuccess: () => { void adminSession.refetch(); },
+  });
+  const sessionExpiresAt = adminSession.data?.authenticated ? adminSession.data.sessionExpiresAt : null;
 
   useEffect(() => {
     if (!adminSession.isLoading) {
@@ -119,8 +123,19 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
 
   return (
     <>
-      <div className="fixed top-3 right-4 z-[60] bg-white rounded-full shadow-md border border-gray-100">
-        <AdminNotificationBell />
+      <div className="fixed top-3 right-4 z-[60] flex items-center gap-2">
+        {sessionExpiresAt && (
+          <button
+            type="button"
+            onClick={() => sessionToken && renewSession.mutate({ sessionToken })}
+            disabled={renewSession.isPending}
+            className="rounded-full border border-emerald-100 bg-white px-3 py-2 text-xs font-medium text-emerald-800 shadow-md"
+            title={`Session active jusqu’à ${new Date(sessionExpiresAt).toLocaleString("fr-FR")}`}
+          >
+            {renewSession.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Expire {new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}
+          </button>
+        )}
+        <div className="bg-white rounded-full shadow-md border border-gray-100"><AdminNotificationBell /></div>
       </div>
       {children}
     </>

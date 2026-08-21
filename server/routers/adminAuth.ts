@@ -141,6 +141,7 @@ export const adminAuthRouter = router({
       return {
         success: true,
         sessionToken,
+        sessionExpiresAt,
         adminType: admin.adminType,
         role: admin.role,
         fullName: admin.fullName,
@@ -165,12 +166,35 @@ export const adminAuthRouter = router({
       return {
         authenticated: true,
         requiresPasswordChange: admin.requiresPasswordChange,
+        sessionExpiresAt: admin.sessionExpiresAt,
         admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType, role: admin.role },
       } as const;
     } catch {
       return { authenticated: false } as const;
     }
   }),
+
+  /** Renouvelle une session admin déjà validée pour 24 heures supplémentaires. */
+  renewSession: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const sessionDurationMs = 24 * 60 * 60 * 1000;
+      const sessionExpiresAt = new Date(Date.now() + sessionDurationMs);
+      await db.update(adminAccounts)
+        .set({ sessionExpiresAt, lastActivityAt: new Date() })
+        .where(eq(adminAccounts.id, admin.id));
+      ctx.res.cookie(ADMIN_SESSION_COOKIE, input.sessionToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: sessionDurationMs,
+      });
+      return { success: true, sessionExpiresAt };
+    }),
 
   /**
    * Changer son propre mot de passe (admin déjà connecté).

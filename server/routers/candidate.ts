@@ -388,6 +388,15 @@ export const candidateRouter = router({
       };
     }),
 
+  // ── Renouveler une session candidat encore valide ──────────────────────────
+  renewSession: candidateProcedure.mutation(async ({ ctx }) => {
+    const token = signCandidateToken(ctx.candidate.id);
+    return {
+      token,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    };
+  }),
+
   // ── Profil candidat (lecture) ──────────────────────────────────────────────
   getProfile: candidateProcedure.query(async ({ ctx }) => {
     if ((ctx as any).isManuUser && ctx.user) {
