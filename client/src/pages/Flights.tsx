@@ -334,7 +334,7 @@ function PassengerSelector({
 
 // ─── Flight Card ──────────────────────────────────────────────────────────────
 function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { flight: Flight; searchParams: any; isSimulated: boolean; servedFromCache: boolean }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const { isAuthenticated } = useCandidateAuth();
   const { addItem } = useMultiServiceCart();
   const { toast } = useToast();
@@ -853,14 +853,14 @@ export default function Flights() {
         </div>
       </div>
 
-      <section id="3m-booking" className="scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
+      <section id="3m-booking" className="order-2 scroll-mt-6" aria-label="3M Booking — Hôtels et séjours">
         <ThreeMBookingExperience />
       </section>
 
-      <FlightQuoteRequest />
+      <div className="order-3"><FlightQuoteRequest /></div>
 
       {/* Travel planner section */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="order-4 max-w-7xl mx-auto px-4 py-6">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass-card bg-gradient-to-r from-blue-900/90 via-indigo-900/90 to-slate-900/90 text-white rounded-3xl p-6 md:p-8 shadow-2xl border border-blue-500/20 relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
@@ -916,7 +916,7 @@ export default function Flights() {
       </div>
 
       {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div id="flight-results" className="order-1 max-w-7xl mx-auto px-4 py-8 scroll-mt-4" aria-live="polite">
         {!searchEnabled && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
             <Plane className="w-16 h-16 text-blue-200 mx-auto mb-4" />
@@ -1095,7 +1095,7 @@ export default function Flights() {
           </motion.div>
         )}
       </div>
-      <Footer />
+      <div className="order-5"><Footer /></div>
     </div>
   );
 }

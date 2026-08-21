@@ -747,6 +747,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter recherche instantanée et filtre par pays au Catalogue e-Visa
 - [x] Ajouter des badges de couleur cohérents pour les statuts de précontrôle hôtelier
 - [x] Tester les exports, filtres et badges administratifs avant publication — 482 tests réussis
+- [x] Afficher les résultats de disponibilité de vols immédiatement sous le formulaire de recherche
+- [x] Enrichir les cartes de résultats avec horaires, escales, bagages, cabine et conditions tarifaires disponibles
+- [x] Vérifier le rendu des résultats de vols sur ordinateur et mobile, puis exécuter les régressions — 484 tests réussis
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
