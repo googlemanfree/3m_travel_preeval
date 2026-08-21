@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHotelTechnicalPrecheck, mapOsmHotelElement } from "./tourism";
+import { buildHotelTechnicalPrecheck, buildVerifiedHotelSuggestion, mapOsmHotelElement } from "./tourism";
 
 describe("catalogue hôtelier — confirmation humaine", () => {
   it("signale une fiche techniquement prête sans la confirmer automatiquement", () => {
@@ -51,5 +51,29 @@ describe("catalogue hôtelier — confirmation humaine", () => {
     expect(entry.officialWebsiteUrl).toBe("https://www.hotel-exemple.test/");
     expect(entry.amenitiesJson).toContain("pool");
     expect(entry.amenitiesJson).toContain("wifi");
+  });
+
+  it("prépare une suggestion client avec les données sourcées de l’hôtel", () => {
+    const suggestion = buildVerifiedHotelSuggestion({
+      id: 81,
+      name: "Hôtel vérifié",
+      address: "Akwa",
+      city: "Douala",
+      country: "Cameroun",
+      stars: 4,
+      amenitiesJson: '["wifi","parking"]',
+      officialWebsiteUrl: "https://hotel-exemple.test",
+      officialBookingUrl: null,
+      imageUrl: "https://hotel-exemple.test/photo.jpg",
+      imageSourceUrl: "https://hotel-exemple.test/galerie",
+      imageAttribution: "Hôtel Exemple — galerie officielle",
+      sourceUrl: "https://www.openstreetmap.org/node/81",
+      sourceAttribution: "© OpenStreetMap contributors, ODbL",
+    });
+
+    expect(suggestion.name).toBe("Hôtel vérifié");
+    expect(suggestion.amenities).toEqual(["wifi", "parking"]);
+    expect(suggestion.imageSourceUrl).toBe("https://hotel-exemple.test/galerie");
+    expect(suggestion.sourceAttribution).toContain("OpenStreetMap");
   });
 });

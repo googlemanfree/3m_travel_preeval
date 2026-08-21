@@ -772,3 +772,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
+- [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
+- [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
+- [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
+- [x] Tester la recherche, les suggestions, le suivi des visuels et la compétence avant publication

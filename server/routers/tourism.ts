@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, isNotNull, like, or } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, like, or } from "drizzle-orm";
 import { adminNotifications, hotelCatalog, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
@@ -150,7 +150,48 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
   return tourismTrackingMeta[status];
 }
 
+type HotelSuggestionSource = {
+  id: number; name: string; address: string | null; city: string; country: string; stars: number | null;
+  amenitiesJson: string | null; officialWebsiteUrl: string | null; officialBookingUrl: string | null;
+  imageUrl: string | null; imageSourceUrl: string | null; imageAttribution: string | null;
+  sourceUrl: string | null; sourceAttribution: string;
+};
+
+/** Prépare une suggestion publique sans contourner le filtre verified appliqué par la requête. */
+export function buildVerifiedHotelSuggestion(hotel: HotelSuggestionSource) {
+  return {
+    id: hotel.id,
+    name: hotel.name,
+    address: hotel.address,
+    city: hotel.city,
+    country: hotel.country,
+    stars: hotel.stars,
+    amenities: parseCatalogAmenities(hotel.amenitiesJson),
+    officialWebsiteUrl: hotel.officialWebsiteUrl,
+    officialBookingUrl: hotel.officialBookingUrl,
+    imageUrl: hotel.imageUrl,
+    imageSourceUrl: hotel.imageSourceUrl,
+    imageAttribution: hotel.imageAttribution,
+    sourceUrl: hotel.sourceUrl,
+    sourceAttribution: hotel.sourceAttribution,
+  };
+}
+
 export const tourismRouter = router({
+  suggestCatalogHotels: publicProcedure.input(z.object({ query: z.string().trim().min(2).max(80), destination: z.string().trim().max(160).optional() })).query(async ({ input }) => {
+    const db = await getDb();
+    if (!db) return [];
+    const query = `%${input.query}%`;
+    const destination = input.destination ? `%${input.destination}%` : null;
+    const destinationFilter = destination ? or(like(hotelCatalog.city, destination), like(hotelCatalog.country, destination)) : undefined;
+    const rows = await db.select().from(hotelCatalog).where(and(
+      eq(hotelCatalog.verificationStatus, "verified"),
+      or(like(hotelCatalog.name, query), like(hotelCatalog.city, query), like(hotelCatalog.country, query)),
+      destinationFilter,
+    )).orderBy(desc(hotelCatalog.lastVerifiedAt), hotelCatalog.name).limit(8);
+    return rows.map(buildVerifiedHotelSuggestion);
+  }),
+
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160), amenities: z.array(hotelAmenity).max(3).default([]) })).mutation(async ({ input }) => {
     let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
     let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; imageUrl: string | null; imageSourceUrl: string | null; imageAttribution: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
@@ -246,6 +287,31 @@ export const tourismRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const city = input?.city?.trim();
     return city ? db.select().from(hotelCatalog).where(eq(hotelCatalog.city, city)).orderBy(desc(hotelCatalog.updatedAt)).limit(100) : db.select().from(hotelCatalog).orderBy(desc(hotelCatalog.updatedAt)).limit(100);
+  }),
+
+  adminCatalogWithoutOfficialVisual: publicProcedure.input(z.object({ query: z.string().trim().max(80).optional(), city: z.string().trim().max(120).optional(), limit: z.number().int().min(1).max(100).default(50), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const term = input?.query?.trim();
+    const city = input?.city?.trim();
+    const termFilter = term ? or(like(hotelCatalog.name, `%${term}%`), like(hotelCatalog.city, `%${term}%`), like(hotelCatalog.country, `%${term}%`)) : undefined;
+    const rows = await db.select({
+      id: hotelCatalog.id,
+      name: hotelCatalog.name,
+      city: hotelCatalog.city,
+      country: hotelCatalog.country,
+      verificationStatus: hotelCatalog.verificationStatus,
+      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
+      officialBookingUrl: hotelCatalog.officialBookingUrl,
+      imageUrl: hotelCatalog.imageUrl,
+      updatedAt: hotelCatalog.updatedAt,
+    }).from(hotelCatalog).where(and(
+      isNull(hotelCatalog.imageUrl),
+      city ? eq(hotelCatalog.city, city) : undefined,
+      termFilter,
+    )).orderBy(desc(hotelCatalog.updatedAt), hotelCatalog.name).limit(input?.limit ?? 50);
+    return rows;
   }),
 
   /**

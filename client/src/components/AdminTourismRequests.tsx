@@ -55,10 +55,20 @@ export function AdminTourismRequests() {
   const [hotelImageUrl, setHotelImageUrl] = useState("");
   const [hotelImageSourceUrl, setHotelImageSourceUrl] = useState("");
   const [hotelImageAttribution, setHotelImageAttribution] = useState("");
+  const [missingVisualSearch, setMissingVisualSearch] = useState("");
+  const [missingVisualCity, setMissingVisualCity] = useState("all");
   const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
   const { data: precheckHotels, refetch: refetchPrecheck, isLoading: isPrecheckLoading, error: precheckError } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
   const { data: catalogReadiness, refetch: refetchReadiness } = trpc.tourism.adminCatalogReadiness.useQuery(adminInput, { refetchInterval: 30_000 });
   const { data: validationHistory, isFetching: isValidationHistoryLoading, refetch: refetchValidationHistory } = trpc.tourism.exportValidationHistory.useQuery(adminInput, { enabled: false });
+  const missingVisualInput = useMemo(() => ({
+    query: missingVisualSearch.trim() || undefined,
+    city: missingVisualCity === "all" ? undefined : missingVisualCity,
+    limit: 50,
+    ...(sessionToken ? { sessionToken } : {}),
+  }), [missingVisualSearch, missingVisualCity, sessionToken]);
+  const { data: hotelsWithoutOfficialVisual, isLoading: isMissingVisualLoading, refetch: refetchMissingVisuals } = trpc.tourism.adminCatalogWithoutOfficialVisual.useQuery(missingVisualInput);
+  const catalogCities = useMemo(() => Array.from(new Set((catalogHotels ?? []).map((hotel) => hotel.city).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr")), [catalogHotels]);
   const readyPrecheckCount = (precheckHotels ?? []).filter(hotel => hotel.precheck.readyForHumanConfirmation).length;
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
@@ -71,15 +81,15 @@ export function AdminTourismRequests() {
     onError: e => toast.error(e.message || "Erreur lors de l’enregistrement."),
   });
   const importCatalog = trpc.tourism.importCatalogCity.useMutation({
-    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
+    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); refetchMissingVisuals(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
     onError: e => toast.error(e.message || "Import du catalogue indisponible."),
   });
   const verifyCatalog = trpc.tourism.verifyCatalogEntry.useMutation({
-    onSuccess: () => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); toast.success("Statut du catalogue mis à jour."); },
+    onSuccess: () => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); refetchMissingVisuals(); toast.success("Statut du catalogue mis à jour."); },
     onError: e => toast.error(e.message || "Mise à jour du catalogue impossible."),
   });
   const updateCatalogImage = trpc.tourism.updateCatalogImage.useMutation({
-    onSuccess: () => { refetchCatalog(); toast.success("Visuel hôtelier enregistré avec sa provenance."); setEditingHotelImage(null); },
+    onSuccess: () => { refetchCatalog(); refetchMissingVisuals(); toast.success("Visuel hôtelier enregistré avec sa provenance."); setEditingHotelImage(null); },
     onError: e => toast.error(e.message || "Le visuel n’a pas pu être enregistré."),
   });
 
@@ -363,6 +373,17 @@ export function AdminTourismRequests() {
               ) : (
                 <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-600">Aucune fiche prête n’est disponible pour le moment. Importez une ville ou actualisez le catalogue.</div>
               )}
+          </div>
+          <div className="mt-5 rounded-xl border border-violet-200 bg-violet-50/50 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div><p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Suivi des visuels officiels</p><p className="mt-1 text-sm font-bold text-slate-900">{hotelsWithoutOfficialVisual?.length ?? 0} fiche(s) sans visuel officiel dans cette vue</p><p className="mt-1 text-xs leading-5 text-slate-600">Priorisez ces fiches pour compléter une photo autorisée, sa page source et son attribution. Les illustrations d’ambiance restent visibles côté client tant qu’aucun visuel n’est ajouté.</p></div>
+              <Button variant="outline" size="sm" onClick={() => refetchMissingVisuals()} className="gap-2 border-violet-200 text-violet-700 hover:bg-violet-100"><RefreshCw className={`h-4 w-4 ${isMissingVisualLoading ? "animate-spin" : ""}`} /> Actualiser</Button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
+              <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input value={missingVisualSearch} onChange={(event) => setMissingVisualSearch(event.target.value)} placeholder="Rechercher un hôtel, une ville ou un pays" className="bg-white pl-9" /></div>
+              <Select value={missingVisualCity} onValueChange={setMissingVisualCity}><SelectTrigger className="bg-white"><SelectValue placeholder="Toutes les villes" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes les villes</SelectItem>{catalogCities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent></Select>
+            </div>
+            <div className="mt-4 overflow-x-auto rounded-lg border border-violet-100 bg-white"><table className="w-full min-w-[620px] text-left text-sm"><thead className="bg-violet-50 text-xs font-black uppercase tracking-wide text-violet-800"><tr><th className="px-3 py-3">Hôtel</th><th className="px-3 py-3">Localisation</th><th className="px-3 py-3">État</th><th className="px-3 py-3">Lien officiel</th><th className="px-3 py-3 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{isMissingVisualLoading ? <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Chargement du suivi…</td></tr> : hotelsWithoutOfficialVisual?.length ? hotelsWithoutOfficialVisual.map((hotel) => <tr key={hotel.id} className="hover:bg-slate-50"><td className="px-3 py-3 font-bold text-slate-900">{hotel.name}</td><td className="px-3 py-3 text-slate-600">{hotel.city}, {hotel.country}</td><td className="px-3 py-3"><Badge variant="outline" className="border-violet-200 bg-violet-50 text-violet-700">Visuel à ajouter</Badge></td><td className="px-3 py-3">{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) ? <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline"><ExternalLink className="h-3.5 w-3.5" /> Ouvrir</a> : <span className="text-xs text-slate-400">À compléter</span>}</td><td className="px-3 py-3 text-right"><Button size="sm" variant="outline" onClick={() => openImageEditor(hotel)} className="border-violet-200 text-violet-700 hover:bg-violet-50"><ImagePlus className="mr-1 h-3.5 w-3.5" /> Ajouter</Button></td></tr>) : <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500">Aucune fiche sans visuel officiel ne correspond à ces filtres.</td></tr>}</tbody></table></div>
           </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
