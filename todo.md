@@ -795,3 +795,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une file administrateur des évaluations récemment reçues avant création de compte ou ouverture de dossier
 - [x] Permettre au conseiller de valider une évaluation, de rattacher le compte créé ensuite et d’activer l’étape suivante du dossier
 - [x] Synchroniser immédiatement la validation, les notifications et les étapes de procédure visibles dans l’espace client
+- [x] Agréger les actions administratives et les changements d’étape visibles au client dans un journal chronologique sécurisé
+- [x] Afficher une frise historique lisible dans le dossier client actif sans exposer les notes internes
+- [x] Tester les droits, le tri chronologique et le rendu client avant publication

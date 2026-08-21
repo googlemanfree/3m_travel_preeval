@@ -675,6 +675,7 @@ export default function ClientDashboard() {
       const delta = new Date(left.createdAt!).getTime() - new Date(right.createdAt!).getTime();
       return historySort === "oldest" ? delta : -delta;
     });
+  const clientTimeline = dossierData?.data?.clientTimeline ?? [];
   const requiresRevisionSupport = dossier.status === "refuse" || pendingRequirements.some((requirement) => requirement.status === "rejected");
   const handleQuickSupport = () => {
     const message = `Bonjour Prime Travel Service, j’ai besoin d’assistance pour la révision de mon dossier ${dossier.numero}.`;
@@ -1304,6 +1305,18 @@ export default function ClientDashboard() {
               ) : (
                 <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">La première mise à jour apparaîtra ici dès qu’elle sera enregistrée par l’équipe.</p>
               )}
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="flex items-center justify-between gap-3">
+                  <h4 className="flex items-center gap-2 font-semibold text-slate-900"><MessageSquare className="h-4 w-4 text-blue-700" aria-hidden="true" />Journal des actions de l’équipe</h4>
+                  <span className="text-xs text-slate-500">{clientTimeline.length} événement(s)</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-500">Seules les informations partagées avec vous apparaissent ici.</p>
+                {clientTimeline.length ? (
+                  <ol className="relative mt-4 space-y-4 border-l border-blue-100 pl-5" aria-label="Journal chronologique des actions administratives">
+                    {clientTimeline.slice(0, 20).map((entry: any) => <li key={entry.id} className="relative"><span className="absolute -left-[1.6rem] top-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow" aria-hidden="true" /><div className="flex flex-wrap items-start justify-between gap-2"><p className="text-sm font-semibold text-slate-800">{entry.title}</p><time className="text-xs text-slate-500" dateTime={new Date(entry.createdAt).toISOString()}>{new Date(entry.createdAt).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" })}</time></div>{entry.detail ? <p className="mt-1 text-sm text-slate-600">{entry.detail}</p> : null}</li>)}
+                  </ol>
+                ) : <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-600">Les actions partagées par votre conseiller apparaîtront ici.</p>}
+              </div>
             </CardContent>
           </Card>
 

@@ -33,6 +33,7 @@ import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
+import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -1198,11 +1199,15 @@ export const candidateRouter = router({
       : null;
 
     // Récupérer les messages
-    const messages = await db
-      .select()
-      .from(candidateMessages)
-      .where(eq(candidateMessages.candidateId, ctx.candidate.id))
-      .orderBy(desc(candidateMessages.createdAt));
+    const [messages, notifications] = await Promise.all([
+      db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, ctx.candidate.id)).orderBy(desc(candidateMessages.createdAt)),
+      db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, ctx.candidate.id)).orderBy(desc(clientNotifications.createdAt)),
+    ]);
+    const timeline = [
+      ...statusHistory.map(entry => ({ id: `status-${entry.id}`, type: "status" as const, title: "Étape du dossier actualisée", detail: entry.reason || "L’équipe a actualisé l’avancement de votre dossier.", createdAt: entry.createdAt })),
+      ...notifications.map(notification => ({ id: `notification-${notification.id}`, type: "notification" as const, title: notification.title, detail: notification.body, createdAt: notification.createdAt })),
+      ...messages.filter(message => message.senderRole === "advisor" && !message.notificationId).map(message => ({ id: `message-${message.id}`, type: "message" as const, title: "Message de votre conseiller", detail: message.content, createdAt: message.createdAt })),
+    ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
 
     return {
       success: true,
@@ -1212,6 +1217,7 @@ export const candidateRouter = router({
         agencyDocuments,
         evaluationReportPdfUrl,
         messages,
+        clientTimeline: timeline,
         statusHistory,
         dossierStatus: application.dossierStatus,
         agreementSigned: application.agreementSigned,
