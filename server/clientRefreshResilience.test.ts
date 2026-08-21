@@ -7,6 +7,7 @@ describe("résilience du rechargement de l’espace client", () => {
   const candidateRouter = readFileSync(resolve(root, "server/routers/candidate.ts"), "utf8");
   const clientEntrypoint = readFileSync(resolve(root, "client/src/main.tsx"), "utf8");
   const dashboard = readFileSync(resolve(root, "client/src/pages/EvaluationSpace.tsx"), "utf8");
+  const adminGuard = readFileSync(resolve(root, "client/src/components/AdminGuard.tsx"), "utf8");
 
   it("laisse le tableau de bord guider les profils sans portrait au lieu de les bloquer", () => {
     expect(candidateRouter).toContain('"candidate.getClientDashboardSummary"');
@@ -22,5 +23,13 @@ describe("résilience du rechargement de l’espace client", () => {
     expect(dashboard).toContain("retry: 3");
     expect(dashboard).toContain("portraitIsMissing");
     expect(dashboard).toContain("Complétez votre profil");
+    expect(dashboard).toContain("sessionConfirmedInvalid");
+    expect(dashboard).toContain("Vérification de votre espace en cours");
+  });
+
+  it("ne redirige pas une session admin présente lors d’un délai temporaire", () => {
+    expect(adminGuard).toContain("sessionTemporarilyUnavailable");
+    expect(adminGuard).toContain("Votre session administrateur est conservée");
+    expect(adminGuard).toContain("Rester dans l’espace admin");
   });
 });

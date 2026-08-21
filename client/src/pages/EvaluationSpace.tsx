@@ -134,16 +134,17 @@ export default function EvaluationSpace() {
   if (isError || !dashboardData) {
     const errorMessage = error instanceof Error ? error.message : "La synchronisation de votre dossier n’a pas abouti.";
     const portraitIsMissing = errorMessage.includes("portrait humain vérifié");
+    const sessionConfirmedInvalid = /UNAUTHORIZED|TOKEN_INVALID|SESSION_EXPIRED|JWT expired/i.test(errorMessage);
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center shadow-xl">
           <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" aria-hidden="true" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{portraitIsMissing ? "Complétez votre profil" : "Votre espace ne répond pas encore"}</h2>
-          <p className="text-gray-600 text-sm">{portraitIsMissing ? "Ajoutez votre portrait pour finaliser les contrôles de votre dossier." : "Nous n’avons pas pu synchroniser les données de votre dossier. Vos informations restent conservées."}</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">{portraitIsMissing ? "Complétez votre profil" : sessionConfirmedInvalid ? "Votre session a expiré" : "Vérification de votre espace en cours"}</h2>
+          <p className="text-gray-600 text-sm">{portraitIsMissing ? "Ajoutez votre portrait pour finaliser les contrôles de votre dossier." : sessionConfirmedInvalid ? "Reconnectez-vous pour restaurer votre accès sécurisé." : "Votre session est conservée. La synchronisation du dossier prend plus de temps que prévu."}</p>
           {!portraitIsMissing && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">{errorMessage}</p>}
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {portraitIsMissing ? <Button onClick={() => setLocation("/mon-espace?section=profile")} className="bg-blue-600 hover:bg-blue-700"><User className="mr-2 h-4 w-4" />Compléter mon profil</Button> : <Button onClick={() => { setLoadingTimeoutReached(false); void refetch(); }} className="bg-blue-600 hover:bg-blue-700"><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>}
-            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button>
+            {sessionConfirmedInvalid ? <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button> : <Button variant="outline" onClick={() => setLocation("/")}>Retour à l’accueil</Button>}
           </div>
           <Button variant="link" className="mt-3 text-sm" onClick={() => setLocation(`/mon-espace?section=messages`)}><MessageSquare className="mr-1 h-4 w-4" />Contacter l’agence</Button>
         </Card>

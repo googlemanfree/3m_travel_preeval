@@ -829,6 +829,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diagnostiquer le blocage « espace ne répond pas encore » lors de l’actualisation du dossier client
 - [x] Corriger la restauration de session et les gardes de profil afin d’éviter les faux blocages au rechargement
 - [x] Tester les actualisations avec profils incomplets et dossiers actifs avant publication
+- [x] Diagnostiquer les redirections client et administrateur vers le login malgré une session encore valide
+- [x] Supprimer les redirections de repli lors d’erreurs transitoires tout en conservant l’expiration et la déconnexion réelles
+- [x] Tester les sessions valides, les erreurs temporaires et les expirations confirmées avant publication
+- [ ] Diagnostiquer la demande de reconnexion affichée malgré une session client encore valide
+- [ ] Préserver la session valide dans l’écran de repli et ne proposer la reconnexion qu’après invalidation réelle
+- [ ] Tester les erreurs transitoires, les actualisations et les expirations réelles avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

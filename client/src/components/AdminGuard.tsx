@@ -19,6 +19,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     : undefined;
   const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
   const isChecking = adminSession.isLoading && !queryTimedOut;
+  const sessionTemporarilyUnavailable = Boolean(sessionToken) && (adminSession.isError || queryTimedOut);
   const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
 
@@ -45,6 +46,22 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
           <p className="mt-4 text-gray-600">
             {requiresPasswordChange ? "Redirection vers la création de votre nouveau mot de passe..." : "Vérification de l'accès..."}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionTemporarilyUnavailable) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-xl">
+          <AlertCircle className="mx-auto mb-4 h-10 w-10 text-amber-600" />
+          <h1 className="text-xl font-bold text-gray-900">Vérification de session en cours</h1>
+          <p className="mt-2 text-sm text-gray-600">Votre session administrateur est conservée. La vérification du serveur met simplement plus de temps que prévu.</p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Button className="flex-1" onClick={() => { setQueryTimedOut(false); void adminSession.refetch(); }}>Réessayer</Button>
+            <Button className="flex-1" variant="outline" onClick={() => navigate("/admin")}>Rester dans l’espace admin</Button>
+          </div>
         </div>
       </div>
     );
