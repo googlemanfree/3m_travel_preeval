@@ -11,6 +11,7 @@ import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuida
 import { toast } from "sonner";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from "recharts";
 import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
+import { jsPDF } from "jspdf";
 import {
   Select,
   SelectContent,
@@ -43,7 +44,9 @@ export default function AdminEmailDeliveryManagement() {
   const [editingEmail, setEditingEmail] = useState("");
   const [selectedFailedLogIds, setSelectedFailedLogIds] = useState<Set<number>>(() => new Set());
   const [advisorEmail, setAdvisorEmail] = useState("all");
-  const [previewLog, setPreviewLog] = useState<{ recipientEmail: string; subject: string; contentHtml: string | null; createdAt: Date | string; deliveryType: string } | null>(null);
+  const [previewLog, setPreviewLog] = useState<{ recipientEmail: string; subject: string; contentPreviewHtml: string | null; createdAt: Date | string; deliveryType: string } | null>(null);
+  const [thresholdAdvisorEmail, setThresholdAdvisorEmail] = useState("");
+  const [thresholdValue, setThresholdValue] = useState("3");
   const utils = trpc.useUtils();
   // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
   // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
@@ -87,6 +90,13 @@ export default function AdminEmailDeliveryManagement() {
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
+  const saveThresholdMutation = trpc.admin.saveEmailDeliveryAdvisorThreshold.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Seuil de ${result.dailyFailureThreshold} échec(s) enregistré pour ${result.advisorEmail}.`);
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
@@ -97,6 +107,7 @@ export default function AdminEmailDeliveryManagement() {
   const deliverySuccessRates30Days = data?.deliverySuccessRates30Days ?? [];
   const weeklySuccessRateComparison = data?.weeklySuccessRateComparison ?? [];
   const advisors = data?.advisors ?? [];
+  const advisorThresholds = data?.advisorThresholds ?? [];
   const rateChartData = deliverySuccessRates30Days.map((metric) => ({
     service: deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType,
     taux: metric.successRate ?? 0,
@@ -118,6 +129,30 @@ export default function AdminEmailDeliveryManagement() {
     link.click();
     URL.revokeObjectURL(url);
     toast.success("Export CSV téléchargé selon les filtres actifs.");
+  };
+
+  const exportWeeklyPdf = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("3M Travel & Services — Rapport hebdomadaire des remises e-mail", 14, 18);
+    doc.setFontSize(10);
+    doc.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, 14, 26);
+    let y = 38;
+    if (!weeklySuccessRateComparison.length) {
+      doc.text("Aucune donnée de remise disponible pour la comparaison hebdomadaire.", 14, y);
+    } else {
+      weeklySuccessRateComparison.forEach((metric) => {
+        const label = deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType;
+        const current = metric.currentRate === null ? "—" : `${metric.currentRate}%`;
+        const previous = metric.previousRate === null ? "—" : `${metric.previousRate}%`;
+        const change = metric.change === null ? "sans comparaison" : `${metric.change >= 0 ? "+" : ""}${metric.change} pts`;
+        doc.text(`${label} : semaine en cours ${current} | semaine précédente ${previous} | ${change}`, 14, y);
+        y += 8;
+        if (y > 275) { doc.addPage(); y = 18; }
+      });
+    }
+    doc.save(`rapport-hebdomadaire-remises-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success("Rapport PDF hebdomadaire téléchargé.");
   };
 
   const toggleFailedLog = (logId: number, checked: boolean) => {
@@ -146,6 +181,9 @@ export default function AdminEmailDeliveryManagement() {
           <div className="flex flex-wrap gap-2 self-start md:self-auto">
             <Button variant="outline" size="sm" onClick={exportFilteredCsv} disabled={!sessionToken || logs.length === 0} className="gap-2">
               <Download className="h-4 w-4" />Exporter CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportWeeklyPdf} disabled={!sessionToken} className="gap-2">
+              <Download className="h-4 w-4" />Rapport PDF hebdo
             </Button>
             <Button variant="outline" size="sm" onClick={() => {
               const selected = selectedFailedLogs.slice(0, 25);
@@ -203,6 +241,22 @@ export default function AdminEmailDeliveryManagement() {
             <div className="border-t bg-slate-50/50 px-5 py-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Comparaison hebdomadaire des taux de réussite</p>
               {weeklySuccessRateComparison.length ? <div className="flex flex-wrap gap-2">{weeklySuccessRateComparison.map((metric) => <Badge key={metric.deliveryType} variant="outline" className="gap-1.5 bg-white px-2.5 py-1 text-slate-700"><span>{deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType}</span><span className="font-semibold">{metric.currentRate ?? "—"}%</span><span className={metric.change === null ? "text-slate-400" : metric.change >= 0 ? "text-emerald-700" : "text-rose-700"}>{metric.change === null ? "· sans comparatif" : `${metric.change >= 0 ? "+" : ""}${metric.change} pts`}</span></Badge>)}</div> : <p className="text-sm text-slate-500">Aucun volume suffisant pour une comparaison hebdomadaire.</p>}
+            </div>
+
+            <div className="grid gap-4 border-t bg-white p-5 lg:grid-cols-[1.5fr_1fr]">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Seuils d’alerte personnalisés par conseiller</p>
+                {advisorThresholds.length ? <div className="mt-2 flex flex-wrap gap-2">{advisorThresholds.map((threshold) => <Badge key={threshold.advisorEmail} variant="outline" className={threshold.failuresToday >= threshold.dailyFailureThreshold ? "border-rose-300 bg-rose-50 text-rose-800" : "bg-slate-50 text-slate-700"}>{threshold.advisorEmail} · {threshold.failuresToday}/{threshold.dailyFailureThreshold} échec(s) aujourd’hui</Badge>)}</div> : <p className="mt-2 text-sm text-slate-500">Aucun seuil personnalisé n’est encore défini.</p>}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="flex-1 text-xs font-medium text-slate-600">Conseiller
+                  <Select value={thresholdAdvisorEmail} onValueChange={setThresholdAdvisorEmail}><SelectTrigger className="mt-1"><SelectValue placeholder="Choisir un conseiller" /></SelectTrigger><SelectContent>{advisors.map((email) => <SelectItem key={email} value={email}>{email}</SelectItem>)}</SelectContent></Select>
+                </label>
+                <label className="w-24 text-xs font-medium text-slate-600">Seuil
+                  <Input className="mt-1" type="number" min="1" max="50" value={thresholdValue} onChange={(event) => setThresholdValue(event.target.value)} />
+                </label>
+                <Button size="sm" disabled={!thresholdAdvisorEmail || saveThresholdMutation.isPending} onClick={() => saveThresholdMutation.mutate({ sessionToken, advisorEmail: thresholdAdvisorEmail, dailyFailureThreshold: Number(thresholdValue) })}>{saveThresholdMutation.isPending ? "Enregistrement…" : "Enregistrer"}</Button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
@@ -359,7 +413,7 @@ export default function AdminEmailDeliveryManagement() {
                               size="sm"
                               className="h-8 gap-1 px-2 text-slate-600 hover:text-blue-700"
                               aria-label={`Prévisualiser l’e-mail à destination de ${log.recipientEmail}`}
-                              onClick={() => setPreviewLog({ recipientEmail: log.recipientEmail, subject: log.subject, contentHtml: log.contentHtml ?? null, createdAt: log.createdAt, deliveryType: log.deliveryType })}
+                              onClick={() => setPreviewLog({ recipientEmail: log.recipientEmail, subject: log.subject, contentPreviewHtml: log.contentPreviewHtml ?? null, createdAt: log.createdAt, deliveryType: log.deliveryType })}
                             >
                               <Mail className="h-3.5 w-3.5" />
                               <span className="hidden lg:inline">Aperçu</span>
@@ -378,7 +432,7 @@ export default function AdminEmailDeliveryManagement() {
                   <DialogTitle>Prévisualisation de la remise</DialogTitle>
                   <DialogDescription>{previewLog ? `${deliveryTypeLabel[previewLog.deliveryType] ?? "Remise"} · ${previewLog.recipientEmail} · ${new Date(previewLog.createdAt).toLocaleString("fr-FR")}` : ""}</DialogDescription>
                 </DialogHeader>
-                {previewLog ? <div className="space-y-3"><div className="rounded-lg border bg-slate-50 p-3"><p className="text-xs font-semibold uppercase text-slate-500">Objet</p><p className="mt-1 font-medium text-slate-900">{previewLog.subject}</p></div>{previewLog.contentHtml ? <iframe title="Aperçu du contenu e-mail" sandbox="" srcDoc={previewLog.contentHtml} className="h-[420px] w-full rounded-lg border bg-white" /> : <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Le contenu complet n’était pas encore journalisé lors de cette tentative. Les nouvelles remises conservent désormais une prévisualisation réservée aux administrateurs.</p>}</div> : null}
+                {previewLog ? <div className="space-y-3"><div className="rounded-lg border bg-slate-50 p-3"><p className="text-xs font-semibold uppercase text-slate-500">Objet</p><p className="mt-1 font-medium text-slate-900">{previewLog.subject}</p></div>{previewLog.contentPreviewHtml ? <><p className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">Les adresses e-mail, numéros de téléphone et identifiants longs sont masqués automatiquement dans cet aperçu.</p><iframe title="Aperçu du contenu e-mail masqué" sandbox="" srcDoc={previewLog.contentPreviewHtml} className="h-[420px] w-full rounded-lg border bg-white" /></> : <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Le contenu complet n’était pas encore journalisé lors de cette tentative. Les nouvelles remises conservent désormais une prévisualisation réservée aux administrateurs.</p>}</div> : null}
               </DialogContent>
             </Dialog>
           </>

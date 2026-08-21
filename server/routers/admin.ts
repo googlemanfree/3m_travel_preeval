@@ -10,13 +10,14 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, emailDeliveryAdvisorThresholds, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
+import { notifyOwner } from "../_core/notification";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
 const EMAIL_DELIVERY_DEMO_NOTE = "DÉMONSTRATION REMISE E-MAIL 3M — dossier isolé de contrôle interne";
@@ -54,6 +55,14 @@ export function classifyEmailDeliveryType(subject: string | null | undefined): E
   if (normalized.includes("pnr") || normalized.includes("billet") || normalized.includes("vol")) return "billet";
   if (normalized.includes("évaluation") || normalized.includes("evaluation") || normalized.includes("bilan")) return "evaluation";
   return "other";
+}
+
+export function redactEmailPreviewHtml(contentHtml: string | null | undefined): string | null {
+  if (!contentHtml) return null;
+  return contentHtml
+    .replace(/([A-Z0-9._%+-]{1,2})[A-Z0-9._%+-]*@([A-Z0-9.-]+\.[A-Z]{2,})/gi, "$1•••@$2")
+    .replace(/\+?\d(?:[\s().-]?\d){7,}/g, "••• ••• •••")
+    .replace(/\b[A-Z0-9]{8,}\b/gi, (value) => /^https?$/i.test(value) ? value : `${value.slice(0, 2)}••••••`);
 }
 
 const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -2541,6 +2550,7 @@ export const adminRouter = router({
         .from(emailDeliveryLogs)
         .orderBy(desc(emailDeliveryLogs.createdAt))
         .limit(1000);
+      const advisorThresholds = await db.select().from(emailDeliveryAdvisorThresholds);
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
@@ -2584,16 +2594,66 @@ export const adminRouter = router({
         })
         .filter((metric) => metric.currentRate !== null || metric.previousRate !== null);
       const advisors = Array.from(new Set(metricsLogs.map((log) => log.triggeredByAdminEmail).filter((email): email is string => Boolean(email)))).sort();
+      const advisorFailureCounts = metricsLogs
+        .filter((log) => log.status === "failed" && log.createdAt >= todayStart && Boolean(log.triggeredByAdminEmail))
+        .reduce<Record<string, number>>((counts, log) => {
+          const advisor = log.triggeredByAdminEmail!;
+          counts[advisor] = (counts[advisor] ?? 0) + 1;
+          return counts;
+        }, {});
+      const alertableThresholds = advisorThresholds.filter((threshold) => {
+        const failures = advisorFailureCounts[threshold.advisorEmail] ?? 0;
+        const recentlyAlerted = threshold.lastAlertedAt && now.getTime() - threshold.lastAlertedAt.getTime() < 6 * 60 * 60 * 1000;
+        return failures >= threshold.dailyFailureThreshold && !recentlyAlerted;
+      });
+      for (const threshold of alertableThresholds) {
+        const failures = advisorFailureCounts[threshold.advisorEmail] ?? 0;
+        try {
+          await notifyOwner({
+            title: "Seuil d’échecs e-mail atteint",
+            content: `${threshold.advisorEmail} a ${failures} échec(s) de remise aujourd’hui (seuil : ${threshold.dailyFailureThreshold}).`,
+          });
+          await db.update(emailDeliveryAdvisorThresholds).set({ lastAlertedAt: now }).where(eq(emailDeliveryAdvisorThresholds.id, threshold.id));
+        } catch (error) {
+          console.error("[email_delivery_threshold_alert]", error);
+        }
+      }
 
       return {
-        logs: logs.map((log) => ({ ...log, deliveryType: classifyEmailDeliveryType(log.subject) })),
+        logs: logs.map(({ contentHtml, ...log }) => ({ ...log, contentPreviewHtml: redactEmailPreviewHtml(contentHtml), deliveryType: classifyEmailDeliveryType(log.subject) })),
         summary: summarizeEmailDeliveryLogs(logs),
         lastSuccessfulByType,
         dailyFailures,
         deliverySuccessRates30Days,
         weeklySuccessRateComparison,
         advisors,
+        advisorThresholds: advisorThresholds.map((threshold) => ({
+          advisorEmail: threshold.advisorEmail,
+          dailyFailureThreshold: threshold.dailyFailureThreshold,
+          lastAlertedAt: threshold.lastAlertedAt,
+          failuresToday: advisorFailureCounts[threshold.advisorEmail] ?? 0,
+        })),
       };
+    }),
+
+  saveEmailDeliveryAdvisorThreshold: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      advisorEmail: z.string().trim().email(),
+      dailyFailureThreshold: z.number().int().min(1).max(50),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const existing = (await db.select().from(emailDeliveryAdvisorThresholds).where(eq(emailDeliveryAdvisorThresholds.advisorEmail, input.advisorEmail)).limit(1))[0];
+      if (existing) {
+        await db.update(emailDeliveryAdvisorThresholds).set({ dailyFailureThreshold: input.dailyFailureThreshold, updatedByAdminEmail: admin.email }).where(eq(emailDeliveryAdvisorThresholds.id, existing.id));
+      } else {
+        await db.insert(emailDeliveryAdvisorThresholds).values({ advisorEmail: input.advisorEmail, dailyFailureThreshold: input.dailyFailureThreshold, updatedByAdminEmail: admin.email });
+      }
+      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: input.advisorEmail, details: JSON.stringify({ action: "advisor_failure_threshold_updated", dailyFailureThreshold: input.dailyFailureThreshold }) });
+      return { success: true, advisorEmail: input.advisorEmail, dailyFailureThreshold: input.dailyFailureThreshold };
     }),
 
   updateEmailDeliveryRecipient: publicProcedure

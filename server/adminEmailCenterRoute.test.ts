@@ -84,4 +84,17 @@ describe("Centre e-mail administrateur", () => {
     expect(management).toContain("Prévisualisation de la remise");
     expect(management).toContain("sandbox=\"\"");
   });
+
+  it("protège les aperçus sensibles, les seuils par conseiller et le rapport PDF", () => {
+    const schema = fs.readFileSync(path.join(root, "drizzle/schema.ts"), "utf8");
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    expect(schema).toContain("emailDeliveryAdvisorThresholds");
+    expect(admin).toContain("redactEmailPreviewHtml");
+    expect(admin).toContain("saveEmailDeliveryAdvisorThreshold");
+    expect(admin).toContain("Seuil d’échecs e-mail atteint");
+    expect(management).toContain("Rapport PDF hebdo");
+    expect(management).toContain("Les adresses e-mail, numéros de téléphone");
+    expect(management).toContain("contentPreviewHtml");
+  });
 });

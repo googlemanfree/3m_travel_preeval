@@ -1441,6 +1441,19 @@ export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
 export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
 export type InsertEmailDeliveryLog = typeof emailDeliveryLogs.$inferInsert;
 
+/** Seuils personnels de supervision des échecs de remise e-mail. */
+export const emailDeliveryAdvisorThresholds = mysqlTable("email_delivery_advisor_thresholds", {
+  id: int("id").autoincrement().primaryKey(),
+  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull().unique(),
+  dailyFailureThreshold: int("dailyFailureThreshold").default(3).notNull(),
+  updatedByAdminEmail: varchar("updatedByAdminEmail", { length: 320 }).notNull(),
+  lastAlertedAt: timestamp("lastAlertedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type EmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferSelect;
+export type InsertEmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferInsert;
+
 /**
  * Historique des recherches de vols effectuées par les utilisateurs.
  */

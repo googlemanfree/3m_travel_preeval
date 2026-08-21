@@ -814,6 +814,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher un indicateur de traitement et un bilan de succès ou d’erreur pour la relance groupée
 - [x] Créer et valider une compétence réutilisable de pilotage avancé des remises e-mail
 - [x] Tester les filtres, la comparaison, les prévisualisations et les relances avant publication
+- [x] Ajouter des seuils personnalisés d’échecs e-mail par conseiller avec alertes administratives
+- [x] Générer un export PDF hebdomadaire des statistiques de remise e-mail
+- [x] Masquer automatiquement les données sensibles dans les aperçus d’e-mails en échec
+- [x] Créer et valider une compétence réutilisable de supervision e-mail sécurisée
+- [x] Tester les seuils, alertes, exports PDF, masquage et régressions avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
