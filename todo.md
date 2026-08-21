@@ -737,6 +737,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Précontrôler les liens et la provenance des fiches hôtel sans modifier leur statut de validation humaine
 - [x] Afficher une liste prioritaire de fiches techniquement prêtes à être vérifiées par un conseiller
 - [x] Vérifier que le précontrôle ne permet aucune approbation automatique côté client ou administration — 476 tests réussis
+- [x] Identifier les actions Tourisme encore dépendantes uniquement du cookie administrateur
+- [x] Transmettre le jeton de repli sécurisé aux validations de catalogue hôtelier
+- [x] Tester qu’une validation hôtel est enregistrée avec cookie ou jeton administrateur valide — 478 tests réussis
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

@@ -21,7 +21,8 @@ const statusLabels: Record<string, { label: string; color: string; bg: string }>
 };
 
 export function AdminTourismRequests() {
-  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery();
+  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined : undefined;
+  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery(sessionToken ? { sessionToken } : undefined);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
@@ -29,8 +30,8 @@ export function AdminTourismRequests() {
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
-  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery();
-  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery({ limit: 8 });
+  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(sessionToken ? { sessionToken } : undefined);
+  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery({ limit: 8, sessionToken });
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -194,7 +195,7 @@ export function AdminTourismRequests() {
                   <SelectItem value="douala">Douala</SelectItem><SelectItem value="yaounde">Yaoundé</SelectItem><SelectItem value="kribi">Kribi</SelectItem><SelectItem value="limbe">Limbe</SelectItem><SelectItem value="libreville">Libreville</SelectItem><SelectItem value="brazzaville">Brazzaville</SelectItem><SelectItem value="ndjamena">N'Djamena</SelectItem><SelectItem value="malabo">Malabo</SelectItem><SelectItem value="bangui">Bangui</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
+              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any, sessionToken })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
                 {importCatalog.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Importer la ville
               </Button>
             </div>
@@ -213,7 +214,7 @@ export function AdminTourismRequests() {
                 {precheckHotels.map(hotel => (
                   <div key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3">
                     <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{hotel.name}</p><p className="text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div>
-                    <div className="flex shrink-0 items-center gap-1.5"><Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Lien présent</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending}>Valider</Button></div>
+                    <div className="flex shrink-0 items-center gap-1.5"><Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">Lien présent</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending}>Valider</Button></div>
                   </div>
                 ))}
               </div>
@@ -222,7 +223,7 @@ export function AdminTourismRequests() {
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
-              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>

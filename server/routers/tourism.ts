@@ -8,7 +8,7 @@ import { storagePut } from "../storage";
 import { makeRequest, type PlacesSearchResult } from "../_core/map";
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
-import { requireAdminSessionFromCookie } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { candidateProcedure, findCandidateFromAuthorizationHeader } from "./candidate";
 
 const serviceType = z.enum(["hotel", "vehicle", "pack"]);
@@ -17,6 +17,14 @@ const hotelAmenity = z.enum(["pool", "wifi", "parking"]);
 export type HotelAmenity = z.infer<typeof hotelAmenity>;
 const hotelAmenitySearchTerms: Record<HotelAmenity, string> = { pool: "piscine", wifi: "Wi-Fi", parking: "parking" };
 export const OSM_CATALOG_ATTRIBUTION = "© OpenStreetMap contributors, ODbL";
+
+async function requireTourismAdminSession(ctx: { req: { headers: { cookie?: string } } }, sessionToken?: string) {
+  if (ctx.req.headers.cookie?.includes("admin_session=")) {
+    return requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  }
+  if (sessionToken) return requireValidAdminSession(sessionToken);
+  return requireAdminSessionFromCookie(ctx.req.headers.cookie);
+}
 
 const osmCityScopes = {
   douala: { city: "Douala", country: "Cameroun", bbox: "4.000,9.550,4.150,9.850" },
@@ -193,15 +201,15 @@ export const tourismRouter = router({
     return requests.map((request) => ({ ...request, tracking: getTourismTrackingMeta(request.status) }));
   }),
 
-  adminList: publicProcedure.query(async ({ ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ ctx, input }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     return db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt));
   }),
 
-  adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional(), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const city = input?.city?.trim();
@@ -213,8 +221,8 @@ export const tourismRouter = router({
    * provenance OpenStreetMap et un lien officiel à ouvrir par un conseiller.
    * Cette procédure ne modifie jamais `verificationStatus`.
    */
-  adminCatalogPrecheck: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(50).default(12) }).optional()).query(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  adminCatalogPrecheck: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(50).default(12), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input?.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const entries = await db.select().from(hotelCatalog).where(and(
@@ -235,8 +243,8 @@ export const tourismRouter = router({
     }));
   }),
 
-  importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey })).mutation(async ({ input, ctx }) => {
-    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey, sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
+    const admin = await requireTourismAdminSession(ctx, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const scope = osmCityScopes[input.cityKey];
@@ -258,24 +266,24 @@ export const tourismRouter = router({
     return { city: scope.city, imported: entries.length, importedBy: admin.email };
   }),
 
-  verifyCatalogEntry: publicProcedure.input(z.object({ id: z.number().int().positive(), verificationStatus: z.enum(["imported", "verified", "inactive"]), officialWebsiteUrl: z.string().url().max(1000).nullable().optional(), officialBookingUrl: z.string().url().max(1000).nullable().optional() })).mutation(async ({ input, ctx }) => {
-    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  verifyCatalogEntry: publicProcedure.input(z.object({ id: z.number().int().positive(), verificationStatus: z.enum(["imported", "verified", "inactive"]), officialWebsiteUrl: z.string().url().max(1000).nullable().optional(), officialBookingUrl: z.string().url().max(1000).nullable().optional(), sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
+    const admin = await requireTourismAdminSession(ctx, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(hotelCatalog).set({ verificationStatus: input.verificationStatus, officialWebsiteUrl: input.officialWebsiteUrl, officialBookingUrl: input.officialBookingUrl, lastVerifiedAt: new Date(), verifiedByAdminEmail: admin.email }).where(eq(hotelCatalog.id, input.id));
     return { success: true };
   }),
 
-  updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema })).mutation(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema, sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(tourismServiceRequests).set({ status: input.status }).where(eq(tourismServiceRequests.id, input.id));
     return { success: true };
   }),
 
-  updateDetails: publicProcedure.input(z.object({ id: z.number().int().positive(), quotedPriceXaf: z.number().int().positive().optional(), adminNotes: z.string().max(1500).optional() })).mutation(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+  updateDetails: publicProcedure.input(z.object({ id: z.number().int().positive(), quotedPriceXaf: z.number().int().positive().optional(), adminNotes: z.string().max(1500).optional(), sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
+    await requireTourismAdminSession(ctx, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const updateData: Record<string, any> = {};
