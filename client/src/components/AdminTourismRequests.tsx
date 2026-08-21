@@ -52,7 +52,8 @@ export function AdminTourismRequests() {
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
   const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
-  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
+  const { data: precheckHotels, refetch: refetchPrecheck, isLoading: isPrecheckLoading, error: precheckError } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
+  const readyPrecheckCount = (precheckHotels ?? []).filter(hotel => hotel.precheck.readyForHumanConfirmation).length;
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -180,6 +181,9 @@ export function AdminTourismRequests() {
           <Button variant="outline" onClick={() => refetch()} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
+          <Button variant="outline" onClick={() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50">
+            <UserCheck className="h-4 w-4" /> Précontrôle{readyPrecheckCount ? ` (${readyPrecheckCount})` : ""}
+          </Button>
           <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800"><Download className="h-4 w-4" /> Demandes CSV</Button>
           <Button variant="outline" onClick={exportHotelsCsv} className="gap-2"><Download className="h-4 w-4" /> Hôtels CSV</Button>
           <Button variant="outline" onClick={exportHotelsPdf} className="gap-2"><FileText className="h-4 w-4" /> Hôtels PDF</Button>
@@ -277,26 +281,32 @@ export function AdminTourismRequests() {
               </Button>
             </div>
           </div>
-          {precheckHotels && precheckHotels.length > 0 && (
-            <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+          <div id="hotel-precheck" className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4 scroll-mt-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Précontrôle technique</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{precheckHotels.length} fiche(s) avec source et lien officiel à contrôler</p>
+                  <p className="mt-1 text-sm font-bold text-slate-900">{readyPrecheckCount} fiche(s) prête(s) à confirmer · {precheckHotels?.length ?? 0} fiche(s) précontrôlée(s)</p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">Le contrôle automatique évalue la provenance, l’identité, la localisation, le lien officiel et les coordonnées. Lorsqu’une fiche est prête, le conseiller n’a plus qu’à ouvrir le lien puis confirmer en un clic.</p>
                 </div>
                 <Badge variant="outline" className="w-fit border-amber-200 bg-amber-50 text-amber-700">Validation humaine requise</Badge>
               </div>
-              <div className="mt-3 grid gap-2 lg:grid-cols-2">
-                {precheckHotels.map(hotel => (
+              {isPrecheckLoading ? (
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-100 bg-white p-3 text-sm text-slate-600"><Loader2 className="h-4 w-4 animate-spin text-blue-700" /> Chargement du précontrôle automatique…</div>
+              ) : precheckError ? (
+                <div className="mt-3 flex flex-col gap-3 rounded-lg border border-rose-100 bg-white p-3 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between"><span>Le précontrôle n’a pas pu être chargé. Vérifiez votre session puis réessayez.</span><Button size="sm" variant="outline" onClick={() => refetchPrecheck()}>Réessayer</Button></div>
+              ) : precheckHotels?.length ? (
+                <div className="mt-3 grid gap-2 lg:grid-cols-2">
+                  {precheckHotels.map(hotel => (
                   <div key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3">
                     <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{hotel.name}</p><p className="text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div>
                     <div className="flex shrink-0 flex-wrap items-center gap-1.5"><Badge variant="outline" className={hotel.precheck.readyForHumanConfirmation ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.precheck.readyForHumanConfirmation ? `Précontrôle ${hotel.precheck.score}/${hotel.precheck.maxScore}` : `Données incomplètes ${hotel.precheck.score}/${hotel.precheck.maxScore}`}</Badge><Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">Confirmation requise</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || !hotel.precheck.readyForHumanConfirmation}>{hotel.precheck.readyForHumanConfirmation ? "Confirmer" : "À compléter"}</Button></div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-600">Aucune fiche prête n’est disponible pour le moment. Importez une ville ou actualisez le catalogue.</div>
+              )}
+          </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();

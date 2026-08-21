@@ -53,6 +53,7 @@ import {
   ImagePlus,
   ShieldAlert,
   MessageSquare,
+  UserCheck,
 } from "lucide-react";
 import {
   BarChart,
@@ -853,6 +854,19 @@ export default function AdminDashboard() {
             >
               <Plus className="w-4 h-4" />
               Saisir dossier agence
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setActiveAdminTab("tourism");
+                window.setTimeout(() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
+              }}
+              className="gap-1.5 border-emerald-300/70 text-emerald-100 hover:bg-emerald-400/20"
+              title="Accéder aux fiches hôtel précontrôlées à confirmer"
+            >
+              <UserCheck className="w-4 h-4" />
+              <span className="hidden xl:inline">Confirmer hôtels</span>
             </Button>
             
             {/* Notifications */}
