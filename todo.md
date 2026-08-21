@@ -780,3 +780,18 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger l’envoi de billet, les autorisations et les retours d’interface côté administrateur
 - [x] Tester l’accès client au billet et la livraison e-mail après action administrateur
 - [x] Garantir qu’une validation de billet publie le PDF dans l’espace client et déclenche l’e-mail de remise au client
+- [x] Ajouter un renvoi explicite du billet par e-mail depuis le suivi administrateur
+- [x] Afficher l’horodatage exact de chaque e-mail de billet transmis au client
+- [x] Intégrer un aperçu PDF dans la modale avant la validation finale du billet
+- [x] Créer et valider une compétence réutilisable de remise administrative de billet
+- [x] Tester les renvois, horodatages, aperçu PDF et contrôles de remise avant publication
+- [x] Recenser côté administration tous les comptes créés avant ouverture de dossier
+- [x] Permettre à un conseiller d’activer un dossier après dépôt en agence et de synchroniser les étapes vers l’espace client
+- [x] Ajouter des relances et notifications contrôlées pour les comptes pré-dossier et dossiers en attente
+- [x] Maintenir la session administrateur active jusqu’à déconnexion pendant la journée et fiabiliser les raccourcis de navigation interne
+- [x] Auditer et corriger les boutons inaccessibles et les synchronisations admin-espace client
+- [x] Tester les comptes pré-dossier, activation, relances, session, navigation et autorisations avant publication
+- [x] Afficher le drapeau, la destination confirmée et des visuels adaptés dans l’espace client des dossiers actifs
+- [x] Ajouter une file administrateur des évaluations récemment reçues avant création de compte ou ouverture de dossier
+- [x] Permettre au conseiller de valider une évaluation, de rattacher le compte créé ensuite et d’activer l’étape suivante du dossier
+- [x] Synchroniser immédiatement la validation, les notifications et les étapes de procédure visibles dans l’espace client

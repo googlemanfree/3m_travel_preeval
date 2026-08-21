@@ -840,6 +840,7 @@ export const flightBookingRouter = router({
             `,
           });
           emailNotificationDispatched = true;
+          await db.update(flightBookingRequests).set({ ticketEmailSentAt: new Date() }).where(eq(flightBookingRequests.id, input.requestId));
           await db.insert(flightBookingRequestHistory).values({
             requestId: input.requestId,
             action: "pnr_email_dispatched",
@@ -962,6 +963,7 @@ export const flightBookingRouter = router({
             `,
           });
         emailNotificationDispatched = true;
+        await db.update(flightBookingRequests).set({ ticketEmailSentAt: new Date() }).where(eq(flightBookingRequests.id, input.requestId));
         await db.insert(flightBookingRequestHistory).values({
           requestId: input.requestId,
           action: "pnr_email_dispatched",
@@ -1246,16 +1248,19 @@ export const flightBookingRouter = router({
         `,
       });
 
+      const sentAt = new Date();
+      await db.update(flightBookingRequests).set({ ticketEmailSentAt: sentAt }).where(eq(flightBookingRequests.id, input.requestId));
+
       await db.insert(flightBookingRequestHistory).values({
         requestId: input.requestId,
-        action: "pnr_reminder_sent",
+        action: "ticket_email_resent",
         changedBy: admin.email,
         oldValue: existing.status,
         newValue: existing.status,
-        details: "Relance manuelle PNR non consulté envoyée par e-mail au client.",
+        details: "Billet PNR renvoyé manuellement par e-mail au client.",
       });
 
-      return { success: true };
+      return { success: true, ticketEmailSentAt: sentAt };
     }),
 
   exportPnrAuditCsv: publicProcedure

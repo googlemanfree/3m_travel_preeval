@@ -5,7 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments, candidateMessages, candidates } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
-import { requireAdminSessionFromCookie } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 
 const candidateFilterSchema = z.object({
@@ -19,6 +19,19 @@ const candidateFilterSchema = z.object({
   sortDirection: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
   pageSize: z.number().int().min(10).max(100).default(25),
+});
+
+const preDossierListSchema = z.object({
+  sessionToken: z.string().min(1),
+  search: z.string().trim().max(120).optional().default(""),
+});
+
+const activatePreDossierSchema = z.object({
+  sessionToken: z.string().min(1),
+  candidateId: z.number().int().positive(),
+  destination: z.string().trim().min(2).max(100),
+  visaType: z.string().trim().min(2).max(100),
+  adminNotes: z.string().trim().max(2000).optional(),
 });
 
 type CandidateFilter = z.infer<typeof candidateFilterSchema>;
@@ -169,6 +182,80 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
 }
 
 export const adminCandidateManagementRouter = router({
+  listPreDossierAccounts: publicProcedure.input(preDossierListSchema).query(async ({ input }) => {
+    await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [accountRows, applicationRows, agencyRows, documentRows] = await Promise.all([
+      db.select().from(candidates).orderBy(desc(candidates.createdAt)).limit(5000),
+      db.select({ id: applications.id, email: applications.email, candidateId: applications.candidateId, dossierNumber: applications.dossierNumber, scoringDetails: applications.scoringDetails }).from(applications).limit(5000),
+      db.select({ email: agencyDossiers.email }).from(agencyDossiers).limit(5000),
+      db.select({ candidateEmail: clientDocuments.candidateEmail }).from(clientDocuments).limit(10000),
+    ]);
+    const agencyDossierEmails = new Set(agencyRows.map(row => row.email.toLowerCase()));
+    const applicationByEmail = new Map(applicationRows.map(row => [row.email.toLowerCase(), row]));
+    const documentsByEmail = new Map<string, number>();
+    documentRows.forEach(row => documentsByEmail.set(row.candidateEmail.toLowerCase(), (documentsByEmail.get(row.candidateEmail.toLowerCase()) ?? 0) + 1));
+    const needle = input.search.toLowerCase();
+    const accounts = accountRows
+      .filter(account => {
+        const email = account.email.toLowerCase();
+        const application = applicationByEmail.get(email);
+        return !agencyDossierEmails.has(email) && (!application || application.candidateId === null);
+      })
+      .filter(account => !needle || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some(value => value.toLowerCase().includes(needle)))
+      .map(account => {
+        const application = applicationByEmail.get(account.email.toLowerCase());
+        let evaluationValidated = false;
+        try {
+          const details = JSON.parse(application?.scoringDetails || "{}");
+          evaluationValidated = details?.adminDraft?.advisorValidated === true;
+        } catch { /* l’interface indique qu’une validation reste nécessaire */ }
+        return { id: account.id, fullName: account.fullName, email: account.email, phone: account.phone, destinationPreference: account.destination, dossierStatus: account.dossierStatus, emailVerified: account.emailVerified, createdAt: account.createdAt, lastLoginAt: account.lastLoginAt, documentsCount: documentsByEmail.get(account.email.toLowerCase()) ?? 0, pendingEvaluationReference: application?.dossierNumber ?? null, evaluationValidated };
+      });
+    return { accounts, total: accounts.length };
+  }),
+
+  activatePreDossierAccount: publicProcedure.input(activatePreDossierSchema).mutation(async ({ input }) => {
+    const admin = await requireValidAdminSession(input.sessionToken);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+    const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+    if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+    const [[existingOnline], [existingAgency]] = await Promise.all([
+      db.select({ id: applications.id, candidateId: applications.candidateId, dossierNumber: applications.dossierNumber, scoringDetails: applications.scoringDetails }).from(applications).where(eq(applications.email, candidate.email)).limit(1),
+      db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(1),
+    ]);
+    if (existingOnline?.candidateId || existingAgency) throw new TRPCError({ code: "CONFLICT", message: "Un dossier est déjà associé à ce compte. Ouvrez sa fiche de suivi." });
+    const now = new Date();
+    let agencyDossierId = 0;
+    let reference = "";
+    if (existingOnline) {
+      let evaluationValidated = false;
+      try {
+        const details = JSON.parse(existingOnline.scoringDetails || "{}");
+        evaluationValidated = details?.adminDraft?.advisorValidated === true;
+      } catch { /* l’erreur utilisateur ci-dessous protège le rattachement */ }
+      if (!evaluationValidated) throw new TRPCError({ code: "BAD_REQUEST", message: "Validez d’abord l’évaluation dans la file « Bilans à valider » avant d’activer ce dossier." });
+      await db.update(applications).set({ candidateId: candidate.id, dossierStatus: "en_attente_documents", lastStatusUpdateAt: now, lastStatusUpdatedBy: admin.email, updatedAt: now }).where(eq(applications.id, existingOnline.id));
+      reference = existingOnline.dossierNumber;
+    } else {
+      const insertResult = await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone || "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "documents_requis", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes || "Dossier activé après création préalable du compte client.", lastStatusChangeAt: now, lastStatusChangeBy: admin.email, source: "manual_admin" });
+      agencyDossierId = Number((insertResult as any)[0]?.insertId || 0);
+      reference = agencyDossierId ? `3M-AG-${String(agencyDossierId).padStart(4, "0")}` : "votre référence agence";
+    }
+    const knownDestinations = ["canada", "luxembourg", "pologne", "europe", "golfe"] as const;
+    const normalizedDestination = input.destination.trim().toLowerCase();
+    await db.update(candidates).set({ destination: (knownDestinations.includes(normalizedDestination as typeof knownDestinations[number]) ? normalizedDestination : "autre") as any, visaType: input.visaType, dossierStatus: "documents", dossierNote: input.adminNotes || "Votre dossier a été activé par l’agence. Préparez les documents demandés." }).where(eq(candidates.id, candidate.id));
+    const notificationBody = `Votre dossier ${reference} est maintenant actif pour ${input.destination}. L’équipe vous accompagnera pour la collecte et la vérification de vos documents.`;
+    const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "admin_status_update", title: "Votre dossier est maintenant actif", body: notificationBody, actionUrl: "/mon-espace?section=dossier", isRead: false });
+    const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+    await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: notificationBody, isRead: false });
+    const emailSent = await sendClientNotificationEmail({ to: candidate.email, fullName: candidate.fullName, title: "Votre dossier est maintenant actif", body: notificationBody, actionUrl: "/mon-espace?section=dossier", sourceLabel: "Prime Travel Service" });
+    if (emailSent && notificationId > 0) await db.update(clientNotifications).set({ emailSentAt: now }).where(eq(clientNotifications.id, notificationId));
+    return { success: true, agencyDossierId, emailSent };
+  }),
+
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const candidates = await loadCandidates(input);

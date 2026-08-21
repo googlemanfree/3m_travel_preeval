@@ -1596,6 +1596,7 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   issuanceChecklist: json("issuanceChecklist"),
   pnrViewedAt: timestamp("pnrViewedAt"),
   pnrDownloadedAt: timestamp("pnrDownloadedAt"),
+  ticketEmailSentAt: timestamp("ticketEmailSentAt"),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   paymentTransactionId: varchar("paymentTransactionId", { length: 120 }),
   clientValidated: boolean("clientValidated").default(false).notNull(),

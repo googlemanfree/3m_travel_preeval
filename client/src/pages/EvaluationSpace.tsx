@@ -34,6 +34,7 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
+import { ActiveDossierDestinationPanel } from "@/components/ActiveDossierDestinationPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
@@ -254,6 +255,7 @@ export default function EvaluationSpace() {
         <div id="candidate-space-content" className="mt-6" role="tabpanel" tabIndex={-1}>
           {activeTab === "overview" && (
             <div className="space-y-6">
+              <ActiveDossierDestinationPanel destination={cProfile.destination} dossierNumber={cProfile.dossierNumber} isActive={Boolean(activeDossier)} />
               {/* Widgets statistiques et progression */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">

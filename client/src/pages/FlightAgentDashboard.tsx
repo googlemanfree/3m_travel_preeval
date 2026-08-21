@@ -206,6 +206,7 @@ export default function FlightAgentDashboard() {
   const [advisorInitialsInput, setAdvisorInitialsInput] = useState("");
   const [issuancePnrInput, setIssuancePnrInput] = useState("");
   const [issuancePdfFile, setIssuancePdfFile] = useState<{ base64: string; name: string } | null>(null);
+  const [issuancePdfPreviewUrl, setIssuancePdfPreviewUrl] = useState<string | null>(null);
 
   const updatePnrMutation = trpc.flightBooking.updatePnrAndIssuedPdf.useMutation({
     onSuccess: (data) => {
@@ -230,6 +231,7 @@ export default function FlightAgentDashboard() {
       setIsIssuanceModalOpen(false);
       setAdvisorInitialsInput("");
       setIssuancePdfFile(null);
+      setIssuancePdfPreviewUrl(null);
       toast({
         title: "Document PNR émis",
         description: data.delivery.emailNotificationDispatched
@@ -245,7 +247,7 @@ export default function FlightAgentDashboard() {
 
   const pnrReminderMutation = trpc.flightBooking.sendPnrReminderEmail.useMutation({
     onSuccess: () => {
-      toast({ title: "Relance PNR transmise", description: "L’e-mail de rappel a été journalisé dans le dossier client." });
+      toast({ title: "Billet renvoyé par e-mail", description: "Le renvoi est journalisé dans le dossier client avec son horodatage." });
       void utils.flightBooking.getRequest.invalidate();
     },
     onError: (error) => toast({ title: "Relance PNR impossible", description: error.message, variant: "destructive" }),
@@ -489,6 +491,7 @@ export default function FlightAgentDashboard() {
                   <Input id="issuance-file" type="file" accept="application/pdf" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    setIssuancePdfPreviewUrl(URL.createObjectURL(file));
                     const reader = new FileReader();
                     reader.onload = () => {
                       const base64 = (reader.result as string).split(",")[1];
@@ -496,6 +499,7 @@ export default function FlightAgentDashboard() {
                     };
                     reader.readAsDataURL(file);
                   }} className="mt-1 text-xs" />
+                  {issuancePdfPreviewUrl && <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50"><p className="border-b border-slate-200 px-3 py-2 text-xs font-bold text-slate-700">Aperçu du PDF avant validation</p><iframe title="Aperçu du billet final" src={issuancePdfPreviewUrl} className="h-64 w-full bg-white" /></div>}
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">

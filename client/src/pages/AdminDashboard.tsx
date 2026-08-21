@@ -54,6 +54,8 @@ import {
   ShieldAlert,
   MessageSquare,
   UserCheck,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import {
   BarChart,
@@ -72,6 +74,7 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
+import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
@@ -595,11 +598,26 @@ export default function AdminDashboard() {
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
+  const [adminTabHistory, setAdminTabHistory] = useState<string[]>(["candidates"]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
+
+  const changeAdminTab = useCallback((nextTab: string) => {
+    setActiveAdminTab(nextTab);
+    setAdminTabHistory((history) => history[history.length - 1] === nextTab ? history : [...history, nextTab].slice(-20));
+  }, []);
+
+  const goBackInsideAdmin = useCallback(() => {
+    setAdminTabHistory((history) => {
+      if (history.length < 2) return history;
+      const nextHistory = history.slice(0, -1);
+      setActiveAdminTab(nextHistory[nextHistory.length - 1] || "candidates");
+      return nextHistory;
+    });
+  }, []);
 
   const addRagDocMutation = trpc.admin.addDestinationDocumentAdmin.useMutation({
     onSuccess: () => {
@@ -820,6 +838,12 @@ export default function AdminDashboard() {
                   ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
                   : formatAdminSyncTime(null)}
               </span>
+              <Button variant="outline" size="sm" onClick={goBackInsideAdmin} disabled={adminTabHistory.length < 2} className="gap-1.5 border-white/30 text-white hover:bg-white/10" title="Revenir au dernier espace du back-office">
+                <ArrowLeft className="h-4 w-4" /><span className="hidden lg:inline">Retour</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => changeAdminTab("candidates")} className="gap-1.5 border-white/30 text-white hover:bg-white/10" title="Revenir au poste de pilotage des dossiers">
+                <ArrowRight className="h-4 w-4" /><span className="hidden lg:inline">Dossiers</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1029,7 +1053,7 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
-        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
+        <Tabs value={activeAdminTab} onValueChange={changeAdminTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
             <TabsTrigger value="candidates">Dossiers</TabsTrigger>
             <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
@@ -1046,6 +1070,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="emails">E-mails</TabsTrigger>
             <TabsTrigger value="activations">Activations</TabsTrigger>
+            <TabsTrigger value="pre-dossiers" className="gap-1.5 font-bold text-blue-700">Comptes à ouvrir</TabsTrigger>
             <TabsTrigger value="flights" className="gap-1.5 font-bold text-sky-700">
               <Plane className="h-4 w-4" /> Réservations vols
               {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}
@@ -1567,6 +1592,9 @@ export default function AdminDashboard() {
 
           <TabsContent value="activations" className="space-y-6">
             <AdminCandidateActivationPanel sessionToken={sessionToken} />
+          </TabsContent>
+          <TabsContent value="pre-dossiers" className="space-y-6">
+            <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
           </TabsContent>
         </Tabs>
       </div>

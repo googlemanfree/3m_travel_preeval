@@ -117,7 +117,8 @@ export const adminAuthRouter = router({
       }
 
       const sessionToken = generateSessionToken();
-      const sessionExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h
+      const sessionDurationMs = 24 * 60 * 60 * 1000;
+      const sessionExpiresAt = new Date(Date.now() + sessionDurationMs); // 24 h ou jusqu’à déconnexion
 
       await db
         .update(adminAccounts)
@@ -134,7 +135,7 @@ export const adminAuthRouter = router({
         secure: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 12 * 60 * 60 * 1000,
+        maxAge: sessionDurationMs,
       });
 
       return {

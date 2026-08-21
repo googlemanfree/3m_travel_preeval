@@ -1540,6 +1540,7 @@ export const candidateRouter = router({
 
     const [
       appRows,
+      agencyDossierRows,
       favFlights,
       evalRows,
       messageRows,
@@ -1547,6 +1548,7 @@ export const candidateRouter = router({
       agencyDocRows,
     ] = await Promise.all([
       db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)),
+      db.select().from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossiers.createdAt)),
       db.select().from(favoriteFlights).where(eq(favoriteFlights.userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
       db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)),
       db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
@@ -1555,6 +1557,20 @@ export const candidateRouter = router({
     ]);
 
     const activeApp = appRows[0] || null;
+    const activeAgencyDossier = agencyDossierRows[0] || null;
+    const activeAgencyStatusMap: Record<string, string> = {
+      nouveau: "nouveau", en_cours: "traitement", documents_requis: "documents", soumis: "soumis", approuve: "approuve", refuse: "refuse",
+    };
+    const activeDossier = activeApp || (activeAgencyDossier ? {
+      id: activeAgencyDossier.id,
+      dossierNumber: `3M-AG-${String(activeAgencyDossier.id).padStart(4, "0")}`,
+      destination: activeAgencyDossier.destination,
+      dossierStatus: activeAgencyStatusMap[activeAgencyDossier.status] || "nouveau",
+      source: "agency",
+    } : null);
+    const activeDestination = activeApp?.destination || activeAgencyDossier?.destination || candidate.destination;
+    const activeStatus = activeApp?.dossierStatus || (activeAgencyDossier ? activeAgencyStatusMap[activeAgencyDossier.status] || "nouveau" : candidate.dossierStatus);
+    const activeDossierNumber = activeApp?.dossierNumber || (activeAgencyDossier ? `3M-AG-${String(activeAgencyDossier.id).padStart(4, "0")}` : null);
 
     let profileFieldsFilled = 0;
     const totalProfileFields = 5;
@@ -1571,17 +1587,17 @@ export const candidateRouter = router({
         fullName: candidate.fullName,
         email: candidate.email,
         phone: candidate.phone,
-        destination: candidate.destination,
+        destination: activeDestination,
         avatarUrl: (candidate as any).avatarUrl || null,
         avatarVerificationStatus: candidate.avatarVerificationStatus,
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
-        dossierNumber: (candidate as any).dossierNumber || activeApp?.dossierNumber || "N/A",
-        dossierStatus: (candidate as any).dossierStatus || activeApp?.dossierStatus || "evaluation",
+        dossierNumber: (candidate as any).dossierNumber || activeDossierNumber || "En attente d’ouverture",
+        dossierStatus: activeStatus || "nouveau",
         createdAt: candidate.createdAt,
       },
-      activeDossier: activeApp,
+      activeDossier,
       applications: appRows,
       favoriteFlights: favFlights,
       evaluations: evalRows,
