@@ -692,8 +692,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les filtres d’équipements sur ordinateur et mobile, avec tests de non-régression
 - [x] Cartographier les sources officielles et partenaires vérifiables pour les hôtels du Cameroun et d’Afrique centrale
 - [x] Définir un catalogue hôtelier administrable avec provenance, date de vérification, équipements et conditions tarifaires
-- [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office — en attente de confirmation humaine d’au moins une fiche prête à confirmer et de son lien officiel
-- [ ] Obtenir la confirmation humaine finale d’une fiche techniquement prête avant sa publication client
+- [x] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office — huit fiches validées et tracées par conseiller
+- [x] Obtenir la confirmation humaine finale d’une fiche techniquement prête avant sa publication client
 - [x] Rendre la file de précontrôle hôtelier visible avec une action rapide de confirmation dans Tourisme & Devis
 - [x] Vérifier le rendu connecté de l’action rapide de confirmation hôtelier dans Tourisme & Devis
 - [x] Conserver la confirmation humaine finale avant toute publication d’hôtel dans 3M Booking
