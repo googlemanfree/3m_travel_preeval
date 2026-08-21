@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,20 @@ const statusLabels: Record<string, { label: string; color: string; bg: string }>
   cancelled: { label: "Annulé", color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
 };
 
+function parseServiceTypes(value: string | null | undefined): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AdminTourismRequests() {
   const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined : undefined;
-  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery(sessionToken ? { sessionToken } : undefined);
+  const adminInput = useMemo(() => sessionToken ? { sessionToken } : undefined, [sessionToken]);
+  const precheckInput = useMemo(() => sessionToken ? { limit: 8, sessionToken } : { limit: 8 }, [sessionToken]);
+  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery(adminInput);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
@@ -30,8 +41,8 @@ export function AdminTourismRequests() {
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
-  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(sessionToken ? { sessionToken } : undefined);
-  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery({ limit: 8, sessionToken });
+  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
+  const { data: precheckHotels, refetch: refetchPrecheck } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -52,9 +63,9 @@ export function AdminTourismRequests() {
   });
 
   const filteredRequests = (requests ?? []).filter(req => {
-    const matchSearch = search === "" || req.fullName.toLowerCase().includes(search.toLowerCase()) || req.destination.toLowerCase().includes(search.toLowerCase()) || req.reference.toLowerCase().includes(search.toLowerCase()) || req.email.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = search === "" || String(req.fullName || "").toLowerCase().includes(search.toLowerCase()) || String(req.destination || "").toLowerCase().includes(search.toLowerCase()) || String(req.reference || "").toLowerCase().includes(search.toLowerCase()) || String(req.email || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || req.status === statusFilter;
-    const services = JSON.parse(req.serviceTypesJson || "[]") as string[];
+    const services = parseServiceTypes(req.serviceTypesJson);
     const matchService = serviceFilter === "all" || services.includes(serviceFilter);
     return matchSearch && matchStatus && matchService;
   });
@@ -70,7 +81,7 @@ export function AdminTourismRequests() {
       r.departureDate ? new Date(r.departureDate).toLocaleDateString("fr-FR") : "",
       r.returnDate ? new Date(r.returnDate).toLocaleDateString("fr-FR") : "",
       r.travelersCount,
-      `"${JSON.parse(r.serviceTypesJson || "[]").join(", ")}"`,
+      `"${parseServiceTypes(r.serviceTypesJson).join(", ")}"`,
       r.budgetXaf ?? "",
       r.quotedPriceXaf ?? "",
       r.status,
@@ -272,7 +283,7 @@ export function AdminTourismRequests() {
                       </td>
                       <td className="p-4">
                         <div className="flex flex-wrap gap-1">
-                          {services.map(s => (
+                          {parseServiceTypes(req.serviceTypesJson).map(s => (
                             <Badge key={s} variant="outline" className="text-xs">
                               {s === "hotel" ? "🏨 Hôtel" : s === "vehicle" ? "🚗 Véhicule" : "📦 Pack"}
                             </Badge>

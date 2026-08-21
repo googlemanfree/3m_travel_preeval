@@ -740,6 +740,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier les actions Tourisme encore dépendantes uniquement du cookie administrateur
 - [x] Transmettre le jeton de repli sécurisé aux validations de catalogue hôtelier
 - [x] Tester qu’une validation hôtel est enregistrée avec cookie ou jeton administrateur valide — 478 tests réussis
+- [x] Identifier l’erreur de rendu responsable de la page blanche administrateur
+- [x] Corriger le rendu de session ou de tableau concerné et ajouter un test de non-régression
+- [x] Vérifier le retour du tableau administrateur sur ordinateur et mobile — 480 tests réussis et accès protégé contrôlé
 - [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
 - [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
