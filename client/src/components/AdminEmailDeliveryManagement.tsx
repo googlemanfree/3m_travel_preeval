@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, Check, Clock3, HelpCircle, Mail, Pencil, RefreshCw, Search, Send, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Check, Clock3, Download, HelpCircle, Mail, Pencil, RefreshCw, Search, Send, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,15 @@ const statusLabel: Record<string, string> = {
   sent: "Envoyé",
   failed: "Échec",
   pending: "En attente",
+};
+
+const deliveryTypeLabel: Record<string, string> = {
+  demonstration: "Démonstration",
+  assurance: "Assurance",
+  evisa: "e-Visa",
+  billet: "Billet / PNR",
+  evaluation: "Évaluation",
+  other: "Autre",
 };
 
 export default function AdminEmailDeliveryManagement() {
@@ -62,9 +71,34 @@ export default function AdminEmailDeliveryManagement() {
     },
     onError: (mutationError) => toast.error(mutationError.message),
   });
+  const bulkResendMutation = trpc.admin.resendFailedEmailsBulk.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.sent} relance(s) envoyée(s)${result.failed ? ` ; ${result.failed} échec(s) à vérifier.` : "."}`);
+      utils.admin.getEmailDeliveryLogs.invalidate();
+    },
+    onError: (mutationError) => toast.error(mutationError.message),
+  });
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
+  const failedLogs = logs.filter((log) => log.status === "failed");
+  const lastSuccessfulByType = data?.lastSuccessfulByType ?? [];
+
+  const exportFilteredCsv = () => {
+    const escapeCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Destinataire", "Sujet", "Type", "Statut", "Date", "Détail"],
+      ...logs.map((log) => [log.recipientEmail, log.subject, deliveryTypeLabel[log.deliveryType] ?? "Autre", statusLabel[log.status] ?? log.status, new Date(log.createdAt).toLocaleString("fr-FR"), log.errorDetails ?? log.providerMessageId ?? ""]),
+    ];
+    const blob = new Blob([`\uFEFF${rows.map((row) => row.map(escapeCsv).join(";")).join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `journaux-email-3m-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export CSV téléchargé selon les filtres actifs.");
+  };
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -80,10 +114,21 @@ export default function AdminEmailDeliveryManagement() {
               Historique des confirmations, notifications et erreurs remontées par Resend.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2 self-start md:self-auto">
-            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-            Actualiser
-          </Button>
+          <div className="flex flex-wrap gap-2 self-start md:self-auto">
+            <Button variant="outline" size="sm" onClick={exportFilteredCsv} disabled={!sessionToken || logs.length === 0} className="gap-2">
+              <Download className="h-4 w-4" />Exporter CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              const selected = failedLogs.slice(0, 25);
+              if (!selected.length || !window.confirm(`Relancer ${selected.length} e-mail(s) en échec ? Les envois réels seront effectués et journalisés.`)) return;
+              bulkResendMutation.mutate({ sessionToken, logIds: selected.map((log) => log.id), confirmed: true });
+            }} disabled={!sessionToken || failedLogs.length === 0 || bulkResendMutation.isPending} className="gap-2 border-amber-300 text-amber-800 hover:bg-amber-50">
+              <Send className={`h-4 w-4 ${bulkResendMutation.isPending ? "animate-pulse" : ""}`} />Relancer les échecs ({Math.min(failedLogs.length, 25)})
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Actualiser
+            </Button>
+          </div>
         </div>
 
         {!sessionToken ? (
@@ -103,6 +148,15 @@ export default function AdminEmailDeliveryManagement() {
               <SummaryCard label="Envoyés" value={summary.sent} icon={<CheckCircle2 className="h-4 w-4" />} tone="green" />
               <SummaryCard label="Échecs" value={summary.failed} icon={<AlertCircle className="h-4 w-4" />} tone="red" />
               <SummaryCard label="En attente" value={summary.pending} icon={<Clock3 className="h-4 w-4" />} tone="amber" />
+            </div>
+
+            <div className="border-t bg-slate-50/50 px-5 py-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Dernières remises réussies par service</p>
+              {lastSuccessfulByType.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {lastSuccessfulByType.map((entry) => <Badge key={entry.deliveryType} variant="outline" className="gap-1.5 bg-white px-2.5 py-1 text-slate-700"><span>{deliveryTypeLabel[entry.deliveryType] ?? entry.deliveryType}</span><span className="text-slate-500">· {new Date(entry.createdAt).toLocaleString("fr-FR")}</span></Badge>)}
+                </div>
+              ) : <p className="text-sm text-slate-500">Aucune remise réussie n’est encore journalisée.</p>}
             </div>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
@@ -189,7 +243,7 @@ export default function AdminEmailDeliveryManagement() {
                           ) : log.recipientEmail}
                         </td>
                         <td className="max-w-[260px] px-5 py-3 text-slate-600">{log.subject}</td>
-                        <td className="px-5 py-3"><Badge variant="outline">{{ demonstration: "Démonstration", assurance: "Assurance", evisa: "e-Visa", billet: "Billet / PNR", evaluation: "Évaluation", other: "Autre" }[log.deliveryType] ?? "Autre"}</Badge></td>
+                        <td className="px-5 py-3"><Badge variant="outline">{deliveryTypeLabel[log.deliveryType] ?? "Autre"}</Badge></td>
                         <td className="px-5 py-3"><Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "secondary"}>{statusLabel[log.status] ?? log.status}</Badge></td>
                         <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">{new Date(log.createdAt).toLocaleString("fr-FR")}</td>
                         <td className="max-w-[280px] px-5 py-3 text-xs text-red-600">

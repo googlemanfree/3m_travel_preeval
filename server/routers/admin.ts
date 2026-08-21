@@ -2522,10 +2522,23 @@ export const adminRouter = router({
         ? rawLogs
         : rawLogs.filter((log) => classifyEmailDeliveryType(log.subject) === input.deliveryType)
       ).slice(0, input.limit);
+      const successfulLogs = await db
+        .select()
+        .from(emailDeliveryLogs)
+        .where(eq(emailDeliveryLogs.status, "sent"))
+        .orderBy(desc(emailDeliveryLogs.createdAt))
+        .limit(400);
+      const lastSuccessfulByType = EMAIL_DELIVERY_TYPES
+        .map((deliveryType) => {
+          const latest = successfulLogs.find((log) => classifyEmailDeliveryType(log.subject) === deliveryType);
+          return latest ? { deliveryType, createdAt: latest.createdAt } : null;
+        })
+        .filter((entry): entry is { deliveryType: EmailDeliveryType; createdAt: Date } => Boolean(entry));
 
       return {
         logs: logs.map((log) => ({ ...log, deliveryType: classifyEmailDeliveryType(log.subject) })),
         summary: summarizeEmailDeliveryLogs(logs),
+        lastSuccessfulByType,
       };
     }),
 
@@ -2594,6 +2607,52 @@ export const adminRouter = router({
       }
 
       return { success: true, recipientEmail: log.recipientEmail };
+    }),
+
+  resendFailedEmailsBulk: publicProcedure
+    .input(z.object({
+      sessionToken: z.string(),
+      logIds: z.array(z.number().int().positive()).min(1).max(25),
+      confirmed: z.literal(true),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const logs = await db.select().from(emailDeliveryLogs)
+        .where(inArray(emailDeliveryLogs.id, Array.from(new Set(input.logIds))));
+      const failedLogs = logs.filter((log) => log.status === "failed");
+      let sent = 0;
+      const failedLogIds: number[] = [];
+
+      for (const log of failedLogs) {
+        try {
+          await sendGenericEmail({
+            to: log.recipientEmail,
+            subject: log.subject,
+            html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après vérification de la remise.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
+          });
+          await db.insert(adminActivityLogs).values({
+            adminEmail: admin.email,
+            action: "status_changed",
+            evaluationType: "email_delivery",
+            evaluationId: String(log.id),
+            details: JSON.stringify({ action: "email_resent_bulk", recipientEmail: log.recipientEmail, subject: log.subject }),
+          });
+          sent += 1;
+        } catch {
+          failedLogIds.push(log.id);
+        }
+      }
+
+      return {
+        requested: input.logIds.length,
+        eligible: failedLogs.length,
+        sent,
+        failed: failedLogIds.length,
+        failedLogIds,
+      };
     }),
 
   getCandidate360: publicProcedure

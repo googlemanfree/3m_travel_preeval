@@ -799,6 +799,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Archiver manuellement le dossier de démonstration après test sans supprimer le journal de remise
 - [x] Créer et valider une compétence réutilisable de supervision e-mail
 - [x] Tester le filtrage, les alertes SMTP, l’archivage et les régressions avant publication
+- [x] Ajouter l’export CSV des journaux e-mail selon les filtres actifs
+- [x] Afficher la dernière remise réussie par type de service dans le centre e-mail
+- [x] Ajouter une relance groupée des e-mails en échec avec confirmation administrative et suivi du résultat
+- [x] Créer et valider une compétence réutilisable de pilotage des remises e-mail
+- [x] Tester les exports, les indicateurs, la relance groupée et les régressions avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

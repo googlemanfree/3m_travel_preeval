@@ -48,4 +48,17 @@ describe("Centre e-mail administrateur", () => {
     expect(monitoring).toContain("SMTP_ALERT_COOLDOWN_MS");
     expect(monitoring).toContain("notifyOwner");
   });
+
+  it("exporte les journaux filtrés et protège les relances groupées", () => {
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    expect(admin).toContain("lastSuccessfulByType");
+    expect(admin).toContain("resendFailedEmailsBulk");
+    expect(admin).toContain("max(25)");
+    expect(admin).toContain("confirmed: z.literal(true)");
+    expect(management).toContain("exportFilteredCsv");
+    expect(management).toContain("Exporter CSV");
+    expect(management).toContain("Dernières remises réussies par service");
+    expect(management).toContain("Relancer les échecs");
+  });
 });
