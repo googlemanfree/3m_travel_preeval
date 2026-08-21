@@ -34,6 +34,7 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   replyTo?: string;
+  triggeredByAdminEmail?: string;
 }
 
 export type SmtpHealthStatus = "operational" | "degraded" | "unavailable";
@@ -88,6 +89,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "failed",
           errorDetails: err.message,
+          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
+          contentHtml: options.html,
         });
       }
     } catch {}
@@ -112,6 +115,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "sent",
           providerMessageId: info.messageId || null,
+          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
+          contentHtml: options.html,
         });
       }
     } catch (logErr) {
@@ -128,6 +133,8 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "failed",
           errorDetails: errorMsg,
+          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
+          contentHtml: options.html,
         });
       }
     } catch {}

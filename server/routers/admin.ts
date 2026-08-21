@@ -2492,6 +2492,7 @@ export const adminRouter = router({
       status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
       errorType: z.enum(["all", "invalid_recipient", "domain_unverified", "rate_limit", "configuration"]).default("all"),
       deliveryType: z.enum(["all", ...EMAIL_DELIVERY_TYPES]).default("all"),
+      advisorEmail: z.string().trim().email().optional(),
       search: z.string().trim().max(120).optional(),
     }))
     .query(async ({ input }) => {
@@ -2502,6 +2503,7 @@ export const adminRouter = router({
 
       const conditions = [];
       if (input.status !== "all") conditions.push(eq(emailDeliveryLogs.status, input.status));
+      if (input.advisorEmail) conditions.push(eq(emailDeliveryLogs.triggeredByAdminEmail, input.advisorEmail));
       if (input.search) {
         conditions.push(or(
           like(emailDeliveryLogs.recipientEmail, `%${input.search}%`),
@@ -2542,6 +2544,8 @@ export const adminRouter = router({
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const currentWeekStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+      const previousWeekStart = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
       const dailyFailures = metricsLogs
         .filter((log) => log.status === "failed" && log.createdAt >= todayStart)
         .map((log) => ({
@@ -2565,6 +2569,21 @@ export const adminRouter = router({
           };
         })
         .filter((metric) => metric.total > 0);
+      const weeklySuccessRateComparison = EMAIL_DELIVERY_TYPES
+        .map((deliveryType) => {
+          const current = metricsLogs.filter((log) => log.createdAt >= currentWeekStart && classifyEmailDeliveryType(log.subject) === deliveryType);
+          const previous = metricsLogs.filter((log) => log.createdAt >= previousWeekStart && log.createdAt < currentWeekStart && classifyEmailDeliveryType(log.subject) === deliveryType);
+          const currentRate = current.length ? Math.round((current.filter((log) => log.status === "sent").length / current.length) * 100) : null;
+          const previousRate = previous.length ? Math.round((previous.filter((log) => log.status === "sent").length / previous.length) * 100) : null;
+          return {
+            deliveryType,
+            currentRate,
+            previousRate,
+            change: currentRate !== null && previousRate !== null ? currentRate - previousRate : null,
+          };
+        })
+        .filter((metric) => metric.currentRate !== null || metric.previousRate !== null);
+      const advisors = Array.from(new Set(metricsLogs.map((log) => log.triggeredByAdminEmail).filter((email): email is string => Boolean(email)))).sort();
 
       return {
         logs: logs.map((log) => ({ ...log, deliveryType: classifyEmailDeliveryType(log.subject) })),
@@ -2572,6 +2591,8 @@ export const adminRouter = router({
         lastSuccessfulByType,
         dailyFailures,
         deliverySuccessRates30Days,
+        weeklySuccessRateComparison,
+        advisors,
       };
     }),
 
@@ -2627,6 +2648,7 @@ export const adminRouter = router({
           to: log.recipientEmail,
           subject: log.subject,
           html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après correction de vos coordonnées.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
+          triggeredByAdminEmail: admin.email,
         });
         await db.insert(adminActivityLogs).values({
           adminEmail: admin.email,
@@ -2665,6 +2687,7 @@ export const adminRouter = router({
             to: log.recipientEmail,
             subject: log.subject,
             html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après vérification de la remise.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
+            triggeredByAdminEmail: admin.email,
           });
           await db.insert(adminActivityLogs).values({
             adminEmail: admin.email,

@@ -808,6 +808,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un graphique des taux de réussite de remise par service sur les 30 derniers jours
 - [x] Permettre la sélection manuelle des e-mails en échec avant relance groupée
 - [x] Tester les indicateurs, le graphique, les sélections et les relances ciblées avant publication
+- [x] Ajouter un filtre de journaux e-mail par conseiller ayant déclenché la remise
+- [x] Afficher une comparaison hebdomadaire des taux de réussite par service
+- [x] Ajouter une prévisualisation du contenu d’un e-mail en échec avant sa relance
+- [x] Afficher un indicateur de traitement et un bilan de succès ou d’erreur pour la relance groupée
+- [x] Créer et valider une compétence réutilisable de pilotage avancé des remises e-mail
+- [x] Tester les filtres, la comparaison, les prévisualisations et les relances avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

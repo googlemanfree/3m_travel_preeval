@@ -72,4 +72,16 @@ describe("Centre e-mail administrateur", () => {
     expect(management).toContain("selectedFailedLogIds");
     expect(management).toContain("Sélectionner tous les e-mails en échec affichés");
   });
+
+  it("propose le filtre conseiller, le comparatif hebdomadaire et un aperçu protégé", () => {
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    expect(admin).toContain("advisorEmail");
+    expect(admin).toContain("weeklySuccessRateComparison");
+    expect(admin).toContain("triggeredByAdminEmail: admin.email");
+    expect(management).toContain("Tous les conseillers");
+    expect(management).toContain("Comparaison hebdomadaire des taux de réussite");
+    expect(management).toContain("Prévisualisation de la remise");
+    expect(management).toContain("sandbox=\"\"");
+  });
 });

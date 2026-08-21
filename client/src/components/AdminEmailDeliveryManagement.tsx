@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { getEmailErrorGuidance, getEmailErrorTitle } from "@/lib/emailErrorGuidance";
 import { toast } from "sonner";
@@ -41,6 +42,8 @@ export default function AdminEmailDeliveryManagement() {
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
   const [selectedFailedLogIds, setSelectedFailedLogIds] = useState<Set<number>>(() => new Set());
+  const [advisorEmail, setAdvisorEmail] = useState("all");
+  const [previewLog, setPreviewLog] = useState<{ recipientEmail: string; subject: string; contentHtml: string | null; createdAt: Date | string; deliveryType: string } | null>(null);
   const utils = trpc.useUtils();
   // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
   // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
@@ -53,8 +56,9 @@ export default function AdminEmailDeliveryManagement() {
     status,
     errorType,
     deliveryType,
+    ...(advisorEmail !== "all" ? { advisorEmail } : {}),
     ...(search.trim() ? { search: search.trim() } : {}),
-  }), [sessionToken, status, errorType, deliveryType, search]);
+  }), [sessionToken, status, errorType, deliveryType, advisorEmail, search]);
   const { data, isLoading, isFetching, error, refetch } = trpc.admin.getEmailDeliveryLogs.useQuery(queryInput, {
     enabled: !!sessionToken,
   });
@@ -76,7 +80,9 @@ export default function AdminEmailDeliveryManagement() {
   });
   const bulkResendMutation = trpc.admin.resendFailedEmailsBulk.useMutation({
     onSuccess: (result) => {
-      toast.success(`${result.sent} relance(s) envoyée(s)${result.failed ? ` ; ${result.failed} échec(s) à vérifier.` : "."}`);
+      if (result.failed) toast.warning(`${result.sent} relance(s) envoyée(s) ; ${result.failed} échec(s) restent à vérifier.`);
+      else toast.success(`${result.sent} relance(s) envoyée(s) avec succès.`);
+      setSelectedFailedLogIds(new Set());
       utils.admin.getEmailDeliveryLogs.invalidate();
     },
     onError: (mutationError) => toast.error(mutationError.message),
@@ -89,6 +95,8 @@ export default function AdminEmailDeliveryManagement() {
   const lastSuccessfulByType = data?.lastSuccessfulByType ?? [];
   const dailyFailures = data?.dailyFailures ?? [];
   const deliverySuccessRates30Days = data?.deliverySuccessRates30Days ?? [];
+  const weeklySuccessRateComparison = data?.weeklySuccessRateComparison ?? [];
+  const advisors = data?.advisors ?? [];
   const rateChartData = deliverySuccessRates30Days.map((metric) => ({
     service: deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType,
     taux: metric.successRate ?? 0,
@@ -144,7 +152,7 @@ export default function AdminEmailDeliveryManagement() {
               if (!selected.length || !window.confirm(`Relancer ${selected.length} e-mail(s) sélectionné(s) ? Les envois réels seront effectués et journalisés.`)) return;
               bulkResendMutation.mutate({ sessionToken, logIds: selected.map((log) => log.id), confirmed: true });
             }} disabled={!sessionToken || selectedFailedLogs.length === 0 || bulkResendMutation.isPending} className="gap-2 border-amber-300 text-amber-800 hover:bg-amber-50">
-              <Send className={`h-4 w-4 ${bulkResendMutation.isPending ? "animate-pulse" : ""}`} />Relancer la sélection ({Math.min(selectedFailedLogs.length, 25)})
+              <Send className={`h-4 w-4 ${bulkResendMutation.isPending ? "animate-pulse" : ""}`} />{bulkResendMutation.isPending ? "Relance en cours…" : `Relancer la sélection (${Math.min(selectedFailedLogs.length, 25)})`}
             </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2">
               <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />Actualiser
@@ -192,6 +200,11 @@ export default function AdminEmailDeliveryManagement() {
               </div>
             </div>
 
+            <div className="border-t bg-slate-50/50 px-5 py-4">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Comparaison hebdomadaire des taux de réussite</p>
+              {weeklySuccessRateComparison.length ? <div className="flex flex-wrap gap-2">{weeklySuccessRateComparison.map((metric) => <Badge key={metric.deliveryType} variant="outline" className="gap-1.5 bg-white px-2.5 py-1 text-slate-700"><span>{deliveryTypeLabel[metric.deliveryType] ?? metric.deliveryType}</span><span className="font-semibold">{metric.currentRate ?? "—"}%</span><span className={metric.change === null ? "text-slate-400" : metric.change >= 0 ? "text-emerald-700" : "text-rose-700"}>{metric.change === null ? "· sans comparatif" : `${metric.change >= 0 ? "+" : ""}${metric.change} pts`}</span></Badge>)}</div> : <p className="text-sm text-slate-500">Aucun volume suffisant pour une comparaison hebdomadaire.</p>}
+            </div>
+
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -227,6 +240,13 @@ export default function AdminEmailDeliveryManagement() {
                   <SelectItem value="billet">Billet / PNR</SelectItem>
                   <SelectItem value="evaluation">Évaluation / bilan</SelectItem>
                   <SelectItem value="other">Autres communications</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={advisorEmail} onValueChange={setAdvisorEmail}>
+                <SelectTrigger className="w-full md:w-56"><SelectValue placeholder="Tous les conseillers" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les conseillers</SelectItem>
+                  {advisors.map((email) => <SelectItem key={email} value={email}>{email}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -333,6 +353,17 @@ export default function AdminEmailDeliveryManagement() {
                                 <span className="hidden lg:inline">Renvoyer</span>
                               </Button>
                             )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 gap-1 px-2 text-slate-600 hover:text-blue-700"
+                              aria-label={`Prévisualiser l’e-mail à destination de ${log.recipientEmail}`}
+                              onClick={() => setPreviewLog({ recipientEmail: log.recipientEmail, subject: log.subject, contentHtml: log.contentHtml ?? null, createdAt: log.createdAt, deliveryType: log.deliveryType })}
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                              <span className="hidden lg:inline">Aperçu</span>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -341,6 +372,15 @@ export default function AdminEmailDeliveryManagement() {
                 </table>
               </div>
             )}
+            <Dialog open={Boolean(previewLog)} onOpenChange={(open) => { if (!open) setPreviewLog(null); }}>
+              <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Prévisualisation de la remise</DialogTitle>
+                  <DialogDescription>{previewLog ? `${deliveryTypeLabel[previewLog.deliveryType] ?? "Remise"} · ${previewLog.recipientEmail} · ${new Date(previewLog.createdAt).toLocaleString("fr-FR")}` : ""}</DialogDescription>
+                </DialogHeader>
+                {previewLog ? <div className="space-y-3"><div className="rounded-lg border bg-slate-50 p-3"><p className="text-xs font-semibold uppercase text-slate-500">Objet</p><p className="mt-1 font-medium text-slate-900">{previewLog.subject}</p></div>{previewLog.contentHtml ? <iframe title="Aperçu du contenu e-mail" sandbox="" srcDoc={previewLog.contentHtml} className="h-[420px] w-full rounded-lg border bg-white" /> : <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Le contenu complet n’était pas encore journalisé lors de cette tentative. Les nouvelles remises conservent désormais une prévisualisation réservée aux administrateurs.</p>}</div> : null}
+              </DialogContent>
+            </Dialog>
           </>
         )}
         </CardContent>

@@ -1434,6 +1434,8 @@ export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
   status: varchar("status", { length: 50 }).default("sent").notNull(),
   providerMessageId: varchar("providerMessageId", { length: 255 }),
   errorDetails: text("errorDetails"),
+  triggeredByAdminEmail: varchar("triggeredByAdminEmail", { length: 320 }),
+  contentHtml: text("contentHtml"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
