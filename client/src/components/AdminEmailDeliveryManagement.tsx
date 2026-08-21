@@ -29,7 +29,11 @@ export default function AdminEmailDeliveryManagement() {
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
   const utils = trpc.useUtils();
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
+  // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    : "";
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
@@ -102,7 +106,8 @@ export default function AdminEmailDeliveryManagement() {
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par destinataire ou sujet" className="pl-9" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par destinataire ou sujet" aria-label="Rechercher instantanément dans les journaux e-mail" className="pl-9 pr-10" />
+                {search && <button type="button" onClick={() => setSearch("")} className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-800" aria-label="Effacer la recherche"><X className="h-4 w-4" /></button>}
               </div>
               <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
                 <SelectTrigger className="w-full md:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
@@ -124,6 +129,10 @@ export default function AdminEmailDeliveryManagement() {
                 </SelectContent>
               </Select>
             </div>
+
+            <p className="px-5 pt-3 text-xs text-slate-500" aria-live="polite">
+              {isFetching ? "Recherche en cours…" : `${logs.length} journal${logs.length > 1 ? "x" : ""} affiché${logs.length > 1 ? "s" : ""}${search ? ` pour « ${search} »` : ""}.`}
+            </p>
 
             {isLoading ? (
               <div className="flex items-center justify-center p-10 text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Chargement des journaux...</div>

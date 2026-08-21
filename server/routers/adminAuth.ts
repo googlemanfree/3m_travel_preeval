@@ -117,7 +117,8 @@ export const adminAuthRouter = router({
       }
 
       const sessionToken = generateSessionToken();
-      const sessionExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h
+      const sessionDurationMs = 24 * 60 * 60 * 1000;
+      const sessionExpiresAt = new Date(Date.now() + sessionDurationMs); // 24 h ou jusqu’à déconnexion
 
       await db
         .update(adminAccounts)
@@ -134,7 +135,7 @@ export const adminAuthRouter = router({
         secure: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 12 * 60 * 60 * 1000,
+        maxAge: sessionDurationMs,
       });
 
       return {
@@ -149,9 +150,18 @@ export const adminAuthRouter = router({
     }),
 
   /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */
-  me: publicProcedure.query(async ({ ctx }) => {
+  me: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).optional() }).optional())
+    .query(async ({ ctx, input }) => {
     try {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
+      // Le cookie HttpOnly reste le canal prioritaire. Le jeton n’est utilisé que
+      // comme repli pour les prévisualisations ou navigateurs qui bloquent le cookie
+      // après une connexion administrateur réussie.
+      const admin = ctx.req.headers.cookie?.includes(`${ADMIN_SESSION_COOKIE}=`)
+        ? await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true })
+        : input?.sessionToken
+          ? await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true })
+          : await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
       return {
         authenticated: true,
         requiresPasswordChange: admin.requiresPasswordChange,

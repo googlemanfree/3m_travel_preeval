@@ -18,15 +18,28 @@ export default function NavigationProgress() {
   const { animationsEnabled } = useAnimationPreferences();
 
   useEffect(() => {
+    let fallbackTimeout: number | undefined;
+
     const start = () => {
       setVisible(true);
       setValue((current) => Math.max(current, 18));
       window.requestAnimationFrame(() => setValue((current) => Math.max(current, 68)));
+      if (fallbackTimeout) window.clearTimeout(fallbackTimeout);
+      fallbackTimeout = window.setTimeout(() => {
+        setValue(100);
+        window.setTimeout(() => {
+          setVisible(false);
+          setValue(8);
+        }, animationsEnabled ? 180 : 0);
+      }, animationsEnabled ? 1400 : 0);
     };
 
     window.addEventListener(NAVIGATION_EVENT, start);
-    return () => window.removeEventListener(NAVIGATION_EVENT, start);
-  }, []);
+    return () => {
+      window.removeEventListener(NAVIGATION_EVENT, start);
+      if (fallbackTimeout) window.clearTimeout(fallbackTimeout);
+    };
+  }, [animationsEnabled]);
 
   useEffect(() => {
     if (previousLocation.current === location) return;
@@ -62,6 +75,7 @@ export default function NavigationProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={value}
+      aria-valuetext="Navigation en cours"
     >
       <div
         className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.7)]"

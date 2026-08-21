@@ -5,8 +5,9 @@ import {
   adminAccounts,
   agencyDossiers,
   applications,
-  candidateFiles,
+  candidates,
   candidateMessages,
+  candidateFiles,
   consultationRequests,
   contactMessages,
   evaluationEmails,
@@ -474,6 +475,36 @@ export const unifiedRequestsRouter = router({
       const source = (await loadSourceSnapshots()).find((item) => item.sourceType === "application" && item.sourceRecordId === application.id);
       if (source) { const request = await ensureManagedRequest(source); await db.insert(unifiedClientRequestHistory).values({ requestId: request.id, actionType: "evaluation_advisor_validated", comment: `${input.validationComment || "Bilan relu et validé par le conseiller avant diffusion."} Numéro de dossier attribué : ${finalDossierNumber}.`, actorAdminAccountId: admin.id }); }
       return { success: true, dossierNumber: finalDossierNumber, message: `Validation conseiller enregistrée. Le numéro de dossier ${finalDossierNumber} est maintenant attribué ; le bilan peut être envoyé ou planifié après les approbations requises.` };
+    }),
+
+  activateValidatedEvaluationForClient: publicProcedure
+    .input(sessionInput.extend({ sourceRecordId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const application = (await db.select().from(applications).where(eq(applications.id, input.sourceRecordId)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+      let details: Record<string, unknown> = {};
+      try { details = JSON.parse(application.scoringDetails || "{}"); } catch { /* validation below rejects incomplete state */ }
+      const draft = details.adminDraft && typeof details.adminDraft === "object" ? details.adminDraft as Record<string, unknown> : {};
+      if (draft.advisorValidated !== true) throw new TRPCError({ code: "BAD_REQUEST", message: "Validez d’abord l’évaluation avec un conseiller avant d’activer le dossier." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.email, application.email)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Le candidat n’a pas encore créé son compte. Vous pourrez l’activer dès son inscription avec la même adresse e-mail." });
+      const dossierNumber = await issueFinalDossierNumber(db, application);
+      const now = new Date();
+      await db.update(applications).set({ candidateId: candidate.id, dossierStatus: "en_attente_documents", lastStatusUpdateAt: now, lastStatusUpdatedBy: admin.email, updatedAt: now }).where(eq(applications.id, application.id));
+      const candidateDestination = ["canada", "luxembourg", "pologne", "europe", "golfe"].includes(application.destination) ? application.destination : "autre";
+      await db.update(candidates).set({ destination: candidateDestination as any, visaType: application.visaType || candidate.visaType, dossierStatus: "documents", dossierNote: "Évaluation validée et dossier activé par l’agence. Préparez les documents demandés." }).where(eq(candidates.id, candidate.id));
+      const body = `Votre évaluation a été validée et votre dossier ${dossierNumber} est maintenant actif. Votre espace client affiche les prochaines pièces à préparer pour ${application.destination}.`;
+      const notificationResult = await db.insert(clientNotifications).values({ candidateId: candidate.id, type: "admin_status_update", title: "Votre dossier est maintenant actif", body, actionUrl: "/mon-espace?section=dossier", isRead: false });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({ candidateId: candidate.id, notificationId: notificationId || null, senderRole: "advisor", content: body, isRead: false });
+      try {
+        await sendEmail({ to: candidate.email, subject: `[3M Travel] Votre dossier ${dossierNumber} est actif`, html: `<p>Bonjour ${escapeHtmlText(candidate.fullName)},</p><p>${escapeHtmlText(body)}</p><p><a href="${buildCandidateSpaceAccessUrl()}">Accéder à mon espace</a></p>` });
+        if (notificationId) await db.update(clientNotifications).set({ emailSentAt: now }).where(eq(clientNotifications.id, notificationId));
+      } catch (error) { console.error("[UnifiedRequests] activation email failed", error); }
+      return { success: true, dossierNumber, candidateId: candidate.id };
     }),
 
   approveSensitiveEvaluation: publicProcedure
