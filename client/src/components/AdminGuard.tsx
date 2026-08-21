@@ -13,12 +13,23 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
+  const [queryTimedOut, setQueryTimedOut] = useState(false);
   const sessionToken = typeof window !== "undefined"
     ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined
     : undefined;
   const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
-  const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
+  const isChecking = adminSession.isLoading && !queryTimedOut;
+  const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
+
+  useEffect(() => {
+    if (!adminSession.isLoading) {
+      setQueryTimedOut(false);
+      return;
+    }
+    const timeout = window.setTimeout(() => setQueryTimedOut(true), 5_000);
+    return () => window.clearTimeout(timeout);
+  }, [adminSession.isLoading]);
 
   useEffect(() => {
     if (requiresPasswordChange && location !== "/admin/change-password") {
