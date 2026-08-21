@@ -705,4 +705,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre la sélection d’un hôtel du catalogue dans 3M Booking et transmettre sa provenance au back-office
 - [x] Afficher l’attribution OpenStreetMap et exclure tout tarif ou disponibilité non vérifiés
 - [x] Afficher le lien officiel de réservation de l’hôtel sélectionné dans chaque demande côté administration
+- [ ] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
+- [ ] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel
+- [ ] Inspecter les connecteurs et les fournisseurs B2B hôteliers accessibles pour 3M Booking
+- [ ] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
+- [ ] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle
+- [ ] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client
+- [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
+- [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
+- [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
+- [x] Corriger les défauts confirmés, ajouter les tests de non-régression et publier le bilan d’audit
+- [x] Corriger la route publique `/3m-booking` qui renvoie actuellement une page 404
+- [x] Vérifier les attributs `src` vides détectés dans la console : non reproduits lors d’une session fraîche après correction de route
+- [x] Vérifier la pile d’actions flottantes mobile : aucun chevauchement entre les commandes n’est reproduit sur les parcours publics contrôlés
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

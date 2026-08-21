@@ -1,0 +1,47 @@
+[
+  {
+    "city": "Douala",
+    "imported": 157,
+    "missingOfficialLink": 140
+  },
+  {
+    "city": "Yaoundé",
+    "imported": 217,
+    "missingOfficialLink": 201
+  },
+  {
+    "city": "Kribi",
+    "imported": 71,
+    "missingOfficialLink": 66
+  },
+  {
+    "city": "Limbe",
+    "imported": 45,
+    "missingOfficialLink": 32
+  },
+  {
+    "city": "Libreville",
+    "imported": 60,
+    "missingOfficialLink": 47
+  },
+  {
+    "city": "Brazzaville",
+    "imported": 157,
+    "missingOfficialLink": 145
+  },
+  {
+    "city": "N'Djamena",
+    "imported": 53,
+    "missingOfficialLink": 53
+  },
+  {
+    "city": "Malabo",
+    "imported": 24,
+    "missingOfficialLink": 18
+  },
+  {
+    "city": "Bangui",
+    "imported": 11,
+    "missingOfficialLink": 11
+  }
+]

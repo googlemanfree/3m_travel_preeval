@@ -12,6 +12,7 @@ describe("routes canoniques des pages de service", () => {
     expect(appSource).toContain('path={"/etudes"} component={VisaEtudes}');
     expect(appSource).toContain('path={"/billets"} component={Billets}');
     expect(appSource).toContain('path={"/formation"} component={Formation}');
+    expect(appSource).toContain('path={"/3m-booking"}');
     expect(appSource).toContain('Redirect to="/etudes"');
     expect(appSource).toContain('Redirect to="/billets"');
   });
@@ -54,5 +55,4 @@ describe("routes canoniques des pages de service", () => {
     expect(canadaSource).toContain("Étape 1 : Évaluez votre score CRS avant de continuer");
   });
 });
-
 
