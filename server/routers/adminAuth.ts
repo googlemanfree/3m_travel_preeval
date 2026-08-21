@@ -10,8 +10,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getDb } from "../db";
-import { adminAccounts, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
-import { count, eq } from "drizzle-orm";
+import { adminAccounts, adminSessionEvents, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
+import { count, desc, eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
@@ -130,6 +130,8 @@ export const adminAuthRouter = router({
         })
         .where(eq(adminAccounts.id, admin.id));
 
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login", expiresAt: sessionExpiresAt });
+
       ctx.res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
         httpOnly: true,
         secure: true,
@@ -186,6 +188,7 @@ export const adminAuthRouter = router({
       await db.update(adminAccounts)
         .set({ sessionExpiresAt, lastActivityAt: new Date() })
         .where(eq(adminAccounts.id, admin.id));
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "renewed", expiresAt: sessionExpiresAt });
       ctx.res.cookie(ADMIN_SESSION_COOKIE, input.sessionToken, {
         httpOnly: true,
         secure: true,
@@ -194,6 +197,35 @@ export const adminAuthRouter = router({
         maxAge: sessionDurationMs,
       });
       return { success: true, sessionExpiresAt };
+    }),
+
+  /** Historique des sessions du compte connecté, sans exposer de jeton. */
+  getSessionHistory: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db
+        .select({ id: adminSessionEvents.id, eventType: adminSessionEvents.eventType, expiresAt: adminSessionEvents.expiresAt, createdAt: adminSessionEvents.createdAt })
+        .from(adminSessionEvents)
+        .where(eq(adminSessionEvents.adminId, admin.id))
+        .orderBy(desc(adminSessionEvents.createdAt))
+        .limit(20);
+    }),
+
+  /** Révoque toute session encore active du compte connecté et efface le cookie courant. */
+  revokeAllSessions: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const now = new Date();
+      await db.update(adminAccounts).set({ sessionToken: null, sessionExpiresAt: null, lastActivityAt: now }).where(eq(adminAccounts.id, admin.id));
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "revoked_all", expiresAt: null });
+      ctx.res.clearCookie(ADMIN_SESSION_COOKIE, { httpOnly: true, secure: true, sameSite: "lax", path: "/" });
+      return { success: true, message: "Toutes vos sessions actives ont été révoquées." };
     }),
 
   /**

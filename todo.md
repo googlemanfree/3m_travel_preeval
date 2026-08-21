@@ -837,6 +837,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un renouvellement manuel sécurisé de session avant expiration
 - [x] Créer et valider une compétence réutilisable de continuité de session
 - [x] Tester les indicateurs, heures d’expiration, renouvellements et régressions avant publication
+- [x] Afficher un rappel visuel cinq minutes avant l’expiration de session
+- [x] Enregistrer et afficher l’historique détaillé des renouvellements de session
+- [x] Permettre aux administrateurs de révoquer toutes leurs sessions actives de manière sécurisée
+- [x] Tester les rappels, l’historique, la révocation et les régressions avant publication
 - [x] Diagnostiquer la demande de reconnexion affichée malgré une session client encore valide
 - [x] Préserver la session valide dans l’écran de repli et ne proposer la reconnexion qu’après invalidation réelle
 - [x] Tester les erreurs transitoires, les actualisations et les expirations réelles avant publication

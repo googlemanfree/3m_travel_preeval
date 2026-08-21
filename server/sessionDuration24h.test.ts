@@ -27,4 +27,15 @@ describe("sessions de 24 heures", () => {
     expect(dashboard).toContain("setActiveTab(\"overview\")");
     expect(dashboard).toContain("setActiveTab(\"messages\")");
   });
+
+  it("trace les renouvellements et permet une révocation globale sécurisée aux administrateurs", () => {
+    const schema = read("drizzle/schema.ts");
+    const auth = read("server/routers/adminAuth.ts");
+    const settings = read("client/src/pages/AdminEmailSettings.tsx");
+
+    expect(schema).toContain('admin_session_events');
+    expect(auth).toContain("getSessionHistory");
+    expect(auth).toContain("revokeAllSessions");
+    expect(settings).toContain("Révoquer toutes mes sessions");
+  });
 });

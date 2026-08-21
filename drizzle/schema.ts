@@ -582,6 +582,15 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+/** Historique traçable des connexions, renouvellements et révocations administrateur. */
+export const adminSessionEvents = mysqlTable("admin_session_events", {
+  id: int("id").autoincrement().primaryKey(),
+  adminId: int("adminId").notNull(),
+  eventType: mysqlEnum("eventType", ["login", "renewed", "revoked_all"]).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 /** Demandes de tourisme, hôtel, véhicule et packs, avec devis confirmé par l’agence. */
 export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
   id: int("id").autoincrement().primaryKey(), reference: varchar("reference", { length: 32 }).notNull().unique(),
