@@ -783,6 +783,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les sessions administrateur et client de 24 heures, leur expiration et la déconnexion manuelle
 - [x] Parcourir les actions du back-office, corriger les liens ou boutons inactifs et consigner les contrôles
 - [x] Exécuter les régressions et la vérification visuelle après les corrections
+- [x] Contrôler l’accès administrateur connecté et la persistance de session dans le navigateur réel
+- [x] Vérifier les actions opérationnelles prioritaires du back-office sans modifier de dossiers réels
+- [x] Corriger et tester toute erreur de navigation ou de remise reproductible découverte
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
