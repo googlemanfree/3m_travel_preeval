@@ -721,4 +721,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Simplifier l’administration du catalogue hôtelier pour un usage gratuit sans fournisseur externe
 - [x] Présenter clairement au client un devis à confirmer plutôt qu’une disponibilité ou réservation automatique
 - [x] Vérifier le parcours gratuit de demande d’hôtel, de la sélection au back-office
+- [x] Diagnostiquer l’écart entre la session administrateur visible et les appels du suivi e-mail
+- [x] Corriger la propagation de session du module d’administration concerné
+- [x] Tester la régression du suivi e-mail : jeton de session administrateur réutilisé et 467 tests réussis
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets

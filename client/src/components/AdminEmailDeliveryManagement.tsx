@@ -29,7 +29,11 @@ export default function AdminEmailDeliveryManagement() {
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
   const utils = trpc.useUtils();
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  // La connexion administrateur écrit le jeton dans sessionStorage. Le repli
+  // localStorage conserve uniquement la compatibilité avec les anciennes sessions.
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
+    : "";
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
