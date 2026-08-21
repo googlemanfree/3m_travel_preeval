@@ -794,6 +794,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Préparer un dossier de démonstration isolé pour les tests de remise e-mail réels
 - [x] Créer et valider une compétence réutilisable pour le contrôle de remise e-mail
 - [x] Tester les accès, la santé SMTP, le dossier de démonstration et les régressions avant publication
+- [x] Ajouter un filtre par type de remise dans les journaux e-mail administratifs
+- [x] Notifier les administrateurs lorsque le diagnostic SMTP signale une défaillance
+- [x] Archiver manuellement le dossier de démonstration après test sans supprimer le journal de remise
+- [x] Créer et valider une compétence réutilisable de supervision e-mail
+- [x] Tester le filtrage, les alertes SMTP, l’archivage et les régressions avant publication
 - [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
 - [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
 - [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers

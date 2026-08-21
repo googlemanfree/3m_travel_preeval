@@ -25,6 +25,7 @@ const statusLabel: Record<string, string> = {
 export default function AdminEmailDeliveryManagement() {
   const [status, setStatus] = useState<"all" | "sent" | "failed" | "pending">("all");
   const [errorType, setErrorType] = useState<"all" | "invalid_recipient" | "domain_unverified" | "rate_limit" | "configuration">("all");
+  const [deliveryType, setDeliveryType] = useState<"all" | "demonstration" | "assurance" | "evisa" | "billet" | "evaluation" | "other">("all");
   const [search, setSearch] = useState("");
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
@@ -39,8 +40,9 @@ export default function AdminEmailDeliveryManagement() {
     limit: 100,
     status,
     errorType,
+    deliveryType,
     ...(search.trim() ? { search: search.trim() } : {}),
-  }), [sessionToken, status, errorType, search]);
+  }), [sessionToken, status, errorType, deliveryType, search]);
   const { data, isLoading, isFetching, error, refetch } = trpc.admin.getEmailDeliveryLogs.useQuery(queryInput, {
     enabled: !!sessionToken,
   });
@@ -128,6 +130,18 @@ export default function AdminEmailDeliveryManagement() {
                   <SelectItem value="configuration">Configuration Resend</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={deliveryType} onValueChange={(value) => setDeliveryType(value as typeof deliveryType)}>
+                <SelectTrigger className="w-full md:w-52"><SelectValue placeholder="Tous les types de remise" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types de remise</SelectItem>
+                  <SelectItem value="demonstration">Démonstration interne</SelectItem>
+                  <SelectItem value="assurance">Assurance</SelectItem>
+                  <SelectItem value="evisa">e-Visa</SelectItem>
+                  <SelectItem value="billet">Billet / PNR</SelectItem>
+                  <SelectItem value="evaluation">Évaluation / bilan</SelectItem>
+                  <SelectItem value="other">Autres communications</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <p className="px-5 pt-3 text-xs text-slate-500" aria-live="polite">
@@ -142,7 +156,7 @@ export default function AdminEmailDeliveryManagement() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[720px] text-sm">
                   <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-                    <tr><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th><th className="px-5 py-3">Actions</th></tr>
+                    <tr><th className="px-5 py-3">Destinataire</th><th className="px-5 py-3">Sujet</th><th className="px-5 py-3">Type</th><th className="px-5 py-3">Statut</th><th className="px-5 py-3">Date</th><th className="px-5 py-3">Détail</th><th className="px-5 py-3">Actions</th></tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {logs.map((log) => (
@@ -175,6 +189,7 @@ export default function AdminEmailDeliveryManagement() {
                           ) : log.recipientEmail}
                         </td>
                         <td className="max-w-[260px] px-5 py-3 text-slate-600">{log.subject}</td>
+                        <td className="px-5 py-3"><Badge variant="outline">{{ demonstration: "Démonstration", assurance: "Assurance", evisa: "e-Visa", billet: "Billet / PNR", evaluation: "Évaluation", other: "Autre" }[log.deliveryType] ?? "Autre"}</Badge></td>
                         <td className="px-5 py-3"><Badge variant={log.status === "sent" ? "default" : log.status === "failed" ? "destructive" : "secondary"}>{statusLabel[log.status] ?? log.status}</Badge></td>
                         <td className="whitespace-nowrap px-5 py-3 text-xs text-slate-500">{new Date(log.createdAt).toLocaleString("fr-FR")}</td>
                         <td className="max-w-[280px] px-5 py-3 text-xs text-red-600">

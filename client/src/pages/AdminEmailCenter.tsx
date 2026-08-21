@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLocation } from "wouter";
-import { Mail, RefreshCw, Server, ShieldCheck } from "lucide-react";
+import { Archive, Mail, RefreshCw, Server, ShieldCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,13 @@ export default function AdminEmailCenter() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const archiveDemo = trpc.admin.archiveEmailDeliveryDemo.useMutation({
+    onSuccess: (result) => {
+      toast.success(`Dossier ${result.folderCode} archivé. Le journal de remise est conservé.`);
+      void utils.admin.getEmailDeliveryDemo.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -57,6 +64,9 @@ export default function AdminEmailCenter() {
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" disabled={!sessionToken || prepareDemo.isPending} onClick={() => prepareDemo.mutate(input)} className="gap-2"><RefreshCw className={`h-4 w-4 ${prepareDemo.isPending ? "animate-spin" : ""}`} />Préparer le dossier</Button>
                 <Button disabled={!sessionToken || !demoQuery.data || sendDemo.isPending} onClick={() => sendDemo.mutate(input)} className="gap-2"><Server className="h-4 w-4" />Envoyer la remise de test</Button>
+                {demoQuery.data && !demoQuery.data.readyForDeliveryTest && <Button variant="outline" disabled={archiveDemo.isPending} onClick={() => {
+                  if (window.confirm("Archiver ce dossier de démonstration ? Le journal de remise sera conservé.")) archiveDemo.mutate(input);
+                }} className="gap-2"><Archive className="h-4 w-4" />Archiver le dossier</Button>}
               </div>
               <p className="text-xs text-amber-700">L’envoi déclenche un e-mail réel vers la boîte interne configurée et apparaît dans le journal ci-dessous.</p>
             </CardContent>

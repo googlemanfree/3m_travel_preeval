@@ -43,6 +43,19 @@ export function parseAdminCandidateReference(reference: string): { source: "onli
   return { source: match[1] as "online" | "agency", id };
 }
 
+export const EMAIL_DELIVERY_TYPES = ["demonstration", "assurance", "evisa", "billet", "evaluation", "other"] as const;
+export type EmailDeliveryType = (typeof EMAIL_DELIVERY_TYPES)[number];
+
+export function classifyEmailDeliveryType(subject: string | null | undefined): EmailDeliveryType {
+  const normalized = String(subject ?? "").toLowerCase();
+  if (normalized.includes("démonstration") || normalized.includes("demonstration")) return "demonstration";
+  if (normalized.includes("assurance") || normalized.includes("coupon")) return "assurance";
+  if (normalized.includes("e-visa") || normalized.includes("e‑visa") || normalized.includes("evisa")) return "evisa";
+  if (normalized.includes("pnr") || normalized.includes("billet") || normalized.includes("vol")) return "billet";
+  if (normalized.includes("évaluation") || normalized.includes("evaluation") || normalized.includes("bilan")) return "evaluation";
+  return "other";
+}
+
 const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
 
 /**
@@ -1821,10 +1834,11 @@ export const adminRouter = router({
       await requireValidAdminSession(input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const [demo] = await db.select().from(agencyDossiers)
+      const demos = await db.select().from(agencyDossiers)
         .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
         .orderBy(desc(agencyDossiers.id))
-        .limit(1);
+        .limit(20);
+      const demo = demos.find((item) => !String(item.adminNotes ?? "").includes("ARCHIVÉ DÉMONSTRATION REMISE E-MAIL"));
       return demo ? {
         id: demo.id,
         folderCode: `3M-DEMO-${String(demo.id).padStart(4, "0")}`,
@@ -1886,6 +1900,39 @@ export const adminRouter = router({
         lastStatusChangeBy: admin.email || "admin",
       }).where(eq(agencyDossiers.id, demo.id));
       return { folderCode, sent: true };
+    }),
+
+  archiveEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const demos = await db.select().from(agencyDossiers)
+        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
+        .orderBy(desc(agencyDossiers.id))
+        .limit(20);
+      const demo = demos.find((item) => !String(item.adminNotes ?? "").includes("ARCHIVÉ DÉMONSTRATION REMISE E-MAIL"));
+      if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier de démonstration actif à archiver." });
+      if (demo.welcomeEmailSent !== true) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La remise de test doit être envoyée avant l’archivage." });
+
+      const archivedAt = new Date();
+      const folderCode = `3M-DEMO-${String(demo.id).padStart(4, "0")}`;
+      await db.transaction(async (tx) => {
+        await tx.update(agencyDossiers).set({
+          adminNotes: `${demo.adminNotes ?? EMAIL_DELIVERY_DEMO_NOTE}\nARCHIVÉ DÉMONSTRATION REMISE E-MAIL le ${archivedAt.toLocaleString("fr-FR")} par ${admin.email ?? "admin"}.`,
+          lastStatusChangeAt: archivedAt,
+          lastStatusChangeBy: admin.email ?? "admin",
+        }).where(eq(agencyDossiers.id, demo.id));
+        await tx.insert(adminActivityLogs).values({
+          adminEmail: admin.email,
+          action: "status_changed",
+          evaluationType: "email_delivery_demo",
+          evaluationId: String(demo.id),
+          details: JSON.stringify({ action: "demo_archived", folderCode, archivedAt: archivedAt.toISOString() }),
+        });
+      });
+      return { folderCode, archivedAt };
     }),
 
   /**
@@ -2444,6 +2491,7 @@ export const adminRouter = router({
       limit: z.number().int().min(1).max(200).default(100),
       status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
       errorType: z.enum(["all", "invalid_recipient", "domain_unverified", "rate_limit", "configuration"]).default("all"),
+      deliveryType: z.enum(["all", ...EMAIL_DELIVERY_TYPES]).default("all"),
       search: z.string().trim().max(120).optional(),
     }))
     .query(async ({ input }) => {
@@ -2464,15 +2512,19 @@ export const adminRouter = router({
         const patterns = emailErrorPatterns[input.errorType as keyof typeof emailErrorPatterns] ?? [];
         conditions.push(or(...patterns.map((pattern) => like(emailDeliveryLogs.errorDetails, `%${pattern}%`))));
       }
-      const logs = await db
+      const rawLogs = await db
         .select()
         .from(emailDeliveryLogs)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(emailDeliveryLogs.createdAt))
-        .limit(input.limit);
+        .limit(input.deliveryType === "all" ? input.limit : 400);
+      const logs = (input.deliveryType === "all"
+        ? rawLogs
+        : rawLogs.filter((log) => classifyEmailDeliveryType(log.subject) === input.deliveryType)
+      ).slice(0, input.limit);
 
       return {
-        logs,
+        logs: logs.map((log) => ({ ...log, deliveryType: classifyEmailDeliveryType(log.subject) })),
         summary: summarizeEmailDeliveryLogs(logs),
       };
     }),

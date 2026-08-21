@@ -29,4 +29,23 @@ describe("Centre e-mail administrateur", () => {
     expect(admin).toContain("sendEmailDeliveryDemo");
     expect(admin).toContain("Ne pas utiliser pour un client");
   });
+
+  it("filtre les journaux par type et archive le scénario interne sans effacer son historique", () => {
+    const admin = fs.readFileSync(path.join(root, "server/routers/admin.ts"), "utf8");
+    const management = fs.readFileSync(path.join(root, "client/src/components/AdminEmailDeliveryManagement.tsx"), "utf8");
+    const center = fs.readFileSync(path.join(root, "client/src/pages/AdminEmailCenter.tsx"), "utf8");
+    expect(admin).toContain("classifyEmailDeliveryType");
+    expect(admin).toContain("deliveryType");
+    expect(admin).toContain("archiveEmailDeliveryDemo");
+    expect(admin).toContain("ARCHIVÉ DÉMONSTRATION REMISE E-MAIL");
+    expect(management).toContain("Tous les types de remise");
+    expect(center).toContain("Archiver le dossier");
+  });
+
+  it("alerte le propriétaire en cas de défaillance SMTP sans répétition immédiate", () => {
+    const monitoring = fs.readFileSync(path.join(root, "server/routers/monitoring.ts"), "utf8");
+    expect(monitoring).toContain("notifySmtpFailureIfNeeded");
+    expect(monitoring).toContain("SMTP_ALERT_COOLDOWN_MS");
+    expect(monitoring).toContain("notifyOwner");
+  });
 });
