@@ -89,6 +89,35 @@ function parseCatalogAmenities(raw: string | null): HotelAmenity[] {
     return [];
   }
 }
+
+export function buildHotelTechnicalPrecheck(entry: {
+  name: string;
+  city: string;
+  country: string;
+  sourceUrl: string | null;
+  sourceAttribution: string | null;
+  officialWebsiteUrl: string | null;
+  officialBookingUrl: string | null;
+  phone: string | null;
+}) {
+  const sourcePresent = Boolean(entry.sourceUrl && entry.sourceAttribution);
+  const officialLinkPresent = Boolean(safeExternalUrl(entry.officialBookingUrl || entry.officialWebsiteUrl));
+  const identityPresent = Boolean(entry.name.trim() && !entry.name.startsWith("Hôtel OpenStreetMap"));
+  const locationPresent = Boolean(entry.city.trim() && entry.country.trim());
+  const contactPresent = Boolean(entry.phone?.trim());
+  const score = [sourcePresent, officialLinkPresent, identityPresent, locationPresent, contactPresent].filter(Boolean).length;
+  return {
+    sourcePresent,
+    officialLinkPresent,
+    identityPresent,
+    locationPresent,
+    contactPresent,
+    score,
+    maxScore: 5,
+    readyForHumanConfirmation: sourcePresent && officialLinkPresent && identityPresent && locationPresent,
+    requiresHumanValidation: true,
+  };
+}
 export function buildTourismServiceTypes(pack: string | undefined, selected: TourismServiceType[]) {
   const required: Record<string, TourismServiceType[]> = { escapade: ["hotel", "pack"], explorer: ["hotel", "vehicle", "pack"], business: ["hotel", "vehicle", "pack"] };
   return Array.from(new Set([...(selected || []), ...(pack ? required[pack] || ["pack"] : [])]));
@@ -234,11 +263,8 @@ export const tourismRouter = router({
     return entries.map(entry => ({
       ...entry,
       precheck: {
-        sourcePresent: Boolean(entry.sourceUrl),
-        officialLinkPresent: Boolean(entry.officialBookingUrl || entry.officialWebsiteUrl),
-        contactPresent: Boolean(entry.phone),
+        ...buildHotelTechnicalPrecheck(entry),
         starsPresent: entry.stars !== null,
-        requiresHumanValidation: true,
       },
     }));
   }),
