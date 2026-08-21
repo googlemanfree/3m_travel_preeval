@@ -782,10 +782,15 @@ export default function ClientDashboard() {
               <h1 className="text-4xl font-bold text-gray-900">Mon Espace Client</h1>
               <p className="text-gray-600 mt-2">Dossier: <span className="font-semibold">{dossier.numero}</span></p>
             </div>
-            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Déconnexion
-            </Button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={() => setActiveTab("overview")}>Mon dossier</Button>
+              <Button variant="outline" size="sm" onClick={() => navigateToIncompleteSection(nextProgressSection.key as "procedure" | "documents" | "profile")}>Étape suivante</Button>
+              <Button variant="outline" size="sm" onClick={() => setActiveTab("messages")}>Messages</Button>
+              <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Déconnexion
+              </Button>
+            </div>
           </div>
         </div>
 

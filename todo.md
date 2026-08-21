@@ -798,3 +798,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Agréger les actions administratives et les changements d’étape visibles au client dans un journal chronologique sécurisé
 - [x] Afficher une frise historique lisible dans le dossier client actif sans exposer les notes internes
 - [x] Tester les droits, le tri chronologique et le rendu client avant publication
+- [x] Harmoniser la persistance des sessions client et administrateur sur 24 heures avec déconnexion manuelle
+- [x] Ajouter des raccourcis internes de retour et d’avancement dans les espaces client et administrateur
+- [x] Tester les expirations de session, les déconnexions et la navigation sans bouton du navigateur avant publication
