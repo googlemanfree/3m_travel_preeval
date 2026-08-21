@@ -57,7 +57,7 @@ describe("auth.logout", () => {
       httpOnly: true,
       path: "/",
     });
-    expect(clearedCookies[0]?.options.expires).toEqual(new Date(0));
+    expect(clearedCookies[0]?.options).not.toHaveProperty("expires");
   });
 });
 
