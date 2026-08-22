@@ -24,7 +24,7 @@
 - [x] Redémarrer et vérifier la disponibilité du routeur 3M Digital dans le serveur de développement.
 - [x] Vérifier visuellement l’écran `/admin/digital-services` et l’éditeur de contenu après les derniers changements.
 - [x] Vérifier visuellement la file de demandes et les actions de statut/notes de `/admin/digital-services`.
-- [ ] Effectuer un test navigateur vérifiable de bout en bout : demande publique → file admin → statut et note interne.
+- [x] Effectuer sur le site publié un vrai test navigateur complet : soumettre une demande publique interne → la retrouver dans la file admin → enregistrer statut et note → vérifier la trace SQL associée.
 - [x] Ajouter un scénario automatisé complet couvrant l’UI publique, la création de demande, la file admin et le traitement final.
 
 ## Persistance réelle des demandes 3M Digital
@@ -35,18 +35,18 @@
 ## Session administrateur de traitement 3M Digital
 - [x] Diagnostiquer la restauration du jeton de session dans l’écran `/admin/digital-services` publié.
 - [x] Corriger le renouvellement ou l’erreur explicite lorsque la session administrateur est invalide.
-- [ ] Vérifier le traitement sécurisé d’une demande 3M Digital avec statut et note interne après correction.
+- [x] Vérifier le traitement sécurisé d’une demande 3M Digital avec statut et note interne après correction.
 
 ## Schéma de suivi 3M Digital en production
 - [x] Vérifier les colonnes de suivi réellement présentes dans le registre publié des demandes 3M Digital.
 - [x] Confirmer que les colonnes de statut, note, conseiller et horodatage sont déjà présentes sans migration destructive.
-- [ ] Confirmer la persistance du statut et de la note sur la demande interne de vérification.
+- [x] Confirmer la persistance du statut et de la note sur la demande interne de vérification.
 
 ## Sauvegarde groupée de traitement 3M Digital
 - [x] Diagnostiquer pourquoi la sélection de statut et la note interne ne sont pas envoyées ensemble.
 - [x] Corriger l’action d’enregistrement pour soumettre le statut et la note choisis dans une même mutation.
 - [x] Ajouter une intégration avec dépôt persistant qui relit statut, note, conseiller et horodatage après mise à jour.
-- [ ] Exécuter une vérification SQL post-correctif sur la demande interne 3M Digital après traitement administrateur.
+- [x] Exécuter une vérification SQL post-correctif sur la demande interne 3M Digital après traitement administrateur.
 
 ## Actions directes de traitement administrateur
 - [x] Auditer l’écran 3M Digital afin d’identifier pourquoi les contrôles de traitement ne sont pas accessibles sur une demande ouverte.
@@ -56,7 +56,7 @@
 - [x] Ajouter des tests d’interface et d’autorisation couvrant les actions 3M Digital et les fiches candidat.
 - [x] Ajouter un test DOM de la fiche pré-dossier couvrant la saisie, la confirmation et l’appel d’activation.
 - [x] Vérifier le rejet lorsque ni cookie administrateur valide ni jeton de session valide ne sont disponibles.
-- [ ] Vérifier dans le navigateur administrateur que les actions sont accessibles, puis publier la correction.
+- [x] Vérifier dans le navigateur administrateur que les actions sont accessibles, puis publier la correction.
 
 ## Grille tarifaire 3M Digital depuis ITINERAIRES PRO
 - [x] Extraire les offres, prestations, prix et explications utiles du document de référence.
