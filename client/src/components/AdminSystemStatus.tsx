@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Database, Mail, RefreshCw, Server, ShieldCheck, Wifi, WifiOff } from "lucide-react";
+import { Activity, Database, RefreshCw, Server, ShieldCheck, Wifi, WifiOff } from "lucide-react";
 
 type StatusTone = "operational" | "degraded" | "unavailable";
 
@@ -42,7 +42,6 @@ export function AdminSystemStatus() {
   const status = statusQuery.data;
   const serverTone = status?.server.status ?? "degraded";
   const databaseTone = status?.database.status ?? "unavailable";
-  const smtpTone = status?.smtp.status ?? "unavailable";
 
   return (
     <section aria-labelledby="system-status-title" className="space-y-4">
@@ -65,10 +64,9 @@ export function AdminSystemStatus() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Serveur applicatif</CardTitle><Server className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[serverTone].className}>{statusStyle[serverTone].label}</Badge><p className="text-xs text-slate-500">Réponse interne : {status?.server.latencyMs ?? "—"} ms · Actif depuis {status ? formatUptime(status.server.uptimeMs) : "—"}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Base de données</CardTitle><Database className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[databaseTone].className}>{statusStyle[databaseTone].label}</Badge><p className="text-xs text-slate-500">{status?.database.message ?? "Contrôle en cours…"}{status?.database.latencyMs !== null && status?.database.latencyMs !== undefined ? ` · ${status.database.latencyMs} ms` : ""}</p></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Messagerie SMTP</CardTitle><Mail className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[smtpTone].className}>{statusStyle[smtpTone].label}</Badge><p className="text-xs text-slate-500">{status?.smtp.message ?? "Contrôle en cours…"}{status?.smtp.latencyMs !== null && status?.smtp.latencyMs !== undefined ? ` · ${status.smtp.latencyMs} ms` : ""}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Trafic tRPC</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent><p className="text-2xl font-bold text-slate-900">{status?.traffic.totalRequests ?? "—"}</p><p className="text-xs text-slate-500">Erreurs : {status?.traffic.errorRate ?? "—"} · Délais : {status?.traffic.timeoutRate ?? "—"}</p></CardContent></Card>
       </div>
 

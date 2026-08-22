@@ -48,7 +48,7 @@ export const SmartFlightAssistant = () => {
       booking: "Pour réserver un vol, accédez à la rubrique « Billets » dans le menu supérieur. Vous pourrez y sélectionner votre trajet, choisir votre classe de cabine et vos options de bagages.",
       baggage: "Chaque billet standard inclut un bagage cabine et un accessoire. Vous pouvez ajouter des bagages en soute supplémentaires directement lors du récapitulatif de votre réservation.",
       seat: "Notre carte interactive de cabine vous permet de choisir votre siège exact (hublot, couloir, issue de secours) lors de la validation de votre billet.",
-      contact: "Nos conseillers experts sont joignables directement sur WhatsApp au +237 698 104 832 ou par e-mail à hello@3mtravelagency.com pour vous assister."
+      contact: "Nos conseillers experts sont joignables directement sur WhatsApp au +237 698 10 48 32 ou par e-mail à hello@3mtravelagency.com pour vous assister."
     },
     en: {
       title: "3M Travel Assistant",
@@ -66,7 +66,7 @@ export const SmartFlightAssistant = () => {
       booking: "To book a flight, go to the 'Billets' section in the top menu. There you can select your itinerary, choose your cabin class, and baggage options.",
       baggage: "Each standard ticket includes a carry-on bag and personal item. You can add extra checked baggage directly during your booking summary.",
       seat: "Our interactive cabin map lets you choose your exact seat (window, aisle, emergency exit) when validating your ticket.",
-      contact: "Our expert advisors can be reached directly via WhatsApp at +237 698 104 832 or by email at hello@3mtravelagency.com to assist you."
+      contact: "Our expert advisors can be reached directly via WhatsApp at +237 698 10 48 32 or by email at hello@3mtravelagency.com to assist you."
     },
     es: {
       title: "Asistente 3M Travel",
@@ -84,7 +84,7 @@ export const SmartFlightAssistant = () => {
       booking: "Para reservar un vuelo, ve a la sección 'Billets' en el menú superior. Allí podrás seleccionar tu itinerario, clase de cabina y opciones de equipaje.",
       baggage: "Cada boleto estándar incluye equipaje de mano y un artículo personal. Puedes agregar equipaje facturado adicional directamente en el resumen de tu reserva.",
       seat: "Nuestro mapa interactivo de cabina te permite elegir tu asiento exacto (ventanilla, pasillo, salida de emergencia) al validar tu boleto.",
-      contact: "Nuestros asesores expertos están disponibles por WhatsApp en el +237 698 104 832 o por correo en hello@3mtravelagency.com para ayudarte."
+      contact: "Nuestros asesores expertos están disponibles por WhatsApp en el +237 698 10 48 32 o por correo en hello@3mtravelagency.com para ayudarte."
     },
     de: {
       title: "3M Travel Assistent",
@@ -102,7 +102,7 @@ export const SmartFlightAssistant = () => {
       booking: "Um einen Flug zu buchen, gehen Sie im oberen Menü auf 'Billets'. Dort können Sie Ihre Reiseroute, Kabinenklasse und Gepäckoptionen auswählen.",
       baggage: "Jedes Standardticket beinhaltet ein Handgepäckstück und ein persönliches Stück. Zusätzliches aufgegebenes Gepäck können Sie direkt in der Buchungsübersicht hinzufügen.",
       seat: "Unsere interaktive Kabinenkarte ermöglicht es Ihnen, bei der Bestätigung Ihres Tickets Ihren genauen Sitzplatz (Fenster, Gang, Notausgang) auszuwählen.",
-      contact: "Unsere Expertenberater erreichen Sie direkt per WhatsApp unter +237 698 104 832 oder per E-Mail unter hello@3mtravelagency.com."
+      contact: "Unsere Expertenberater erreichen Sie direkt per WhatsApp unter +237 698 10 48 32 oder per E-Mail unter hello@3mtravelagency.com."
     }
   };
 

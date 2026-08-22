@@ -12,25 +12,6 @@ import {
   exportMetrics,
   resetMetrics,
 } from "../_core/monitoring";
-import { getSmtpHealth } from "../_core/email";
-import { notifyOwner } from "../_core/notification";
-
-const SMTP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
-let lastSmtpFailureAlertAt = 0;
-
-async function notifySmtpFailureIfNeeded(smtp: { status: string; message: string }) {
-  if (smtp.status === "operational") {
-    lastSmtpFailureAlertAt = 0;
-    return;
-  }
-  const now = Date.now();
-  if (now - lastSmtpFailureAlertAt < SMTP_ALERT_COOLDOWN_MS) return;
-  lastSmtpFailureAlertAt = now;
-  await notifyOwner({
-    title: "Alerte 3M : messagerie SMTP indisponible",
-    content: `Le diagnostic SMTP a signalé une défaillance. Vérifiez le centre e-mail administrateur. Détail : ${smtp.message.slice(0, 240)}`,
-  }).catch(() => undefined);
-}
 
 export const monitoringRouter = router({
   /** État synthétique, réservé aux administrateurs connectés. */
@@ -53,8 +34,7 @@ export const monitoringRouter = router({
       databaseMessage = "Le test de connexion à la base a échoué";
     }
 
-    const [smtp, summary] = await Promise.all([getSmtpHealth(), Promise.resolve(getPerformanceSummary())]);
-    await notifySmtpFailureIfNeeded(smtp);
+    const summary = getPerformanceSummary();
     const apiLatencyMs = Date.now() - startedAt;
     const serverStatus = databaseStatus === "operational" ? "operational" : "degraded";
 
@@ -71,7 +51,6 @@ export const monitoringRouter = router({
         latencyMs: databaseLatencyMs,
         message: databaseMessage,
       },
-      smtp,
       traffic: {
         totalRequests: summary.totalRequests,
         errorRate: summary.errorRate,
@@ -83,14 +62,13 @@ export const monitoringRouter = router({
   /** Lance un diagnostic ponctuel et recontrôle immédiatement les dépendances internes. */
   runConnectivityDiagnostic: adminProcedure.mutation(async () => {
     const startedAt = Date.now();
-    const [db, smtp] = await Promise.all([getDb(), getSmtpHealth()]);
-    await notifySmtpFailureIfNeeded(smtp);
+    const db = await getDb();
     if (!db) {
       return {
         ok: false,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["La base de données n’est pas disponible.", `Messagerie : ${smtp.message}`],
+        findings: ["La base de données n’est pas disponible."],
       };
     }
 
@@ -100,14 +78,14 @@ export const monitoringRouter = router({
         ok: true,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["API tRPC accessible.", "Base de données accessible.", `Messagerie : ${smtp.message}`, "Les métriques serveur sont disponibles."],
+        findings: ["API tRPC accessible.", "Base de données accessible.", "Les métriques serveur sont disponibles."],
       };
     } catch {
       return {
         ok: false,
         checkedAt: new Date(),
         durationMs: Date.now() - startedAt,
-        findings: ["API tRPC accessible.", "Le test de connexion à la base de données a échoué.", `Messagerie : ${smtp.message}`],
+        findings: ["API tRPC accessible.", "Le test de connexion à la base de données a échoué."],
       };
     }
   }),

@@ -6,6 +6,7 @@ import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail, CheckCircle2, Send } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
+import { COMPANY_CONTACTS } from "@/lib/companyContacts";
 
 const SOCIAL_LINKS = [
   { icon: Facebook, href: 'https://www.facebook.com/3mtravelcm', label: 'Facebook officiel', color: 'hover:text-blue-600' },
@@ -20,6 +21,7 @@ const USEFUL_LINKS = [
   { label: 'Mentions légales', href: '/conditions-utilisation' },
   { label: 'Plan du site', href: '/plan-du-site' },
   { label: 'Accessibilité', href: '/accessibilite' },
+  { label: 'Service 3M Digital', href: '/3m-digital' },
 ];
 
 export default function Footer() {
@@ -158,7 +160,7 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                <span>Siège : Yaoundé, Biyem-Assi, Montée chapelle Obili (10 m de EHS)</span>
+                <span>Siège : {COMPANY_CONTACTS.yaounde.address}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
@@ -166,16 +168,15 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp Yaoundé : +237 698 104 832</a>
+                <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a>
               </div>
-              <p className="pl-6 text-xs text-blue-200">Bureau Ottawa, Canada : +1 672 897 2999</p>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">Téléphone : +237 620 996 045</a>
+                <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-300 transition-colors">Téléphone : {COMPANY_CONTACTS.yaounde.phone}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href="mailto:hello@3mtravelagency.com" className="hover:text-blue-300 transition-colors">hello@3mtravelagency.com</a>
+                <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-blue-300 transition-colors">{COMPANY_CONTACTS.yaounde.email}</a>
               </div>
             </div>
           </div>

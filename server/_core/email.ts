@@ -34,47 +34,6 @@ export interface SendEmailOptions {
   subject: string;
   html: string;
   replyTo?: string;
-  triggeredByAdminEmail?: string;
-}
-
-export type SmtpHealthStatus = "operational" | "degraded" | "unavailable";
-
-/**
- * Vérifie la disponibilité SMTP sans transmettre de message et sans exposer
- * l’hôte, le compte ou tout autre secret de configuration au back-office.
- */
-export async function getSmtpHealth(): Promise<{
-  status: SmtpHealthStatus;
-  latencyMs: number | null;
-  message: string;
-  checkedAt: Date;
-}> {
-  const startedAt = Date.now();
-  if (!transporter) {
-    return {
-      status: "unavailable",
-      latencyMs: null,
-      message: "La configuration de messagerie est incomplète.",
-      checkedAt: new Date(),
-    };
-  }
-
-  try {
-    await transporter.verify();
-    return {
-      status: "operational",
-      latencyMs: Date.now() - startedAt,
-      message: "La connexion de messagerie est vérifiée.",
-      checkedAt: new Date(),
-    };
-  } catch {
-    return {
-      status: "degraded",
-      latencyMs: Date.now() - startedAt,
-      message: "La messagerie ne peut pas être vérifiée actuellement.",
-      checkedAt: new Date(),
-    };
-  }
 }
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
@@ -89,8 +48,6 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "failed",
           errorDetails: err.message,
-          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
-          contentHtml: options.html,
         });
       }
     } catch {}
@@ -115,8 +72,6 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "sent",
           providerMessageId: info.messageId || null,
-          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
-          contentHtml: options.html,
         });
       }
     } catch (logErr) {
@@ -133,8 +88,6 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
           subject: options.subject,
           status: "failed",
           errorDetails: errorMsg,
-          triggeredByAdminEmail: options.triggeredByAdminEmail ?? null,
-          contentHtml: options.html,
         });
       }
     } catch {}

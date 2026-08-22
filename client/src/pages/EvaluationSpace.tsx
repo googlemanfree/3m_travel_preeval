@@ -34,7 +34,6 @@ import CandidateAvatar from "@/components/CandidateAvatar";
 import DossierProgressTimeline from "@/components/DossierProgressTimeline";
 import AgencyDocumentsPanel, { type AgencyDocumentView } from "@/components/AgencyDocumentsPanel";
 import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
-import { ActiveDossierDestinationPanel } from "@/components/ActiveDossierDestinationPanel";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
@@ -43,22 +42,11 @@ export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const section = searchParams.get("section") || "overview";
-  const { candidate, isAuthenticated, logout, sessionExpiresAt, setSessionExpiresAt, login } = useCandidateAuth();
+  const { candidate, isAuthenticated, logout } = useCandidateAuth();
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showSessionRestored, setShowSessionRestored] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "documents" | "profile" | "messages" | "testimonials">("overview");
-
-  const renewSessionMutation = trpc.candidate.renewSession.useMutation({
-    onSuccess: (data) => {
-      const expiresAt = new Date(data.expiresAt).getTime();
-      localStorage.setItem("3m_candidate_token", data.token);
-      localStorage.setItem("3m_candidate_session_expires_at", String(expiresAt));
-      if (candidate) login(data.token, candidate);
-      setSessionExpiresAt(expiresAt);
-    },
-  });
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -70,8 +58,8 @@ export default function EvaluationSpace() {
   const { data: dashboardData, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 5_000),
+    retry: 1,
+    retryDelay: 1000,
   });
   const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
 
@@ -83,11 +71,6 @@ export default function EvaluationSpace() {
     const timeout = window.setTimeout(() => setLoadingTimeoutReached(true), 12_000);
     return () => window.clearTimeout(timeout);
   }, [isLoading]);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setShowSessionRestored(false), 6_000);
-    return () => window.clearTimeout(timeout);
-  }, []);
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
@@ -149,18 +132,16 @@ export default function EvaluationSpace() {
 
   if (isError || !dashboardData) {
     const errorMessage = error instanceof Error ? error.message : "La synchronisation de votre dossier n’a pas abouti.";
-    const portraitIsMissing = errorMessage.includes("portrait humain vérifié");
-    const sessionConfirmedInvalid = /UNAUTHORIZED|TOKEN_INVALID|SESSION_EXPIRED|JWT expired/i.test(errorMessage);
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 flex items-center justify-center">
         <Card className="max-w-md w-full p-8 text-center shadow-xl">
           <AlertCircle className="w-12 h-12 text-amber-600 mx-auto mb-4" aria-hidden="true" />
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{portraitIsMissing ? "Complétez votre profil" : sessionConfirmedInvalid ? "Votre session a expiré" : "Vérification de votre espace en cours"}</h2>
-          <p className="text-gray-600 text-sm">{portraitIsMissing ? "Ajoutez votre portrait pour finaliser les contrôles de votre dossier." : sessionConfirmedInvalid ? "Reconnectez-vous pour restaurer votre accès sécurisé." : "Votre session est conservée. La synchronisation du dossier prend plus de temps que prévu."}</p>
-          {!portraitIsMissing && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">{errorMessage}</p>}
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Votre espace ne répond pas encore</h2>
+          <p className="text-gray-600 text-sm">Nous n’avons pas pu synchroniser les données de votre dossier. Vos informations restent conservées.</p>
+          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">{errorMessage}</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {portraitIsMissing ? <Button onClick={() => setLocation("/mon-espace?section=profile")} className="bg-blue-600 hover:bg-blue-700"><User className="mr-2 h-4 w-4" />Compléter mon profil</Button> : <Button onClick={() => { setLoadingTimeoutReached(false); void refetch(); }} className="bg-blue-600 hover:bg-blue-700"><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>}
-            {sessionConfirmedInvalid ? <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button> : <Button variant="outline" onClick={() => setLocation("/")}>Retour à l’accueil</Button>}
+            <Button onClick={() => { setLoadingTimeoutReached(false); void refetch(); }} className="bg-blue-600 hover:bg-blue-700"><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>
+            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button>
           </div>
           <Button variant="link" className="mt-3 text-sm" onClick={() => setLocation(`/mon-espace?section=messages`)}><MessageSquare className="mr-1 h-4 w-4" />Contacter l’agence</Button>
         </Card>
@@ -197,23 +178,6 @@ export default function EvaluationSpace() {
           </div>
 
           <div className="flex w-full flex-wrap items-center justify-center gap-3 sm:w-auto sm:justify-end">
-            {showSessionRestored && sessionExpiresAt && (
-              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800">
-                Session restaurée · jusqu’à {new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-              </span>
-            )}
-            {sessionExpiresAt && (
-              <Button
-                onClick={() => renewSessionMutation.mutate()}
-                disabled={renewSessionMutation.isPending}
-                variant="outline"
-                size="sm"
-                className="h-11 gap-2 text-gray-700 bg-white hover:bg-gray-50"
-              >
-                <Clock className="w-4 h-4" />
-                {renewSessionMutation.isPending ? "Renouvellement…" : `Expire ${new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
-              </Button>
-            )}
             <Button
               onClick={handleManualRefresh}
               variant="outline"
@@ -290,7 +254,6 @@ export default function EvaluationSpace() {
         <div id="candidate-space-content" className="mt-6" role="tabpanel" tabIndex={-1}>
           {activeTab === "overview" && (
             <div className="space-y-6">
-              <ActiveDossierDestinationPanel destination={cProfile.destination} dossierNumber={cProfile.dossierNumber} isActive={Boolean(activeDossier)} />
               {/* Widgets statistiques et progression */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
@@ -354,7 +317,7 @@ export default function EvaluationSpace() {
                   <ShieldCheck className="w-5 h-5 text-blue-600" />
                   Avancement de votre procédure
                 </h3>
-                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} />
+                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
 
               {/* Résumé des dernières activités */}
@@ -414,7 +377,7 @@ export default function EvaluationSpace() {
             <div className="space-y-6">
               <Card className="p-6 border-blue-100 bg-white shadow-sm">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Dossier d'immigration actif ({cProfile.dossierNumber})</h3>
-                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} />
+                <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
 
               {/* Suivi e-Visa en direct */}

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BellRing, CheckCircle2, Circle, Clock, XCircle } from "lucide-react";
+import { isEvaluationDeclarationComplete, type EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 
 /**
  * Timeline de progression du dossier — reflète le vrai statut fixé par
@@ -72,14 +73,19 @@ function getSeenStatusKey(dossierKey: string): string {
 export default function DossierProgressTimeline({
   dossierStatus,
   dossierKey = "default",
+  evaluationDeclarationStatus = "not_declared",
 }: {
   dossierStatus: string;
   dossierKey?: string;
+  evaluationDeclarationStatus?: EvaluationDeclarationStatus | null;
 }) {
   const isRefused = dossierStatus === "refuse";
+  const evaluationDeclared = isEvaluationDeclarationComplete(evaluationDeclarationStatus);
   const currentStageIndex = getStageIndex(dossierStatus);
   const currentStageLabel = getStageLabel(dossierStatus);
-  const message = STAGE_MESSAGES[dossierStatus] || "Votre dossier progresse — nous vous tiendrons informé à chaque étape.";
+  const message = evaluationDeclared && currentStageIndex === 0
+    ? "Votre évaluation a été indiquée comme reçue. Notre équipe l’associera à votre dossier pour la suite."
+    : STAGE_MESSAGES[dossierStatus] || "Votre dossier progresse — nous vous tiendrons informé à chaque étape.";
   const [hasNewStage, setHasNewStage] = useState(false);
 
   useEffect(() => {
@@ -151,11 +157,12 @@ export default function DossierProgressTimeline({
           style={{ width: `${(currentStageIndex / (STAGE_GROUPS.length - 1)) * 100}%`, zIndex: 0 }}
         />
         {STAGE_GROUPS.map((stage, i) => {
-          const isDone = i < currentStageIndex;
-          const isCurrent = i === currentStageIndex;
+          const isDone = i < currentStageIndex || (stage.key === "evaluation" && evaluationDeclared);
+          const isCurrent = i === currentStageIndex && !isDone;
           return (
             <div key={stage.key} className="flex flex-col items-center gap-2 relative z-10 flex-1">
               <div
+                aria-label={stage.key === "evaluation" && evaluationDeclared ? "Évaluation déclarée comme reçue" : undefined}
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-lg border-2 transition-all ${
                   isRefused && isCurrent
                     ? "bg-red-50 border-red-400"

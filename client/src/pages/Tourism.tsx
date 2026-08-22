@@ -236,7 +236,7 @@ export default function Tourism() {
                 required
                 value={form.destination}
                 onChange={event => change("destination", event.target.value)}
-                placeholder="Ville et pays de destination"
+                placeholder="Paris, France"
                 className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal"
               />
             </label>

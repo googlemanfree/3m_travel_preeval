@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   Smartphone,
   Star,
+  UsersRound,
   UserRound,
   X,
   Zap,
@@ -37,6 +38,7 @@ const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: bo
   { href: "/evaluation-rapide-enhanced", label: "Évaluation Rapide", icon: Zap },
   { href: "/mon-espace", label: "Suivi de dossier", icon: FolderKanban },
   { href: "/evisas", label: "E-Visa", icon: Smartphone, highlight: true },
+  { href: "/3m-digital", label: "3M Digital", icon: UsersRound },
 ];
 
 const nativeLinkClass = (highlight?: boolean) =>

@@ -23,7 +23,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
 }
-const JWT_EXPIRES = "24h";
+const JWT_EXPIRES = "30d";
 
 function signCandidateToken(candidateId: number): string {
   return jwt.sign({ sub: candidateId, type: "candidate" }, JWT_SECRET, {

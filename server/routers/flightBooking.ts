@@ -35,10 +35,6 @@ const requestStatus = [
 ] as const;
 const requestPriority = ["low", "normal", "high", "urgent"] as const;
 const issuanceCheckKeys = ["identity_verified", "passport_valid", "fare_revalidated", "payment_verified", "pnr_document_ready"] as const;
-export function hasCompleteIssuanceChecklist(value: unknown) {
-  const checklist = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, boolean> : {};
-  return issuanceCheckKeys.every((key) => checklist[key] === true);
-}
 const customerStatusLabels: Record<(typeof requestStatus)[number], string> = {
   pending_review: "En cours de vérification",
   assigned: "Prise en charge par un conseiller",
@@ -788,7 +784,9 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
-      if (!hasCompleteIssuanceChecklist(existing.issuanceChecklist)) {
+      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
+      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
       await db.update(flightBookingRequests).set({
@@ -807,10 +805,9 @@ export const flightBookingRouter = router({
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
 
       // Envoi automatique de la confirmation PDF par e-mail au client
-      const pdfLink = input.issuedPdfUrl || existing.issuedPdfUrl;
-      let emailNotificationDispatched = false;
       try {
         const clientEmail = existing.candidateEmail;
+        const pdfLink = input.issuedPdfUrl || existing.issuedPdfUrl;
         if (clientEmail) {
           await sendEmail({
             to: clientEmail,
@@ -839,37 +836,12 @@ export const flightBookingRouter = router({
               </div>
             `,
           });
-          emailNotificationDispatched = true;
-          await db.update(flightBookingRequests).set({ ticketEmailSentAt: new Date() }).where(eq(flightBookingRequests.id, input.requestId));
-          await db.insert(flightBookingRequestHistory).values({
-            requestId: input.requestId,
-            action: "pnr_email_dispatched",
-            changedBy: admin.email,
-            oldValue: null,
-            newValue: "email_dispatched",
-            details: `Notification PNR transmise à ${clientEmail}. Document espace client : ${pdfLink ? "disponible" : "référence PNR uniquement"}.`,
-          });
         }
       } catch (err) {
         console.error("[Email Notification Error] Échec de l'envoi de la confirmation PNR par e-mail:", err);
-        await db.insert(flightBookingRequestHistory).values({
-          requestId: input.requestId,
-          action: "pnr_email_dispatch_failed",
-          changedBy: admin.email,
-          oldValue: null,
-          newValue: "email_not_dispatched",
-          details: "La remise dans l’espace client est enregistrée, mais la notification e-mail doit être relancée par l’équipe.",
-        });
       }
 
-      return {
-        success: true,
-        loyalty,
-        delivery: {
-          clientSpaceReady: Boolean(pdfLink),
-          emailNotificationDispatched,
-        },
-      };
+      return { success: true, loyalty };
     }),
 
   generatePaymentReceiptPdf: publicProcedure
@@ -907,7 +879,9 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
 
-      if (!hasCompleteIssuanceChecklist(existing.issuanceChecklist)) {
+      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
+      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
 
@@ -939,7 +913,6 @@ export const flightBookingRouter = router({
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
 
       // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
-      let emailNotificationDispatched = false;
       try {
         await sendEmail({
           to: existing.candidateEmail,
@@ -960,39 +933,13 @@ export const flightBookingRouter = router({
               <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
               <p style="font-size: 11px; color: #64748b; text-align: center;">Ceci est un message automatique, veuillez ne pas y répondre directement.</p>
             </div>
-            `,
-          });
-        emailNotificationDispatched = true;
-        await db.update(flightBookingRequests).set({ ticketEmailSentAt: new Date() }).where(eq(flightBookingRequests.id, input.requestId));
-        await db.insert(flightBookingRequestHistory).values({
-          requestId: input.requestId,
-          action: "pnr_email_dispatched",
-          changedBy: admin.email,
-          oldValue: null,
-          newValue: "email_dispatched",
-          details: `Document PNR disponible dans l’espace client et notification transmise à ${existing.candidateEmail}.`,
+          `,
         });
       } catch (err) {
         console.error("[Email Notification Error] Impossible d'envoyer l'e-mail PNR:", err);
-        await db.insert(flightBookingRequestHistory).values({
-          requestId: input.requestId,
-          action: "pnr_email_dispatch_failed",
-          changedBy: admin.email,
-          oldValue: null,
-          newValue: "email_not_dispatched",
-          details: "Document PNR disponible dans l’espace client, mais notification e-mail à relancer par l’équipe.",
-        });
       }
 
-      return {
-        success: true,
-        issuedPdfUrl: url,
-        loyalty,
-        delivery: {
-          clientSpaceReady: true,
-          emailNotificationDispatched,
-        },
-      };
+      return { success: true, issuedPdfUrl: url, loyalty };
     }),
 
   exportAuditHistoryPdf: publicProcedure
@@ -1248,19 +1195,16 @@ export const flightBookingRouter = router({
         `,
       });
 
-      const sentAt = new Date();
-      await db.update(flightBookingRequests).set({ ticketEmailSentAt: sentAt }).where(eq(flightBookingRequests.id, input.requestId));
-
       await db.insert(flightBookingRequestHistory).values({
         requestId: input.requestId,
-        action: "ticket_email_resent",
+        action: "pnr_reminder_sent",
         changedBy: admin.email,
         oldValue: existing.status,
         newValue: existing.status,
-        details: "Billet PNR renvoyé manuellement par e-mail au client.",
+        details: "Relance manuelle PNR non consulté envoyée par e-mail au client.",
       });
 
-      return { success: true, ticketEmailSentAt: sentAt };
+      return { success: true };
     }),
 
   exportPnrAuditCsv: publicProcedure

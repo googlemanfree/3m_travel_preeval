@@ -7,7 +7,6 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { resetPwaCache } from "@/lib/pwaClient";
-import { SafeResponsiveChart } from "@/components/SafeResponsiveChart";
 
 const quickLinks = [
   { href: "/flights", label: "Réserver un vol", description: "Rechercher et préparer une demande", icon: Plane, tone: "bg-blue-50 text-blue-700" },
@@ -196,8 +195,7 @@ export default function ClientSpaceNavigation() {
             ) : (
               <div className="space-y-3">
                 {/* Représentation graphique en barres / points cumulés */}
-                <SafeResponsiveChart className="h-36 w-full" label="Évolution des points de fidélité">
-                <div className="flex h-full w-full items-end gap-3 border-b border-slate-200 px-2 pb-2 pt-6">
+                <div className="h-36 w-full flex items-end gap-3 pt-6 px-2 border-b border-slate-200 pb-2">
                   {(() => {
                     const txs = [...loyaltyQuery.data.transactions].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
                     let runningTotal = 0;
@@ -232,7 +230,6 @@ export default function ClientSpaceNavigation() {
                     });
                   })()}
                 </div>
-                </SafeResponsiveChart>
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
                   <span>Historique des flux de points 3M Rewards</span>

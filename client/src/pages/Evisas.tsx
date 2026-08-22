@@ -973,7 +973,6 @@ export default function Evisas() {
   const unifiedEvisaCatalogue = useMemo(() => {
     const seen = new Set<string>();
     return mergeEvisaCatalogue(evisasDatabaseComplete, managedOverrides).map((entry) => ({
-      id: entry.id,
       country: entry.country,
       flag: entry.flag,
       region: entry.region,
@@ -1017,8 +1016,9 @@ export default function Evisas() {
     window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
   };
 
-  const handleLaunchProcedure = (countryName: string, countryCode: string) => {
-    window.location.assign(`/evisas/request?countryCode=${encodeURIComponent(countryCode)}&countryName=${encodeURIComponent(countryName)}&nationality=${encodeURIComponent(selectedNationalite)}`);
+  const handleLaunchProcedure = (countryName: string) => {
+    const text = encodeURIComponent(`Bonjour, je suis de nationalité ${selectedNationalite} et je souhaite démarrer la procédure complète de demande d'e-Visa pour ${countryName} via 3M Travel & Services.`);
+    window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
   };
 
   return (
@@ -1257,7 +1257,7 @@ export default function Evisas() {
                   {/* Action Buttons */}
                   <div className="space-y-2">
                     <Button
-                      onClick={() => handleLaunchProcedure(evisa.country, evisa.id)}
+                      onClick={() => handleLaunchProcedure(evisa.country)}
                       className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all text-sm"
                     >
                       <Sparkles className="w-4 h-4" />

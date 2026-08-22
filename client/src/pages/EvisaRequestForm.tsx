@@ -86,7 +86,7 @@ export default function EvisaRequestForm() {
     lastName: '',
     email: '',
     phone: '',
-    nationality: new URLSearchParams(window.location.search).get('nationality') || '',
+    nationality: '',
     dateOfBirth: '',
     passportNumber: '',
     issuingCountry: '',

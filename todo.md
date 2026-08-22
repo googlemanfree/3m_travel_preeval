@@ -1,45 +1,40 @@
 # 3M Travel & Services — Roadmap
 
-## Contact Ottawa et graphique de fidélité
-- [x] Recenser les parcours WhatsApp et le conteneur du graphique de fidélité.
-- [x] Migrer toutes les occurrences applicatives du WhatsApp historique vers le contact prioritaire Ottawa, y compris les messages, fenêtres, liens, appels et PDF client.
-- [x] Corriger le rendu du graphique de fidélité lorsqu’il est initialement masqué.
-- [x] Ajouter un contrôle de non-régression garantissant qu’aucun parcours public ne conserve l’ancien numéro WhatsApp.
-- [x] Rejouer la vérification complète des CTA de contact publics, du graphique, de TypeScript et des régressions avant publication.
-
-## Contacts multi-bureaux et formulaire rapide
-- [x] Créer et valider une compétence réutilisable de gestion de contacts multi-bureaux.
-- [x] Définir les horaires, le fuseau horaire et les contacts du bureau d’Ottawa et du bureau Cameroun.
-- [x] Ajouter un sélecteur interactif Ottawa–Cameroun aux actions de contact publiques.
-- [x] Ajouter un formulaire de contact rapide routé vers le bureau sélectionné.
-- [x] Ajouter un test réellement interactif du sélecteur Ottawa–Cameroun, de ses horaires et de ses liens WhatsApp.
-- [x] Ajouter un test réellement interactif du formulaire rapide, de ses validations et de son destinataire WhatsApp.
-- [x] Ajouter une régression d’accessibilité couvrant clavier, focus, labels et annonce d’erreur du panneau multi-bureaux.
-- [x] Vérifier explicitement le comportement mobile et desktop des nouveaux contrôles avant publication.
-
-## Distinction Ottawa Canada et Yaoundé Cameroun
-- [x] Corriger les libellés pour afficher « Bureau 3M Travel d’Ottawa, Canada » et « Bureau de Yaoundé, Cameroun ».
-- [x] Conserver le WhatsApp +1 672 897 2999 pour Ottawa et +237 698 104 832 pour Yaoundé.
-- [x] Vérifier les liens et messages du sélecteur et du formulaire pour les deux bureaux.
-
-## Contacts visuels et poste administratif HD
-- [x] Ajouter les drapeaux Canada et Cameroun au sélecteur de bureaux.
-- [x] Afficher l’adresse complète du bureau de Yaoundé, une carte dynamique et un accès WhatsApp direct selon le bureau sélectionné.
-- [ ] Confirmer l’adresse de rue officielle du bureau d’Ottawa avant son affichage public complet ; la carte est actuellement centrée sur Ottawa, Ontario.
-- [x] Réorganiser la navigation du tableau de bord administrateur en catégories HD claires et accessibles.
-- [x] Vérifier explicitement le rendu mobile du panneau de contact avec drapeaux, adresse et carte dynamique.
-- [x] Ajouter un test interactif des raccourcis Retour, Dossiers et Actualiser du poste administratif HD.
-
-## Priorité WhatsApp Yaoundé
-- [x] Recenser les icônes et appels WhatsApp publics qui doivent pointer vers Yaoundé.
-- [x] Définir Yaoundé (+237 698 104 832) comme contact WhatsApp principal des liens directs.
-- [x] Conserver Ottawa comme contact secondaire discret dans le sélecteur et le pied de page.
-- [x] Vérifier les liens WhatsApp et les régressions avant publication.
-
 ## Exportation iCal des Réservations (v253)
 - [x] Ajouter la procédure tRPC `exportCalendarIcal` dans `server/routers/tourism.ts` pour générer un flux .ics sécurisé
 - [x] Intégrer le bouton d’export iCal dans le composant `AdminCalendarView.tsx` avec téléchargement instantané du fichier
 - [x] Valider avec les tests unitaires et TypeScript puis publier la version finale
+
+## Déclaration d’évaluation préalable à l’inscription
+- [x] Analyser les champs d’inscription, les étapes d’évaluation et la fiche administrative existante.
+- [x] Enregistrer de façon traçable l’indication « évaluation déjà effectuée » lors de la création de compte.
+- [x] Marquer l’étape client comme évaluation reçue lorsque le candidat répond oui, sinon conserver « évaluation en cours ».
+- [x] Afficher et traiter cette information dans le back-office sans validation automatique d’un résultat non vérifié.
+- [x] Ajouter un test d’intégration du routeur d’inscription pour les réponses oui/non et la persistance attendue.
+- [x] Ajouter un test tRPC réel de `listCandidates` pour le compte pré-dossier et son statut déclaré.
+- [x] Ajouter un test tRPC réel de `getCandidateDetails` et de la fiche administrative pré-dossier.
+- [x] Ajouter un test client de la timeline pour les états déclaré et en cours.
+- [x] Rejouer les contrôles intégrés et les régressions avant publication.
+
+## Sous-page de service 3M Digital
+- [x] Remplacer l’orientation « communauté » par une sous-page de service 3M Digital fidèle à la référence fournie.
+- [x] Centraliser les coordonnées 3M Digital/Yaoundé dans une source partagée réutilisée par la sous-page et le pied de page.
+- [x] Ajouter une interface administrateur pour consulter et modifier les pôles et contenus publiés de la sous-page 3M Digital.
+- [x] Ajouter un test d’intégration du flux création de demande → liste admin → mise à jour humaine de statut et de note.
+- [x] Redémarrer et vérifier la disponibilité du routeur 3M Digital dans le serveur de développement.
+- [ ] Vérifier visuellement l’écran `/admin/digital-services`, l’éditeur de contenu et la file de demandes après les derniers changements.
+- [ ] Exécuter un parcours UI de demande 3M Digital jusqu’au traitement administratif de statut et de notes.
+
+## Sauvegarde alternative avant publication
+- [x] Diagnostiquer une méthode de sauvegarde non destructive malgré le conflit de synchronisation.
+- [x] Préserver une copie vérifiable des changements locaux validés.
+- [ ] Synchroniser ou publier sans écraser les changements existants.
+
+## Mise en ligne du service 3M Digital
+- [ ] Diagnostiquer l’écart entre les routes locales 3M Digital et la version publique.
+- [ ] Préserver une version vérifiable des nouvelles routes avant synchronisation.
+- [ ] Synchroniser et publier `/3m-digital` ainsi que `/admin/digital-services` sans écraser les changements existants.
+- [ ] Vérifier les routes publiées et l’accès administrateur après déploiement.
 
 ## Système Centralisé de Réservation Multi-Services & PNR / Référence Fournisseur (v254)
 - [x] Étendre le schéma Drizzle et les types pour stocker le PNR / référence fournisseur, la catégorie de service et la quittance PDF de réservation
@@ -728,24 +723,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les filtres d’équipements sur ordinateur et mobile, avec tests de non-régression
 - [x] Cartographier les sources officielles et partenaires vérifiables pour les hôtels du Cameroun et d’Afrique centrale
 - [x] Définir un catalogue hôtelier administrable avec provenance, date de vérification, équipements et conditions tarifaires
-- [x] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office — huit fiches validées et tracées par conseiller
-- [x] Obtenir la confirmation humaine finale d’une fiche techniquement prête avant sa publication client
-- [x] Rendre la file de précontrôle hôtelier visible avec une action rapide de confirmation dans Tourisme & Devis
-- [x] Vérifier le rendu connecté de l’action rapide de confirmation hôtelier dans Tourisme & Devis
-- [x] Alerter visuellement l’administrateur lorsqu’une fiche hôtel est techniquement prête à confirmer
-- [x] Exporter en CSV l’historique complet des validations hôtelières, avec conseiller et date
-- [x] Ajouter un filtre client n’affichant que les hôtels confirmés
-- [x] Associer des visuels hôteliers propres à chaque fiche en respectant leur provenance et leurs droits d’usage
-- [x] Tester les alertes, exports, filtre client et rendu des visuels avant publication
-- [x] Conserver la confirmation humaine finale avant toute publication d’hôtel dans 3M Booking
-- [x] Automatiser le précontrôle des fiches hôtel tout en conservant une confirmation humaine finale en un clic
-- [x] Définir et automatiser le précontrôle technique des liens, coordonnées et provenance des fiches hôtel
-- [x] Afficher les résultats de précontrôle sans transformer ces résultats en validation client automatique
+- [ ] Créer un premier périmètre d’hôtels vérifiés, relié à la demande 3M Booking et au back-office
 - [x] Mettre en place des garde-fous pour éviter d’afficher des tarifs ou disponibilités non confirmés
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
-- [x] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — écarté : solution payante non retenue
+- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale
 - [x] Identifier une source ouverte ou gratuite permettant de démarrer un catalogue hôtelier Cameroun et Afrique centrale
 - [x] Concevoir la table de catalogue hôtelier avec source OSM, URL officielle, équipements et date de vérification
 - [x] Importer de manière contrôlée les hôtels OpenStreetMap des neuf villes prioritaires
@@ -753,12 +736,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre la sélection d’un hôtel du catalogue dans 3M Booking et transmettre sa provenance au back-office
 - [x] Afficher l’attribution OpenStreetMap et exclure tout tarif ou disponibilité non vérifiés
 - [x] Afficher le lien officiel de réservation de l’hôtel sélectionné dans chaque demande côté administration
-- [x] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
-- [x] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel — 795 hôtels importés, dont 713 fiches à compléter ou vérifier avant publication client
+- [ ] Lancer l’import groupé des neuf villes prioritaires vers le catalogue hôtelier administrateur
+- [ ] Vérifier et consigner les volumes importés ainsi que les établissements sans lien officiel
 - [x] Inspecter les connecteurs et les fournisseurs B2B hôteliers accessibles pour 3M Booking
 - [x] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
-- [x] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle — écarté : solution payante non retenue
-- [x] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client — écarté : parcours gratuit retenu
+- [ ] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle
+- [ ] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
@@ -766,146 +749,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la route publique `/3m-booking` qui renvoie actuellement une page 404
 - [x] Vérifier les attributs `src` vides détectés dans la console : non reproduits lors d’une session fraîche après correction de route
 - [x] Vérifier la pile d’actions flottantes mobile : aucun chevauchement entre les commandes n’est reproduit sur les parcours publics contrôlés
-- [x] Simplifier l’administration du catalogue hôtelier pour un usage gratuit sans fournisseur externe
-- [x] Présenter clairement au client un devis à confirmer plutôt qu’une disponibilité ou réservation automatique
-- [x] Vérifier le parcours gratuit de demande d’hôtel, de la sélection au back-office
-- [x] Diagnostiquer l’écart entre la session administrateur visible et les appels du suivi e-mail
-- [x] Corriger la propagation de session du module d’administration concerné
-- [x] Tester la régression du suivi e-mail : jeton de session administrateur réutilisé et 467 tests réussis
-- [x] Cartographier les routes, tests automatisés et contrôles de session à couvrir dans la vérification complète
-- [x] Vérifier les parcours publics, client et administrateur accessibles sur ordinateur et mobile
-- [x] Vérifier les API, journaux, PWA et protections d’accès puis corriger toute anomalie reproductible
-- [x] Exécuter la régression complète et publier le bilan de vérification
-- [x] Ajouter un indicateur de navigation fluide et respectueux des préférences d’accessibilité
-- [x] Uniformiser les notifications de succès et d’erreur pour les actions administratives
-- [x] Ajouter une recherche instantanée aux données administratives prioritaires et vérifier son accessibilité
-- [x] Analyser la connexion administrateur, le jeton de session et la redirection du tableau de bord
-- [x] Corriger la persistance de session administrateur entre connexion et navigation
-- [x] Ajouter un test de non-régression du maintien de session administrateur — 474 tests réussis
-- [x] Précontrôler les liens et la provenance des fiches hôtel sans modifier leur statut de validation humaine
-- [x] Afficher une liste prioritaire de fiches techniquement prêtes à être vérifiées par un conseiller
-- [x] Vérifier que le précontrôle ne permet aucune approbation automatique côté client ou administration — 476 tests réussis
-- [x] Identifier les actions Tourisme encore dépendantes uniquement du cookie administrateur
-- [x] Transmettre le jeton de repli sécurisé aux validations de catalogue hôtelier
-- [x] Tester qu’une validation hôtel est enregistrée avec cookie ou jeton administrateur valide — 478 tests réussis
-- [x] Identifier l’erreur de rendu responsable de la page blanche administrateur
-- [x] Corriger le rendu de session ou de tableau concerné et ajouter un test de non-régression
-- [x] Vérifier le retour du tableau administrateur sur ordinateur et mobile — 480 tests réussis et accès protégé contrôlé
-- [x] Ajouter un export CSV et un export PDF traçable des fiches hôtels depuis Tourisme & Devis
-- [x] Ajouter recherche instantanée et filtre par pays au Catalogue e-Visa
-- [x] Ajouter des badges de couleur cohérents pour les statuts de précontrôle hôtelier
-- [x] Tester les exports, filtres et badges administratifs avant publication — 482 tests réussis
-- [x] Afficher les résultats de disponibilité de vols immédiatement sous le formulaire de recherche
-- [x] Enrichir les cartes de résultats avec horaires, escales, bagages, cabine et conditions tarifaires disponibles
-- [x] Vérifier le rendu des résultats de vols sur ordinateur et mobile, puis exécuter les régressions — 484 tests réussis
-- [x] Empêcher une recherche de vols de rester indéfiniment en attente en prévoyant un repli explicite et rapide
-- [x] Auditer la création de réservation de vol, la transmission à l’administration et les données opérationnelles disponibles
-- [x] Renforcer la fiche administrateur avec les informations nécessaires à la réservation et au suivi PNR
-- [x] Ajouter une action administrateur de relance PNR avec état de synchronisation e-mail et espace client
-- [x] Vérifier ou fiabiliser la remise synchronisée du PNR dans l’espace client et par e-mail
-- [x] Tester le parcours de réservation de bout en bout avec contrôles d’autorisation et de non-régression — 487 tests réussis
-- [x] Retirer l’option obsolète de suppression de cookie Express sans modifier la portée de session
-- [x] Clarifier le champ Tourisme : aucune destination n’est préremplie et le libellé est désormais neutre
-- [x] Identifier et corriger les composants qui transmettent un attribut d’image `src` vide au navigateur
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
-- [x] Auditer les parcours assurance, vol, e‑Visa et procédures ainsi que leurs notifications, documents et synchronisations existantes
-- [x] Créer le circuit assurance : demande, référence, coupon de réservation, traitement administrateur et remise du PDF au client
-- [x] Harmoniser les confirmations e-mail et espace client des services soumis puis traités par l’administration
-- [x] Corriger les boutons et liens sans destination opérationnelle dans les parcours de service prioritaires
-- [x] Tester les circuits assurance, vol, e‑Visa et procédures de bout en bout avant publication
-- [x] Préserver les sessions 24 heures publiées tout en intégrant les améliorations assurance et e‑Visa locales
-- [x] Vérifier l’absence de perte de contenu, de route ou de contrôle d’accès après la fusion
-- [x] Tester la synchronisation complète assurance et e‑Visa entre client, e-mail et back-office
-- [x] Vérifier les sessions administrateur et client de 24 heures, leur expiration et la déconnexion manuelle
-- [x] Parcourir les actions du back-office, corriger les liens ou boutons inactifs et consigner les contrôles
-- [x] Exécuter les régressions et la vérification visuelle après les corrections
-- [x] Contrôler l’accès administrateur connecté et la persistance de session dans le navigateur réel
-- [x] Vérifier les actions opérationnelles prioritaires du back-office sans modifier de dossiers réels
-- [x] Corriger et tester toute erreur de navigation ou de remise reproductible découverte
-- [x] Cartographier les notifications et les actions de remise administratives à contrôler sans envoi réel
-- [x] Vérifier les écrans, accès et retours d’erreur des notifications et remises
-- [x] Corriger et tester toute anomalie reproductible avant publication
-- [x] Créer une route directe sécurisée vers le suivi e-mail administrateur
-- [x] Ajouter un tableau de santé SMTP réservé au back-office, sans exposer de secrets
-- [x] Préparer un dossier de démonstration isolé pour les tests de remise e-mail réels
-- [x] Créer et valider une compétence réutilisable pour le contrôle de remise e-mail
-- [x] Tester les accès, la santé SMTP, le dossier de démonstration et les régressions avant publication
-- [x] Ajouter un filtre par type de remise dans les journaux e-mail administratifs
-- [x] Notifier les administrateurs lorsque le diagnostic SMTP signale une défaillance
-- [x] Archiver manuellement le dossier de démonstration après test sans supprimer le journal de remise
-- [x] Créer et valider une compétence réutilisable de supervision e-mail
-- [x] Tester le filtrage, les alertes SMTP, l’archivage et les régressions avant publication
-- [x] Ajouter l’export CSV des journaux e-mail selon les filtres actifs
-- [x] Afficher la dernière remise réussie par type de service dans le centre e-mail
-- [x] Ajouter une relance groupée des e-mails en échec avec confirmation administrative et suivi du résultat
-- [x] Créer et valider une compétence réutilisable de pilotage des remises e-mail
-- [x] Tester les exports, les indicateurs, la relance groupée et les régressions avant publication
-- [x] Afficher un résumé détaillé des échecs d’e-mails de la journée dans le tableau de bord
-- [x] Ajouter un graphique des taux de réussite de remise par service sur les 30 derniers jours
-- [x] Permettre la sélection manuelle des e-mails en échec avant relance groupée
-- [x] Tester les indicateurs, le graphique, les sélections et les relances ciblées avant publication
-- [x] Ajouter un filtre de journaux e-mail par conseiller ayant déclenché la remise
-- [x] Afficher une comparaison hebdomadaire des taux de réussite par service
-- [x] Ajouter une prévisualisation du contenu d’un e-mail en échec avant sa relance
-- [x] Afficher un indicateur de traitement et un bilan de succès ou d’erreur pour la relance groupée
-- [x] Créer et valider une compétence réutilisable de pilotage avancé des remises e-mail
-- [x] Tester les filtres, la comparaison, les prévisualisations et les relances avant publication
-- [x] Ajouter des seuils personnalisés d’échecs e-mail par conseiller avec alertes administratives
-- [x] Générer un export PDF hebdomadaire des statistiques de remise e-mail
-- [x] Masquer automatiquement les données sensibles dans les aperçus d’e-mails en échec
-- [x] Créer et valider une compétence réutilisable de supervision e-mail sécurisée
-- [x] Tester les seuils, alertes, exports PDF, masquage et régressions avant publication
-- [x] Créer une page sécurisée de paramètres des seuils d’alerte par conseiller
-- [x] Journaliser les incidents de remise déclenchés et permettre leur accusé de réception par un administrateur
-- [x] Inclure l’historique des alertes et accusés dans le rapport PDF hebdomadaire
-- [x] Tester les paramètres, incidents, accusés et rapports avant publication
-- [x] Permettre aux administrateurs d’ajouter des commentaires détaillés aux incidents de remise e-mail
-- [x] Calculer et afficher le délai moyen de résolution des incidents par conseiller
-- [x] Tester les commentaires, calculs de délai, autorisations et régressions avant publication
-- [x] Diagnostiquer le blocage « espace ne répond pas encore » lors de l’actualisation du dossier client
-- [x] Corriger la restauration de session et les gardes de profil afin d’éviter les faux blocages au rechargement
-- [x] Tester les actualisations avec profils incomplets et dossiers actifs avant publication
-- [x] Diagnostiquer les redirections client et administrateur vers le login malgré une session encore valide
-- [x] Supprimer les redirections de repli lors d’erreurs transitoires tout en conservant l’expiration et la déconnexion réelles
-- [x] Tester les sessions valides, les erreurs temporaires et les expirations confirmées avant publication
-- [x] Afficher un indicateur discret confirmant la restauration d’une session valide
-- [x] Afficher l’heure d’expiration de session dans les menus client et administrateur
-- [x] Ajouter un renouvellement manuel sécurisé de session avant expiration
-- [x] Créer et valider une compétence réutilisable de continuité de session
-- [x] Tester les indicateurs, heures d’expiration, renouvellements et régressions avant publication
-- [x] Afficher un rappel visuel cinq minutes avant l’expiration de session
-- [x] Enregistrer et afficher l’historique détaillé des renouvellements de session
-- [x] Permettre aux administrateurs de révoquer toutes leurs sessions actives de manière sécurisée
-- [x] Tester les rappels, l’historique, la révocation et les régressions avant publication
-- [x] Diagnostiquer la demande de reconnexion affichée malgré une session client encore valide
-- [x] Préserver la session valide dans l’écran de repli et ne proposer la reconnexion qu’après invalidation réelle
-- [x] Tester les erreurs transitoires, les actualisations et les expirations réelles avant publication
-- [x] Ajouter une recherche client par nom d’hôtel avec autocomplétion des établissements confirmés
-- [x] Créer un tableau administrateur pour identifier et filtrer les fiches sans visuel officiel
-- [x] Formaliser et valider une compétence réutilisable pour le workflow de recherche et visuels hôteliers
-- [x] Tester la recherche, les suggestions, le suivi des visuels et la compétence avant publication
-- [x] Diagnostiquer les erreurs et les boutons inaccessibles du parcours d’envoi de billet administrateur
-- [x] Corriger l’envoi de billet, les autorisations et les retours d’interface côté administrateur
-- [x] Tester l’accès client au billet et la livraison e-mail après action administrateur
-- [x] Garantir qu’une validation de billet publie le PDF dans l’espace client et déclenche l’e-mail de remise au client
-- [x] Ajouter un renvoi explicite du billet par e-mail depuis le suivi administrateur
-- [x] Afficher l’horodatage exact de chaque e-mail de billet transmis au client
-- [x] Intégrer un aperçu PDF dans la modale avant la validation finale du billet
-- [x] Créer et valider une compétence réutilisable de remise administrative de billet
-- [x] Tester les renvois, horodatages, aperçu PDF et contrôles de remise avant publication
-- [x] Recenser côté administration tous les comptes créés avant ouverture de dossier
-- [x] Permettre à un conseiller d’activer un dossier après dépôt en agence et de synchroniser les étapes vers l’espace client
-- [x] Ajouter des relances et notifications contrôlées pour les comptes pré-dossier et dossiers en attente
-- [x] Maintenir la session administrateur active jusqu’à déconnexion pendant la journée et fiabiliser les raccourcis de navigation interne
-- [x] Auditer et corriger les boutons inaccessibles et les synchronisations admin-espace client
-- [x] Tester les comptes pré-dossier, activation, relances, session, navigation et autorisations avant publication
-- [x] Afficher le drapeau, la destination confirmée et des visuels adaptés dans l’espace client des dossiers actifs
-- [x] Ajouter une file administrateur des évaluations récemment reçues avant création de compte ou ouverture de dossier
-- [x] Permettre au conseiller de valider une évaluation, de rattacher le compte créé ensuite et d’activer l’étape suivante du dossier
-- [x] Synchroniser immédiatement la validation, les notifications et les étapes de procédure visibles dans l’espace client
-- [x] Agréger les actions administratives et les changements d’étape visibles au client dans un journal chronologique sécurisé
-- [x] Afficher une frise historique lisible dans le dossier client actif sans exposer les notes internes
-- [x] Tester les droits, le tri chronologique et le rendu client avant publication
-- [x] Harmoniser la persistance des sessions client et administrateur sur 24 heures avec déconnexion manuelle
-- [x] Ajouter des raccourcis internes de retour et d’avancement dans les espaces client et administrateur
-- [x] Tester les expirations de session, les déconnexions et la navigation sans bouton du navigateur avant publication

@@ -70,7 +70,7 @@ export function CredibilityBadge() {
                     📞 +237 620-996-045
                   </a>
                   <a href="tel:+237698104832" className="text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors block">
-                    📞 +237 698 104 832
+                    📞 +237 698-104-832
                   </a>
                 </div>
               </div>

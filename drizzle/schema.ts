@@ -159,6 +159,11 @@ export const candidates = mysqlTable("candidates", {
     "approuve",
     "refuse",
   ]).default("nouveau").notNull(),
+  // Déclaration faite par le candidat à la création du compte. Elle indique
+  // qu’un résultat d’évaluation existe déjà, sans le présenter comme validé
+  // tant que l’équipe n’a pas rapproché le dossier.
+  evaluationDeclarationStatus: mysqlEnum("evaluationDeclarationStatus", ["not_declared", "declared_complete"]).default("not_declared").notNull(),
+  evaluationDeclaredAt: timestamp("evaluationDeclaredAt"),
   dossierNote: text("dossierNote"),         // Note interne du conseiller
   formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
   // Scoring
@@ -582,15 +587,6 @@ export const adminAccounts = mysqlTable("admin_accounts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
-/** Historique traçable des connexions, renouvellements et révocations administrateur. */
-export const adminSessionEvents = mysqlTable("admin_session_events", {
-  id: int("id").autoincrement().primaryKey(),
-  adminId: int("adminId").notNull(),
-  eventType: mysqlEnum("eventType", ["login", "renewed", "revoked_all"]).notNull(),
-  expiresAt: timestamp("expiresAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
 /** Demandes de tourisme, hôtel, véhicule et packs, avec devis confirmé par l’agence. */
 export const tourismServiceRequests = mysqlTable("tourism_service_requests", {
   id: int("id").autoincrement().primaryKey(), reference: varchar("reference", { length: 32 }).notNull().unique(),
@@ -621,9 +617,6 @@ export const hotelCatalog = mysqlTable("hotel_catalog", {
   longitude: decimal("longitude", { precision: 10, scale: 7 }),
   officialWebsiteUrl: text("officialWebsiteUrl"),
   officialBookingUrl: text("officialBookingUrl"),
-  imageUrl: text("imageUrl"),
-  imageSourceUrl: text("imageSourceUrl"),
-  imageAttribution: varchar("imageAttribution", { length: 255 }),
   phone: varchar("phone", { length: 80 }),
   stars: int("stars"),
   amenitiesJson: text("amenitiesJson"),
@@ -672,13 +665,8 @@ export const insuranceRequests = mysqlTable("insurance_requests", {
   emergencyContactName: varchar("emergencyContactName", { length: 255 }).notNull(),
   emergencyContactPhone: varchar("emergencyContactPhone", { length: 50 }).notNull(),
   notes: text("notes"),
-  couponFileKey: varchar("couponFileKey", { length: 512 }),
-  couponFileName: varchar("couponFileName", { length: 255 }),
-  couponGeneratedAt: timestamp("couponGeneratedAt"),
-  couponEmailSentAt: timestamp("couponEmailSentAt"),
   attestationFileKey: varchar("attestationFileKey", { length: 512 }),
   attestationFileName: varchar("attestationFileName", { length: 255 }),
-  attestationEmailSentAt: timestamp("attestationEmailSentAt"),
   consentAt: timestamp("consentAt").notNull(),
   status: mysqlEnum("status", ["new", "contacted", "quote_sent", "completed", "cancelled"]).default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1220,6 +1208,39 @@ export const consultationRequests = mysqlTable("consultation_requests", {
 export type ConsultationRequest = typeof consultationRequests.$inferSelect;
 export type InsertConsultationRequest = typeof consultationRequests.$inferInsert;
 
+/** Demandes issues de la sous-page de service 3M Digital. */
+export const digitalServiceRequests = mysqlTable("digital_service_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  reference: varchar("reference", { length: 40 }).notNull().unique(),
+  service: mysqlEnum("service", ["web_platform", "digital_growth", "it_support", "professional_training"]).notNull(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  organization: varchar("organization", { length: 255 }),
+  message: text("message").notNull(),
+  status: mysqlEnum("status", ["new", "contacted", "proposal_sent", "completed", "cancelled"]).default("new").notNull(),
+  adminNotes: text("adminNotes"),
+  handledByAdminEmail: varchar("handledByAdminEmail", { length: 320 }),
+  handledAt: timestamp("handledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DigitalServiceRequest = typeof digitalServiceRequests.$inferSelect;
+export type InsertDigitalServiceRequest = typeof digitalServiceRequests.$inferInsert;
+
+/** Contenu éditable de la sous-page de service 3M Digital. */
+export const digitalServiceContent = mysqlTable("digital_service_content", {
+  id: int("id").primaryKey(),
+  heroTitle: varchar("heroTitle", { length: 255 }).notNull(),
+  heroDescription: text("heroDescription").notNull(),
+  serviceIntro: text("serviceIntro").notNull(),
+  requestIntro: text("requestIntro").notNull(),
+  serviceDefinitionsJson: text("serviceDefinitionsJson").notNull(),
+  updatedByAdminEmail: varchar("updatedByAdminEmail", { length: 320 }),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DigitalServiceContent = typeof digitalServiceContent.$inferSelect;
+
 
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
@@ -1443,56 +1464,10 @@ export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
   status: varchar("status", { length: 50 }).default("sent").notNull(),
   providerMessageId: varchar("providerMessageId", { length: 255 }),
   errorDetails: text("errorDetails"),
-  triggeredByAdminEmail: varchar("triggeredByAdminEmail", { length: 320 }),
-  contentHtml: text("contentHtml"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
 export type InsertEmailDeliveryLog = typeof emailDeliveryLogs.$inferInsert;
-
-/** Seuils personnels de supervision des échecs de remise e-mail. */
-export const emailDeliveryAdvisorThresholds = mysqlTable("email_delivery_advisor_thresholds", {
-  id: int("id").autoincrement().primaryKey(),
-  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull().unique(),
-  dailyFailureThreshold: int("dailyFailureThreshold").default(3).notNull(),
-  updatedByAdminEmail: varchar("updatedByAdminEmail", { length: 320 }).notNull(),
-  lastAlertedAt: timestamp("lastAlertedAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-export type EmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferSelect;
-export type InsertEmailDeliveryAdvisorThreshold = typeof emailDeliveryAdvisorThresholds.$inferInsert;
-
-/** Incidents créés lorsqu’un seuil de remise e-mail est atteint. */
-export const emailDeliveryIncidents = mysqlTable("email_delivery_incidents", {
-  id: int("id").autoincrement().primaryKey(),
-  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull(),
-  thresholdId: int("thresholdId").notNull(),
-  failureCount: int("failureCount").notNull(),
-  thresholdValue: int("thresholdValue").notNull(),
-  status: mysqlEnum("status", ["open", "acknowledged"]).default("open").notNull(),
-  triggeredAt: timestamp("triggeredAt").defaultNow().notNull(),
-  acknowledgedAt: timestamp("acknowledgedAt"),
-  acknowledgedByAdminEmail: varchar("acknowledgedByAdminEmail", { length: 320 }),
-}, table => [
-  index("idx_email_incident_advisor_time").on(table.advisorEmail, table.triggeredAt),
-  index("idx_email_incident_status_time").on(table.status, table.triggeredAt),
-]);
-export type EmailDeliveryIncident = typeof emailDeliveryIncidents.$inferSelect;
-export type InsertEmailDeliveryIncident = typeof emailDeliveryIncidents.$inferInsert;
-
-/** Commentaires administratifs associés aux incidents de remise e-mail. */
-export const emailDeliveryIncidentComments = mysqlTable("email_delivery_incident_comments", {
-  id: int("id").autoincrement().primaryKey(),
-  incidentId: int("incidentId").notNull(),
-  commentText: text("commentText").notNull(),
-  createdByAdminEmail: varchar("createdByAdminEmail", { length: 320 }).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [
-  index("idx_email_incident_comment_incident_time").on(table.incidentId, table.createdAt),
-]);
-export type EmailDeliveryIncidentComment = typeof emailDeliveryIncidentComments.$inferSelect;
-export type InsertEmailDeliveryIncidentComment = typeof emailDeliveryIncidentComments.$inferInsert;
 
 /**
  * Historique des recherches de vols effectuées par les utilisateurs.
@@ -1656,7 +1631,6 @@ export const flightBookingRequests = mysqlTable("flight_booking_requests", {
   issuanceChecklist: json("issuanceChecklist"),
   pnrViewedAt: timestamp("pnrViewedAt"),
   pnrDownloadedAt: timestamp("pnrDownloadedAt"),
-  ticketEmailSentAt: timestamp("ticketEmailSentAt"),
   paymentMethod: varchar("paymentMethod", { length: 50 }),
   paymentTransactionId: varchar("paymentTransactionId", { length: 120 }),
   clientValidated: boolean("clientValidated").default(false).notNull(),

@@ -5,8 +5,7 @@ import { z } from "zod";
 import { adminNotifications, insuranceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
-import { notifyInsuranceRequest, sendInsuranceClientDelivery } from "../services/insuranceRequestNotification";
-import { createInsuranceCouponPdf } from "../services/insuranceCoupon";
+import { notifyInsuranceRequest } from "../services/insuranceRequestNotification";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { requireAdminSessionFromCookie } from "./adminAuth";
 
@@ -75,14 +74,6 @@ export const insuranceRequestsRouter = router({
       notes: input.notes || null,
       consentAt: new Date(),
     });
-    const created = await db.select({ id: insuranceRequests.id }).from(insuranceRequests).where(eq(insuranceRequests.reference, reference)).limit(1);
-    const requestId = created[0]?.id;
-    if (!requestId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Référence d’assurance introuvable après création." });
-    const couponFileName = `coupon-assurance-${reference}.pdf`;
-    const coupon = createInsuranceCouponPdf({ reference, fullName: input.fullName, destinationCountry: input.destinationCountry, departureDate: input.departureDate, returnDate: input.returnDate, coveragePlan: input.coveragePlan, travelersCount: input.travelers.length });
-    const storedCoupon = await storagePut(`insurance-coupons/${reference}/${couponFileName}`, coupon, "application/pdf");
-    const couponGeneratedAt = new Date();
-    await db.update(insuranceRequests).set({ couponFileKey: storedCoupon.key, couponFileName, couponGeneratedAt }).where(eq(insuranceRequests.id, requestId));
     await db.insert(adminNotifications).values({
       type: "new_contact_message",
       title: "Nouvelle demande d’assurance voyage",
@@ -95,14 +86,7 @@ export const insuranceRequestsRouter = router({
       destinationCountry: input.destinationCountry, departureDate: input.departureDate,
       returnDate: input.returnDate, travelersCount: input.travelers.length,
     }).catch(error => console.error("[InsuranceRequest] Alerte e-mail non envoyée", error));
-    void (async () => {
-      try {
-        const couponUrl = await storageGetSignedUrl(storedCoupon.key);
-        await sendInsuranceClientDelivery({ reference, fullName: input.fullName, email: input.email, phone: input.phone, destinationCountry: input.destinationCountry, departureDate: input.departureDate, returnDate: input.returnDate, travelersCount: input.travelers.length, documentUrl: couponUrl, documentLabel: couponFileName, documentKind: "coupon" });
-        await db.update(insuranceRequests).set({ couponEmailSentAt: new Date() }).where(eq(insuranceRequests.id, requestId));
-      } catch (error) { console.error("[InsuranceRequest] Coupon client non envoyé", error); }
-    })();
-    return { reference, requestId, couponReady: true };
+    return { reference, whatsappMessage: whatsappSummary(input, reference) };
   }),
 
   adminList: publicProcedure.query(async ({ ctx }) => {
@@ -138,13 +122,7 @@ export const insuranceRequestsRouter = router({
     const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
     const stored = await storagePut(`insurance-attestations/${request.reference}/${safeName}`, bytes, input.mimeType);
     await db.update(insuranceRequests).set({ attestationFileKey: stored.key, attestationFileName: input.fileName, status: "completed" }).where(eq(insuranceRequests.id, request.id));
-    let emailSent = true;
-    try {
-      const attestationUrl = await storageGetSignedUrl(stored.key);
-      await sendInsuranceClientDelivery({ reference: request.reference, fullName: request.fullName, email: request.email, phone: request.phone, destinationCountry: request.destinationCountry, departureDate: request.departureDate.toISOString().slice(0, 10), returnDate: request.returnDate.toISOString().slice(0, 10), travelersCount: request.travelersCount, documentUrl: attestationUrl, documentLabel: input.fileName, documentKind: "attestation" });
-      await db.update(insuranceRequests).set({ attestationEmailSentAt: new Date() }).where(eq(insuranceRequests.id, request.id));
-    } catch (error) { emailSent = false; console.error("[InsuranceRequest] Attestation client non envoyée", error); }
-    return { success: true, fileName: input.fileName, emailSent };
+    return { success: true, fileName: input.fileName };
   }),
 
   downloadAttestation: publicProcedure.input(z.object({ id: z.number().int().positive() })).query(async ({ input, ctx }) => {
@@ -155,15 +133,5 @@ export const insuranceRequestsRouter = router({
     const request = requests[0];
     if (!request?.attestationFileKey) throw new TRPCError({ code: "NOT_FOUND", message: "Aucune attestation disponible." });
     return { url: await storageGetSignedUrl(request.attestationFileKey), fileName: request.attestationFileName };
-  }),
-
-  downloadCoupon: publicProcedure.input(z.object({ id: z.number().int().positive() })).query(async ({ input, ctx }) => {
-    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const requests = await db.select().from(insuranceRequests).where(eq(insuranceRequests.id, input.id)).limit(1);
-    const request = requests[0];
-    if (!request?.couponFileKey) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun coupon disponible." });
-    return { url: await storageGetSignedUrl(request.couponFileKey), fileName: request.couponFileName };
   }),
 });

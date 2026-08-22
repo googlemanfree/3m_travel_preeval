@@ -124,14 +124,10 @@ const trpcClient = trpc.createClient({
       // @ts-expect-error - faux positif TypeScript, voir commentaire ci-dessus
       transformer: superjson,
       headers() {
-        const isAdminRoute = typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
-        // Le même navigateur peut contenir une session candidat et une session
-        // administrateur. Le jeton doit suivre la zone consultée : autrement un
-        // rechargement de l’espace client peut envoyer le jeton admin et faire
-        // échouer la synchronisation du dossier.
+        // 1. Admin session token (takes priority for admin routes)
         try {
           const adminToken = sessionStorage.getItem("adminSessionToken");
-          if (isAdminRoute && adminToken) {
+          if (adminToken) {
             return { Authorization: `Bearer ${adminToken}`, "X-Admin-Token": adminToken };
           }
         } catch {
@@ -149,13 +145,6 @@ const trpcClient = trpc.createClient({
           }
         } catch {
           // localStorage unavailable
-        }
-        // Les pages administratives peuvent uniquement utiliser le repli admin.
-        try {
-          const adminToken = sessionStorage.getItem("adminSessionToken");
-          if (adminToken) return { Authorization: `Bearer ${adminToken}`, "X-Admin-Token": adminToken };
-        } catch {
-          // sessionStorage unavailable
         }
         // 3. Preview auto-login fallback: when the browser blocks iframe cookies
         // (Safari ITP / private browsing / WebView), the runtime mirrors the
