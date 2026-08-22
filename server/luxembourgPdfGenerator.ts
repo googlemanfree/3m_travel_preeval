@@ -204,7 +204,7 @@ export function generateLuxembourgPDF(data: LuxembourgEvaluationData): Buffer {
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
   doc.text(
-    `3M Travel & Services SARL | +237 698 104 832 | www.3mtravelagency.click`,
+    `3M Travel & Services SARL | +1 672 897 2999 | www.3mtravelagency.click`,
     pageWidth / 2,
     pageHeight - 10,
     { align: 'center' }

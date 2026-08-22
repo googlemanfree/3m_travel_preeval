@@ -17,7 +17,7 @@ const ADMINS = [
   {
     email: "aureoldonfack@gmail.com",
     fullName: "Aureol Donfack",
-    phone: "+237698104832",
+    phone: "+16728972999",
     adminType: "evaluation" as const,
     password: "5@w7ETkXdqQP",
   },
@@ -31,7 +31,7 @@ const ADMINS = [
   {
     email: "hello@3mtravelagency.com",
     fullName: "3M Travel & Services",
-    phone: "+237698104832",
+    phone: "+16728972999",
     adminType: "procedures" as const,
     password: "M46C!mywWYV6",
   },

@@ -177,17 +177,17 @@ export default function PaymentAgencyConfirmation() {
             <div>
               <p className="text-sm text-gray-500 font-semibold mb-1">TÉLÉPHONE</p>
               <a
-                href="tel:+237698104832"
+                href="tel:+16728972999"
                 className="text-blue-600 hover:text-blue-700 font-semibold"
               >
-                +237 698 104 832
+                +1 672 897 2999
               </a>
             </div>
 
             <div>
               <p className="text-sm text-gray-500 font-semibold mb-1">WHATSAPP</p>
               <a
-                href="https://wa.me/237698104832"
+                href="https://wa.me/16728972999"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-green-600 hover:text-green-700 font-semibold"

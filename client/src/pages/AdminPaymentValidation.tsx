@@ -24,7 +24,7 @@ const mockPendingPayments: PendingPayment[] = [
     id: 'PAY001',
     candidateName: 'Exemple Candidat',
     email: 'exemple@email.com',
-    phone: '+237698104832',
+    phone: '+16728972999',
     amount: 65000,
     currency: 'XAF',
     paymentMethod: 'agency',

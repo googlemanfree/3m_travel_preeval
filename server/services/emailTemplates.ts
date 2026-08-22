@@ -158,7 +158,7 @@ export function generateVIPEvaluationEmail(data: EvaluationEmailData): string {
           <div class="footer">
             <p><strong>3M Travel & Services SARL</strong></p>
             <p>📍 Agence physique : Biyem-Assi (Montée Chapelle Obili) - Yaoundé, Cameroun</p>
-            <p>📞 Assistance WhatsApp : +237 698 104 832 / +237 620 996 045</p>
+            <p>📞 Assistance WhatsApp : +1 672 897 2999 / +237 620 996 045</p>
             <p>📧 Email : support@3mtravelagency.click</p>
             <p style="margin-top: 15px; border-top: 1px solid #ddd; padding-top: 10px;">
               © 2026 3M Travel & Services SARL. Tous droits réservés.

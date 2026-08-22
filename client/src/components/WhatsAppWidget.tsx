@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MessageCircle, X, Phone, Calendar, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const WHATSAPP_NUMBER = "237698104832";
+const WHATSAPP_NUMBER = "16728972999";
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 
 interface WhatsAppOption {

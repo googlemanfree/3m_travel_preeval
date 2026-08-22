@@ -216,7 +216,7 @@ async function sendPaymentRejectionEmail(
       to: candidate.email,
       replyTo: AGENCY_EMAIL,
       subject: '⚠️ Votre paiement a été rejeté - 3M Travel Agency',
-      html: `<h2>Paiement rejeté</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement n’a pas pu être validé.</p>${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ''}<p>Contactez notre équipe pour la suite de votre dossier.</p><p><a href="https://wa.me/237698104832">Contacter l’équipe via WhatsApp</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
+      html: `<h2>Paiement rejeté</h2><p>Bonjour ${candidate.fullName},</p><p>Votre paiement n’a pas pu être validé.</p>${reason ? `<p><strong>Motif :</strong> ${reason}</p>` : ''}<p>Contactez notre équipe pour la suite de votre dossier.</p><p><a href="https://wa.me/16728972999">Contacter l’équipe via WhatsApp</a></p><p>Cordialement,<br/>L’équipe 3M Travel Agency</p>`,
     });
     return true;
   } catch (error) {

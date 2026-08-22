@@ -309,7 +309,7 @@ export default function CountryDetailPage() {
             <Card className="p-6 bg-gradient-to-br from-blue-900 to-indigo-900 text-white rounded-3xl shadow-lg space-y-4">
               <h4 className="font-bold text-lg">Besoin d'aide sur {country.name} ?</h4>
               <p className="text-blue-200 text-sm">Nos conseillers experts en mobilité internationale vous accompagnent de A à Z dans vos démarches.</p>
-              <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="block">
+              <a href="https://wa.me/16728972999" target="_blank" rel="noopener noreferrer" className="block">
                 <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow">
                   💬 Discuter sur WhatsApp
                 </Button>

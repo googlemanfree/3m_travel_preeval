@@ -183,13 +183,13 @@ export const consultationRequestRouter = router({
           <p>Voici le retour de notre équipe suite à votre demande de consultation :</p>
           <div style="background:#f4f6f8;border-left:4px solid #2563eb;padding:16px;border-radius:6px;white-space:pre-line;">${input.finalReportContent}</div>
           <p style="text-align:center;margin:28px 0;">
-            <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon retour de consultation pour ${request.targetCountry || ""} et je souhaite en discuter.`)}"
+            <a href="https://wa.me/16728972999?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon retour de consultation pour ${request.targetCountry || ""} et je souhaite en discuter.`)}"
                style="background:#28a745;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
               💬 Discuter sur WhatsApp
             </a>
           </p>
           <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
-          <p style="font-size:12px;color:#666;text-align:center;">3M Travel & Services SARL — +237 698 104 832 | hello@3mtravelagency.com</p>
+          <p style="font-size:12px;color:#666;text-align:center;">3M Travel & Services SARL — +1 672 897 2999 | hello@3mtravelagency.com</p>
         </div>
       </div>`;
 

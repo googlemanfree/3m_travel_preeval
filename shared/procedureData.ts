@@ -58,7 +58,7 @@ CULTURE
 n GASTRONOMIE &
 HISTOIRE
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -176,7 +176,7 @@ Passeport valide + phot`,
     requiredDocuments: `— Entrées multiples — délai 3–5 jours ouvrables Documents requis Passeport valide + photo numérique + justificatif de séjour prévu + carte bancaire Activités autorisées Tourisme, affaires, visites, transit, conférences Durée maximale 30 jours (standard) ou 90 jours (multi-entrées) Prolongation Sécurité Possible via les autorités d'immigration azerbaïdjanaises sur place Très bon niveau à Bakou — éviter les zones frontalières avec l'Arménie Étapes e-Visa ASAN Délai Détail 1. Aller sur visa.azerbai`,
     procedureSteps: `u — éviter les zones frontalières avec l'Arménie Étapes e-Visa ASAN Délai Détail 1. Aller sur visa.azerbaijian.az Immédiat Site officiel en anglais — interface claire et simple 2. Remplir le formulaire en ligne 15–30 minutes Informations personnelles, dates de séjour, type de visa 3. Télécharger une photo numérique Immédiat Format JPEG, fond blanc, moins de 6 mois 4. Payer en ligne par carte bancaire Immédiat Visa, Mastercard — 25 ou 100 USD selon durée choisie 5. Recevoir le visa par email 3–5 `,
     eligibilityConditions: ``,
-    practicalTips: `0–700 000 F — Variable selon le style de voyage CONSEIL : Pour maximiser votre séjour à Bakou, réservez un hôtel dans la vieille ville (Icheri Sheher) — vous pouvez tout visiter à pied, sans taxi. Le métro de Bakou coûte 0,20 USD par trajet. Incroyable rapport qualité/prix pour une capitale aussi moderne. 3M TRAVEL & SERVICES SARL • +237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • `,
+    practicalTips: `0–700 000 F — Variable selon le style de voyage CONSEIL : Pour maximiser votre séjour à Bakou, réservez un hôtel dans la vieille ville (Icheri Sheher) — vous pouvez tout visiter à pied, sans taxi. Le métro de Bakou coûte 0,20 USD par trajet. Incroyable rapport qualité/prix pour une capitale aussi moderne. 3M TRAVEL & SERVICES SARL • +1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • `,
     rawText: `3M TRAVEL & SERVICES SARL
 
 nn Azerbaïdjan • Guide Complet
@@ -199,7 +199,7 @@ ULTRAMODERNE
 
 n MER CASPIENNE
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -371,7 +371,7 @@ n SAISONNIER
 
 n SCHENGEN 2025
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -504,7 +504,7 @@ ANGLAIS
 nn 320 JOURS DE
 SOLEIL
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -644,7 +644,7 @@ LIBRE
 n MÉDECINE EN
 ANGLAIS
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -772,7 +772,7 @@ n VISA TRAVAIL
 
 n VISA ÉTUDES
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -2210,7 +2210,7 @@ D`,
     costs: `es 25-32 ans marquent le maximum de points âge ▸ Frais de dossier principal : environ 4 640 AUD (hors frais conjoint/enfants) 65 points suffisent pour entrer dans le bassin SkillSelect, mais la majorité des invitations réelles se situent entre 80 et 95+ points pour les métiers très demandés (santé, ingénierie, IT). Subclass 190 — Skilled Nominated Visa Résidence permanente directe, avec nomination`,
     sectors: `onnu 6–10 mois Sommités internationales dans un secteur stratégique Ce document détaille successivement : (02) les voies AVEC sponsor employeur, (03) les voies SANS sponsor (système de points indépendant), (04) les autres possibilités (famille, affaires, talent), (05) le système de points détaillé, `,
     requiredDocuments: `ans marquent le maximum de points âge ▸ Frais de dossier principal : environ 4 640 AUD (hors frais conjoint/enfants) 65 points suffisent pour entrer dans le bassin SkillSelect, mais la majorité des invitations réelles se situent entre 80 et 95+ points pour les métiers très demandés (santé, ingénierie, IT). Subclass 190 — Skilled Nominated Visa Résidence permanente directe, avec nomination d'un État ou Territoire (+5 points) Pour les profils n'atteignant pas le score très compétitif du 189, la no`,
-    procedureSteps: `e de points détaillé, (06) la procédure type en 8 étapes, et (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Résidence Permanente Australie • Toutes les voies d'accès 🇦🇺 RP AUSTRALIE Guide complet 2026 02 — RÉSIDENCE PERMANENTE AVEC SPONSOR EMPLOYEUR Un employeur australien disposé à vous sponsoriser ouvre l'accès dire`,
+    procedureSteps: `e de points détaillé, (06) la procédure type en 8 étapes, et (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +1 672 897 2999 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Résidence Permanente Australie • Toutes les voies d'accès 🇦🇺 RP AUSTRALIE Guide complet 2026 02 — RÉSIDENCE PERMANENTE AVEC SPONSOR EMPLOYEUR Un employeur australien disposé à vous sponsoriser ouvre l'accès dire`,
     eligibilityConditions: `nés ▸ Passage au 888 (RP) après avoir rempli les conditions d'exploitation ou d'investissement pendant la durée requise Cette voie s'adresse à des profils entrepreneuriaux ou patrimoniaux confirmés — 3M Travel évalue la pertinence de cette filière selon votre situation réelle. Global Talent Visa (Subclass 858) Pour les profils d'excellence reconnue dans un secteur stratégique Réservé à un nombre restreint de places (4 000 en 2025-2026), ce visa cible des profils ayant un parcours exceptionnel et`,
     practicalTips: `û à la signature. Analyse profil, calcul points, conseiller dédié. Identification de la voie optimale parmi tous les programmes. Délai 8-16 semaines selon organisme (Engineers Australia, ACS, VETASSESS...). Score minimum requis selon le programme visé. 45+ documents vérifiés. Coordination Home Affairs. Frais officiels non remboursables — Subclass 189/190/491. Frais par accompagnant (conjoint/enfan`,
     rawText: `3M TRAVEL & SERVICES SARL
@@ -2250,9 +2250,9 @@ FAMILLE
 AFFAIRES
 
 Budget à partir de 2 000 000 FCFA hors billet d'avion  •  Document officiel pour ressortissants camerounais
-+237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
++1 672 897 2999  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +1 672 897 2999  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
 3M TRAVEL & SERVICES SARL
 Immigration  •  Résidence Permanente Australie  •  Toutes les voies d'accès
@@ -2360,7 +2360,7 @@ Ce document détaille successivement : (02) les voies AVEC sponsor employeur, (0
 indépendant), (04) les autres possibilités (famille, affaires, talent), (05) le système de points détaillé, (06) la procédure type en 8 étapes, 
 et (07) le budget complet.
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité`,
+3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +1 672 897 2999  •  hello@3mtravelagency.com  •  « Votre mobilité`,
   },
   {
     country: `Nouvelle-Zélande`,
@@ -2409,9 +2409,9 @@ FAMILLE
 AFFAIRES
 
 Budget à partir de 2 000 000 FCFA hors billet d'avion  •  Document officiel pour ressortissants camerounais
-+237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
++1 672 897 2999  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +1 672 897 2999  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
 3M TRAVEL & SERVICES SARL
 Immigration  •  Résidence Permanente Nouvelle-Zélande  •  Toutes les voies
@@ -2547,7 +2547,7 @@ n VISA TRAVAIL (IT & BTP)
 n MÉDECINE ﬁ EXERCICE EN
 FRANCE
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01 — FICHE PAYS
 
@@ -2676,7 +2676,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 Excellence académique gratuite · TU Munich · Heidelberg · DAAD · Rentrée octobre 2026 & avril
 2027
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -2862,7 +2862,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Université de Vienne · TU Wien · Med Uni Wien · Musique · Arts · Rentrée octobre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -3039,7 +3039,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 UCLouvain · VUB · ULiège · UGent · Pays bilingue FR/NL · Bourses disponibles · Rentrée
 septembre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -3200,7 +3200,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇧🇬  BULGARIE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -3261,7 +3261,7 @@ GUIDE COMPLET & VÉRIFIÉ 2026
 
 IRCC · CAQ Québec · Preuve de fonds actualisée · Rentrées Automne et Hiver
 
-+237 698 104 832 / +237 620 996 045  |  hello@3mtravelagency.com  |  www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045  |  hello@3mtravelagency.com  |  www.3mtravelagency.com
 
 Ce guide rassemble des informations vérifiées auprès des sources officielles canadiennes (IRCC, ministère de
 l'Immigration du Québec/MIFI) afin que chaque client 3M Travel connaisse à l'avance toutes les exigences réelles pour un
@@ -3412,7 +3412,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Copenhagen · DTU · Aarhus · Bourses DFF · Hub design & pharma · Rentrée septembre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -3562,7 +3562,7 @@ Business, Finance, Économie, Commerce `,
 
 Douala ﬁ Madrid / Barcelona (Air France via Paris, Iberia, Royal Air Maroc) — 8–`,
     salaryMin: `3 000 EUR/an`,
-    costs: `Universidad Complutense · Barcelona · Valencia · Frais bas · Soleil · Rentrée septembre 2026 +237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com 01 nn POURQUOI ÉTUDIER EN ESPAGNE ? Indicateur n Statut Données 2026 Membre UE + Schengen — 4ème économie de la zone euro — Hub pour l'Amérique latine n Frais de scolarité 1 000–3 000 EUR/an (universités publiques) — pa`,
+    costs: `Universidad Complutense · Barcelona · Valencia · Frais bas · Soleil · Rentrée septembre 2026 +1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com 01 nn POURQUOI ÉTUDIER EN ESPAGNE ? Indicateur n Statut Données 2026 Membre UE + Schengen — 4ème économie de la zone euro — Hub pour l'Amérique latine n Frais de scolarité 1 000–3 000 EUR/an (universités publiques) — pa`,
     sectors: `niversidad Complutense de Madrid (UCM) Madrid n Domaines n Frais/an nn Langue Médecine, Droit, Sciences, Lettres, Pharmacie, Psychologie, Commerce, Informatique 1 000–2 500 EUR/an (public) Espagnol — programmes EN en master n Accréditation Top 200 mondial — 86 000 étudiants — La plus grande universi`,
     requiredDocuments: `uridad Social). Secrétariat universitaire 05 n DOCUMENTS REQUIS — LISTE COMPLÈTE Document Obligatoire Où l'obtenir Délai Passeport valide (3 mois+ après fin visa)n DGSN Yaoundé 2–6 semaines Lettre d'admission (carta de admisión)n Universidad espagnole 4–8 semaines Diplôme BAC + relevés légalisés + apostille n Établissement + Ministère AE 1–2 semaines Traduction assermentée en espagnoln Traducteur juré certifié 1 semaine Preuve de ressources (660 EUR/mois)n Relevés bancaires 6 mois + attestationS`,
     procedureSteps: `ute la procédure. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 Évaluation profil + niveau espagnol Évaluation du niveau d'espagnol + choix ville selon budget. Madrid/Barcelone ou Valence/Séville pour budget réduit. Rapport 48h. 3M Travel — Gratuit Préparation DELE (si requis) Test DELE B2 requis pour programmes en espagnol. DELE B1 + programme Centre Alliance Française / EN = voie alternative. Délai préparation : 3–6 mois. Instituto Cervantes Pré-inscription universitaire Soumission `,
@@ -3585,7 +3585,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Universidad Complutense · Barcelona · Valencia · Frais bas · Soleil · Rentrée septembre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -3746,7 +3746,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Helsinki · Aalto · Tampere · Éducation n°1 mondial · Gratuit pour doctorat · Rentrée août 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -3909,7 +3909,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇭🇺  HONGRIE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -3989,7 +3989,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 La Sapienza · Bologna · Milano · Borse di Studio · DSU · Rentrée octobre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -4150,7 +4150,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇱🇻  LETTONIE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -4225,7 +4225,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 Université du Luxembourg · Trilinguisme · 1er pays le plus riche du monde · Rentrée septembre
 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -4393,7 +4393,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Université de Malte · Anglais officiel · Île méditerranéenne · Prix bas · Rentrée octobre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -4570,7 +4570,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 TU Delft · Amsterdam · Leiden · 2 200+ programmes EN · Holland Scholarship · Rentrée
 septembre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -4722,7 +4722,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇵🇱  POLOGNE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -4794,7 +4794,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Lisbonne · Porto · Coimbra · Coût de vie bas · Langue proche français · Rentrée septembre 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -4951,7 +4951,7 @@ Prague
 
 Semaine d'accueil internat`,
     salaryMin: `9 000 EUR/an`,
-    costs: `Charles University · CTU · Médecine EN anglais · Frais très bas · Rentrée oct. 2026 +237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com 01 nn POURQUOI ÉTUDIER EN RÉPUBLIQUE TCHÈQUE ? Indicateur n Statut Données 2026 Membre UE + Schengen — Prague = l'une des + belles villes d'Europe — Hub automobilistique (Skoda) n Médecine EN anglais Charles University : program`,
+    costs: `Charles University · CTU · Médecine EN anglais · Frais très bas · Rentrée oct. 2026 +1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com 01 nn POURQUOI ÉTUDIER EN RÉPUBLIQUE TCHÈQUE ? Indicateur n Statut Données 2026 Membre UE + Schengen — Prague = l'une des + belles villes d'Europe — Hub automobilistique (Skoda) n Médecine EN anglais Charles University : program`,
     sectors: `harles University (Univerzita Karlova) Prague n Domaines n Frais/an nn Langue Médecine (6 ans EN anglais), Droit, Sciences, Pharmacie, Lettres, Sciences sociales 10 000–15 000 EUR/an (médecine EN) — Gratuit en tchèque Anglais pour médecine internationale + tchèque pour autres filières n Accréditatio`,
     requiredDocuments: `me Charles University (pays UE). diplôme) 05 n DOCUMENTS REQUIS — LISTE COMPLÈTE Document Obligatoire Où l'obtenir Délai Passeport valide n DGSN Yaoundé 2–6 semaines Lettre d'admission Charles Universityn admissions.cuni.cz 4–8 semaines Diplôme BAC + relevés légalisés + apostille n Établissement + Ministère AE 1–2 semaines Traduction assermentée en anglais ou tchèque n Traducteur assermenté 1 semaine Preuve de ressources (5 700 EUR/an minimum) n Relevés bancaires + attestation Selon situation As`,
     procedureSteps: `e très abordable. 04 n PROCÉDURE COMPLÈTE EN 8 ÉTAPES 01 02 03 04 05 06 07 08 Profil + choix filière Médecine EN (Charles University), Ingénierie (CTU), Business (VŠE), Sciences 3M Travel — Gratuit (Masaryk). Rapport 48h. Candidature Charles University médecine Test d'entrée : biologie + chimie + physique (en anglais). Organisé à Prague ou dans certains pays. 3M Travel vous prépare aux tests. admissions.cuni.cz Bourse Gouvernement Tchèque Bourse du gouvernement tchèque pour étudiants hors-UE. 3M`,
@@ -4974,7 +4974,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 Prague · Charles University · CTU · Médecine EN anglais · Frais très bas · Rentrée oct. 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -5121,7 +5121,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇷🇴  ROUMANIE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -5178,7 +5178,7 @@ RC/YAO/2019/A/2567  |  NIU : M112417203369H
 GUIDE DE PROCEDURE
 VISA D'ÉTUDES
 🇸🇰  SLOVAQUIE
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com  |  www.3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 Note : Les frais d'inscription universitaire, le visa et le billet d'avion sont a la charge du candidat et non inclus dans les honoraires 3M Travel.
@@ -5247,7 +5247,7 @@ VISA ÉTUDES — GUIDE COMPLET 2026
 
 KTH · Lund · Stockholm · Svenska · Gratuit pour étudiants UE · Bourses SI · Rentrée sept. 2026
 
-+237 698 104 832 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045 • hello@3mtravelagency.com • www.3mtravelagency.com
 
 01
 
@@ -6526,7 +6526,7 @@ GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇬🇦  GABON
 Permis de Travail — Immigration DGDI — 2026
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 01  —  Pourquoi Travailler en Gabon ? Marché & Chiffres Clés
@@ -6611,7 +6611,7 @@ GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇮🇪  IRLANDE
 Visa de Travail — Critical Skills Employment Permit — 2026
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 01  —  Pourquoi Travailler en Irlande ? Marché & Chiffres Clés
@@ -6726,7 +6726,7 @@ GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇰🇪  KENYA
 Work Permit — Class G/I/K — Kenya Visa 2026
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 01  —  Pourquoi Travailler en Kenya ? Marché & Chiffres Clés
@@ -6889,7 +6889,7 @@ PROCÉDURE OFFICIELLE & ANTI-ARNAQUE 2026
 
 Document officiel pour ressortissants camerounais — Édition mise à jour et sécurisée
 
-+237 698 104 832 / +237 620 996 045  |  hello@3mtravelagency.com  |  www.3mtravelagency.com
++1 672 897 2999 / +237 620 996 045  |  hello@3mtravelagency.com  |  www.3mtravelagency.com
 
 01   INTRODUCTION & VISION GLOBALE
 Le Grand-Duché de Luxembourg offre les meilleures conditions de travail d'Europe. 3M Travel & Services vous accompagne de 
@@ -7012,7 +7012,7 @@ GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇲🇾  MALAISIE
 Employment Pass — Professional Visit Pass — 2026
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 01  —  Pourquoi Travailler en Malaisie ? Marché & Chiffres Clés
@@ -7201,7 +7201,7 @@ n Salaire moyen
     costs: `peuvent rejoindre après l'obtention du permis F Frais UDI : 6 300 NOK (»370 000 FCFA) à payer en ligne lors du dépôt n Le Skilled Worker Permit est la voie principale vers la résidence permanente et la citoyenneté norvégienne. n Seasonal Worker Permit — Travailleur Saisonnier Agriculture, pêche, horticulture — Délai 2–4 semaines — Accès rapide Le permis saisonnier est destiné aux secteurs agricole`,
     sectors: `VAIL — GUIDE COMPLET 2026 Procédures complètes · Secteurs porteurs · Permis de travail · 8 étapes détaillées · Budget & Options de paiement n ÉNERGIE Pétrole offshore n PÊCHE 1er exportateur mondial nn BTP Infrastructure n SANTÉ Médecins & infirmiers n TECH & IT Innovation digitale Honoraires à part`,
     requiredDocuments: `'une vie en Scandinavie. 06 LISTE COMPLÈTE DES DOCUMENTS REQUIS Document Obligatoire Où l'obtenir Délai Passeport valide (6 mois+ après expiration permis) DGSN Yaoundé / Douala n 2–6 semaines Offre d'emploi ou contrat de travail signén Employeur norvégien — via 3M TravelSelon employeur Diplôme universitaire légalisé + apostillen Établissement + Ministère AE Cameroun 1–2 semaines Traduction assermentée diplôme en anglais n Traducteur assermenté certifié 3–5 jours Attestation NOKUT (reconnaissance`,
-    procedureSteps: `lètes · Secteurs porteurs · Permis de travail · 8 étapes détaillées · Budget & Options de paiement n ÉNERGIE Pétrole offshore n PÊCHE 1er exportateur mondial nn BTP Infrastructure n SANTÉ Médecins & infirmiers n TECH & IT Innovation digitale Honoraires à partir de 2 000 000 FCFA • Ouverture dossier : 65 000 FCFA • +237 698 104 832 • hello@3mtravelagency.com 01 nn POURQUOI CHOISIR LA NORVÈGE ? La Norvège est l'un des pays les plus riches du monde grâce à ses réserves pétrolières et gazières en me`,
+    procedureSteps: `lètes · Secteurs porteurs · Permis de travail · 8 étapes détaillées · Budget & Options de paiement n ÉNERGIE Pétrole offshore n PÊCHE 1er exportateur mondial nn BTP Infrastructure n SANTÉ Médecins & infirmiers n TECH & IT Innovation digitale Honoraires à partir de 2 000 000 FCFA • Ouverture dossier : 65 000 FCFA • +1 672 897 2999 • hello@3mtravelagency.com 01 nn POURQUOI CHOISIR LA NORVÈGE ? La Norvège est l'un des pays les plus riches du monde grâce à ses réserves pétrolières et gazières en me`,
     eligibilityConditions: `cations logement, déductions). 04 CONDITIONS D'ÉLIGIBILITÉ — SKILLED WORKER PERMIT Condition requise Exigence officielle UDI 2026 Conseil 3M Travel Offre d'emploi concrète OBLIGATOIRE — contrat signé + salaire ‡ 487 200 NOK/an 3M Travel met en relation avec employeurs vérifiés Qualification reconnue Diplôme Bac+3 minimum OU qualification professionnelle équivalente 3M Travel coordonne la reconnaissance via NOKUT Salaire minimum 487 200 NOK/an brut (»42 000 EUR) — revalorisé chaque mai Le contrat`,
     practicalTips: `Condition requise Exigence officielle UDI 2026 Conseil 3M Travel Offre d'emploi concrète OBLIGATOIRE — contrat signé + salaire ‡ 487 200 NOK/an 3M Travel met en relation avec employeurs vérifiés Qualification reconnue Diplôme Bac+3 minimum OU qualification professionnelle équivalente 3M Travel coordonne la reconnaissance via NOKUT Salaire minimum 487 200 NOK/an brut (»42 000 EUR) — revalorisé chaq`,
     rawText: `3M TRAVEL & SERVICES SARL
@@ -7240,7 +7240,7 @@ n TECH & IT
 Innovation
 digitale
 
-Honoraires à partir de 2 000 000 FCFA • Ouverture dossier : 65 000 FCFA • +237 698 104 832 •
+Honoraires à partir de 2 000 000 FCFA • Ouverture dossier : 65 000 FCFA • +1 672 897 2999 •
 
 hello@3mtravelagency.com
 
@@ -7796,7 +7796,7 @@ GUIDE DE PROCEDURE
 VISA DE TRAVAIL
 🇸🇳  SÉNÉGAL
 Permis de Travail — DTSS — Immigration Senegal 2026
-+237 698 104 832  |  +237 620 996 045
++1 672 897 2999  |  +237 620 996 045
 hello@3mtravelagency.com
 "Votre mobilite, notre expertise. Votre reussite, notre mission."
 01  —  Pourquoi Travailler en Sénégal ? Marché & Chiffres Clés
@@ -8554,7 +8554,7 @@ Aucun test requis - an`,
     practicalTips: `Booking.com, Hotels.com, Airbnb Dubai, Agoda.com CONSEIL LOGEMENT : CONSEIL 3M TRAVEL DUBAI TOURISME : Reserver hotel Deira ou Al Barsha (30-50% moins cher que Marina) et utiliser metro Dubai (AED 2-7 par trajet). Le metro connecte 90% des attractions. NOOL card rechargeable = economie vs ticket unitaire. Eviter taxis : metro et RTA buses suffisent. 5. PROCEDURE COMPLETE 3M TRAVEL — 8 ETAPES ETAPE`,
     rawText: `VISA TRAVAIL DUBAI - VISA VISITEUR
 Visa Touriste Dubai - e-Visa en Ligne - Shopping Festival - Expo - Tourisme Luxe - Dubai Frame
-3M TRAVEL & SERVICES SARL | Biyem-Assi, Yaounde | +237 698 104 832 | hello@3mtravelagency.com
+3M TRAVEL & SERVICES SARL | Biyem-Assi, Yaounde | +1 672 897 2999 | hello@3mtravelagency.com
 
 1. POURQUOI DUBAI - VISA VISITEUR ?
 
@@ -11714,11 +11714,11 @@ Preuve de liens avec le Camer`,
     visaType: `Autre`,
     processingTime: `5 à 15 jours`,
     salaryMin: `65 000 FCFA ouverture de dossier  •  Document pour ressortissan`,
-    costs: `5 à 15 jours ouvrables 5 à 15 jours ouvrables Frais consulaires Environ 80–150 USD Environ 80–150 USD Les ressortissants camerounais ne bénéficient pas du e-Visa en ligne automatique. Le dépôt doit se faire physiquement ou via une ⚠ ambassade désignée. 3M Travel prépare et vérifie l'intégralité de votre dossier avant le dépôt. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • he`,
+    costs: `5 à 15 jours ouvrables 5 à 15 jours ouvrables Frais consulaires Environ 80–150 USD Environ 80–150 USD Les ressortissants camerounais ne bénéficient pas du e-Visa en ligne automatique. Le dépôt doit se faire physiquement ou via une ⚠ ambassade désignée. 3M Travel prépare et vérifie l'intégralité de votre dossier avant le dépôt. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +1 672 897 2999 • he`,
     sectors: `-d'œuvre qualifiée en forte demande dans certains secteurs, et une politique d'immigration en cours de modernisation, la Turquie représente une opportunité réelle pour les profils qualifiés, les entrepreneurs et les voyageurs d'affaires camerounais. Indicateur Données 2026 🌍 Statut géographique Pont`,
     requiredDocuments: `mplet 2026 07 — LISTE COMPLÈTE DES DOCUMENTS REQUIS Document Visa Visiteur Visa Travail Ikamet Passeport valide (6 mois min. après retour) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire 2 photos biométriques récentes (3,5×4,5 cm) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Formulaire de demande de visa (officiel) ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Relevé bancaire 3 derniers mois ✅ Obligatoire ✅ Obligatoire ✅ Obligatoire Assurance voyage/santé valable en Turquie ✅ Obligatoire ✅ Recommandée ✅ Obli`,
-    procedureSteps: `ravail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Visa Travail & Visiteur Turquie • Procédures officielles 🇹🇷 TURQUIE Guide complet 2026 02 — VISA VISITEUR (TOURISME & AFFAIRES) Le visa visiteur turc est la porte d'entrée la plus rapide pour découvrir la Turquie, `,
-    eligibilityConditions: `8 ans de résidence légale continue : éligibilité à l'Ikamet long séjour. ▸ Après 5 ans : possibilité de demander la nationalité turque selon conditions. Objectif à long terme : la nationalité turque donne accès à un passeport permettant de voyager dans plus de 110 pays sans visa, dont plusieurs destinations européennes. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +237 698 104 832 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SE`,
+    procedureSteps: `ravail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +1 672 897 2999 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SERVICES SARL Immigration • Visa Travail & Visiteur Turquie • Procédures officielles 🇹🇷 TURQUIE Guide complet 2026 02 — VISA VISITEUR (TOURISME & AFFAIRES) Le visa visiteur turc est la porte d'entrée la plus rapide pour découvrir la Turquie, `,
+    eligibilityConditions: `8 ans de résidence légale continue : éligibilité à l'Ikamet long séjour. ▸ Après 5 ans : possibilité de demander la nationalité turque selon conditions. Objectif à long terme : la nationalité turque donne accès à un passeport permettant de voyager dans plus de 110 pays sans visa, dont plusieurs destinations européennes. 3M Travel & Services SARL • Biyem-Assi, Yaoundé • +1 672 897 2999 • hello@3mtravelagency.com • « Votre mobilité, notre expertise. Votre réussite, notre mission. » 3M TRAVEL & SE`,
     practicalTips: ``,
     rawText: `3M TRAVEL & SERVICES SARL
 Immigration  •  Visa Travail & Visiteur Turquie  •  Procédures officielles
@@ -11757,9 +11757,9 @@ IKAMET
 AFFAIRES
 
 Budget à partir de 65 000 FCFA ouverture de dossier  •  Document pour ressortissants camerounais
-+237 698 104 832  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
++1 672 897 2999  /  +237 620 996 045   •   hello@3mtravelagency.com   •   www.3mtravelagency.com
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
+3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +1 672 897 2999  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mission. »
 
 3M TRAVEL & SERVICES SARL
 Immigration  •  Visa Travail & Visiteur Turquie  •  Procédures officielles
@@ -11839,7 +11839,7 @@ d'expatriation intermédiaire très pertinent.
 Ce guide couvre : (02) le Visa Visiteur (tourisme & affaires), (03) le Visa Travail & permis de travail, (04) l'Ikamet (titre de séjour), (05) les 
 types de permis de travail détaillés, (06) la procédure complète en 8 étapes, (07) le budget complet.
 
-3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +237 698 104 832  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mis`,
+3M Travel & Services SARL  •  Biyem-Assi, Yaoundé  •  +1 672 897 2999  •  hello@3mtravelagency.com  •  « Votre mobilité, notre expertise. Votre réussite, notre mis`,
   },
   {
     country: `Luxembourg`,

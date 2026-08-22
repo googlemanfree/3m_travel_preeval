@@ -97,7 +97,7 @@ const PROGRESS_STEPS = [
   { step: 5, label: "Décision", icon: CheckCircle2 },
 ];
 
-const SUPPORT_WHATSAPP_NUMBER = "237698104832";
+const SUPPORT_WHATSAPP_NUMBER = "16728972999";
 
 export default function ClientDashboard() {
   const { candidate, isAuthenticated, logout } = useCandidateAuth();
@@ -966,7 +966,7 @@ export default function ClientDashboard() {
                       doc.setFontSize(10);
                       doc.setTextColor(100, 100, 100);
                       doc.text("3M Travel & Services SARL — Agence de Mobilité Internationale", 15, 155);
-                      doc.text("Cameroun — Contacts : +237 698 104 832 / contact@3mtravelagency.com", 15, 163);
+                      doc.text("Cameroun — Contacts : +1 672 897 2999 / contact@3mtravelagency.com", 15, 163);
                       doc.text("Document généré automatiquement et sécurisé.", 15, 171);
 
                       doc.save(`Quittance_3MTravel_${dossier.numero}.pdf`);
@@ -1169,7 +1169,7 @@ export default function ClientDashboard() {
                         doc.setFontSize(10);
                         doc.setTextColor(100, 100, 100);
                         doc.text("3M Travel & Services SARL — Agence de Mobilité Internationale", 15, 155);
-                        doc.text("Cameroun — Contacts : +237 698 104 832 / contact@3mtravelagency.com", 15, 163);
+                        doc.text("Cameroun — Contacts : +1 672 897 2999 / contact@3mtravelagency.com", 15, 163);
                         doc.text("Document généré automatiquement et sécurisé.", 15, 171);
 
                         doc.save(`Quittance_3MTravel_${dossier.numero}.pdf`);

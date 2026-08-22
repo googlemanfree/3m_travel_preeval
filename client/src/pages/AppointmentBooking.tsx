@@ -173,7 +173,7 @@ export default function AppointmentBooking() {
                         <div className="space-y-2 text-sm text-gray-500">
                           <p>📍 Avenue Marché Biyem-Assi</p>
                           <p>⏰ Lundi - Vendredi: 09:00 - 17:00</p>
-                          <p>☎️ +237 698 104 832</p>
+                          <p>☎️ +1 672 897 2999</p>
                         </div>
                       </Card>
                     </motion.div>

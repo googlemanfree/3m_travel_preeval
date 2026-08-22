@@ -29,4 +29,43 @@ describe("SafeResponsiveChart", () => {
       expect(source).toContain("<ResponsiveContainer width=\"100%\" height=\"100%\">");
     }
   });
+
+  it("protège aussi le graphique de fidélité lorsqu’il est affiché dans un panneau masqué", () => {
+    const source = fs.readFileSync(
+      path.join(projectRoot, "client/src/components/ClientSpaceNavigation.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("SafeResponsiveChart");
+    expect(source).toContain('label="Évolution des points de fidélité"');
+  });
+
+  it("centralise la bascule des anciens liens WhatsApp vers le bureau d’Ottawa", () => {
+    const source = fs.readFileSync(
+      path.join(projectRoot, "client/src/components/OttawaWhatsAppPriority.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain('OTTAWA_WHATSAPP_NUMBER = "16728972999"');
+    expect(source).toContain("ottawaWhatsAppUrl");
+  });
+
+  it("ne conserve plus l’ancien contact WhatsApp dans les sources applicatives", () => {
+    const sourceRoots = ["client", "server", "shared"];
+    const pending = sourceRoots.map((directory) => path.join(projectRoot, directory));
+    const sources: string[] = [];
+
+    while (pending.length) {
+      const current = pending.pop()!;
+      for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+        const absolutePath = path.join(current, entry.name);
+        if (entry.isDirectory()) pending.push(absolutePath);
+        if (entry.isFile() && /\.(ts|tsx|html)$/.test(entry.name) && !entry.name.endsWith(".test.ts")) sources.push(absolutePath);
+      }
+    }
+
+    for (const sourcePath of sources) {
+      expect(fs.readFileSync(sourcePath, "utf8")).not.toMatch(/237698104832|\+237[\s-]*698[\s-]*104[\s-]*832/);
+    }
+  });
 });

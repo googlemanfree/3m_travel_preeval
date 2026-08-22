@@ -392,7 +392,7 @@ function FlightCard({ flight, searchParams, isSimulated, servedFromCache }: { fl
 
   function buildWhatsAppMsg() {
     const msg = `Bonjour 3M Travel, je souhaite réserver ce vol :\n\n✈️ *${flight.airline.name}* — Vol ${flight.flightNumber}\n📍 ${flight.originCity} (${flight.origin}) → ${flight.destinationCity} (${flight.destination})\n📅 Départ : ${flight.departureDate} à ${flight.departureTime}\n🕐 Arrivée : ${flight.arrivalTime} | Durée : ${flight.duration}\n🛑 Escales : ${flight.stops === 0 ? "Vol direct" : flight.stops + " escale(s)"}\n💺 Classe : ${CABIN_LABELS[flight.cabinClass]}\n👥 Passagers : ${searchParams.adults} adulte(s)${searchParams.children > 0 ? `, ${searchParams.children} enfant(s)` : ""}${searchParams.infants > 0 ? `, ${searchParams.infants} bébé(s)` : ""}\n💰 Prix total : ${formatXAF(flight.totalPrice)}\n📋 Réf. : ${flight.pnrRef}\n\nMerci de me contacter pour finaliser la réservation.`;
-    return `https://wa.me/237698104832?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/16728972999?text=${encodeURIComponent(msg)}`;
   }
 
   const stopColor = flight.stops === 0 ? "text-green-600 bg-green-50" : flight.stops === 1 ? "text-orange-600 bg-orange-50" : "text-red-600 bg-red-50";

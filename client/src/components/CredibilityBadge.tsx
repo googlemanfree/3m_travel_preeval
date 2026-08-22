@@ -69,8 +69,8 @@ export function CredibilityBadge() {
                   <a href="tel:+237620996045" className="text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors block">
                     📞 +237 620-996-045
                   </a>
-                  <a href="tel:+237698104832" className="text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors block">
-                    📞 +237 698-104-832
+                  <a href="tel:+16728972999" className="text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors block">
+                    📞 +1 672 897 2999
                   </a>
                 </div>
               </div>

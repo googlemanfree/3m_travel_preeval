@@ -95,7 +95,7 @@ export default function TestimonialsSectionEnhanced() {
                 Démarrer mon évaluation gratuite →
               </motion.button>
             </Link>
-            <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/16728972999" target="_blank" rel="noopener noreferrer">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

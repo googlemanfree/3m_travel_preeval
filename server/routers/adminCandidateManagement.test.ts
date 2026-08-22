@@ -4,7 +4,7 @@ import { escapeCsvCell, paginateCandidates } from "./adminCandidateManagement";
 describe("escapeCsvCell", () => {
   it("protège les valeurs interprétables comme formules par un tableur", () => {
     expect(escapeCsvCell("=HYPERLINK(\"https://malicious.test\")")).toBe("\"'=HYPERLINK(\"\"https://malicious.test\"\")\"");
-    expect(escapeCsvCell("+237698104832")).toBe("\"'+237698104832\"");
+    expect(escapeCsvCell("+16728972999")).toBe("\"'+16728972999\"");
   });
 
   it("préserve les accents, les guillemets et neutralise les retours de ligne", () => {

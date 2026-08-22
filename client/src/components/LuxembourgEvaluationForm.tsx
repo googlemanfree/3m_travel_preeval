@@ -182,7 +182,7 @@ export default function LuxembourgEvaluationForm() {
 
     pdf.setFontSize(9);
     pdf.setTextColor(120, 120, 120);
-    pdf.text("3M Travel Agency SARL — +237 698 104 832 — hello@3mtravelagency.com", 15, 280);
+    pdf.text("3M Travel Agency SARL — +1 672 897 2999 — hello@3mtravelagency.com", 15, 280);
 
       setPdfExportProgress(85);
       setPdfExportStatus("Téléchargement du document PDF…");

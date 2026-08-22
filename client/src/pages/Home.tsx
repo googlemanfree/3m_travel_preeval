@@ -46,7 +46,7 @@ import { searchCountries, countriesData } from '@/data/countriesData';
 import CountrySearchResults from '@/components/CountrySearchResults';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────────
-const WHATSAPP_NUMBER = "237698104832";
+const WHATSAPP_NUMBER = "16728972999";
 
 const SearchBarWithAutocomplete = () => {
   const [query, setQuery] = useState('');
@@ -1259,7 +1259,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-1">WhatsApp</h4>
-                    <p className="text-gray-600">+237 698 104 832</p>
+                    <p className="text-gray-600">+1 672 897 2999</p>
                   </div>
                 </div>
                 <div className="flex gap-4 items-start">
@@ -1383,7 +1383,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
-                  <a href="tel:+237698104832" className="hover:text-[#7cb9e8]">+237 698-104-832</a>
+                  <a href="tel:+16728972999" className="hover:text-[#7cb9e8]">+1 672 897 2999</a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
@@ -1744,7 +1744,7 @@ function WhatsAppButton() {
     return () => clearTimeout(t);
   }, []);
 
-  const phoneNumber = "237698104832";
+  const phoneNumber = "16728972999";
   const message = encodeURIComponent(
     "Bonjour 3M Travel & Services ! Je souhaite obtenir des informations sur vos services de visa et immigration. Pouvez-vous m'aider ?"
   );
@@ -1886,7 +1886,7 @@ function PricingSection() {
     },
   ];
 
-  const phoneNumber = "237698104832";
+  const phoneNumber = "16728972999";
 
   return (
     <section id="tarifs" className="py-12 md:py-20 bg-gradient-to-b from-white to-[#f0f6ff]">
@@ -2033,7 +2033,7 @@ function EligibilityModal({ open, onClose }: { open: boolean; onClose: () => voi
     e.preventDefault();
     if (!validate()) return;
 
-    const phoneNumber = "237698104832";
+    const phoneNumber = "16728972999";
     const message = `Bonjour 3M Travel, je viens de faire mon auto-évaluation sur le site. Voici mes informations :
 - Nom : ${form.nom}
 - Ville : ${form.ville}

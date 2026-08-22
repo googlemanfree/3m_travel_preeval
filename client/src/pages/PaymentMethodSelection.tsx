@@ -316,7 +316,7 @@ export default function PaymentMethodSelection() {
                 Contactez-nous si vous avez des questions sur le paiement en ligne.
               </p>
               <a
-                href="https://wa.me/237698104832"
+                href="https://wa.me/16728972999"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700 font-semibold text-sm"
@@ -330,7 +330,7 @@ export default function PaymentMethodSelection() {
                 Adresse : Douala, Cameroun
               </p>
               <a
-                href="https://wa.me/237698104832"
+                href="https://wa.me/16728972999"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700 font-semibold text-sm"

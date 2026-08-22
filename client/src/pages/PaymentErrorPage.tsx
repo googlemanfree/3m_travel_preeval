@@ -90,7 +90,7 @@ export default function PaymentErrorPage() {
             Réessayer le paiement
           </Button>
           <a
-            href="https://wa.me/237698104832?text=Bonjour, j'ai un problème avec mon paiement."
+            href="https://wa.me/16728972999?text=Bonjour, j'ai un problème avec mon paiement."
             target="_blank"
             rel="noopener noreferrer"
           >

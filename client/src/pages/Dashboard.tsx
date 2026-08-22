@@ -325,7 +325,7 @@ export default function Dashboard() {
               <div className="font-bold text-sm">Équipe 3M Travel</div>
               <div className="text-blue-200 text-xs mt-1">Disponible 8h–18h (GMT+1)</div>
               <a
-                href="https://wa.me/237698104832?text=Bonjour%2C%20je%20suis%20candidat%203M%20Travel%20et%20j%27ai%20une%20question%20sur%20mon%20dossier."
+                href="https://wa.me/16728972999?text=Bonjour%2C%20je%20suis%20candidat%203M%20Travel%20et%20j%27ai%20une%20question%20sur%20mon%20dossier."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors"

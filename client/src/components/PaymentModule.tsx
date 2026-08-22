@@ -130,7 +130,7 @@ STATUT: ✓ PAIEMENT CONFIRMÉ
 Merci pour votre confiance !
 Pour toute question, contactez-nous:
 📧 hello@3mtravelagency.com
-📱 WhatsApp: +237 698 104 832
+📱 WhatsApp: +1 672 897 2999
 
 ═══════════════════════════════════════
     `;

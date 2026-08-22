@@ -195,7 +195,7 @@ export default function VisaEtudes() {
                 <ArrowRight size={20} />
               </motion.button>
             </a>
-            <a href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20\u00e9tudes." target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/16728972999?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20\u00e9tudes." target="_blank" rel="noopener noreferrer">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-green-500 text-green-600 font-bold rounded-full text-lg transition-all duration-300 hover:bg-green-50 inline-flex items-center justify-center gap-2">
                 <MessageCircle size={20} />
                 Poser une question

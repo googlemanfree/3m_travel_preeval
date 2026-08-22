@@ -151,7 +151,7 @@ export default function Evisa() {
     },
   ];
 
-  const whatsappBase = 'https://wa.me/237698104832?text=';
+  const whatsappBase = 'https://wa.me/16728972999?text=';
 
   function ctaFor(d: Destination) {
     if (d.status === 'evisa') {

@@ -46,7 +46,7 @@ export default function LocationBanner() {
               <h3 className="text-lg font-bold mb-2">📞 Prise de RDV</h3>
               <div className="flex gap-2 flex-wrap">
                 <a
-                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20prendre%20un%20rendez-vous%20%C3%A0%20l%27agence."
+                  href="https://wa.me/16728972999?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20prendre%20un%20rendez-vous%20%C3%A0%20l%27agence."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-all"

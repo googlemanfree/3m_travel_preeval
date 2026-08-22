@@ -213,7 +213,7 @@ export default function ProceduresSimplifiedWithFilters() {
             <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold px-6">
               <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
             </Button>
-            <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20des%20informations%20sur%20vos%20destinations" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/16728972999?text=Bonjour%203M%20Travel%2C%20je%20souhaite%20des%20informations%20sur%20vos%20destinations" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" className="border-white text-white hover:bg-white/10 px-6">
                 <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
               </Button>
@@ -426,7 +426,7 @@ export default function ProceduresSimplifiedWithFilters() {
                 <Button onClick={() => setShowEvalModal(true)} className="bg-white text-blue-800 hover:bg-blue-50 font-bold">
                   <Star className="w-4 h-4 mr-2" /> Évaluation gratuite
                 </Button>
-                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/16728972999" target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" className="border-white text-white hover:bg-white/10">
                     <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp direct
                   </Button>

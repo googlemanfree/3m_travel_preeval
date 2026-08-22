@@ -1,5 +1,12 @@
 # 3M Travel & Services — Roadmap
 
+## Contact Ottawa et graphique de fidélité
+- [x] Recenser les parcours WhatsApp et le conteneur du graphique de fidélité.
+- [x] Migrer toutes les occurrences applicatives du WhatsApp historique vers le contact prioritaire Ottawa, y compris les messages, fenêtres, liens, appels et PDF client.
+- [x] Corriger le rendu du graphique de fidélité lorsqu’il est initialement masqué.
+- [x] Ajouter un contrôle de non-régression garantissant qu’aucun parcours public ne conserve l’ancien numéro WhatsApp.
+- [x] Rejouer la vérification complète des CTA de contact publics, du graphique, de TypeScript et des régressions avant publication.
+
 ## Exportation iCal des Réservations (v253)
 - [x] Ajouter la procédure tRPC `exportCalendarIcal` dans `server/routers/tourism.ts` pour générer un flux .ics sécurisé
 - [x] Intégrer le bouton d’export iCal dans le composant `AdminCalendarView.tsx` avec téléchargement instantané du fichier

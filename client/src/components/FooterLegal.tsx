@@ -29,8 +29,8 @@ export function FooterLegal() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <a href="tel:+237698104832" className="hover:text-white transition">
-                  +237 698 104 832
+                <a href="tel:+16728972999" className="hover:text-white transition">
+                  +1 672 897 2999
                 </a>
               </div>
               <div className="flex items-center gap-2">

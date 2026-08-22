@@ -89,7 +89,7 @@ Cordialement,
 Aureol DONFACK - PDG
 3M Travel & Services SARL
 Yaoundé, Cameroun
-+237 698 104 832 | hello@3mtravelagency.com
++1 672 897 2999 | hello@3mtravelagency.com
 RC/YAO/2019/A/2567 | NIU: M112417203369H
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;
@@ -226,7 +226,7 @@ Cordialement,
 Aureol DONFACK - PDG
 3M Travel & Services SARL
 Yaoundé, Cameroun
-+237 698 104 832 | hello@3mtravelagency.com
++1 672 897 2999 | hello@3mtravelagency.com
 RC/YAO/2019/A/2567 | NIU: M112417203369H
 
 "Votre mobilité, notre expertise. Votre réussite, notre mission."`;

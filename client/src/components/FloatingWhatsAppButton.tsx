@@ -10,7 +10,7 @@ export function FloatingWhatsAppButton() {
   const [isHovered, setIsHovered] = useState(false);
 
   // Numéro WhatsApp de l'agence
-  const whatsappNumber = "237698104832";
+  const whatsappNumber = "16728972999";
   const whatsappMessage = "Bonjour, je souhaiterais obtenir une évaluation pour mon projet de visa.";
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 

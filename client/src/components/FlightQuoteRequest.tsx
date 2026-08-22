@@ -10,7 +10,7 @@ export function FlightQuoteRequest() {
     onSuccess: () => {
       setSent(true);
       const whatsappText = "Bonjour 3M Travel, je viens d'envoyer une demande de devis vol. Merci de me contacter.";
-      window.open(`https://wa.me/237698104832?text=${encodeURIComponent(whatsappText)}`, "_blank", "noopener,noreferrer");
+      window.open(`https://wa.me/16728972999?text=${encodeURIComponent(whatsappText)}`, "_blank", "noopener,noreferrer");
       toast({ title: "Demande envoyée", description: "Notre équipe reçoit votre besoin et vous contactera avec des options adaptées." });
     },
     onError: error => toast({ title: "Envoi impossible", description: error.message, variant: "destructive" }),

@@ -102,14 +102,14 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
         <p style="margin:0;">${result.recommendationText}</p>
       </div>
       <p style="text-align:center;margin:28px 0;">
-        <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Visa Études (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"
+        <a href="https://wa.me/16728972999?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Visa Études (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"
            style="background:#28a745;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
           💬 Discuter sur WhatsApp
         </a>
       </p>
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
       <p style="font-size:12px;color:#666;text-align:center;">
-        3M Travel & Services SARL — +237 698 104 832 | hello@3mtravelagency.com
+        3M Travel & Services SARL — +1 672 897 2999 | hello@3mtravelagency.com
       </p>
     </div>
   </div>`;
@@ -174,7 +174,7 @@ export const studyVisaEvaluationRouter = router({
 
       logger.info("study_visa_evaluation.completed", { email: input.email, score: result.scoreTotal });
 
-      const teamWhatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(
+      const teamWhatsappUrl = `https://wa.me/16728972999?text=${encodeURIComponent(
         `📋 Nouvelle évaluation Visa Études\nCandidat : ${input.fullName}\nEmail : ${input.email}\nScore : ${result.scoreTotal}/100 — ${result.statusLabel}`
       )}`;
 

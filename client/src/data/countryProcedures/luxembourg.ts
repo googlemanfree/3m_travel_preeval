@@ -152,7 +152,7 @@ export const luxembourgProcedure: CountryProcedure = {
     { question: "Que faire face à une offre suspecte reçue en ligne ?", answer: "Ne transmettez rien, et contactez 3M Travel ou l'ADEM directement avant toute démarche." },
   ],
   contact: {
-    phones: ["+237 698 104 832", "+237 620 996 045"],
+    phones: ["+1 672 897 2999", "+237 620 996 045"],
     email: "hello@3mtravelagency.com",
     website: "www.3mtravelagency.com",
     address: "Biyem-Assi, Montée Chapelle Obili — à 10m du Collège EHS, Yaoundé",

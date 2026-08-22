@@ -85,7 +85,7 @@ export default function Hotels() {
           "\n📞 Téléphone : " +
           phone;
 
-        const whatsappUrl = "https://wa.me/237698104832?text=" + encodeURIComponent(message);
+        const whatsappUrl = "https://wa.me/16728972999?text=" + encodeURIComponent(message);
         window.open(whatsappUrl, "_blank");
       });
     }

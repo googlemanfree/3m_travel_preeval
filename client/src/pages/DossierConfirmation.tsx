@@ -227,7 +227,7 @@ Conservez ce numéro précieusement pour suivre votre dossier.
             Suivre mon dossier
           </Button>
           <a
-            href={`https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je confirme l'ouverture de mon dossier ${dossierData.dossierNumber}.`)}`}
+            href={`https://wa.me/16728972999?text=${encodeURIComponent(`Bonjour, je confirme l'ouverture de mon dossier ${dossierData.dossierNumber}.`)}`}
             target="_blank"
             rel="noopener noreferrer"
           >
