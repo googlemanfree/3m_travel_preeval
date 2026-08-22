@@ -33,9 +33,14 @@
 - [ ] Valider une demande réelle créée par l’utilisateur jusqu’à sa visibilité dans la file administrateur.
 
 ## Session administrateur de traitement 3M Digital
-- [ ] Diagnostiquer la restauration du jeton de session dans l’écran `/admin/digital-services` publié.
-- [ ] Corriger le renouvellement ou l’erreur explicite lorsque la session administrateur est invalide.
+- [x] Diagnostiquer la restauration du jeton de session dans l’écran `/admin/digital-services` publié.
+- [x] Corriger le renouvellement ou l’erreur explicite lorsque la session administrateur est invalide.
 - [ ] Vérifier le traitement sécurisé d’une demande 3M Digital avec statut et note interne après correction.
+
+## Schéma de suivi 3M Digital en production
+- [x] Vérifier les colonnes de suivi réellement présentes dans le registre publié des demandes 3M Digital.
+- [x] Confirmer que les colonnes de statut, note, conseiller et horodatage sont déjà présentes sans migration destructive.
+- [ ] Confirmer la persistance du statut et de la note sur la demande interne de vérification.
 
 ## Grille tarifaire 3M Digital depuis ITINERAIRES PRO
 - [x] Extraire les offres, prestations, prix et explications utiles du document de référence.
@@ -48,6 +53,10 @@
 - [x] Restaurer les exports, routeurs et composants historiques manquants sans écraser la grille 3M Digital.
 - [x] Réconcilier les contrats de session, d’administration et de tourisme avec les usages clients existants.
 - [x] Rejouer TypeScript et la suite de régression complète jusqu’à suppression des échecs.
+
+## Stabilisation du serveur après restauration
+- [x] Corriger les imports et exports SMTP qui empêchent le démarrage du routeur de supervision.
+- [x] Exercer la procédure de supervision SMTP après redémarrage et confirmer l’absence d’erreur d’import ou d’export dans les nouveaux journaux.
 
 ## Sauvegarde alternative avant publication
 - [x] Diagnostiquer une méthode de sauvegarde non destructive malgré le conflit de synchronisation.
