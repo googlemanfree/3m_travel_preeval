@@ -232,6 +232,13 @@ export default function FlightAgentDashboard() {
     },
     onError: (error) => toast({ title: "Téléversement PNR impossible", description: error.message, variant: "destructive" }),
   });
+  const pnrReminderMutation = trpc.flightBooking.sendPnrReminderEmail.useMutation({
+    onSuccess: () => {
+      toast({ title: "Relance PNR envoyée", description: "Le client a été invité à consulter son document dans son espace." });
+      void utils.flightBooking.getRequest.invalidate();
+    },
+    onError: (error) => toast({ title: "Relance PNR impossible", description: error.message, variant: "destructive" }),
+  });
 
   const [auditStartDate, setAuditStartDate] = useState("");
   const [auditEndDate, setAuditEndDate] = useState("");
@@ -372,6 +379,15 @@ export default function FlightAgentDashboard() {
               <div className="space-y-5">
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="text-xs font-black uppercase tracking-wider text-blue-600">Dossier {detailQuery.data.request.requestRef}</p><h2 className="mt-1 text-xl font-black text-slate-900">Détails de la demande</h2></div><div className="flex flex-wrap items-center gap-2"><span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-800">{STATUS_LABELS[detailQuery.data.request.status as RequestStatus]}</span><Button type="button" size="sm" variant="outline" onClick={printOperationalFile}><Printer className="mr-1.5 h-4 w-4" /> Imprimer</Button>{detailQuery.data.request.issuedPdfUrl && <Button type="button" size="sm" className="bg-blue-700 text-white hover:bg-blue-800" onClick={() => setPreviewPnr({ url: detailQuery.data.request.issuedPdfUrl, title: `PNR ${detailQuery.data.request.pnrReference || detailQuery.data.request.requestRef}` })}><Eye className="mr-1.5 h-4 w-4" /> Aperçu PNR</Button>}</div></div>
                 <FlightRequestOverview request={detailQuery.data.request} />
+                <section className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div>
+                      <h3 className="text-sm font-black text-indigo-950">Consultation client</h3>
+                      <p className="mt-1 text-xs text-indigo-800">{detailQuery.data.request.pnrDownloadedAt ? "Le document PNR a été téléchargé par le client." : detailQuery.data.request.pnrViewedAt ? "Le document PNR a été consulté ; le téléchargement reste à confirmer." : "Le client n’a pas encore consulté son document PNR."}</p>
+                    </div>
+                    {detailQuery.data.request.issuedPdfUrl && !detailQuery.data.request.pnrDownloadedAt && <Button type="button" variant="outline" disabled={pnrReminderMutation.isPending} onClick={() => pnrReminderMutation.mutate({ sessionToken, requestId: selectedRequestId })} className="border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-100">{pnrReminderMutation.isPending ? "Relance en cours…" : "Relancer le PNR"}</Button>}
+                  </div>
+                </section>
                 <details className="rounded-xl border border-slate-200 p-3"><summary className="cursor-pointer text-sm font-bold text-slate-800">Voir les données techniques reçues</summary><pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-600">{displayJson({ vol: detailQuery.data.request.flightData, passagers: detailQuery.data.request.passengerData })}</pre></details>
                 <section className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center"><div><h3 className="text-sm font-black text-sky-950">Comparateur de devis partenaires</h3><p className="mt-1 text-xs text-sky-800">Saisissez uniquement une offre réellement reçue, avec sa référence source. Le client verra uniquement les devis vérifiés et actifs.</p></div><span className="w-fit rounded-full bg-white px-3 py-1 text-xs font-black text-sky-800">{partnerQuotesQuery.data?.length ?? 0} devis</span></div>

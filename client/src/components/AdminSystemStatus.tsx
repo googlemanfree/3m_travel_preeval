@@ -25,6 +25,10 @@ export function AdminSystemStatus() {
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
+  const smtpHealthQuery = trpc.monitoring.getSmtpHealth.useQuery(undefined, {
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
   const diagnosis = trpc.monitoring.runConnectivityDiagnostic.useMutation({
     onSuccess: () => void statusQuery.refetch(),
   });
@@ -64,10 +68,11 @@ export function AdminSystemStatus() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Serveur applicatif</CardTitle><Server className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[serverTone].className}>{statusStyle[serverTone].label}</Badge><p className="text-xs text-slate-500">Réponse interne : {status?.server.latencyMs ?? "—"} ms · Actif depuis {status ? formatUptime(status.server.uptimeMs) : "—"}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Base de données</CardTitle><Database className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={statusStyle[databaseTone].className}>{statusStyle[databaseTone].label}</Badge><p className="text-xs text-slate-500">{status?.database.message ?? "Contrôle en cours…"}{status?.database.latencyMs !== null && status?.database.latencyMs !== undefined ? ` · ${status.database.latencyMs} ms` : ""}</p></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Trafic tRPC</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent><p className="text-2xl font-bold text-slate-900">{status?.traffic.totalRequests ?? "—"}</p><p className="text-xs text-slate-500">Erreurs : {status?.traffic.errorRate ?? "—"} · Délais : {status?.traffic.timeoutRate ?? "—"}</p></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Messagerie SMTP</CardTitle><Activity className="h-4 w-4 text-blue-700" /></CardHeader><CardContent className="space-y-2"><Badge variant="outline" className={smtpHealthQuery.data?.configured ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{smtpHealthQuery.data?.configured ? "Configurée" : "À configurer"}</Badge><p className="text-xs text-slate-500">{smtpHealthQuery.data?.host ?? "Serveur non configuré"} · Port {smtpHealthQuery.data?.port ?? "—"}</p></CardContent></Card>
       </div>
 
       {diagnosis.data && <div className={`rounded-xl border p-4 text-sm ${diagnosis.data.ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900"}`}><p className="font-semibold">Diagnostic {diagnosis.data.ok ? "réussi" : "à examiner"} · {diagnosis.data.durationMs} ms</p><ul className="mt-2 list-disc space-y-1 pl-5">{diagnosis.data.findings.map((finding) => <li key={finding}>{finding}</li>)}</ul></div>}

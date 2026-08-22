@@ -40,7 +40,7 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
 }
-const JWT_EXPIRES = "30d";
+const JWT_EXPIRES = "24h";
 
 export function signCandidateToken(candidateId: number): string {
   return jwt.sign({ sub: candidateId, type: "candidate" }, JWT_SECRET, {
@@ -141,6 +141,8 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 // Le portrait est une barrière serveur : seules les mutations d’onboarding
 // peuvent être appelées avant la vérification humaine.
 const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
+// Contrat de la requête de synthèse consommée par l’espace candidat après actualisation.
+export const CANDIDATE_DASHBOARD_CONTRACT = "candidate.getClientDashboardSummary";
 
 export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais

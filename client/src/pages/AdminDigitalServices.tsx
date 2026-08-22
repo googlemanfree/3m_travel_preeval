@@ -23,7 +23,7 @@ export default function AdminDigitalServices() {
   const [notes, setNotes] = useState("");
   const utils = trpc.useUtils();
   const { data: requests, isLoading, error } = trpc.digitalServices.adminList.useQuery({ sessionToken: token }, { enabled: Boolean(token), retry: false });
-  const updateRequest = trpc.digitalServices.updateRequest.useMutation({ onSuccess: () => { utils.digitalServices.adminList.invalidate({ sessionToken: token }); toast.success("Demande 3M Digital mise à jour."); }, onError: (updateError) => toast.error(updateError.message || "Mise à jour impossible.") });
+  const updateRequest = trpc.digitalServices.updateRequest.useMutation({ onSuccess: () => { utils.digitalServices.adminList.invalidate({ sessionToken: token }); toast.success("Demande 3M Digital mise à jour."); }, onError: (updateError) => toast.error(updateError.message?.includes("session") ? "Session expirée : reconnectez-vous puis réessayez." : updateError.message || "Mise à jour impossible.") });
   const selected = requests?.find((request) => request.id === selectedId) ?? requests?.[0] ?? null;
   const selectRequest = (id: number) => { const request = requests?.find((item) => item.id === id); setSelectedId(id); setNotes(request?.adminNotes || ""); };
   const saveRequest = (status: RequestStatus) => { if (selected) updateRequest.mutate({ sessionToken: token, requestId: selected.id, status, adminNotes: notes || undefined }); };

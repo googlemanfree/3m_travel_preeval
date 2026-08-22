@@ -10,13 +10,14 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { getDb } from "../db";
-import { adminAccounts, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
-import { count, eq } from "drizzle-orm";
+import { adminAccounts, adminSessionEvents, evaluations, flightBookingRequests, insuranceRequests } from "../../drizzle/schema";
+import { count, desc, eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
+const ADMIN_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 // Générer un token de session
 function generateSessionToken(): string {
@@ -117,7 +118,7 @@ export const adminAuthRouter = router({
       }
 
       const sessionToken = generateSessionToken();
-      const sessionExpiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12h
+      const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
 
       await db
         .update(adminAccounts)
@@ -128,13 +129,14 @@ export const adminAuthRouter = router({
           lastActivityAt: new Date(),
         })
         .where(eq(adminAccounts.id, admin.id));
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login", expiresAt: sessionExpiresAt });
 
       ctx.res.cookie(ADMIN_SESSION_COOKIE, sessionToken, {
         httpOnly: true,
         secure: true,
         sameSite: "lax",
         path: "/",
-        maxAge: 12 * 60 * 60 * 1000,
+        maxAge: ADMIN_SESSION_DURATION_MS,
       });
 
       return {
@@ -149,9 +151,17 @@ export const adminAuthRouter = router({
     }),
 
   /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */
-  me: publicProcedure.query(async ({ ctx }) => {
+  me: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).optional() }).optional())
+    .query(async ({ ctx, input }) => {
     try {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
+      } catch {
+        if (!input?.sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
+        admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      }
       return {
         authenticated: true,
         requiresPasswordChange: admin.requiresPasswordChange,
@@ -161,6 +171,49 @@ export const adminAuthRouter = router({
       return { authenticated: false } as const;
     }
   }),
+
+  /** Renouvelle la session depuis le cookie HttpOnly ou un jeton de compatibilité valide. */
+  renewSession: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1).optional() }))
+    .mutation(async ({ input, ctx }) => {
+      let admin;
+      try {
+        admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie, { allowPasswordChange: true });
+      } catch {
+        if (!input.sessionToken) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session administrateur requise." });
+        admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      }
+
+      const sessionToken = generateSessionToken();
+      const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.update(adminAccounts).set({ sessionToken, sessionExpiresAt, lastActivityAt: new Date() }).where(eq(adminAccounts.id, admin.id));
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "renewed", expiresAt: sessionExpiresAt });
+      ctx.res.cookie(ADMIN_SESSION_COOKIE, sessionToken, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: ADMIN_SESSION_DURATION_MS });
+      return { sessionToken, sessionExpiresAt };
+    }),
+
+  getSessionHistory: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db.select().from(adminSessionEvents).where(eq(adminSessionEvents.adminId, admin.id)).orderBy(desc(adminSessionEvents.createdAt)).limit(50);
+    }),
+
+  revokeAllSessions: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "revoked_all", expiresAt: null });
+      await db.update(adminAccounts).set({ sessionToken: null, sessionExpiresAt: null }).where(eq(adminAccounts.id, admin.id));
+      ctx.res.clearCookie(ADMIN_SESSION_COOKIE, { httpOnly: true, secure: true, sameSite: "lax", path: "/" });
+      return { success: true };
+    }),
 
   /**
    * Changer son propre mot de passe (admin déjà connecté).

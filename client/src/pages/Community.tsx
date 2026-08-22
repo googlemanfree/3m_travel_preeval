@@ -70,6 +70,8 @@ const serviceLabels = {
   professional_training: "Formation professionnelle",
 } as const;
 
+type PricingPlan = { title: string; subtitle: string; launchRange: string; annualRange: string; delivery: string; points: string[] };
+
 export default function Community() {
   const [form, setForm] = useState({ service: "web_platform" as keyof typeof serviceLabels, fullName: "", email: "", phone: "", organization: "", message: "" });
   const { data: content } = trpc.digitalServices.getContent.useQuery();
@@ -80,6 +82,12 @@ export default function Community() {
       return expertise.map((item, index) => ({ ...item, title: definitions[index]?.title || item.title, description: definitions[index]?.description || item.description, points: definitions[index]?.points || item.points }));
     } catch { return expertise; }
   }, [content?.serviceDefinitionsJson]);
+  const pricingPlans = useMemo(() => {
+    try {
+      const parsed = JSON.parse(content?.pricingJson || "[]") as PricingPlan[];
+      return Array.isArray(parsed) ? parsed.filter((plan) => plan?.title && plan?.launchRange && Array.isArray(plan?.points)) : [];
+    } catch { return []; }
+  }, [content?.pricingJson]);
   const submitRequest = trpc.digitalServices.createRequest.useMutation({
     onSuccess: ({ reference }) => {
       toast.success(`Votre demande ${reference} a été transmise à l’équipe 3M Digital.`);
@@ -184,6 +192,14 @@ export default function Community() {
             </div>
           </div>
         </section>
+
+        {pricingPlans.length > 0 && <section id="tarifs" className="border-y border-slate-200 bg-white px-4 py-18 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-3xl"><p className="text-sm font-black uppercase tracking-[.14em] text-blue-700">Repères de cadrage</p><h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Comprendre l’ampleur d’un projet digital.</h2><p className="mt-4 leading-7 text-slate-600">Les fourchettes ci-dessous servent à cadrer un projet selon son niveau d’ambition. Elles doivent être confirmées par une analyse de besoin et un devis 3M Digital ; elles ne constituent ni une offre ferme ni un paiement automatique.</p></div>
+            <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950"><strong>À distinguer :</strong> les frais de lancement couvrent le cadrage, le design, les contenus, le développement et les tests. Les charges annuelles couvrent ensuite l’hébergement, la maintenance, la sécurité, les outils et le support. Les API, commissions, taxes et fournisseurs externes sont évalués séparément lorsque nécessaires.</div>
+            <div className="mt-8 grid gap-5 lg:grid-cols-2">{pricingPlans.map((plan) => <article key={plan.title} className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm"><p className="text-sm font-black uppercase tracking-[.12em] text-blue-700">Niveau de service</p><h3 className="mt-3 text-2xl font-black text-slate-950">{plan.title}</h3><p className="mt-3 min-h-14 leading-7 text-slate-600">{plan.subtitle}</p><div className="mt-6 grid gap-3 border-y border-slate-200 py-5 sm:grid-cols-3"><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Lancement</p><p className="mt-1 font-black text-slate-950">{plan.launchRange}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Charges annuelles</p><p className="mt-1 font-bold text-slate-800">{plan.annualRange}</p></div><div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Délai indicatif</p><p className="mt-1 font-bold text-slate-800">{plan.delivery}</p></div></div><ul className="mt-5 space-y-2.5 text-sm leading-6 text-slate-700">{plan.points.map((point) => <li key={point} className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-600" />{point}</li>)}</ul><a href="#demande" className="mt-6 inline-flex items-center font-bold text-blue-700 hover:text-blue-900">Demander un cadrage personnalisé <ArrowRight className="ml-2 h-4 w-4" /></a></article>)}</div>
+          </div>
+        </section>}
 
         <section id="demande" className="mx-auto max-w-7xl px-4 py-18 sm:px-6 lg:px-8">
           <div className="grid overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-blue-800 to-sky-700 text-white lg:grid-cols-[.9fr_1.1fr]">

@@ -48,4 +48,30 @@ describe("cycle complet des demandes 3M Digital", () => {
     expect(outcome).toEqual({ success: true });
     expect(updates[0]).toMatchObject({ status: "contacted", adminNotes: "Appel de qualification prévu demain.", handledByAdminEmail: "admin@3mtravelagency.com" });
   });
+
+  it("enregistre une grille de cadrage administrable sans créer de tarif contractuel", async () => {
+    const caller = digitalServicesRouter.createCaller(ctx);
+    const pricingJson = JSON.stringify([
+      { title: "Vitrine évolutive", subtitle: "Demande et validation humaine.", launchRange: "3 600 000 – 14 500 000 XAF", annualRange: "1 150 000 – 7 200 000 XAF / an", delivery: "6 à 12 semaines", points: ["Formulaires", "Suivi"] },
+      { title: "Plateforme transactionnelle", subtitle: "Services standardisés.", launchRange: "17 500 000 – 66 000 000 XAF", annualRange: "8 100 000 – 47 000 000 XAF / an", delivery: "4 à 9 mois", points: ["Catalogue", "Paiement"] },
+    ]);
+    const outcome = await caller.adminUpdateContent({
+      sessionToken: "valid-admin-session",
+      content: {
+        heroTitle: "Le digital qui fait avancer vos projets.",
+        heroDescription: "Une présentation structurée des services numériques 3M Digital.",
+        serviceIntro: "Des expertises adaptées aux besoins numériques et opérationnels.",
+        requestIntro: "Chaque demande est traitée par un conseiller avant toute proposition.",
+        serviceDefinitionsJson: JSON.stringify([
+          { title: "Web", description: "Sites", points: ["Conseil"] },
+          { title: "Croissance", description: "Visibilité", points: ["Contenu"] },
+          { title: "Support", description: "Fiabilité", points: ["Assistance"] },
+          { title: "Formation", description: "Compétences", points: ["Ateliers"] },
+        ]),
+        pricingJson,
+      },
+    });
+    expect(outcome).toEqual({ success: true });
+    expect(inserted.at(-1)).toMatchObject({ pricingJson, updatedByAdminEmail: "admin@3mtravelagency.com" });
+  });
 });

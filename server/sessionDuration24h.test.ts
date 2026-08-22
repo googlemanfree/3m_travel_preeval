@@ -11,6 +11,15 @@ describe("sessions de 24 heures", () => {
     expect(read("server/routers/candidateAuthOTP.ts")).toContain('const JWT_EXPIRES = "24h"');
     expect(read("server/routers/adminAuth-new.ts")).toContain('const JWT_EXPIRES = "24h"');
     expect(read("server/routers/adminAuth.ts")).toContain("24 * 60 * 60 * 1000");
+    expect(read("server/routers/adminAuth.ts")).toContain("renewSession");
+  });
+
+  it("privilégie le cookie sécurisé pour les traitements 3M Digital et informe clairement après expiration", () => {
+    const router = read("server/routers/digitalServices.ts");
+    const page = read("client/src/pages/AdminDigitalServices.tsx");
+    expect(router).toContain("resolveDigitalAdminSession");
+    expect(router).toContain("requireAdminSessionFromCookie");
+    expect(page).toContain("Session expirée : reconnectez-vous puis réessayez.");
   });
 
   it("conserve la session candidat dans le navigateur avec une échéance explicite", () => {

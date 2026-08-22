@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "3m_candidate_token";
 const CANDIDATE_KEY = "3m_candidate_info";
+const EXPIRY_KEY = "3m_candidate_session_expires_at";
 
 export interface CandidateInfo {
   id: number;
@@ -19,6 +20,12 @@ export interface CandidateInfo {
 /** Lit le token depuis localStorage (persistant) ou sessionStorage (session) */
 function readToken(): string | null {
   try {
+    const expiresAt = Number(localStorage.getItem(EXPIRY_KEY) ?? sessionStorage.getItem(EXPIRY_KEY) ?? "0");
+    if (!expiresAt || expiresAt <= Date.now()) {
+      localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CANDIDATE_KEY); localStorage.removeItem(EXPIRY_KEY);
+      sessionStorage.removeItem(STORAGE_KEY); sessionStorage.removeItem(CANDIDATE_KEY); sessionStorage.removeItem(EXPIRY_KEY);
+      return null;
+    }
     return localStorage.getItem(STORAGE_KEY) ?? sessionStorage.getItem(STORAGE_KEY);
   } catch { return null; }
 }
@@ -46,8 +53,10 @@ export function useCandidateAuth() {
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(CANDIDATE_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
     sessionStorage.removeItem(STORAGE_KEY);
     sessionStorage.removeItem(CANDIDATE_KEY);
+    sessionStorage.removeItem(EXPIRY_KEY);
     setToken(null);
     setCandidate(null);
   }, []);

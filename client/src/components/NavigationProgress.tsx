@@ -22,10 +22,16 @@ export default function NavigationProgress() {
       setVisible(true);
       setValue((current) => Math.max(current, 18));
       window.requestAnimationFrame(() => setValue((current) => Math.max(current, 68)));
+      const fallbackTimeout = window.setTimeout(() => {
+        setVisible(false);
+        setValue(8);
+      }, 8_000);
+      return () => window.clearTimeout(fallbackTimeout);
     };
 
-    window.addEventListener(NAVIGATION_EVENT, start);
-    return () => window.removeEventListener(NAVIGATION_EVENT, start);
+    const onStart = () => { void start(); };
+    window.addEventListener(NAVIGATION_EVENT, onStart);
+    return () => window.removeEventListener(NAVIGATION_EVENT, onStart);
   }, []);
 
   useEffect(() => {
@@ -62,6 +68,7 @@ export default function NavigationProgress() {
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={value}
+      aria-valuetext="Navigation en cours"
     >
       <div
         className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.7)]"

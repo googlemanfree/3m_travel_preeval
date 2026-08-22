@@ -58,9 +58,10 @@ export default function EvaluationSpace() {
   const { data: dashboardData, isLoading, isError, error, refetch } = trpc.candidate.getClientDashboardSummary.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: 3,
     retryDelay: 1000,
   });
+  const sessionConfirmedInvalid = isError && /non authentifi|expir|invalid/i.test(error instanceof Error ? error.message : "");
   const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
 
   useEffect(() => {
@@ -124,7 +125,7 @@ export default function EvaluationSpace() {
         <Card className="max-w-md w-full p-8 text-center">
           <Loader2 className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
           <h2 className="text-xl font-bold text-gray-900 mb-1">Chargement de votre tableau de bord...</h2>
-          <p className="text-gray-500 text-sm">Synchronisation sécurisée en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
+          <p className="text-gray-500 text-sm">Vérification de votre espace en cours. Si cela dure, un bouton de reprise apparaîtra automatiquement.</p>
         </Card>
       </div>
     );
@@ -141,7 +142,7 @@ export default function EvaluationSpace() {
           <p className="mt-3 rounded-lg bg-amber-50 p-3 text-left text-xs text-amber-900">{errorMessage}</p>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Button onClick={() => { setLoadingTimeoutReached(false); void refetch(); }} className="bg-blue-600 hover:bg-blue-700"><RefreshCw className="mr-2 h-4 w-4" />Réessayer</Button>
-            <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button>
+            {sessionConfirmedInvalid ? <Button variant="outline" onClick={() => { logout(); setLocation("/login"); }}>Se reconnecter</Button> : <Button variant="outline" onClick={() => void refetch()}>Conserver ma session</Button>}
           </div>
           <Button variant="link" className="mt-3 text-sm" onClick={() => setLocation(`/mon-espace?section=messages`)}><MessageSquare className="mr-1 h-4 w-4" />Contacter l’agence</Button>
         </Card>
@@ -150,6 +151,7 @@ export default function EvaluationSpace() {
   }
 
   const { candidate: cProfile, activeDossier, favoriteFlights, evaluations, messages, candidateFiles, agencyDocuments, stats } = dashboardData;
+  const portraitIsMissing = !cProfile.avatarUrl;
   const checklistDocuments = [...(agencyDocuments ?? []), ...(candidateFiles ?? [])].map((document: any) => ({
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
@@ -254,6 +256,7 @@ export default function EvaluationSpace() {
         <div id="candidate-space-content" className="mt-6" role="tabpanel" tabIndex={-1}>
           {activeTab === "overview" && (
             <div className="space-y-6">
+              {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               {/* Widgets statistiques et progression */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">

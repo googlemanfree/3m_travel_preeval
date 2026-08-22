@@ -29,6 +29,17 @@ const transporter = smtpHost && smtpUser && smtpPass ? nodemailer.createTranspor
   },
 }) : null;
 
+/** État non sensible utilisable par la supervision ; aucun secret SMTP n’est renvoyé. */
+export function getSmtpHealth() {
+  return {
+    configured: Boolean(transporter),
+    provider: "SMTP",
+    host: smtpHost || null,
+    port: smtpPort,
+    from: smtpFrom,
+  };
+}
+
 export interface SendEmailOptions {
   to: string;
   subject: string;

@@ -2,7 +2,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
-import { applications, agencyDossiers, clientDocuments, candidateMessages, candidates } from "../../drizzle/schema";
+import { applications, agencyDossiers, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie } from "./adminAuth";
@@ -169,6 +169,61 @@ async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
 }
 
 export const adminCandidateManagementRouter = router({
+  listPreDossierAccounts: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().max(120).optional().default("") }))
+    .query(async ({ input, ctx }) => {
+      await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [accounts, files] = await Promise.all([
+        db.select().from(candidates).where(eq(candidates.dossierStatus, "nouveau")).orderBy(desc(candidates.createdAt)).limit(500),
+        db.select({ candidateId: candidateFiles.candidateId }).from(candidateFiles).limit(5000),
+      ]);
+      const documentsByCandidate = new Map<number, number>();
+      files.forEach((file) => documentsByCandidate.set(file.candidateId, (documentsByCandidate.get(file.candidateId) ?? 0) + 1));
+      const query = input.search.toLowerCase();
+      const filtered = accounts.filter((account) => !query || [account.fullName, account.email, account.phone ?? "", account.destination ?? ""].some((value) => value.toLowerCase().includes(query)));
+      return {
+        total: filtered.length,
+        accounts: filtered.map((account) => ({
+          id: account.id,
+          fullName: account.fullName,
+          email: account.email,
+          phone: account.phone,
+          destinationPreference: account.destination,
+          dossierStatus: account.dossierStatus,
+          emailVerified: account.emailVerified,
+          createdAt: account.createdAt,
+          lastLoginAt: account.lastLoginAt,
+          documentsCount: documentsByCandidate.get(account.id) ?? 0,
+          pendingEvaluationReference: account.evaluationDeclarationStatus === "declared_complete" ? "Évaluation déclarée" : null,
+          evaluationValidated: false,
+        })),
+      };
+    }),
+
+  activatePreDossierAccount: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive(), destination: z.string().trim().min(2).max(100), visaType: z.string().trim().min(2).max(100), adminNotes: z.string().trim().max(5000).optional() }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: "Ce compte possède déjà un dossier actif." });
+      const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(1);
+      if (existing.length) throw new TRPCError({ code: "CONFLICT", message: "Un dossier agence existe déjà pour ce candidat." });
+      await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+      await db.update(candidates).set({ dossierStatus: "documents", destination: input.destination as any, visaType: input.visaType, dossierNote: input.adminNotes ?? null }).where(eq(candidates.id, candidate.id));
+      let emailSent = false;
+      try {
+        emailSent = await sendDossierConfirmationEmail(candidate.email, candidate.fullName, `3M-AGN-${candidate.id.toString().padStart(4, "0")}`, input.destination, 0);
+      } catch {
+        emailSent = false;
+      }
+      return { success: true, emailSent };
+    }),
+
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {
     await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const candidates = await loadCandidates(input);

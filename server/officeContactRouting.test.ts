@@ -44,10 +44,10 @@ describe("contacts multi-bureaux", () => {
     const legalFooter = read("client/src/components/FooterLegal.tsx");
 
     expect(context).toContain('return "cameroon"');
-    expect(footer).toContain('wa.me/237698104832');
-    expect(footer).toContain('Bureau Ottawa, Canada : +1 672 897 2999');
+    expect(footer).toContain('COMPANY_CONTACTS.yaounde.whatsappUrl');
+    expect(footer).toContain('OFFICE_CONTACTS.ottawa.whatsappDisplay');
     expect(legalFooter).toContain('tel:+237698104832');
-    expect(legalFooter).toContain('Bureau Ottawa, Canada : +1 672 897 2999');
+    expect(legalFooter).toContain('Bureau 3M Travel d’Ottawa, Canada : +1 672 897 2999');
   });
 
   it("bascule la destination et le message rapide vers le bureau choisi", () => {

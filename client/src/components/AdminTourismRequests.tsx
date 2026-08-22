@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,22 @@ const statusLabels: Record<string, { label: string; color: string; bg: string }>
   cancelled: { label: "Annulé", color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
 };
 
+const catalogStatusMeta: Record<string, string> = { pending: "À vérifier", verified: "Confirmé", rejected: "Écarté" };
+
+function parseServiceTypes(raw: string | null | undefined): string[] {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export function AdminTourismRequests() {
-  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery();
+  const sessionToken = typeof window === "undefined" ? "" : sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "";
+  const adminInput = useMemo(() => ({ sessionToken: sessionToken || undefined }), [sessionToken]);
+  const precheckInput = useMemo(() => ({ sessionToken: sessionToken || undefined }), [sessionToken]);
+  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery(adminInput);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
@@ -29,7 +43,8 @@ export function AdminTourismRequests() {
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
-  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery();
+  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
+  const { data: precheckEntries } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -52,7 +67,7 @@ export function AdminTourismRequests() {
   const filteredRequests = (requests ?? []).filter(req => {
     const matchSearch = search === "" || req.fullName.toLowerCase().includes(search.toLowerCase()) || req.destination.toLowerCase().includes(search.toLowerCase()) || req.reference.toLowerCase().includes(search.toLowerCase()) || req.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || req.status === statusFilter;
-    const services = JSON.parse(req.serviceTypesJson || "[]") as string[];
+    const services = parseServiceTypes(req.serviceTypesJson);
     const matchService = serviceFilter === "all" || services.includes(serviceFilter);
     return matchSearch && matchStatus && matchService;
   });
@@ -68,7 +83,7 @@ export function AdminTourismRequests() {
       r.departureDate ? new Date(r.departureDate).toLocaleDateString("fr-FR") : "",
       r.returnDate ? new Date(r.returnDate).toLocaleDateString("fr-FR") : "",
       r.travelersCount,
-      `"${JSON.parse(r.serviceTypesJson || "[]").join(", ")}"`,
+      `"${parseServiceTypes(r.serviceTypesJson).join(", ")}"`,
       r.budgetXaf ?? "",
       r.quotedPriceXaf ?? "",
       r.status,
@@ -85,6 +100,27 @@ export function AdminTourismRequests() {
     document.body.removeChild(link);
   };
 
+  const exportHotelsCsv = () => {
+    const headers = ["Hôtel", "Ville", "Pays", "Statut", "Lien officiel"];
+    const rows = (catalogHotels ?? []).map((hotel: any) => [hotel.name ?? "", hotel.city ?? "", hotel.country ?? "", catalogStatusMeta[hotel.validationStatus] ?? hotel.validationStatus ?? "pending", hotel.officialUrl ?? ""]);
+    const blob = new Blob([[headers, ...rows].map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "hotels-catalogue-3m.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportHotelsPdf = () => {
+    const listing = (catalogHotels ?? []).map((hotel: any) => `<tr><td>${hotel.name ?? "—"}</td><td>${hotel.city ?? "—"}</td><td>${catalogStatusMeta[hotel.validationStatus] ?? hotel.validationStatus ?? "À vérifier"}</td></tr>`).join("");
+    const documentWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!documentWindow) return toast.error("Autorisez l’ouverture de la fenêtre d’export PDF.");
+    documentWindow.document.write(`<html><head><title>Catalogue hôtels 3M</title><style>body{font-family:Arial;padding:28px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;text-align:left}</style></head><body><h1>Catalogue hôtels 3M</h1><p>Export de suivi administratif — validation humaine requise.</p><table><thead><tr><th>Hôtel</th><th>Ville</th><th>Statut</th></tr></thead><tbody>${listing}</tbody></table></body></html>`);
+    documentWindow.document.close();
+    documentWindow.print();
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -97,7 +133,9 @@ export function AdminTourismRequests() {
             Suivi des demandes d’hôtel, véhicules et packs professionnels formulées par les candidats.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={exportHotelsCsv} className="gap-2"><Download className="h-4 w-4" /> Hôtels CSV</Button>
+          <Button variant="outline" onClick={exportHotelsPdf} className="gap-2"><FileText className="h-4 w-4" /> Hôtels PDF</Button>
           <Button variant="outline" onClick={() => refetch()} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
@@ -180,6 +218,10 @@ export function AdminTourismRequests() {
 
       <Card className="border-slate-200 bg-white">
         <CardContent className="p-5">
+          <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="font-black text-amber-950">Précontrôle technique</p>
+            <p className="mt-1 text-xs text-amber-900">{precheckEntries?.length ?? 0} fiche(s) avec provenance et contact officiel. Validation humaine requise avant toute visibilité client.</p>
+          </div>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier ouvert</p>
@@ -193,7 +235,7 @@ export function AdminTourismRequests() {
                   <SelectItem value="douala">Douala</SelectItem><SelectItem value="yaounde">Yaoundé</SelectItem><SelectItem value="kribi">Kribi</SelectItem><SelectItem value="limbe">Limbe</SelectItem><SelectItem value="libreville">Libreville</SelectItem><SelectItem value="brazzaville">Brazzaville</SelectItem><SelectItem value="ndjamena">N'Djamena</SelectItem><SelectItem value="malabo">Malabo</SelectItem><SelectItem value="bangui">Bangui</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
+              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any, sessionToken })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
                 {importCatalog.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Importer la ville
               </Button>
             </div>
@@ -201,7 +243,7 @@ export function AdminTourismRequests() {
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
-              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>
@@ -269,7 +311,7 @@ export function AdminTourismRequests() {
                         )}
                       </td>
                       <td className="p-4">
-                        <Select value={req.status} onValueChange={value => updateStatus.mutate({ id: req.id, status: value as any })}>
+                        <Select value={req.status} onValueChange={value => updateStatus.mutate({ id: req.id, status: value as any, sessionToken })}>
                           <SelectTrigger className={`w-36 text-xs font-semibold ${st.bg} ${st.color}`}>
                             <SelectValue />
                           </SelectTrigger>
@@ -383,7 +425,7 @@ export function AdminTourismRequests() {
 
             <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setSelectedRequest(null)}>Fermer</Button>
-              <Button onClick={() => updateDetails.mutate({ id: selectedRequest.id, quotedPriceXaf: quotedPrice ? Number(quotedPrice) : undefined, adminNotes: adminNotes || undefined })} className="bg-blue-700 text-white hover:bg-blue-800">
+              <Button onClick={() => updateDetails.mutate({ id: selectedRequest.id, quotedPriceXaf: quotedPrice ? Number(quotedPrice) : undefined, adminNotes: adminNotes || undefined, sessionToken })} className="bg-blue-700 text-white hover:bg-blue-800">
                 Enregistrer le devis & les notes
               </Button>
             </DialogFooter>

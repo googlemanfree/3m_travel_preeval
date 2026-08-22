@@ -277,7 +277,7 @@ export const flightsRouter = router({
           params.set("return_date", input.returnDate);
         }
 
-        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`);
+        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, { signal: AbortSignal.timeout(8_000) });
         if (!res.ok) {
           const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
           const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
@@ -391,6 +391,7 @@ export const flightsRouter = router({
           outbound,
           inbound: [],
           searchParams: input,
+          providerNotice: "Service fournisseur momentanément indisponible : affichage d’offres indicatives à confirmer par un conseiller.",
           currency: "XAF",
           agencyMarkup: AGENCY_MARKUP,
           isDemo: true,

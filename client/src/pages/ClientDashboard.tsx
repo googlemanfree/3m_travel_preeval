@@ -813,6 +813,10 @@ export default function ClientDashboard() {
                   <span className="rounded-lg bg-white/10 p-3"><span className="block text-blue-100">Profil</span><strong>{profileProgress}%</strong></span>
                 </div>
               </button>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" onClick={() => setActiveTab("overview")}>Étape suivante</Button>
+                <Button type="button" variant="outline" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={() => setActiveTab("messages")}>Mes messages</Button>
+              </div>
             </div>
           </CardContent>
         </Card>

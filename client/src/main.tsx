@@ -124,10 +124,12 @@ const trpcClient = trpc.createClient({
       // @ts-expect-error - faux positif TypeScript, voir commentaire ci-dessus
       transformer: superjson,
       headers() {
-        // 1. Admin session token (takes priority for admin routes)
+        const isAdminRoute = window.location.pathname.startsWith("/admin");
+        // 1. Jeton administrateur : uniquement dans l’espace admin, afin de ne
+        // jamais écraser le jeton candidat après un rechargement de son espace.
         try {
-          const adminToken = sessionStorage.getItem("adminSessionToken");
-          if (adminToken) {
+          const adminToken = sessionStorage.getItem("adminSessionToken") ?? localStorage.getItem("adminSessionToken");
+          if (isAdminRoute && adminToken) {
             return { Authorization: `Bearer ${adminToken}`, "X-Admin-Token": adminToken };
           }
         } catch {
@@ -140,7 +142,7 @@ const trpcClient = trpc.createClient({
         // déconnectés par le serveur dès leur premier appel API.
         try {
           const candidateToken = localStorage.getItem("3m_candidate_token") ?? sessionStorage.getItem("3m_candidate_token");
-          if (candidateToken) {
+          if (!isAdminRoute && candidateToken) {
             return { Authorization: `Bearer ${candidateToken}` };
           }
         } catch {

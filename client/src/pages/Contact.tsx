@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatModal } from '@/components/ChatModal';
+import OfficeContactPanel from '@/components/OfficeContactPanel';
 import { trpc } from '@/lib/trpc';
 
 export default function Contact() {
@@ -122,6 +123,12 @@ export default function Contact() {
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
+      </section>
+
+      <section className="px-4 pb-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <OfficeContactPanel />
+        </div>
       </section>
 
       {/* Google Maps Section */}

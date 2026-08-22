@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { evisasDatabaseComplete } from '@/data/evisasDatabaseComplete';
 import { trpc } from '@/lib/trpc';
 import { mergeEvisaCatalogue } from '@/lib/evisaCatalogueMerge';
+import { useLocation } from 'wouter';
 
 interface Evisa {
   country: string;
@@ -907,6 +908,7 @@ interface ChecklistState {
 }
 
 export default function Evisas() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('Tous');
   const [selectedNationalite, setSelectedNationalite] = useState('Camerounaise');
@@ -1017,8 +1019,7 @@ export default function Evisas() {
   };
 
   const handleLaunchProcedure = (countryName: string) => {
-    const text = encodeURIComponent(`Bonjour, je suis de nationalité ${selectedNationalite} et je souhaite démarrer la procédure complète de demande d'e-Visa pour ${countryName} via 3M Travel & Services.`);
-    window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
+    setLocation(`/evisas/request?countryCode=${encodeURIComponent(countryName)}`);
   };
 
   return (

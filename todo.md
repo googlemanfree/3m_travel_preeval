@@ -22,8 +22,32 @@
 - [x] Ajouter une interface administrateur pour consulter et modifier les pôles et contenus publiés de la sous-page 3M Digital.
 - [x] Ajouter un test d’intégration du flux création de demande → liste admin → mise à jour humaine de statut et de note.
 - [x] Redémarrer et vérifier la disponibilité du routeur 3M Digital dans le serveur de développement.
-- [ ] Vérifier visuellement l’écran `/admin/digital-services`, l’éditeur de contenu et la file de demandes après les derniers changements.
-- [ ] Exécuter un parcours UI de demande 3M Digital jusqu’au traitement administratif de statut et de notes.
+- [x] Vérifier visuellement l’écran `/admin/digital-services` et l’éditeur de contenu après les derniers changements.
+- [x] Vérifier visuellement la file de demandes et les actions de statut/notes de `/admin/digital-services`.
+- [ ] Effectuer un test navigateur vérifiable de bout en bout : demande publique → file admin → statut et note interne.
+- [ ] Ajouter un scénario E2E automatisé couvrant le flux UI 3M Digital de la demande au traitement administratif.
+
+## Persistance réelle des demandes 3M Digital
+- [ ] Vérifier la présence de demandes 3M Digital dans le registre publié et le lien formulaire → route serveur.
+- [ ] Corriger tout écart de persistance ou de filtrage entre la soumission publique et la file administrateur.
+- [ ] Valider une demande réelle créée par l’utilisateur jusqu’à sa visibilité dans la file administrateur.
+
+## Session administrateur de traitement 3M Digital
+- [ ] Diagnostiquer la restauration du jeton de session dans l’écran `/admin/digital-services` publié.
+- [ ] Corriger le renouvellement ou l’erreur explicite lorsque la session administrateur est invalide.
+- [ ] Vérifier le traitement sécurisé d’une demande 3M Digital avec statut et note interne après correction.
+
+## Grille tarifaire 3M Digital depuis ITINERAIRES PRO
+- [x] Extraire les offres, prestations, prix et explications utiles du document de référence.
+- [x] Adapter les niveaux de service à 3M Digital sans présenter les tarifs de référence comme des prix 3M confirmés.
+- [x] Intégrer une grille tarifaire éditable dans la sous-page et le back-office 3M Digital.
+- [x] Vérifier les contenus tarifaires, les demandes associées et les régressions avant publication.
+
+## Restauration des contrats historiques après récupération
+- [x] Cartographier les échecs de suite complète et identifier les fichiers de sauvegarde compatibles.
+- [x] Restaurer les exports, routeurs et composants historiques manquants sans écraser la grille 3M Digital.
+- [x] Réconcilier les contrats de session, d’administration et de tourisme avec les usages clients existants.
+- [x] Rejouer TypeScript et la suite de régression complète jusqu’à suppression des échecs.
 
 ## Sauvegarde alternative avant publication
 - [x] Diagnostiquer une méthode de sauvegarde non destructive malgré le conflit de synchronisation.
@@ -33,10 +57,10 @@
 ## Mise en ligne du service 3M Digital
 - [x] Diagnostiquer l’écart entre les routes locales 3M Digital et la version publique.
 - [x] Préserver une version vérifiable des nouvelles routes avant synchronisation.
-- [ ] Vérifier le déploiement effectif de `/3m-digital` et corriger la publication tant que la route affiche 404.
-- [ ] Vérifier l’accès protégé de `/admin/digital-services` sur le domaine déployé après propagation du cache.
+- [x] Vérifier le déploiement effectif de `/3m-digital` et corriger la publication tant que la route affiche 404.
+- [x] Vérifier l’accès protégé de `/admin/digital-services` sur le domaine déployé après propagation du cache.
 - [x] Renouveler le cache PWA afin de diffuser les nouvelles routes publiées.
-- [ ] Rejouer une vérification navigateur des deux routes déployées et consigner la preuve avant de clore la mise en ligne.
+- [x] Rejouer une vérification navigateur des deux routes déployées et consigner la preuve avant de clore la mise en ligne.
 
 ## Système Centralisé de Réservation Multi-Services & PNR / Référence Fournisseur (v254)
 - [x] Étendre le schéma Drizzle et les types pour stocker le PNR / référence fournisseur, la catégorie de service et la quittance PDF de réservation

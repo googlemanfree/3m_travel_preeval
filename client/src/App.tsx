@@ -3,7 +3,7 @@ import React from "react";
 import { lazyWithTimeout } from "./lib/lazyWithTimeout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 const NotFound = lazyWithTimeout(() => import("./pages/NotFound"));
-import { Route, Switch, Redirect } from "wouter";
+import { Route, Switch, Redirect, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
@@ -87,6 +87,8 @@ const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
+const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
+const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
 const FlightAgentDashboard = lazyWithTimeout(() => import("./pages/FlightAgentDashboard"));
 const AmbassadorProgram = lazyWithTimeout(() => import("./pages/AmbassadorProgram"));
 const CinetPayPayment = lazyWithTimeout(() => import("./pages/CinetPayPayment"));
@@ -162,7 +164,7 @@ function Router() {
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"} component={EvisaDemande} />
+        <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
@@ -239,6 +241,16 @@ function Router() {
       <Route path={"/admin/dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/emails"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEmailCenter />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/email-settings"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminEmailSettings />
         </AdminGuard>
       </Route>
       <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
@@ -439,9 +451,11 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
+  const showFloatingTools = location !== "/contact";
 
   return (
     <ErrorBoundary>
@@ -466,7 +480,7 @@ function App() {
                 </React.Suspense>
               </PageTransition>
               {/* Menu d'actions flottantes unifié */}
-              <FloatingActionMenu />
+               {showFloatingTools && <FloatingActionMenu />}
               {/* Guide d’information flottant */}
               <AiCopilotWidgetEnhanced />
               {/* Assistant intelligent de réservation de vol */}

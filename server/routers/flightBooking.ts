@@ -35,6 +35,12 @@ const requestStatus = [
 ] as const;
 const requestPriority = ["low", "normal", "high", "urgent"] as const;
 const issuanceCheckKeys = ["identity_verified", "passport_valid", "fare_revalidated", "payment_verified", "pnr_document_ready"] as const;
+
+export function hasCompleteIssuanceChecklist(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const checklist = value as Record<string, unknown>;
+  return issuanceCheckKeys.every((key) => checklist[key] === true);
+}
 const customerStatusLabels: Record<(typeof requestStatus)[number], string> = {
   pending_review: "En cours de vérification",
   assigned: "Prise en charge par un conseiller",
@@ -784,8 +790,7 @@ export const flightBookingRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
-      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
-      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      const allChecked = hasCompleteIssuanceChecklist(existing.issuanceChecklist);
       if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
@@ -879,8 +884,7 @@ export const flightBookingRouter = router({
       const [existing] = await db.select().from(flightBookingRequests).where(eq(flightBookingRequests.id, input.requestId)).limit(1);
       if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Réservation introuvable." });
 
-      const checklist = existing.issuanceChecklist && typeof existing.issuanceChecklist === "object" ? existing.issuanceChecklist as Record<string, boolean> : {};
-      const allChecked = issuanceCheckKeys.every((key) => checklist[key] === true);
+      const allChecked = hasCompleteIssuanceChecklist(existing.issuanceChecklist);
       if (!allChecked) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Émission impossible : tous les points de la checklist de contrôle avant émission doivent être validés." });
       }
@@ -911,6 +915,8 @@ export const flightBookingRouter = router({
       });
 
       const loyalty = await awardLoyaltyPointsForIssuedBooking(db, existing, input.requestId);
+      const clientSpaceReady = true;
+      let emailNotificationDispatched = false;
 
       // Envoi synchrone de l'e-mail de notification au client avec le lien du PNR
       try {
@@ -935,11 +941,14 @@ export const flightBookingRouter = router({
             </div>
           `,
         });
+        emailNotificationDispatched = true;
+        await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "pnr_email_dispatched", changedBy: admin.email, oldValue: null, newValue: existing.candidateEmail, details: "Remise PNR envoyée par e-mail ; le document reste disponible dans l’espace client." });
       } catch (err) {
         console.error("[Email Notification Error] Impossible d'envoyer l'e-mail PNR:", err);
+        await db.insert(flightBookingRequestHistory).values({ requestId: input.requestId, action: "pnr_email_dispatch_failed", changedBy: admin.email, oldValue: null, newValue: existing.candidateEmail, details: "Échec de remise PNR par e-mail ; le document reste disponible dans l’espace client." });
       }
 
-      return { success: true, issuedPdfUrl: url, loyalty };
+      return { success: true, issuedPdfUrl: url, loyalty, clientSpaceReady, emailNotificationDispatched };
     }),
 
   exportAuditHistoryPdf: publicProcedure

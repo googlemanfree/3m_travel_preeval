@@ -665,8 +665,13 @@ export const insuranceRequests = mysqlTable("insurance_requests", {
   emergencyContactName: varchar("emergencyContactName", { length: 255 }).notNull(),
   emergencyContactPhone: varchar("emergencyContactPhone", { length: 50 }).notNull(),
   notes: text("notes"),
+  couponFileKey: varchar("couponFileKey", { length: 512 }),
+  couponFileName: varchar("couponFileName", { length: 255 }),
+  couponGeneratedAt: timestamp("couponGeneratedAt"),
+  couponEmailSentAt: timestamp("couponEmailSentAt"),
   attestationFileKey: varchar("attestationFileKey", { length: 512 }),
   attestationFileName: varchar("attestationFileName", { length: 255 }),
+  attestationEmailSentAt: timestamp("attestationEmailSentAt"),
   consentAt: timestamp("consentAt").notNull(),
   status: mysqlEnum("status", ["new", "contacted", "quote_sent", "completed", "cancelled"]).default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -1236,6 +1241,7 @@ export const digitalServiceContent = mysqlTable("digital_service_content", {
   serviceIntro: text("serviceIntro").notNull(),
   requestIntro: text("requestIntro").notNull(),
   serviceDefinitionsJson: text("serviceDefinitionsJson").notNull(),
+  pricingJson: text("pricingJson").notNull(),
   updatedByAdminEmail: varchar("updatedByAdminEmail", { length: 320 }),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -1468,6 +1474,54 @@ export const emailDeliveryLogs = mysqlTable("email_delivery_logs", {
 });
 export type EmailDeliveryLog = typeof emailDeliveryLogs.$inferSelect;
 export type InsertEmailDeliveryLog = typeof emailDeliveryLogs.$inferInsert;
+
+/** Seuils de supervision configurés par conseiller pour les remises e-mail. */
+export const advisorAlertThresholds = mysqlTable("advisor_alert_thresholds", {
+  id: int("id").autoincrement().primaryKey(),
+  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull().unique(),
+  failureThreshold: int("failureThreshold").default(3).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  updatedBy: varchar("updatedBy", { length: 320 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+// Nom historique conservé pour les intégrations et rapports e-mail existants.
+export const emailDeliveryAdvisorThresholds = advisorAlertThresholds;
+
+/** Journal d’incidents de seuil ; il ne contient ni jeton ni contenu sensible d’e-mail. */
+export const emailDeliveryIncidents = mysqlTable("email_delivery_incidents", {
+  id: int("id").autoincrement().primaryKey(),
+  advisorEmail: varchar("advisorEmail", { length: 320 }).notNull(),
+  serviceType: varchar("serviceType", { length: 80 }).default("general").notNull(),
+  failureCount: int("failureCount").default(0).notNull(),
+  thresholdValue: int("thresholdValue").default(3).notNull(),
+  status: mysqlEnum("status", ["open", "acknowledged", "resolved"]).default("open").notNull(),
+  acknowledgedBy: varchar("acknowledgedBy", { length: 320 }),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const incidentComments = mysqlTable("email_delivery_incident_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  authorEmail: varchar("authorEmail", { length: 320 }).notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+/** Alias explicite conservé pour l’historique des incidents dans les rapports. */
+export const emailDeliveryIncidentsHistory = emailDeliveryIncidents;
+
+/** Événements de session administrateur, sans exposer de jeton. */
+export const adminSessionEvents = mysqlTable("admin_session_events", {
+  id: int("id").autoincrement().primaryKey(),
+  adminId: int("adminId").notNull(),
+  eventType: varchar("eventType", { length: 32 }).notNull(),
+  expiresAt: timestamp("expiresAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
 
 /**
  * Historique des recherches de vols effectuées par les utilisateurs.

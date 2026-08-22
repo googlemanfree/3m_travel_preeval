@@ -13,8 +13,17 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
-  const adminSession = trpc.adminAuth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: true });
-  const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
+  const sessionToken = typeof window === "undefined" ? "" : sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "";
+  const [queryTimedOut, setQueryTimedOut] = useState(false);
+  const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
+  useEffect(() => {
+    if (!adminSession.isLoading) { setQueryTimedOut(false); return; }
+    const timeout = window.setTimeout(() => setQueryTimedOut(true), 5_000);
+    return () => window.clearTimeout(timeout);
+  }, [adminSession.isLoading]);
+  const isChecking = adminSession.isLoading && !queryTimedOut;
+  const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
+  const sessionTemporarilyUnavailable = adminSession.isError && !/non authentifi|expir|invalid/i.test(adminSession.error?.message ?? "");
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
 
   useEffect(() => {
@@ -23,7 +32,7 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
     }
   }, [location, navigate, requiresPasswordChange]);
 
-  if (isAuthorized === null || requiresPasswordChange) {
+  if (isChecking || requiresPasswordChange) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
@@ -31,6 +40,19 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
           <p className="mt-4 text-gray-600">
             {requiresPasswordChange ? "Redirection vers la création de votre nouveau mot de passe..." : "Vérification de l'accès..."}
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionTemporarilyUnavailable) {
+    return (
+      <div className="min-h-screen bg-slate-50 p-4 flex items-center justify-center">
+        <div className="max-w-md rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-xl">
+          <AlertCircle className="mx-auto h-10 w-10 text-amber-600" />
+          <h1 className="mt-4 text-xl font-black text-slate-900">Vérification temporairement indisponible</h1>
+          <p className="mt-2 text-sm text-slate-600">Votre session administrateur est conservée pendant la reprise de connexion.</p>
+          <Button className="mt-5" onClick={() => void adminSession.refetch()}>Rester dans l’espace admin</Button>
         </div>
       </div>
     );

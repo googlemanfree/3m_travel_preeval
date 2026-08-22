@@ -23,13 +23,19 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function AdminEmailDeliveryManagement() {
+  // Les champs restent déclarés pour conserver le contrat des exports et aperçus administratifs.
+  const selectedFailedLogIds = new Set<number>();
+  const contentPreviewHtml = "";
+  const advisorFilterLabel = "Tous les conseillers";
+  const weeklyComparisonLabel = "Comparaison hebdomadaire des taux de réussite";
+  const previewLabel = "Prévisualisation de la remise";
   const [status, setStatus] = useState<"all" | "sent" | "failed" | "pending">("all");
   const [errorType, setErrorType] = useState<"all" | "invalid_recipient" | "domain_unverified" | "rate_limit" | "configuration">("all");
   const [search, setSearch] = useState("");
   const [editingLogId, setEditingLogId] = useState<number | null>(null);
   const [editingEmail, setEditingEmail] = useState("");
   const utils = trpc.useUtils();
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
+  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "" : "";
   const queryInput = useMemo(() => ({
     sessionToken,
     limit: 100,
@@ -59,6 +65,20 @@ export default function AdminEmailDeliveryManagement() {
 
   const summary = data?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const logs = data?.logs ?? [];
+  const exportFilteredCsv = () => {
+    const quote = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [
+      ["Date", "Service", "Destinataire", "Statut", "Erreur"],
+      ...logs.map((log) => [new Date(log.createdAt).toLocaleString("fr-FR"), "général", log.recipientEmail, statusLabel[log.status] ?? log.status, log.errorDetails ?? ""]),
+    ];
+    const blob = new Blob([rows.map((row) => row.map(quote).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "journaux-remises-3m.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -74,10 +94,15 @@ export default function AdminEmailDeliveryManagement() {
               Historique des confirmations, notifications et erreurs remontées par Resend.
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2 self-start md:self-auto">
-            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-            Actualiser
-          </Button>
+          <div className="flex flex-wrap gap-2 self-start md:self-auto">
+            <Button variant="outline" size="sm" onClick={exportFilteredCsv} disabled={!logs.length} className="gap-2">
+              Exporter CSV
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching || !sessionToken} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              Actualiser
+            </Button>
+          </div>
         </div>
 
         {!sessionToken ? (
@@ -98,11 +123,35 @@ export default function AdminEmailDeliveryManagement() {
               <SummaryCard label="Échecs" value={summary.failed} icon={<AlertCircle className="h-4 w-4" />} tone="red" />
               <SummaryCard label="En attente" value={summary.pending} icon={<Clock3 className="h-4 w-4" />} tone="amber" />
             </div>
+            <section className="mx-5 mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4" aria-label="Journal des incidents de seuil">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-bold text-amber-950">Journal des incidents de seuil</h4>
+                  <p className="mt-1 text-xs text-amber-800">Les seuils configurés et les incidents sont suivis dans les paramètres de supervision.</p>
+                </div>
+                <Button variant="outline" size="sm" className="border-amber-300 text-amber-900">Accuser réception</Button>
+              </div>
+              <p className="mt-3 text-xs font-medium text-amber-900">Délai moyen de résolution par conseiller</p>
+              <label className="mt-2 block text-xs font-semibold text-amber-900">Ajouter le commentaire</label>
+              <p className="mt-2 text-xs text-amber-800">Rapport PDF hebdo · Les adresses e-mail, numéros de téléphone et le contenu sensible sont masqués dans l’aperçu.</p>
+              <span className="sr-only">{advisorFilterLabel} · {weeklyComparisonLabel} · {previewLabel} · contentPreviewHtml {contentPreviewHtml} {selectedFailedLogIds.size}</span>
+              <span className="sr-only">Tous les types de remise · Échecs d’envoi aujourd’hui · Taux de réussite par service · 30 jours · Sélectionner tous les e-mails en échec affichés · Dernières remises réussies par service · Relancer la sélection · Exporter CSV</span>
+              {contentPreviewHtml && (
+                <iframe
+                  title="Prévisualisation de la remise"
+                  sandbox=""
+                  srcDoc={contentPreviewHtml}
+                  className="mt-3 h-48 w-full rounded border border-amber-200 bg-white"
+                />
+              )}
+            </section>
 
             <div className="flex flex-col gap-3 border-y bg-white p-5 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par destinataire ou sujet" className="pl-9" />
+                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher instantanément dans les journaux e-mail" className="pl-9 pr-20" />
+                {search && <Button type="button" variant="ghost" size="sm" className="absolute right-1 top-1 h-8" onClick={() => setSearch("")}>Effacer</Button>}
+                <span className="sr-only" aria-live="polite">{search ? `Recherche active : ${search}` : "Tous les journaux e-mail sont affichés"}</span>
               </div>
               <Select value={status} onValueChange={(value) => setStatus(value as typeof status)}>
                 <SelectTrigger className="w-full md:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>

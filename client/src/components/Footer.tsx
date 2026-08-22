@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail, CheckCircle2, Send } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 import { COMPANY_CONTACTS } from "@/lib/companyContacts";
+import { OFFICE_CONTACTS } from "@/lib/officeContacts";
 
 const SOCIAL_LINKS = [
   { icon: Facebook, href: 'https://www.facebook.com/3mtravelcm', label: 'Facebook officiel', color: 'hover:text-blue-600' },
@@ -169,6 +170,7 @@ export default function Footer() {
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
                 <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a>
+                <span className="text-xs text-blue-200">Bureau 3M Travel d’Ottawa, Canada : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />

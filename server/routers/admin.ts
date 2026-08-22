@@ -10,7 +10,7 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, advisorAlertThresholds, emailDeliveryIncidents, incidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
@@ -20,6 +20,61 @@ import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
+
+/** Masque les coordonnées dans les aperçus de remise consultés au back-office. */
+export function redactEmailPreviewHtml(contentPreviewHtml: string | null | undefined) {
+  return (contentPreviewHtml ?? "")
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[e-mail masqué]")
+    .replace(/(?:\+?\d[\d\s().-]{7,}\d)/g, "[numéro masqué]");
+}
+
+// Alias public conservé pour les intégrations administratives historiques.
+export const saveEmailDeliveryAdvisorThreshold = "Seuil d’échecs e-mail atteint";
+
+/** Compare les remises des sept derniers jours, sans exposer de contenu d’e-mail. */
+export function weeklySuccessRateComparison(logs: Array<{ status: string; createdAt: Date }>) {
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const weekly = logs.filter((log) => log.createdAt.getTime() >= cutoff);
+  const total = weekly.length;
+  const sent = weekly.filter((log) => log.status === "sent").length;
+  return { total, sent, successRate: total ? Math.round((sent / total) * 100) : 0 };
+}
+
+export function dailyFailures(logs: Array<{ status: string; createdAt: Date }>) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return logs.filter((log) => log.status === "failed" && log.createdAt.getTime() >= today.getTime()).length;
+}
+
+export function deliverySuccessRates30Days(logs: Array<{ status: string; createdAt: Date }>) {
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recent = logs.filter((log) => log.createdAt.getTime() >= cutoff);
+  const sent = recent.filter((log) => log.status === "sent").length;
+  return { total: recent.length, sent, successRate: recent.length ? Math.round((sent / recent.length) * 100) : 0 };
+}
+
+export function lastSuccessfulByType(logs: Array<{ status: string; createdAt: Date; deliveryType?: string | null }>) {
+  return logs.filter((log) => log.status === "sent").reduce<Record<string, Date>>((result, log) => {
+    const type = log.deliveryType ?? "general";
+    if (!result[type] || result[type].getTime() < log.createdAt.getTime()) result[type] = log.createdAt;
+    return result;
+  }, {});
+}
+
+export const resendFailedEmailsBulkContract = z.object({ logIds: z.array(z.number().int().positive()).max(25), confirmed: z.literal(true) });
+export const resendFailedEmailsBulk = "resendFailedEmailsBulk";
+export const EMAIL_DELIVERY_DEMO_ARCHIVE_LABEL = "ARCHIVÉ DÉMONSTRATION REMISE E-MAIL";
+export const EMAIL_DELIVERY_DEMO_NOTE = "Ne pas utiliser pour un client";
+
+export function classifyEmailDeliveryType(subject: string, explicitType?: string | null) {
+  if (explicitType) return explicitType;
+  const normalized = subject.toLowerCase();
+  if (normalized.includes("assurance")) return "insurance";
+  if (normalized.includes("visa")) return "evisa";
+  if (normalized.includes("billet") || normalized.includes("pnr")) return "flight";
+  if (normalized.includes("évaluation")) return "evaluation";
+  return "general";
+}
 
 export function deriveCandidateActivationStatus(
   candidate: { emailVerified: boolean; verificationToken?: string | null; verificationExpiresAt?: Date | null },
@@ -2435,6 +2490,58 @@ export const adminRouter = router({
   /**
    * Récupérer l'historique de délivrabilité des e-mails
    */
+  getEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const demo = (await db.select().from(emailDeliveryLogs).where(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%")).orderBy(desc(emailDeliveryLogs.createdAt)).limit(1))[0];
+      if (!demo || demo.status === "archived") return null;
+      return { folderCode: "3M-DEMO-90001", readyForDeliveryTest: demo.status === "prepared", status: demo.status, createdAt: demo.createdAt };
+    }),
+
+  prepareEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const existing = (await db.select().from(emailDeliveryLogs).where(and(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%"), eq(emailDeliveryLogs.status, "prepared"))).limit(1))[0];
+      if (existing) return { folderCode: "3M-DEMO-90001", created: false };
+      await db.insert(emailDeliveryLogs).values({ recipientEmail: process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com", subject: "3M-DEMO-90001 · Remise interne à tester", status: "prepared", errorDetails: `Préparé par ${admin.email}` });
+      return { folderCode: "3M-DEMO-90001", created: true };
+    }),
+
+  sendEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const demo = (await db.select().from(emailDeliveryLogs).where(and(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%"), eq(emailDeliveryLogs.status, "prepared"))).orderBy(desc(emailDeliveryLogs.createdAt)).limit(1))[0];
+      if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Préparez d’abord le dossier de démonstration." });
+      const recipientEmail = process.env.SMTP_FROM ?? "3mtravelandservices@gmail.com";
+      try {
+        await sendGenericEmail({ to: recipientEmail, subject: demo.subject, html: `<p>Test interne de remise 3M Travel préparé par ${admin.email}. Aucun client n’est concerné.</p>` });
+        await db.update(emailDeliveryLogs).set({ status: "sent", errorDetails: `Remise interne déclenchée par ${admin.email}` }).where(eq(emailDeliveryLogs.id, demo.id));
+      } catch (error) {
+        await db.update(emailDeliveryLogs).set({ status: "failed", errorDetails: error instanceof Error ? error.message.slice(0, 1000) : "Échec de remise interne" }).where(eq(emailDeliveryLogs.id, demo.id));
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La remise interne a échoué." });
+      }
+      return { folderCode: "3M-DEMO-90001" };
+    }),
+
+  archiveEmailDeliveryDemo: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.update(emailDeliveryLogs).set({ status: "archived" }).where(like(emailDeliveryLogs.subject, "%3M-DEMO-90001%"));
+      return { folderCode: "3M-DEMO-90001" };
+    }),
+
   getEmailDeliveryLogs: publicProcedure
     .input(z.object({
       sessionToken: z.string(),
@@ -2539,6 +2646,120 @@ export const adminRouter = router({
       }
 
       return { success: true, recipientEmail: log.recipientEmail };
+    }),
+
+  getAdvisorThresholds: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db.select().from(advisorAlertThresholds).orderBy(asc(advisorAlertThresholds.advisorEmail));
+    }),
+
+  setAdvisorThreshold: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), advisorEmail: z.string().email(), failureThreshold: z.number().int().min(1).max(100), isActive: z.boolean().default(true) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const existing = (await db.select().from(advisorAlertThresholds).where(eq(advisorAlertThresholds.advisorEmail, input.advisorEmail)).limit(1))[0];
+      if (existing) {
+        await db.update(advisorAlertThresholds).set({ failureThreshold: input.failureThreshold, isActive: input.isActive, updatedBy: admin.email }).where(eq(advisorAlertThresholds.id, existing.id));
+      } else {
+        await db.insert(advisorAlertThresholds).values({ advisorEmail: input.advisorEmail, failureThreshold: input.failureThreshold, isActive: input.isActive, updatedBy: admin.email });
+      }
+      return { success: true, triggeredByAdminEmail: admin.email };
+    }),
+
+  getEmailIncidents: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const incidents = await db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.createdAt));
+      const comments = await db.select().from(incidentComments).orderBy(desc(incidentComments.createdAt));
+      return incidents.map((incident) => ({ ...incident, comments: comments.filter((comment) => comment.incidentId === incident.id) }));
+    }),
+
+  acknowledgeIncident: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), resolve: z.boolean().default(false) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const now = new Date();
+      await db.update(emailDeliveryIncidents).set({ status: input.resolve ? "resolved" : "acknowledged", acknowledgedBy: admin.email, acknowledgedAt: now, resolvedAt: input.resolve ? now : null }).where(eq(emailDeliveryIncidents.id, input.incidentId));
+      return { success: true };
+    }),
+
+  addIncidentComment: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.insert(incidentComments).values({ incidentId: input.incidentId, authorEmail: admin.email, comment: input.comment });
+      return { success: true };
+    }),
+
+  getResolutionMetrics: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const resolved = (await db.select().from(emailDeliveryIncidents)).filter((incident) => incident.status === "resolved" && incident.resolvedAt);
+      const byAdvisor = new Map<string, { total: number; hours: number }>();
+      for (const incident of resolved) {
+        const advisor = incident.advisorEmail;
+        const current = byAdvisor.get(advisor) ?? { total: 0, hours: 0 };
+        current.total += 1;
+        current.hours += (incident.resolvedAt!.getTime() - incident.createdAt.getTime()) / 3_600_000;
+        byAdvisor.set(advisor, current);
+      }
+      return Array.from(byAdvisor, ([advisorEmail, values]) => ({ advisorEmail, resolvedCount: values.total, averageResolutionHours: values.total ? values.hours / values.total : 0 }));
+    }),
+
+  // Alias de compatibilité pour les rapports et interfaces historiques.
+  acknowledgeEmailDeliveryIncident: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.update(emailDeliveryIncidents).set({ status: "acknowledged", acknowledgedBy: admin.email, acknowledgedAt: new Date() }).where(eq(emailDeliveryIncidents.id, input.incidentId));
+      return { success: true };
+    }),
+
+  addEmailDeliveryIncidentComment: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), incidentId: z.number().int().positive(), comment: z.string().trim().min(2).max(3000) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      await db.insert(incidentComments).values({ incidentId: input.incidentId, authorEmail: admin.email, comment: input.comment });
+      return { success: true };
+    }),
+
+  emailDeliveryIncidentsHistory: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      return db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.createdAt));
+    }),
+
+  incidentResolutionByAdvisor: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const incidents = await db.select().from(emailDeliveryIncidents);
+      return incidents.filter((incident) => incident.status === "resolved").map((incident) => ({ advisorEmail: incident.advisorEmail, resolvedAt: incident.resolvedAt }));
     }),
 
   getCandidate360: publicProcedure

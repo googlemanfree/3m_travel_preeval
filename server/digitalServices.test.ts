@@ -13,6 +13,7 @@ describe("service 3M Digital", () => {
     expect(schema).toContain('service: mysqlEnum("service"');
     expect(schema).toContain('status: mysqlEnum("status"');
     expect(schema).toContain('adminNotes: text("adminNotes")');
+    expect(schema).toContain('pricingJson: text("pricingJson").notNull()');
   });
 
   it("protège le traitement administrateur et maintient une création publique validée", () => {
@@ -20,8 +21,9 @@ describe("service 3M Digital", () => {
     expect(router).toContain("createRequest: publicProcedure.input(requestSchema)");
     expect(router).toContain("adminList: publicProcedure.input");
     expect(router).toContain("updateRequest: publicProcedure.input");
-    expect(router.match(/await requireValidAdminSession\(/g) ?? []).toHaveLength(4);
+    expect(router).toContain("resolveDigitalAdminSession");
     expect(router).toContain("adminNotifications");
+    expect(router).toContain("pricingJson: z.string()");
   });
 
   it("expose la sous-page de service, son formulaire et son écran administrateur", () => {
@@ -31,6 +33,9 @@ describe("service 3M Digital", () => {
     expect(page).toContain("Service 3M Digital");
     expect(page).toContain("trpc.digitalServices.createRequest.useMutation");
     expect(page).toContain('aria-label="Demande de service 3M Digital"');
+    expect(page).toContain('id="tarifs"');
+    expect(page).toContain("Repères de cadrage");
+    expect(page).toContain("ne constituent ni une offre ferme ni un paiement automatique");
     expect(adminPage).toContain("trpc.digitalServices.adminList.useQuery");
     expect(adminPage).toContain("trpc.digitalServices.updateRequest.useMutation");
     expect(app).toContain('path={"/3m-digital"} component={Community}');

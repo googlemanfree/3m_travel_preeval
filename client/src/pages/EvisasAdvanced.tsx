@@ -113,13 +113,17 @@ export default function EvisasAdvanced() {
               <div>
                 {/* Image d'en-tête */}
                 <div className="relative h-48 overflow-hidden bg-slate-900">
-                  <img
-                    src={destination.image}
-                    alt={destination.country}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
-                  />
+                  {destination.image ? (
+                    <img
+                      src={destination.image}
+                      alt={`Drapeau de ${destination.country}`}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-80"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-950 to-slate-800 text-7xl" role="img" aria-label={`Drapeau de ${destination.country}`}>{destination.flag}</div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                   
                   <div className="absolute top-4 left-4">

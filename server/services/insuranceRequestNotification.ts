@@ -11,6 +11,12 @@ type InsuranceAlert = {
   travelersCount: number;
 };
 
+type InsuranceClientDelivery = InsuranceAlert & {
+  documentUrl: string;
+  documentLabel: string;
+  documentKind: "coupon" | "attestation";
+};
+
 const escapeHtml = (value: string) => value.replace(/[&<>'"]/g, character => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
 })[character] ?? character);
@@ -34,5 +40,18 @@ export async function notifyInsuranceRequest(alert: InsuranceAlert): Promise<voi
     to,
     subject: `[Assurance] Nouvelle demande ${alert.reference}`,
     html,
-  })));
+  }))); 
+}
+
+/** Delivers only the prepared insurance document and a signed temporary link to its owner. */
+export async function sendInsuranceClientDelivery(delivery: InsuranceClientDelivery): Promise<void> {
+  const documentTitle = delivery.documentKind === "coupon" ? "coupon de réservation" : "attestation d’assurance";
+  const html = [
+    `<h2>Votre ${documentTitle} est disponible</h2>`,
+    `<p>Bonjour ${escapeHtml(delivery.fullName)},</p>`,
+    `<p>Votre document d’assurance lié à la référence <strong>${escapeHtml(delivery.reference)}</strong> est prêt.</p>`,
+    `<p><a href="${escapeHtml(delivery.documentUrl)}">Télécharger ${escapeHtml(delivery.documentLabel)}</a></p>`,
+    `<p>Ce lien est personnel. Conservez votre référence pour tout échange avec l’équipe 3M Travel.</p>`,
+  ].join("");
+  await sendEmail({ to: delivery.email, subject: `[Assurance] ${delivery.reference} — ${documentTitle}`, html });
 }

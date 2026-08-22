@@ -5,6 +5,7 @@
 
 import { sql } from "drizzle-orm";
 import { getDb } from "../db";
+import { getSmtpHealth } from "../_core/email";
 import { adminProcedure, router } from "../_core/trpc";
 import {
   getMetrics,
@@ -13,7 +14,20 @@ import {
   resetMetrics,
 } from "../_core/monitoring";
 
+export const SMTP_ALERT_COOLDOWN_MS = 15 * 60 * 1000;
+let lastSmtpFailureAlertAt = 0;
+
+/** Évite de répéter les alertes SMTP lors d’un même incident. */
+export async function notifySmtpFailureIfNeeded(reason: string, now = Date.now()) {
+  if (now - lastSmtpFailureAlertAt < SMTP_ALERT_COOLDOWN_MS) return false;
+  lastSmtpFailureAlertAt = now;
+  // notifyOwner : l’intégration propriétaire peut relayer ce signal sans y joindre de données client.
+  console.error("[SMTP] notifyOwner", { reason, at: new Date(now).toISOString() });
+  return true;
+}
+
 export const monitoringRouter = router({
+  getSmtpHealth: adminProcedure.query(() => getSmtpHealth()),
   /** État synthétique, réservé aux administrateurs connectés. */
   getConnectivityStatus: adminProcedure.query(async () => {
     const startedAt = Date.now();
@@ -64,6 +78,7 @@ export const monitoringRouter = router({
     const startedAt = Date.now();
     const db = await getDb();
     if (!db) {
+      await notifySmtpFailureIfNeeded("Base de données indisponible lors du diagnostic SMTP");
       return {
         ok: false,
         checkedAt: new Date(),
@@ -81,6 +96,7 @@ export const monitoringRouter = router({
         findings: ["API tRPC accessible.", "Base de données accessible.", "Les métriques serveur sont disponibles."],
       };
     } catch {
+      await notifySmtpFailureIfNeeded("Échec de diagnostic de connectivité SMTP");
       return {
         ok: false,
         checkedAt: new Date(),

@@ -2,8 +2,12 @@
  * Dashboard Administrateur — 3M Travel & Services
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
+
+function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
+  return <section className="min-w-0 rounded-xl border border-slate-200 bg-white/80 p-2.5"><p className="mb-2 px-1 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{title}</p><TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-slate-100 p-1">{children}</TabsList></section>;
+}
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -1030,32 +1034,13 @@ export default function AdminDashboard() {
         </div>
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
-            <TabsTrigger value="candidates">Dossiers</TabsTrigger>
-            <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
-            <TabsTrigger value="evaluation-review" className="gap-1.5 font-bold text-amber-700">Bilans à valider</TabsTrigger>
-            <TabsTrigger value="evaluation-reminders" className="gap-1.5 font-bold text-violet-700">Bilans à relancer</TabsTrigger>
-            <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
-            <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
-            <TabsTrigger value="destination-analytics" className="gap-1.5 font-bold text-indigo-700">📊 Destinations</TabsTrigger>
-            <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
-            <TabsTrigger value="route-health" className="gap-1.5 font-bold text-rose-700">404 & Liens</TabsTrigger>
-            <TabsTrigger value="system-status" className="gap-1.5 font-bold text-emerald-700">État système</TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
-            <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="emails">E-mails</TabsTrigger>
-            <TabsTrigger value="activations">Activations</TabsTrigger>
-            <TabsTrigger value="flights" className="gap-1.5 font-bold text-sky-700">
-              <Plane className="h-4 w-4" /> Réservations vols
-              {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}
-            </TabsTrigger>
-            <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
-            <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
-            <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
-            <TabsTrigger value="rates" className="gap-1.5 font-bold text-emerald-600">💱 Taux de Change</TabsTrigger>
-            <TabsTrigger value="passport-history" className="gap-1.5 font-bold text-indigo-600">Passeports vérifiés</TabsTrigger>
-          </TabsList>
+          <div className="mb-6 grid gap-3 xl:grid-cols-5">
+            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="candidates">Dossiers</TabsTrigger><TabsTrigger value="inbox">Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="activations">Activations</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism">Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar">Calendrier</TabsTrigger><TabsTrigger value="payments">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails">E-mails</TabsTrigger><TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag">Guides & RAG</TabsTrigger><TabsTrigger value="passport-history">Passeports</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="system-status" className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="audit">Journal d’audit</TabsTrigger></AdminNavGroup>
+          </div>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { OFFICE_CONTACTS, officeWhatsAppUrl } from "@/lib/officeContacts";
 
 /**
  * Point de contact WhatsApp global.
@@ -9,9 +10,8 @@ import { MessageCircle } from "lucide-react";
  */
 export function FloatingActionMenu() {
   const [isHovered, setIsHovered] = useState(false);
-  const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(
-    "Bonjour, je souhaiterais obtenir des informations sur les procédures de visa 3M Travel."
-  )}`;
+  const office = OFFICE_CONTACTS.cameroon;
+  const whatsappUrl = officeWhatsAppUrl(office, "Bonjour, je souhaiterais obtenir des informations sur les procédures de visa 3M Travel.");
 
   return (
     <div className="safe-bottom-floating safe-bottom-floating-whatsapp fixed right-4 z-40 md:right-6">
