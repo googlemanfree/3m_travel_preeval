@@ -97,7 +97,7 @@ export default function ConditionsUtilisation() {
                 </a>
               </p>
               <p>
-                <a href="tel:+16728972999" className="text-blue-600 hover:underline">+1 672 897 2999</a> /{" "}
+                <a href="tel:+237698104832" className="text-blue-600 hover:underline">+237 698 104 832</a> /{" "}
                 <a href="tel:+237620996045" className="text-blue-600 hover:underline">+237 620 996 045</a>
               </p>
             </div>

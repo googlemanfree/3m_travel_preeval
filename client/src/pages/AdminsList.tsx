@@ -50,7 +50,7 @@ const mockAdmins: Admin[] = [
     id: 1,
     name: "Aureol Donfack",
     email: "aureol@3mtravel.com",
-    phone: "+16728972999",
+    phone: "+237698104832",
     role: "admin",
     status: "active",
     createdAt: "2026-01-15",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { buildQuickOfficeContactMessage, OFFICE_CONTACTS, officeWhatsAppUrl, validateQuickOfficeContact } from "../client/src/lib/officeContacts";
+import { buildQuickOfficeContactMessage, OFFICE_CONTACTS, officeMapEmbedUrl, officeMapsUrl, officeWhatsAppUrl, validateQuickOfficeContact } from "../client/src/lib/officeContacts";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (relativePath: string) => readFileSync(resolve(root, relativePath), "utf8");
@@ -15,6 +15,8 @@ describe("contacts multi-bureaux", () => {
     expect(source).toContain('timeZone: "Africa/Douala"');
     expect(source).toContain('whatsappNumber: "16728972999"');
     expect(source).toContain('whatsappNumber: "237698104832"');
+    expect(source).toContain('flag: "🇨🇦"');
+    expect(source).toContain('flag: "🇨🇲"');
   });
 
   it("conserve le bureau choisi et prépare le lien WhatsApp avec son message", () => {
@@ -23,15 +25,29 @@ describe("contacts multi-bureaux", () => {
     expect(source).toContain('3m_selected_contact_office');
     expect(panel).toContain('officeWhatsAppUrl(office, content)');
     expect(panel).toContain('formatOfficeTime(office, now)');
+    expect(panel).toContain('officeMapEmbedUrl(office)');
+    expect(panel).toContain('Discuter sur WhatsApp');
   });
 
   it("intègre le sélecteur et le formulaire rapide sur la page de contact", () => {
     const page = read("client/src/pages/Contact.tsx");
     const floating = read("client/src/components/FloatingActionMenu.tsx");
     expect(page).toContain('<OfficeContactPanel />');
-    expect(floating).toContain('useOfficeContact()');
     expect(floating).toContain('officeWhatsAppUrl(office');
+    expect(floating).toContain('OFFICE_CONTACTS.cameroon');
     expect(read("client/src/App.tsx")).toContain('const showFloatingTools = location !== "/contact"');
+  });
+
+  it("fait de Yaoundé le WhatsApp public principal et conserve Ottawa comme contact secondaire", () => {
+    const context = read("client/src/contexts/OfficeContactContext.tsx");
+    const footer = read("client/src/components/Footer.tsx");
+    const legalFooter = read("client/src/components/FooterLegal.tsx");
+
+    expect(context).toContain('return "cameroon"');
+    expect(footer).toContain('wa.me/237698104832');
+    expect(footer).toContain('Bureau Ottawa, Canada : +1 672 897 2999');
+    expect(legalFooter).toContain('tel:+237698104832');
+    expect(legalFooter).toContain('Bureau Ottawa, Canada : +1 672 897 2999');
   });
 
   it("bascule la destination et le message rapide vers le bureau choisi", () => {
@@ -43,6 +59,8 @@ describe("contacts multi-bureaux", () => {
     expect(cameroonMessage).toContain("Bureau de Yaoundé, Cameroun");
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.ottawa, ottawaMessage)).toContain("wa.me/16728972999");
     expect(officeWhatsAppUrl(OFFICE_CONTACTS.cameroon, cameroonMessage)).toContain("wa.me/237698104832");
+    expect(officeMapsUrl(OFFICE_CONTACTS.ottawa)).toContain(encodeURIComponent("Ottawa, Ontario, Canada"));
+    expect(officeMapEmbedUrl(OFFICE_CONTACTS.cameroon)).toContain(encodeURIComponent("Avenue Marché Biyem-Assi, Yaoundé, Cameroun"));
   });
 
   it("refuse les données incomplètes avant toute ouverture de WhatsApp", () => {
@@ -50,5 +68,16 @@ describe("contacts multi-bureaux", () => {
     expect(validateQuickOfficeContact({ name: "Marie", email: "invalide", message: "Un message assez détaillé" })).toBe("Indiquez une adresse e-mail valide.");
     expect(validateQuickOfficeContact({ name: "Marie", email: "marie@example.com", message: "Court" })).toBe("Décrivez votre demande en au moins 10 caractères.");
     expect(validateQuickOfficeContact({ name: "Marie", email: "marie@example.com", message: "Un message assez détaillé" })).toBeNull();
+  });
+
+  it("regroupe les accès du poste administratif HD sans retirer les onglets opérationnels", () => {
+    const dashboard = read("client/src/pages/AdminDashboard.tsx");
+    expect(dashboard).toContain('AdminNavGroup title="Pilotage des dossiers"');
+    expect(dashboard).toContain('AdminNavGroup title="Services & catalogue"');
+    expect(dashboard).toContain('AdminNavGroup title="Réservations & finance"');
+    expect(dashboard).toContain('AdminNavGroup title="Communication & qualité"');
+    expect(dashboard).toContain('AdminNavGroup title="Supervision"');
+    expect(dashboard).toContain('TabsTrigger value="candidates"');
+    expect(dashboard).toContain('TabsTrigger value="system-status"');
   });
 });

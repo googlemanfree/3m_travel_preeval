@@ -525,7 +525,7 @@ export default function CanadaScoreSimulator() {
               </a>
             ) : (
               <a
-                href={`https://wa.me/16728972999?text=${getWhatsappMessage()}`}
+                href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-lg transition-all"
@@ -843,7 +843,7 @@ export default function CanadaScoreSimulator() {
 
           <div className="pt-2 flex items-center justify-between">
             <a
-              href={`https://wa.me/16728972999?text=${getWhatsappMessage()}`}
+              href={`https://wa.me/237698104832?text=${getWhatsappMessage()}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1.5"

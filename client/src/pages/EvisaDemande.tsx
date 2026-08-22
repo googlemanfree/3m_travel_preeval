@@ -59,7 +59,7 @@ export default function EvisaDemande() {
       formData.duration ? `Durée du séjour : ${formData.duration} jours` : null,
     ].filter(Boolean);
     const message = lines.join('\n');
-    const whatsappUrl = `https://wa.me/16728972999?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 

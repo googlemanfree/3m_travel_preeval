@@ -32,7 +32,7 @@ Informations factuelles à utiliser si pertinentes :
 - Destinations : 107 pays disponibles (Travail, Études, Visiteur)
 - Processus : Évaluation primaire (CV + informations) → Révision du dossier → Validation administrative → Paiement → Documents → Traitement
 - Documents généralement demandés : CV, diplômes, casier judiciaire, passeport valide, preuve de ressources
-- Contact : WhatsApp +1 672 897 2999, email hello@3mtravelagency.com
+- Contact : WhatsApp +237 698 104 832, email hello@3mtravelagency.com
 - Adresse : Biyem-Assi, Montée Chapelle Obili, Yaoundé
 
 Règles strictes :
@@ -120,7 +120,7 @@ ${destinationContext}
       } catch (err) {
         console.error("ai_copilot.chat_failed", err);
         return {
-          reply: "Désolé, je rencontre un souci technique. Contactez directement notre équipe sur WhatsApp au +1 672 897 2999, elle vous répondra rapidement.",
+          reply: "Désolé, je rencontre un souci technique. Contactez directement notre équipe sur WhatsApp au +237 698 104 832, elle vous répondra rapidement.",
         };
       }
     }),
@@ -272,7 +272,7 @@ ${destinationContext}
 Voici les questions les plus fréquentes posées par nos candidats au chatbot Aureol :
 ${questionsListText}
 
-Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +1 672 897 2999, email hello@3mtravelagency.com) et les frais (65 000 FCFA pour l'ouverture de dossier).
+Pour chacune de ces questions, rédige une suggestion de réponse officielle, claire, professionnelle, chaleureuse et factuelle (3 à 4 phrases max), incluant si pertinent les contacts officiels (WhatsApp +237 698 104 832, email hello@3mtravelagency.com) et les frais (65 000 FCFA pour l'ouverture de dossier).
 
 Format de sortie attendu en JSON strict (sans markdown autour si possible, ou dans un bloc json) :
 [
@@ -321,7 +321,7 @@ Format de sortie attendu en JSON strict (sans markdown autour si possible, ou da
           parsed = topQuestions.map(q => ({
             question: q.question,
             frequency: q.count,
-            suggestedAnswer: "Contactez notre agence au +1 672 897 2999 ou par email à hello@3mtravelagency.com pour un accompagnement personnalisé sur cette démarche.",
+            suggestedAnswer: "Contactez notre agence au +237 698 104 832 ou par email à hello@3mtravelagency.com pour un accompagnement personnalisé sur cette démarche.",
           }));
         }
 

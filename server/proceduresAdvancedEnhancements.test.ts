@@ -13,7 +13,7 @@ describe("améliorations Procédures et suivi administratif", () => {
     expect(procedures).toContain("Vérifier votre score CRS");
     expect(procedures).toContain('href="/canada"');
     expect(procedures).toContain("VISA_DOCUMENT_CHECKLISTS");
-    expect(procedures).toContain("16728972999");
+    expect(procedures).toContain("237698104832");
   });
 
   it("prévoit les échéances consulaires, la checklist contextuelle et les tendances réelles", () => {

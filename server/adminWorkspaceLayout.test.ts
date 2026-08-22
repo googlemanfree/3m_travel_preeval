@@ -18,6 +18,29 @@ describe("poste de pilotage administrateur", () => {
     expect(source).toContain("Suivre les envois e-mail");
   });
 
+  it("organise les accès rapides en pôles HD plutôt qu’en onglets entassés", () => {
+    const source = readFileSync(dashboardPath, "utf8");
+
+    ["Pilotage des dossiers", "Services & catalogue", "Réservations & finance", "Communication & qualité", "Supervision"].forEach((label) => {
+      expect(source).toContain(label);
+    });
+    expect(source).toContain('xl:grid-cols-5');
+    expect(source).toContain('aria-label="Poste administratif par pôle opérationnel"');
+  });
+
+  it("conserve des raccourcis opérationnels explicites pour actualiser, revenir et retrouver les dossiers", () => {
+    const source = readFileSync(dashboardPath, "utf8");
+    const shortcuts = readFileSync(resolve(process.cwd(), "client/src/components/AdminNavigationShortcuts.tsx"), "utf8");
+
+    expect(source).toContain("<AdminNavigationShortcuts");
+    expect(source).toContain('onRefresh={() => void handleRefresh()}');
+    expect(source).toContain('onBack={goBackInsideAdmin}');
+    expect(source).toContain('onDossiers={() => changeAdminTab("candidates")}');
+    expect(shortcuts).toContain('aria-label="Actualiser manuellement les données du dashboard"');
+    expect(shortcuts).toContain('title="Revenir au dernier espace du back-office"');
+    expect(shortcuts).toContain('title="Revenir au poste de pilotage des dossiers"');
+  });
+
   it("conserve les six domaines opérationnels de gestion des dossiers", () => {
     const source = readFileSync(workspacePath, "utf8");
 

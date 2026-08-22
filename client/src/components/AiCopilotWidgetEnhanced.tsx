@@ -76,7 +76,7 @@ export default function AiCopilotWidgetEnhanced() {
         {
           role: "assistant",
           content:
-            "Désolé, une erreur est survenue. Contactez-nous directement sur WhatsApp au +1 672 897 2999.",
+            "Désolé, une erreur est survenue. Contactez-nous directement sur WhatsApp au +237 698 104 832.",
           feedback: null,
           showActions: false
         },
@@ -105,7 +105,7 @@ export default function AiCopilotWidgetEnhanced() {
   const handleQuickAction = (action: (typeof QUICK_ACTIONS)[number]) => {
     if (action.whatsapp) {
       window.open(
-        `https://wa.me/16728972999?text=${encodeURIComponent(
+        `https://wa.me/237698104832?text=${encodeURIComponent(
           "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel pour une évaluation."
         )}`,
         "_blank"
@@ -137,7 +137,7 @@ export default function AiCopilotWidgetEnhanced() {
         break;
       case "whatsapp":
         window.open(
-          `https://wa.me/16728972999?text=${encodeURIComponent(
+          `https://wa.me/237698104832?text=${encodeURIComponent(
             "Bonjour, j'aimerais être recontacté(e) par un conseiller 3M Travel."
           )}`,
           "_blank"

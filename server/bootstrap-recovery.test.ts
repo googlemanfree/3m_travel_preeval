@@ -21,6 +21,6 @@ describe("static bootstrap recovery contract", () => {
     expect(indexHtml).toContain("sessionStorage.setItem(RELOAD_FLAG_KEY, \"1\")");
     expect(indexHtml).toContain("Le chargement rencontre un problème persistant.");
     expect(indexHtml).toContain("Réessayer");
-    expect(indexHtml).toContain("Bureau d\\'Ottawa — WhatsApp");
+    expect(indexHtml).toContain("Bureau de Yaoundé — WhatsApp");
   });
 });

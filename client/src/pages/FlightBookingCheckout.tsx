@@ -165,16 +165,16 @@ export default function FlightBookingCheckout() {
     });
   };
 
-  const whatsappNumber = "16728972999";
+  const whatsappNumber = "237698104832";
   const agencyEmail = "hello@3mtravelagency.com";
-  const agencyPhone = "+1 672 897 2999";
+  const agencyPhone = "+237 698 104 832";
   const destinationLabel = selectedFlight?.destinationCity || (typeof window !== "undefined"
     ? new URLSearchParams(window.location.search).get("destination") || "votre destination"
     : "votre destination");
   const destinationKey = destinationLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
   const shareLink = typeof window !== "undefined" ? window.location.href : "https://www.3mtravelagency.com/flights";
 
-  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nPrix indicatif: ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nBureau d’Ottawa — WhatsApp: +1 672 897 2999`;
+  const shareText = `✈️ Ma demande de réservation 3M Travel Agency\nRéf Dossier: ${dossierRef}\nPassager: ${formData.fullName}\nPasseport: ${formData.passportNumber}\nVol: ${selectedFlight?.flightNumber || params?.flightId || "REF"}\nItinéraire: ${selectedFlight?.originCity || selectedFlight?.origin || "Départ"} → ${selectedFlight?.destinationCity || selectedFlight?.destination || "Destination"}\nPrix indicatif: ${selectedFlight ? formatXaf(selectedFlight.totalPrice) : "à confirmer"}\nBureau d’Ottawa — WhatsApp: +237 698 104 832`;
 
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(shareText)}`;
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent("https://www.3mtravelagency.com")}&text=${encodeURIComponent(shareText)}`;
@@ -297,7 +297,7 @@ export default function FlightBookingCheckout() {
         "",
         "VALIDATION",
         "Le tarif, les places et l’émission doivent être revalidés par 3M Travel Agency avant tout paiement ou émission définitive.",
-        "Bureau d’Ottawa : hello@3mtravelagency.com · +1 672 897 2999",
+        "Bureau d’Ottawa : hello@3mtravelagency.com · +237 698 104 832",
       ];
 
       pdf.setTextColor(25, 55, 109);

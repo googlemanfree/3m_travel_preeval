@@ -16,7 +16,7 @@ const heroButtonSize = "w-full min-h-14 sm:w-[300px]";
 export default function HeroSectionVIP({ 
   onEvalClick, 
   logoUrl = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg",
-  whatsappNumber = "16728972999"
+  whatsappNumber = "237698104832"
 }: HeroSectionVIPProps) {
   const heroRef = useRef<HTMLElement | null>(null);
   const backgroundRef = useRef<HTMLImageElement | null>(null);

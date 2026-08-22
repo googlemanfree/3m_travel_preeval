@@ -213,7 +213,7 @@ export const evaluationRouter = router({
       if (previousCount.length >= 2) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "⚠️ Vous avez atteint la limite maximale de 2 évaluations gratuites. Pour toute analyse complémentaire ou pour faire le point sur votre dossier, veuillez contacter directement notre direction au +1 672 897 2999 ou vous rendre en agence à Biyem-Assi (Yaoundé).",
+          message: "⚠️ Vous avez atteint la limite maximale de 2 évaluations gratuites. Pour toute analyse complémentaire ou pour faire le point sur votre dossier, veuillez contacter directement notre direction au +237 698 104 832 ou vous rendre en agence à Biyem-Assi (Yaoundé).",
         });
       }
 

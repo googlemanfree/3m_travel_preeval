@@ -292,7 +292,7 @@ export default function Ressources() {
               la procédure complète pour votre pays de destination.
             </p>
             <a
-              href="https://wa.me/16728972999?text=Bonjour%203M%20Travel%2C%20je%20cherche%20la%20proc%C3%A9dure%20pour%20"
+              href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20cherche%20la%20proc%C3%A9dure%20pour%20"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 mt-2 text-sm font-semibold text-green-700 hover:text-green-800"

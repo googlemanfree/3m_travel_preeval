@@ -40,17 +40,17 @@ describe("SafeResponsiveChart", () => {
     expect(source).toContain('label="Évolution des points de fidélité"');
   });
 
-  it("centralise la bascule des anciens liens WhatsApp vers le bureau d’Ottawa", () => {
+  it("conserve Ottawa comme contact secondaire dans la configuration multi-bureaux", () => {
     const source = fs.readFileSync(
-      path.join(projectRoot, "client/src/components/OttawaWhatsAppPriority.tsx"),
+      path.join(projectRoot, "client/src/lib/officeContacts.ts"),
       "utf8",
     );
 
-    expect(source).toContain('OTTAWA_WHATSAPP_NUMBER = "16728972999"');
-    expect(source).toContain("ottawaWhatsAppUrl");
+    expect(source).toContain('whatsappNumber: "16728972999"');
+    expect(source).toContain('whatsappNumber: "237698104832"');
   });
 
-  it("ne conserve plus l’ancien contact WhatsApp dans les sources applicatives", () => {
+  it("réserve les liens WhatsApp publics directs au bureau de Yaoundé", () => {
     const sourceRoots = ["client", "server", "shared"];
     const pending = sourceRoots.map((directory) => path.join(projectRoot, directory));
     const sources: string[] = [];
@@ -60,12 +60,12 @@ describe("SafeResponsiveChart", () => {
       for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
         const absolutePath = path.join(current, entry.name);
         if (entry.isDirectory()) pending.push(absolutePath);
-        if (entry.isFile() && /\.(ts|tsx|html)$/.test(entry.name) && !entry.name.endsWith(".test.ts") && !entry.name.endsWith(".test.tsx") && entry.name !== "officeContacts.ts") sources.push(absolutePath);
+        if (entry.isFile() && /\.(ts|tsx|html)$/.test(entry.name) && !entry.name.endsWith(".test.ts") && !entry.name.endsWith(".test.tsx")) sources.push(absolutePath);
       }
     }
 
     for (const sourcePath of sources) {
-      expect(fs.readFileSync(sourcePath, "utf8")).not.toMatch(/237698104832|\+237[\s-]*698[\s-]*104[\s-]*832/);
+      expect(fs.readFileSync(sourcePath, "utf8")).not.toContain("wa.me/16728972999");
     }
   });
 });

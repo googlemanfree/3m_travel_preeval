@@ -1014,7 +1014,7 @@ export default function Evisas() {
 
   const openWhatsApp = (countryName: string) => {
     const text = encodeURIComponent(`Bonjour l'équipe 3M Travel, je suis de nationalité ${selectedNationalite} et je souhaite lancer la procédure d'e-Visa pour ${countryName}. Pouvez-vous me guider ?`);
-    window.open(`https://wa.me/16728972999?text=${text}`, '_blank');
+    window.open(`https://wa.me/237698104832?text=${text}`, '_blank');
   };
 
   const handleLaunchProcedure = (countryName: string, countryCode: string) => {

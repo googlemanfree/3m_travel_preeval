@@ -362,7 +362,7 @@ export default function PaymentReceipt({
         <p className="text-amber-900 text-sm">
           Besoin d'aide ? Contactez-nous sur{" "}
           <a
-            href="https://wa.me/16728972999"
+            href="https://wa.me/237698104832"
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold text-amber-700 hover:underline"

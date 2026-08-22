@@ -205,7 +205,7 @@ export default function LuxembourgEvaluation() {
             Contactez notre équipe d'experts pour discuter de votre profil et de vos options.
           </p>
           <a
-            href="https://wa.me/16728972999?text=Bonjour, j'aimerais discuter de mon évaluation Luxembourg."
+            href="https://wa.me/237698104832?text=Bonjour, j'aimerais discuter de mon évaluation Luxembourg."
             className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg transition-colors"
           >
             💬 Discuter sur WhatsApp

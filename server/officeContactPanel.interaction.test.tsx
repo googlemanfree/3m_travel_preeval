@@ -34,17 +34,23 @@ describe("OfficeContactPanel — parcours interactif", () => {
     vi.unstubAllGlobals();
   });
 
-  it("bascule visiblement Ottawa vers Cameroun avec le fuseau, les horaires et le CTA associés", () => {
+  it("bascule visiblement Yaoundé vers Ottawa avec le fuseau, les horaires et le CTA associés", () => {
     renderPanel();
-    expect(getOfficeSwitch("Ottawa, Canada").getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByRole("link", { name: /WhatsApp : \+1 672 897 2999/i }).getAttribute("href")).toContain("wa.me/16728972999");
-
-    fireEvent.click(getOfficeSwitch("Yaoundé"));
-
     expect(getOfficeSwitch("Yaoundé").getAttribute("aria-pressed")).toBe("true");
-    expect(screen.getByText(/Heure de Douala/i)).toBeTruthy();
-    expect(screen.getByText(/Lun–ven : 08 h 00 – 20 h 00/i)).toBeTruthy();
+    expect(screen.getAllByText("🇨🇲").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByRole("link", { name: /WhatsApp : \+237 698 104 832/i }).getAttribute("href")).toContain("wa.me/237698104832");
+    expect(screen.getByRole("link", { name: /Discuter sur WhatsApp/i }).getAttribute("href")).toContain("wa.me/237698104832");
+    expect(screen.getByTitle(/Carte Bureau de Yaoundé/i).getAttribute("src")).toContain("Avenue%20March%C3%A9%20Biyem-Assi");
+
+    fireEvent.click(getOfficeSwitch("Ottawa, Canada"));
+
+    expect(getOfficeSwitch("Ottawa, Canada").getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getAllByText("🇨🇦").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/Heure de Toronto/i)).toBeTruthy();
+    expect(screen.getByText(/Lun–ven : 08 h 00 – 20 h 00/i)).toBeTruthy();
+    expect(screen.getByRole("link", { name: /WhatsApp : \+1 672 897 2999/i }).getAttribute("href")).toContain("wa.me/16728972999");
+    expect(screen.getByRole("link", { name: /Discuter sur WhatsApp/i }).getAttribute("href")).toContain("wa.me/16728972999");
+    expect(screen.getByTitle(/Carte Bureau 3M Travel d’Ottawa/i).getAttribute("src")).toContain("Ottawa%2C%20Ontario%2C%20Canada");
   });
 
   it("annonce les erreurs puis ouvre le WhatsApp du bureau sélectionné avec le message saisi", () => {

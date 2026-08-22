@@ -34,7 +34,7 @@ export default function Contact() {
     {
       icon: Phone,
       title: 'Téléphone',
-      details: ['+1 672 897 2999', '+237 620 996 045'],
+      details: ['+237 698 104 832', '+237 620 996 045'],
       color: 'text-green-500',
       link: true,
     },
@@ -424,7 +424,7 @@ export default function Contact() {
                 <h3 className="text-lg font-bold text-gray-900 mb-2">WhatsApp</h3>
                 <p className="text-gray-600 mb-6">Discutez directement avec notre équipe</p>
                 <a
-                  href="https://wa.me/16728972999?text=Bonjour%203M%20Travel%20%26%20Services"
+                  href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
@@ -445,10 +445,10 @@ export default function Contact() {
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Appel Direct</h3>
                 <p className="text-gray-600 mb-6">Appelez nos conseillers</p>
                 <a
-                  href="tel:+16728972999"
+                  href="tel:+237698104832"
                   className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  +1 672 897 2999
+                  +237 698 104 832
                 </a>
               </Card>
             </motion.div>

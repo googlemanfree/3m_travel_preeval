@@ -30,7 +30,7 @@ export function DestinationCallbackDialog({ destination, procedure }: Destinatio
     }
     const formattedDate = new Date(`${preferredDate}T00:00:00`).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     const message = `Bonjour 3M Travel, je demande un rappel pour la procédure ${procedure} vers ${destination}.\nNom : ${name.trim()}\nTéléphone : ${phone.trim()}\nDate souhaitée : ${formattedDate}\nCréneau souhaité : ${preferredTimeSlot}`;
-    window.open(`https://wa.me/16728972999?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/237698104832?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
     setOpen(false);
   };
 

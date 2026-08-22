@@ -2,8 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
 import { useLocation } from "wouter";
-import { useOfficeContact } from "@/contexts/OfficeContactContext";
-import { formatOfficeTime, officeWhatsAppUrl } from "@/lib/officeContacts";
+import { formatOfficeTime, OFFICE_CONTACTS, officeWhatsAppUrl } from "@/lib/officeContacts";
 
 /**
  * Point de contact WhatsApp global.
@@ -13,7 +12,7 @@ import { formatOfficeTime, officeWhatsAppUrl } from "@/lib/officeContacts";
 export function FloatingActionMenu() {
   const [isHovered, setIsHovered] = useState(false);
   const [location] = useLocation();
-  const { office } = useOfficeContact();
+  const office = OFFICE_CONTACTS.cameroon;
   const whatsappUrl = officeWhatsAppUrl(office, `Bonjour, je souhaiterais joindre le ${office.label} de 3M Travel pour obtenir des informations sur les procédures de visa.`);
 
   return (

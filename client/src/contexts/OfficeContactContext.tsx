@@ -13,8 +13,8 @@ const OfficeContactContext = createContext<OfficeContactContextValue | null>(nul
 
 export function OfficeContactProvider({ children }: { children: ReactNode }) {
   const [officeId, setOfficeId] = useState<OfficeId>(() => {
-    if (typeof window === "undefined") return "ottawa";
-    return sessionStorage.getItem(STORAGE_KEY) === "cameroon" ? "cameroon" : "ottawa";
+    if (typeof window === "undefined") return "cameroon";
+    return sessionStorage.getItem(STORAGE_KEY) === "ottawa" ? "ottawa" : "cameroon";
   });
 
   useEffect(() => {

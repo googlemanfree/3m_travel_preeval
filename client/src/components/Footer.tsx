@@ -166,8 +166,9 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href="https://wa.me/16728972999" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp : +1 672 897 2999</a>
+                <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp Yaoundé : +237 698 104 832</a>
               </div>
+              <p className="pl-6 text-xs text-blue-200">Bureau Ottawa, Canada : +1 672 897 2999</p>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
                 <a href="tel:+237620996045" className="hover:text-blue-300 transition-colors">Téléphone : +237 620 996 045</a>

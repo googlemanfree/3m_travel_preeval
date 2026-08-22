@@ -22,6 +22,20 @@
 - [x] Conserver le WhatsApp +1 672 897 2999 pour Ottawa et +237 698 104 832 pour Yaoundé.
 - [x] Vérifier les liens et messages du sélecteur et du formulaire pour les deux bureaux.
 
+## Contacts visuels et poste administratif HD
+- [x] Ajouter les drapeaux Canada et Cameroun au sélecteur de bureaux.
+- [x] Afficher l’adresse complète du bureau de Yaoundé, une carte dynamique et un accès WhatsApp direct selon le bureau sélectionné.
+- [ ] Confirmer l’adresse de rue officielle du bureau d’Ottawa avant son affichage public complet ; la carte est actuellement centrée sur Ottawa, Ontario.
+- [x] Réorganiser la navigation du tableau de bord administrateur en catégories HD claires et accessibles.
+- [x] Vérifier explicitement le rendu mobile du panneau de contact avec drapeaux, adresse et carte dynamique.
+- [x] Ajouter un test interactif des raccourcis Retour, Dossiers et Actualiser du poste administratif HD.
+
+## Priorité WhatsApp Yaoundé
+- [x] Recenser les icônes et appels WhatsApp publics qui doivent pointer vers Yaoundé.
+- [x] Définir Yaoundé (+237 698 104 832) comme contact WhatsApp principal des liens directs.
+- [x] Conserver Ottawa comme contact secondaire discret dans le sélecteur et le pied de page.
+- [x] Vérifier les liens WhatsApp et les régressions avant publication.
+
 ## Exportation iCal des Réservations (v253)
 - [x] Ajouter la procédure tRPC `exportCalendarIcal` dans `server/routers/tourism.ts` pour générer un flux .ics sécurisé
 - [x] Intégrer le bouton d’export iCal dans le composant `AdminCalendarView.tsx` avec téléchargement instantané du fichier

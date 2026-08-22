@@ -143,7 +143,7 @@ export default function Evisas() {
   const openWhatsApp = (country: string) => {
     const message = `Bonjour, je souhaiterais obtenir un e-Visa pour ${country}. Pouvez-vous m'aider ?`;
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/16728972999?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/237698104832?text=${encodedMessage}`, '_blank');
   };
 
   const getRegionColor = (region: string) => {

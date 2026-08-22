@@ -89,7 +89,7 @@ class ErrorBoundary extends Component<Props, State> {
                 Réessayer maintenant
               </button>
               <a
-                href="https://wa.me/16728972999?text=Bonjour%203M%20Travel%2C%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site."
+                href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%2C%20je%20rencontre%20un%20souci%20technique%20sur%20le%20site."
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition shadow-lg cursor-pointer"

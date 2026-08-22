@@ -83,7 +83,7 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
       <p style="margin-top:24px;">Frais d'ouverture de dossier : <strong>65 000 FCFA</strong> (non remboursables).</p>
 
       <p style="text-align:center;margin:28px 0;">
-        <a href="https://wa.me/16728972999?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Luxembourg (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"
+        <a href="https://wa.me/237698104832?text=${encodeURIComponent(`Bonjour, je viens de recevoir mon évaluation Luxembourg (score ${result.scoreTotal}/100) et je souhaite en discuter.`)}"
            style="background:#28a745;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
           💬 Discuter sur WhatsApp
         </a>
@@ -92,7 +92,7 @@ function buildResultEmailHtml(fullName: string, result: ReturnType<typeof comput
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0;"/>
       <p style="font-size:12px;color:#666;text-align:center;">
         3M Travel & Services SARL — "Votre mobilité, notre expertise. Votre réussite, notre mission."<br/>
-        +1 672 897 2999 | hello@3mtravelagency.com | www.3mtravelagency.click<br/>
+        +237 698 104 832 | hello@3mtravelagency.com | www.3mtravelagency.click<br/>
         RC/YAO/2019/A/2567
       </p>
     </div>
@@ -188,7 +188,7 @@ export const luxembourgEvaluationRouter = router({
       logger.info("luxembourg_evaluation.completed", { email: input.email, score: result.scoreTotal, status: result.eligibilityStatus });
 
       // Lien WhatsApp prêt pour notifier l'équipe immédiatement depuis le front (bouton "Envoyer")
-      const teamWhatsappUrl = `https://wa.me/16728972999?text=${encodeURIComponent(
+      const teamWhatsappUrl = `https://wa.me/237698104832?text=${encodeURIComponent(
         `📋 Nouvelle évaluation Luxembourg\nCandidat : ${input.fullName}\nEmail : ${input.email}\nScore : ${result.scoreTotal}/100 — ${result.statusLabel}`
       )}`;
 

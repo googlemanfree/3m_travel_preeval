@@ -94,7 +94,7 @@ const mockCandidates: Candidate[] = [
     applicationNumber: "3M-APP-2026-0001",
     fullName: "Jean Dupont",
     email: "jean@example.com",
-    phone: "+16728972999",
+    phone: "+237698104832",
     destination: "Canada",
     visaType: "Études",
     scoringTotal: 85,

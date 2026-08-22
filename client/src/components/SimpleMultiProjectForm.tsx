@@ -271,7 +271,7 @@ export function SimpleMultiProjectForm() {
               onClick={() => {
                 const text = `Bonjour 3M Travel, voici les détails de mon projet :\n- Nom : ${formData.fullName || "(Non renseigné)"}\n- Email : ${formData.email || "(Non renseigné)"}\n- WhatsApp : ${formData.whatsappPhone || "(Non renseigné)"}\n- Nationalité : ${formData.nationality || "(Non renseignée)"}\n- Type de projet : ${formData.projectType.toUpperCase()}\n- Précisions / Destination : ${formData.sector || "Non spécifié"}`;
                 const encoded = encodeURIComponent(text);
-                window.open(`https://wa.me/16728972999?text=${encoded}`, "_blank");
+                window.open(`https://wa.me/237698104832?text=${encoded}`, "_blank");
                 setWhatsappCopied(true);
                 setTimeout(() => setWhatsappCopied(false), 3500);
               }}

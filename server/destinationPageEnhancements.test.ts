@@ -9,7 +9,7 @@ describe("interactions des fiches destination premium", () => {
   it("propose une demande de rappel contextualisée vers le contact 3M", () => {
     const callback = readProjectFile("client/src/components/DestinationCallbackDialog.tsx");
     expect(callback).toContain("Demander un rappel");
-    expect(callback).toContain("16728972999");
+    expect(callback).toContain("237698104832");
     expect(callback).toContain("destination");
     expect(callback).toContain("procedure");
     expect(callback).toContain("Date souhaitée");

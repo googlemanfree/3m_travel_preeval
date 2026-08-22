@@ -118,7 +118,7 @@ export default function FloatingServices() {
           <div className="bg-white rounded-lg shadow-md p-4 border-t-4 border-blue-600">
             <p className="text-xs text-slate-600 mb-3">Besoin d'aide ?</p>
             <a
-              href="https://wa.me/16728972999"
+              href="https://wa.me/237698104832"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"

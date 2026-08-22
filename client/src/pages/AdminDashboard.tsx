@@ -54,8 +54,6 @@ import {
   ShieldAlert,
   MessageSquare,
   UserCheck,
-  ArrowLeft,
-  ArrowRight,
 } from "lucide-react";
 import {
   BarChart,
@@ -89,6 +87,7 @@ import { Candidate360Workspace } from "@/components/Candidate360Workspace";
 import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
+import { AdminNavigationShortcuts } from "@/components/AdminNavigationShortcuts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -222,6 +221,15 @@ function ActivationBadge({ status }: { status?: string }) {
       {config.icon}
       {config.label}
     </span>
+  );
+}
+
+function AdminNavGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="min-w-0 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5">
+      <p className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{title}</p>
+      <div className="grid gap-1">{children}</div>
+    </section>
   );
 }
 
@@ -822,28 +830,19 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isRefreshing || isLoading || isLoadingCountryDistribution}
-                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
-                aria-label="Actualiser manuellement les données du dashboard"
-              >
-                <RefreshCw className={`w-4 h-4 ${isRefreshing || isLoading || isLoadingCountryDistribution ? "animate-spin" : ""}`} />
-                {isRefreshing ? "Synchronisation..." : "Actualiser"}
-              </Button>
+              <AdminNavigationShortcuts
+                onRefresh={() => void handleRefresh()}
+                onBack={goBackInsideAdmin}
+                onDossiers={() => changeAdminTab("candidates")}
+                isRefreshing={isRefreshing}
+                isRefreshDisabled={isRefreshing || isLoading || isLoadingCountryDistribution}
+                canGoBack={adminTabHistory.length >= 2}
+              />
               <span className="text-xs text-blue-100/90" aria-live="polite">
                 {lastSyncedAt
                   ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
                   : formatAdminSyncTime(null)}
               </span>
-              <Button variant="outline" size="sm" onClick={goBackInsideAdmin} disabled={adminTabHistory.length < 2} className="gap-1.5 border-white/30 text-white hover:bg-white/10" title="Revenir au dernier espace du back-office">
-                <ArrowLeft className="h-4 w-4" /><span className="hidden lg:inline">Retour</span>
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => changeAdminTab("candidates")} className="gap-1.5 border-white/30 text-white hover:bg-white/10" title="Revenir au poste de pilotage des dossiers">
-                <ArrowRight className="h-4 w-4" /><span className="hidden lg:inline">Dossiers</span>
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -1061,34 +1060,45 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
+        {/* Poste HD : accès organisés par pôle opérationnel plutôt que sur plusieurs rangées indistinctes */}
         <Tabs value={activeAdminTab} onValueChange={changeAdminTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
-            <TabsTrigger value="candidates">Dossiers</TabsTrigger>
-            <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
-            <TabsTrigger value="evaluation-review" className="gap-1.5 font-bold text-amber-700">Bilans à valider</TabsTrigger>
-            <TabsTrigger value="evaluation-reminders" className="gap-1.5 font-bold text-violet-700">Bilans à relancer</TabsTrigger>
-            <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
-            <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
-            <TabsTrigger value="destination-analytics" className="gap-1.5 font-bold text-indigo-700">📊 Destinations</TabsTrigger>
-            <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
-            <TabsTrigger value="route-health" className="gap-1.5 font-bold text-rose-700">404 & Liens</TabsTrigger>
-            <TabsTrigger value="system-status" className="gap-1.5 font-bold text-emerald-700">État système</TabsTrigger>
-            <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
-            <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
-            <TabsTrigger value="documents">Documents</TabsTrigger>
-            <TabsTrigger value="emails">E-mails</TabsTrigger>
-            <TabsTrigger value="activations">Activations</TabsTrigger>
-            <TabsTrigger value="pre-dossiers" className="gap-1.5 font-bold text-blue-700">Comptes à ouvrir</TabsTrigger>
-            <TabsTrigger value="flights" className="gap-1.5 font-bold text-sky-700">
-              <Plane className="h-4 w-4" /> Réservations vols
-              {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}
-            </TabsTrigger>
-            <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
-            <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
-            <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
-            <TabsTrigger value="rates" className="gap-1.5 font-bold text-emerald-600">💱 Taux de Change</TabsTrigger>
-            <TabsTrigger value="passport-history" className="gap-1.5 font-bold text-indigo-600">Passeports vérifiés</TabsTrigger>
+          <TabsList aria-label="Poste administratif par pôle opérationnel" className="mb-6 grid h-auto w-full grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-5">
+            <AdminNavGroup title="Pilotage des dossiers">
+              <TabsTrigger value="candidates" className="justify-start gap-2 px-3 text-left font-bold"><Users className="h-4 w-4 text-blue-700" />Dossiers</TabsTrigger>
+              <TabsTrigger value="inbox" className="justify-start gap-2 px-3 text-left"><MessageSquare className="h-4 w-4 text-slate-500" />Demandes unifiées</TabsTrigger>
+              <TabsTrigger value="evaluation-review" className="justify-start gap-2 px-3 text-left font-bold text-amber-700"><FileCheck className="h-4 w-4" />Bilans à valider</TabsTrigger>
+              <TabsTrigger value="evaluation-reminders" className="justify-start gap-2 px-3 text-left font-bold text-violet-700"><Clock className="h-4 w-4" />Bilans à relancer</TabsTrigger>
+              <TabsTrigger value="pre-dossiers" className="justify-start gap-2 px-3 text-left font-bold text-blue-700"><UserCheck className="h-4 w-4" />Comptes à ouvrir</TabsTrigger>
+              <TabsTrigger value="activations" className="justify-start gap-2 px-3 text-left"><CheckCircle className="h-4 w-4 text-emerald-600" />Activations</TabsTrigger>
+              <TabsTrigger value="documents" className="justify-start gap-2 px-3 text-left"><FileText className="h-4 w-4 text-violet-600" />Documents</TabsTrigger>
+            </AdminNavGroup>
+
+            <AdminNavGroup title="Services & catalogue">
+              <TabsTrigger value="tourism" className="justify-start gap-2 px-3 text-left"><MapPin className="h-4 w-4 text-emerald-600" />Tourisme & devis</TabsTrigger>
+              <TabsTrigger value="consular" className="justify-start gap-2 px-3 text-left font-bold text-blue-700"><Globe className="h-4 w-4" />Consulats & liens</TabsTrigger>
+              <TabsTrigger value="destination-analytics" className="justify-start gap-2 px-3 text-left font-bold text-indigo-700"><BarChart3 className="h-4 w-4" />Destinations</TabsTrigger>
+              <TabsTrigger value="evisa-catalogue" className="justify-start gap-2 px-3 text-left font-bold text-cyan-700"><FileCheck className="h-4 w-4" />Catalogue e‑Visa</TabsTrigger>
+              <TabsTrigger value="rag" className="justify-start gap-2 px-3 text-left"><FileText className="h-4 w-4 text-blue-600" />Guides & RAG</TabsTrigger>
+              <TabsTrigger value="passport-history" className="justify-start gap-2 px-3 text-left font-bold text-indigo-700"><ShieldAlert className="h-4 w-4" />Passeports vérifiés</TabsTrigger>
+            </AdminNavGroup>
+
+            <AdminNavGroup title="Réservations & finance">
+              <TabsTrigger value="flights" className="justify-start gap-2 px-3 text-left font-bold text-sky-700"><Plane className="h-4 w-4" />Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="ml-auto h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger>
+              <TabsTrigger value="calendar" className="justify-start gap-2 px-3 text-left"><Calendar className="h-4 w-4 text-blue-600" />Calendrier</TabsTrigger>
+              <TabsTrigger value="payments" className="justify-start gap-2 px-3 text-left"><BarChart3 className="h-4 w-4 text-amber-600" />Paiements {pendingPaymentApplications.length > 0 && <Badge className="ml-auto h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
+              <TabsTrigger value="rates" className="justify-start gap-2 px-3 text-left font-bold text-emerald-700"><Sparkles className="h-4 w-4" />Taux de change</TabsTrigger>
+            </AdminNavGroup>
+
+            <AdminNavGroup title="Communication & qualité">
+              <TabsTrigger value="emails" className="justify-start gap-2 px-3 text-left"><Mail className="h-4 w-4 text-blue-600" />E-mails</TabsTrigger>
+              <TabsTrigger value="faq" className="justify-start gap-2 px-3 text-left"><Star className="h-4 w-4 text-amber-500" />Satisfaction FAQ</TabsTrigger>
+              <TabsTrigger value="audit" className="justify-start gap-2 px-3 text-left"><FileCheck className="h-4 w-4 text-slate-600" />Journal d’audit</TabsTrigger>
+            </AdminNavGroup>
+
+            <AdminNavGroup title="Supervision">
+              <TabsTrigger value="route-health" className="justify-start gap-2 px-3 text-left font-bold text-rose-700"><ExternalLink className="h-4 w-4" />404 & liens</TabsTrigger>
+              <TabsTrigger value="system-status" className="justify-start gap-2 px-3 text-left font-bold text-emerald-700"><ShieldAlert className="h-4 w-4" />État système</TabsTrigger>
+            </AdminNavGroup>
           </TabsList>
 
           <TabsContent value="tourism" className="space-y-6">

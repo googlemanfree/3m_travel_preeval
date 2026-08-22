@@ -188,7 +188,7 @@ export default function ProceduresAdvanced() {
           </Card>
           <Card className="border-emerald-200 bg-white p-6 shadow-sm">
             <div className="flex items-start gap-4"><div className="rounded-xl bg-emerald-50 p-3 text-emerald-700"><MessageCircle className="h-6 w-6" /></div><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Besoin d’orientation</p><h2 className="mt-1 text-2xl font-black text-slate-950">Parler à un conseiller</h2><p className="mt-2 text-sm leading-6 text-slate-600">Partagez votre destination, votre procédure et les pièces déjà disponibles pour recevoir une orientation adaptée.</p></div></div>
-            <a href={`https://wa.me/16728972999?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M Travel et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700">WhatsApp +1 672 897 2999 <ExternalLink className="h-4 w-4" /></a>
+            <a href={`https://wa.me/237698104832?text=${encodeURIComponent("Bonjour, je consulte les procédures 3M Travel et souhaite être orienté(e) sur mon projet.")}`} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white hover:bg-emerald-700">WhatsApp +237 698 104 832 <ExternalLink className="h-4 w-4" /></a>
           </Card>
         </section>
 
