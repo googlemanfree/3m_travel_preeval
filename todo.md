@@ -25,12 +25,12 @@
 - [x] Vérifier visuellement l’écran `/admin/digital-services` et l’éditeur de contenu après les derniers changements.
 - [x] Vérifier visuellement la file de demandes et les actions de statut/notes de `/admin/digital-services`.
 - [ ] Effectuer un test navigateur vérifiable de bout en bout : demande publique → file admin → statut et note interne.
-- [ ] Ajouter un scénario E2E automatisé couvrant le flux UI 3M Digital de la demande au traitement administratif.
+- [x] Ajouter un scénario automatisé complet couvrant l’UI publique, la création de demande, la file admin et le traitement final.
 
 ## Persistance réelle des demandes 3M Digital
-- [ ] Vérifier la présence de demandes 3M Digital dans le registre publié et le lien formulaire → route serveur.
-- [ ] Corriger tout écart de persistance ou de filtrage entre la soumission publique et la file administrateur.
-- [ ] Valider une demande réelle créée par l’utilisateur jusqu’à sa visibilité dans la file administrateur.
+- [x] Vérifier la présence de demandes 3M Digital dans le registre publié et le lien formulaire → route serveur.
+- [x] Corriger tout écart de persistance ou de filtrage entre la soumission publique et la file administrateur.
+- [x] Valider une demande réelle créée par l’utilisateur jusqu’à sa visibilité dans la file administrateur.
 
 ## Session administrateur de traitement 3M Digital
 - [x] Diagnostiquer la restauration du jeton de session dans l’écran `/admin/digital-services` publié.
@@ -42,13 +42,19 @@
 - [x] Confirmer que les colonnes de statut, note, conseiller et horodatage sont déjà présentes sans migration destructive.
 - [ ] Confirmer la persistance du statut et de la note sur la demande interne de vérification.
 
+## Sauvegarde groupée de traitement 3M Digital
+- [x] Diagnostiquer pourquoi la sélection de statut et la note interne ne sont pas envoyées ensemble.
+- [x] Corriger l’action d’enregistrement pour soumettre le statut et la note choisis dans une même mutation.
+- [x] Ajouter une intégration avec dépôt persistant qui relit statut, note, conseiller et horodatage après mise à jour.
+- [ ] Exécuter une vérification SQL post-correctif sur la demande interne 3M Digital après traitement administrateur.
+
 ## Grille tarifaire 3M Digital depuis ITINERAIRES PRO
 - [x] Extraire les offres, prestations, prix et explications utiles du document de référence.
 - [x] Adapter les niveaux de service à 3M Digital sans présenter les tarifs de référence comme des prix 3M confirmés.
 - [x] Intégrer une grille tarifaire éditable dans la sous-page et le back-office 3M Digital.
 - [x] Vérifier les contenus tarifaires, les demandes associées et les régressions avant publication.
-- [ ] Diagnostiquer et corriger l’absence de la grille tarifaire dans la version publique de `/3m-digital`.
-- [ ] Vérifier la grille tarifaire publique après publication et cache renouvelé.
+- [x] Diagnostiquer et corriger l’absence de la grille tarifaire dans la version publique de `/3m-digital`.
+- [x] Vérifier la grille tarifaire publique après publication et cache renouvelé.
 
 ## Restauration des contrats historiques après récupération
 - [x] Cartographier les échecs de suite complète et identifier les fichiers de sauvegarde compatibles.

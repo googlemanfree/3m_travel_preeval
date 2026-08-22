@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const inserted: unknown[] = [];
 const updates: unknown[] = [];
-const requestRow = {
+const requestRow: any = {
   id: 42,
   reference: "DGT-2026-123456",
   service: "web_platform" as const,
@@ -22,7 +22,7 @@ const requestRow = {
 const fakeDb = {
   insert: vi.fn(() => ({ values: vi.fn((value: unknown) => { inserted.push(value); return { onDuplicateKeyUpdate: vi.fn(async () => undefined), then: (resolve: (value: unknown) => unknown) => Promise.resolve(undefined).then(resolve) }; }) })),
   select: vi.fn(() => ({ from: vi.fn(() => ({ orderBy: vi.fn(async () => [requestRow]), where: vi.fn(() => ({ limit: vi.fn(async () => [requestRow]) })) })) })),
-  update: vi.fn(() => ({ set: vi.fn((value: unknown) => { updates.push(value); return { where: vi.fn(async () => undefined) }; }) })),
+  update: vi.fn(() => ({ set: vi.fn((value: unknown) => { updates.push(value); Object.assign(requestRow, value); return { where: vi.fn(async () => undefined) }; }) })),
 };
 
 vi.mock("./db", () => ({ getDb: vi.fn(async () => fakeDb) }));
@@ -47,6 +47,9 @@ describe("cycle complet des demandes 3M Digital", () => {
     const outcome = await caller.updateRequest({ sessionToken: "valid-admin-session", requestId: requestRow.id, status: "contacted", adminNotes: "Appel de qualification prévu demain." });
     expect(outcome).toEqual({ success: true });
     expect(updates[0]).toMatchObject({ status: "contacted", adminNotes: "Appel de qualification prévu demain.", handledByAdminEmail: "admin@3mtravelagency.com" });
+    expect((updates[0] as { handledAt?: unknown }).handledAt).toBeInstanceOf(Date);
+    expect(requestRow).toMatchObject({ status: "contacted", adminNotes: "Appel de qualification prévu demain.", handledByAdminEmail: "admin@3mtravelagency.com" });
+    expect(requestRow.handledAt).toBeInstanceOf(Date);
   });
 
   it("enregistre une grille de cadrage administrable sans créer de tarif contractuel", async () => {
