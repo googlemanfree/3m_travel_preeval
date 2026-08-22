@@ -781,7 +781,19 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
-- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale
+- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — en attente de l’activation API par RateHawk ; aucune action supplémentaire à effectuer dans le compte à ce stade.
+
+## Audit transversal des parcours opérationnels
+- [x] Auditer le parcours 3M Booking, le catalogue hôtelier et le transfert vers le back-office.
+- [ ] Auditer le parcours de recherche et de traitement des réservations de vol.
+- [ ] Auditer les demandes e‑Visa, leurs documents et leur suivi client-administrateur.
+- [ ] Auditer les demandes d’assurance, la remise des documents et la synchronisation e-mail.
+- [ ] Auditer l’espace candidat, les sessions, les suivis et les accès aux documents.
+- [ ] Auditer le back-office, les actions directes, les sessions et les erreurs opérationnelles récentes.
+- [ ] Prioriser et corriger les blocages confirmés, avec tests de régression avant publication.
+- [x] Diagnostiquer et corriger le chargement vide observé sur la route publique `/3m-booking`.
+- [x] Restaurer ou rediriger la route publique `/insurance` vers le parcours d’assurance réellement actif.
+- [x] Restaurer ou rediriger l’accès candidat attendu sur `/candidate/login` vers le parcours d’authentification actif.
 - [x] Identifier une source ouverte ou gratuite permettant de démarrer un catalogue hôtelier Cameroun et Afrique centrale
 - [x] Concevoir la table de catalogue hôtelier avec source OSM, URL officielle, équipements et date de vérification
 - [x] Importer de manière contrôlée les hôtels OpenStreetMap des neuf villes prioritaires

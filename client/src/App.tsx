@@ -159,10 +159,11 @@ function Router() {
       {/* Pages protégées — nécessitent un compte 3M Travel */}
       <Route path={"/flights"} component={Flights} />
       <Route path={"/billets"} component={Billets} />
-      <Route path={"/3m-booking"}>{() => <Redirect to="/billets" />}</Route>
+      <Route path={"/3m-booking"} component={Billets} />
       <Route path={"/vols"}>{() => <Redirect to="/billets" />}</Route>
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
+      <Route path={"/insurance"}>{() => <Redirect to="/assurance" />}</Route>
       <Route path={"/evisa"} component={Evisa} />
         <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
       <Route path={"/about"} component={About} />
@@ -195,6 +196,7 @@ function Router() {
       <Route path={"/suivi-client"} component={ClientCaseTracking} />
 
       {/* Mon Espace Candidat — aliases historiques vers l’espace client unique. */}
+      <Route path={"/candidate/login"}>{() => <Redirect to="/login" />}</Route>
       <Route path={"/mon-espace-candidat"}>{() => <Redirect to="/mon-espace" />}</Route>
       <Route path={"/my-space"}>{() => <Redirect to="/mon-espace" />}</Route>
 
