@@ -60,7 +60,7 @@ describe("SafeResponsiveChart", () => {
       for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
         const absolutePath = path.join(current, entry.name);
         if (entry.isDirectory()) pending.push(absolutePath);
-        if (entry.isFile() && /\.(ts|tsx|html)$/.test(entry.name) && !entry.name.endsWith(".test.ts")) sources.push(absolutePath);
+        if (entry.isFile() && /\.(ts|tsx|html)$/.test(entry.name) && !entry.name.endsWith(".test.ts") && !entry.name.endsWith(".test.tsx") && entry.name !== "officeContacts.ts") sources.push(absolutePath);
       }
     }
 

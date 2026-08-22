@@ -4,6 +4,7 @@ import { lazyWithTimeout } from "./lib/lazyWithTimeout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 const NotFound = lazyWithTimeout(() => import("./pages/NotFound"));
 import { Route, Switch, Redirect } from "wouter";
+import { useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
@@ -79,6 +80,7 @@ import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
+import { OfficeContactProvider } from "./contexts/OfficeContactContext";
 
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
@@ -445,6 +447,8 @@ function App() {
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
+  const [location] = useLocation();
+  const showFloatingTools = location !== "/contact";
 
   return (
     <ErrorBoundary>
@@ -452,6 +456,7 @@ function App() {
         <AnimationPreferencesProvider>
           <FontSizePreferencesProvider>
             <TooltipProvider>
+            <OfficeContactProvider>
           <MultiServiceCartProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
@@ -468,15 +473,18 @@ function App() {
                   <Router />
                 </React.Suspense>
               </PageTransition>
-              {/* Menu d'actions flottantes unifié */}
-              <FloatingActionMenu />
-              {/* Guide d’information flottant */}
-              <AiCopilotWidgetEnhanced />
-              {/* Assistant intelligent de réservation de vol */}
-              <SmartFlightAssistant />
+              {showFloatingTools && <>
+                {/* Menu d'actions flottantes unifié */}
+                <FloatingActionMenu />
+                {/* Guide d’information flottant */}
+                <AiCopilotWidgetEnhanced />
+                {/* Assistant intelligent de réservation de vol */}
+                <SmartFlightAssistant />
+              </>}
             </>
           )}
           </MultiServiceCartProvider>
+          </OfficeContactProvider>
           </TooltipProvider>
           </FontSizePreferencesProvider>
         </AnimationPreferencesProvider>

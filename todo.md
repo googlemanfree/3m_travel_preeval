@@ -7,6 +7,21 @@
 - [x] Ajouter un contrôle de non-régression garantissant qu’aucun parcours public ne conserve l’ancien numéro WhatsApp.
 - [x] Rejouer la vérification complète des CTA de contact publics, du graphique, de TypeScript et des régressions avant publication.
 
+## Contacts multi-bureaux et formulaire rapide
+- [x] Créer et valider une compétence réutilisable de gestion de contacts multi-bureaux.
+- [x] Définir les horaires, le fuseau horaire et les contacts du bureau d’Ottawa et du bureau Cameroun.
+- [x] Ajouter un sélecteur interactif Ottawa–Cameroun aux actions de contact publiques.
+- [x] Ajouter un formulaire de contact rapide routé vers le bureau sélectionné.
+- [x] Ajouter un test réellement interactif du sélecteur Ottawa–Cameroun, de ses horaires et de ses liens WhatsApp.
+- [x] Ajouter un test réellement interactif du formulaire rapide, de ses validations et de son destinataire WhatsApp.
+- [x] Ajouter une régression d’accessibilité couvrant clavier, focus, labels et annonce d’erreur du panneau multi-bureaux.
+- [x] Vérifier explicitement le comportement mobile et desktop des nouveaux contrôles avant publication.
+
+## Distinction Ottawa Canada et Yaoundé Cameroun
+- [x] Corriger les libellés pour afficher « Bureau 3M Travel d’Ottawa, Canada » et « Bureau de Yaoundé, Cameroun ».
+- [x] Conserver le WhatsApp +1 672 897 2999 pour Ottawa et +237 698 104 832 pour Yaoundé.
+- [x] Vérifier les liens et messages du sélecteur et du formulaire pour les deux bureaux.
+
 ## Exportation iCal des Réservations (v253)
 - [x] Ajouter la procédure tRPC `exportCalendarIcal` dans `server/routers/tourism.ts` pour générer un flux .ics sécurisé
 - [x] Intégrer le bouton d’export iCal dans le composant `AdminCalendarView.tsx` avec téléchargement instantané du fichier
