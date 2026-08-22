@@ -60,6 +60,7 @@ export default function Register() {
     email: "",
     password: "",
     confirmPassword: "",
+    evaluationAlreadyCompleted: "no" as "yes" | "no",
   });
   const isFullNameInvalid = form.fullName.length > 0 && form.fullName.trim().length < 2;
   const isEmailInvalid = form.email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
@@ -156,6 +157,7 @@ export default function Register() {
         email: form.email,
         password: form.password,
         portraitVerificationToken: result.portraitVerificationToken,
+        evaluationAlreadyCompleted: form.evaluationAlreadyCompleted === "yes",
       });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Impossible d’envoyer le portrait.");
@@ -385,6 +387,34 @@ export default function Register() {
             </div>
 
 
+
+            {/* Portrait humain obligatoire */}
+            <fieldset className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+              <legend className="px-1 text-sm font-bold text-slate-800">Évaluation déjà effectuée ?</legend>
+              <p className="mt-1 text-xs leading-5 text-slate-600">Avez-vous déjà reçu une évaluation de 3M Travel par e-mail ou directement en agence ?</p>
+              <div className="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Évaluation déjà effectuée">
+                {([
+                  ["yes", "Oui, reçue"],
+                  ["no", "Non, à effectuer"],
+                ] as const).map(([value, label]) => {
+                  const selected = form.evaluationAlreadyCompleted === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setForm((current) => ({ ...current, evaluationAlreadyCompleted: value }))}
+                      disabled={registerMutation.isPending || isUploadingPortrait || showSuccessAnimation}
+                      className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${selected ? "border-blue-700 bg-blue-700 text-white" : "border-blue-200 bg-white text-blue-800 hover:bg-blue-100"}`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              {form.evaluationAlreadyCompleted === "yes" && <p className="mt-3 text-xs font-medium text-emerald-800">Votre étape d’évaluation sera indiquée comme reçue dans votre espace après l’activation du compte.</p>}
+            </fieldset>
 
             {/* Portrait humain obligatoire */}
             <PortraitCapture

@@ -6,7 +6,7 @@ describe("Client Dashboard Summary Aggregator", () => {
       id: 1,
       fullName: "Aureol Donfack",
       email: "aureoldonfack@gmail.com",
-      phone: "+16728972999",
+      phone: "+237698104832",
       destination: "canada",
     };
 

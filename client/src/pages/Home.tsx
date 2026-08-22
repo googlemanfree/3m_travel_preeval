@@ -1383,7 +1383,7 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />
-                  <a href="tel:+237698104832" className="hover:text-[#7cb9e8]">+237 698 104 832</a>
+                  <a href="tel:+237698104832" className="hover:text-[#7cb9e8]">+237 698-104-832</a>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-[#7cb9e8] flex-shrink-0" />

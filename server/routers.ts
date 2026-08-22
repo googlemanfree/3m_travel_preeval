@@ -74,6 +74,7 @@ import { evisaCatalogueRouter } from "./routers/evisaCatalogueRouter";
 import { routeHealthRouter } from "./routers/routeHealthRouter";
 import { richTextTemplatesRouter } from "./routers/richTextTemplatesRouter";
 import { consularRegistryRouter } from "./routers/consularRegistryRouter";
+import { digitalServicesRouter } from "./routers/digitalServices";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -97,7 +98,7 @@ export const appRouter = router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, expires: new Date(0) });
       return {
         success: true,
       } as const;
@@ -152,6 +153,7 @@ export const appRouter = router({
   consularRegistry: consularRegistryRouter,
   routeHealth: routeHealthRouter,
   richTextTemplates: richTextTemplatesRouter,
+  digitalServices: digitalServicesRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,
   reassurance: reassuranceRouter,

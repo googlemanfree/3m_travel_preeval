@@ -4,7 +4,6 @@ import { lazyWithTimeout } from "./lib/lazyWithTimeout";
 import { TooltipProvider } from "@/components/ui/tooltip";
 const NotFound = lazyWithTimeout(() => import("./pages/NotFound"));
 import { Route, Switch, Redirect } from "wouter";
-import { useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
@@ -80,7 +79,6 @@ import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
-import { OfficeContactProvider } from "./contexts/OfficeContactContext";
 
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
@@ -96,8 +94,6 @@ const PaymentMethodSelection = lazyWithTimeout(() => import("./pages/PaymentMeth
 const PaymentAgencyConfirmation = lazyWithTimeout(() => import("./pages/PaymentAgencyConfirmation"));
 const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomerReviews"));
 const AdminInsuranceRequests = lazyWithTimeout(() => import("./pages/AdminInsuranceRequests"));
-const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
-const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
 const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTracking"));
 const SubmitReview = lazyWithTimeout(() => import("./pages/SubmitReview"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
@@ -118,6 +114,8 @@ const CountryComparisonPage = lazyWithTimeout(() => import("./pages/CountryCompa
 const EvisasAdvanced = lazyWithTimeout(() => import("./pages/EvisasAdvanced"));
 const Evaluation = lazyWithTimeout(() => import("./pages/Evaluation"));
 const PrimeJourney = lazyWithTimeout(() => import("./pages/PrimeJourney"));
+const Community = lazyWithTimeout(() => import("./pages/Community"));
+const AdminDigitalServices = lazyWithTimeout(() => import("./pages/AdminDigitalServices"));
 
 function Router() {
   // Gérer l'inactivité et la déconnexion automatique
@@ -131,6 +129,8 @@ function Router() {
       <Route path={"/confirm-email"} component={ConfirmEmail} />
       <Route path={"/login"} component={Login} />
       <Route path={"/parcours"} component={PrimeJourney} />
+      <Route path={"/3m-digital"} component={Community} />
+      <Route path={"/communaute"}>{() => <Redirect to="/3m-digital" />}</Route>
       <Route path={"/evaluation-canada"}>{() => <Redirect to="/evaluation?source=facebook&campaign=Canada" />}</Route>
       <Route path={"/evaluation"}>
         <AuthGuard message="Vous devez créer un compte pour faire votre évaluation.">
@@ -162,7 +162,7 @@ function Router() {
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/evisa"} component={Evisa} />
-      <Route path={"/evisa-demande"}>{() => <Redirect to="/evisas/request" />}</Route>
+      <Route path={"/evisa-demande"} component={EvisaDemande} />
       <Route path={"/about"} component={About} />
       <Route path={"/contact"} component={Contact} />
       <Route path={"/politique-confidentialite"} component={PolitiqueConfidentialite} />
@@ -314,19 +314,14 @@ function Router() {
           <AdminConsultationRequests />
         </AdminGuard>
       </Route>
+      <Route path={"/admin/digital-services"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminDigitalServices />
+        </AdminGuard>
+      </Route>
       <Route path={"/admin/insurance-requests"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminInsuranceRequests />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/emails"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEmailCenter />
-        </AdminGuard>
-      </Route>
-      <Route path={"/admin/email-settings"}>
-        <AdminGuard message="Accès réservé aux administrateurs.">
-          <AdminEmailSettings />
         </AdminGuard>
       </Route>
       <Route path={"/admin/ai-evaluations"}>
@@ -447,8 +442,6 @@ function App() {
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
-  const [location] = useLocation();
-  const showFloatingTools = location !== "/contact";
 
   return (
     <ErrorBoundary>
@@ -456,7 +449,6 @@ function App() {
         <AnimationPreferencesProvider>
           <FontSizePreferencesProvider>
             <TooltipProvider>
-            <OfficeContactProvider>
           <MultiServiceCartProvider>
           <SessionLoader isLoading={!sessionRestored} />
           <Toaster />
@@ -473,18 +465,15 @@ function App() {
                   <Router />
                 </React.Suspense>
               </PageTransition>
-              {showFloatingTools && <>
-                {/* Menu d'actions flottantes unifié */}
-                <FloatingActionMenu />
-                {/* Guide d’information flottant */}
-                <AiCopilotWidgetEnhanced />
-                {/* Assistant intelligent de réservation de vol */}
-                <SmartFlightAssistant />
-              </>}
+              {/* Menu d'actions flottantes unifié */}
+              <FloatingActionMenu />
+              {/* Guide d’information flottant */}
+              <AiCopilotWidgetEnhanced />
+              {/* Assistant intelligent de réservation de vol */}
+              <SmartFlightAssistant />
             </>
           )}
           </MultiServiceCartProvider>
-          </OfficeContactProvider>
           </TooltipProvider>
           </FontSizePreferencesProvider>
         </AnimationPreferencesProvider>

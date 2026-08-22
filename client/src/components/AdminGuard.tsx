@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { AlertCircle, Clock, Lock, RefreshCw } from "lucide-react";
+import { AlertCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import { trpc } from "@/lib/trpc";
@@ -13,28 +13,9 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
-  const [queryTimedOut, setQueryTimedOut] = useState(false);
-  const sessionToken = typeof window !== "undefined"
-    ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined
-    : undefined;
-  const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
-  const isChecking = adminSession.isLoading && !queryTimedOut;
-  const sessionTemporarilyUnavailable = Boolean(sessionToken) && (adminSession.isError || queryTimedOut);
-  const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
+  const adminSession = trpc.adminAuth.me.useQuery(undefined, { retry: false, refetchOnWindowFocus: true });
+  const isAuthorized = adminSession.isLoading ? null : adminSession.data?.authenticated === true;
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;
-  const renewSession = trpc.adminAuth.renewSession.useMutation({
-    onSuccess: () => { void adminSession.refetch(); },
-  });
-  const sessionExpiresAt = adminSession.data?.authenticated ? adminSession.data.sessionExpiresAt : null;
-
-  useEffect(() => {
-    if (!adminSession.isLoading) {
-      setQueryTimedOut(false);
-      return;
-    }
-    const timeout = window.setTimeout(() => setQueryTimedOut(true), 5_000);
-    return () => window.clearTimeout(timeout);
-  }, [adminSession.isLoading]);
 
   useEffect(() => {
     if (requiresPasswordChange && location !== "/admin/change-password") {
@@ -50,22 +31,6 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
           <p className="mt-4 text-gray-600">
             {requiresPasswordChange ? "Redirection vers la création de votre nouveau mot de passe..." : "Vérification de l'accès..."}
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (sessionTemporarilyUnavailable) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow-xl">
-          <AlertCircle className="mx-auto mb-4 h-10 w-10 text-amber-600" />
-          <h1 className="text-xl font-bold text-gray-900">Vérification de session en cours</h1>
-          <p className="mt-2 text-sm text-gray-600">Votre session administrateur est conservée. La vérification du serveur met simplement plus de temps que prévu.</p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <Button className="flex-1" onClick={() => { setQueryTimedOut(false); void adminSession.refetch(); }}>Réessayer</Button>
-            <Button className="flex-1" variant="outline" onClick={() => navigate("/admin")}>Rester dans l’espace admin</Button>
-          </div>
         </div>
       </div>
     );
@@ -123,19 +88,8 @@ export default function AdminGuard({ children, message = "Accès réservé aux a
 
   return (
     <>
-      <div className="fixed top-3 right-4 z-[60] flex items-center gap-2">
-        {sessionExpiresAt && (
-          <button
-            type="button"
-            onClick={() => sessionToken && renewSession.mutate({ sessionToken })}
-            disabled={renewSession.isPending}
-            className="rounded-full border border-emerald-100 bg-white px-3 py-2 text-xs font-medium text-emerald-800 shadow-md"
-            title={`Session active jusqu’à ${new Date(sessionExpiresAt).toLocaleString("fr-FR")}`}
-          >
-            {renewSession.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Expire {new Date(sessionExpiresAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>}
-          </button>
-        )}
-        <div className="bg-white rounded-full shadow-md border border-gray-100"><AdminNotificationBell /></div>
+      <div className="fixed top-3 right-4 z-[60] bg-white rounded-full shadow-md border border-gray-100">
+        <AdminNotificationBell />
       </div>
       {children}
     </>

@@ -33,10 +33,6 @@ export function FooterLegal() {
                   +237 698 104 832
                 </a>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <MapPin className="w-4 h-4" />
-                <span>Bureau Ottawa, Canada : +1 672 897 2999</span>
-              </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 <a href="mailto:hello@3mtravelagency.com" className="hover:text-white transition">

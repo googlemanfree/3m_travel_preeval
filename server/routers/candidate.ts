@@ -33,14 +33,14 @@ import { sendEmail as sendGenericEmail } from "../_core/email";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { verifyPortraitProof as verifyPortraitProofToken } from "../portraitVerification";
 import { GOOGLE_HANDOFF_COOKIE } from "../googleCandidateOAuth";
-import { clientNotifications } from "../../drizzle/caseTrackingSchema";
+import { resolveEvaluationDeclaration } from "../../shared/evaluationDeclaration";
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET est obligatoire pour l’authentification candidat.");
 }
-const JWT_EXPIRES = "24h";
+const JWT_EXPIRES = "30d";
 
 export function signCandidateToken(candidateId: number): string {
   return jwt.sign({ sub: candidateId, type: "candidate" }, JWT_SECRET, {
@@ -140,15 +140,7 @@ export async function getOrCreateCandidateForPlatformUser(user: { id: number; na
 // ─── Procédure protégée pour les candidats ───────────────────────────────────
 // Le portrait est une barrière serveur : seules les mutations d’onboarding
 // peuvent être appelées avant la vérification humaine.
-const PORTRAIT_ONBOARDING_PATHS = new Set([
-  "candidate.getProfile",
-  "candidate.updateProfile",
-  "candidate.updateAvatar",
-  // Le tableau de bord doit rester accessible au rechargement afin que le
-  // candidat puisse voir son dossier et compléter son profil, sans faux écran
-  // de panne. Les ressources sensibles restent protégées par la garde serveur.
-  "candidate.getClientDashboardSummary",
-]);
+const PORTRAIT_ONBOARDING_PATHS = new Set(["candidate.getProfile", "candidate.updateProfile", "candidate.updateAvatar"]);
 
 export function hasUsableCandidatePortrait(candidate: { avatarVerificationStatus?: string | null; avatarUrl?: string | null }) {
   // Les comptes créés avant l’ajout du statut ont parfois une photo valide mais
@@ -267,6 +259,7 @@ export const candidateRouter = router({
         destination: z.enum(["canada", "luxembourg", "pologne", "europe", "golfe", "autre"]).optional(),
         nationality: z.string().optional(),
         portraitVerificationToken: z.string().min(20, "Portrait vérifié requis"),
+        evaluationAlreadyCompleted: z.boolean().default(false),
       })
     )
     .mutation(async ({ input }) => {
@@ -296,6 +289,7 @@ export const candidateRouter = router({
           destination: input.destination ?? "autre",
           nationality: input.nationality ?? null,
           dossierStatus: "nouveau",
+          ...resolveEvaluationDeclaration(input.evaluationAlreadyCompleted),
           emailVerified: false,
           avatarUrl: portraitProof.url,
           avatarVerificationStatus: "verified",
@@ -387,15 +381,6 @@ export const candidateRouter = router({
         },
       };
     }),
-
-  // ── Renouveler une session candidat encore valide ──────────────────────────
-  renewSession: candidateProcedure.mutation(async ({ ctx }) => {
-    const token = signCandidateToken(ctx.candidate.id);
-    return {
-      token,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    };
-  }),
 
   // ── Profil candidat (lecture) ──────────────────────────────────────────────
   getProfile: candidateProcedure.query(async ({ ctx }) => {
@@ -1216,15 +1201,11 @@ export const candidateRouter = router({
       : null;
 
     // Récupérer les messages
-    const [messages, notifications] = await Promise.all([
-      db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, ctx.candidate.id)).orderBy(desc(candidateMessages.createdAt)),
-      db.select().from(clientNotifications).where(eq(clientNotifications.candidateId, ctx.candidate.id)).orderBy(desc(clientNotifications.createdAt)),
-    ]);
-    const timeline = [
-      ...statusHistory.map(entry => ({ id: `status-${entry.id}`, type: "status" as const, title: "Étape du dossier actualisée", detail: entry.reason || "L’équipe a actualisé l’avancement de votre dossier.", createdAt: entry.createdAt })),
-      ...notifications.map(notification => ({ id: `notification-${notification.id}`, type: "notification" as const, title: notification.title, detail: notification.body, createdAt: notification.createdAt })),
-      ...messages.filter(message => message.senderRole === "advisor" && !message.notificationId).map(message => ({ id: `message-${message.id}`, type: "message" as const, title: "Message de votre conseiller", detail: message.content, createdAt: message.createdAt })),
-    ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+    const messages = await db
+      .select()
+      .from(candidateMessages)
+      .where(eq(candidateMessages.candidateId, ctx.candidate.id))
+      .orderBy(desc(candidateMessages.createdAt));
 
     return {
       success: true,
@@ -1234,7 +1215,6 @@ export const candidateRouter = router({
         agencyDocuments,
         evaluationReportPdfUrl,
         messages,
-        clientTimeline: timeline,
         statusHistory,
         dossierStatus: application.dossierStatus,
         agreementSigned: application.agreementSigned,
@@ -1563,7 +1543,6 @@ export const candidateRouter = router({
 
     const [
       appRows,
-      agencyDossierRows,
       favFlights,
       evalRows,
       messageRows,
@@ -1571,7 +1550,6 @@ export const candidateRouter = router({
       agencyDocRows,
     ] = await Promise.all([
       db.select().from(applications).where(eq(applications.candidateId, candidate.id)).orderBy(desc(applications.createdAt)),
-      db.select().from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossiers.createdAt)),
       db.select().from(favoriteFlights).where(eq(favoriteFlights.userId, candidate.id)).orderBy(desc(favoriteFlights.createdAt)),
       db.select().from(evaluations).where(eq(evaluations.email, candidate.email)).orderBy(desc(evaluations.createdAt)),
       db.select().from(candidateMessages).where(eq(candidateMessages.candidateId, candidate.id)).orderBy(desc(candidateMessages.createdAt)),
@@ -1580,20 +1558,6 @@ export const candidateRouter = router({
     ]);
 
     const activeApp = appRows[0] || null;
-    const activeAgencyDossier = agencyDossierRows[0] || null;
-    const activeAgencyStatusMap: Record<string, string> = {
-      nouveau: "nouveau", en_cours: "traitement", documents_requis: "documents", soumis: "soumis", approuve: "approuve", refuse: "refuse",
-    };
-    const activeDossier = activeApp || (activeAgencyDossier ? {
-      id: activeAgencyDossier.id,
-      dossierNumber: `3M-AG-${String(activeAgencyDossier.id).padStart(4, "0")}`,
-      destination: activeAgencyDossier.destination,
-      dossierStatus: activeAgencyStatusMap[activeAgencyDossier.status] || "nouveau",
-      source: "agency",
-    } : null);
-    const activeDestination = activeApp?.destination || activeAgencyDossier?.destination || candidate.destination;
-    const activeStatus = activeApp?.dossierStatus || (activeAgencyDossier ? activeAgencyStatusMap[activeAgencyDossier.status] || "nouveau" : candidate.dossierStatus);
-    const activeDossierNumber = activeApp?.dossierNumber || (activeAgencyDossier ? `3M-AG-${String(activeAgencyDossier.id).padStart(4, "0")}` : null);
 
     let profileFieldsFilled = 0;
     const totalProfileFields = 5;
@@ -1610,17 +1574,19 @@ export const candidateRouter = router({
         fullName: candidate.fullName,
         email: candidate.email,
         phone: candidate.phone,
-        destination: activeDestination,
+        destination: candidate.destination,
         avatarUrl: (candidate as any).avatarUrl || null,
         avatarVerificationStatus: candidate.avatarVerificationStatus,
         avatarVerificationMethod: candidate.avatarVerificationMethod,
         avatarVerifiedAt: candidate.avatarVerifiedAt,
         passportNumber: (candidate as any).passportNumber || null,
-        dossierNumber: (candidate as any).dossierNumber || activeDossierNumber || "En attente d’ouverture",
-        dossierStatus: activeStatus || "nouveau",
+        dossierNumber: (candidate as any).dossierNumber || activeApp?.dossierNumber || "N/A",
+        dossierStatus: (candidate as any).dossierStatus || activeApp?.dossierStatus || "evaluation",
+        evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
+        evaluationDeclaredAt: candidate.evaluationDeclaredAt,
         createdAt: candidate.createdAt,
       },
-      activeDossier,
+      activeDossier: activeApp,
       applications: appRows,
       favoriteFlights: favFlights,
       evaluations: evalRows,

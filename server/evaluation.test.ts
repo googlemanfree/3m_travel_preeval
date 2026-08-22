@@ -71,7 +71,7 @@ describe("evaluation.submit", () => {
     const result = await caller.evaluation.submit({
       fullName: "Marie Kamga",
       email: "marie@example.com",
-      phone: "+16728972999",
+      phone: "+237698104832",
       destinationCategory: "canada",
       visaType: "canada_rp",
       nationality: "Camerounaise",

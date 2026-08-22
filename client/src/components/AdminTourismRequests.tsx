@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { BedDouble, BellRing, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, ImagePlus, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
+import { useState } from "react";
+import { BedDouble, Car, CheckCircle2, Clock, Download, Eye, ExternalLink, FileText, Loader2, MapPin, RefreshCw, Search, Sparkles, UserCheck, XCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,30 +20,8 @@ const statusLabels: Record<string, { label: string; color: string; bg: string }>
   cancelled: { label: "Annulé", color: "text-rose-700", bg: "bg-rose-50 border-rose-200" },
 };
 
-function parseServiceTypes(value: string | null | undefined): string[] {
-  try {
-    const parsed: unknown = JSON.parse(value || "[]");
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function escapeCsv(value: unknown): string {
-  return `"${String(value ?? "").replace(/"/g, '""')}"`;
-}
-
-function catalogStatusMeta(status: string | null | undefined) {
-  if (status === "verified") return { label: "Vérifié", className: "border-emerald-200 bg-emerald-50 text-emerald-700" };
-  if (status === "inactive") return { label: "Masqué", className: "border-slate-200 bg-slate-50 text-slate-600" };
-  return { label: "À vérifier", className: "border-amber-200 bg-amber-50 text-amber-700" };
-}
-
 export function AdminTourismRequests() {
-  const sessionToken = typeof window !== "undefined" ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || undefined : undefined;
-  const adminInput = useMemo(() => sessionToken ? { sessionToken } : undefined, [sessionToken]);
-  const precheckInput = useMemo(() => sessionToken ? { limit: 8, sessionToken } : { limit: 8 }, [sessionToken]);
-  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery(adminInput);
+  const { data: requests, isLoading, error, refetch } = trpc.tourism.adminList.useQuery();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
@@ -51,25 +29,7 @@ export function AdminTourismRequests() {
   const [quotedPrice, setQuotedPrice] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [catalogCity, setCatalogCity] = useState("douala");
-  const [editingHotelImage, setEditingHotelImage] = useState<any | null>(null);
-  const [hotelImageUrl, setHotelImageUrl] = useState("");
-  const [hotelImageSourceUrl, setHotelImageSourceUrl] = useState("");
-  const [hotelImageAttribution, setHotelImageAttribution] = useState("");
-  const [missingVisualSearch, setMissingVisualSearch] = useState("");
-  const [missingVisualCity, setMissingVisualCity] = useState("all");
-  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery(adminInput);
-  const { data: precheckHotels, refetch: refetchPrecheck, isLoading: isPrecheckLoading, error: precheckError } = trpc.tourism.adminCatalogPrecheck.useQuery(precheckInput);
-  const { data: catalogReadiness, refetch: refetchReadiness } = trpc.tourism.adminCatalogReadiness.useQuery(adminInput, { refetchInterval: 30_000 });
-  const { data: validationHistory, isFetching: isValidationHistoryLoading, refetch: refetchValidationHistory } = trpc.tourism.exportValidationHistory.useQuery(adminInput, { enabled: false });
-  const missingVisualInput = useMemo(() => ({
-    query: missingVisualSearch.trim() || undefined,
-    city: missingVisualCity === "all" ? undefined : missingVisualCity,
-    limit: 50,
-    ...(sessionToken ? { sessionToken } : {}),
-  }), [missingVisualSearch, missingVisualCity, sessionToken]);
-  const { data: hotelsWithoutOfficialVisual, isLoading: isMissingVisualLoading, refetch: refetchMissingVisuals } = trpc.tourism.adminCatalogWithoutOfficialVisual.useQuery(missingVisualInput);
-  const catalogCities = useMemo(() => Array.from(new Set((catalogHotels ?? []).map((hotel) => hotel.city).filter(Boolean))).sort((a, b) => a.localeCompare(b, "fr")), [catalogHotels]);
-  const readyPrecheckCount = (precheckHotels ?? []).filter(hotel => hotel.precheck.readyForHumanConfirmation).length;
+  const { data: catalogHotels, refetch: refetchCatalog } = trpc.tourism.adminCatalog.useQuery();
 
   const updateStatus = trpc.tourism.updateStatus.useMutation({
     onSuccess: () => { refetch(); toast.success("Statut de la demande mis à jour."); },
@@ -81,29 +41,18 @@ export function AdminTourismRequests() {
     onError: e => toast.error(e.message || "Erreur lors de l’enregistrement."),
   });
   const importCatalog = trpc.tourism.importCatalogCity.useMutation({
-    onSuccess: (data) => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); refetchMissingVisuals(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
+    onSuccess: (data) => { refetchCatalog(); toast.success(`${data.imported} hôtel(s) importé(s) pour ${data.city}. À vérifier avant publication client.`); },
     onError: e => toast.error(e.message || "Import du catalogue indisponible."),
   });
   const verifyCatalog = trpc.tourism.verifyCatalogEntry.useMutation({
-    onSuccess: () => { refetchCatalog(); refetchPrecheck(); refetchReadiness(); refetchMissingVisuals(); toast.success("Statut du catalogue mis à jour."); },
+    onSuccess: () => { refetchCatalog(); toast.success("Statut du catalogue mis à jour."); },
     onError: e => toast.error(e.message || "Mise à jour du catalogue impossible."),
   });
-  const updateCatalogImage = trpc.tourism.updateCatalogImage.useMutation({
-    onSuccess: () => { refetchCatalog(); refetchMissingVisuals(); toast.success("Visuel hôtelier enregistré avec sa provenance."); setEditingHotelImage(null); },
-    onError: e => toast.error(e.message || "Le visuel n’a pas pu être enregistré."),
-  });
-
-  const openImageEditor = (hotel: any) => {
-    setEditingHotelImage(hotel);
-    setHotelImageUrl(hotel.imageUrl || "");
-    setHotelImageSourceUrl(hotel.imageSourceUrl || hotel.officialWebsiteUrl || "");
-    setHotelImageAttribution(hotel.imageAttribution || "");
-  };
 
   const filteredRequests = (requests ?? []).filter(req => {
-    const matchSearch = search === "" || String(req.fullName || "").toLowerCase().includes(search.toLowerCase()) || String(req.destination || "").toLowerCase().includes(search.toLowerCase()) || String(req.reference || "").toLowerCase().includes(search.toLowerCase()) || String(req.email || "").toLowerCase().includes(search.toLowerCase());
+    const matchSearch = search === "" || req.fullName.toLowerCase().includes(search.toLowerCase()) || req.destination.toLowerCase().includes(search.toLowerCase()) || req.reference.toLowerCase().includes(search.toLowerCase()) || req.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || req.status === statusFilter;
-    const services = parseServiceTypes(req.serviceTypesJson);
+    const services = JSON.parse(req.serviceTypesJson || "[]") as string[];
     const matchService = serviceFilter === "all" || services.includes(serviceFilter);
     return matchSearch && matchStatus && matchService;
   });
@@ -119,7 +68,7 @@ export function AdminTourismRequests() {
       r.departureDate ? new Date(r.departureDate).toLocaleDateString("fr-FR") : "",
       r.returnDate ? new Date(r.returnDate).toLocaleDateString("fr-FR") : "",
       r.travelersCount,
-      `"${parseServiceTypes(r.serviceTypesJson).join(", ")}"`,
+      `"${JSON.parse(r.serviceTypesJson || "[]").join(", ")}"`,
       r.budgetXaf ?? "",
       r.quotedPriceXaf ?? "",
       r.status,
@@ -136,93 +85,6 @@ export function AdminTourismRequests() {
     document.body.removeChild(link);
   };
 
-  const exportHotelsCsv = () => {
-    const headers = ["Hôtel", "Ville", "Pays", "Étoiles", "Équipements", "Site officiel", "Réservation officielle", "Source", "Statut", "Vérifié le"];
-    const rows = (catalogHotels ?? []).map((hotel) => [
-      hotel.name,
-      hotel.city,
-      hotel.country,
-      hotel.stars ?? "",
-      (() => { try { return (JSON.parse(hotel.amenitiesJson || "[]") as string[]).join(", "); } catch { return ""; } })(),
-      hotel.officialWebsiteUrl ?? "",
-      hotel.officialBookingUrl ?? "",
-      hotel.sourceUrl ?? "OpenStreetMap",
-      catalogStatusMeta(hotel.verificationStatus).label,
-      hotel.lastVerifiedAt ? new Date(hotel.lastVerifiedAt).toLocaleDateString("fr-FR") : "",
-    ].map(escapeCsv));
-    const blob = new Blob([[headers.map(escapeCsv).join(","), ...rows.map((row) => row.join(","))].join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `catalogue_hotels_3m_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    toast.success("Export CSV hôtel téléchargé", { description: `${catalogHotels?.length ?? 0} fiche(s) exportée(s).` });
-  };
-
-  const exportHotelsPdf = async () => {
-    try {
-      const [{ jsPDF }, { default: autoTable }] = await Promise.all([import("jspdf"), import("jspdf-autotable")]);
-      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-      pdf.setFontSize(16);
-      pdf.text("3M Travel & Services — Catalogue hôtelier", 14, 16);
-      pdf.setFontSize(9);
-      pdf.setTextColor(80);
-      pdf.text("Export interne — disponibilité et tarifs à confirmer par un conseiller", 14, 22);
-      autoTable(pdf, {
-        startY: 28,
-        head: [["Hôtel", "Ville / Pays", "Équipements", "Lien officiel", "Statut"]],
-        body: (catalogHotels ?? []).map((hotel) => [
-          hotel.name,
-          `${hotel.city}, ${hotel.country}${hotel.stars ? ` · ${hotel.stars}★` : ""}`,
-          (() => { try { return (JSON.parse(hotel.amenitiesJson || "[]") as string[]).join(", "); } catch { return "—"; } })(),
-          hotel.officialBookingUrl || hotel.officialWebsiteUrl || "À compléter",
-          catalogStatusMeta(hotel.verificationStatus).label,
-        ]),
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [30, 58, 138] },
-        columnStyles: { 0: { cellWidth: 46 }, 1: { cellWidth: 39 }, 2: { cellWidth: 44 }, 3: { cellWidth: 95 }, 4: { cellWidth: 24 } },
-      });
-      pdf.save(`catalogue_hotels_3m_${new Date().toISOString().slice(0, 10)}.pdf`);
-      toast.success("Export PDF hôtel téléchargé", { description: `${catalogHotels?.length ?? 0} fiche(s) exportée(s).` });
-    } catch {
-      toast.error("Export PDF indisponible", { description: "Réessayez après actualisation de la page." });
-    }
-  };
-
-  const exportValidationHistoryCsv = async () => {
-    const result = validationHistory ?? (await refetchValidationHistory()).data;
-    if (!result?.length) {
-      toast.error("Aucune validation à exporter", { description: "Les validations confirmées apparaîtront ici dès qu’un conseiller aura traité une fiche." });
-      return;
-    }
-    const headers = ["Hôtel", "Ville", "Pays", "Statut", "Validé le", "Conseiller", "Site officiel", "Lien de réservation", "Source", "Attribution"];
-    const rows = result.map((hotel) => [
-      hotel.name,
-      hotel.city,
-      hotel.country,
-      catalogStatusMeta(hotel.verificationStatus).label,
-      hotel.lastVerifiedAt ? new Date(hotel.lastVerifiedAt).toLocaleString("fr-FR") : "",
-      hotel.verifiedByAdminEmail ?? "",
-      hotel.officialWebsiteUrl ?? "",
-      hotel.officialBookingUrl ?? "",
-      hotel.sourceUrl ?? "",
-      hotel.sourceAttribution ?? "",
-    ].map(escapeCsv));
-    const blob = new Blob([[headers.map(escapeCsv).join(","), ...rows.map((row) => row.join(","))].join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `historique_validations_hotels_3m_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-    toast.success("Historique CSV téléchargé", { description: `${result.length} validation(s) avec conseiller et date.` });
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -236,26 +98,14 @@ export function AdminTourismRequests() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => { refetch(); refetchReadiness(); }} className="gap-2">
+          <Button variant="outline" onClick={() => refetch()} className="gap-2">
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
-          <Button variant="outline" onClick={() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50">
-            <UserCheck className="h-4 w-4" /> Précontrôle{readyPrecheckCount ? ` (${readyPrecheckCount})` : ""}
+          <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800">
+            <Download className="h-4 w-4" /> Exporter CSV
           </Button>
-          <Button onClick={exportCsv} className="gap-2 bg-blue-700 text-white hover:bg-blue-800"><Download className="h-4 w-4" /> Demandes CSV</Button>
-          <Button variant="outline" onClick={exportHotelsCsv} className="gap-2"><Download className="h-4 w-4" /> Hôtels CSV</Button>
-          <Button variant="outline" onClick={exportValidationHistoryCsv} disabled={isValidationHistoryLoading} className="gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50"><UserCheck className="h-4 w-4" /> Validations CSV</Button>
-          <Button variant="outline" onClick={exportHotelsPdf} className="gap-2"><FileText className="h-4 w-4" /> Hôtels PDF</Button>
         </div>
       </div>
-
-      {(catalogReadiness?.readyCount ?? 0) > 0 && <div className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between" role="status" aria-live="polite">
-        <div className="flex items-start gap-3">
-          <span className="rounded-xl bg-amber-200 p-2 text-amber-900"><BellRing className="h-5 w-5" /></span>
-          <div><p className="font-black">{catalogReadiness.readyCount} fiche{catalogReadiness.readyCount > 1 ? "s" : ""} hôtel prête{catalogReadiness.readyCount > 1 ? "s" : ""} à être confirmée{catalogReadiness.readyCount > 1 ? "s" : ""}</p><p className="mt-1 text-sm leading-5 text-amber-800">La provenance et le lien officiel sont renseignés. Ouvrez le précontrôle pour effectuer la confirmation humaine.</p></div>
-        </div>
-        <Button type="button" onClick={() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" })} className="shrink-0 bg-amber-500 text-slate-950 hover:bg-amber-400"><UserCheck className="mr-2 h-4 w-4" /> Examiner</Button>
-      </div>}
 
       {/* Cartes de synthèse */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -332,9 +182,9 @@ export function AdminTourismRequests() {
         <CardContent className="p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier gratuit</p>
-              <h3 className="mt-1 text-lg font-black text-slate-900">Trois étapes simples pour traiter un hôtel</h3>
-              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">1. Importez une ville. 2. Vérifiez le site officiel et validez l’hôtel. 3. Répondez à la demande avec un devis confirmé. Aucun tarif ni disponibilité ne sont publiés automatiquement.</p>
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Catalogue hôtelier ouvert</p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">Importer et vérifier les établissements</h3>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">Chaque source, site officiel et équipement est conservé. Les tarifs et disponibilités restent soumis à validation humaine.</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Select value={catalogCity} onValueChange={setCatalogCity}>
@@ -343,72 +193,21 @@ export function AdminTourismRequests() {
                   <SelectItem value="douala">Douala</SelectItem><SelectItem value="yaounde">Yaoundé</SelectItem><SelectItem value="kribi">Kribi</SelectItem><SelectItem value="limbe">Limbe</SelectItem><SelectItem value="libreville">Libreville</SelectItem><SelectItem value="brazzaville">Brazzaville</SelectItem><SelectItem value="ndjamena">N'Djamena</SelectItem><SelectItem value="malabo">Malabo</SelectItem><SelectItem value="bangui">Bangui</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any, sessionToken })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
+              <Button onClick={() => importCatalog.mutate({ cityKey: catalogCity as any })} disabled={importCatalog.isPending} className="bg-slate-900 text-white hover:bg-slate-800">
                 {importCatalog.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />} Importer la ville
               </Button>
             </div>
           </div>
-          <div id="hotel-precheck" className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4 scroll-mt-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Précontrôle technique</p>
-                  <p className="mt-1 text-sm font-bold text-slate-900">{readyPrecheckCount} fiche(s) prête(s) à confirmer · {precheckHotels?.length ?? 0} fiche(s) précontrôlée(s)</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">Le contrôle automatique évalue la provenance, l’identité, la localisation, le lien officiel et les coordonnées. Lorsqu’une fiche est prête, le conseiller n’a plus qu’à ouvrir le lien puis confirmer en un clic.</p>
-                </div>
-                <Badge variant="outline" className="w-fit border-amber-200 bg-amber-50 text-amber-700">Validation humaine requise</Badge>
-              </div>
-              {isPrecheckLoading ? (
-                <div className="mt-3 flex items-center gap-2 rounded-lg border border-blue-100 bg-white p-3 text-sm text-slate-600"><Loader2 className="h-4 w-4 animate-spin text-blue-700" /> Chargement du précontrôle automatique…</div>
-              ) : precheckError ? (
-                <div className="mt-3 flex flex-col gap-3 rounded-lg border border-rose-100 bg-white p-3 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between"><span>Le précontrôle n’a pas pu être chargé. Vérifiez votre session puis réessayez.</span><Button size="sm" variant="outline" onClick={() => refetchPrecheck()}>Réessayer</Button></div>
-              ) : precheckHotels?.length ? (
-                <div className="mt-3 grid gap-2 lg:grid-cols-2">
-                  {precheckHotels.map(hotel => (
-                  <div key={hotel.id} className="flex items-center justify-between gap-3 rounded-lg border border-blue-100 bg-white p-3">
-                    <div className="min-w-0"><p className="truncate text-sm font-bold text-slate-900">{hotel.name}</p><p className="text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-1.5"><Badge variant="outline" className={hotel.precheck.readyForHumanConfirmation ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.precheck.readyForHumanConfirmation ? `Précontrôle ${hotel.precheck.score}/${hotel.precheck.maxScore}` : `Données incomplètes ${hotel.precheck.score}/${hotel.precheck.maxScore}`}</Badge><Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700">Confirmation requise</Badge>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Ouvrir</a>}<Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || !hotel.precheck.readyForHumanConfirmation}>{hotel.precheck.readyForHumanConfirmation ? "Confirmer" : "À compléter"}</Button></div>
-                  </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 rounded-lg border border-dashed border-blue-200 bg-white p-3 text-sm text-slate-600">Aucune fiche prête n’est disponible pour le moment. Importez une ville ou actualisez le catalogue.</div>
-              )}
-          </div>
-          <div className="mt-5 rounded-xl border border-violet-200 bg-violet-50/50 p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div><p className="text-xs font-black uppercase tracking-[0.14em] text-violet-700">Suivi des visuels officiels</p><p className="mt-1 text-sm font-bold text-slate-900">{hotelsWithoutOfficialVisual?.length ?? 0} fiche(s) sans visuel officiel dans cette vue</p><p className="mt-1 text-xs leading-5 text-slate-600">Priorisez ces fiches pour compléter une photo autorisée, sa page source et son attribution. Les illustrations d’ambiance restent visibles côté client tant qu’aucun visuel n’est ajouté.</p></div>
-              <Button variant="outline" size="sm" onClick={() => refetchMissingVisuals()} className="gap-2 border-violet-200 text-violet-700 hover:bg-violet-100"><RefreshCw className={`h-4 w-4 ${isMissingVisualLoading ? "animate-spin" : ""}`} /> Actualiser</Button>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_220px]">
-              <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><Input value={missingVisualSearch} onChange={(event) => setMissingVisualSearch(event.target.value)} placeholder="Rechercher un hôtel, une ville ou un pays" className="bg-white pl-9" /></div>
-              <Select value={missingVisualCity} onValueChange={setMissingVisualCity}><SelectTrigger className="bg-white"><SelectValue placeholder="Toutes les villes" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes les villes</SelectItem>{catalogCities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent></Select>
-            </div>
-            <div className="mt-4 overflow-x-auto rounded-lg border border-violet-100 bg-white"><table className="w-full min-w-[620px] text-left text-sm"><thead className="bg-violet-50 text-xs font-black uppercase tracking-wide text-violet-800"><tr><th className="px-3 py-3">Hôtel</th><th className="px-3 py-3">Localisation</th><th className="px-3 py-3">État</th><th className="px-3 py-3">Lien officiel</th><th className="px-3 py-3 text-right">Action</th></tr></thead><tbody className="divide-y divide-slate-100">{isMissingVisualLoading ? <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500"><Loader2 className="mr-2 inline h-4 w-4 animate-spin" /> Chargement du suivi…</td></tr> : hotelsWithoutOfficialVisual?.length ? hotelsWithoutOfficialVisual.map((hotel) => <tr key={hotel.id} className="hover:bg-slate-50"><td className="px-3 py-3 font-bold text-slate-900">{hotel.name}</td><td className="px-3 py-3 text-slate-600">{hotel.city}, {hotel.country}</td><td className="px-3 py-3"><Badge variant="outline" className="border-violet-200 bg-violet-50 text-violet-700">Visuel à ajouter</Badge></td><td className="px-3 py-3">{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) ? <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:underline"><ExternalLink className="h-3.5 w-3.5" /> Ouvrir</a> : <span className="text-xs text-slate-400">À compléter</span>}</td><td className="px-3 py-3 text-right"><Button size="sm" variant="outline" onClick={() => openImageEditor(hotel)} className="border-violet-200 text-violet-700 hover:bg-violet-50"><ImagePlus className="mr-1 h-3.5 w-3.5" /> Ajouter</Button></td></tr>) : <tr><td colSpan={5} className="px-3 py-8 text-center text-slate-500">Aucune fiche sans visuel officiel ne correspond à ces filtres.</td></tr>}</tbody></table></div>
-          </div>
           <div className="mt-5 grid gap-3 lg:grid-cols-2">
             {(catalogHotels ?? []).slice(0, 8).map(hotel => {
               const amenities = (() => { try { return JSON.parse(hotel.amenitiesJson || "[]") as string[]; } catch { return []; } })();
-              const catalogStatus = catalogStatusMeta(hotel.verificationStatus);
-              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3">{hotel.imageUrl && <img src={hotel.imageUrl} alt="" className="h-11 w-14 rounded-lg object-cover" />}<div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div></div><Badge variant="outline" className={catalogStatus.className}>{catalogStatus.label}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => openImageEditor(hotel)}><ImagePlus className="mr-1 h-3.5 w-3.5" />Visuel</Button><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive", sessionToken })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
+              return <div key={hotel.id} className="rounded-xl border border-slate-200 p-3"><div className="flex items-start justify-between gap-3"><div><p className="font-bold text-slate-900">{hotel.name}</p><p className="mt-0.5 text-xs text-slate-500">{hotel.city}, {hotel.country}{hotel.stars ? ` · ${hotel.stars}★` : ""}</p></div><Badge variant="outline" className={hotel.verificationStatus === "verified" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : hotel.verificationStatus === "inactive" ? "border-slate-200 bg-slate-50 text-slate-500" : "border-amber-200 bg-amber-50 text-amber-700"}>{hotel.verificationStatus === "verified" ? "Vérifié" : hotel.verificationStatus === "inactive" ? "Inactif" : "À vérifier"}</Badge></div><div className="mt-2 flex flex-wrap gap-1">{amenities.map(item => <span key={item} className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{item === "pool" ? "Piscine" : item === "wifi" ? "Wi‑Fi" : item === "parking" ? "Parking" : item}</span>)}</div><div className="mt-3 flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "verified" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "verified"}>Valider</Button><Button size="sm" variant="ghost" onClick={() => verifyCatalog.mutate({ id: hotel.id, verificationStatus: "inactive" })} disabled={verifyCatalog.isPending || hotel.verificationStatus === "inactive"}>Masquer</Button>{(hotel.officialBookingUrl || hotel.officialWebsiteUrl) && <a href={hotel.officialBookingUrl || hotel.officialWebsiteUrl || "#"} target="_blank" rel="noreferrer" className="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-xs font-bold text-blue-700 hover:bg-blue-50"><ExternalLink className="h-3.5 w-3.5" />Site officiel</a>}</div></div>;
             })}
             {catalogHotels?.length === 0 && <p className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-500 lg:col-span-2">Aucun hôtel n’est encore importé. Sélectionnez une ville puis lancez un import contrôlé.</p>}
           </div>
-          <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Cette liste gratuite sert à préparer les demandes ; vérifiez toujours le site officiel avant d’envoyer un devis au client.</p>
+          <p className="mt-4 text-[11px] text-slate-500">Données géographiques : © OpenStreetMap contributors, ODbL. Vérifiez chaque fiche et le lien avant sa publication dans 3M Booking.</p>
         </CardContent>
       </Card>
-
-      <Dialog open={!!editingHotelImage} onOpenChange={(open) => { if (!open) setEditingHotelImage(null); }}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader><DialogTitle className="flex items-center gap-2 text-slate-900"><ImagePlus className="h-5 w-5 text-blue-700" /> Visuel de {editingHotelImage?.name}</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <p className="rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-900">Ajoutez uniquement un visuel que l’établissement a fourni, publié officiellement ou dont vous détenez l’autorisation d’utilisation. La page source est obligatoire afin de préserver la traçabilité.</p>
-            <div><Label htmlFor="hotel-image-url">URL directe de l’image</Label><Input id="hotel-image-url" type="url" value={hotelImageUrl} onChange={(event) => setHotelImageUrl(event.target.value)} placeholder="https://…/photo.jpg" className="mt-1" /></div>
-            <div><Label htmlFor="hotel-image-source">Page source du visuel</Label><Input id="hotel-image-source" type="url" value={hotelImageSourceUrl} onChange={(event) => setHotelImageSourceUrl(event.target.value)} placeholder="https://site-officiel…" className="mt-1" /></div>
-            <div><Label htmlFor="hotel-image-attribution">Crédit / attribution</Label><Input id="hotel-image-attribution" value={hotelImageAttribution} onChange={(event) => setHotelImageAttribution(event.target.value)} placeholder="Ex. Établissement — site officiel" className="mt-1" /></div>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setEditingHotelImage(null)}>Annuler</Button><Button onClick={() => updateCatalogImage.mutate({ id: editingHotelImage.id, imageUrl: hotelImageUrl.trim() || null, imageSourceUrl: hotelImageSourceUrl.trim() || null, imageAttribution: hotelImageAttribution.trim() || null, sessionToken })} disabled={updateCatalogImage.isPending} className="bg-blue-700 text-white hover:bg-blue-800">{updateCatalogImage.isPending ? "Enregistrement…" : "Enregistrer le visuel"}</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Liste des demandes */}
       {isLoading ? (
@@ -432,7 +231,7 @@ export function AdminTourismRequests() {
               <tbody className="divide-y divide-slate-100 text-sm">
                 {filteredRequests.map(req => {
                   const st = statusLabels[req.status] || statusLabels.new;
-                  const services = parseServiceTypes(req.serviceTypesJson);
+                  const services = JSON.parse(req.serviceTypesJson || "[]") as string[];
                   return (
                     <tr key={req.id} className="hover:bg-slate-50/50 transition">
                       <td className="p-4">
@@ -451,7 +250,7 @@ export function AdminTourismRequests() {
                       </td>
                       <td className="p-4">
                         <div className="flex flex-wrap gap-1">
-                          {parseServiceTypes(req.serviceTypesJson).map(s => (
+                          {services.map(s => (
                             <Badge key={s} variant="outline" className="text-xs">
                               {s === "hotel" ? "🏨 Hôtel" : s === "vehicle" ? "🚗 Véhicule" : "📦 Pack"}
                             </Badge>

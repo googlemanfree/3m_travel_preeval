@@ -1,14 +1,14 @@
 import { randomInt } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { and, desc, eq, isNotNull, isNull, like, or } from "drizzle-orm";
+import { and, desc, eq, like, or } from "drizzle-orm";
 import { adminNotifications, hotelCatalog, tourismServiceRequests } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { storagePut } from "../storage";
 import { makeRequest, type PlacesSearchResult } from "../_core/map";
 import { invokeLLM } from "../_core/llm";
 import { publicProcedure, router } from "../_core/trpc";
-import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
+import { requireAdminSessionFromCookie } from "./adminAuth";
 import { candidateProcedure, findCandidateFromAuthorizationHeader } from "./candidate";
 
 const serviceType = z.enum(["hotel", "vehicle", "pack"]);
@@ -17,14 +17,6 @@ const hotelAmenity = z.enum(["pool", "wifi", "parking"]);
 export type HotelAmenity = z.infer<typeof hotelAmenity>;
 const hotelAmenitySearchTerms: Record<HotelAmenity, string> = { pool: "piscine", wifi: "Wi-Fi", parking: "parking" };
 export const OSM_CATALOG_ATTRIBUTION = "© OpenStreetMap contributors, ODbL";
-
-async function requireTourismAdminSession(ctx: { req: { headers: { cookie?: string } } }, sessionToken?: string) {
-  if (ctx.req.headers.cookie?.includes("admin_session=")) {
-    return requireAdminSessionFromCookie(ctx.req.headers.cookie);
-  }
-  if (sessionToken) return requireValidAdminSession(sessionToken);
-  return requireAdminSessionFromCookie(ctx.req.headers.cookie);
-}
 
 const osmCityScopes = {
   douala: { city: "Douala", country: "Cameroun", bbox: "4.000,9.550,4.150,9.850" },
@@ -89,35 +81,6 @@ function parseCatalogAmenities(raw: string | null): HotelAmenity[] {
     return [];
   }
 }
-
-export function buildHotelTechnicalPrecheck(entry: {
-  name: string;
-  city: string;
-  country: string;
-  sourceUrl: string | null;
-  sourceAttribution: string | null;
-  officialWebsiteUrl: string | null;
-  officialBookingUrl: string | null;
-  phone: string | null;
-}) {
-  const sourcePresent = Boolean(entry.sourceUrl && entry.sourceAttribution);
-  const officialLinkPresent = Boolean(safeExternalUrl(entry.officialBookingUrl || entry.officialWebsiteUrl));
-  const identityPresent = Boolean(entry.name.trim() && !entry.name.startsWith("Hôtel OpenStreetMap"));
-  const locationPresent = Boolean(entry.city.trim() && entry.country.trim());
-  const contactPresent = Boolean(entry.phone?.trim());
-  const score = [sourcePresent, officialLinkPresent, identityPresent, locationPresent, contactPresent].filter(Boolean).length;
-  return {
-    sourcePresent,
-    officialLinkPresent,
-    identityPresent,
-    locationPresent,
-    contactPresent,
-    score,
-    maxScore: 5,
-    readyForHumanConfirmation: sourcePresent && officialLinkPresent && identityPresent && locationPresent,
-    requiresHumanValidation: true,
-  };
-}
 export function buildTourismServiceTypes(pack: string | undefined, selected: TourismServiceType[]) {
   const required: Record<string, TourismServiceType[]> = { escapade: ["hotel", "pack"], explorer: ["hotel", "vehicle", "pack"], business: ["hotel", "vehicle", "pack"] };
   return Array.from(new Set([...(selected || []), ...(pack ? required[pack] || ["pack"] : [])]));
@@ -150,51 +113,10 @@ export function getTourismTrackingMeta(status: z.infer<typeof statusSchema>) {
   return tourismTrackingMeta[status];
 }
 
-type HotelSuggestionSource = {
-  id: number; name: string; address: string | null; city: string; country: string; stars: number | null;
-  amenitiesJson: string | null; officialWebsiteUrl: string | null; officialBookingUrl: string | null;
-  imageUrl: string | null; imageSourceUrl: string | null; imageAttribution: string | null;
-  sourceUrl: string | null; sourceAttribution: string;
-};
-
-/** Prépare une suggestion publique sans contourner le filtre verified appliqué par la requête. */
-export function buildVerifiedHotelSuggestion(hotel: HotelSuggestionSource) {
-  return {
-    id: hotel.id,
-    name: hotel.name,
-    address: hotel.address,
-    city: hotel.city,
-    country: hotel.country,
-    stars: hotel.stars,
-    amenities: parseCatalogAmenities(hotel.amenitiesJson),
-    officialWebsiteUrl: hotel.officialWebsiteUrl,
-    officialBookingUrl: hotel.officialBookingUrl,
-    imageUrl: hotel.imageUrl,
-    imageSourceUrl: hotel.imageSourceUrl,
-    imageAttribution: hotel.imageAttribution,
-    sourceUrl: hotel.sourceUrl,
-    sourceAttribution: hotel.sourceAttribution,
-  };
-}
-
 export const tourismRouter = router({
-  suggestCatalogHotels: publicProcedure.input(z.object({ query: z.string().trim().min(2).max(80), destination: z.string().trim().max(160).optional() })).query(async ({ input }) => {
-    const db = await getDb();
-    if (!db) return [];
-    const query = `%${input.query}%`;
-    const destination = input.destination ? `%${input.destination}%` : null;
-    const destinationFilter = destination ? or(like(hotelCatalog.city, destination), like(hotelCatalog.country, destination)) : undefined;
-    const rows = await db.select().from(hotelCatalog).where(and(
-      eq(hotelCatalog.verificationStatus, "verified"),
-      or(like(hotelCatalog.name, query), like(hotelCatalog.city, query), like(hotelCatalog.country, query)),
-      destinationFilter,
-    )).orderBy(desc(hotelCatalog.lastVerifiedAt), hotelCatalog.name).limit(8);
-    return rows.map(buildVerifiedHotelSuggestion);
-  }),
-
   discover: publicProcedure.input(z.object({ destination: z.string().trim().min(2).max(160), amenities: z.array(hotelAmenity).max(3).default([]) })).mutation(async ({ input }) => {
     let places: Array<{ name: string; address: string; rating?: number; priceLevel?: number }> = [];
-    let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; imageUrl: string | null; imageSourceUrl: string | null; imageAttribution: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
+    let catalogPlaces: Array<{ id: number; name: string; address: string | null; city: string; country: string; stars: number | null; amenities: HotelAmenity[]; officialWebsiteUrl: string | null; officialBookingUrl: string | null; sourceUrl: string | null; sourceAttribution: string }> = [];
     const db = await getDb();
     if (db) {
       const query = `%${input.destination.trim()}%`;
@@ -209,9 +131,6 @@ export const tourismRouter = router({
         amenities: parseCatalogAmenities(hotel.amenitiesJson),
         officialWebsiteUrl: hotel.officialWebsiteUrl,
         officialBookingUrl: hotel.officialBookingUrl,
-        imageUrl: hotel.imageUrl,
-        imageSourceUrl: hotel.imageSourceUrl,
-        imageAttribution: hotel.imageAttribution,
         sourceUrl: hotel.sourceUrl,
         sourceAttribution: hotel.sourceAttribution,
       })).filter((hotel) => input.amenities.every((amenity) => hotel.amenities.includes(amenity))).slice(0, 12);
@@ -274,122 +193,23 @@ export const tourismRouter = router({
     return requests.map((request) => ({ ...request, tracking: getTourismTrackingMeta(request.status) }));
   }),
 
-  adminList: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ ctx, input }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
+  adminList: publicProcedure.query(async ({ ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     return db.select().from(tourismServiceRequests).orderBy(desc(tourismServiceRequests.createdAt));
   }),
 
-  adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional(), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
+  adminCatalog: publicProcedure.input(z.object({ city: z.string().trim().max(120).optional() }).optional()).query(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const city = input?.city?.trim();
     return city ? db.select().from(hotelCatalog).where(eq(hotelCatalog.city, city)).orderBy(desc(hotelCatalog.updatedAt)).limit(100) : db.select().from(hotelCatalog).orderBy(desc(hotelCatalog.updatedAt)).limit(100);
   }),
 
-  adminCatalogWithoutOfficialVisual: publicProcedure.input(z.object({ query: z.string().trim().max(80).optional(), city: z.string().trim().max(120).optional(), limit: z.number().int().min(1).max(100).default(50), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const term = input?.query?.trim();
-    const city = input?.city?.trim();
-    const termFilter = term ? or(like(hotelCatalog.name, `%${term}%`), like(hotelCatalog.city, `%${term}%`), like(hotelCatalog.country, `%${term}%`)) : undefined;
-    const rows = await db.select({
-      id: hotelCatalog.id,
-      name: hotelCatalog.name,
-      city: hotelCatalog.city,
-      country: hotelCatalog.country,
-      verificationStatus: hotelCatalog.verificationStatus,
-      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
-      officialBookingUrl: hotelCatalog.officialBookingUrl,
-      imageUrl: hotelCatalog.imageUrl,
-      updatedAt: hotelCatalog.updatedAt,
-    }).from(hotelCatalog).where(and(
-      isNull(hotelCatalog.imageUrl),
-      city ? eq(hotelCatalog.city, city) : undefined,
-      termFilter,
-    )).orderBy(desc(hotelCatalog.updatedAt), hotelCatalog.name).limit(input?.limit ?? 50);
-    return rows;
-  }),
-
-  /**
-   * Précontrôle technique : identifie les fiches importées qui possèdent une
-   * provenance OpenStreetMap et un lien officiel à ouvrir par un conseiller.
-   * Cette procédure ne modifie jamais `verificationStatus`.
-   */
-  adminCatalogPrecheck: publicProcedure.input(z.object({ limit: z.number().int().min(1).max(50).default(12), sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const entries = await db.select().from(hotelCatalog).where(and(
-      eq(hotelCatalog.verificationStatus, "imported"),
-      isNotNull(hotelCatalog.sourceUrl),
-      or(isNotNull(hotelCatalog.officialWebsiteUrl), isNotNull(hotelCatalog.officialBookingUrl)),
-    )).orderBy(desc(hotelCatalog.stars), desc(hotelCatalog.updatedAt)).limit(input?.limit ?? 12);
-
-    return entries.map(entry => ({
-      ...entry,
-      precheck: {
-        ...buildHotelTechnicalPrecheck(entry),
-        starsPresent: entry.stars !== null,
-      },
-    }));
-  }),
-
-  /** Synthèse sans modification : elle alimente les alertes de validation humaine. */
-  adminCatalogReadiness: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const entries = await db.select({
-      id: hotelCatalog.id,
-      name: hotelCatalog.name,
-      city: hotelCatalog.city,
-      country: hotelCatalog.country,
-      sourceUrl: hotelCatalog.sourceUrl,
-      sourceAttribution: hotelCatalog.sourceAttribution,
-      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
-      officialBookingUrl: hotelCatalog.officialBookingUrl,
-      phone: hotelCatalog.phone,
-      updatedAt: hotelCatalog.updatedAt,
-    }).from(hotelCatalog).where(and(
-      eq(hotelCatalog.verificationStatus, "imported"),
-      isNotNull(hotelCatalog.sourceUrl),
-      or(isNotNull(hotelCatalog.officialWebsiteUrl), isNotNull(hotelCatalog.officialBookingUrl)),
-    )).limit(500);
-    const readyEntries = entries.filter((entry) => buildHotelTechnicalPrecheck(entry).readyForHumanConfirmation);
-    const latestReadyAt = readyEntries.reduce<Date | null>((latest, entry) => !latest || entry.updatedAt > latest ? entry.updatedAt : latest, null);
-    return { readyCount: readyEntries.length, latestReadyAt };
-  }),
-
-  /** Historique exploitable des validations effectuées par les conseillers. */
-  exportValidationHistory: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input?.sessionToken);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    const entries = await db.select({
-      id: hotelCatalog.id,
-      name: hotelCatalog.name,
-      city: hotelCatalog.city,
-      country: hotelCatalog.country,
-      verificationStatus: hotelCatalog.verificationStatus,
-      lastVerifiedAt: hotelCatalog.lastVerifiedAt,
-      verifiedByAdminEmail: hotelCatalog.verifiedByAdminEmail,
-      officialWebsiteUrl: hotelCatalog.officialWebsiteUrl,
-      officialBookingUrl: hotelCatalog.officialBookingUrl,
-      sourceUrl: hotelCatalog.sourceUrl,
-      sourceAttribution: hotelCatalog.sourceAttribution,
-    }).from(hotelCatalog).where(and(
-      eq(hotelCatalog.verificationStatus, "verified"),
-      isNotNull(hotelCatalog.lastVerifiedAt),
-    )).orderBy(desc(hotelCatalog.lastVerifiedAt), desc(hotelCatalog.updatedAt));
-    return entries;
-  }),
-
-  importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey, sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
-    const admin = await requireTourismAdminSession(ctx, input.sessionToken);
+  importCatalogCity: publicProcedure.input(z.object({ cityKey: osmCityKey })).mutation(async ({ input, ctx }) => {
+    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const scope = osmCityScopes[input.cityKey];
@@ -411,43 +231,24 @@ export const tourismRouter = router({
     return { city: scope.city, imported: entries.length, importedBy: admin.email };
   }),
 
-  verifyCatalogEntry: publicProcedure.input(z.object({ id: z.number().int().positive(), verificationStatus: z.enum(["imported", "verified", "inactive"]), officialWebsiteUrl: z.string().url().max(1000).nullable().optional(), officialBookingUrl: z.string().url().max(1000).nullable().optional(), sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
-    const admin = await requireTourismAdminSession(ctx, input.sessionToken);
+  verifyCatalogEntry: publicProcedure.input(z.object({ id: z.number().int().positive(), verificationStatus: z.enum(["imported", "verified", "inactive"]), officialWebsiteUrl: z.string().url().max(1000).nullable().optional(), officialBookingUrl: z.string().url().max(1000).nullable().optional() })).mutation(async ({ input, ctx }) => {
+    const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(hotelCatalog).set({ verificationStatus: input.verificationStatus, officialWebsiteUrl: input.officialWebsiteUrl, officialBookingUrl: input.officialBookingUrl, lastVerifiedAt: new Date(), verifiedByAdminEmail: admin.email }).where(eq(hotelCatalog.id, input.id));
     return { success: true };
   }),
 
-  /** Le visuel est enregistré séparément de la confirmation pour ne jamais contourner celle-ci. */
-  updateCatalogImage: publicProcedure.input(z.object({
-    id: z.number().int().positive(),
-    imageUrl: z.string().url().max(2000).nullable(),
-    imageSourceUrl: z.string().url().max(2000).nullable(),
-    imageAttribution: z.string().trim().max(255).nullable(),
-    sessionToken: z.string().min(1).optional(),
-  }).refine((value) => !value.imageUrl || Boolean(value.imageSourceUrl), { message: "La page source du visuel est obligatoire lorsque vous ajoutez une image." })).mutation(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input.sessionToken);
-    const db = await getDb();
-    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
-    await db.update(hotelCatalog).set({
-      imageUrl: input.imageUrl,
-      imageSourceUrl: input.imageSourceUrl,
-      imageAttribution: input.imageAttribution,
-    }).where(eq(hotelCatalog.id, input.id));
-    return { success: true };
-  }),
-
-  updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema, sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input.sessionToken);
+  updateStatus: publicProcedure.input(z.object({ id: z.number().int().positive(), status: statusSchema })).mutation(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     await db.update(tourismServiceRequests).set({ status: input.status }).where(eq(tourismServiceRequests.id, input.id));
     return { success: true };
   }),
 
-  updateDetails: publicProcedure.input(z.object({ id: z.number().int().positive(), quotedPriceXaf: z.number().int().positive().optional(), adminNotes: z.string().max(1500).optional(), sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx, input.sessionToken);
+  updateDetails: publicProcedure.input(z.object({ id: z.number().int().positive(), quotedPriceXaf: z.number().int().positive().optional(), adminNotes: z.string().max(1500).optional() })).mutation(async ({ input, ctx }) => {
+    await requireAdminSessionFromCookie(ctx.req.headers.cookie);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const updateData: Record<string, any> = {};

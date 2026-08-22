@@ -2,8 +2,8 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
-const INACTIVITY_TIMEOUT = 24 * 60 * 60 * 1000; // Une journée, cohérente avec les jetons applicatifs
-const WARNING_TIME = 15 * 60 * 1000; // Avertissement 15 minutes avant l’expiration
+const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes en millisecondes
+const WARNING_TIME = 2 * 60 * 1000; // Avertissement 2 minutes avant la déconnexion
 
 export function useSessionTimeout() {
   const { logout, isAuthenticated } = useAuth();
@@ -41,7 +41,7 @@ export function useSessionTimeout() {
       }
     }, INACTIVITY_TIMEOUT - WARNING_TIME);
 
-    // Déconnexion automatique après 24 heures d’inactivité maximale
+    // Déconnexion automatique après 15 minutes
     timeoutRef.current = setTimeout(() => {
       toast.info('Vous avez été déconnecté en raison de l\'inactivité.');
       logout();

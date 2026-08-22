@@ -10,17 +10,14 @@ import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emai
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
-import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, emailDeliveryAdvisorThresholds, emailDeliveryIncidents, emailDeliveryIncidentComments, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
+import { evaluations, users, applications, profileEvaluations, aiReportHistory, clientDocuments, candidateFiles, candidates, agencyDossiers, bilans, adminActivityLogs, emailDeliveryLogs, passportVerificationAudits, cases, caseDocuments, documentRequirements, caseTasks, caseAdminNotes, caseActivityLogs, caseStatusHistory, clientNotifications, candidateMessages, adminAccounts, unifiedClientRequests, unifiedClientRequestHistory, evaluationBilanVersions } from "../../drizzle/schema";
 // (imports précédemment retirés par erreur lors d'un nettoyage — tables réellement utilisées ci-dessous, restaurées)
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { createEvisaCommunicationSnapshot } from "../services/evisaCommunicationSnapshot";
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
-import { notifyOwner } from "../_core/notification";
 import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
-
-const EMAIL_DELIVERY_DEMO_NOTE = "DÉMONSTRATION REMISE E-MAIL 3M — dossier isolé de contrôle interne";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -42,27 +39,6 @@ export function parseAdminCandidateReference(reference: string): { source: "onli
   const id = Number(match[2]);
   if (!Number.isSafeInteger(id) || id <= 0) return null;
   return { source: match[1] as "online" | "agency", id };
-}
-
-export const EMAIL_DELIVERY_TYPES = ["demonstration", "assurance", "evisa", "billet", "evaluation", "other"] as const;
-export type EmailDeliveryType = (typeof EMAIL_DELIVERY_TYPES)[number];
-
-export function classifyEmailDeliveryType(subject: string | null | undefined): EmailDeliveryType {
-  const normalized = String(subject ?? "").toLowerCase();
-  if (normalized.includes("démonstration") || normalized.includes("demonstration")) return "demonstration";
-  if (normalized.includes("assurance") || normalized.includes("coupon")) return "assurance";
-  if (normalized.includes("e-visa") || normalized.includes("e‑visa") || normalized.includes("evisa")) return "evisa";
-  if (normalized.includes("pnr") || normalized.includes("billet") || normalized.includes("vol")) return "billet";
-  if (normalized.includes("évaluation") || normalized.includes("evaluation") || normalized.includes("bilan")) return "evaluation";
-  return "other";
-}
-
-export function redactEmailPreviewHtml(contentHtml: string | null | undefined): string | null {
-  if (!contentHtml) return null;
-  return contentHtml
-    .replace(/([A-Z0-9._%+-]{1,2})[A-Z0-9._%+-]*@([A-Z0-9.-]+\.[A-Z]{2,})/gi, "$1•••@$2")
-    .replace(/\+?\d(?:[\s().-]?\d){7,}/g, "••• ••• •••")
-    .replace(/\b[A-Z0-9]{8,}\b/gi, (value) => /^https?$/i.test(value) ? value : `${value.slice(0, 2)}••••••`);
 }
 
 const candidate360WorkflowStatuses = ["new", "qualifying", "waiting_customer", "documents_review", "payment_review", "processing", "submitted", "completed", "closed", "rejected"] as const;
@@ -1300,7 +1276,16 @@ export const adminRouter = router({
 
         const candidateRows = await db
           .select({
+            id: candidates.id,
             email: candidates.email,
+            fullName: candidates.fullName,
+            phone: candidates.phone,
+            destination: candidates.destination,
+            dossierStatus: candidates.dossierStatus,
+            evaluationDeclarationStatus: candidates.evaluationDeclarationStatus,
+            evaluationDeclaredAt: candidates.evaluationDeclaredAt,
+            createdAt: candidates.createdAt,
+            updatedAt: candidates.updatedAt,
             emailVerified: candidates.emailVerified,
             verificationToken: candidates.verificationToken,
             verificationExpiresAt: candidates.verificationExpiresAt,
@@ -1335,6 +1320,7 @@ export const adminRouter = router({
         }
         const getActivationStatus = (email: string): CandidateActivationStatus =>
           activationStatusByEmail.get(email.toLowerCase()) ?? "not_registered";
+        const candidateByEmail = new Map(candidateRows.map((candidate) => [candidate.email.toLowerCase(), candidate]));
 
         // Mapper les statuts internes vers les statuts admin
         const mapDossierStatus = (status: string): string => {
@@ -1386,6 +1372,8 @@ export const adminRouter = router({
           createdAt: app.createdAt,
           updatedAt: app.updatedAt,
           activationStatus: getActivationStatus(app.email),
+          evaluationDeclarationStatus: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclarationStatus ?? "not_declared",
+          evaluationDeclaredAt: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclaredAt ?? null,
         }));
 
         // Normaliser les dossiers agence
@@ -1407,10 +1395,37 @@ export const adminRouter = router({
           createdAt: app.createdAt,
           updatedAt: app.updatedAt,
           activationStatus: getActivationStatus(app.email),
+          evaluationDeclarationStatus: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclarationStatus ?? "not_declared",
+          evaluationDeclaredAt: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclaredAt ?? null,
         }));
 
+        const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
+        const normalizedAccounts = candidateRows
+          .filter((candidate) => !dossierEmails.has(candidate.email.toLowerCase()))
+          .map((candidate) => ({
+            id: `account_${candidate.id}`,
+            internalId: candidate.id,
+            folderCode: `COMPTE-${String(candidate.id).padStart(5, "0")}`,
+            fullName: candidate.fullName,
+            email: candidate.email,
+            whatsapp: candidate.phone || "",
+            city: "Compte en ligne",
+            destinationCountry: candidate.destination || "Non spécifiée",
+            projectType: "À qualifier",
+            status: mapDossierStatus(candidate.dossierStatus),
+            internalStatus: candidate.dossierStatus,
+            source: "ACCOUNT_ONLY" as const,
+            scoringTotal: null,
+            scoringBadge: null,
+            createdAt: candidate.createdAt,
+            updatedAt: candidate.updatedAt,
+            activationStatus: getActivationStatus(candidate.email),
+            evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
+            evaluationDeclaredAt: candidate.evaluationDeclaredAt,
+          }));
+
         // Combiner et trier par date de création
-        let allCandidates = [...normalizedOnline, ...normalizedAgency].sort(
+        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts].sort(
           (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 
@@ -1837,113 +1852,6 @@ export const adminRouter = router({
       }
     }),
 
-  getEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
-    .query(async ({ input }) => {
-      await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const demos = await db.select().from(agencyDossiers)
-        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
-        .orderBy(desc(agencyDossiers.id))
-        .limit(20);
-      const demo = demos.find((item) => !String(item.adminNotes ?? "").includes("ARCHIVÉ DÉMONSTRATION REMISE E-MAIL"));
-      return demo ? {
-        id: demo.id,
-        folderCode: `3M-DEMO-${String(demo.id).padStart(4, "0")}`,
-        status: demo.status,
-        readyForDeliveryTest: demo.welcomeEmailSent !== true,
-      } : null;
-    }),
-
-  prepareEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const [existing] = await db.select().from(agencyDossiers)
-        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
-        .orderBy(desc(agencyDossiers.id))
-        .limit(1);
-      if (existing) return { id: existing.id, folderCode: `3M-DEMO-${String(existing.id).padStart(4, "0")}`, created: false };
-
-      const internalRecipient = process.env.SMTP_USER || process.env.SMTP_FROM || "hello@3mtravelagency.com";
-      const result = await db.insert(agencyDossiers).values({
-        fullName: "Démonstration remise e-mail 3M",
-        email: internalRecipient,
-        phone: "+237000000000",
-        destination: "Démonstration interne",
-        visaType: "Contrôle de remise e-mail",
-        status: "nouveau",
-        source: "manual_admin",
-        createdByAdmin: admin.email || "admin",
-        adminNotes: `${EMAIL_DELIVERY_DEMO_NOTE}. Ne pas utiliser pour un client. Créé le ${new Date().toLocaleString("fr-FR")}.`,
-        welcomeEmailSent: false,
-      });
-      const id = Number((result as any)[0]?.insertId || 0);
-      return { id, folderCode: `3M-DEMO-${String(id).padStart(4, "0")}`, created: true };
-    }),
-
-  sendEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const [demo] = await db.select().from(agencyDossiers)
-        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
-        .orderBy(desc(agencyDossiers.id))
-        .limit(1);
-      if (!demo) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Préparez d’abord le dossier de démonstration." });
-
-      const folderCode = `3M-DEMO-${String(demo.id).padStart(4, "0")}`;
-      await sendGenericEmail({
-        to: demo.email,
-        subject: `[Démonstration] Remise e-mail ${folderCode} — 3M Travel & Services`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto"><h2>Contrôle de remise e-mail</h2><p>Ce message confirme le bon acheminement de la démonstration interne <strong>${folderCode}</strong>.</p><p>Aucune démarche client, pièce client ou procédure réelle n’est associée à ce dossier.</p></div>`,
-      });
-      await db.update(agencyDossiers).set({
-        welcomeEmailSent: true,
-        lastStatusChangeAt: new Date(),
-        lastStatusChangeBy: admin.email || "admin",
-      }).where(eq(agencyDossiers.id, demo.id));
-      return { folderCode, sent: true };
-    }),
-
-  archiveEmailDeliveryDemo: publicProcedure
-    .input(z.object({ sessionToken: z.string() }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const demos = await db.select().from(agencyDossiers)
-        .where(like(agencyDossiers.adminNotes, `%${EMAIL_DELIVERY_DEMO_NOTE}%`))
-        .orderBy(desc(agencyDossiers.id))
-        .limit(20);
-      const demo = demos.find((item) => !String(item.adminNotes ?? "").includes("ARCHIVÉ DÉMONSTRATION REMISE E-MAIL"));
-      if (!demo) throw new TRPCError({ code: "NOT_FOUND", message: "Aucun dossier de démonstration actif à archiver." });
-      if (demo.welcomeEmailSent !== true) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La remise de test doit être envoyée avant l’archivage." });
-
-      const archivedAt = new Date();
-      const folderCode = `3M-DEMO-${String(demo.id).padStart(4, "0")}`;
-      await db.transaction(async (tx) => {
-        await tx.update(agencyDossiers).set({
-          adminNotes: `${demo.adminNotes ?? EMAIL_DELIVERY_DEMO_NOTE}\nARCHIVÉ DÉMONSTRATION REMISE E-MAIL le ${archivedAt.toLocaleString("fr-FR")} par ${admin.email ?? "admin"}.`,
-          lastStatusChangeAt: archivedAt,
-          lastStatusChangeBy: admin.email ?? "admin",
-        }).where(eq(agencyDossiers.id, demo.id));
-        await tx.insert(adminActivityLogs).values({
-          adminEmail: admin.email,
-          action: "status_changed",
-          evaluationType: "email_delivery_demo",
-          evaluationId: String(demo.id),
-          details: JSON.stringify({ action: "demo_archived", folderCode, archivedAt: archivedAt.toISOString() }),
-        });
-      });
-      return { folderCode, archivedAt };
-    }),
-
   /**
    * Récupérer les détails complets d'un candidat pour la fiche admin
    */
@@ -1959,6 +1867,39 @@ export const adminRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
 
       try {
+        const accountMatch = /^account_(\d+)$/.exec(input.candidateId.trim());
+        if (accountMatch) {
+          const candidateId = Number(accountMatch[1]);
+          const [account] = await db.select().from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+          if (!account) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable" });
+          const docs = await db.select().from(candidateFiles).where(eq(candidateFiles.candidateId, account.id)).limit(50);
+          return {
+            success: true,
+            candidate: {
+              id: `account_${account.id}`,
+              internalId: account.id,
+              folderCode: `COMPTE-${String(account.id).padStart(5, "0")}`,
+              fullName: account.fullName,
+              email: account.email,
+              whatsapp: account.phone || "",
+              city: "Compte en ligne",
+              destinationCountry: account.destination || "Non spécifiée",
+              projectType: "À qualifier",
+              status: "PENDING_48H",
+              internalStatus: account.dossierStatus,
+              source: "ACCOUNT_ONLY" as const,
+              scoringTotal: null,
+              scoringBadge: null,
+              scoringData: null,
+              avatarUrl: account.avatarUrl || null,
+              evaluationDeclarationStatus: account.evaluationDeclarationStatus,
+              evaluationDeclaredAt: account.evaluationDeclaredAt,
+              createdAt: account.createdAt,
+              updatedAt: account.updatedAt,
+            },
+            documents: docs,
+          };
+        }
         const reference = parseAdminCandidateReference(input.candidateId);
         if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
         const { source, id } = reference;
@@ -2500,8 +2441,6 @@ export const adminRouter = router({
       limit: z.number().int().min(1).max(200).default(100),
       status: z.enum(["all", "sent", "failed", "pending"]).default("all"),
       errorType: z.enum(["all", "invalid_recipient", "domain_unverified", "rate_limit", "configuration"]).default("all"),
-      deliveryType: z.enum(["all", ...EMAIL_DELIVERY_TYPES]).default("all"),
-      advisorEmail: z.string().trim().email().optional(),
       search: z.string().trim().max(120).optional(),
     }))
     .query(async ({ input }) => {
@@ -2512,7 +2451,6 @@ export const adminRouter = router({
 
       const conditions = [];
       if (input.status !== "all") conditions.push(eq(emailDeliveryLogs.status, input.status));
-      if (input.advisorEmail) conditions.push(eq(emailDeliveryLogs.triggeredByAdminEmail, input.advisorEmail));
       if (input.search) {
         conditions.push(or(
           like(emailDeliveryLogs.recipientEmail, `%${input.search}%`),
@@ -2523,191 +2461,17 @@ export const adminRouter = router({
         const patterns = emailErrorPatterns[input.errorType as keyof typeof emailErrorPatterns] ?? [];
         conditions.push(or(...patterns.map((pattern) => like(emailDeliveryLogs.errorDetails, `%${pattern}%`))));
       }
-      const rawLogs = await db
+      const logs = await db
         .select()
         .from(emailDeliveryLogs)
         .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(desc(emailDeliveryLogs.createdAt))
-        .limit(input.deliveryType === "all" ? input.limit : 400);
-      const logs = (input.deliveryType === "all"
-        ? rawLogs
-        : rawLogs.filter((log) => classifyEmailDeliveryType(log.subject) === input.deliveryType)
-      ).slice(0, input.limit);
-      const successfulLogs = await db
-        .select()
-        .from(emailDeliveryLogs)
-        .where(eq(emailDeliveryLogs.status, "sent"))
-        .orderBy(desc(emailDeliveryLogs.createdAt))
-        .limit(400);
-      const lastSuccessfulByType = EMAIL_DELIVERY_TYPES
-        .map((deliveryType) => {
-          const latest = successfulLogs.find((log) => classifyEmailDeliveryType(log.subject) === deliveryType);
-          return latest ? { deliveryType, createdAt: latest.createdAt } : null;
-        })
-        .filter((entry): entry is { deliveryType: EmailDeliveryType; createdAt: Date } => Boolean(entry));
-      const metricsLogs = await db
-        .select()
-        .from(emailDeliveryLogs)
-        .orderBy(desc(emailDeliveryLogs.createdAt))
-        .limit(1000);
-      const advisorThresholds = await db.select().from(emailDeliveryAdvisorThresholds);
-      const emailDeliveryIncidentsHistory = await db.select().from(emailDeliveryIncidents).orderBy(desc(emailDeliveryIncidents.triggeredAt)).limit(50);
-      const emailDeliveryIncidentCommentsHistory = await db.select().from(emailDeliveryIncidentComments).orderBy(desc(emailDeliveryIncidentComments.createdAt)).limit(200);
-      const incidentCommentsById = emailDeliveryIncidentCommentsHistory.reduce<Record<number, typeof emailDeliveryIncidentCommentsHistory>>((acc, comment) => {
-        (acc[comment.incidentId] ??= []).push(comment);
-        return acc;
-      }, {});
-      const resolutionByAdvisor = Object.entries(emailDeliveryIncidentsHistory.reduce<Record<string, { totalMs: number; resolved: number }>>((acc, incident) => {
-        if (!incident.acknowledgedAt) return acc;
-        const current = acc[incident.advisorEmail] ?? { totalMs: 0, resolved: 0 };
-        current.totalMs += incident.acknowledgedAt.getTime() - incident.triggeredAt.getTime();
-        current.resolved += 1;
-        acc[incident.advisorEmail] = current;
-        return acc;
-      }, {})).map(([advisorEmail, { totalMs, resolved }]) => ({
-        advisorEmail,
-        resolvedCount: resolved,
-        averageResolutionMinutes: Math.round(totalMs / resolved / 60_000),
-      }));
-      const now = new Date();
-      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-      const currentWeekStart = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-      const previousWeekStart = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
-      const dailyFailures = metricsLogs
-        .filter((log) => log.status === "failed" && log.createdAt >= todayStart)
-        .map((log) => ({
-          id: log.id,
-          recipientEmail: log.recipientEmail,
-          subject: log.subject,
-          errorDetails: log.errorDetails,
-          createdAt: log.createdAt,
-          deliveryType: classifyEmailDeliveryType(log.subject),
-        }));
-      const deliverySuccessRates30Days = EMAIL_DELIVERY_TYPES
-        .map((deliveryType) => {
-          const serviceLogs = metricsLogs.filter((log) => log.createdAt >= thirtyDaysAgo && classifyEmailDeliveryType(log.subject) === deliveryType);
-          const sent = serviceLogs.filter((log) => log.status === "sent").length;
-          return {
-            deliveryType,
-            total: serviceLogs.length,
-            sent,
-            failed: serviceLogs.filter((log) => log.status === "failed").length,
-            successRate: serviceLogs.length ? Math.round((sent / serviceLogs.length) * 100) : null,
-          };
-        })
-        .filter((metric) => metric.total > 0);
-      const weeklySuccessRateComparison = EMAIL_DELIVERY_TYPES
-        .map((deliveryType) => {
-          const current = metricsLogs.filter((log) => log.createdAt >= currentWeekStart && classifyEmailDeliveryType(log.subject) === deliveryType);
-          const previous = metricsLogs.filter((log) => log.createdAt >= previousWeekStart && log.createdAt < currentWeekStart && classifyEmailDeliveryType(log.subject) === deliveryType);
-          const currentRate = current.length ? Math.round((current.filter((log) => log.status === "sent").length / current.length) * 100) : null;
-          const previousRate = previous.length ? Math.round((previous.filter((log) => log.status === "sent").length / previous.length) * 100) : null;
-          return {
-            deliveryType,
-            currentRate,
-            previousRate,
-            change: currentRate !== null && previousRate !== null ? currentRate - previousRate : null,
-          };
-        })
-        .filter((metric) => metric.currentRate !== null || metric.previousRate !== null);
-      const advisors = Array.from(new Set(metricsLogs.map((log) => log.triggeredByAdminEmail).filter((email): email is string => Boolean(email)))).sort();
-      const advisorFailureCounts = metricsLogs
-        .filter((log) => log.status === "failed" && log.createdAt >= todayStart && Boolean(log.triggeredByAdminEmail))
-        .reduce<Record<string, number>>((counts, log) => {
-          const advisor = log.triggeredByAdminEmail!;
-          counts[advisor] = (counts[advisor] ?? 0) + 1;
-          return counts;
-        }, {});
-      const alertableThresholds = advisorThresholds.filter((threshold) => {
-        const failures = advisorFailureCounts[threshold.advisorEmail] ?? 0;
-        const recentlyAlerted = threshold.lastAlertedAt && now.getTime() - threshold.lastAlertedAt.getTime() < 6 * 60 * 60 * 1000;
-        return failures >= threshold.dailyFailureThreshold && !recentlyAlerted;
-      });
-      for (const threshold of alertableThresholds) {
-        const failures = advisorFailureCounts[threshold.advisorEmail] ?? 0;
-        try {
-          await db.insert(emailDeliveryIncidents).values({
-            advisorEmail: threshold.advisorEmail,
-            thresholdId: threshold.id,
-            failureCount: failures,
-            thresholdValue: threshold.dailyFailureThreshold,
-          });
-          await notifyOwner({
-            title: "Seuil d’échecs e-mail atteint",
-            content: `${threshold.advisorEmail} a ${failures} échec(s) de remise aujourd’hui (seuil : ${threshold.dailyFailureThreshold}).`,
-          });
-          await db.update(emailDeliveryAdvisorThresholds).set({ lastAlertedAt: now }).where(eq(emailDeliveryAdvisorThresholds.id, threshold.id));
-        } catch (error) {
-          console.error("[email_delivery_threshold_alert]", error);
-        }
-      }
+        .limit(input.limit);
 
       return {
-        logs: logs.map(({ contentHtml, ...log }) => ({ ...log, contentPreviewHtml: redactEmailPreviewHtml(contentHtml), deliveryType: classifyEmailDeliveryType(log.subject) })),
+        logs,
         summary: summarizeEmailDeliveryLogs(logs),
-        lastSuccessfulByType,
-        dailyFailures,
-        deliverySuccessRates30Days,
-        weeklySuccessRateComparison,
-        advisors,
-        advisorThresholds: advisorThresholds.map((threshold) => ({
-          advisorEmail: threshold.advisorEmail,
-          dailyFailureThreshold: threshold.dailyFailureThreshold,
-          lastAlertedAt: threshold.lastAlertedAt,
-          failuresToday: advisorFailureCounts[threshold.advisorEmail] ?? 0,
-        })),
-        emailDeliveryIncidents: emailDeliveryIncidentsHistory.map((incident) => ({ ...incident, comments: incidentCommentsById[incident.id] ?? [] })),
-        incidentResolutionByAdvisor: resolutionByAdvisor,
       };
-    }),
-
-  saveEmailDeliveryAdvisorThreshold: publicProcedure
-    .input(z.object({
-      sessionToken: z.string(),
-      advisorEmail: z.string().trim().email(),
-      dailyFailureThreshold: z.number().int().min(1).max(50),
-    }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const existing = (await db.select().from(emailDeliveryAdvisorThresholds).where(eq(emailDeliveryAdvisorThresholds.advisorEmail, input.advisorEmail)).limit(1))[0];
-      if (existing) {
-        await db.update(emailDeliveryAdvisorThresholds).set({ dailyFailureThreshold: input.dailyFailureThreshold, updatedByAdminEmail: admin.email }).where(eq(emailDeliveryAdvisorThresholds.id, existing.id));
-      } else {
-        await db.insert(emailDeliveryAdvisorThresholds).values({ advisorEmail: input.advisorEmail, dailyFailureThreshold: input.dailyFailureThreshold, updatedByAdminEmail: admin.email });
-      }
-      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: input.advisorEmail, details: JSON.stringify({ action: "advisor_failure_threshold_updated", dailyFailureThreshold: input.dailyFailureThreshold }) });
-      return { success: true, advisorEmail: input.advisorEmail, dailyFailureThreshold: input.dailyFailureThreshold };
-    }),
-
-  acknowledgeEmailDeliveryIncident: publicProcedure
-    .input(z.object({ sessionToken: z.string(), incidentId: z.number().int().positive() }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const incident = (await db.select().from(emailDeliveryIncidents).where(eq(emailDeliveryIncidents.id, input.incidentId)).limit(1))[0];
-      if (!incident) throw new TRPCError({ code: "NOT_FOUND", message: "Incident introuvable" });
-      if (incident.status !== "acknowledged") {
-        await db.update(emailDeliveryIncidents).set({ status: "acknowledged", acknowledgedAt: new Date(), acknowledgedByAdminEmail: admin.email }).where(eq(emailDeliveryIncidents.id, input.incidentId));
-        await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: String(input.incidentId), details: JSON.stringify({ action: "email_delivery_incident_acknowledged", advisorEmail: incident.advisorEmail }) });
-      }
-      return { success: true, incidentId: input.incidentId };
-    }),
-
-  addEmailDeliveryIncidentComment: publicProcedure
-    .input(z.object({ sessionToken: z.string(), incidentId: z.number().int().positive(), commentText: z.string().trim().min(2).max(2_000) }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-      const incident = (await db.select().from(emailDeliveryIncidents).where(eq(emailDeliveryIncidents.id, input.incidentId)).limit(1))[0];
-      if (!incident) throw new TRPCError({ code: "NOT_FOUND", message: "Incident introuvable" });
-      await db.insert(emailDeliveryIncidentComments).values({ incidentId: incident.id, commentText: input.commentText, createdByAdminEmail: admin.email });
-      await db.insert(adminActivityLogs).values({ adminEmail: admin.email, action: "status_changed", evaluationType: "email_delivery", evaluationId: String(incident.id), details: JSON.stringify({ action: "email_delivery_incident_comment_added" }) });
-      return { success: true, incidentId: incident.id };
     }),
 
   updateEmailDeliveryRecipient: publicProcedure
@@ -2762,7 +2526,6 @@ export const adminRouter = router({
           to: log.recipientEmail,
           subject: log.subject,
           html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après correction de vos coordonnées.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
-          triggeredByAdminEmail: admin.email,
         });
         await db.insert(adminActivityLogs).values({
           adminEmail: admin.email,
@@ -2776,53 +2539,6 @@ export const adminRouter = router({
       }
 
       return { success: true, recipientEmail: log.recipientEmail };
-    }),
-
-  resendFailedEmailsBulk: publicProcedure
-    .input(z.object({
-      sessionToken: z.string(),
-      logIds: z.array(z.number().int().positive()).min(1).max(25),
-      confirmed: z.literal(true),
-    }))
-    .mutation(async ({ input }) => {
-      const admin = await requireValidAdminSession(input.sessionToken);
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
-
-      const logs = await db.select().from(emailDeliveryLogs)
-        .where(inArray(emailDeliveryLogs.id, Array.from(new Set(input.logIds))));
-      const failedLogs = logs.filter((log) => log.status === "failed");
-      let sent = 0;
-      const failedLogIds: number[] = [];
-
-      for (const log of failedLogs) {
-        try {
-          await sendGenericEmail({
-            to: log.recipientEmail,
-            subject: log.subject,
-            html: "<p>Bonjour,</p><p>Votre message 3M Travel & Services est renvoyé après vérification de la remise.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>",
-            triggeredByAdminEmail: admin.email,
-          });
-          await db.insert(adminActivityLogs).values({
-            adminEmail: admin.email,
-            action: "status_changed",
-            evaluationType: "email_delivery",
-            evaluationId: String(log.id),
-            details: JSON.stringify({ action: "email_resent_bulk", recipientEmail: log.recipientEmail, subject: log.subject }),
-          });
-          sent += 1;
-        } catch {
-          failedLogIds.push(log.id);
-        }
-      }
-
-      return {
-        requested: input.logIds.length,
-        eligible: failedLogs.length,
-        sent,
-        failed: failedLogIds.length,
-        failedLogIds,
-      };
     }),
 
   getCandidate360: publicProcedure

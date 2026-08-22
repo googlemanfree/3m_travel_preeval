@@ -54,9 +54,8 @@ export default function Login() {
 
   const loginMutation = trpc.candidate.login.useMutation({
     onSuccess: (data) => {
-      const storage = localStorage;
+      const storage = rememberMe ? localStorage : sessionStorage;
       storage.setItem("3m_candidate_token", data.token);
-      storage.setItem("3m_candidate_session_expires_at", String(Date.now() + 24 * 60 * 60 * 1000));
       const candidateData = data.candidate as typeof data.candidate & { emailVerified?: boolean };
       storage.setItem("3m_candidate_info", JSON.stringify({
         id: candidateData.id,
@@ -104,9 +103,8 @@ export default function Login() {
 
   const consumeGoogleOAuthMutation = trpc.candidate.consumeGoogleOAuth.useMutation({
     onSuccess: (data) => {
-      const storage = localStorage;
+      const storage = sessionStorage;
       storage.setItem("3m_candidate_token", data.token);
-      storage.setItem("3m_candidate_session_expires_at", String(Date.now() + 24 * 60 * 60 * 1000));
       storage.setItem("3m_candidate_info", JSON.stringify({
         id: data.candidate.id,
         fullName: data.candidate.fullName,

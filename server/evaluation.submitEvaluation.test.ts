@@ -39,7 +39,7 @@ describe("evaluation.submitEvaluation", () => {
     const result = await caller.evaluation.submitEvaluation({
       fullName: "Jean Dupont",
       email: "jean@example.com",
-      whatsappPhone: "+16728972999",
+      whatsappPhone: "+237698104832",
       nationality: "Camerounais",
       projectType: "travail",
       sector: "Informatique",
@@ -60,7 +60,7 @@ describe("evaluation.submitEvaluation", () => {
     const result = await caller.evaluation.submitEvaluation({
       fullName: "Marie Durand",
       email: "marie@example.com",
-      whatsappPhone: "+16728972999",
+      whatsappPhone: "+237698104832",
       nationality: "Française",
       projectType: "etudes",
       diplomaLevel: "Baccalauréat",
@@ -80,7 +80,7 @@ describe("evaluation.submitEvaluation", () => {
     const result = await caller.evaluation.submitEvaluation({
       fullName: "Pierre Martin",
       email: "pierre@example.com",
-      whatsappPhone: "+16728972999",
+      whatsappPhone: "+237698104832",
       nationality: "Belge",
       projectType: "tourisme",
       visitReason: "Tourisme culturel",
@@ -119,7 +119,7 @@ describe("evaluation.submitEvaluation", () => {
     const result = await caller.evaluation.submitEvaluation({
       fullName: "Test User",
       email: "test@example.com",
-      whatsappPhone: "+16728972999",
+      whatsappPhone: "+237698104832",
       nationality: "Camerounais",
       projectType: "travail",
       sector: "Santé",

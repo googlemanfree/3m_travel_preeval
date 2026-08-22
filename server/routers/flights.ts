@@ -277,9 +277,7 @@ export const flightsRouter = router({
           params.set("return_date", input.returnDate);
         }
 
-        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`, {
-          signal: AbortSignal.timeout(8_000),
-        });
+        const res = await fetch(`https://www.searchapi.io/api/v1/search?${params.toString()}`);
         if (!res.ok) {
           const details = (await res.text()).replace(/\s+/g, " ").slice(0, 160);
           const message = `SearchAPI.io a répondu ${res.status}${details ? ` — ${details}` : ""}`;
@@ -381,11 +379,7 @@ export const flightsRouter = router({
       } catch (err) {
         console.error("SearchAPI error, falling back to mock:", err);
         if (!flightSearchCache.getStatus().lastError) {
-          const isTimeout = err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError");
-          flightSearchCache.recordUnavailable(
-            "error",
-            isTimeout ? "La source tarifaire a dépassé le délai de réponse ; affichage d’offres indicatives." : err instanceof Error ? err.message : "Erreur SearchAPI inconnue"
-          );
+          flightSearchCache.recordUnavailable("error", err instanceof Error ? err.message : "Erreur SearchAPI inconnue");
         }
         const totalPaxForCalc = input.adults + (input.children * 0.75) + (input.infants * 0.1);
         let outbound = generateFlights(input.origin, input.destination, input.departureDate, totalPaxForCalc, input.cabinClass);

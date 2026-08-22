@@ -36,6 +36,7 @@ import {
   CheckCircle,
   Globe,
   Building2,
+  UserPlus,
   Mail,
   Phone,
   Plane,
@@ -53,7 +54,6 @@ import {
   ImagePlus,
   ShieldAlert,
   MessageSquare,
-  UserCheck,
 } from "lucide-react";
 import {
   BarChart,
@@ -72,7 +72,6 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
-import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
@@ -87,14 +86,15 @@ import { Candidate360Workspace } from "@/components/Candidate360Workspace";
 import FlightAgentDashboard from "@/pages/FlightAgentDashboard";
 import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationReviewQueue";
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
-import { AdminNavigationShortcuts } from "@/components/AdminNavigationShortcuts";
+import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
+import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type AdminStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
-type CandidateSource = "WEB" | "AGENCY_PHYSICAL";
+type CandidateSource = "WEB" | "AGENCY_PHYSICAL" | "ACCOUNT_ONLY";
 type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
 interface Candidate {
@@ -115,6 +115,8 @@ interface Candidate {
   createdAt: Date | string;
   updatedAt: Date | string;
   activationStatus: CandidateActivationStatus;
+  evaluationDeclarationStatus?: "not_declared" | "declared_complete";
+  evaluationDeclaredAt?: Date | string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -162,6 +164,11 @@ const SOURCE_CONFIG: Record<CandidateSource, { label: string; color: string; ico
     label: "Agence",
     color: "text-orange-700 bg-orange-50 border-orange-200",
     icon: <Building2 className="w-3 h-3" />,
+  },
+  ACCOUNT_ONLY: {
+    label: "Compte créé",
+    color: "text-violet-700 bg-violet-50 border-violet-200",
+    icon: <UserPlus className="w-3 h-3" />,
   },
 };
 
@@ -224,15 +231,6 @@ function ActivationBadge({ status }: { status?: string }) {
   );
 }
 
-function AdminNavGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="min-w-0 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5">
-      <p className="mb-2 px-1 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{title}</p>
-      <div className="grid gap-1">{children}</div>
-    </section>
-  );
-}
-
 // ─── Modale : Fiche Candidat ──────────────────────────────────────────────────
 
 function CandidateDetailModal({
@@ -283,6 +281,7 @@ function CandidateDetailModal({
   };
 
   const candidate = data?.candidate;
+  const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -345,14 +344,18 @@ function CandidateDetailModal({
               </div>
             </div>
 
-            <Candidate360Workspace
-              sessionToken={sessionToken}
-              candidate={candidate as any}
-              onRefresh={() => {
-                void refetch();
-                onStatusUpdated();
-              }}
-            />
+            {isPreDossierAccount ? (
+              <AdminPreDossierEvaluationPanel status={candidate.evaluationDeclarationStatus} declaredAt={candidate.evaluationDeclaredAt} />
+            ) : (
+              <Candidate360Workspace
+                sessionToken={sessionToken}
+                candidate={candidate as any}
+                onRefresh={() => {
+                  void refetch();
+                  onStatusUpdated();
+                }}
+              />
+            )}
 
             </div>
 
@@ -371,7 +374,7 @@ function CandidateDetailModal({
                 </div>
               </section>
 
-              <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
+              {!isPreDossierAccount && <section className="rounded-xl border border-blue-100 bg-blue-50/70 p-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Décision de procédure</p>
                 <p className="mt-2 text-sm font-semibold text-slate-900">{candidate.projectType || "Procédure à qualifier"}</p>
                 <div className="mt-4 space-y-3 border-t border-blue-100 pt-4">
@@ -388,9 +391,9 @@ function CandidateDetailModal({
                     {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer la décision"}
                   </Button>
                 </div>
-              </section>
+              </section>}
 
-              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              {!isPreDossierAccount && <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Centres de traitement</p>
                 <p className="mt-2 text-sm text-slate-600">Ouvrez le module spécialisé pour traiter les éléments liés à ce dossier.</p>
                 <div className="mt-4 grid gap-2">
@@ -398,7 +401,7 @@ function CandidateDetailModal({
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("payments", candidate.folderCode)}><BarChart3 className="mr-2 h-4 w-4 text-amber-700" />Valider un paiement</Button>
                   <Button variant="outline" className="justify-start" onClick={() => onOpenOperations("emails", candidate.folderCode)}><Mail className="mr-2 h-4 w-4 text-blue-700" />Suivre les envois e-mail</Button>
                 </div>
-              </section>
+              </section>}
 
               {candidate.scoringTotal !== null && <section className="rounded-xl border border-emerald-100 bg-emerald-50 p-5"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Score d’évaluation</p><p className="mt-1 text-3xl font-black text-emerald-800">{candidate.scoringTotal}<span className="text-base font-semibold">/100</span></p><div className="mt-3 h-2 rounded-full bg-emerald-100"><div className="h-2 rounded-full bg-emerald-500" style={{ width: `${Math.min(100, candidate.scoringTotal)}%` }} /></div></section>}
             </aside>
@@ -606,26 +609,11 @@ export default function AdminDashboard() {
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
-  const [adminTabHistory, setAdminTabHistory] = useState<string[]>(["candidates"]);
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
-
-  const changeAdminTab = useCallback((nextTab: string) => {
-    setActiveAdminTab(nextTab);
-    setAdminTabHistory((history) => history[history.length - 1] === nextTab ? history : [...history, nextTab].slice(-20));
-  }, []);
-
-  const goBackInsideAdmin = useCallback(() => {
-    setAdminTabHistory((history) => {
-      if (history.length < 2) return history;
-      const nextHistory = history.slice(0, -1);
-      setActiveAdminTab(nextHistory[nextHistory.length - 1] || "candidates");
-      return nextHistory;
-    });
-  }, []);
 
   const addRagDocMutation = trpc.admin.addDestinationDocumentAdmin.useMutation({
     onSuccess: () => {
@@ -679,10 +667,6 @@ export default function AdminDashboard() {
     { enabled: !!sessionToken }
   );
   const { data: flightQueueSummary, refetch: refetchFlightQueueSummary } = trpc.flightBooking.getQueueSummary.useQuery(
-    { sessionToken },
-    { enabled: !!sessionToken, retry: false, refetchInterval: 30_000 },
-  );
-  const { data: hotelCatalogReadiness, refetch: refetchHotelCatalogReadiness } = trpc.tourism.adminCatalogReadiness.useQuery(
     { sessionToken },
     { enabled: !!sessionToken, retry: false, refetchInterval: 30_000 },
   );
@@ -830,14 +814,17 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <AdminNavigationShortcuts
-                onRefresh={() => void handleRefresh()}
-                onBack={goBackInsideAdmin}
-                onDossiers={() => changeAdminTab("candidates")}
-                isRefreshing={isRefreshing}
-                isRefreshDisabled={isRefreshing || isLoading || isLoadingCountryDistribution}
-                canGoBack={adminTabHistory.length >= 2}
-              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing || isLoading || isLoadingCountryDistribution}
+                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
+                aria-label="Actualiser manuellement les données du dashboard"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing || isLoading || isLoadingCountryDistribution ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Synchronisation..." : "Actualiser"}
+              </Button>
               <span className="text-xs text-blue-100/90" aria-live="polite">
                 {lastSyncedAt
                   ? `Dernière synchronisation : ${formatAdminSyncTime(lastSyncedAt)}`
@@ -850,15 +837,6 @@ export default function AdminDashboard() {
                 className="gap-1.5 border-white/30 text-white hover:bg-white/10"
               >
                 <ImagePlus className="w-4 h-4" /> Visuels destinations
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/admin/emails")}
-                className="gap-1.5 border-white/30 text-white hover:bg-white/10"
-                title="Ouvrir le suivi des e-mails et l’état de santé SMTP"
-              >
-                <Mail className="w-4 h-4" /><span className="hidden xl:inline">Suivi e-mails</span>
               </Button>
             </div>
             <Button
@@ -891,20 +869,6 @@ export default function AdminDashboard() {
               <Plus className="w-4 h-4" />
               Saisir dossier agence
             </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setActiveAdminTab("tourism");
-                  window.setTimeout(() => document.getElementById("hotel-precheck")?.scrollIntoView({ behavior: "smooth", block: "center" }), 0);
-                }}
-                className="gap-1.5 border-emerald-300/70 text-emerald-100 hover:bg-emerald-400/20"
-                title={hotelCatalogReadiness?.readyCount ? `${hotelCatalogReadiness.readyCount} fiche(s) hôtel prête(s) à confirmer` : "Accéder aux fiches hôtel précontrôlées à confirmer"}
-              >
-                <UserCheck className="w-4 h-4" />
-                <span className="hidden xl:inline">Confirmer hôtels</span>
-                {(hotelCatalogReadiness?.readyCount ?? 0) > 0 && <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-amber-300 px-1 text-[11px] font-black text-slate-950" aria-label={`${hotelCatalogReadiness?.readyCount} fiche(s) prête(s) à confirmer`}>{hotelCatalogReadiness?.readyCount}</span>}
-              </Button>
             
             {/* Notifications */}
             <AdminNotificationBell />
@@ -1060,45 +1024,37 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Poste HD : accès organisés par pôle opérationnel plutôt que sur plusieurs rangées indistinctes */}
-        <Tabs value={activeAdminTab} onValueChange={changeAdminTab} className="w-full">
-          <TabsList aria-label="Poste administratif par pôle opérationnel" className="mb-6 grid h-auto w-full grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-5">
-            <AdminNavGroup title="Pilotage des dossiers">
-              <TabsTrigger value="candidates" className="justify-start gap-2 px-3 text-left font-bold"><Users className="h-4 w-4 text-blue-700" />Dossiers</TabsTrigger>
-              <TabsTrigger value="inbox" className="justify-start gap-2 px-3 text-left"><MessageSquare className="h-4 w-4 text-slate-500" />Demandes unifiées</TabsTrigger>
-              <TabsTrigger value="evaluation-review" className="justify-start gap-2 px-3 text-left font-bold text-amber-700"><FileCheck className="h-4 w-4" />Bilans à valider</TabsTrigger>
-              <TabsTrigger value="evaluation-reminders" className="justify-start gap-2 px-3 text-left font-bold text-violet-700"><Clock className="h-4 w-4" />Bilans à relancer</TabsTrigger>
-              <TabsTrigger value="pre-dossiers" className="justify-start gap-2 px-3 text-left font-bold text-blue-700"><UserCheck className="h-4 w-4" />Comptes à ouvrir</TabsTrigger>
-              <TabsTrigger value="activations" className="justify-start gap-2 px-3 text-left"><CheckCircle className="h-4 w-4 text-emerald-600" />Activations</TabsTrigger>
-              <TabsTrigger value="documents" className="justify-start gap-2 px-3 text-left"><FileText className="h-4 w-4 text-violet-600" />Documents</TabsTrigger>
-            </AdminNavGroup>
-
-            <AdminNavGroup title="Services & catalogue">
-              <TabsTrigger value="tourism" className="justify-start gap-2 px-3 text-left"><MapPin className="h-4 w-4 text-emerald-600" />Tourisme & devis</TabsTrigger>
-              <TabsTrigger value="consular" className="justify-start gap-2 px-3 text-left font-bold text-blue-700"><Globe className="h-4 w-4" />Consulats & liens</TabsTrigger>
-              <TabsTrigger value="destination-analytics" className="justify-start gap-2 px-3 text-left font-bold text-indigo-700"><BarChart3 className="h-4 w-4" />Destinations</TabsTrigger>
-              <TabsTrigger value="evisa-catalogue" className="justify-start gap-2 px-3 text-left font-bold text-cyan-700"><FileCheck className="h-4 w-4" />Catalogue e‑Visa</TabsTrigger>
-              <TabsTrigger value="rag" className="justify-start gap-2 px-3 text-left"><FileText className="h-4 w-4 text-blue-600" />Guides & RAG</TabsTrigger>
-              <TabsTrigger value="passport-history" className="justify-start gap-2 px-3 text-left font-bold text-indigo-700"><ShieldAlert className="h-4 w-4" />Passeports vérifiés</TabsTrigger>
-            </AdminNavGroup>
-
-            <AdminNavGroup title="Réservations & finance">
-              <TabsTrigger value="flights" className="justify-start gap-2 px-3 text-left font-bold text-sky-700"><Plane className="h-4 w-4" />Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="ml-auto h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger>
-              <TabsTrigger value="calendar" className="justify-start gap-2 px-3 text-left"><Calendar className="h-4 w-4 text-blue-600" />Calendrier</TabsTrigger>
-              <TabsTrigger value="payments" className="justify-start gap-2 px-3 text-left"><BarChart3 className="h-4 w-4 text-amber-600" />Paiements {pendingPaymentApplications.length > 0 && <Badge className="ml-auto h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
-              <TabsTrigger value="rates" className="justify-start gap-2 px-3 text-left font-bold text-emerald-700"><Sparkles className="h-4 w-4" />Taux de change</TabsTrigger>
-            </AdminNavGroup>
-
-            <AdminNavGroup title="Communication & qualité">
-              <TabsTrigger value="emails" className="justify-start gap-2 px-3 text-left"><Mail className="h-4 w-4 text-blue-600" />E-mails</TabsTrigger>
-              <TabsTrigger value="faq" className="justify-start gap-2 px-3 text-left"><Star className="h-4 w-4 text-amber-500" />Satisfaction FAQ</TabsTrigger>
-              <TabsTrigger value="audit" className="justify-start gap-2 px-3 text-left"><FileCheck className="h-4 w-4 text-slate-600" />Journal d’audit</TabsTrigger>
-            </AdminNavGroup>
-
-            <AdminNavGroup title="Supervision">
-              <TabsTrigger value="route-health" className="justify-start gap-2 px-3 text-left font-bold text-rose-700"><ExternalLink className="h-4 w-4" />404 & liens</TabsTrigger>
-              <TabsTrigger value="system-status" className="justify-start gap-2 px-3 text-left font-bold text-emerald-700"><ShieldAlert className="h-4 w-4" />État système</TabsTrigger>
-            </AdminNavGroup>
+        <div className="mb-4 flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
+          <div><p className="font-black text-blue-950">Pôle 3M Digital</p><p className="text-sm text-blue-800">Consultez et traitez les demandes de plateformes, marketing, support IT et formation.</p></div>
+          <a href="/admin/digital-services" className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-blue-700 px-4 text-sm font-black text-white transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Ouvrir les demandes 3M Digital</a>
+        </div>
+        {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
+        <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-12 mb-6">
+            <TabsTrigger value="candidates">Dossiers</TabsTrigger>
+            <TabsTrigger value="inbox" className="gap-1.5">Demandes unifiées</TabsTrigger>
+            <TabsTrigger value="evaluation-review" className="gap-1.5 font-bold text-amber-700">Bilans à valider</TabsTrigger>
+            <TabsTrigger value="evaluation-reminders" className="gap-1.5 font-bold text-violet-700">Bilans à relancer</TabsTrigger>
+            <TabsTrigger value="tourism" className="gap-1.5">Tourisme & Devis</TabsTrigger>
+            <TabsTrigger value="consular" className="gap-1.5 font-bold text-blue-600">🌍 Consulats & Liens</TabsTrigger>
+            <TabsTrigger value="destination-analytics" className="gap-1.5 font-bold text-indigo-700">📊 Destinations</TabsTrigger>
+            <TabsTrigger value="evisa-catalogue" className="gap-1.5 font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger>
+            <TabsTrigger value="route-health" className="gap-1.5 font-bold text-rose-700">404 & Liens</TabsTrigger>
+            <TabsTrigger value="system-status" className="gap-1.5 font-bold text-emerald-700">État système</TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-1.5">Calendrier Réservations</TabsTrigger>
+            <TabsTrigger value="payments" className="gap-1.5">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="emails">E-mails</TabsTrigger>
+            <TabsTrigger value="activations">Activations</TabsTrigger>
+            <TabsTrigger value="flights" className="gap-1.5 font-bold text-sky-700">
+              <Plane className="h-4 w-4" /> Réservations vols
+              {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger>
+            <TabsTrigger value="rag">Guides & RAG (107 PDF)</TabsTrigger>
+            <TabsTrigger value="audit">Journal d’audit</TabsTrigger>
+            <TabsTrigger value="rates" className="gap-1.5 font-bold text-emerald-600">💱 Taux de Change</TabsTrigger>
+            <TabsTrigger value="passport-history" className="gap-1.5 font-bold text-indigo-600">Passeports vérifiés</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tourism" className="space-y-6">
@@ -1515,6 +1471,7 @@ export default function AdminDashboard() {
                         <div>
                           <p className="font-medium text-gray-800 truncate max-w-[160px]">{candidate.fullName}</p>
                           <p className="text-xs text-gray-500 truncate max-w-[160px]">{candidate.email}</p>
+                          <div className="mt-1"><EvaluationDeclarationBadge status={candidate.evaluationDeclarationStatus} /></div>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
@@ -1611,9 +1568,6 @@ export default function AdminDashboard() {
 
           <TabsContent value="activations" className="space-y-6">
             <AdminCandidateActivationPanel sessionToken={sessionToken} />
-          </TabsContent>
-          <TabsContent value="pre-dossiers" className="space-y-6">
-            <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
           </TabsContent>
         </Tabs>
       </div>
