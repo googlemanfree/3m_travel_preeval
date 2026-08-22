@@ -47,6 +47,8 @@
 - [x] Adapter les niveaux de service à 3M Digital sans présenter les tarifs de référence comme des prix 3M confirmés.
 - [x] Intégrer une grille tarifaire éditable dans la sous-page et le back-office 3M Digital.
 - [x] Vérifier les contenus tarifaires, les demandes associées et les régressions avant publication.
+- [ ] Diagnostiquer et corriger l’absence de la grille tarifaire dans la version publique de `/3m-digital`.
+- [ ] Vérifier la grille tarifaire publique après publication et cache renouvelé.
 
 ## Restauration des contrats historiques après récupération
 - [x] Cartographier les échecs de suite complète et identifier les fichiers de sauvegarde compatibles.
