@@ -28,13 +28,15 @@
 ## Sauvegarde alternative avant publication
 - [x] Diagnostiquer une méthode de sauvegarde non destructive malgré le conflit de synchronisation.
 - [x] Préserver une copie vérifiable des changements locaux validés.
-- [ ] Synchroniser ou publier sans écraser les changements existants.
+- [x] Synchroniser la version avec la branche principale sans écraser les changements existants.
 
 ## Mise en ligne du service 3M Digital
-- [ ] Diagnostiquer l’écart entre les routes locales 3M Digital et la version publique.
-- [ ] Préserver une version vérifiable des nouvelles routes avant synchronisation.
-- [ ] Synchroniser et publier `/3m-digital` ainsi que `/admin/digital-services` sans écraser les changements existants.
-- [ ] Vérifier les routes publiées et l’accès administrateur après déploiement.
+- [x] Diagnostiquer l’écart entre les routes locales 3M Digital et la version publique.
+- [x] Préserver une version vérifiable des nouvelles routes avant synchronisation.
+- [ ] Vérifier le déploiement effectif de `/3m-digital` et corriger la publication tant que la route affiche 404.
+- [ ] Vérifier l’accès protégé de `/admin/digital-services` sur le domaine déployé après propagation du cache.
+- [x] Renouveler le cache PWA afin de diffuser les nouvelles routes publiées.
+- [ ] Rejouer une vérification navigateur des deux routes déployées et consigner la preuve avant de clore la mise en ligne.
 
 ## Système Centralisé de Réservation Multi-Services & PNR / Référence Fournisseur (v254)
 - [x] Étendre le schéma Drizzle et les types pour stocker le PNR / référence fournisseur, la catégorie de service et la quittance PDF de réservation
