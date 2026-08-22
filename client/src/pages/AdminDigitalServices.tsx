@@ -167,27 +167,41 @@ export default function AdminDigitalServices() {
                   <Badge className={statusStyles[draftStatus]}>{statusLabels[draftStatus]}</Badge>
                 </div>
 
+                <section className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-5" aria-label="Traitement direct de la demande">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-wider text-blue-700">Traitement direct</p>
+                      <p className="mt-1 text-sm text-slate-700">Choisissez le statut, consignez la prochaine action, puis enregistrez une seule fois.</p>
+                    </div>
+                    <Badge className={statusStyles[draftStatus]}>Brouillon : {statusLabels[draftStatus]}</Badge>
+                  </div>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-[224px_minmax(0,1fr)]">
+                    <div>
+                      <label className="text-sm font-black text-slate-950" htmlFor="digital-request-status">Statut</label>
+                      <Select value={draftStatus} onValueChange={(value) => setDraftStatus(value as RequestStatus)}>
+                        <SelectTrigger id="digital-request-status" className="mt-2 bg-white" aria-label="Statut de la demande 3M Digital"><SelectValue /></SelectTrigger>
+                        <SelectContent>{Object.entries(statusLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label htmlFor="digital-admin-notes" className="text-sm font-black text-slate-950">Notes internes</label>
+                      <Textarea id="digital-admin-notes" className="mt-2 min-h-24 bg-white" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contexte, prochaine action, conditions proposées…" />
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <Button onClick={saveRequest} disabled={updateRequest.isPending} className="bg-blue-700 hover:bg-blue-800">
+                      <Save className="mr-2 h-4 w-4" /> {updateRequest.isPending ? "Enregistrement…" : "Enregistrer le traitement"}
+                    </Button>
+                    <a href={digitalWhatsAppUrl(`Bonjour ${selected.fullName}, nous faisons suite à votre demande ${selected.reference} auprès de 3M Digital.`)} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp client</a>
+                  </div>
+                </section>
+
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
                   <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Coordonnées</p><p className="mt-2 font-medium text-slate-950">{selected.email}</p><p className="text-slate-700">{selected.phone}</p>{selected.organization && <p className="mt-2 text-sm text-slate-600">Organisation : {selected.organization}</p>}</div>
                   <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Traitement</p><p className="mt-2 text-sm text-slate-700">Créée le {new Date(selected.createdAt).toLocaleString("fr-FR")}</p>{selected.handledByAdminEmail && <p className="mt-1 text-sm text-slate-700">Dernière action : {selected.handledByAdminEmail}</p>}</div>
                 </div>
 
                 <div className="mt-6 rounded-2xl bg-slate-50 p-5"><p className="text-xs font-bold uppercase tracking-wider text-slate-500">Besoin exprimé</p><p className="mt-3 whitespace-pre-wrap leading-7 text-slate-800">{selected.message}</p></div>
-
-                <div className="mt-6">
-                  <label htmlFor="digital-admin-notes" className="text-sm font-black text-slate-950">Notes internes</label>
-                  <Textarea id="digital-admin-notes" className="mt-2 min-h-28" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Contexte, prochaine action, conditions proposées…" />
-                </div>
-
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                  <Select value={draftStatus} onValueChange={(value) => setDraftStatus(value as RequestStatus)}>
-                    <SelectTrigger className="sm:w-56" aria-label="Statut de la demande 3M Digital"><SelectValue /></SelectTrigger>
-                    <SelectContent>{Object.entries(statusLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
-                  </Select>
-                  <Button onClick={saveRequest} disabled={updateRequest.isPending} className="bg-blue-700 hover:bg-blue-800"><Save className="mr-2 h-4 w-4" /> {updateRequest.isPending ? "Enregistrement…" : "Enregistrer le traitement"}</Button>
-                  <a href={digitalWhatsAppUrl(`Bonjour ${selected.fullName}, nous faisons suite à votre demande ${selected.reference} auprès de 3M Digital.`)} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp client</a>
-                </div>
-                <p className="mt-3 text-xs text-slate-500">Choisissez le statut et rédigez la note, puis enregistrez une seule fois le traitement.</p>
                 <p className="mt-3 text-xs text-slate-500">Relance envoyée via le bureau principal : {COMPANY_CONTACTS.yaounde.label}.</p>
               </Card>
             )}

@@ -5,7 +5,7 @@ import { desc, eq } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
 import { clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
-import { requireAdminSessionFromCookie } from "./adminAuth";
+import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
 
 const candidateFilterSchema = z.object({
@@ -91,6 +91,16 @@ async function resolveCandidateIdForAdmin(candidateId: string) {
   return candidate?.id ?? null;
 }
 
+export async function requireAdminTreatmentSession(cookieHeader: string | undefined, sessionToken: string) {
+  try {
+    return await requireAdminSessionFromCookie(cookieHeader);
+  } catch {
+    // Repli sécurisé pour les aperçus intégrés qui ne transmettent pas le cookie HttpOnly.
+    // Le jeton est validé côté serveur et ne porte aucune identité fournie par le navigateur.
+    return requireValidAdminSession(sessionToken);
+  }
+}
+
 async function loadCandidates(filter: CandidateFilter, sourceLimit = 5000) {
   const db = await getDb();
   if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
@@ -172,7 +182,7 @@ export const adminCandidateManagementRouter = router({
   listPreDossierAccounts: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), search: z.string().trim().max(120).optional().default("") }))
     .query(async ({ input, ctx }) => {
-      await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [accounts, files] = await Promise.all([
@@ -205,7 +215,7 @@ export const adminCandidateManagementRouter = router({
   activatePreDossierAccount: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive(), destination: z.string().trim().min(2).max(100), visaType: z.string().trim().min(2).max(100), adminNotes: z.string().trim().max(5000).optional() }))
     .mutation(async ({ input, ctx }) => {
-      const admin = await requireAdminSessionFromCookie(ctx.req.headers.cookie);
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);

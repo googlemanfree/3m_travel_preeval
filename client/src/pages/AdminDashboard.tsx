@@ -2,7 +2,7 @@
  * Dashboard Administrateur — 3M Travel & Services
  * Gestion unifiée des candidats (dossiers en ligne + dossiers agence)
  */
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import React, { useState, useEffect, useCallback, type ReactNode } from "react";
 import { trpc } from "@/lib/trpc";
 
 function AdminNavGroup({ title, children }: { title: string; children: ReactNode }) {
@@ -76,6 +76,7 @@ import AdminEmailDeliveryManagement from "@/components/AdminEmailDeliveryManagem
 import AdminNotificationBell from "@/components/AdminNotificationBell";
 import AdminAuditLogPanel from "@/components/AdminAuditLogPanel";
 import AdminCandidateActivationPanel from "@/components/AdminCandidateActivationPanel";
+import AdminPreDossierAccountsPanel from "@/components/AdminPreDossierAccountsPanel";
 import { AdminTourismRequests } from "@/components/AdminTourismRequests";
 import { AdminConsularRegistry } from "@/components/AdminConsularRegistry";
 import { AdminDestinationAnalytics } from "@/components/AdminDestinationAnalytics";
@@ -92,6 +93,7 @@ import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationRevi
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
 
@@ -237,7 +239,7 @@ function ActivationBadge({ status }: { status?: string }) {
 
 // ─── Modale : Fiche Candidat ──────────────────────────────────────────────────
 
-function CandidateDetailModal({
+export function CandidateDetailModal({
   candidateId,
   onClose,
   onStatusUpdated,
@@ -251,6 +253,10 @@ function CandidateDetailModal({
   const { toast } = useToast();
   const [notifyClient, setNotifyClient] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<AdminStatus | "">("");
+  const [preDossierDestination, setPreDossierDestination] = useState("");
+  const [preDossierVisaType, setPreDossierVisaType] = useState("");
+  const [preDossierNotes, setPreDossierNotes] = useState("");
+  const [preDossierConfirmationOpen, setPreDossierConfirmationOpen] = useState(false);
   const sessionToken = typeof window !== "undefined"
     ? sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || ""
     : "";
@@ -259,6 +265,8 @@ function CandidateDetailModal({
     { sessionToken, candidateId },
     { enabled: !!candidateId && !!sessionToken }
   );
+  const candidate = data?.candidate;
+  const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -274,6 +282,23 @@ function CandidateDetailModal({
     },
   });
 
+  const activatePreDossierMutation = trpc.adminCandidateManagement.activatePreDossierAccount.useMutation({
+    onSuccess: (result) => {
+      setPreDossierConfirmationOpen(false);
+      toast({ title: "Dossier activé", description: result.emailSent ? "Le dossier est actif dans l’espace client et la confirmation a été envoyée." : "Le dossier est actif dans l’espace client ; la confirmation e-mail devra être relancée." });
+      onStatusUpdated();
+      onClose();
+    },
+    onError: (err) => toast({ title: "Activation impossible", description: err.message, variant: "destructive" }),
+  });
+
+  useEffect(() => {
+    if (!isPreDossierAccount || !candidate) return;
+    setPreDossierDestination(candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry);
+    setPreDossierVisaType(candidate.projectType === "À qualifier" ? "" : candidate.projectType);
+    setPreDossierNotes("");
+  }, [candidate?.id, candidate?.destinationCountry, candidate?.projectType, isPreDossierAccount]);
+
   const handleStatusUpdate = () => {
     if (!selectedStatus) return;
     updateStatusMutation.mutate({
@@ -283,9 +308,6 @@ function CandidateDetailModal({
       notifyClient,
     });
   };
-
-  const candidate = data?.candidate;
-  const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -349,7 +371,25 @@ function CandidateDetailModal({
             </div>
 
             {isPreDossierAccount ? (
-              <AdminPreDossierEvaluationPanel status={candidate.evaluationDeclarationStatus} declaredAt={candidate.evaluationDeclaredAt} />
+              <>
+                <AdminPreDossierEvaluationPanel status={candidate.evaluationDeclarationStatus} declaredAt={candidate.evaluationDeclaredAt} />
+                <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
+                      <h4 className="mt-1 text-lg font-bold text-slate-950">Ouvrir et activer le dossier client</h4>
+                      <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Ce compte est encore pré-dossier : choisissez la destination et la procédure confirmées en agence. L’ouverture crée un dossier traçable, active le suivi client et conserve la note interne.</p>
+                    </div>
+                    <Badge className="w-fit bg-amber-100 text-amber-800">Pré-dossier</Badge>
+                  </div>
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <div><Label htmlFor="predossier-destination-modal">Destination confirmée</Label><Input id="predossier-destination-modal" className="mt-2" value={preDossierDestination} onChange={(event) => setPreDossierDestination(event.target.value)} placeholder="Ex. Canada" /></div>
+                    <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" /></div>
+                  </div>
+                  <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={!preDossierDestination.trim() || !preDossierVisaType.trim() || activatePreDossierMutation.isPending} className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p className="text-xs text-slate-500">Une confirmation explicite est demandée avant création du dossier et notification du client.</p></div>
+                </section>
+              </>
             ) : (
               <Candidate360Workspace
                 sessionToken={sessionToken}
@@ -424,6 +464,18 @@ function CandidateDetailModal({
           <Button variant="outline" onClick={onClose}>Fermer</Button>
           <p className="hidden text-xs text-slate-500 md:block">Toutes les actions sont journalisées dans l’historique du dossier.</p>
         </DialogFooter>
+        <AlertDialog open={preDossierConfirmationOpen} onOpenChange={setPreDossierConfirmationOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmer l’ouverture du dossier ?</AlertDialogTitle>
+              <AlertDialogDescription>Le compte de {candidate?.fullName} deviendra un dossier actif pour {preDossierDestination || "la destination choisie"}. Le client pourra suivre son dossier et recevra une confirmation lorsque l’envoi e-mail est disponible.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={activatePreDossierMutation.isPending}>Annuler</AlertDialogCancel>
+              <AlertDialogAction disabled={activatePreDossierMutation.isPending || !candidate?.internalId} onClick={(event) => { event.preventDefault(); if (candidate?.internalId) activatePreDossierMutation.mutate({ sessionToken, candidateId: candidate.internalId, destination: preDossierDestination.trim(), visaType: preDossierVisaType.trim(), adminNotes: preDossierNotes.trim() || undefined }); }}>{activatePreDossierMutation.isPending ? "Activation…" : "Confirmer l’activation"}</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
@@ -1035,7 +1087,7 @@ export default function AdminDashboard() {
         {/* Onglets : Dossiers, Paiements, Documents, Paramètres Vols */}
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full">
           <div className="mb-6 grid gap-3 xl:grid-cols-5">
-            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="candidates">Dossiers</TabsTrigger><TabsTrigger value="inbox">Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="activations">Activations</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="candidates">Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox">Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="activations">Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism">Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar">Calendrier</TabsTrigger><TabsTrigger value="payments">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails">E-mails</TabsTrigger><TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag">Guides & RAG</TabsTrigger><TabsTrigger value="passport-history">Passeports</TabsTrigger></AdminNavGroup>
@@ -1521,6 +1573,10 @@ export default function AdminDashboard() {
             </div>
           )}
         </Card>
+          </TabsContent>
+
+          <TabsContent value="pre-dossiers" className="space-y-6">
+            <AdminPreDossierAccountsPanel sessionToken={sessionToken} />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">

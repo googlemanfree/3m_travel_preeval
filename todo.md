@@ -48,6 +48,16 @@
 - [x] Ajouter une intégration avec dépôt persistant qui relit statut, note, conseiller et horodatage après mise à jour.
 - [ ] Exécuter une vérification SQL post-correctif sur la demande interne 3M Digital après traitement administrateur.
 
+## Actions directes de traitement administrateur
+- [x] Auditer l’écran 3M Digital afin d’identifier pourquoi les contrôles de traitement ne sont pas accessibles sur une demande ouverte.
+- [x] Rendre visible et utilisable, dans chaque demande 3M Digital ouverte, une action unique de statut et de note interne avec retour de succès ou d’erreur.
+- [x] Auditer les fiches des nouveaux candidats pré-dossier afin d’identifier les contrôles de statut manquants ou masqués.
+- [x] Ajouter des actions directes, sécurisées et traçables pour modifier le statut et activer ou faire progresser un dossier candidat depuis sa fiche administrative.
+- [x] Ajouter des tests d’interface et d’autorisation couvrant les actions 3M Digital et les fiches candidat.
+- [x] Ajouter un test DOM de la fiche pré-dossier couvrant la saisie, la confirmation et l’appel d’activation.
+- [x] Vérifier le rejet lorsque ni cookie administrateur valide ni jeton de session valide ne sont disponibles.
+- [ ] Vérifier dans le navigateur administrateur que les actions sont accessibles, puis publier la correction.
+
 ## Grille tarifaire 3M Digital depuis ITINERAIRES PRO
 - [x] Extraire les offres, prestations, prix et explications utiles du document de référence.
 - [x] Adapter les niveaux de service à 3M Digital sans présenter les tarifs de référence comme des prix 3M confirmés.
