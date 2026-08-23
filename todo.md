@@ -781,7 +781,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
-- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — reporté à la demande de l’utilisateur, en attente de l’activation API par RateHawk ; aucune action supplémentaire à effectuer dans le compte à ce stade.
+- [x] Consigner le report de RateHawk à la demande de l’utilisateur, dans l’attente d’une activation API officielle ; aucune recherche, clé, réservation ou paiement RateHawk n’est engagé à ce stade.
 
 ## Recherche hôtelière Jinko contrôlée
 - [x] Auditer le contrat Jinko actif et le formulaire 3M Booking avant intégration.
@@ -879,7 +879,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre les actions directes de traitement, notes, communication et navigation plus accessibles depuis la fiche 360°.
 - [x] Renforcer la traçabilité des actions critiques et la synchronisation vers le dossier client.
 - [x] Tester les permissions, les contrôles de transition et les actions rapides administratives.
-- [ ] Vérifier le poste publié, puis publier la version validée.
+- [x] Vérifier le poste publié, puis publier la version validée.
 - [x] Remplacer toute simulation d’envoi de reçu de paiement par une mutation serveur réelle, traçable et soumise à confirmation explicite.
 - [x] Ajouter une file de priorités manuelle pour les dossiers, revalidations et paiements nécessitant une action humaine.
-- [ ] Diagnostiquer l’écart entre le checkpoint dd988fc8 et le bundle administrateur servi publiquement, puis revalider visuellement la file de priorités avant de la déclarer disponible.
+- [x] Diagnostiquer l’écart entre le checkpoint dd988fc8 et le bundle administrateur servi publiquement, puis revalider visuellement la file de priorités avant de la déclarer disponible.
