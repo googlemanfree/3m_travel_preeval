@@ -79,6 +79,7 @@ import AiCopilotWidgetEnhanced from "./components/AiCopilotWidgetEnhanced";
 const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"));
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
+import { OfficeContactProvider } from "./contexts/OfficeContactContext";
 
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
@@ -465,31 +466,33 @@ function App() {
         <AnimationPreferencesProvider>
           <FontSizePreferencesProvider>
             <TooltipProvider>
-          <MultiServiceCartProvider>
-          <SessionLoader isLoading={!sessionRestored} />
-          <Toaster />
-          <ChunkReloadNotice />
-          <PwaStatusNotice />
-          {sessionRestored && (
-            <>
-              {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
-              <NavigationProgress />
-              <Navbar />
-              {/* Contenu des pages avec transition douce entre les routes */}
-              <PageTransition>
-                <React.Suspense fallback={<PageLoadingFallback />}>
-                  <Router />
-                </React.Suspense>
-              </PageTransition>
-              {/* Menu d'actions flottantes unifié */}
-               {showFloatingTools && <FloatingActionMenu />}
-              {/* Guide d’information flottant */}
-              <AiCopilotWidgetEnhanced />
-              {/* Assistant intelligent de réservation de vol */}
-              <SmartFlightAssistant />
-            </>
-          )}
-          </MultiServiceCartProvider>
+              <OfficeContactProvider>
+                <MultiServiceCartProvider>
+                  <SessionLoader isLoading={!sessionRestored} />
+                  <Toaster />
+                  <ChunkReloadNotice />
+                  <PwaStatusNotice />
+                  {sessionRestored && (
+                    <>
+                      {/* Header global visible sur toutes les pages avec barre de progression de chargement */}
+                      <NavigationProgress />
+                      <Navbar />
+                      {/* Contenu des pages avec transition douce entre les routes */}
+                      <PageTransition>
+                        <React.Suspense fallback={<PageLoadingFallback />}>
+                          <Router />
+                        </React.Suspense>
+                      </PageTransition>
+                      {/* Menu d'actions flottantes unifié */}
+                      {showFloatingTools && <FloatingActionMenu />}
+                      {/* Guide d’information flottant */}
+                      <AiCopilotWidgetEnhanced />
+                      {/* Assistant intelligent de réservation de vol */}
+                      <SmartFlightAssistant />
+                    </>
+                  )}
+                </MultiServiceCartProvider>
+              </OfficeContactProvider>
           </TooltipProvider>
           </FontSizePreferencesProvider>
         </AnimationPreferencesProvider>

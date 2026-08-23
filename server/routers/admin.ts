@@ -1305,6 +1305,9 @@ export const adminRouter = router({
       search: z.string().optional(),
        status: z.string().optional(),
        activationStatus: z.enum(["ALL", "active", "pending", "expired", "failed", "not_registered"]).optional(),
+       source: z.enum(["WEB", "AGENCY_PHYSICAL", "ACCOUNT_ONLY"]).optional(),
+       destination: z.string().trim().min(1).max(100).optional(),
+       sortBy: z.enum(["priority", "recent", "oldest", "name", "score_desc"]).default("priority"),
        limit: z.number().int().min(1).max(200).default(100),
       offset: z.number().int().min(0).default(0),
     }))
@@ -1479,10 +1482,11 @@ export const adminRouter = router({
             evaluationDeclaredAt: candidate.evaluationDeclaredAt,
           }));
 
-        // Combiner et trier par date de création
-        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
+        let allCandidates = [...normalizedOnline, ...normalizedAgency, ...normalizedAccounts];
+        const availableDestinations = Array.from(
+          new Set(allCandidates.map((candidate) => candidate.destinationCountry).filter(Boolean)),
+        ).sort((a, b) => a.localeCompare(b, "fr"));
 
         // Filtrer par statut
         if (input.status && input.status !== "ALL") {
@@ -1490,6 +1494,13 @@ export const adminRouter = router({
         }
         if (input.activationStatus && input.activationStatus !== "ALL") {
           allCandidates = allCandidates.filter(c => c.activationStatus === input.activationStatus);
+        }
+        if (input.source) {
+          allCandidates = allCandidates.filter(c => c.source === input.source);
+        }
+        if (input.destination) {
+          const destination = input.destination.toLocaleLowerCase("fr-FR");
+          allCandidates = allCandidates.filter(c => c.destinationCountry.toLocaleLowerCase("fr-FR") === destination);
         }
 
         // Filtrer par recherche
@@ -1503,10 +1514,26 @@ export const adminRouter = router({
           );
         }
 
+        const priorityRank = (candidate: (typeof allCandidates)[number]) => {
+          if (candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation") return 0;
+          if (candidate.status === "PENDING_48H") return 1;
+          if (candidate.status === "DOCUMENTS_CHECK") return 2;
+          return 3;
+        };
+        allCandidates.sort((a, b) => {
+          const createdAtDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          if (input.sortBy === "oldest") return -createdAtDiff;
+          if (input.sortBy === "name") return a.fullName.localeCompare(b.fullName, "fr");
+          if (input.sortBy === "score_desc") return (b.scoringTotal ?? -1) - (a.scoringTotal ?? -1) || createdAtDiff;
+          if (input.sortBy === "recent") return createdAtDiff;
+          return priorityRank(a) - priorityRank(b) || -createdAtDiff;
+        });
+
         return {
           success: true,
           candidates: allCandidates,
           total: allCandidates.length,
+          availableDestinations,
         };
       } catch (err) {
         console.error("[Admin List Candidates] Error:", err);

@@ -58,6 +58,10 @@ import {
   ImagePlus,
   ShieldAlert,
   MessageSquare,
+  Filter,
+  ArrowDownUp,
+  Timer,
+  X,
 } from "lucide-react";
 import {
   BarChart,
@@ -198,6 +202,37 @@ const PROJECT_TYPE_OPTIONS = [
   "Visa Étudiant", "Visa Travail", "Visa Tourisme", "Visa Famille",
   "Résidence Permanente", "Visa Affaires", "Autre",
 ];
+
+type ManualPriorityDeadline = {
+  label: string;
+  detail: string;
+  tone: "rose" | "amber" | "emerald" | "slate";
+};
+
+function getManualPriorityDeadline(
+  items: Array<{ createdAt?: Date | string | null }>,
+  targetHours: number,
+): ManualPriorityDeadline {
+  const oldestCreatedAt = items
+    .map((item) => item.createdAt ? new Date(item.createdAt).getTime() : Number.NaN)
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b)[0];
+
+  if (!oldestCreatedAt) {
+    return { label: "Aucun élément", detail: "Aucune échéance à suivre.", tone: "slate" };
+  }
+
+  const remainingMs = oldestCreatedAt + targetHours * 60 * 60 * 1000 - Date.now();
+  const dueAt = new Date(oldestCreatedAt + targetHours * 60 * 60 * 1000);
+  const dueLabel = dueAt.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  if (remainingMs <= 0) {
+    return { label: "Échéance dépassée", detail: `Cible de revue : ${targetHours} h · depuis le ${dueLabel}.`, tone: "rose" };
+  }
+  if (remainingMs <= 12 * 60 * 60 * 1000) {
+    return { label: "À traiter bientôt", detail: `Cible de revue : ${targetHours} h · avant le ${dueLabel}.`, tone: "amber" };
+  }
+  return { label: "Dans le délai cible", detail: `Cible de revue : ${targetHours} h · avant le ${dueLabel}.`, tone: "emerald" };
+}
 
 // ─── Composant Badge Statut ───────────────────────────────────────────────────
 
@@ -688,6 +723,9 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [activationFilter, setActivationFilter] = useState<CandidateActivationStatus | "ALL">("ALL");
+  const [sourceFilter, setSourceFilter] = useState<CandidateSource | "ALL">("ALL");
+  const [destinationFilter, setDestinationFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
   const [showImportModal, setShowImportModal] = useState(false);
@@ -729,6 +767,9 @@ export default function AdminDashboard() {
       search: search || undefined,
       status: statusFilter !== "ALL" ? statusFilter : undefined,
       activationStatus: activationFilter !== "ALL" ? activationFilter : undefined,
+      source: sourceFilter !== "ALL" ? sourceFilter : undefined,
+      destination: destinationFilter !== "ALL" ? destinationFilter : undefined,
+      sortBy,
     },
     { enabled: !!sessionToken }
   );
@@ -855,6 +896,16 @@ export default function AdminDashboard() {
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
+  const availableDestinations = data?.availableDestinations || [];
+  const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || sortBy !== "priority");
+  const resetCandidateFilters = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setActivationFilter("ALL");
+    setSourceFilter("ALL");
+    setDestinationFilter("ALL");
+    setSortBy("priority");
+  };
 
   // Statistiques rapides
   const stats = {
@@ -867,22 +918,26 @@ export default function AdminDashboard() {
     web: candidates.filter((c) => c.source === "WEB").length,
     agency: candidates.filter((c) => c.source === "AGENCY_PHYSICAL").length,
   };
+  const externalEvaluationCandidates = candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation");
+  const pendingEvaluationCandidates = candidates.filter((candidate) => candidate.status === "PENDING_48H");
   const manualPriorities = [
     {
       id: "external-evaluations",
       label: "Évaluations externes à confirmer",
       detail: "Aucune activation de dossier avant décision humaine.",
-      count: candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation").length,
+      count: externalEvaluationCandidates.length,
       tab: "pre-dossiers",
       tone: "amber",
+      deadline: getManualPriorityDeadline(externalEvaluationCandidates, 24),
     },
     {
       id: "evaluation-48h",
       label: "Bilans à relire",
       detail: "Vérifier le bilan avant sa décision de procédure.",
-      count: stats.pending,
+      count: pendingEvaluationCandidates.length,
       tab: "evaluation-review",
       tone: "blue",
+      deadline: getManualPriorityDeadline(pendingEvaluationCandidates, 48),
     },
     {
       id: "payments",
@@ -891,6 +946,7 @@ export default function AdminDashboard() {
       count: pendingPaymentApplications.length,
       tab: "payments",
       tone: "orange",
+      deadline: getManualPriorityDeadline(pendingPaymentApplications, 24),
     },
     {
       id: "flight-requests",
@@ -899,6 +955,7 @@ export default function AdminDashboard() {
       count: flightQueueSummary?.pending_review ?? 0,
       tab: "flights",
       tone: "sky",
+      deadline: { label: "Revue manuelle", detail: "Cible opérationnelle : vérifier avant émission ou notification.", tone: "slate" },
     },
   ] as const;
 
@@ -1063,6 +1120,7 @@ export default function AdminDashboard() {
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {manualPriorities.map((priority) => {
               const tone = priority.tone === "amber" ? "border-amber-200 bg-amber-50" : priority.tone === "orange" ? "border-orange-200 bg-orange-50" : priority.tone === "sky" ? "border-sky-200 bg-sky-50" : "border-blue-200 bg-blue-50";
+              const deadlineTone = priority.deadline.tone === "rose" ? "border-rose-200 bg-rose-100 text-rose-800" : priority.deadline.tone === "amber" ? "border-amber-200 bg-amber-100 text-amber-800" : priority.deadline.tone === "emerald" ? "border-emerald-200 bg-emerald-100 text-emerald-800" : "border-slate-200 bg-slate-100 text-slate-700";
               return (
                 <button
                   key={priority.id}
@@ -1073,6 +1131,8 @@ export default function AdminDashboard() {
                 >
                   <div className="flex items-start justify-between gap-3"><span className="text-sm font-bold text-slate-900">{priority.label}</span><span className="rounded-full bg-white px-2 py-0.5 text-lg font-black text-slate-950">{priority.count}</span></div>
                   <p className="mt-3 text-xs leading-5 text-slate-600">{priority.detail}</p>
+                  <span className={`mt-3 flex w-fit items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${deadlineTone}`}><Timer className="h-3 w-3" />{priority.deadline.label}</span>
+                  <p className="mt-2 text-[11px] leading-4 text-slate-600">{priority.deadline.detail}</p>
                   <span className="mt-3 inline-block text-xs font-bold text-blue-800">Ouvrir le module →</span>
                 </button>
               );
@@ -1500,7 +1560,8 @@ export default function AdminDashboard() {
 
           <TabsContent value="candidates" className="space-y-6">
             {/* Filtres & Recherche */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 xl:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
@@ -1539,6 +1600,34 @@ export default function AdminDashboard() {
               ))}
             </SelectContent>
           </Select>
+          </div>
+          <div className="flex flex-col gap-3 lg:flex-row">
+            <Select value={sourceFilter} onValueChange={(value) => setSourceFilter(value as CandidateSource | "ALL")}>
+              <SelectTrigger className="w-full lg:w-48" aria-label="Filtrer par source"><SelectValue placeholder="Toutes les sources" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Toutes les sources</SelectItem>
+                {Object.entries(SOURCE_CONFIG).map(([key, config]) => <SelectItem key={key} value={key}>{config.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={destinationFilter} onValueChange={setDestinationFilter}>
+              <SelectTrigger className="w-full lg:w-52" aria-label="Filtrer par destination"><SelectValue placeholder="Toutes les destinations" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Toutes les destinations</SelectItem>
+                {availableDestinations.map((destination) => <SelectItem key={destination} value={destination}>{destination}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+              <SelectTrigger className="w-full lg:w-56" aria-label="Trier les dossiers"><ArrowDownUp className="mr-2 h-4 w-4" /><SelectValue placeholder="Trier les dossiers" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="priority">Priorités d’abord</SelectItem>
+                <SelectItem value="recent">Plus récents</SelectItem>
+                <SelectItem value="oldest">Plus anciens</SelectItem>
+                <SelectItem value="name">Nom du candidat</SelectItem>
+                <SelectItem value="score_desc">Score décroissant</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasCandidateFilters && <Button type="button" variant="outline" onClick={resetCandidateFilters} className="gap-2"><X className="h-4 w-4" />Réinitialiser</Button>}
+          </div>
         </div>
 
         {/* Tableau */}
@@ -1574,7 +1663,7 @@ export default function AdminDashboard() {
                     <td colSpan={9} className="px-4 py-12 text-center text-gray-500">
                       <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                       <p>Aucun candidat trouvé</p>
-                      {(search || statusFilter !== "ALL" || activationFilter !== "ALL") && (
+                      {hasCandidateFilters && (
                         <p className="text-xs mt-1">Essayez de modifier vos filtres</p>
                       )}
                     </td>

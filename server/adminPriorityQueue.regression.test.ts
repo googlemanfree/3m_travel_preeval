@@ -12,6 +12,9 @@ describe("file de priorités manuelle administrateur", () => {
     expect(dashboard).toContain("Évaluations externes à confirmer");
     expect(dashboard).toContain("Paiements à contrôler");
     expect(dashboard).toContain("Réservations vol à traiter");
+    expect(dashboard).toContain("getManualPriorityDeadline");
+    expect(dashboard).toContain("Échéance dépassée");
+    expect(dashboard).toContain("Cible de revue");
   });
 
   it("oriente vers les modules existants plutôt que de modifier les dossiers", () => {

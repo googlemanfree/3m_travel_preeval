@@ -883,3 +883,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer toute simulation d’envoi de reçu de paiement par une mutation serveur réelle, traçable et soumise à confirmation explicite.
 - [x] Ajouter une file de priorités manuelle pour les dossiers, revalidations et paiements nécessitant une action humaine.
 - [x] Diagnostiquer l’écart entre le checkpoint dd988fc8 et le bundle administrateur servi publiquement, puis revalider visuellement la file de priorités avant de la déclarer disponible.
+
+## Stabilisation contact et pilotage administrateur
+- [ ] Placer `OfficeContactProvider` dans le layout global et vérifier l’absence d’erreur de contexte sur `/contact`, `/about`, `/panier` et `/login`.
+- [ ] Ajouter des échéances calculées et des indicateurs visuels explicites à la file de priorités manuelle, sans déclenchement automatique.
+- [ ] Renforcer la recherche et les filtres de tri du registre administrateur, avec des critères stables et accessibles.
+- [ ] Effectuer l’envoi réel d’un reçu de paiement uniquement sur une transaction de test `SUCCESS` validée manuellement, après confirmation explicite de l’identifiant et de l’adresse de réception contrôlée.
