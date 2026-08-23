@@ -75,6 +75,7 @@ import { routeHealthRouter } from "./routers/routeHealthRouter";
 import { richTextTemplatesRouter } from "./routers/richTextTemplatesRouter";
 import { consularRegistryRouter } from "./routers/consularRegistryRouter";
 import { digitalServicesRouter } from "./routers/digitalServices";
+import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -154,6 +155,7 @@ export const appRouter = router({
   routeHealth: routeHealthRouter,
   richTextTemplates: richTextTemplatesRouter,
   digitalServices: digitalServicesRouter,
+  jinkoHotels: jinkoHotelSearchRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,
   reassurance: reassuranceRouter,

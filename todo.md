@@ -783,6 +783,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
 - [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — en attente de l’activation API par RateHawk ; aucune action supplémentaire à effectuer dans le compte à ce stade.
 
+## Recherche hôtelière Jinko contrôlée
+- [x] Auditer le contrat Jinko actif et le formulaire 3M Booking avant intégration.
+- [x] Créer une procédure serveur Jinko limitée à la recherche, protégée contre réservation, paiement, création de voyage et annulation.
+- [x] Afficher les résultats Jinko avec provenance, date de recherche et message de confirmation humaine des tarifs et disponibilités.
+- [x] Permettre au client de transmettre volontairement une offre recherchée dans sa demande 3M Booking, sans réservation automatique.
+- [x] Tester les validations d’entrée, les autorisations, l’absence d’actions transactionnelles et le parcours de sélection.
+- [x] Vérifier la suite complète puis publier uniquement après contrôle final.
+
 ## Audit transversal des parcours opérationnels
 - [x] Auditer le parcours 3M Booking, le catalogue hôtelier et le transfert vers le back-office.
 - [x] Auditer le parcours de recherche et de traitement des réservations de vol.
