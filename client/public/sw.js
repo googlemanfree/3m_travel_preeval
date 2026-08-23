@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v5-digital-services';
+const CACHE_NAME = '3m-travel-pwa-v6-jinko-booking-flow';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
