@@ -841,9 +841,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Rendre visible la revalidation conseiller et son horodatage dans les deux espaces selon les droits d’accès.
 - [x] Ajouter des actions de communication prudentes vers le client, sans promettre une disponibilité ni créer de réservation.
 - [x] Tester les droits, le filtrage, les états et la synchronisation client-administration.
-- [ ] Vérifier les deux espaces et publier la version validée.
+- [x] Vérifier les deux espaces et publier la version validée.
 - [x] Corriger l’ordre de rendu de la page Vols afin que 3M Booking et la recherche Jinko apparaissent avant le pied de page.
-- [ ] Renouveler le cache PWA puis confirmer que la version publiée affiche 3M Booking avant le pied de page.
+- [x] Renouveler le cache PWA puis confirmer que la version publiée affiche 3M Booking avant le pied de page.
+- [x] Diagnostiquer et corriger le bouton « Vérifier » de la recherche Jinko lorsque la requête ne démarre pas ou ne produit aucun retour visible.
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
