@@ -871,4 +871,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des commandes administratives explicites pour valider, corriger ou refuser une évaluation externe avant de faire avancer le dossier.
 - [x] Synchroniser de manière sécurisée l’état validé, les notes autorisées et la prochaine action dans l’espace candidat.
 - [x] Tester les droits, les validations, les refus, les transitions et l’historique sans valider automatiquement un résultat.
-- [ ] Vérifier les parcours client et administrateur, puis publier la version validée.
+- [x] Vérifier les parcours client et administrateur, puis publier la version validée.
