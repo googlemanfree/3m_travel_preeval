@@ -413,7 +413,7 @@ export default function Register() {
                   );
                 })}
               </div>
-              {form.evaluationAlreadyCompleted === "yes" && <p className="mt-3 text-xs font-medium text-emerald-800">Votre étape d’évaluation sera indiquée comme reçue dans votre espace après l’activation du compte.</p>}
+              {form.evaluationAlreadyCompleted === "yes" && <p className="mt-3 text-xs font-medium text-amber-800">Votre évaluation sera déclarée dans votre espace, puis vérifiée manuellement par notre équipe avant toute mise à jour officielle du dossier.</p>}
             </fieldset>
 
             {/* Portrait humain obligatoire */}

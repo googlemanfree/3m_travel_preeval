@@ -206,10 +206,71 @@ export const adminCandidateManagementRouter = router({
           createdAt: account.createdAt,
           lastLoginAt: account.lastLoginAt,
           documentsCount: documentsByCandidate.get(account.id) ?? 0,
-          pendingEvaluationReference: account.evaluationDeclarationStatus === "declared_complete" ? "Évaluation déclarée" : null,
-          evaluationValidated: false,
+          pendingEvaluationReference: account.evaluationDeclarationStatus === "pending_validation" ? "Évaluation externe à valider" : null,
+          evaluationDeclarationStatus: account.evaluationDeclarationStatus,
+          evaluationReviewedAt: account.evaluationReviewedAt,
+          evaluationReviewedBy: account.evaluationReviewedBy,
+          evaluationReviewNote: account.evaluationReviewNote,
+          evaluationValidated: account.evaluationDeclarationStatus === "validated",
         })),
       };
+    }),
+
+  reviewEvaluationDeclaration: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      decision: z.enum(["validate", "refuse", "request_correction"]),
+      note: z.string().trim().max(1000).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      if (candidate.evaluationDeclarationStatus === "not_declared") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Ce candidat n’a pas déclaré d’évaluation externe à vérifier." });
+      }
+      if (input.decision !== "validate" && !input.note?.trim()) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Une note de correction ou de refus est requise." });
+      }
+
+      const nextStatus = input.decision === "validate"
+        ? "validated"
+        : input.decision === "refuse"
+          ? "refused"
+          : "pending_validation";
+      const reviewedAt = new Date();
+      await db.update(candidates).set({
+        evaluationDeclarationStatus: nextStatus,
+        evaluationReviewedAt: reviewedAt,
+        evaluationReviewedBy: admin.email,
+        evaluationReviewNote: input.note?.trim() || null,
+      }).where(eq(candidates.id, candidate.id));
+
+      const visibleMessage = input.decision === "validate"
+        ? "Votre évaluation transmise avant la création du compte a été vérifiée par notre équipe. Votre dossier peut poursuivre son traitement selon les étapes confirmées."
+        : input.decision === "refuse"
+          ? "Notre équipe n’a pas pu valider l’évaluation déclarée. Consultez la prochaine action indiquée et contactez-nous si vous disposez d’un document complémentaire."
+          : "Notre équipe a besoin d’un complément pour vérifier l’évaluation déclarée avant la poursuite de votre dossier.";
+      const notificationResult = await db.insert(clientNotifications).values({
+        candidateId: candidate.id,
+        type: "admin_remark",
+        title: input.decision === "validate" ? "Évaluation vérifiée" : "Vérification de votre évaluation",
+        body: visibleMessage,
+        actionUrl: "/mon-espace",
+        isRead: false,
+      });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId: candidate.id,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: visibleMessage,
+        isRead: false,
+      });
+      return { success: true, status: nextStatus, reviewedAt, reviewedBy: admin.email };
     }),
 
   activatePreDossierAccount: publicProcedure
@@ -221,6 +282,9 @@ export const adminCandidateManagementRouter = router({
       const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
       if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
       if (candidate.dossierStatus !== "nouveau") throw new TRPCError({ code: "CONFLICT", message: "Ce compte possède déjà un dossier actif." });
+      if (candidate.evaluationDeclarationStatus !== "not_declared" && candidate.evaluationDeclarationStatus !== "validated") {
+        throw new TRPCError({ code: "CONFLICT", message: "L’évaluation déclarée doit être validée manuellement avant l’ouverture du dossier." });
+      }
       const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(1);
       if (existing.length) throw new TRPCError({ code: "CONFLICT", message: "Un dossier agence existe déjà pour ce candidat." });
       await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });

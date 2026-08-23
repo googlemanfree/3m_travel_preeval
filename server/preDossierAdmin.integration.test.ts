@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({
     phone: "+237698104832",
     destination: "canada",
     dossierStatus: "nouveau",
-    evaluationDeclarationStatus: "declared_complete",
+    evaluationDeclarationStatus: "pending_validation",
     evaluationDeclaredAt: new Date("2026-08-22T10:00:00.000Z"),
     createdAt: new Date("2026-08-22T09:00:00.000Z"),
     updatedAt: new Date("2026-08-22T10:00:00.000Z"),
@@ -44,7 +44,7 @@ import { adminRouter } from "./routers/admin";
 
 describe("back-office — compte pré-dossier avec évaluation déclarée", () => {
   beforeEach(() => {
-    state.account.evaluationDeclarationStatus = "declared_complete";
+    state.account.evaluationDeclarationStatus = "pending_validation";
   });
 
   it("liste un compte sans dossier avec la source et le statut synchronisés", async () => {
@@ -55,7 +55,7 @@ describe("back-office — compte pré-dossier avec évaluation déclarée", () =
     expect(result.candidates[0]).toMatchObject({
       id: "account_701",
       source: "ACCOUNT_ONLY",
-      evaluationDeclarationStatus: "declared_complete",
+      evaluationDeclarationStatus: "pending_validation",
       folderCode: "COMPTE-00701",
     });
   });
@@ -67,7 +67,7 @@ describe("back-office — compte pré-dossier avec évaluation déclarée", () =
     expect(result.candidate).toMatchObject({
       id: "account_701",
       source: "ACCOUNT_ONLY",
-      evaluationDeclarationStatus: "declared_complete",
+      evaluationDeclarationStatus: "pending_validation",
       internalStatus: "nouveau",
     });
     expect(result.candidate.evaluationDeclaredAt).toEqual(state.account.evaluationDeclaredAt);

@@ -39,14 +39,14 @@ describe("candidate.register — déclaration d’évaluation préalable", () =>
     state.inserted.length = 0;
   });
 
-  it("persiste une déclaration reçue lorsque le candidat répond oui", async () => {
+  it("persiste une déclaration en attente de validation lorsque le candidat répond oui", async () => {
     const caller = candidateRouter.createCaller({} as any);
     const result = await caller.register({ ...payload, evaluationAlreadyCompleted: true });
 
     expect(result.candidateId).toBe(1);
     expect(state.inserted).toHaveLength(1);
     expect(state.inserted[0]).toMatchObject({
-      evaluationDeclarationStatus: "declared_complete",
+      evaluationDeclarationStatus: "pending_validation",
       dossierStatus: "nouveau",
     });
     expect(state.inserted[0].evaluationDeclaredAt).toBeInstanceOf(Date);

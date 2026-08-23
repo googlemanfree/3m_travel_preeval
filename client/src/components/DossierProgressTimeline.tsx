@@ -80,11 +80,15 @@ export default function DossierProgressTimeline({
   evaluationDeclarationStatus?: EvaluationDeclarationStatus | null;
 }) {
   const isRefused = dossierStatus === "refuse";
-  const evaluationDeclared = isEvaluationDeclarationComplete(evaluationDeclarationStatus);
+  const evaluationValidated = isEvaluationDeclarationComplete(evaluationDeclarationStatus);
   const currentStageIndex = getStageIndex(dossierStatus);
   const currentStageLabel = getStageLabel(dossierStatus);
-  const message = evaluationDeclared && currentStageIndex === 0
-    ? "Votre évaluation a été indiquée comme reçue. Notre équipe l’associera à votre dossier pour la suite."
+  const message = evaluationDeclarationStatus === "pending_validation" && currentStageIndex === 0
+    ? "Votre évaluation déclarée est en cours de vérification par notre équipe avant la suite du dossier."
+    : evaluationDeclarationStatus === "refused" && currentStageIndex === 0
+      ? "Un complément est nécessaire pour vérifier l’évaluation déclarée. Consultez la prochaine action indiquée par notre équipe."
+    : evaluationValidated && currentStageIndex === 0
+    ? "Votre évaluation a été vérifiée par notre équipe. Votre dossier peut poursuivre son traitement selon les étapes confirmées."
     : STAGE_MESSAGES[dossierStatus] || "Votre dossier progresse — nous vous tiendrons informé à chaque étape.";
   const [hasNewStage, setHasNewStage] = useState(false);
 
@@ -157,12 +161,12 @@ export default function DossierProgressTimeline({
           style={{ width: `${(currentStageIndex / (STAGE_GROUPS.length - 1)) * 100}%`, zIndex: 0 }}
         />
         {STAGE_GROUPS.map((stage, i) => {
-          const isDone = i < currentStageIndex || (stage.key === "evaluation" && evaluationDeclared);
+          const isDone = i < currentStageIndex || (stage.key === "evaluation" && evaluationValidated);
           const isCurrent = i === currentStageIndex && !isDone;
           return (
             <div key={stage.key} className="flex flex-col items-center gap-2 relative z-10 flex-1">
               <div
-                aria-label={stage.key === "evaluation" && evaluationDeclared ? "Évaluation déclarée comme reçue" : undefined}
+                aria-label={stage.key === "evaluation" && evaluationValidated ? "Évaluation validée par l’équipe" : undefined}
                 className={`w-10 h-10 rounded-full flex items-center justify-center text-lg border-2 transition-all ${
                   isRefused && isCurrent
                     ? "bg-red-50 border-red-400"

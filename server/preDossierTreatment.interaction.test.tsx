@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 
 const getCandidateDetails = vi.fn();
 const activatePreDossierAccount = vi.fn();
+const reviewEvaluationDeclaration = vi.fn();
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
@@ -15,6 +16,7 @@ vi.mock("@/lib/trpc", () => ({
     },
     adminCandidateManagement: {
       activatePreDossierAccount: { useMutation: () => ({ mutate: activatePreDossierAccount, isPending: false }) },
+      reviewEvaluationDeclaration: { useMutation: () => ({ mutate: reviewEvaluationDeclaration, isPending: false }) },
     },
   },
 }));
@@ -41,7 +43,7 @@ describe("CandidateDetailModal — traitement d’un compte pré-dossier", () =>
           status: "PENDING_48H",
           source: "ACCOUNT_ONLY",
           scoringTotal: null,
-          evaluationDeclarationStatus: "declared_complete",
+          evaluationDeclarationStatus: "validated",
           evaluationDeclaredAt: new Date("2026-08-22T10:00:00.000Z"),
         },
       },

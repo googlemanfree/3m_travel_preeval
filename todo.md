@@ -781,7 +781,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Comparer les fournisseurs professionnels de contenu hôtelier et leurs possibilités d’accès pour 3M Booking
 - [x] Vérifier si un connecteur ou des identifiants RateHawk sont déjà disponibles dans la session
 - [x] Définir le contrat RateHawk pour recherche, tarifs, pré-vérification et transfert vers le back-office
-- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — en attente de l’activation API par RateHawk ; aucune action supplémentaire à effectuer dans le compte à ce stade.
+- [ ] Configurer des identifiants RateHawk de test et vérifier les recherches prioritaires d’Afrique centrale — reporté à la demande de l’utilisateur, en attente de l’activation API par RateHawk ; aucune action supplémentaire à effectuer dans le compte à ce stade.
 
 ## Recherche hôtelière Jinko contrôlée
 - [x] Auditer le contrat Jinko actif et le formulaire 3M Booking avant intégration.
@@ -863,3 +863,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser chaque mise à jour de statut via l’administration avec le dossier 360°, son historique et la notification client associée.
 - [x] Tester les droits, formulaires, parcours et synchronisations de procédure.
 - [x] Vérifier les vues publiées côté client et administration, puis publier la version validée.
+
+## Évaluations pré-inscription et validations administratives
+- [x] Auditer la déclaration « évaluation déjà effectuée », les données de dossier et les validations existantes.
+- [x] Distinguer côté client l’évaluation déclarée de l’évaluation effectivement validée par un administrateur.
+- [x] Définir les transitions de dossier autorisées après chaque validation humaine, avec historique obligatoire.
+- [x] Ajouter des commandes administratives explicites pour valider, corriger ou refuser une évaluation externe avant de faire avancer le dossier.
+- [x] Synchroniser de manière sécurisée l’état validé, les notes autorisées et la prochaine action dans l’espace candidat.
+- [x] Tester les droits, les validations, les refus, les transitions et l’historique sans valider automatiquement un résultat.
+- [ ] Vérifier les parcours client et administrateur, puis publier la version validée.

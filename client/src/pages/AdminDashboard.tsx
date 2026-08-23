@@ -93,6 +93,7 @@ import { AdvisorEvaluationReviewQueue } from "@/components/AdvisorEvaluationRevi
 import { BilanReminderDashboard } from "@/components/BilanReminderDashboard";
 import { EvaluationDeclarationBadge } from "@/components/EvaluationDeclarationBadge";
 import { AdminPreDossierEvaluationPanel } from "@/components/AdminPreDossierEvaluationPanel";
+import type { EvaluationDeclarationStatus } from "@shared/evaluationDeclaration";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatAdminSyncTime } from "@shared/adminSync";
@@ -121,8 +122,11 @@ interface Candidate {
   createdAt: Date | string;
   updatedAt: Date | string;
   activationStatus: CandidateActivationStatus;
-  evaluationDeclarationStatus?: "not_declared" | "declared_complete";
+  evaluationDeclarationStatus?: EvaluationDeclarationStatus;
   evaluationDeclaredAt?: Date | string | null;
+  evaluationReviewedAt?: Date | string | null;
+  evaluationReviewedBy?: string | null;
+  evaluationReviewNote?: string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -267,6 +271,9 @@ export function CandidateDetailModal({
   );
   const candidate = data?.candidate;
   const isPreDossierAccount = candidate?.source === "ACCOUNT_ONLY";
+  const evaluationBlocksActivation = isPreDossierAccount
+    && candidate?.evaluationDeclarationStatus !== "not_declared"
+    && candidate?.evaluationDeclarationStatus !== "validated";
 
   const updateStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
     onSuccess: (result) => {
@@ -290,6 +297,15 @@ export function CandidateDetailModal({
       onClose();
     },
     onError: (err) => toast({ title: "Activation impossible", description: err.message, variant: "destructive" }),
+  });
+
+  const reviewEvaluationMutation = trpc.adminCandidateManagement.reviewEvaluationDeclaration.useMutation({
+    onSuccess: (result) => {
+      toast({ title: result.status === "validated" ? "Évaluation validée" : "Décision enregistrée", description: "La décision est tracée et le suivi candidat a été synchronisé." });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Décision impossible", description: err.message, variant: "destructive" }),
   });
 
   useEffect(() => {
@@ -372,13 +388,22 @@ export function CandidateDetailModal({
 
             {isPreDossierAccount ? (
               <>
-                <AdminPreDossierEvaluationPanel status={candidate.evaluationDeclarationStatus} declaredAt={candidate.evaluationDeclaredAt} />
+                <AdminPreDossierEvaluationPanel
+                  status={candidate.evaluationDeclarationStatus}
+                  declaredAt={candidate.evaluationDeclaredAt}
+                  reviewedAt={candidate.evaluationReviewedAt}
+                  reviewedBy={candidate.evaluationReviewedBy}
+                  reviewNote={candidate.evaluationReviewNote}
+                  isReviewing={reviewEvaluationMutation.isPending}
+                  onReview={(decision, note) => reviewEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, decision, note })}
+                />
                 <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                     <div>
                       <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Action de traitement requise</p>
                       <h4 className="mt-1 text-lg font-bold text-slate-950">Ouvrir et activer le dossier client</h4>
                       <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Ce compte est encore pré-dossier : choisissez la destination et la procédure confirmées en agence. L’ouverture crée un dossier traçable, active le suivi client et conserve la note interne.</p>
+                      {evaluationBlocksActivation && <p className="mt-2 text-sm font-medium text-amber-800">Validez d’abord l’évaluation déclarée ou demandez un complément avant d’ouvrir le dossier.</p>}
                     </div>
                     <Badge className="w-fit bg-amber-100 text-amber-800">Pré-dossier</Badge>
                   </div>
@@ -387,7 +412,7 @@ export function CandidateDetailModal({
                     <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" /></div>
                   </div>
                   <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={!preDossierDestination.trim() || !preDossierVisaType.trim() || activatePreDossierMutation.isPending} className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p className="text-xs text-slate-500">Une confirmation explicite est demandée avant création du dossier et notification du client.</p></div>
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={!preDossierDestination.trim() || !preDossierVisaType.trim() || evaluationBlocksActivation || activatePreDossierMutation.isPending} className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p className="text-xs text-slate-500">Une confirmation explicite est demandée avant création du dossier et notification du client.</p></div>
                 </section>
               </>
             ) : (

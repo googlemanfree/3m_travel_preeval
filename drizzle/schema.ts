@@ -162,8 +162,11 @@ export const candidates = mysqlTable("candidates", {
   // Déclaration faite par le candidat à la création du compte. Elle indique
   // qu’un résultat d’évaluation existe déjà, sans le présenter comme validé
   // tant que l’équipe n’a pas rapproché le dossier.
-  evaluationDeclarationStatus: mysqlEnum("evaluationDeclarationStatus", ["not_declared", "declared_complete"]).default("not_declared").notNull(),
+  evaluationDeclarationStatus: mysqlEnum("evaluationDeclarationStatus", ["not_declared", "pending_validation", "validated", "refused"]).default("not_declared").notNull(),
   evaluationDeclaredAt: timestamp("evaluationDeclaredAt"),
+  evaluationReviewedAt: timestamp("evaluationReviewedAt"),
+  evaluationReviewedBy: varchar("evaluationReviewedBy", { length: 320 }),
+  evaluationReviewNote: text("evaluationReviewNote"),
   dossierNote: text("dossierNote"),         // Note interne du conseiller
   formulaChosen: varchar("formulaChosen", { length: 100 }), // integral / echelonne / garanti
   // Scoring
