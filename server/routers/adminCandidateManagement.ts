@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { desc, eq } from "drizzle-orm";
 import { applications, agencyDossiers, clientDocuments, candidateFiles, candidateMessages, candidates } from "../../drizzle/schema";
-import { clientNotifications } from "../../drizzle/caseTrackingSchema";
+import { caseActivityLogs, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
 import { getDb } from "../db";
 import { requireAdminSessionFromCookie, requireValidAdminSession } from "./adminAuth";
 import { sendClientNotificationEmail, sendDossierConfirmationEmail } from "../emailService";
@@ -324,7 +324,7 @@ export const adminCandidateManagementRouter = router({
       if (source === "online") {
         const allowed = ["nouveau", "en_evaluation", "bilan_envoye", "en_attente_paiement", "paye", "en_attente_documents", "documents_recus", "soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier en ligne invalide." });
-        const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, fullName: applications.fullName, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus }).from(applications).where(eq(applications.id, id)).limit(1);
+        const [record] = await db.select({ candidateId: applications.candidateId, email: applications.email, fullName: applications.fullName, dossierNumber: applications.dossierNumber, dossierStatus: applications.dossierStatus, destination: applications.destination, visaType: applications.visaType }).from(applications).where(eq(applications.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier en ligne introuvable." });
         candidateIdForMessage = record.candidateId ?? null;
         candidateEmailForNotification = record.email;
@@ -355,7 +355,7 @@ export const adminCandidateManagementRouter = router({
       } else {
         const allowed = ["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"] as const;
         if (!(allowed as readonly string[]).includes(input.status)) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut de dossier agence invalide." });
-        const [record] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, status: agencyDossiers.status }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
+        const [record] = await db.select({ email: agencyDossiers.email, fullName: agencyDossiers.fullName, status: agencyDossiers.status, destination: agencyDossiers.destination, visaType: agencyDossiers.visaType }).from(agencyDossiers).where(eq(agencyDossiers.id, id)).limit(1);
         if (!record) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
         previousStatus = record.status;
         candidateEmailForNotification = record.email;
@@ -376,6 +376,49 @@ export const adminCandidateManagementRouter = router({
         }).where(eq(agencyDossiers.id, id));
         const affectedRows = Number((result as unknown as [{ affectedRows?: number }])[0]?.affectedRows ?? 0);
         if (affectedRows === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier agence introuvable." });
+      }
+
+      const [existingCase] = source === "online"
+        ? await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyApplicationId, id)).limit(1)
+        : await db.select({ id: cases.id }).from(cases).where(eq(cases.legacyAgencyDossierId, id)).limit(1);
+      let synchronizedCaseId = existingCase?.id ?? null;
+      if (synchronizedCaseId) {
+        await db.update(cases).set({
+          currentStatus: input.status,
+          ...(input.destination !== undefined ? { countryTarget: input.destination } : {}),
+          ...(input.visaType !== undefined ? { visaType: input.visaType } : {}),
+        }).where(eq(cases.id, synchronizedCaseId));
+      } else {
+        const [caseInsert] = await db.insert(cases).values({
+          caseNumber: dossierNumberForMessage,
+          candidateId: candidateIdForMessage,
+          sourceChannel: source === "online" ? "online" : "agency_manual",
+          ...(source === "online" ? { legacyApplicationId: id } : { legacyAgencyDossierId: id }),
+          countryTarget: input.destination ?? null,
+          caseType: source === "online" ? "procedure_en_ligne" : "procedure_agence",
+          visaType: input.visaType ?? null,
+          currentStatus: input.status,
+          openedAt: new Date(),
+        });
+        synchronizedCaseId = Number(caseInsert.insertId);
+      }
+
+      if (synchronizedCaseId && previousStatus !== input.status) {
+        await db.insert(caseStatusHistory).values({
+          caseId: synchronizedCaseId,
+          oldStatus: previousStatus || null,
+          newStatus: input.status,
+          changedByRole: "admin",
+          comment: "Statut de procédure synchronisé depuis le back-office.",
+        });
+        await db.insert(caseActivityLogs).values({
+          caseId: synchronizedCaseId,
+          actorRole: "admin",
+          actionType: "procedure_status_synchronized",
+          entityType: source === "online" ? "application" : "agency_dossier",
+          entityId: String(id),
+          description: `Statut synchronisé de ${previousStatus || "non défini"} vers ${input.status} par ${admin.email}.`,
+        });
       }
 
       if (candidateIdForMessage && Object.keys(profilePatch).length > 0) {
@@ -400,6 +443,7 @@ export const adminCandidateManagementRouter = router({
         const agencyResponse = ["soumis_agences", "en_cours_recrutement", "contrat_obtenu", "visa_approuve", "approuve", "soumis"].includes(input.status);
         const notificationResult = await db.insert(clientNotifications).values({
           candidateId: candidateIdForMessage,
+          caseId: synchronizedCaseId,
           type: agencyResponse ? "agency_response" : input.adminNotes ? "admin_remark" : "admin_status_update",
           title: agencyResponse ? "Réponse de l’agence de placement" : input.adminNotes ? "Nouvelle remarque de l’administration" : "Mise à jour de votre dossier",
           body: visibleBody,

@@ -14,7 +14,7 @@ import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { randomBytes, randomInt } from "node:crypto";
 import { candidateProcedure } from "./candidate";
-import { caseApplicants, caseStatusHistory, cases, clientNotifications } from "../../drizzle/caseTrackingSchema";
+import { caseApplicants, caseStatusHistory, cases, clientNotifications, documentRequirements } from "../../drizzle/caseTrackingSchema";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -927,6 +927,51 @@ export const applicationRouter = router({
       if (app.email.toLowerCase() !== input.email.toLowerCase()) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Email incorrect pour ce dossier.' });
       }
+      const [caseRecord] = await db
+        .select({
+          id: cases.id,
+          countryTarget: cases.countryTarget,
+          caseType: cases.caseType,
+          visaType: cases.visaType,
+          currentStatus: cases.currentStatus,
+          dueAt: cases.dueAt,
+        })
+        .from(cases)
+        .where(eq(cases.legacyApplicationId, app.id))
+        .limit(1);
+
+      const procedureTracking = caseRecord
+        ? await (async () => {
+          const requirements = await db
+            .select({
+              documentType: documentRequirements.documentType,
+              status: documentRequirements.status,
+              dueAt: documentRequirements.dueAt,
+            })
+            .from(documentRequirements)
+            .where(eq(documentRequirements.caseId, caseRecord.id));
+          const required = requirements.filter((requirement) => requirement.status !== "waived");
+          const completed = required.filter((requirement) => requirement.status === "approved").length;
+          const nextRequirement = required.find((requirement) => ["pending", "rejected"].includes(requirement.status));
+          return {
+            destination: caseRecord.countryTarget ?? app.destination,
+            procedure: caseRecord.visaType ?? caseRecord.caseType ?? app.visaType ?? null,
+            status: caseRecord.currentStatus,
+            dueAt: caseRecord.dueAt,
+            documents: requirements,
+            summary: { required: required.length, completed },
+            nextAction: nextRequirement
+              ? {
+                title: nextRequirement.status === "rejected" ? "Document à corriger" : "Document attendu",
+                description: `Votre conseiller attend : ${nextRequirement.documentType}.`,
+              }
+              : {
+                title: "Suivi par votre conseiller",
+                description: "Votre dossier est suivi selon les étapes de votre procédure. Nous vous informerons lorsqu’une action sera requise.",
+              },
+          };
+        })()
+        : null;
       // Retourner les infos sans données sensibles (OTP, etc.)
       return {
         id: app.id,
@@ -949,6 +994,7 @@ export const applicationRouter = router({
         documentsUrls: app.documentsUrls,
         scoringTotal: app.scoringTotal,
         scoringBadge: app.scoringBadge,
+        procedureTracking,
         createdAt: app.createdAt,
         updatedAt: app.updatedAt,
       };

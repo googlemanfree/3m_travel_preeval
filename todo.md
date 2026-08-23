@@ -853,3 +853,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les attributs `src` vides détectés dans la console : non reproduits lors d’une session fraîche après correction de route
 - [x] Vérifier la pile d’actions flottantes mobile : aucun chevauchement entre les commandes n’est reproduit sur les parcours publics contrôlés
 - [x] Retirer les mentions internes encore visibles dans le panneau d’assistance de la page Billets
+
+## Parcours Procédures côté client et administration
+- [x] Auditer les pages client, les formulaires et les données de procédure déjà synchronisées avec le back-office.
+- [x] Clarifier le choix pays-procédure et la prochaine action dans le parcours client, sans promettre d’éligibilité ni de visa.
+- [x] Rendre le suivi de procédure et les documents attendus plus lisibles dans l’espace candidat.
+- [x] Ajouter ou renforcer les actions directes de traitement, de statut et de note pour les conseillers dans le back-office.
+- [x] Assurer la synchronisation sécurisée des étapes, commentaires et prochaines actions entre client et administration.
+- [x] Synchroniser chaque mise à jour de statut via l’administration avec le dossier 360°, son historique et la notification client associée.
+- [x] Tester les droits, formulaires, parcours et synchronisations de procédure.
+- [ ] Vérifier les vues publiées côté client et administration, puis publier la version validée.

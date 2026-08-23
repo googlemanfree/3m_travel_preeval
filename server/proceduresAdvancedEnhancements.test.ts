@@ -16,6 +16,14 @@ describe("améliorations Procédures et suivi administratif", () => {
     expect(procedures).toContain("237698104832");
   });
 
+  it("préserve le pays et la procédure choisis jusqu’au formulaire d’évaluation", () => {
+    const procedures = readProjectFile("client/src/pages/ProceduresAdvanced.tsx");
+    expect(procedures).toContain("getEvaluationHref");
+    expect(procedures).toContain("destination=${encodeURIComponent(country.id)}&project=${encodeURIComponent(country.visaType)}");
+    expect(procedures).toContain("Préparer mon dossier");
+    expect(procedures).not.toContain("window.location.href = `/procedures/${country.id}`");
+  });
+
   it("prévoit les échéances consulaires, la checklist contextuelle et les tendances réelles", () => {
     const schema = readProjectFile("drizzle/consularPortalSchema.ts");
     const registry = readProjectFile("client/src/components/AdminConsularRegistry.tsx");

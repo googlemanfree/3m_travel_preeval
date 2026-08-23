@@ -25,6 +25,7 @@ import {
   Star,
   ChevronRight,
   Lock,
+  ClipboardList,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -52,6 +53,15 @@ interface DossierData {
   documentsUrls: string | null;
   scoringTotal: number | null;
   scoringBadge: string | null;
+  procedureTracking: {
+    destination: string | null;
+    procedure: string | null;
+    status: string;
+    dueAt: string | Date | null;
+    documents: Array<{ documentType: string; status: "pending" | "received" | "approved" | "rejected" | "waived"; dueAt: string | Date | null }>;
+    summary: { required: number; completed: number };
+    nextAction: { title: string; description: string };
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -372,6 +382,51 @@ export default function MonDossier() {
                   </div>
                 </CardContent>
               </Card>
+
+              {dossier.procedureTracking && (
+                <Card className="shadow-md border-0 border-l-4 border-l-indigo-500" aria-labelledby="procedure-tracking-title">
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle id="procedure-tracking-title" className="text-lg flex items-center gap-2">
+                          <ClipboardList className="w-5 h-5 text-indigo-600" />
+                          Suivi de votre procédure
+                        </CardTitle>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {dossier.procedureTracking.procedure ?? "Procédure en cours"} · {dossier.procedureTracking.destination ?? dossier.destination}
+                        </p>
+                      </div>
+                      <Badge className="bg-indigo-50 text-indigo-700 border-0">
+                        {dossier.procedureTracking.summary.completed}/{dossier.procedureTracking.summary.required} pièce(s) validée(s)
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-lg bg-indigo-50 p-4">
+                      <p className="text-sm font-semibold text-indigo-950">{dossier.procedureTracking.nextAction.title}</p>
+                      <p className="mt-1 text-sm text-indigo-800">{dossier.procedureTracking.nextAction.description}</p>
+                    </div>
+                    {dossier.procedureTracking.documents.length > 0 ? (
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {dossier.procedureTracking.documents.map((document, index) => {
+                          const approved = document.status === "approved" || document.status === "waived";
+                          const rejected = document.status === "rejected";
+                          const label = approved ? "Validé" : rejected ? "À corriger" : document.status === "received" ? "Reçu" : "À fournir";
+                          return (
+                            <div key={`${document.documentType}-${index}`} className={`rounded-lg border p-3 text-sm ${approved ? "border-emerald-200 bg-emerald-50" : rejected ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+                              <p className="font-semibold text-gray-900">{document.documentType}</p>
+                              <p className="mt-1 text-xs text-gray-700">{label}{document.dueAt ? ` · Échéance : ${new Date(document.dueAt).toLocaleDateString("fr-FR")}` : ""}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-600">Votre conseiller préparera la liste des pièces adaptées à votre procédure. Consultez ce suivi avant tout dépôt.</p>
+                    )}
+                    <p className="text-xs text-gray-500">Les pièces et étapes sont confirmées par votre conseiller. Elles ne constituent pas une décision consulaire.</p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Timeline d'avancement */}
               <Card className="shadow-md border-0">
