@@ -40,6 +40,7 @@ export function AdminPaymentManagement() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [adminNote, setAdminNote] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
+  const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -50,6 +51,7 @@ export function AdminPaymentManagement() {
   });
   const { data: auditLogs = [], isLoading: auditLoading, refetch: refetchAuditLogs } = trpc.clientDocuments.getPaymentAuditLogs.useQuery({ limit: 200 });
   const updatePaymentMutation = trpc.application.adminUpdatePaymentStatus.useMutation();
+  const sendPaymentReceiptMutation = trpc.application.adminSendPaymentReceipt.useMutation();
 
   // Transformer les applications en paiements
   const payments: Payment[] = (Array.isArray(applicationsData) ? applicationsData : []).map((app: any) => ({
@@ -138,12 +140,21 @@ export function AdminPaymentManagement() {
   };
 
   const handleSendReceipt = (payment: Payment) => {
-    setIsProcessing(true);
-    // Simuler l'envoi du reçu
-    setTimeout(() => {
-      toast.success(`Reçu de paiement envoyé à ${payment.email}`);
-      setIsProcessing(false);
-    }, 1500);
+    setReceiptEmailPayment(payment);
+  };
+
+  const handleConfirmReceiptEmail = async () => {
+    if (!receiptEmailPayment) return;
+    try {
+      await sendPaymentReceiptMutation.mutateAsync({ id: receiptEmailPayment.id });
+      toast.success("Confirmation de paiement envoyée", {
+        description: `Dossier ${receiptEmailPayment.dossierNumber} — ${receiptEmailPayment.email}`,
+      });
+      setReceiptEmailPayment(null);
+      refetchAuditLogs();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "L’envoi de la confirmation a échoué");
+    }
   };
 
   const handleConfirmPayment = (payment: Payment) => {
@@ -490,7 +501,7 @@ export function AdminPaymentManagement() {
                               size="sm"
                               title="Envoyer le reçu"
                               className="hover:bg-blue-50 transition-colors"
-                              disabled={isProcessing}
+                              disabled={isProcessing || sendPaymentReceiptMutation.isPending}
                             >
                               <Mail className="w-4 h-4" />
                             </Button>
@@ -659,6 +670,24 @@ export function AdminPaymentManagement() {
             <iframe src={receiptPreview.receiptUrl} title={`Justificatif de paiement — ${receiptPreview.fullName}`} className="h-[65vh] w-full rounded-lg border" />
           ))}
           <DialogFooter><Button variant="outline" onClick={() => setReceiptPreview(null)}>Fermer</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(receiptEmailPayment)} onOpenChange={(open) => !open && setReceiptEmailPayment(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Envoyer la confirmation de paiement</DialogTitle>
+            <DialogDescription>
+              {receiptEmailPayment ? `Un e-mail réel sera envoyé à ${receiptEmailPayment.email} pour le dossier ${receiptEmailPayment.dossierNumber}. Cette action sera journalisée.` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-slate-700">Confirmez uniquement si le paiement est déjà validé et si l’adresse affichée est correcte. Cet e-mail ne crée aucune réservation ni émission fournisseur.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReceiptEmailPayment(null)} disabled={sendPaymentReceiptMutation.isPending}>Annuler</Button>
+            <Button onClick={handleConfirmReceiptEmail} disabled={sendPaymentReceiptMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
+              {sendPaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />Confirmer l’envoi</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

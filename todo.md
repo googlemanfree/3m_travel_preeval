@@ -872,3 +872,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Synchroniser de manière sécurisée l’état validé, les notes autorisées et la prochaine action dans l’espace candidat.
 - [x] Tester les droits, les validations, les refus, les transitions et l’historique sans valider automatiquement un résultat.
 - [x] Vérifier les parcours client et administrateur, puis publier la version validée.
+
+## Renforcement du poste de travail administrateur
+- [x] Auditer les compteurs, les listes, les filtres et les actions de traitement actuellement disponibles.
+- [x] Ajouter une vue de priorités opérationnelles avec dossiers nécessitant une action humaine, sans actualisation automatique.
+- [x] Rendre les actions directes de traitement, notes, communication et navigation plus accessibles depuis la fiche 360°.
+- [x] Renforcer la traçabilité des actions critiques et la synchronisation vers le dossier client.
+- [x] Tester les permissions, les contrôles de transition et les actions rapides administratives.
+- [ ] Vérifier le poste publié, puis publier la version validée.
+- [x] Remplacer toute simulation d’envoi de reçu de paiement par une mutation serveur réelle, traçable et soumise à confirmation explicite.
+- [x] Ajouter une file de priorités manuelle pour les dossiers, revalidations et paiements nécessitant une action humaine.

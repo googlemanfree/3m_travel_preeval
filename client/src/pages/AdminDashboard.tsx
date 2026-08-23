@@ -867,6 +867,40 @@ export default function AdminDashboard() {
     web: candidates.filter((c) => c.source === "WEB").length,
     agency: candidates.filter((c) => c.source === "AGENCY_PHYSICAL").length,
   };
+  const manualPriorities = [
+    {
+      id: "external-evaluations",
+      label: "Évaluations externes à confirmer",
+      detail: "Aucune activation de dossier avant décision humaine.",
+      count: candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation").length,
+      tab: "pre-dossiers",
+      tone: "amber",
+    },
+    {
+      id: "evaluation-48h",
+      label: "Bilans à relire",
+      detail: "Vérifier le bilan avant sa décision de procédure.",
+      count: stats.pending,
+      tab: "evaluation-review",
+      tone: "blue",
+    },
+    {
+      id: "payments",
+      label: "Paiements à contrôler",
+      detail: "Valider manuellement avant toute confirmation client.",
+      count: pendingPaymentApplications.length,
+      tab: "payments",
+      tone: "orange",
+    },
+    {
+      id: "flight-requests",
+      label: "Réservations vol à traiter",
+      detail: "Contrôler la demande avant émission ou notification.",
+      count: flightQueueSummary?.pending_review ?? 0,
+      tab: "flights",
+      tone: "sky",
+    },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-slate-50/70 text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
@@ -1017,6 +1051,34 @@ export default function AdminDashboard() {
             <strong>{stats.agency}</strong> dossiers agence
           </span>
         </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="File de priorités manuelle">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 font-black text-slate-950"><AlertCircle className="h-5 w-5 text-amber-600" />File de priorités</h2>
+              <p className="mt-1 text-sm text-slate-600">Indicateurs de travail à ouvrir manuellement par un conseiller. Aucune décision ni notification n’est déclenchée automatiquement.</p>
+            </div>
+            <span className="text-xs font-semibold text-slate-500">Actualisation manuelle requise</span>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {manualPriorities.map((priority) => {
+              const tone = priority.tone === "amber" ? "border-amber-200 bg-amber-50" : priority.tone === "orange" ? "border-orange-200 bg-orange-50" : priority.tone === "sky" ? "border-sky-200 bg-sky-50" : "border-blue-200 bg-blue-50";
+              return (
+                <button
+                  key={priority.id}
+                  type="button"
+                  onClick={() => setActiveAdminTab(priority.tab)}
+                  className={`min-h-28 rounded-xl border p-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${tone}`}
+                  aria-label={`Ouvrir ${priority.label} : ${priority.count} élément(s)`}
+                >
+                  <div className="flex items-start justify-between gap-3"><span className="text-sm font-bold text-slate-900">{priority.label}</span><span className="rounded-full bg-white px-2 py-0.5 text-lg font-black text-slate-950">{priority.count}</span></div>
+                  <p className="mt-3 text-xs leading-5 text-slate-600">{priority.detail}</p>
+                  <span className="mt-3 inline-block text-xs font-bold text-blue-800">Ouvrir le module →</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (

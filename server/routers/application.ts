@@ -10,6 +10,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { and, eq, desc, inArray, or, like, ilike } from "drizzle-orm";
 import { sendClientDossierConfirmationEmail, sendAdminNewDossierAlertEmail, sendVerificationOtp, sendEvisaStatusUpdateEmail } from "../emailService";
+import { sendEmail as sendGenericEmail } from "../_core/email";
 import { generateEvaluationReportHTML } from "../evaluationService";
 import { extractTextFromPDF, generateAIEvaluationReport } from "../aiEvaluationService";
 import { randomBytes, randomInt } from "node:crypto";
@@ -647,6 +648,49 @@ export const applicationRouter = router({
       }
 
       return { success: true, dossierNumber: application.dossierNumber, paymentStatus: input.paymentStatus };
+    }),
+
+  /** Envoie une confirmation de paiement uniquement après validation manuelle et journalise le résultat. */
+  adminSendPaymentReceipt: protectedProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      if (ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
+      }
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible" });
+
+      const application = (await db.select().from(applications).where(eq(applications.id, input.id)).limit(1))[0];
+      if (!application) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable" });
+      if (application.paymentStatus !== "SUCCESS") {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Le reçu ne peut être envoyé qu’après validation du paiement" });
+      }
+      if (!application.email) {
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Aucune adresse e-mail client n’est disponible pour ce dossier" });
+      }
+
+      try {
+        await sendGenericEmail({
+          to: application.email,
+          subject: `Confirmation de paiement — Dossier ${application.dossierNumber}`,
+          html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#1e293b"><h2 style="color:#123a7a">Paiement validé</h2><p>Bonjour ${application.fullName},</p><p>Votre paiement de <strong>${Number(application.paymentAmount ?? 65000).toLocaleString("fr-FR")} ${application.paymentCurrency ?? "XAF"}</strong> a été validé pour le dossier <strong>${application.dossierNumber}</strong>.</p><p>La suite du dossier reste pilotée par un conseiller 3M Travel & Services. Consultez votre espace client pour les prochaines étapes et les documents disponibles.</p><p><a href="https://www.3mtravelagency.com/mon-espace" style="display:inline-block;background:#123a7a;color:white;padding:12px 18px;border-radius:6px;text-decoration:none">Accéder à mon espace</a></p><p style="font-size:12px;color:#64748b">Cet e-mail confirme une validation administrative ; il ne constitue pas une émission de billet, de visa ou de réservation fournisseur.</p></div>`,
+        });
+      } catch (error) {
+        console.error("payment receipt delivery failed", { applicationId: application.id, error });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "L’e-mail de confirmation n’a pas pu être envoyé. Réessayez après vérification du service e-mail." });
+      }
+
+      await db.insert(paymentAuditLogs).values({
+        adminName: ctx.user.name || "Administrateur",
+        adminEmail: ctx.user.email || "",
+        action: "receipt_sent",
+        paymentId: application.id,
+        candidateEmail: application.email,
+        amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+        details: `Confirmation de paiement envoyée après validation manuelle du dossier ${application.dossierNumber}`,
+      });
+
+      return { success: true, dossierNumber: application.dossierNumber };
     }),
 
   /** Changer le statut d'un dossier (admin) */
