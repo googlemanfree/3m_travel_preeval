@@ -882,3 +882,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Vérifier le poste publié, puis publier la version validée.
 - [x] Remplacer toute simulation d’envoi de reçu de paiement par une mutation serveur réelle, traçable et soumise à confirmation explicite.
 - [x] Ajouter une file de priorités manuelle pour les dossiers, revalidations et paiements nécessitant une action humaine.
+- [ ] Diagnostiquer l’écart entre le checkpoint dd988fc8 et le bundle administrateur servi publiquement, puis revalider visuellement la file de priorités avant de la déclarer disponible.
