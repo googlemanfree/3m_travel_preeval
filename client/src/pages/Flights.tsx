@@ -1095,7 +1095,7 @@ export default function Flights() {
           </motion.div>
         )}
       </div>
-      <Footer />
+      <div className="order-5"><Footer /></div>
     </div>
   );
 }
