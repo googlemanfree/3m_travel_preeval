@@ -150,7 +150,17 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+// Les métadonnées de localisation JSX et le collecteur navigateur sont utiles au
+// développement, mais augmentent fortement la mémoire de Rollup sans rien
+// apporter au bundle publié. Les exclure en production évite de réutiliser un
+// ancien artefact lorsque le build ne peut pas aboutir.
+const isProductionBuild = process.env.NODE_ENV === "production";
+const plugins = [
+  react(),
+  tailwindcss(),
+  vitePluginManusRuntime(),
+  ...(!isProductionBuild ? [jsxLocPlugin(), vitePluginManusDebugCollector()] : []),
+];
 
 export default defineConfig({
   plugins,
