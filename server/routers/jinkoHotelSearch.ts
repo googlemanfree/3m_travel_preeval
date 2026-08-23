@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 
@@ -43,6 +44,39 @@ type JinkoHotel = {
 
 type JinkoSearchResponse = { hotels?: JinkoHotel[]; total?: number };
 
+export const JINKO_MAX_RESULTS = 12;
+export const JINKO_SEARCH_WINDOW_MS = 60_000;
+export const JINKO_SEARCH_LIMIT_PER_WINDOW = 8;
+export const JINKO_RESULT_VALIDITY_MS = 15 * 60_000;
+
+type SearchWindow = { count: number; resetAt: number };
+
+export function createJinkoSearchRateLimiter(limit = JINKO_SEARCH_LIMIT_PER_WINDOW, windowMs = JINKO_SEARCH_WINDOW_MS) {
+  const windows = new Map<string, SearchWindow>();
+  return {
+    check(key: string, now = Date.now()) {
+      const current = windows.get(key);
+      if (!current || current.resetAt <= now) {
+        windows.set(key, { count: 1, resetAt: now + windowMs });
+        return { allowed: true, retryAfterSeconds: 0 };
+      }
+      if (current.count >= limit) {
+        return { allowed: false, retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1_000)) };
+      }
+      current.count += 1;
+      return { allowed: true, retryAfterSeconds: 0 };
+    },
+  };
+}
+
+const jinkoSearchRateLimiter = createJinkoSearchRateLimiter();
+
+function getSearchClientKey(request: { headers: Record<string, string | string[] | undefined>; socket?: { remoteAddress?: string | undefined } }) {
+  const forwarded = request.headers["x-forwarded-for"];
+  const forwardedValue = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  return forwardedValue?.split(",")[0]?.trim() || request.socket?.remoteAddress || "anonymous";
+}
+
 function lowestRate(hotel: JinkoHotel) {
   const rates = (hotel.rooms ?? []).flatMap((room) => room.rates ?? [])
     .filter((rate) => typeof rate.total_amount === "number" && Number.isFinite(rate.total_amount));
@@ -73,7 +107,12 @@ export function mapJinkoHotel(hotel: JinkoHotel) {
 }
 
 export const jinkoHotelSearchRouter = router({
-  search: publicProcedure.input(searchInput).mutation(async ({ input }) => {
+  search: publicProcedure.input(searchInput).mutation(async ({ input, ctx }) => {
+    const limit = jinkoSearchRateLimiter.check(getSearchClientKey(ctx.req));
+    if (!limit.allowed) {
+      throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: `Trop de recherches rapprochées. Réessayez dans ${limit.retryAfterSeconds} seconde(s).` });
+    }
+
     const apiKey = process.env.JINKO_API_KEY;
     if (!apiKey) {
       throw new TRPCError({ code: "PRECONDITION_FAILED", message: "La recherche hôtelière est temporairement indisponible." });
@@ -102,12 +141,24 @@ export const jinkoHotelSearchRouter = router({
       throw new TRPCError({ code: "BAD_GATEWAY", message: "La recherche hôtelière ne peut pas être finalisée pour le moment." });
     }
 
-    const payload = await response.json() as JinkoSearchResponse;
-    const hotels = (payload.hotels ?? []).slice(0, 12).map(mapJinkoHotel);
+    let payload: JinkoSearchResponse;
+    try {
+      payload = await response.json() as JinkoSearchResponse;
+    } catch {
+      throw new TRPCError({ code: "BAD_GATEWAY", message: "Le fournisseur hôtelier a renvoyé une réponse inexploitable. Réessayez dans quelques instants." });
+    }
+
+    const searchedAt = new Date();
+    const hotels = (payload.hotels ?? []).slice(0, JINKO_MAX_RESULTS).map(mapJinkoHotel);
     return {
       hotels,
       total: typeof payload.total === "number" ? payload.total : hotels.length,
-      searchedAt: new Date(),
+      searchId: `JNK-${randomUUID()}`,
+      searchedAt,
+      validUntil: new Date(searchedAt.getTime() + JINKO_RESULT_VALIDITY_MS),
+      requestedCity: input.cityName,
+      requestedCountryCode: input.countryCode,
+      resultLimit: JINKO_MAX_RESULTS,
       provider: "Jinko",
       humanValidationRequired: true,
       notice: "Les disponibilités, conditions et tarifs indicatifs affichés doivent être confirmés par un conseiller 3M avant toute réservation.",

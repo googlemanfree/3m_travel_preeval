@@ -81,7 +81,7 @@ export function ThreeMBookingExperience() {
       ? `Établissement souhaité : ${selectedPlace.name} — ${selectedPlace.address || "adresse à confirmer"}.`
       : "Aucun établissement précis sélectionné.";
     const jinkoNote = selectedPlace?.jinko
-      ? ` Offre Jinko repérée : ${selectedPlace.jinko.name}; identifiant fournisseur ${selectedPlace.jinko.providerHotelId}; offre ${selectedPlace.jinko.indicativeOffer?.offerId || "à confirmer"}; tarif indicatif ${selectedPlace.jinko.indicativeOffer?.totalAmount ?? "non communiqué"} ${selectedPlace.jinko.indicativeOffer?.currency || ""}. Cette sélection ne constitue pas une réservation.`
+      ? ` Offre Jinko repérée : ${selectedPlace.jinko.name}; recherche ${selectedPlace.jinko.searchTrace.searchId}; identifiant fournisseur ${selectedPlace.jinko.providerHotelId}; offre ${selectedPlace.jinko.indicativeOffer?.offerId || "à confirmer"}; tarif indicatif ${selectedPlace.jinko.indicativeOffer?.totalAmount ?? "non communiqué"} ${selectedPlace.jinko.indicativeOffer?.currency || ""}; résultat à revalider après ${new Date(selectedPlace.jinko.searchTrace.validUntil).toLocaleString("fr-FR")}. Cette sélection ne constitue pas une réservation.`
       : "";
     return [selection, jinkoNote, `Chambres : ${rooms}.`, `Catégorie souhaitée : ${hotelCategory}.`, amenities.length ? `Équipements à privilégier : ${amenities.map((amenity) => amenityOptions.find((option) => option.key === amenity)?.label).join(", ")}.` : "Aucun équipement prioritaire sélectionné.", budget ? `Budget indicatif par nuit : ${budget} XAF.` : "Budget à affiner avec le conseiller.", "Recherche réalisée via 3M Booking ; disponibilité et tarif final à revalider par l’agence."].join(" ");
   }, [amenities, budget, hotelCategory, rooms, selectedPlace]);
@@ -128,6 +128,7 @@ export function ThreeMBookingExperience() {
       enrichment: {
         selectedPlace,
         jinkoSelection: selectedPlace?.jinko ?? null,
+        jinkoSearchTrace: selectedPlace?.jinko?.searchTrace ?? null,
         rooms,
         amenities,
         source: "3M Booking",

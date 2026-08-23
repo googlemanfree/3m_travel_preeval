@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { mapJinkoHotel } from "./routers/jinkoHotelSearch";
+import { createJinkoSearchRateLimiter, mapJinkoHotel } from "./routers/jinkoHotelSearch";
 
 const root = resolve(import.meta.dirname, "..");
 const read = (path: string) => readFileSync(resolve(root, path), "utf8");
@@ -34,6 +34,17 @@ describe("recherche hôtelière Jinko contrôlée", () => {
     expect(router).not.toContain("hotel_cancel");
     expect(router).not.toContain("/v1/checkout");
     expect(router).toContain("humanValidationRequired: true");
+    expect(router).toContain("JINKO_MAX_RESULTS");
+    expect(router).toContain("searchId:");
+    expect(router).toContain("validUntil:");
+  });
+
+  it("limite les recherches rapprochées et autorise de nouveau après la fenêtre", () => {
+    const limiter = createJinkoSearchRateLimiter(2, 60_000);
+    expect(limiter.check("client-test", 1_000).allowed).toBe(true);
+    expect(limiter.check("client-test", 1_001).allowed).toBe(true);
+    expect(limiter.check("client-test", 1_002)).toMatchObject({ allowed: false, retryAfterSeconds: 60 });
+    expect(limiter.check("client-test", 61_000).allowed).toBe(true);
   });
 
   it("transmet seulement une sélection volontaire à la demande 3M Booking", () => {
@@ -42,8 +53,11 @@ describe("recherche hôtelière Jinko contrôlée", () => {
 
     expect(booking).toContain("<JinkoHotelSearchPanel");
     expect(booking).toContain("jinkoSelection: selectedPlace?.jinko ?? null");
+    expect(booking).toContain("jinkoSearchTrace: selectedPlace?.jinko?.searchTrace ?? null");
     expect(booking).toContain("Cette sélection ne constitue pas une réservation.");
     expect(panel).toContain("Aucun clic sur cette page ne crée une réservation, un voyage ou un paiement.");
     expect(panel).toContain("Choisir pour demander un devis");
+    expect(panel).toContain("Référence de recherche");
+    expect(read("client/src/components/AdminTourismRequests.tsx")).toContain("Jinko · recherche seule · validation humaine requise");
   });
 });

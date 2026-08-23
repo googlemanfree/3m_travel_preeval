@@ -22,6 +22,14 @@ export type JinkoHotelSelection = {
     refundable: boolean;
     freeCancellationUntil: string | null;
   } | null;
+  searchTrace: {
+    searchId: string;
+    searchedAt: string;
+    validUntil: string;
+    requestedCity: string;
+    requestedCountryCode: string;
+    provider: "Jinko";
+  };
 };
 
 const countryOptions = [
@@ -105,12 +113,12 @@ export function JinkoHotelSearchPanel({
             <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" /><p>{searchMutation.data.notice}</p></div>
           </div>
           {searchMutation.data.hotels.length === 0 ? (
-            <p className="mt-4 rounded-2xl border border-dashed border-emerald-300 p-4 text-sm text-slate-600">Aucune offre n’est disponible pour ces paramètres. Vous pouvez tout de même transmettre votre demande à un conseiller 3M.</p>
+            <div className="mt-4 rounded-2xl border border-dashed border-emerald-300 p-4 text-sm text-slate-600"><p className="font-bold text-slate-800">Aucune offre n’est disponible pour ces paramètres.</p><p className="mt-1">Essayez des dates ou une destination différente, ou transmettez tout de même votre demande à un conseiller 3M pour une vérification manuelle.</p></div>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {searchMutation.data.hotels.map((hotel) => {
                 const active = selectedProviderHotelId === hotel.providerHotelId;
-                return <button key={hotel.providerHotelId} type="button" onClick={() => onSelect(hotel)} className={`rounded-2xl border p-4 text-left transition ${active ? "border-emerald-600 bg-emerald-100 ring-2 ring-emerald-300/60" : "border-emerald-100 bg-white hover:border-emerald-400"}`}>
+                return <button key={hotel.providerHotelId} type="button" onClick={() => onSelect({ ...hotel, searchTrace: { searchId: searchMutation.data.searchId, searchedAt: searchMutation.data.searchedAt, validUntil: searchMutation.data.validUntil, requestedCity: searchMutation.data.requestedCity, requestedCountryCode: searchMutation.data.requestedCountryCode, provider: "Jinko" } })} className={`rounded-2xl border p-4 text-left transition ${active ? "border-emerald-600 bg-emerald-100 ring-2 ring-emerald-300/60" : "border-emerald-100 bg-white hover:border-emerald-400"}`}>
                   <div className="flex gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><Building2 className="h-5 w-5" /></div><div className="min-w-0"><p className="truncate text-sm font-black text-slate-900">{hotel.name}</p><p className="mt-1 line-clamp-2 text-xs text-slate-600"><MapPin className="mr-1 inline h-3.5 w-3.5 text-emerald-700" />{hotel.address || [hotel.city, hotel.country].filter(Boolean).join(", ") || "Adresse à confirmer"}</p></div></div>
                   <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">{hotel.stars ? <span className="inline-flex items-center gap-1 font-black text-amber-700"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {hotel.stars} étoiles</span> : null}{hotel.guestRating ? <span className="rounded-full bg-slate-100 px-2 py-1 font-bold text-slate-700">Note {hotel.guestRating.toFixed(1)}</span> : null}</div>
                   <div className="mt-4 border-t border-slate-100 pt-3"><p className="text-[10px] font-black uppercase tracking-wide text-slate-500">Tarif indicatif pour le séjour</p><p className="mt-1 text-lg font-black text-emerald-800">{formatAmount(hotel.indicativeOffer?.totalAmount ?? null, hotel.indicativeOffer?.currency ?? null)}</p><p className="mt-1 text-[11px] text-slate-600">{hotel.indicativeOffer?.boardName || "Conditions à confirmer"}{hotel.indicativeOffer?.refundable ? " · Flexible" : ""}</p></div>
@@ -119,6 +127,10 @@ export function JinkoHotelSearchPanel({
               })}
             </div>
           )}
+          <div className="mt-4 flex flex-col gap-1 rounded-xl bg-emerald-100/70 px-3 py-2 text-[11px] text-emerald-950 sm:flex-row sm:items-center sm:justify-between">
+            <span>Référence de recherche : <strong>{searchMutation.data.searchId}</strong> · {searchMutation.data.hotels.length} offre(s) affichée(s) sur {searchMutation.data.total}.</span>
+            <span>Recherché le {new Date(searchMutation.data.searchedAt).toLocaleString("fr-FR")} · à revalider après le {new Date(searchMutation.data.validUntil).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.</span>
+          </div>
         </div>
       )}
     </section>

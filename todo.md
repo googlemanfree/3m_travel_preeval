@@ -816,6 +816,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir le parcours d’activation et les secrets nécessaires au fournisseur retenu
 - [x] Activer le connecteur Jinko et finaliser l’autorisation OAuth professionnelle
 - [x] Vérifier une recherche hôtelière Jinko avant toute intégration dans le parcours client
+
+## Renforcement opérationnel de l’intégration Jinko
+- [x] Auditer les limites de la recherche Jinko publiée et le transfert actuel vers 3M Booking.
+- [x] Ajouter des métadonnées de recherche, un identifiant de traçabilité et des limites de volume côté serveur.
+- [x] Renforcer l’affichage des résultats vides, des erreurs temporaires et de la date de recherche sans masquer la confirmation humaine obligatoire.
+- [x] Structurer la sélection Jinko dans la demande 3M Booking pour qu’elle soit immédiatement exploitable côté administration.
+- [x] Ajouter une vue ou des indicateurs administratifs de provenance Jinko, sans créer de réservation fournisseur.
+- [x] Couvrir par tests les échecs réseau, la sélection, la traçabilité et l’interdiction d’actions transactionnelles.
+- [x] Vérifier le parcours dans le navigateur, puis publier la version validée.
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
