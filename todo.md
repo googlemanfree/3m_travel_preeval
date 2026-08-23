@@ -825,6 +825,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une vue ou des indicateurs administratifs de provenance Jinko, sans créer de réservation fournisseur.
 - [x] Couvrir par tests les échecs réseau, la sélection, la traçabilité et l’interdiction d’actions transactionnelles.
 - [x] Vérifier le parcours dans le navigateur, puis publier la version validée.
+
+## Parcours Jinko sélection vers devis administrateur
+- [x] Auditer le transfert actuel d’une offre Jinko sélectionnée vers la demande 3M Booking et la fiche administrative.
+- [x] Rendre la demande de devis issue de Jinko plus explicite pour le client, avec référence, tarif indicatif et rappel de revalidation.
+- [x] Ajouter au back-office une lecture opérationnelle de l’offre Jinko, de sa fraîcheur et de l’action de revalidation attendue.
+- [x] Préserver une traçabilité de l’action conseiller sans créer de réservation, de paiement ou de voyage fournisseur.
+- [x] Couvrir la sélection, le transfert, les états de revalidation et les contrôles de non-transactionnalité par tests.
+- [ ] Publier la version validée du parcours Jinko sélection-vers-devis.
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles

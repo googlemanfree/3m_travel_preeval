@@ -289,17 +289,47 @@ export const tourismRouter = router({
     return { success: true };
   }),
 
-  updateDetails: publicProcedure.input(z.object({ id: z.number().int().positive(), quotedPriceXaf: z.number().int().positive().optional(), adminNotes: z.string().max(1500).optional(), sessionToken: z.string().min(1).optional() })).mutation(async ({ input, ctx }) => {
-    await requireTourismAdminSession(ctx.req.headers.cookie, input.sessionToken);
+  updateDetails: publicProcedure.input(z.object({
+    id: z.number().int().positive(),
+    quotedPriceXaf: z.number().int().positive().optional(),
+    adminNotes: z.string().max(1500).optional(),
+    jinkoRevalidation: z.object({
+      searchId: z.string().trim().min(8).max(120),
+      action: z.enum(["revalidated", "needs_recheck"]),
+      confirmation: z.literal(true),
+      note: z.string().trim().max(280).optional(),
+    }).optional(),
+    sessionToken: z.string().min(1).optional(),
+  })).mutation(async ({ input, ctx }) => {
+    const admin = await requireTourismAdminSession(ctx.req.headers.cookie, input.sessionToken);
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
     const updateData: Record<string, any> = {};
     if (input.quotedPriceXaf !== undefined) updateData.quotedPriceXaf = input.quotedPriceXaf;
     if (input.adminNotes !== undefined) updateData.adminNotes = input.adminNotes;
+    if (input.jinkoRevalidation) {
+      const [request] = await db.select({ enrichmentJson: tourismServiceRequests.enrichmentJson }).from(tourismServiceRequests).where(eq(tourismServiceRequests.id, input.id)).limit(1);
+      if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Demande de séjour introuvable." });
+      let enrichment: Record<string, any> = {};
+      try { enrichment = request.enrichmentJson ? JSON.parse(request.enrichmentJson) : {}; } catch { throw new TRPCError({ code: "BAD_REQUEST", message: "La trace de recherche de cette demande est invalide." }); }
+      const selection = enrichment.jinkoSelection ?? enrichment.selectedPlace?.jinko;
+      const trace = enrichment.jinkoSearchTrace ?? selection?.searchTrace;
+      if (!selection || !trace || trace.searchId !== input.jinkoRevalidation.searchId) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "La référence Jinko ne correspond pas à cette demande." });
+      }
+      enrichment.jinkoRevalidation = {
+        action: input.jinkoRevalidation.action,
+        confirmedAt: new Date().toISOString(),
+        confirmedByAdminEmail: admin.email,
+        note: input.jinkoRevalidation.note || null,
+        humanValidationRequired: true,
+      };
+      updateData.enrichmentJson = JSON.stringify(enrichment);
+    }
     if (Object.keys(updateData).length > 0) {
       await db.update(tourismServiceRequests).set(updateData).where(eq(tourismServiceRequests.id, input.id));
     }
-    return { success: true };
+    return { success: true, jinkoRevalidation: input.jinkoRevalidation ? { action: input.jinkoRevalidation.action } : null };
   }),
 
   exportIcal: publicProcedure.input(z.object({ sessionToken: z.string().min(1).optional() }).optional()).query(async ({ input, ctx }) => {

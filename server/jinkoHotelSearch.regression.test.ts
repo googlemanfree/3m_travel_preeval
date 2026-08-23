@@ -60,4 +60,19 @@ describe("recherche hôtelière Jinko contrôlée", () => {
     expect(panel).toContain("Référence de recherche");
     expect(read("client/src/components/AdminTourismRequests.tsx")).toContain("Jinko · recherche seule · validation humaine requise");
   });
+
+  it("exige une confirmation humaine avant de consigner une revalidation Jinko", () => {
+    const tourism = read("server/routers/tourism.ts");
+    const booking = read("client/src/components/ThreeMBookingExperience.tsx");
+    const admin = read("client/src/components/AdminTourismRequests.tsx");
+
+    expect(tourism).toContain("confirmation: z.literal(true)");
+    expect(tourism).toContain("trace.searchId !== input.jinkoRevalidation.searchId");
+    expect(tourism).toContain("confirmedByAdminEmail: admin.email");
+    expect(tourism).toContain("humanValidationRequired: true");
+    expect(booking).toContain("La demande crée un devis à étudier, jamais une réservation ou un paiement.");
+    expect(admin).toContain("Consigner la revalidation");
+    expect(admin).toContain("!jinkoRevalidationConfirmed");
+    expect(admin).toContain("Ne pas réserver ni encaisser depuis cette fiche");
+  });
 });
