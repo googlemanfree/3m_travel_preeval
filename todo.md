@@ -862,4 +862,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Assurer la synchronisation sécurisée des étapes, commentaires et prochaines actions entre client et administration.
 - [x] Synchroniser chaque mise à jour de statut via l’administration avec le dossier 360°, son historique et la notification client associée.
 - [x] Tester les droits, formulaires, parcours et synchronisations de procédure.
-- [ ] Vérifier les vues publiées côté client et administration, puis publier la version validée.
+- [x] Vérifier les vues publiées côté client et administration, puis publier la version validée.
