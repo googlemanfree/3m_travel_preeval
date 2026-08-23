@@ -48,6 +48,35 @@ function selectedHotelFromEnrichment(enrichmentJson: string | null) {
   }
 }
 
+export type JinkoClientTracking = {
+  hotelName: string;
+  searchId: string | null;
+  searchedAt: string | null;
+  validUntil: string | null;
+  revalidatedAt: string | null;
+  revalidatedBy: string | null;
+};
+
+export function jinkoClientTrackingFromEnrichment(enrichmentJson: string | null): JinkoClientTracking | null {
+  try {
+    const enrichment = enrichmentJson ? JSON.parse(enrichmentJson) : null;
+    const selection = enrichment?.jinkoSelection ?? enrichment?.selectedPlace?.jinko;
+    const trace = enrichment?.jinkoSearchTrace ?? selection?.searchTrace;
+    if (!selection?.name || !trace?.searchId) return null;
+    const revalidation = enrichment?.jinkoRevalidation;
+    return {
+      hotelName: String(selection.name),
+      searchId: String(trace.searchId),
+      searchedAt: trace.searchedAt ? String(trace.searchedAt) : null,
+      validUntil: trace.validUntil ? String(trace.validUntil) : null,
+      revalidatedAt: revalidation?.confirmedAt ? String(revalidation.confirmedAt) : null,
+      revalidatedBy: revalidation?.confirmedByAdminEmail ? String(revalidation.confirmedByAdminEmail) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 type DateFilter = "all" | "7" | "30" | "older";
 
 export default function ClientSpaceNavigation() {
@@ -376,6 +405,7 @@ export default function ClientSpaceNavigation() {
         ) : <div className="mt-4 grid gap-3 md:grid-cols-2">{hotelRequestsQuery.data.map((request) => {
           const meta = request.tracking;
           const selectedHotel = selectedHotelFromEnrichment(request.enrichmentJson);
+          const jinkoTracking = jinkoClientTrackingFromEnrichment(request.enrichmentJson);
           const isCancelled = request.status === "cancelled";
           return <article key={request.id} className="rounded-2xl border border-white/90 bg-white/90 p-4 shadow-sm">
             <div className="flex items-start justify-between gap-3">
@@ -385,6 +415,13 @@ export default function ClientSpaceNavigation() {
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-700"><p><span className="block font-bold text-slate-500">Séjour</span>{request.departureDate ? new Date(request.departureDate).toLocaleDateString("fr-FR") : "Dates à préciser"}{request.returnDate ? ` → ${new Date(request.returnDate).toLocaleDateString("fr-FR")}` : ""}</p><p><span className="block font-bold text-slate-500">Voyageurs</span>{request.travelersCount} voyageur(s)</p></div>
             <div className="mt-4"><div className="flex items-center gap-1.5" aria-label={`Progression : ${meta.label}`}>{[1, 2, 3, 4].map((step) => <span key={step} className={`h-1.5 flex-1 rounded-full ${!isCancelled && step <= meta.step ? "bg-orange-500" : "bg-slate-200"}`} />)}</div><p className="mt-2 text-xs font-medium text-slate-700">{meta.detail}</p></div>
             {request.quotedPriceXaf && <div className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900">Devis validé par l’agence : {request.quotedPriceXaf.toLocaleString("fr-FR")} XAF</div>}
+            {jinkoTracking && <div className={`mt-3 rounded-xl border p-3 text-xs ${jinkoTracking.revalidatedAt ? "border-emerald-200 bg-emerald-50 text-emerald-950" : "border-amber-200 bg-amber-50 text-amber-950"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-black">Jinko · offre suivie par 3M</p><span className="font-mono text-[10px] font-bold">{jinkoTracking.searchId}</span></div>
+              <p className="mt-1 font-semibold">Offre sélectionnée : {jinkoTracking.hotelName}</p>
+              {jinkoTracking.revalidatedAt ? <p className="mt-1">Votre conseiller a revalidé l’offre le {new Date(jinkoTracking.revalidatedAt).toLocaleString("fr-FR")}. Le devis final reste à confirmer avec 3M.</p> : <p className="mt-1">Votre conseiller doit encore revalider disponibilité, conditions et tarif avant tout devis ferme.</p>}
+              {jinkoTracking.validUntil && <p className="mt-1 text-[11px]">Recherche à revalider après le {new Date(jinkoTracking.validUntil).toLocaleString("fr-FR")}.</p>}
+              <a href="/mon-espace?section=messages" className="mt-2 inline-flex items-center gap-1 font-bold text-blue-800 underline underline-offset-2"><MessageCircle className="h-3.5 w-3.5" /> Écrire à mon conseiller</a>
+            </div>}
             <p className="mt-3 text-[11px] text-slate-500">Dernière mise à jour : {new Date(request.updatedAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}</p>
           </article>;
         })}</div>}

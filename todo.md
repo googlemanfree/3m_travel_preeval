@@ -832,7 +832,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter au back-office une lecture opérationnelle de l’offre Jinko, de sa fraîcheur et de l’action de revalidation attendue.
 - [x] Préserver une traçabilité de l’action conseiller sans créer de réservation, de paiement ou de voyage fournisseur.
 - [x] Couvrir la sélection, le transfert, les états de revalidation et les contrôles de non-transactionnalité par tests.
-- [ ] Publier la version validée du parcours Jinko sélection-vers-devis.
+- [x] Publier la version validée du parcours Jinko sélection-vers-devis.
+
+## Suivi Jinko dans les espaces client et administrateur
+- [x] Auditer les données de demandes 3M Booking visibles dans l’espace client et le back-office.
+- [x] Ajouter une carte client de suivi de demande Jinko avec référence, offre sélectionnée, fraîcheur et prochaine action humaine.
+- [x] Ajouter un filtre et des indicateurs administratifs dédiés aux demandes Jinko à revalider.
+- [x] Rendre visible la revalidation conseiller et son horodatage dans les deux espaces selon les droits d’accès.
+- [x] Ajouter des actions de communication prudentes vers le client, sans promettre une disponibilité ni créer de réservation.
+- [x] Tester les droits, le filtrage, les états et la synchronisation client-administration.
+- [ ] Vérifier les deux espaces et publier la version validée.
 - [x] Cartographier les routes, procédures tRPC et zones administratives du site pour l’audit complet
 - [x] Vérifier les parcours publics, l’espace client et l’administration sur ordinateur et mobile
 - [x] Examiner les journaux, la PWA, les réponses API et les erreurs console reproductibles
