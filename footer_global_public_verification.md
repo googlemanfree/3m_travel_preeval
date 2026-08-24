@@ -11,3 +11,9 @@ La cause est une diffusion différée ou un cache d’assets du domaine public. 
 URL contrôlée : `https://www.3mtravelagency.com/?release=b37b3095&footer-global=1`.
 
 Le bundle public affiche désormais le module compact « Préparer votre démarche avec les bonnes informations » avec un lien vers les sources officielles, sans les anciens blocs détaillés de coordonnées. En bas de la page, un seul footer continu présente l’alerte anti-fraude, les liens utiles, Yaoundé (WhatsApp principal et fixe), Ottawa et les informations légales. Les anciennes sections de contact ne sont plus rendues comme des pieds de page distincts.
+
+## Vérification après la révision PWA v13 — mini-plan
+
+URLs contrôlées : `https://www.3mtravelagency.com/?release=b347e4ff&footer-mini-sitemap=1` et `https://www.3mtravelagency.com/tarifs?release=b347e4ff&footer-mini-sitemap=1`.
+
+Le domaine public affiche désormais, dans le footer unique, le titre accessible « Mini-plan du site » et les six raccourcis attendus : « Évaluation gratuite », « 3M Booking », « Procédures », « e-Visas », « Tarifs » et « Sources officielles ». Le contrôle de la page secondaire `/tarifs` confirme que le même footer partagé est hérité hors de l’accueil. La révision PWA v13 a évacué le bundle obsolète précédemment servi, sans suppression de route, de composant fonctionnel ou de contenu.

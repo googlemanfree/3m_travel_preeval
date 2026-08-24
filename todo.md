@@ -985,5 +985,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Mini-plan du site dans le footer
 - [x] Auditer les raccourcis de navigation essentiels à exposer dans le footer unique.
 - [x] Ajouter un mini-plan de site accessible et responsive dans le footer partagé.
-- [ ] Tester et publier le mini-plan de site sur le domaine public.
+- [x] Tester et publier le mini-plan de site sur le domaine public.
 - [x] Réviser le cache PWA pour évacuer le bundle public obsolète et diffuser le mini-plan.
