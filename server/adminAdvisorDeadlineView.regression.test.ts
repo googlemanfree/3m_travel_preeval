@@ -22,6 +22,11 @@ describe("échéances de traitement par conseiller", () => {
     expect(dashboard).toContain("Toutes priorités");
     expect(adminRouter).toContain("Échéance dépassée");
     expect(adminRouter).toContain("À traiter sous 24 h");
+    expect(dashboard).toContain("Exporter CSV");
+    expect(dashboard).toContain("Priorité urgente");
+    expect(dashboard).toContain("Priorité haute");
+    expect(dashboard).toContain("Priorité normale");
+    expect(dashboard).toContain("Priorité basse");
   });
 
   it("affiche une synthèse SMTP sans divulguer les détails sensibles de remise", () => {
@@ -30,5 +35,8 @@ describe("échéances de traitement par conseiller", () => {
     expect(dashboard).toContain("Dernières erreurs de remise");
     expect(dashboard).toContain("Les détails sensibles ne sont pas affichés ici.");
     expect(dashboard).toContain("getEmailDeliveryLogs");
+    expect(dashboard).toContain("getEmailDeliveryTrend30Days");
+    expect(dashboard).toContain("Taux de réussite SMTP · 30 jours");
+    expect(adminRouter).toContain("getEmailDeliveryTrend30Days");
   });
 });

@@ -66,6 +66,8 @@ import {
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -787,6 +789,10 @@ export default function AdminDashboard() {
     { sessionToken, limit: 30, status: "all", errorType: "all" },
     { enabled: !!sessionToken },
   );
+  const { data: smtpDeliveryTrend = [], isFetching: isFetchingSmtpTrend, refetch: refetchSmtpTrend } = trpc.admin.getEmailDeliveryTrend30Days.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken },
+  );
 
   const { data: countryDistribution, isLoading: isLoadingCountryDistribution, refetch: refetchCountryDistribution } = trpc.admin.getCandidateCountryDistribution.useQuery(
     { sessionToken, limit: 12 },
@@ -885,7 +891,7 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary(), refetchAdvisorDeadlines(), refetchSmtpDelivery()]);
+      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary(), refetchAdvisorDeadlines(), refetchSmtpDelivery(), refetchSmtpTrend()]);
       const syncedAt = new Date();
       setLastSyncedAt(syncedAt);
       toast({
@@ -901,7 +907,7 @@ export default function AdminDashboard() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, refetchAdvisorDeadlines, refetchSmtpDelivery, toast]);
+  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, refetchAdvisorDeadlines, refetchSmtpDelivery, refetchSmtpTrend, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -940,6 +946,35 @@ export default function AdminDashboard() {
   const smtpSummary = smtpDeliveryOverview?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
   const smtpSuccessRate = smtpSummary.total ? Math.round((smtpSummary.sent / smtpSummary.total) * 100) : null;
   const recentSmtpFailures = (smtpDeliveryOverview?.logs ?? []).filter((log) => log.status === "failed").slice(0, 3);
+  const hasSmtpTrend = smtpDeliveryTrend.some((point) => point.successRate !== null);
+  const exportAdvisorDeadlinesCsv = () => {
+    const rows = visibleAdvisorDeadlineGroups.flatMap((group) => group.items.map((item) => [
+      group.advisorName,
+      group.advisorEmail ?? "Non attribué",
+      item.caseNumber,
+      item.candidateName ?? "",
+      item.label,
+      item.priority,
+      item.deadline.label,
+      new Date(item.dueAt).toLocaleString("fr-FR"),
+    ]));
+    if (rows.length === 0) {
+      toast({ title: "Aucune échéance à exporter", description: "Aucune ligne ne correspond au filtre de priorité actuel.", variant: "destructive" });
+      return;
+    }
+    const quote = (value: string) => `"${value.replace(/"/g, '""')}"`;
+    const csv = [["Conseiller", "E-mail conseiller", "Dossier", "Candidat", "Échéance", "Priorité", "État", "Date limite"], ...rows]
+      .map((row) => row.map(quote).join(","))
+      .join("\n");
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `echeances-conseillers_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Échéances exportées", description: `${rows.length} échéance(s) exportée(s) selon le filtre actif.` });
+  };
   const manualPriorities = [
     {
       id: "external-evaluations",
@@ -1135,13 +1170,17 @@ export default function AdminDashboard() {
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Mail className="h-5 w-5 text-blue-700" />Remises SMTP</h2>
               <p className="mt-1 text-sm text-slate-600">Synthèse des 30 dernières remises enregistrées. Les détails sensibles ne sont pas affichés ici.</p>
             </div>
-            <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => refetchSmtpDelivery()} disabled={isFetchingSmtpDelivery || !sessionToken} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetchingSmtpDelivery ? "animate-spin" : ""}`} />Actualiser</Button><Button variant="outline" size="sm" onClick={() => setActiveAdminTab("emails")}>Ouvrir les e-mails</Button></div>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void Promise.all([refetchSmtpDelivery(), refetchSmtpTrend()])} disabled={isFetchingSmtpDelivery || isFetchingSmtpTrend || !sessionToken} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetchingSmtpDelivery || isFetchingSmtpTrend ? "animate-spin" : ""}`} />Actualiser</Button><Button variant="outline" size="sm" onClick={() => setActiveAdminTab("emails")}>Ouvrir les e-mails</Button></div>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><p className="text-xs font-semibold text-blue-800">Taux de réussite</p><p className="mt-1 text-2xl font-black text-blue-950">{smtpSuccessRate === null ? "—" : `${smtpSuccessRate}%`}</p><p className="text-xs text-blue-700">Sur les remises chargées</p></div>
             <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-semibold text-emerald-800">Envoyés</p><p className="mt-1 text-2xl font-black text-emerald-950">{smtpSummary.sent}</p><p className="text-xs text-emerald-700">Remises confirmées</p></div>
             <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-semibold text-rose-800">Échecs</p><p className="mt-1 text-2xl font-black text-rose-950">{smtpSummary.failed}</p><p className="text-xs text-rose-700">À examiner manuellement</p></div>
             <div className="rounded-xl border border-amber-100 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-800">En attente</p><p className="mt-1 text-2xl font-black text-amber-950">{smtpSummary.pending}</p><p className="text-xs text-amber-700">Suivi requis</p></div>
+          </div>
+          <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3" aria-label="Évolution du taux de réussite SMTP sur 30 jours">
+            <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Taux de réussite SMTP · 30 jours</p><span className="text-xs text-slate-500">Remises finalisées uniquement</span></div>
+            {isFetchingSmtpTrend ? <p className="py-8 text-sm text-slate-500">Chargement de la tendance…</p> : !hasSmtpTrend ? <p className="py-8 text-sm text-slate-600">Aucune remise finalisée sur les 30 derniers jours : aucune tendance n’est tracée.</p> : <div className="mt-2 h-56"><ResponsiveContainer width="100%" height="100%"><LineChart data={smtpDeliveryTrend} margin={{ top: 10, right: 16, left: -20, bottom: 0 }}><CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" /><XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" /><YAxis domain={[0, 100]} tickFormatter={(value) => `${value}%`} tick={{ fontSize: 11 }} /><Tooltip formatter={(value: number | null) => value === null ? "Aucune remise finalisée" : `${value}%`} labelFormatter={(label) => `Jour : ${label}`} /><Line type="monotone" dataKey="successRate" name="Taux de réussite" stroke="#1d4ed8" strokeWidth={2.5} dot={false} connectNulls={false} /></LineChart></ResponsiveContainer></div>}
           </div>
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Dernières erreurs de remise</p>{recentSmtpFailures.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun échec dans les remises chargées.</p> : <ul className="mt-2 space-y-1 text-sm text-slate-700">{recentSmtpFailures.map((failure) => <li key={failure.id} className="flex flex-wrap items-center justify-between gap-2"><span>Échec de remise à examiner</span><span className="text-xs text-slate-500">{new Date(failure.createdAt).toLocaleString("fr-FR")}</span></li>)}</ul>}</div>
         </section>
@@ -1183,16 +1222,7 @@ export default function AdminDashboard() {
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
               <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
             </div>
-            <Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}>
-              <SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes priorités</SelectItem>
-                <SelectItem value="urgent">Urgente</SelectItem>
-                <SelectItem value="high">Haute</SelectItem>
-                <SelectItem value="normal">Normale</SelectItem>
-                <SelectItem value="low">Basse</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button variant="outline" size="sm" onClick={exportAdvisorDeadlinesCsv} className="gap-2"><Download className="h-4 w-4" />Exporter CSV</Button><Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}><SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger><SelectContent><SelectItem value="all">Toutes priorités</SelectItem><SelectItem value="urgent">Urgente</SelectItem><SelectItem value="high">Haute</SelectItem><SelectItem value="normal">Normale</SelectItem><SelectItem value="low">Basse</SelectItem></SelectContent></Select></div>
           </div>
           {isLoadingAdvisorDeadlines ? (
             <p className="py-6 text-sm text-slate-500">Chargement des échéances…</p>
@@ -1209,7 +1239,8 @@ export default function AdminDashboard() {
                   <ul className="mt-3 space-y-2">
                     {group.items.slice(0, 6).map((item) => {
                       const deadlineClass = item.deadline.key === "overdue" ? "border-rose-200 bg-rose-50 text-rose-800" : item.deadline.key === "today" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800";
-                      return <li key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.caseNumber}{item.candidateName ? ` · ${item.candidateName}` : ""}</p><p className="mt-0.5 truncate text-xs text-slate-600">{item.label}</p></div><div className="flex flex-wrap items-center gap-2"><Badge className={deadlineClass}>{item.deadline.label}</Badge><span className="whitespace-nowrap text-xs font-medium text-slate-600">{new Date(item.dueAt).toLocaleString("fr-FR")}</span></div></li>;
+                      const priorityMeta = item.priority === "urgent" ? { label: "Priorité urgente", className: "border-rose-300 bg-rose-600 text-white" } : item.priority === "high" ? { label: "Priorité haute", className: "border-orange-300 bg-orange-100 text-orange-900" } : item.priority === "low" ? { label: "Priorité basse", className: "border-slate-300 bg-slate-100 text-slate-700" } : { label: "Priorité normale", className: "border-blue-300 bg-blue-100 text-blue-900" };
+                      return <li key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.caseNumber}{item.candidateName ? ` · ${item.candidateName}` : ""}</p><p className="mt-0.5 truncate text-xs text-slate-600">{item.label}</p></div><div className="flex flex-wrap items-center gap-2"><Badge className={priorityMeta.className}>{priorityMeta.label}</Badge><Badge className={deadlineClass}>{item.deadline.label}</Badge><span className="whitespace-nowrap text-xs font-medium text-slate-600">{new Date(item.dueAt).toLocaleString("fr-FR")}</span></div></li>;
                     })}
                   </ul>
                   {group.items.length > 6 && <p className="mt-3 text-xs font-medium text-slate-500">+ {group.items.length - 6} autre(s) échéance(s) dans ce groupe.</p>}

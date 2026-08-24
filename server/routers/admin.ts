@@ -6,7 +6,7 @@
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { richTextToPlainText, sanitizeRichTextHtml } from "../services/richText";
-import { emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
+import { buildEmailDeliveryTrend30Days, emailErrorPatterns, summarizeEmailDeliveryLogs } from "../services/emailDelivery";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
@@ -17,7 +17,7 @@ import { createEvisaCommunicationSnapshot } from "../services/evisaCommunication
 import { listDestinationDocuments, addDestinationDocument, deleteDestinationDocument } from "../destinationDocumentService";
 import { storagePut } from "../storage";
 import { ADMIN_DOCUMENT_TYPES, suggestAdminDocumentMetadata } from "../services/adminDocumentRecognitionAssistant";
-import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray } from "drizzle-orm";
+import { eq, desc, asc, like, or, and, isNull, isNotNull, inArray, gte } from "drizzle-orm";
 
 export type CandidateActivationStatus = "active" | "pending" | "expired" | "failed" | "not_registered";
 
@@ -2639,6 +2639,20 @@ export const adminRouter = router({
         logs,
         summary: summarizeEmailDeliveryLogs(logs),
       };
+    }),
+
+  getEmailDeliveryTrend30Days: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const start = new Date(Date.now() - (29 * 24 * 60 * 60 * 1000));
+      const logs = await db.select({ status: emailDeliveryLogs.status, createdAt: emailDeliveryLogs.createdAt })
+        .from(emailDeliveryLogs)
+        .where(gte(emailDeliveryLogs.createdAt, start))
+        .orderBy(asc(emailDeliveryLogs.createdAt));
+      return buildEmailDeliveryTrend30Days(logs);
     }),
 
   updateEmailDeliveryRecipient: publicProcedure

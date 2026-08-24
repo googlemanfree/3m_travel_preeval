@@ -902,3 +902,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un export CSV limité aux données administratives nécessaires du registre des paiements.
 - [x] Ajouter un filtre de priorité à la vue des échéances par conseiller.
 - [x] Afficher un widget SMTP avec taux de réussite et dernières erreurs de remise, sans exposer de contenu d’e-mail sensible.
+
+## Analytique d’échéances et SMTP
+- [x] Mettre à jour la compétence de supervision des paiements avec l’export d’échéances, les badges de priorité et la tendance SMTP.
+- [x] Ajouter un export CSV filtré de la vue des échéances par conseiller.
+- [x] Ajouter des badges de couleur accessibles pour chaque priorité d’échéance.
+- [x] Ajouter un graphique de taux de réussite SMTP sur 30 jours à partir des journaux réels de remise.
