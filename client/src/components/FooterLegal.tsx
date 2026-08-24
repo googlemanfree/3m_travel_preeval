@@ -32,11 +32,24 @@ export function FooterLegal() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <a href={`tel:+${cameroon.whatsappNumber}`} className="hover:text-white transition">
-                  {cameroon.whatsappDisplay}
+                <a href={`https://wa.me/${cameroon.whatsappNumber}`} className="hover:text-white transition">
+                  WhatsApp Yaoundé (principal) : {cameroon.whatsappDisplay}
                 </a>
               </div>
-              <p className="text-xs text-blue-200">{ottawa.label} : {ottawa.whatsappDisplay}</p>
+              {cameroon.phoneDisplay && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  <a href={`tel:${cameroon.phoneDisplay.replace(/\s/g, "")}`} className="hover:text-white transition">
+                    Fixe Yaoundé : {cameroon.phoneDisplay}
+                  </a>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-xs text-blue-200">
+                <Phone className="w-4 h-4" />
+                <a href={`tel:+${ottawa.whatsappNumber}`} className="hover:text-white transition">
+                  Bureau Ottawa : {ottawa.whatsappDisplay}
+                </a>
+              </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
                 <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="hover:text-white transition">

@@ -965,4 +965,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un filtre interactif par destination et la date de dernière vérification à chaque source officielle.
 - [x] Ajouter un bouton de signalement de lien expiré qui n’altère aucune source sans validation humaine.
 - [x] Ajouter des infobulles accessibles expliquant les termes techniques de la FAQ tarifaire.
-- [ ] Tester et publier les interactions documentaires et tarifaires vérifiées.
+- [x] Tester les interactions documentaires et tarifaires vérifiées avant publication.
+
+## Coordonnées Ottawa dans le pied de page
+- [x] Afficher le fixe du bureau Ottawa dans le pied de page partagé, sans remplacer le WhatsApp principal Yaoundé.
+- [ ] Vérifier et publier les sources interactives ainsi que les coordonnées Ottawa du footer.

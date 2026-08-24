@@ -48,7 +48,16 @@ describe("contacts multi-bureaux", () => {
     expect(footer).toContain('COMPANY_CONTACTS.yaounde.whatsappUrl');
     expect(footer).toContain('OFFICE_CONTACTS.ottawa.whatsappDisplay');
     expect(legalFooter).toContain('cameroon.whatsappNumber');
-    expect(legalFooter).toContain('ottawa.label');
+    expect(legalFooter).toContain('ottawa.shortLabel');
+  });
+
+  it("distingue le WhatsApp principal, le fixe 620 de Yaoundé et le bureau Ottawa dans le footer", () => {
+    const legalFooter = read("client/src/components/FooterLegal.tsx");
+    expect(legalFooter).toContain("WhatsApp Yaoundé (principal)");
+    expect(legalFooter).toContain("Fixe Yaoundé");
+    expect(legalFooter).toContain("Bureau Ottawa");
+    expect(legalFooter).toContain("cameroon.phoneDisplay");
+    expect(legalFooter).toContain("ottawa.whatsappDisplay");
   });
 
   it("bascule la destination et le message rapide vers le bureau choisi", () => {
