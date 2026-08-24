@@ -18,7 +18,7 @@ describe("Chargement frais après déploiement", () => {
     expect(worker).toContain("3m-travel-pwa-v6-jinko-booking-flow");
     expect(source).toContain("SW_REVISION");
     expect(source).toContain("/sw-v10.js?revision=");
-    expect(versionedWorker).toContain("3m-travel-pwa-v10-official-sources");
+    expect(versionedWorker).toContain("3m-travel-pwa-v10-contact-timezone");
     expect(worker).toContain("IS_PREVIEW_HOST");
     expect(worker).toContain("SKIP_WAITING");
   });
