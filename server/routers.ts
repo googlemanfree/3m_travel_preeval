@@ -76,6 +76,7 @@ import { richTextTemplatesRouter } from "./routers/richTextTemplatesRouter";
 import { consularRegistryRouter } from "./routers/consularRegistryRouter";
 import { digitalServicesRouter } from "./routers/digitalServices";
 import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
+import { footerEngagementRouter } from "./routers/footerEngagement";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -155,7 +156,10 @@ export const appRouter = router({
   routeHealth: routeHealthRouter,
   richTextTemplates: richTextTemplatesRouter,
   digitalServices: digitalServicesRouter,
+  jinkoHotelSearch: jinkoHotelSearchRouter,
+  // Alias de compatibilité consommé par le panneau de recherche d’hôtels.
   jinkoHotels: jinkoHotelSearchRouter,
+  footerEngagement: footerEngagementRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,
   reassurance: reassuranceRouter,

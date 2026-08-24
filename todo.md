@@ -1002,3 +1002,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester, publier et vérifier publiquement le plan du site et les interactions du footer.
 - [x] Réviser la PWA pour évacuer le bundle public qui conserve l’ancien plan du site.
 - [x] Basculer la révision de diffusion vers le service worker statique principal, car le nouveau chemin v15 est réécrit en HTML en production.
+
+## Navigation bilingue et engagement du footer
+- [x] Auditer les composants de plan du site, footer et les mécanismes d’analytique existants.
+- [x] Créer une compétence réutilisable pour les évolutions de footer, les preuves de diffusion et les garde-fous PWA.
+- [x] Ajouter une recherche interactive et accessible au plan du site.
+- [x] Ajouter une bascule linguistique français-anglais au plan du site et aux infobulles du footer.
+- [x] Ajouter un suivi léger et respectueux de la vie privée des clics sur les raccourcis du footer.
+- [ ] Tester, publier et vérifier publiquement la navigation bilingue et le suivi d’engagement.
+- [x] Rétablir l’alias de routeur Jinko attendu par le composant de recherche d’hôtels afin de valider TypeScript.

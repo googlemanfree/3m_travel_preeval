@@ -8,6 +8,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AnimationPreferencesProvider } from "./contexts/AnimationPreferencesContext";
 import { FontSizePreferencesProvider } from "./contexts/FontSizePreferencesContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
@@ -469,9 +470,10 @@ function App() {
       <ThemeProvider defaultTheme="light" switchable>
         <AnimationPreferencesProvider>
           <FontSizePreferencesProvider>
-            <TooltipProvider>
-              <OfficeContactProvider>
-                <MultiServiceCartProvider>
+            <LanguageProvider>
+              <TooltipProvider>
+                <OfficeContactProvider>
+                  <MultiServiceCartProvider>
                   <SessionLoader isLoading={!sessionRestored} />
                   <Toaster />
                   <ChunkReloadNotice />
@@ -496,9 +498,10 @@ function App() {
                       <SmartFlightAssistant />
                     </>
                   )}
-                </MultiServiceCartProvider>
-              </OfficeContactProvider>
-          </TooltipProvider>
+                  </MultiServiceCartProvider>
+                </OfficeContactProvider>
+              </TooltipProvider>
+            </LanguageProvider>
           </FontSizePreferencesProvider>
         </AnimationPreferencesProvider>
       </ThemeProvider>
