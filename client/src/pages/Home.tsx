@@ -37,7 +37,6 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import { VisasCarousel } from "@/components/VisasCarousel";
 import { SimulatorExpress } from "@/components/SimulatorExpress";
-import { FooterLegal } from "@/components/FooterLegal";
 import AureolQuestionField from "@/components/AureolQuestionField";
 import FacebookFeedSection from "@/components/FacebookFeedSection";
 
@@ -1350,9 +1349,6 @@ export default function Home() {
 
       {/* ─── SIMULATEUR EXPRESS 30 SECONDES ────────────────────────────────────── */}
       <SimulatorExpress />
-
-      {/* ─── FOOTER LÉGAL & INSTITUTIONNEL ─────────────────────────────────────── */}
-      <FooterLegal />
 
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />

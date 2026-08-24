@@ -102,6 +102,7 @@ const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTrack
 const SubmitReview = lazyWithTimeout(() => import("./pages/SubmitReview"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
 import Navbar from "./components/Navbar";
+import { FooterLegal } from "./components/FooterLegal";
 import PageTransition from "./components/PageTransition";
 import PageLoadingFallback from "./components/PageLoadingFallback";
 import ChunkReloadNotice from "./components/ChunkReloadNotice";
@@ -461,6 +462,7 @@ function App() {
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
   const showFloatingTools = location !== "/contact";
+  const showPublicFooter = !location.startsWith("/admin");
 
   return (
     <ErrorBoundary>
@@ -485,6 +487,7 @@ function App() {
                           <Router />
                         </React.Suspense>
                       </PageTransition>
+                      {showPublicFooter && <FooterLegal />}
                       {/* Menu d'actions flottantes unifié */}
                       {showFloatingTools && <FloatingActionMenu />}
                       {/* Guide d’information flottant */}
