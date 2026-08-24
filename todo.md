@@ -1000,3 +1000,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des infobulles descriptives accessibles aux raccourcis du footer.
 - [x] Enrichir les icônes sociales de micro-animations interactives respectueuses du mouvement réduit.
 - [ ] Tester, publier et vérifier publiquement le plan du site et les interactions du footer.
+- [x] Réviser la PWA pour évacuer le bundle public qui conserve l’ancien plan du site.

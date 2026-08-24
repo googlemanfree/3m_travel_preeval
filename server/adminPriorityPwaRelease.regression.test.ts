@@ -3,17 +3,17 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const indexHtml = readFileSync(resolve(import.meta.dirname, "../client/index.html"), "utf8");
-const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/public/sw-v14.js"), "utf8");
+const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/public/sw-v15.js"), "utf8");
 
 describe("révision PWA du poste administrateur", () => {
   it("enregistre une révision de service worker distincte pour évacuer les bundles périmés", () => {
-    expect(indexHtml).toContain("2026-08-24-footer-shortcut-motion");
-    expect(indexHtml).toContain("/sw-v14.js?revision=");
+    expect(indexHtml).toContain("2026-08-24-sitemap-footer-tooltips");
+    expect(indexHtml).toContain("/sw-v15.js?revision=");
     expect(indexHtml).toContain("updateViaCache: 'none'");
   });
 
   it("préserve le réseau d’abord pour les navigations et purge les anciens caches", () => {
-    expect(serviceWorker).toContain("3m-travel-pwa-v14-footer-shortcut-motion");
+    expect(serviceWorker).toContain("3m-travel-pwa-v15-sitemap-footer-tooltips");
     expect(serviceWorker).toContain("keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))");
     expect(serviceWorker).toContain("if (event.request.mode === 'navigate')");
     expect(serviceWorker).toContain("fetch(event.request)");

@@ -38,8 +38,8 @@
             return;
           }
 
-          const SW_REVISION = '2026-08-24-footer-shortcut-motion';
-          navigator.serviceWorker.register('/sw-v14.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
+          const SW_REVISION = '2026-08-24-sitemap-footer-tooltips';
+          navigator.serviceWorker.register('/sw-v15.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.
             registration.update();
