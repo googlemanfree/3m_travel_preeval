@@ -81,6 +81,34 @@ export async function requireAdminSessionFromCookie(cookieHeader: string | undef
 
 export const adminAuthRouter = router({
   /**
+   * Établit une session admin 24 h après authentification OAuth, uniquement si
+   * l’adresse OAuth appartient déjà à un compte administrateur actif.
+   */
+  bootstrapPlatformSession: publicProcedure.query(async ({ ctx }) => {
+    const platformEmail = ctx.user?.email?.trim().toLowerCase();
+    if (!platformEmail) return { authenticated: false } as const;
+
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+    const rows = await db.select().from(adminAccounts).where(eq(adminAccounts.email, platformEmail)).limit(1);
+    const admin = rows[0];
+    if (!admin || admin.status !== "active") return { authenticated: false } as const;
+
+    const sessionToken = generateSessionToken();
+    const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
+    await db.update(adminAccounts).set({ sessionToken, sessionExpiresAt, lastLoginAt: new Date(), lastActivityAt: new Date() }).where(eq(adminAccounts.id, admin.id));
+    await db.insert(adminSessionEvents).values({ adminId: admin.id, eventType: "login", expiresAt: sessionExpiresAt });
+    ctx.res.cookie(ADMIN_SESSION_COOKIE, sessionToken, { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: ADMIN_SESSION_DURATION_MS });
+
+    return {
+      authenticated: true,
+      sessionToken,
+      sessionExpiresAt,
+      admin: { email: admin.email, fullName: admin.fullName, adminType: admin.adminType },
+    } as const;
+  }),
+
+  /**
    * Connexion administrateur par email + mot de passe.
    */
   login: publicProcedure

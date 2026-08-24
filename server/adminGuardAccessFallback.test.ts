@@ -11,7 +11,8 @@ describe("garde administrateur", () => {
   it("bascule vers la page d’accès refusé si une vérification de session reste bloquée", () => {
     expect(guardSource).toContain("const [queryTimedOut, setQueryTimedOut] = useState(false)");
     expect(guardSource).toContain("window.setTimeout(() => setQueryTimedOut(true), 5_000)");
-    expect(guardSource).toContain("const isChecking = adminSession.isLoading && !queryTimedOut");
+    expect(guardSource).toContain("const isBootstrapping = !sessionToken && adminSession.data?.authenticated === false && platformBootstrap.isLoading");
+    expect(guardSource).toContain("const isChecking = (adminSession.isLoading || isBootstrapping) && !queryTimedOut");
     expect(guardSource).toContain("Se connecter en tant qu'Admin");
   });
 });

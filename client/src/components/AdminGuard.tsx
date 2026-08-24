@@ -13,15 +13,30 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
-  const sessionToken = typeof window === "undefined" ? "" : sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "";
+  const [sessionToken, setSessionToken] = useState(() => typeof window === "undefined" ? "" : sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "");
   const [queryTimedOut, setQueryTimedOut] = useState(false);
   const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
+  const platformBootstrap = trpc.adminAuth.bootstrapPlatformSession.useQuery(undefined, {
+    enabled: !sessionToken && adminSession.data?.authenticated === false,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+  useEffect(() => {
+    if (!platformBootstrap.data?.authenticated) return;
+    const { sessionToken: restoredToken, admin } = platformBootstrap.data;
+    sessionStorage.setItem("adminSessionToken", restoredToken);
+    localStorage.setItem("adminSessionToken", restoredToken);
+    sessionStorage.setItem("adminName", admin.fullName);
+    sessionStorage.setItem("adminEmail", admin.email);
+    setSessionToken(restoredToken);
+  }, [platformBootstrap.data]);
   useEffect(() => {
     if (!adminSession.isLoading) { setQueryTimedOut(false); return; }
     const timeout = window.setTimeout(() => setQueryTimedOut(true), 5_000);
     return () => window.clearTimeout(timeout);
   }, [adminSession.isLoading]);
-  const isChecking = adminSession.isLoading && !queryTimedOut;
+  const isBootstrapping = !sessionToken && adminSession.data?.authenticated === false && platformBootstrap.isLoading;
+  const isChecking = (adminSession.isLoading || isBootstrapping) && !queryTimedOut;
   const isAuthorized = isChecking ? null : adminSession.data?.authenticated === true;
   const sessionTemporarilyUnavailable = adminSession.isError && !/non authentifi|expir|invalid/i.test(adminSession.error?.message ?? "");
   const requiresPasswordChange = adminSession.data?.authenticated === true && adminSession.data.requiresPasswordChange === true;

@@ -889,3 +889,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Ajouter des échéances calculées et des indicateurs visuels explicites à la file de priorités manuelle, sans déclenchement automatique.
 - [ ] Renforcer la recherche et les filtres de tri du registre administrateur, avec des critères stables et accessibles.
 - [ ] Effectuer l’envoi réel d’un reçu de paiement uniquement sur une transaction de test `SUCCESS` validée manuellement, après confirmation explicite de l’identifiant et de l’adresse de réception contrôlée.
+- [ ] Corriger le retour vers l’accueil après authentification administrateur et préserver la session vérifiée jusqu’à son expiration réelle ou une déconnexion explicite.
