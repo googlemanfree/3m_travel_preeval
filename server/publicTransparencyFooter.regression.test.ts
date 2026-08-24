@@ -40,5 +40,9 @@ describe("transparence publique et footer consolidé", () => {
     expect(footer).toContain("MINI_SITE_MAP");
     expect(footer).toContain("Mini-plan du site");
     expect(footer).toContain('href: "/sources-officielles"');
+    expect(footer).toContain("FOOTER_SHORTCUT_CLASS");
+    expect(footer).toContain("hover:translate-x-1");
+    expect(footer).toContain("focus-visible:ring-2");
+    expect(footer).toContain("motion-reduce:transition-none");
   });
 });

@@ -987,3 +987,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un mini-plan de site accessible et responsive dans le footer partagé.
 - [x] Tester et publier le mini-plan de site sur le domaine public.
 - [x] Réviser le cache PWA pour évacuer le bundle public obsolète et diffuser le mini-plan.
+
+## Interactions du footer
+- [x] Concevoir des animations de survol fluides, discrètes et respectueuses de la préférence de mouvement réduit.
+- [x] Appliquer les animations aux raccourcis du mini-plan et vérifier leur accessibilité.
+- [ ] Tester, publier et vérifier le rendu des interactions du footer.

@@ -31,6 +31,8 @@ const MINI_SITE_MAP = [
   { label: "Sources officielles", href: "/sources-officielles" },
 ];
 
+const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-8 items-center rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
+
 export default function Footer() {
   return (
     <footer className="mt-auto bg-[#0f2460] text-gray-300" aria-label="Informations et contacts 3M Travel">
@@ -72,11 +74,11 @@ export default function Footer() {
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Navigation</h2>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="hover:text-blue-200">Accueil</Link></li>
-              <li><Link href="/flights" className="hover:text-blue-200">Recherche de vols</Link></li>
-              <li><Link href="/procedures" className="hover:text-blue-200">Procédures &amp; destinations</Link></li>
-              <li><Link href="/register" className="hover:text-blue-200">Inscription</Link></li>
-              <li><Link href="/login" className="hover:text-blue-200">Espace candidat</Link></li>
+              <li><Link href="/" className={FOOTER_SHORTCUT_CLASS}>Accueil</Link></li>
+              <li><Link href="/flights" className={FOOTER_SHORTCUT_CLASS}>Recherche de vols</Link></li>
+              <li><Link href="/procedures" className={FOOTER_SHORTCUT_CLASS}>Procédures &amp; destinations</Link></li>
+              <li><Link href="/register" className={FOOTER_SHORTCUT_CLASS}>Inscription</Link></li>
+              <li><Link href="/login" className={FOOTER_SHORTCUT_CLASS}>Espace candidat</Link></li>
             </ul>
           </div>
 
@@ -84,7 +86,7 @@ export default function Footer() {
             <h2 className="mb-3 text-sm font-bold text-white">Destinations</h2>
             <ul className="space-y-2 text-sm">
               {["Canada", "France", "Allemagne", "Luxembourg", "Royaume-Uni", "Australie"].map((destination) => (
-                <li key={destination}><Link href="/procedures" className="hover:text-blue-200">{destination}</Link></li>
+                <li key={destination}><Link href="/procedures" className={FOOTER_SHORTCUT_CLASS}>{destination}</Link></li>
               ))}
             </ul>
           </div>
@@ -92,7 +94,7 @@ export default function Footer() {
           <nav aria-label="Mini-plan du site">
             <h2 className="mb-3 text-sm font-bold text-white">Mini-plan du site</h2>
             <ul className="space-y-2 text-sm">
-              {MINI_SITE_MAP.map((link) => <li key={link.label}><Link href={link.href} className="hover:text-blue-200">{link.label}</Link></li>)}
+              {MINI_SITE_MAP.map((link) => <li key={link.label}><Link href={link.href} className={FOOTER_SHORTCUT_CLASS}>{link.label}</Link></li>)}
             </ul>
           </nav>
 
@@ -111,7 +113,7 @@ export default function Footer() {
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Informations utiles</h2>
             <ul className="space-y-2 text-sm">
-              {USEFUL_LINKS.map((link) => <li key={link.label}><Link href={link.href} className="hover:text-blue-200">{link.label}</Link></li>)}
+              {USEFUL_LINKS.map((link) => <li key={link.label}><Link href={link.href} className={FOOTER_SHORTCUT_CLASS}>{link.label}</Link></li>)}
             </ul>
             <div className="mt-5 border-t border-white/15 pt-4">
               <p className="mb-2 text-xs font-semibold text-blue-200">Page officielle</p>
