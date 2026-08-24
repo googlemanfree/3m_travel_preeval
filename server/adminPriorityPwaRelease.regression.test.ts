@@ -3,17 +3,17 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const indexHtml = readFileSync(resolve(import.meta.dirname, "../client/index.html"), "utf8");
-const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/public/sw-v12.js"), "utf8");
+const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/public/sw-v13.js"), "utf8");
 
 describe("révision PWA du poste administrateur", () => {
   it("enregistre une révision de service worker distincte pour évacuer les bundles périmés", () => {
-    expect(indexHtml).toContain("2026-08-24-global-footer");
-    expect(indexHtml).toContain("/sw-v12.js?revision=");
+    expect(indexHtml).toContain("2026-08-24-footer-mini-sitemap");
+    expect(indexHtml).toContain("/sw-v13.js?revision=");
     expect(indexHtml).toContain("updateViaCache: 'none'");
   });
 
   it("préserve le réseau d’abord pour les navigations et purge les anciens caches", () => {
-    expect(serviceWorker).toContain("3m-travel-pwa-v12-global-footer");
+    expect(serviceWorker).toContain("3m-travel-pwa-v13-footer-mini-sitemap");
     expect(serviceWorker).toContain("keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))");
     expect(serviceWorker).toContain("if (event.request.mode === 'navigate')");
     expect(serviceWorker).toContain("fetch(event.request)");

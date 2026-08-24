@@ -8,7 +8,7 @@ describe("Chargement frais après déploiement", () => {
   it("force la recherche d’un nouveau service worker sans attendre le cache HTTP", () => {
     const source = fs.readFileSync(path.join(projectRoot, "client/index.html"), "utf8");
     const worker = fs.readFileSync(path.join(projectRoot, "client/public/sw.js"), "utf8");
-    const versionedWorker = fs.readFileSync(path.join(projectRoot, "client/public/sw-v12.js"), "utf8");
+    const versionedWorker = fs.readFileSync(path.join(projectRoot, "client/public/sw-v13.js"), "utf8");
 
     expect(source).toContain("updateViaCache: 'none'");
     expect(source).toContain("registration.update()");
@@ -17,8 +17,8 @@ describe("Chargement frais après déploiement", () => {
     expect(source).toContain("registration.unregister()");
     expect(worker).toContain("3m-travel-pwa-v6-jinko-booking-flow");
     expect(source).toContain("SW_REVISION");
-    expect(source).toContain("/sw-v12.js?revision=");
-    expect(versionedWorker).toContain("3m-travel-pwa-v12-global-footer");
+    expect(source).toContain("/sw-v13.js?revision=");
+    expect(versionedWorker).toContain("3m-travel-pwa-v13-footer-mini-sitemap");
     expect(worker).toContain("IS_PREVIEW_HOST");
     expect(worker).toContain("SKIP_WAITING");
   });
