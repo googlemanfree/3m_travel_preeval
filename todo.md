@@ -1009,6 +1009,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une recherche interactive et accessible au plan du site.
 - [x] Ajouter une bascule linguistique français-anglais au plan du site et aux infobulles du footer.
 - [x] Ajouter un suivi léger et respectueux de la vie privée des clics sur les raccourcis du footer.
-- [ ] Tester, publier et vérifier publiquement la navigation bilingue et le suivi d’engagement.
+- [x] Tester, publier et vérifier publiquement la navigation bilingue et le suivi d’engagement.
 - [x] Rétablir l’alias de routeur Jinko attendu par le composant de recherche d’hôtels afin de valider TypeScript.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public précédant la navigation bilingue.

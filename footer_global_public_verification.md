@@ -29,3 +29,9 @@ Après actualisation, le DOM public confirme pour chacun des six liens du mini-p
 URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=4be59b3d&footer-tooltips=public-verified`.
 
 Après propagation, le domaine public affiche le plan du site structuré en quatre catégories, avec une description pour chaque accès. Le footer partagé conserve ses raccourcis et présente des infobulles accessibles : au focus clavier, le raccourci « Évaluation gratuite » affiche « Démarrer une orientation gratuite sans créer de compte. » ; l’icône Facebook affiche son aide contextuelle. Le service worker actif est `sw.js?revision=2026-08-24-sitemap-footer-tooltips-static`, avec le cache v16. Cette vérification confirme aussi la bannière de mise à jour disponible pour les navigateurs utilisant encore une version antérieure.
+
+## Vérification publique — recherche et bascule bilingue
+
+URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=56fce112&navigation-search-language=public-v17`.
+
+Le domaine public affiche la barre « Rechercher dans le plan du site », les commandes « Français » et « English », ainsi que la page complète en anglais. La bascule vers le français a été vérifiée dans la même session : les titres, descriptions et raccourcis du footer sont revenus en français. L’infobulle du raccourci « Évaluation gratuite » est visible au focus clavier en français. Le registre d’engagement minimal a été migré et le code de suivi est diffusé ; aucun clic de démonstration n’a été envoyé afin de ne pas fausser les statistiques réelles. À ce contrôle, le chemin statique du worker public renvoyait encore le cache v16, mais le bundle de navigation v17 et ses fonctionnalités sont effectivement chargés et vérifiés sur le domaine public.
