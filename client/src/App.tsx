@@ -84,6 +84,7 @@ import { OfficeContactProvider } from "./contexts/OfficeContactContext";
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
 const Avis = lazyWithTimeout(() => import("./pages/Avis"));
+const OfficialSources = lazyWithTimeout(() => import("./pages/OfficialSources"));
 const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
@@ -274,6 +275,7 @@ function Router() {
 
       {/* Tarifs, Avis, Blog */}
       <Route path={"/tarifs"} component={Tarifs} />
+      <Route path={"/sources-officielles"} component={OfficialSources} />
       <Route path={"/avis"} component={Avis} />
       <Route path={"/blog"} component={Blog} />
       <Route path={"/blog/etudes/:slug"} component={StudyDestinationArticle} />

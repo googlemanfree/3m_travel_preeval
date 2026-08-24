@@ -1,6 +1,8 @@
 import { CheckCircle2, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+import { digitalWhatsAppUrl } from "@/lib/companyContacts";
 
 const SERVICE_OPTIONS = [
   {
@@ -66,12 +68,13 @@ export default function Tarifs() {
 
         <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-7" aria-labelledby="tarifs-questions">
           <h2 id="tarifs-questions" className="text-2xl font-black text-slate-950">Questions fréquentes</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-3">
-            <div><h3 className="font-bold text-slate-900">Les frais sont-ils définitifs&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Ils sont confirmés par écrit pour le service retenu. Les frais de tiers peuvent évoluer selon leurs propres règles.</p></div>
-            <div><h3 className="font-bold text-slate-900">Existe-t-il un remboursement automatique&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Non. Toute éventuelle condition de remboursement dépend d’une politique écrite applicable et doit être expliquée avant paiement.</p></div>
-            <div><h3 className="font-bold text-slate-900">Comment demander un devis&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Présentez votre projet : un conseiller vous indiquera le périmètre, les frais applicables et les limites du service.</p></div>
-          </div>
-          <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services%2C%20je%20souhaite%20demander%20une%20pr%C3%A9cision%20tarifaire." target="_blank" rel="noopener noreferrer" className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-5 py-3 text-sm font-black text-blue-800 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"><MessageCircle className="h-4 w-4" />Poser une question tarifaire</a>
+          <Accordion type="single" collapsible className="mt-5 divide-y divide-slate-200">
+            <AccordionItem value="frais-confirms"><AccordionTrigger className="text-left font-bold text-slate-900">Les frais sont-ils définitifs&nbsp;?</AccordionTrigger><AccordionContent className="text-sm leading-6 text-slate-600">Les honoraires d’agence sont confirmés par écrit pour le service retenu. Les frais de tiers — administration, consulat, biométrie, assurance, traduction ou fournisseur — peuvent évoluer selon leurs propres règles et sont distingués avant paiement.</AccordionContent></AccordionItem>
+            <AccordionItem value="frais-tiers"><AccordionTrigger className="text-left font-bold text-slate-900">Quels frais peuvent être facturés par des tiers&nbsp;?</AccordionTrigger><AccordionContent className="text-sm leading-6 text-slate-600">Selon la démarche, des organismes externes peuvent facturer des frais gouvernementaux, consulaires, médicaux, biométriques, de traduction, d’assurance ou de fournisseur. Leur montant, destinataire et éventuelles conditions sont expliqués avant votre décision.</AccordionContent></AccordionItem>
+            <AccordionItem value="remboursement"><AccordionTrigger className="text-left font-bold text-slate-900">Existe-t-il un remboursement automatique&nbsp;?</AccordionTrigger><AccordionContent className="text-sm leading-6 text-slate-600">Non. Une éventuelle condition de remboursement dépend d’une politique écrite applicable au service et au dossier concerné. Les frais versés à des autorités ou fournisseurs peuvent suivre leurs propres règles ; ils ne sont jamais présumés remboursables.</AccordionContent></AccordionItem>
+            <AccordionItem value="devis"><AccordionTrigger className="text-left font-bold text-slate-900">Comment demander un devis ou une explication&nbsp;?</AccordionTrigger><AccordionContent className="text-sm leading-6 text-slate-600">Présentez votre projet : un conseiller indique le périmètre du service, les documents attendus, les frais connus et les limites applicables. Vous choisissez de poursuivre uniquement après avoir reçu ces informations.</AccordionContent></AccordionItem>
+          </Accordion>
+          <a href={digitalWhatsAppUrl("Bonjour 3M Travel & Services, je souhaite demander une précision tarifaire.")} target="_blank" rel="noopener noreferrer" className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-5 py-3 text-sm font-black text-blue-800 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"><MessageCircle className="h-4 w-4" />Poser une question tarifaire</a>
         </section>
       </div>
     </main>

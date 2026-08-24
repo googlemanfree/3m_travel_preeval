@@ -1,7 +1,10 @@
 import { Mail, Phone, MapPin, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 export function FooterLegal() {
+  const cameroon = COMPANY_PROFILE.offices.cameroon;
+  const ottawa = COMPANY_PROFILE.offices.ottawa;
   return (
     <footer className="bg-gradient-to-b from-blue-900 to-blue-950 text-white">
       {/* Warning Banner */}
@@ -21,23 +24,23 @@ export function FooterLegal() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-bold mb-4">3M Travel Agency SARL</h3>
+            <h3 className="text-lg font-bold mb-4">{COMPANY_PROFILE.legalName}</h3>
             <div className="space-y-3 text-sm text-blue-100">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>Siège : Yaoundé, Biyem-Assi, Montée chapelle Obili (10 m de EHS), Cameroun. Bureau secondaire : Douala.</span>
+                <span>Siège : {cameroon.addressLines.join(", ")}. Bureau d’information : {ottawa.shortLabel}.</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
-                <a href="tel:+237698104832" className="hover:text-white transition">
-                  +237 698 104 832
+                <a href={`tel:+${cameroon.whatsappNumber}`} className="hover:text-white transition">
+                  {cameroon.whatsappDisplay}
                 </a>
               </div>
-              <p className="text-xs text-blue-200">Bureau 3M Travel d’Ottawa, Canada : +1 672 897 2999</p>
+              <p className="text-xs text-blue-200">{ottawa.label} : {ottawa.whatsappDisplay}</p>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:hello@3mtravelagency.com" className="hover:text-white transition">
-                  hello@3mtravelagency.com
+                <a href={`mailto:${COMPANY_PROFILE.publicEmail}`} className="hover:text-white transition">
+                  {COMPANY_PROFILE.publicEmail}
                 </a>
               </div>
             </div>
@@ -47,8 +50,8 @@ export function FooterLegal() {
           <div>
             <h4 className="font-bold mb-4">Informations Légales</h4>
             <div className="space-y-2 text-sm text-blue-100">
-              <p><strong>RC :</strong> RC/YAO/2019/A/2567</p>
-              <p><strong>NIU :</strong> M112417203369H</p>
+              <p><strong>RC :</strong> {COMPANY_PROFILE.legalIdentifiers.registration}</p>
+              <p><strong>NIU :</strong> {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
               <p><strong>Horaires :</strong> Lundi à vendredi, 8h–17h</p>
             </div>
           </div>
@@ -65,6 +68,11 @@ export function FooterLegal() {
               <li>
                 <Link href="/procedures" className="hover:text-white transition">
                   Procédures
+                </Link>
+              </li>
+              <li>
+                <Link href="/sources-officielles" className="hover:text-white transition">
+                  Sources officielles
                 </Link>
               </li>
               <li>
@@ -107,7 +115,7 @@ export function FooterLegal() {
 
         {/* Bottom Bar */}
         <div className="border-t border-blue-700 pt-6 flex flex-col md:flex-row justify-between items-center text-sm text-blue-200">
-          <p>&copy; 2026 3M Travel Agency SARL. Tous droits réservés.</p>
+          <p>&copy; 2026 {COMPANY_PROFILE.legalName}. Tous droits réservés.</p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <Link href="/politique-confidentialite" className="hover:text-white transition">
               Politique de Confidentialité

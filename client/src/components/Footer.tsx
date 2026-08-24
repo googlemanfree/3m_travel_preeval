@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
-import { COMPANY_CONTACTS } from "@/lib/companyContacts";
+import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
 
 const SOCIAL_LINKS = [
@@ -40,7 +40,7 @@ export default function Footer() {
           </div>
           <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
             <a href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50">Ouvrir le formulaire de contact</a>
-            <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">Écrire sur WhatsApp</a>
+            <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">Écrire sur WhatsApp</a>
           </div>
         </div>
       </motion.div>
@@ -96,7 +96,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <span>Bureau secondaire : Douala, Cameroun</span>
+                <span>Bureau d’information : {COMPANY_CONTACTS.ottawa.address}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
@@ -162,12 +162,12 @@ export default function Footer() {
         {/* Barre légale */}
         <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">
           <p>
-            <span className="text-gray-400 font-medium">3M Travel Agency SARL</span> — RC/YAO/2019/A/2567 | NIU : M112417203369H
+            <span className="text-gray-400 font-medium">{COMPANY_PROFILE.legalName}</span> — RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
           </p>
           <p>
             Rôle de conseil et d'accompagnement. Les décisions d'octroi de visa appartiennent exclusivement aux autorités consulaires.
           </p>
-          <p className="mt-2">© {new Date().getFullYear()} 3M Travel Agency. Tous droits réservés.</p>
+          <p className="mt-2">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

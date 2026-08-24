@@ -9,14 +9,15 @@ const read = (relativePath: string) => readFileSync(resolve(root, relativePath),
 describe("contacts multi-bureaux", () => {
   it("déclare Ottawa et Cameroun avec des fuseaux IANA et un WhatsApp distinct", () => {
     const source = read("client/src/lib/officeContacts.ts");
-    expect(source).toContain('ottawa:');
-    expect(source).toContain('cameroon:');
-    expect(source).toContain('timeZone: "America/Toronto"');
-    expect(source).toContain('timeZone: "Africa/Douala"');
-    expect(source).toContain('whatsappNumber: "16728972999"');
-    expect(source).toContain('whatsappNumber: "237698104832"');
-    expect(source).toContain('flag: "🇨🇦"');
-    expect(source).toContain('flag: "🇨🇲"');
+    const config = read("client/src/lib/companyContacts.ts");
+    expect(source).toContain('COMPANY_PROFILE.offices.ottawa');
+    expect(source).toContain('COMPANY_PROFILE.offices.cameroon');
+    expect(config).toContain('timeZone: "America/Toronto"');
+    expect(config).toContain('timeZone: "Africa/Douala"');
+    expect(config).toContain('whatsappNumber: "16728972999"');
+    expect(config).toContain('whatsappNumber: "237698104832"');
+    expect(config).toContain('flag: "🇨🇦"');
+    expect(config).toContain('flag: "🇨🇲"');
   });
 
   it("conserve le bureau choisi et prépare le lien WhatsApp avec son message", () => {
@@ -46,8 +47,8 @@ describe("contacts multi-bureaux", () => {
     expect(context).toContain('return "cameroon"');
     expect(footer).toContain('COMPANY_CONTACTS.yaounde.whatsappUrl');
     expect(footer).toContain('OFFICE_CONTACTS.ottawa.whatsappDisplay');
-    expect(legalFooter).toContain('tel:+237698104832');
-    expect(legalFooter).toContain('Bureau 3M Travel d’Ottawa, Canada : +1 672 897 2999');
+    expect(legalFooter).toContain('cameroon.whatsappNumber');
+    expect(legalFooter).toContain('ottawa.label');
   });
 
   it("bascule la destination et le message rapide vers le bureau choisi", () => {

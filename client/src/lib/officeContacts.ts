@@ -1,3 +1,5 @@
+import { COMPANY_PROFILE, type CompanyOffice } from "@/lib/companyContacts";
+
 export type OfficeId = "ottawa" | "cameroon";
 
 export type OfficeContact = {
@@ -14,33 +16,11 @@ export type OfficeContact = {
   mapQuery: string;
 };
 
+const toOfficeContact = (id: OfficeId, office: CompanyOffice): OfficeContact => ({ id, ...office });
+
 export const OFFICE_CONTACTS: Record<OfficeId, OfficeContact> = {
-  ottawa: {
-    id: "ottawa",
-    label: "Bureau 3M Travel d’Ottawa, Canada",
-    shortLabel: "Ottawa, Canada",
-    flag: "🇨🇦",
-    whatsappNumber: "16728972999",
-    whatsappDisplay: "+1 672 897 2999",
-    timeZone: "America/Toronto",
-    timeZoneLabel: "Heure de Toronto (ET)",
-    openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
-    addressLines: ["Ottawa, Ontario, Canada"],
-    mapQuery: "Ottawa, Ontario, Canada",
-  },
-  cameroon: {
-    id: "cameroon",
-    label: "Bureau de Yaoundé, Cameroun",
-    shortLabel: "Yaoundé",
-    flag: "🇨🇲",
-    whatsappNumber: "237698104832",
-    whatsappDisplay: "+237 698 104 832",
-    timeZone: "Africa/Douala",
-    timeZoneLabel: "Heure de Douala (WAT)",
-    openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
-    addressLines: ["Biyem-Assi, Montée Chapelle Obili", "À 10 m de EHS, Yaoundé, Cameroun"],
-    mapQuery: "Avenue Marché Biyem-Assi, Yaoundé, Cameroun",
-  },
+  ottawa: toOfficeContact("ottawa", COMPANY_PROFILE.offices.ottawa),
+  cameroon: toOfficeContact("cameroon", COMPANY_PROFILE.offices.cameroon),
 };
 
 export const OFFICE_CONTACT_LIST = Object.values(OFFICE_CONTACTS);

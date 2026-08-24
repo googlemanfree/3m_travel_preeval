@@ -951,3 +951,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester et publier les pages À propos, Tarifs et Accueil corrigées.
 - [x] Forcer une révision de cache du bundle public et revalider `/about`, `/tarifs` et le footer unique sur le domaine de déploiement.
 - [x] Surveiller le rétablissement du domaine publié, puis vérifier les pages transparentes sans supprimer de route ni de composant fonctionnel supplémentaire.
+
+## Coordonnées centralisées et transparence documentaire
+- [x] Centraliser les coordonnées légales et de contact dans une configuration partagée, puis migrer les composants publics concernés.
+- [x] Créer la page `/sources-officielles` avec des liens institutionnels vérifiés par destination et les limites d’information associées.
+- [x] Ajouter une FAQ interactive complète sur `/tarifs` concernant les frais tiers et les limites de remboursement.
+- [ ] Tester et publier les coordonnées centralisées, les sources officielles et la FAQ tarifaire.

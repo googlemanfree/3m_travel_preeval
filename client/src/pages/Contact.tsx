@@ -7,8 +7,12 @@ import { Input } from '@/components/ui/input';
 import { ChatModal } from '@/components/ChatModal';
 import OfficeContactPanel from '@/components/OfficeContactPanel';
 import { trpc } from '@/lib/trpc';
+import { COMPANY_PROFILE } from '@/lib/companyContacts';
+import { officeMapEmbedUrl } from '@/lib/officeContacts';
 
 export default function Contact() {
+  const cameroon = COMPANY_PROFILE.offices.cameroon;
+  const ottawa = COMPANY_PROFILE.offices.ottawa;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,27 +32,27 @@ export default function Contact() {
     {
       icon: MapPin,
       title: 'Adresse',
-      details: ['Yaoundé, Cameroun', 'Douala, Cameroun'],
+      details: [cameroon.addressLines.join(', '), ottawa.addressLines.join(', ')],
       color: 'text-red-500',
     },
     {
       icon: Phone,
       title: 'Téléphone',
-      details: ['+237 698 104 832', '+237 620 996 045'],
+      details: [cameroon.whatsappDisplay, cameroon.phoneDisplay ?? ottawa.whatsappDisplay],
       color: 'text-green-500',
       link: true,
     },
     {
       icon: Mail,
       title: 'Email',
-      details: ['hello@3mtravelagency.com'],
+      details: [COMPANY_PROFILE.publicEmail],
       color: 'text-blue-500',
       link: true,
     },
     {
       icon: Clock,
       title: 'Horaires',
-      details: ['Lun-Ven: 8h00 - 20h00', 'Sam-Dim: 9h00 - 18h00'],
+      details: [...cameroon.openingHours],
       color: 'text-purple-500',
     },
   ];
@@ -138,7 +142,7 @@ export default function Contact() {
             Nos localisations
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
-            {/* Yaoundé Map */}
+            {/* Carte du bureau principal */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -146,11 +150,11 @@ export default function Contact() {
               className="rounded-lg overflow-hidden shadow-lg"
             >
               <div className="bg-white p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Yaoundé</h3>
-                <p className="text-sm text-gray-600 mb-4">Siège principal</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{cameroon.shortLabel}</h3>
+                <p className="text-sm text-gray-600 mb-4">{cameroon.label}</p>
               </div>
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.7441234567890!2d11.5021!3d3.8667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zM8KwNTIwMDEuMiJOIDExwrMwMDA1OS4yIkU!5e0!3m2!1sfr!2scm!4v1234567890"
+                src={officeMapEmbedUrl({ id: "cameroon", ...cameroon })}
                 width="100%"
                 height="300"
                 style={{ border: 0 }}
@@ -160,7 +164,7 @@ export default function Contact() {
               />
             </motion.div>
 
-            {/* Douala Map */}
+            {/* Carte du bureau Ottawa */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -168,11 +172,11 @@ export default function Contact() {
               className="rounded-lg overflow-hidden shadow-lg"
             >
               <div className="bg-white p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Douala</h3>
-                <p className="text-sm text-gray-600 mb-4">Bureau secondaire</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{ottawa.shortLabel}</h3>
+                <p className="text-sm text-gray-600 mb-4">{ottawa.label}</p>
               </div>
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3979.7441234567890!2d9.7679!3d4.0511!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2z0JDQu9C80LXQvdC40LXQvdC90LjRgdC60LDRgtC10YI!5e0!3m2!1sfr!2scm!4v1234567890"
+                src={officeMapEmbedUrl({ id: "ottawa", ...ottawa })}
                 width="100%"
                 height="300"
                 style={{ border: 0 }}
