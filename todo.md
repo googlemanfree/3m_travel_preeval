@@ -948,5 +948,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reformuler les contenus non vérifiables de `/about` selon le principe de transparence appliqué à `/avis` et `/canada`.
 - [x] Identifier les trois footers rendus sur l’accueil et les consolider en un seul pied de page partagé.
 - [x] Auditer les promesses de remboursement et de frais de `/tarifs`, puis les reformuler avec une information de politique vérifiable.
-- [ ] Tester et publier les pages À propos, Tarifs et Accueil corrigées.
-- [ ] Forcer une révision de cache du bundle public et revalider `/about`, `/tarifs` et le footer unique sur le domaine de déploiement.
+- [x] Tester et publier les pages À propos, Tarifs et Accueil corrigées.
+- [x] Forcer une révision de cache du bundle public et revalider `/about`, `/tarifs` et le footer unique sur le domaine de déploiement.
+- [x] Surveiller le rétablissement du domaine publié, puis vérifier les pages transparentes sans supprimer de route ni de composant fonctionnel supplémentaire.
