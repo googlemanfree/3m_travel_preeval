@@ -980,3 +980,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Fusionner visuellement l’alerte anti-fraude, l’appel de contact et les colonnes du footer en une seule surface continue, sans sections perçues comme plusieurs pieds de page.
 - [x] Monter le footer canonique au niveau global et retirer son rendu local de l’accueil afin d’afficher exactement un footer complet sur chaque route publique.
 - [x] Réduire les sections de coordonnées de l’accueil qui dupliquent visuellement le footer, en conservant des liens fonctionnels vers Contact et Sources officielles.
+- [ ] Forcer la diffusion du bundle d’accueil compact et du footer global, puis revalider le domaine public.
