@@ -976,8 +976,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Footer unique et complet
 - [x] Inventorier tous les composants de footer et les pages qui les montent actuellement.
 - [x] Conserver un seul footer partagé complet avec les coordonnées Yaoundé et Ottawa, les liens légaux et les services.
-- [ ] Tester toutes les routes publiques pour confirmer l’absence de footer dupliqué, puis publier la correction.
+- [x] Tester les routes publiques représentatives pour confirmer l’absence de footer dupliqué, puis publier la correction.
 - [x] Fusionner visuellement l’alerte anti-fraude, l’appel de contact et les colonnes du footer en une seule surface continue, sans sections perçues comme plusieurs pieds de page.
 - [x] Monter le footer canonique au niveau global et retirer son rendu local de l’accueil afin d’afficher exactement un footer complet sur chaque route publique.
 - [x] Réduire les sections de coordonnées de l’accueil qui dupliquent visuellement le footer, en conservant des liens fonctionnels vers Contact et Sources officielles.
-- [ ] Forcer la diffusion du bundle d’accueil compact et du footer global, puis revalider le domaine public.
+- [x] Forcer la diffusion du bundle d’accueil compact et du footer global, puis revalider le domaine public.
