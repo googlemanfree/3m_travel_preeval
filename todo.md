@@ -957,3 +957,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer la page `/sources-officielles` avec des liens institutionnels vérifiés par destination et les limites d’information associées.
 - [x] Ajouter une FAQ interactive complète sur `/tarifs` concernant les frais tiers et les limites de remboursement.
 - [ ] Tester et publier les coordonnées centralisées, les sources officielles et la FAQ tarifaire.
+- [ ] Diagnostiquer la route `/sources-officielles` absente du bundle publié et revalider les pages publiques associées.
