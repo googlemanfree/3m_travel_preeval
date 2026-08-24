@@ -31,7 +31,6 @@ import TravelSearchHero from "@/components/TravelSearchHero";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
-import { CredibilityBadge } from "@/components/CredibilityBadge";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
@@ -1220,7 +1219,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ─── SECTION CRÉDIBILITÉ & LOCALISATION ──────────────────────────────── */}
+      {/* ─── ASSISTANCE & TRANSPARENCE (avant le footer global) ─────────────── */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4">
           <motion.div
@@ -1229,64 +1228,39 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="mb-12 text-center"
           >
-            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Confiance & Transparence</p>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Nous Sommes Officiellement Enregistrés</h2>
+            <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Assistance & transparence</p>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">Préparez votre démarche avec les bonnes informations</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              3M Travel & Services est une agence officielle certifiée et transparente. Découvrez nos certifications, notre localisation et nos coordonnées.
+              Consultez les sources institutionnelles, posez une question à l’agence et retrouvez toutes les coordonnées dans le footer unique ci-dessous.
             </p>
           </motion.div>
 
-          {/* Badge de crédibilité */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="mb-12"
+            className="mb-10"
           >
-            <CredibilityBadge />
+            <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-5 rounded-2xl border border-blue-100 bg-white p-6 text-center md:flex-row md:text-left">
+              <div>
+                <p className="font-bold text-slate-900">Une information claire avant toute décision</p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">Les exigences, frais et délais relèvent des autorités compétentes et peuvent évoluer. Notre rôle est de vous accompagner dans vos démarches.</p>
+              </div>
+              <div className="flex shrink-0 flex-wrap justify-center gap-3">
+                <a href="/sources-officielles"><Button variant="outline" className="border-blue-200 text-blue-800">Sources officielles</Button></a>
+                <a href="/contact"><Button className="bg-blue-700 hover:bg-blue-800">Contacter l’agence</Button></a>
+              </div>
+            </div>
           </motion.div>
 
-          {/* Section Contact Améliorée */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">📍 Nous Contacter</h3>
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Informations de contact */}
-              <div className="space-y-6">
-                <div className="flex gap-4 items-start">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Adresse</h4>
-                    <p className="text-gray-600">Douala, Cameroun</p>
-                  </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">WhatsApp</h4>
-                    <p className="text-gray-600">+237 698 104 832</p>
-                  </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Email</h4>
-                    <p className="text-gray-600">hello@3mtravelagency.com</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Formulaire de contact simple */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+            <details className="mx-auto max-w-xl rounded-2xl border border-blue-100 bg-white p-5">
+              <summary className="cursor-pointer list-none text-center font-bold text-slate-900">Envoyer une question à l’agence</summary>
+              <div className="mt-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
                 <h4 className="font-semibold text-gray-900 mb-4">Envoyez-nous un message</h4>
                 <form className="space-y-4" onSubmit={handleContactSubmit}>
                   <div>
@@ -1335,7 +1309,7 @@ export default function Home() {
                   </Button>
                 </form>
               </div>
-            </div>
+            </details>
           </motion.div>
         </div>
       </section>
