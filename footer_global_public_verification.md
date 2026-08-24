@@ -23,3 +23,9 @@ Le domaine public affiche désormais, dans le footer unique, le titre accessible
 URL contrôlée : `https://www.3mtravelagency.com/tarifs?release=524017f3&footer-shortcut-motion=1`.
 
 Après actualisation, le DOM public confirme pour chacun des six liens du mini-plan la présence de l’animation de survol `hover:translate-x-1`, de l’anneau de focus clavier visible et de la désactivation des animations lorsque la préférence « mouvement réduit » est activée. La révision PWA v14 a donc bien diffusé les interactions du footer partagé.
+
+## Vérification après la révision PWA v16 — plan du site et aides contextuelles
+
+URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=4be59b3d&footer-tooltips=public-verified`.
+
+Après propagation, le domaine public affiche le plan du site structuré en quatre catégories, avec une description pour chaque accès. Le footer partagé conserve ses raccourcis et présente des infobulles accessibles : au focus clavier, le raccourci « Évaluation gratuite » affiche « Démarrer une orientation gratuite sans créer de compte. » ; l’icône Facebook affiche son aide contextuelle. Le service worker actif est `sw.js?revision=2026-08-24-sitemap-footer-tooltips-static`, avec le cache v16. Cette vérification confirme aussi la bannière de mise à jour disponible pour les navigateurs utilisant encore une version antérieure.
