@@ -1,146 +1,79 @@
+import { CheckCircle2, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+
+const SERVICE_OPTIONS = [
+  {
+    name: "Évaluation gratuite",
+    detail: "Première orientation sur votre projet et les informations à confirmer.",
+    points: ["Accessible sans compte", "Sans engagement de procédure", "Réponse et périmètre confirmés par un conseiller"],
+    accent: "border-blue-200 bg-blue-50",
+  },
+  {
+    name: "Ouverture et suivi de dossier",
+    detail: "Les honoraires d’agence sont communiqués pour le service demandé, avant tout règlement.",
+    points: ["Périmètre du service expliqué", "Documents et prochaines étapes confirmés", "Reçu et suivi administratif après validation"],
+    accent: "border-slate-200 bg-white",
+  },
+  {
+    name: "Accompagnement sur mesure",
+    detail: "Certaines demandes exigent un devis individualisé selon la destination, les documents et les prestations retenues.",
+    points: ["Devis avant engagement", "Frais tiers distingués des honoraires d’agence", "Aucune décision consulaire ou fournisseur garantie"],
+    accent: "border-emerald-200 bg-emerald-50",
+  },
+];
 
 export default function Tarifs() {
-  const plans = [
-    {
-      name: "Évaluation Gratuite",
-      price: "0",
-      description: "Commencez votre parcours",
-      features: [
-        "Évaluation d'éligibilité",
-        "Rapport détaillé",
-        "Recommandations personnalisées",
-        "Valide 48h",
-      ],
-    },
-    {
-      name: "Dossier Complet",
-      price: "65 000",
-      currency: "XAF",
-      description: "Traitement complet de votre dossier",
-      features: [
-        "Tout de l'évaluation gratuite",
-        "Vérification des documents",
-        "Soumission aux agences partenaires",
-        "Suivi administratif complet",
-        "Support prioritaire",
-      ],
-      highlighted: true,
-    },
-    {
-      name: "Accompagnement Premium",
-      price: "Sur devis",
-      description: "Service personnalisé complet",
-      features: [
-        "Tout du dossier complet",
-        "Coaching entretien visa",
-        "Assistance juridique",
-        "Suivi jusqu'à l'obtention du visa",
-        "Garantie satisfaction",
-      ],
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Nos Tarifs</h1>
-          <p className="text-xl text-gray-600">
-            Des solutions adaptées à votre projet de mobilité internationale
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <header className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Information tarifaire</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Comprendre les tarifs avant de vous engager</h1>
+          <p className="mt-5 text-base leading-7 text-slate-600">
+            Les prestations, frais tiers et modalités applicables dépendent du service choisi et de votre situation. Une confirmation écrite est donnée avant tout règlement.
           </p>
-        </div>
+        </header>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan, idx) => (
-            <Card
-              key={idx}
-              className={`relative p-8 transition-all ${
-                plan.highlighted
-                  ? "ring-2 ring-blue-500 shadow-xl scale-105"
-                  : "hover:shadow-lg"
-              }`}
-            >
-              {plan.highlighted && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                  <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
-                    Populaire
-                  </span>
-                </div>
-              )}
-
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                {plan.name}
-              </h3>
-              <p className="text-gray-600 text-sm mb-6">{plan.description}</p>
-
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">
-                  {plan.price}
-                </span>
-                {plan.currency && (
-                  <span className="text-gray-600 ml-2">{plan.currency}</span>
-                )}
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature, fidx) => (
-                  <li key={fidx} className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
+        <section className="mt-12 grid gap-6 md:grid-cols-3" aria-label="Repères tarifaires">
+          {SERVICE_OPTIONS.map((option) => (
+            <Card key={option.name} className={`flex flex-col border p-7 shadow-sm ${option.accent}`}>
+              <h2 className="text-xl font-black text-slate-950">{option.name}</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{option.detail}</p>
+              <ul className="mt-6 flex-1 space-y-3">
+                {option.points.map((point) => (
+                  <li key={point} className="flex gap-2 text-sm leading-6 text-slate-700"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />{point}</li>
                 ))}
               </ul>
-
-              <button
-                className={`w-full py-3 rounded-lg font-semibold transition-colors ${
-                  plan.highlighted
-                    ? "bg-blue-600 text-white hover:bg-blue-700"
-                    : "bg-gray-100 text-gray-900 hover:bg-gray-200"
-                }`}
-              >
-                Choisir ce plan
-              </button>
+              <PublicEvaluationCTA className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-4 py-3 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                Demander une orientation
+              </PublicEvaluationCTA>
             </Card>
           ))}
-        </div>
+        </section>
 
-        {/* FAQ Section */}
-        <div className="mt-16 bg-white rounded-lg p-8 shadow-sm border border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
-            Questions Fréquentes
-          </h2>
-          <div className="space-y-6">
+        <section className="mt-12 rounded-2xl border border-amber-200 bg-amber-50 p-6 sm:p-8" aria-labelledby="tarifs-transparence">
+          <div className="flex gap-3">
+            <Info className="mt-0.5 h-6 w-6 shrink-0 text-amber-800" aria-hidden="true" />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Puis-je payer en plusieurs fois ?
-              </h3>
-              <p className="text-gray-600">
-                Oui, nous proposons des plans de paiement flexibles. Contactez notre équipe pour discuter des options.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Y a-t-il des frais cachés ?
-              </h3>
-              <p className="text-gray-600">
-                Non, tous nos tarifs sont transparents et incluent tous les frais. Aucun frais supplémentaire.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">
-                Que se passe-t-il si mon dossier est rejeté ?
-              </h3>
-              <p className="text-gray-600">
-                Nous vous remboursons 50% des frais et vous aidons à améliorer votre dossier pour une nouvelle tentative.
+              <h2 id="tarifs-transparence" className="text-xl font-black text-amber-950">Ce qui doit être confirmé avant paiement</h2>
+              <p className="mt-3 text-sm leading-6 text-amber-950/85">
+                Les frais gouvernementaux, consulaires, médicaux, biométriques, de traduction, d’assurance ou de fournisseur ne sont pas présumés inclus. Leur montant, leur destinataire et leurs conditions sont précisés selon la procédure. Aucune garantie générale de remboursement, de visa, de permis, de contrat ou de résultat n’est affichée sans politique écrite applicable à votre dossier.
               </p>
             </div>
           </div>
-        </div>
+        </section>
+
+        <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-7" aria-labelledby="tarifs-questions">
+          <h2 id="tarifs-questions" className="text-2xl font-black text-slate-950">Questions fréquentes</h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            <div><h3 className="font-bold text-slate-900">Les frais sont-ils définitifs&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Ils sont confirmés par écrit pour le service retenu. Les frais de tiers peuvent évoluer selon leurs propres règles.</p></div>
+            <div><h3 className="font-bold text-slate-900">Existe-t-il un remboursement automatique&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Non. Toute éventuelle condition de remboursement dépend d’une politique écrite applicable et doit être expliquée avant paiement.</p></div>
+            <div><h3 className="font-bold text-slate-900">Comment demander un devis&nbsp;?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Présentez votre projet : un conseiller vous indiquera le périmètre, les frais applicables et les limites du service.</p></div>
+          </div>
+          <a href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services%2C%20je%20souhaite%20demander%20une%20pr%C3%A9cision%20tarifaire." target="_blank" rel="noopener noreferrer" className="mt-7 inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 px-5 py-3 text-sm font-black text-blue-800 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"><MessageCircle className="h-4 w-4" />Poser une question tarifaire</a>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }

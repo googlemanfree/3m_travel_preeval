@@ -1,469 +1,108 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Award, Users, CheckCircle, Globe, Zap, Shield, ArrowRight, Heart } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Link } from 'wouter';
+import { CheckCircle2, FileSearch, Globe2, ShieldCheck, UsersRound } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
+
+const OPERATING_PRINCIPLES = [
+  {
+    icon: FileSearch,
+    title: "Information expliquée",
+    text: "Les étapes, documents et frais applicables sont précisés pour votre situation avant toute décision de votre part.",
+  },
+  {
+    icon: UsersRound,
+    title: "Suivi humain",
+    text: "Un conseiller traite le dossier et confirme les prochaines actions ; aucune décision administrative sensible n’est automatisée.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Données protégées",
+    text: "Les informations transmises sont utilisées pour le traitement demandé et les documents restent soumis à des contrôles d’accès.",
+  },
+  {
+    icon: Globe2,
+    title: "Sources à confirmer",
+    text: "Les exigences et délais peuvent évoluer. Les éléments déterminants sont vérifiés auprès des sources officielles concernées avant soumission.",
+  },
+];
+
+const PROCESS = [
+  "Vous présentez votre projet par le formulaire gratuit ou à l’agence.",
+  "L’équipe confirme le périmètre, les documents attendus et les honoraires applicables à votre cas.",
+  "Vous choisissez de poursuivre uniquement après avoir reçu les informations nécessaires.",
+  "Les décisions de visa, permis, admission, assurance ou fournisseur restent prises par les autorités ou organismes compétents.",
+];
 
 export default function About() {
-  const stats = [
-    { number: '500+', label: 'Dossiers traités' },
-    { number: '15+', label: 'Destinations couvertes' },
-    { number: '98%', label: 'Taux de satisfaction' },
-    { number: '24h', label: 'Réponse moyenne' },
-  ];
-
-  const values = [
-    {
-      icon: Zap,
-      title: 'Rapidité',
-      description: 'Traitement accéléré de vos demandes selon la destination et les délais consulaires',
-    },
-    {
-      icon: Award,
-      title: 'Expertise',
-      description: 'Analyse minutieuse des dossiers pour limiter les erreurs et les risques de retard',
-    },
-    {
-      icon: Users,
-      title: 'Suivi personnalisé',
-      description: 'Accompagnement complet jusqu\'à la finalisation de votre démarche',
-    },
-    {
-      icon: Shield,
-      title: 'Confidentialité',
-      description: 'Gestion sécurisée de vos documents et informations personnelles',
-    },
-    {
-      icon: CheckCircle,
-      title: 'Qualité',
-      description: 'Vérification rigoureuse de chaque document avant soumission',
-    },
-    {
-      icon: Heart,
-      title: 'Engagement',
-      description: 'Conseils personnalisés pour particuliers, entreprises et professionnels',
-    },
-  ];
-
-  const timeline = [
-    {
-      year: '2020',
-      title: 'Création de 3M Travel & Services',
-      description: 'Fondation de l\'agence avec une vision claire : simplifier les démarches d\'immigration',
-    },
-    {
-      year: '2021',
-      title: 'Expansion régionale',
-      description: 'Ouverture de bureaux à Yaoundé et Douala pour mieux servir nos clients',
-    },
-    {
-      year: '2022',
-      title: 'Certification internationale',
-      description: 'Obtention des certifications ISO et reconnaissance officielle des ambassades',
-    },
-    {
-      year: '2023',
-      title: 'Plateforme numérique',
-      description: 'Lancement de notre plateforme en ligne pour un suivi 24/7 des dossiers',
-    },
-    {
-      year: '2024',
-      title: 'Expansion continentale',
-      description: 'Extension des services vers 15+ destinations en Afrique, Europe et Amérique du Nord',
-    },
-  ];
-
-  const team = [
-    {
-      name: 'Jean-Claude Mbarga',
-      role: 'Directeur Général',
-      bio: '15 ans d\'expérience en formalités consulaires',
-      emoji: '👨‍💼',
-    },
-    {
-      name: 'Marie Nkomo',
-      role: 'Responsable Visas',
-      bio: 'Experte en procédures visa Canada et France',
-      emoji: '👩‍💼',
-    },
-    {
-      name: 'Pierre Kamdem',
-      role: 'Responsable eVisa',
-      bio: 'Spécialiste des visas électroniques',
-      emoji: '👨‍💻',
-    },
-    {
-      name: 'Sophie Tagne',
-      role: 'Responsable Support Client',
-      bio: 'Dévouée à la satisfaction de nos clients',
-      emoji: '👩‍💼',
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: 'Alain Fouda',
-      role: 'Entrepreneur',
-      text: '3M Travel a rendu mon visa Canada possible en seulement 3 mois. Équipe professionnelle et réactive !',
-      rating: 5,
-    },
-    {
-      name: 'Carole Bah',
-      role: 'Étudiante',
-      text: 'Merci pour l\'accompagnement complet. Mon visa France a été approuvé sans aucun problème.',
-      rating: 5,
-    },
-    {
-      name: 'Ibrahim Hassan',
-      role: 'Homme d\'affaires',
-      text: 'Service impeccable. Ils ont géré tous mes documents avec sérieux et transparence.',
-      rating: 5,
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-              Qui sommes-nous ?
-            </h1>
-
-            <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              3M Travel & Services accompagne particuliers, entreprises et professionnels dans leurs démarches de visas, eVisas, légalisations, traductions assermentées et assurances voyage.
-            </p>
-
-            <p className="text-base text-gray-500 max-w-3xl mx-auto">
-              Depuis 2020, notre équipe expérimentée sécurise vos démarches, vérifie vos documents et vous fait gagner du temps.
-            </p>
-          </motion.div>
-        </div>
-
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-200/20 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl -z-10" />
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="text-center"
-              >
-                <div className="text-4xl font-bold text-blue-600 mb-2">
-                  {stat.number}
-                </div>
-                <div className="text-gray-600 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50">
+      <section className="px-4 pb-16 pt-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl text-center">
+          <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">3M Travel &amp; Services</p>
+          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Qui sommes-nous&nbsp;?</h1>
+          <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+            3M Travel &amp; Services accompagne les particuliers, entreprises et professionnels dans la préparation de projets de mobilité internationale&nbsp;: procédures, visas, eVisas, voyages, documents et services connexes.
+          </p>
+          <p className="mx-auto mt-4 max-w-3xl text-sm leading-6 text-slate-500">
+            Nous présentons ici notre mode d’accompagnement, et non des résultats garantis. Chaque dossier est examiné selon sa situation, les exigences applicables et les décisions des organismes compétents.
+          </p>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid md:grid-cols-2 gap-12 items-center"
-          >
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Notre mission
-              </h2>
-              <p className="text-gray-600 mb-4">
-                Simplifier et sécuriser les démarches d'immigration pour que chacun puisse réaliser ses projets de mobilité internationale sans stress ni complications.
-              </p>
-              <p className="text-gray-600 mb-6">
-                Nous croyons que l'accès aux visas et aux formalités internationales ne devrait pas être un obstacle. C'est pourquoi nous mettons notre expertise au service de vos ambitions.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="text-green-500" size={24} />
-                  <span className="text-gray-700">Transparence totale</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="text-green-500" size={24} />
-                  <span className="text-gray-700">Accompagnement personnalisé</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="text-green-500" size={24} />
-                  <span className="text-gray-700">Résultats garantis</span>
-                </div>
-              </div>
-            </div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-8 text-white shadow-xl"
-            >
-              <Globe size={48} className="mb-4" />
-              <h3 className="text-2xl font-bold mb-4">Nos valeurs</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={20} />
-                  <span>Intégrité et honnêteté</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={20} />
-                  <span>Excellence et rigueur</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={20} />
-                  <span>Responsabilité sociale</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle size={20} />
-                  <span>Innovation continue</span>
-                </li>
-              </ul>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Values Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Pourquoi choisir 3M Travel & Services ?
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {values.map((value, index) => {
-              const Icon = value.icon;
+      <section className="bg-white px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {OPERATING_PRINCIPLES.map((item) => {
+              const Icon = item.icon;
               return (
-                <motion.div
-                  key={value.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="p-6 h-full hover:shadow-lg transition-all duration-300">
-                    <Icon className="text-blue-600 mb-4" size={32} />
-                    <h3 className="text-lg font-bold text-gray-900 mb-3">
-                      {value.title}
-                    </h3>
-                    <p className="text-gray-600">
-                      {value.description}
-                    </p>
-                  </Card>
-                </motion.div>
+                <Card key={item.title} className="border-slate-200 p-6 shadow-sm">
+                  <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
+                  <h2 className="mt-4 text-lg font-black text-slate-950">{item.title}</h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                </Card>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Timeline Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Notre historique
-          </h2>
-          <div className="space-y-8">
-            {timeline.map((item, index) => (
-              <motion.div
-                key={item.year}
-                initial={{ opacity: 0, x: index % 2 === 0 ? -20 : 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex gap-6"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                    {item.year.slice(-2)}
-                  </div>
-                  {index < timeline.length - 1 && (
-                    <div className="w-1 h-24 bg-blue-200 mt-2" />
-                  )}
-                </div>
-                <div className="pb-8">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {item.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {item.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Notre équipe
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
-              <motion.div
-                key={member.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="p-6 text-center hover:shadow-lg transition-all duration-300">
-                  <div className="text-5xl mb-4">{member.emoji}</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-blue-600 font-semibold text-sm mb-3">
-                    {member.role}
-                  </p>
-                  <p className="text-gray-600 text-sm">
-                    {member.bio}
-                  </p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Partners & Certifications Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Nos partenaires et certifications
-          </h2>
-
-          {/* Certifications */}
-          <div className="mb-16">
-            <h3 className="text-xl font-bold text-gray-900 mb-8 text-center">
-              Certifications et accréditations
-            </h3>
-            <div className="grid md:grid-cols-4 gap-6 mb-12">
-              {[
-                { name: 'ISO 9001', desc: 'Qualité de service' },
-                { name: 'ISO 27001', desc: 'Sécurité des données' },
-                { name: 'RGPD', desc: 'Protection des données' },
-                { name: 'Agréé ONU', desc: 'Reconnaissance officielle' },
-              ].map((cert, index) => (
-                <motion.div
-                  key={cert.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all"
-                >
-                  <div className="text-4xl mb-3">✓</div>
-                  <h4 className="font-bold text-gray-900 mb-1">{cert.name}</h4>
-                  <p className="text-sm text-gray-600">{cert.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          {/* Partners */}
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr_.9fr] lg:items-start">
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-8 text-center">
-              Nos partenaires officiels
-            </h3>
-            <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
-              {[
-                { emoji: '🇨🇦', name: 'Immigration Canada' },
-                { emoji: '🇫🇷', name: 'Ambassade France' },
-                { emoji: '🇩🇪', name: 'Consulat Allemagne' },
-                { emoji: '🇬🇧', name: 'UK Visas' },
-                { emoji: '🇦🇪', name: 'Dubaï Tourism' },
-                { emoji: '🏛️', name: 'Ministère Intérieur' },
-              ].map((partner, index) => (
-                <motion.div
-                  key={partner.name}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all cursor-pointer group"
-                >
-                  <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">
-                    {partner.emoji}
-                  </div>
-                  <p className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition-colors">
-                    {partner.name}
-                  </p>
-                </motion.div>
+            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Notre manière de travailler</p>
+            <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Un accompagnement clair, étape par étape</h2>
+            <ol className="mt-8 space-y-4">
+              {PROCESS.map((step, index) => (
+                <li key={step} className="flex gap-4 rounded-2xl border border-slate-200 bg-white p-4">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-black text-white">{index + 1}</span>
+                  <span className="text-sm leading-6 text-slate-700">{step}</span>
+                </li>
               ))}
+            </ol>
+          </div>
+          <Card className="border-blue-100 bg-blue-950 p-8 text-white shadow-xl">
+            <h2 className="text-2xl font-black">Engagement de transparence</h2>
+            <p className="mt-4 text-sm leading-7 text-blue-100">
+              Nous ne présentons pas de certification, agrément, partenariat institutionnel, volume de dossiers, note client ou taux de réussite sans source vérifiable et autorisation adaptée. Les autorités consulaires, établissements et fournisseurs conservent leurs décisions indépendantes.
+            </p>
+            <div className="mt-6 border-t border-white/15 pt-6">
+              <p className="text-sm font-bold text-white">Ce qui est confirmé avant toute démarche</p>
+              <ul className="mt-3 space-y-2 text-sm text-blue-100">
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Le service demandé et les documents attendus.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Les honoraires d’agence, les frais tiers éventuels et leurs conditions.</li>
+                <li className="flex gap-2"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />Les limites de l’accompagnement et la responsabilité des autorités compétentes.</li>
+              </ul>
             </div>
-          </div>
+          </Card>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">
-            Ils nous font confiance
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <span key={i} className="text-yellow-400">⭐</span>
-                    ))}
-                  </div>
-                  <p className="text-gray-600 mb-4 italic">
-                    "{testimonial.text}"
-                  </p>
-                  <div>
-                    <p className="font-bold text-gray-900">{testimonial.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.role}</p>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+      <section className="bg-slate-950 px-4 py-16 text-center sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-black text-white">Parlons de votre projet</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-slate-300">Commencez par une évaluation gratuite. Elle n’engage aucune procédure et permet de recevoir une première orientation humaine.</p>
+        <PublicEvaluationCTA className="mt-7 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-6 py-3 text-sm font-black text-blue-900 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
+          Commencer l’évaluation gratuite
+        </PublicEvaluationCTA>
       </section>
-
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-blue-500">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-white mb-6">
-            Besoin d'un accompagnement ?
-          </h2>
-          <p className="text-lg text-blue-100 mb-8">
-            Confiez vos formalités internationales à 3M Travel & Services et gagnez du temps dans vos démarches.
-          </p>
-          <Link href="/">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 bg-white text-blue-600 font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center gap-2"
-            >
-              Commencer une évaluation
-              <ArrowRight size={20} />
-            </motion.button>
-          </Link>
-        </div>
-      </section>
-    </div>
+    </main>
   );
 }

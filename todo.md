@@ -942,3 +942,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Centraliser les CTA publics dans un composant réutilisable accessible et cohérent.
 - [x] Remplacer les sections de témoignages de l’accueil par une FAQ dynamique et interactive sans contenu client inventé.
 - [x] Tester les contrôles de modération, les CTA et la FAQ avant publication.
+
+## Transparence À propos, Tarifs et footer unique
+- [x] Vérifier les chiffres, garanties, certifications et reconnaissances mentionnés dans `/about` avant de les conserver.
+- [x] Reformuler les contenus non vérifiables de `/about` selon le principe de transparence appliqué à `/avis` et `/canada`.
+- [x] Identifier les trois footers rendus sur l’accueil et les consolider en un seul pied de page partagé.
+- [x] Auditer les promesses de remboursement et de frais de `/tarifs`, puis les reformuler avec une information de politique vérifiable.
+- [ ] Tester et publier les pages À propos, Tarifs et Accueil corrigées.
