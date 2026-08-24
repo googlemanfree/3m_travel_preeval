@@ -22,6 +22,15 @@ const USEFUL_LINKS = [
   { label: "Sources officielles", href: "/sources-officielles" },
 ];
 
+const MINI_SITE_MAP = [
+  { label: "Évaluation gratuite", href: "/?project=travail#evaluation-multi" },
+  { label: "3M Booking", href: "/billets" },
+  { label: "Procédures", href: "/procedures" },
+  { label: "e-Visas", href: "/evisas" },
+  { label: "Tarifs", href: "/tarifs" },
+  { label: "Sources officielles", href: "/sources-officielles" },
+];
+
 export default function Footer() {
   return (
     <footer className="mt-auto bg-[#0f2460] text-gray-300" aria-label="Informations et contacts 3M Travel">
@@ -54,7 +63,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 py-9 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-8 py-9 sm:grid-cols-2 lg:grid-cols-6">
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">3M Travel</h2>
             <p className="text-xs leading-relaxed text-slate-300">Un accompagnement fondé sur vos documents, les sources institutionnelles disponibles et des validations humaines à chaque étape sensible.</p>
@@ -79,6 +88,13 @@ export default function Footer() {
               ))}
             </ul>
           </div>
+
+          <nav aria-label="Mini-plan du site">
+            <h2 className="mb-3 text-sm font-bold text-white">Mini-plan du site</h2>
+            <ul className="space-y-2 text-sm">
+              {MINI_SITE_MAP.map((link) => <li key={link.label}><Link href={link.href} className="hover:text-blue-200">{link.label}</Link></li>)}
+            </ul>
+          </nav>
 
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Coordonnées</h2>

@@ -981,3 +981,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Monter le footer canonique au niveau global et retirer son rendu local de l’accueil afin d’afficher exactement un footer complet sur chaque route publique.
 - [x] Réduire les sections de coordonnées de l’accueil qui dupliquent visuellement le footer, en conservant des liens fonctionnels vers Contact et Sources officielles.
 - [x] Forcer la diffusion du bundle d’accueil compact et du footer global, puis revalider le domaine public.
+
+## Mini-plan du site dans le footer
+- [x] Auditer les raccourcis de navigation essentiels à exposer dans le footer unique.
+- [x] Ajouter un mini-plan de site accessible et responsive dans le footer partagé.
+- [ ] Tester et publier le mini-plan de site sur le domaine public.

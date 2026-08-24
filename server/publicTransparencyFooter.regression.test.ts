@@ -36,5 +36,9 @@ describe("transparence publique et footer consolidé", () => {
     expect(home).not.toContain("<FooterLegal />");
     expect(home).not.toContain('<footer id="contact"');
     expect(legalFooter).toContain("return <Footer />");
+    const footer = read("client/src/components/Footer.tsx");
+    expect(footer).toContain("MINI_SITE_MAP");
+    expect(footer).toContain("Mini-plan du site");
+    expect(footer).toContain('href: "/sources-officielles"');
   });
 });
