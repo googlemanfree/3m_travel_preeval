@@ -44,5 +44,14 @@ describe("transparence publique et footer consolidé", () => {
     expect(footer).toContain("hover:translate-x-1");
     expect(footer).toContain("focus-visible:ring-2");
     expect(footer).toContain("motion-reduce:transition-none");
+    expect(footer).toContain('role="tooltip"');
+    expect(footer).toContain("aria-describedby");
+    expect(footer).toContain("useReducedMotion");
+    expect(footer).toContain("enableSocialMotion");
+    const sitemap = read("client/src/pages/Sitemap.tsx");
+    expect(sitemap).toContain("SITE_SECTIONS");
+    expect(sitemap).toContain("Plan du site 3M Travel &amp; Services");
+    expect(sitemap).toContain('href: "/sources-officielles"');
+    expect(app).toContain('path={"/plan-du-site"} component={Sitemap}');
   });
 });

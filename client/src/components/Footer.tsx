@@ -1,39 +1,78 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
+import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: "https://www.facebook.com/3mtravelcm", label: "Facebook officiel", color: "hover:text-blue-300" },
-  { icon: Instagram, href: "https://instagram.com/3mtravelagency", label: "Instagram", color: "hover:text-pink-300" },
-  { icon: Linkedin, href: "https://linkedin.com/company/3mtravelagency", label: "LinkedIn", color: "hover:text-blue-300" },
-  { icon: Twitter, href: "https://twitter.com/3mtravelagency", label: "Twitter", color: "hover:text-sky-300" },
+  { icon: Facebook, href: "https://www.facebook.com/3mtravelcm", label: "Facebook officiel", description: "Ouvrir la page Facebook officielle dans un nouvel onglet.", color: "hover:text-blue-300" },
+  { icon: Instagram, href: "https://instagram.com/3mtravelagency", label: "Instagram", description: "Ouvrir le compte Instagram dans un nouvel onglet.", color: "hover:text-pink-300" },
+  { icon: Linkedin, href: "https://linkedin.com/company/3mtravelagency", label: "LinkedIn", description: "Ouvrir la page LinkedIn dans un nouvel onglet.", color: "hover:text-blue-300" },
+  { icon: Twitter, href: "https://twitter.com/3mtravelagency", label: "Twitter", description: "Ouvrir le compte X dans un nouvel onglet.", color: "hover:text-sky-300" },
 ];
 
 const USEFUL_LINKS = [
-  { label: "Destinations populaires", href: "/procedures" },
-  { label: "Contact", href: "/contact" },
-  { label: "Mentions légales", href: "/conditions-utilisation" },
-  { label: "Plan du site", href: "/plan-du-site" },
-  { label: "Accessibilité", href: "/accessibilite" },
-  { label: "Service 3M Digital", href: "/3m-digital" },
-  { label: "Sources officielles", href: "/sources-officielles" },
+  { label: "Destinations populaires", href: "/procedures", description: "Explorer les procédures disponibles selon votre destination." },
+  { label: "Contact", href: "/contact", description: "Consulter les coordonnées et envoyer une demande à l’agence." },
+  { label: "Mentions légales", href: "/conditions-utilisation", description: "Lire les conditions d’utilisation et le cadre de service." },
+  { label: "Plan du site", href: "/plan-du-site", description: "Retrouver l’ensemble des accès publics en une seule page." },
+  { label: "Accessibilité", href: "/accessibilite", description: "Adapter l’affichage et les préférences d’interaction." },
+  { label: "Service 3M Digital", href: "/3m-digital", description: "Découvrir les services numériques complémentaires de 3M." },
+  { label: "Sources officielles", href: "/sources-officielles", description: "Consulter les liens institutionnels par destination." },
 ];
 
 const MINI_SITE_MAP = [
-  { label: "Évaluation gratuite", href: "/?project=travail#evaluation-multi" },
-  { label: "3M Booking", href: "/billets" },
-  { label: "Procédures", href: "/procedures" },
-  { label: "e-Visas", href: "/evisas" },
-  { label: "Tarifs", href: "/tarifs" },
-  { label: "Sources officielles", href: "/sources-officielles" },
+  { label: "Évaluation gratuite", href: "/?project=travail#evaluation-multi", description: "Démarrer une orientation gratuite sans créer de compte." },
+  { label: "3M Booking", href: "/billets", description: "Rechercher des options de voyage et de réservation." },
+  { label: "Procédures", href: "/procedures", description: "Comparer les démarches et destinations proposées." },
+  { label: "e-Visas", href: "/evisas", description: "Préparer une demande de visa électronique adaptée." },
+  { label: "Tarifs", href: "/tarifs", description: "Comprendre les honoraires, frais tiers et modalités." },
+  { label: "Sources officielles", href: "/sources-officielles", description: "Vérifier les ressources gouvernementales par destination." },
 ];
 
+const NAVIGATION_LINKS = [
+  { label: "Accueil", href: "/", description: "Revenir à la page principale et à l’évaluation gratuite." },
+  { label: "Recherche de vols", href: "/flights", description: "Rechercher des vols selon votre itinéraire et vos dates." },
+  { label: "Procédures & destinations", href: "/procedures", description: "Comparer les démarches de mobilité internationale." },
+  { label: "Inscription", href: "/register", description: "Créer un espace personnel pour suivre vos demandes." },
+  { label: "Espace candidat", href: "/login", description: "Accéder à votre espace et à vos dossiers existants." },
+];
+
+const DESTINATION_LINKS = ["Canada", "France", "Allemagne", "Luxembourg", "Royaume-Uni", "Australie"].map((label) => ({
+  label,
+  href: "/procedures",
+  description: `Explorer les informations de procédure disponibles pour ${label}.`,
+}));
+
 const FOOTER_SHORTCUT_CLASS = "group inline-flex min-h-8 items-center rounded-md px-1 py-1 outline-none transition-[color,transform,background-color] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] hover:translate-x-1 hover:bg-white/10 hover:text-blue-100 focus-visible:translate-x-1 focus-visible:bg-white/10 focus-visible:text-blue-100 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none";
+const FOOTER_TOOLTIP_CLASS = "pointer-events-none absolute bottom-full left-0 z-50 mb-2 w-60 rounded-md border border-white/15 bg-slate-950 px-3 py-2 text-xs leading-relaxed text-white opacity-0 shadow-lg invisible translate-y-1 transition-[opacity,transform,visibility] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 motion-reduce:transform-none motion-reduce:transition-none";
+
+const footerTooltipId = (prefix: string, value: string) => `${prefix}-${value.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+type FooterShortcutProps = { label: string; href: string; description: string };
+
+function FooterShortcut({ label, href, description }: FooterShortcutProps) {
+  const descriptionId = footerTooltipId("footer-shortcut", href);
+  return (
+    <span className="group relative inline-flex max-w-full">
+      <Link href={href} aria-describedby={descriptionId} className={FOOTER_SHORTCUT_CLASS}>
+        <span>{label}</span>
+        <span aria-hidden="true" className="ml-1 text-blue-200 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">↗</span>
+      </Link>
+      <span id={descriptionId} role="tooltip" className={FOOTER_TOOLTIP_CLASS}>
+        {description}
+      </span>
+    </span>
+  );
+}
 
 export default function Footer() {
+  const prefersReducedMotion = useReducedMotion();
+  const { animationsEnabled } = useAnimationPreferences();
+  const enableSocialMotion = animationsEnabled && !prefersReducedMotion;
+
   return (
     <footer className="mt-auto bg-[#0f2460] text-gray-300" aria-label="Informations et contacts 3M Travel">
       <div className="mx-auto max-w-7xl px-4 py-9 sm:py-11">
@@ -74,27 +113,21 @@ export default function Footer() {
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Navigation</h2>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/" className={FOOTER_SHORTCUT_CLASS}>Accueil</Link></li>
-              <li><Link href="/flights" className={FOOTER_SHORTCUT_CLASS}>Recherche de vols</Link></li>
-              <li><Link href="/procedures" className={FOOTER_SHORTCUT_CLASS}>Procédures &amp; destinations</Link></li>
-              <li><Link href="/register" className={FOOTER_SHORTCUT_CLASS}>Inscription</Link></li>
-              <li><Link href="/login" className={FOOTER_SHORTCUT_CLASS}>Espace candidat</Link></li>
+              {NAVIGATION_LINKS.map((link) => <li key={link.label}><FooterShortcut {...link} /></li>)}
             </ul>
           </div>
 
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Destinations</h2>
             <ul className="space-y-2 text-sm">
-              {["Canada", "France", "Allemagne", "Luxembourg", "Royaume-Uni", "Australie"].map((destination) => (
-                <li key={destination}><Link href="/procedures" className={FOOTER_SHORTCUT_CLASS}>{destination}</Link></li>
-              ))}
+              {DESTINATION_LINKS.map((link) => <li key={link.label}><FooterShortcut {...link} /></li>)}
             </ul>
           </div>
 
           <nav aria-label="Mini-plan du site">
             <h2 className="mb-3 text-sm font-bold text-white">Mini-plan du site</h2>
             <ul className="space-y-2 text-sm">
-              {MINI_SITE_MAP.map((link) => <li key={link.label}><Link href={link.href} className={FOOTER_SHORTCUT_CLASS}>{link.label}</Link></li>)}
+              {MINI_SITE_MAP.map((link) => <li key={link.label}><FooterShortcut {...link} /></li>)}
             </ul>
           </nav>
 
@@ -113,7 +146,7 @@ export default function Footer() {
           <div>
             <h2 className="mb-3 text-sm font-bold text-white">Informations utiles</h2>
             <ul className="space-y-2 text-sm">
-              {USEFUL_LINKS.map((link) => <li key={link.label}><Link href={link.href} className={FOOTER_SHORTCUT_CLASS}>{link.label}</Link></li>)}
+              {USEFUL_LINKS.map((link) => <li key={link.label}><FooterShortcut {...link} /></li>)}
             </ul>
             <div className="mt-5 border-t border-white/15 pt-4">
               <p className="mb-2 text-xs font-semibold text-blue-200">Page officielle</p>
@@ -126,7 +159,28 @@ export default function Footer() {
           <div className="flex gap-3">
             {SOCIAL_LINKS.map((social) => {
               const Icon = social.icon;
-              return <motion.a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.96 }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ${social.color}`} aria-label={`Ouvrir ${social.label}`}><Icon className="h-4 w-4" /></motion.a>;
+              const descriptionId = footerTooltipId("footer-social", social.label);
+              return (
+                <span key={social.label} className="group relative inline-flex">
+                    <motion.a
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-describedby={descriptionId}
+                      initial={false}
+                      whileHover={enableSocialMotion ? { y: -3, scale: 1.12 } : undefined}
+                      whileTap={enableSocialMotion ? { scale: 0.95 } : undefined}
+                      transition={{ type: "spring", stiffness: 480, damping: 20, mass: 0.35 }}
+                      className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/10 outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f2460] motion-reduce:transform-none motion-reduce:transition-none ${social.color}`}
+                      aria-label={`Ouvrir ${social.label}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </motion.a>
+                  <span id={descriptionId} role="tooltip" className={FOOTER_TOOLTIP_CLASS}>
+                    {social.description}
+                  </span>
+                </span>
+              );
             })}
           </div>
           <div className="max-w-2xl text-center text-xs leading-relaxed text-slate-400 sm:text-right">
