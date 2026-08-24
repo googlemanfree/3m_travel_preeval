@@ -925,7 +925,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le chargement, les CTA, les liens internes et les formulaires des pages publiques listées par l’utilisateur, sans soumettre de données de test externes.
 - [x] Identifier et consolider les routes, composants ou contenus réellement redondants sans retirer de parcours utile.
 - [x] Vérifier les vues et actions du back-office sans déclencher d’opération sensible.
-- [ ] Tester, publier et documenter les corrections réellement vérifiées.
+- [x] Tester, publier et documenter les corrections réellement vérifiées.
+- [x] Diagnostiquer le bundle obsolète encore servi sur `/avis` après le checkpoint dcc5e2a5 et revalider la transparence publique.
 - [x] Corriger le CTA du Blog qui dirige encore vers `/evaluation` afin qu’il ouvre le formulaire gratuit public.
 - [x] Retirer les témoignages, notes et statistiques clients non vérifiés de la page `/avis` et rétablir une page d’information non trompeuse.
 - [x] Corriger le CTA de la section de confiance de l’accueil afin qu’il ouvre le formulaire gratuit public.
