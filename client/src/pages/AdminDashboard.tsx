@@ -778,6 +778,10 @@ export default function AdminDashboard() {
     limit: 100,
     offset: 0,
   });
+  const { data: advisorDeadlineGroups = [], isLoading: isLoadingAdvisorDeadlines, refetch: refetchAdvisorDeadlines } = trpc.admin.listAdvisorTreatmentDeadlines.useQuery(
+    { sessionToken },
+    { enabled: !!sessionToken },
+  );
 
   const { data: countryDistribution, isLoading: isLoadingCountryDistribution, refetch: refetchCountryDistribution } = trpc.admin.getCandidateCountryDistribution.useQuery(
     { sessionToken, limit: 12 },
@@ -876,7 +880,7 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary()]);
+      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary(), refetchAdvisorDeadlines()]);
       const syncedAt = new Date();
       setLastSyncedAt(syncedAt);
       toast({
@@ -892,7 +896,7 @@ export default function AdminDashboard() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, toast]);
+  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, refetchAdvisorDeadlines, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -1138,6 +1142,39 @@ export default function AdminDashboard() {
               );
             })}
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Échéances de traitement par conseiller">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
+              <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
+            </div>
+            <span className="text-xs font-semibold text-slate-500">Lecture seule · actualisation manuelle</span>
+          </div>
+          {isLoadingAdvisorDeadlines ? (
+            <p className="py-6 text-sm text-slate-500">Chargement des échéances…</p>
+          ) : advisorDeadlineGroups.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aucune échéance de dossier ou de tâche n’est actuellement enregistrée.</p>
+          ) : (
+            <div className="mt-4 grid gap-3 xl:grid-cols-2">
+              {advisorDeadlineGroups.map((group) => (
+                <article key={group.advisorId ?? "unassigned"} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div><h3 className="font-bold text-slate-950">{group.advisorName}</h3><p className="text-xs text-slate-500">{group.advisorEmail ?? "À attribuer à un conseiller"}</p></div>
+                    <Badge className="bg-blue-100 text-blue-800">{group.items.length} échéance{group.items.length > 1 ? "s" : ""}</Badge>
+                  </div>
+                  <ul className="mt-3 space-y-2">
+                    {group.items.slice(0, 6).map((item) => {
+                      const deadlineClass = item.deadline.key === "overdue" ? "border-rose-200 bg-rose-50 text-rose-800" : item.deadline.key === "today" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800";
+                      return <li key={item.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{item.caseNumber}{item.candidateName ? ` · ${item.candidateName}` : ""}</p><p className="mt-0.5 truncate text-xs text-slate-600">{item.label}</p></div><div className="flex flex-wrap items-center gap-2"><Badge className={deadlineClass}>{item.deadline.label}</Badge><span className="whitespace-nowrap text-xs font-medium text-slate-600">{new Date(item.dueAt).toLocaleString("fr-FR")}</span></div></li>;
+                    })}
+                  </ul>
+                  {group.items.length > 6 && <p className="mt-3 text-xs font-medium text-slate-500">+ {group.items.length - 6} autre(s) échéance(s) dans ce groupe.</p>}
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}

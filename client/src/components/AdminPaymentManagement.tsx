@@ -24,6 +24,12 @@ interface Payment {
   receiptUrl?: string;
   receiptMimeType?: string;
   receiptFileName?: string;
+  paymentReceiptDelivery?: {
+    status: "sent" | "failed" | "not_sent";
+    lastAttemptAt?: Date | null;
+    lastSentAt?: Date | null;
+    lastFailureAt?: Date | null;
+  };
 }
 
 export function AdminPaymentManagement() {
@@ -41,6 +47,7 @@ export function AdminPaymentManagement() {
   const [adminNote, setAdminNote] = useState("");
   const [receiptPreview, setReceiptPreview] = useState<Payment | null>(null);
   const [receiptEmailPayment, setReceiptEmailPayment] = useState<Payment | null>(null);
+  const [receiptEmailAction, setReceiptEmailAction] = useState<"initial" | "resend">("initial");
 
   // Récupérer les paiements via tRPC
   const { data: applicationsData = [], isLoading, refetch } = trpc.application.listApplications.useQuery({
@@ -68,10 +75,14 @@ export function AdminPaymentManagement() {
     receiptUrl: app.paymentReceipt?.fileUrl,
     receiptMimeType: app.paymentReceipt?.mimeType,
     receiptFileName: app.paymentReceipt?.fileName,
+    paymentReceiptDelivery: app.paymentReceiptDelivery,
   }));
 
   // Filtrage local complémentaire pour le rapprochement Mobile Money / Agence.
+  const [filterReceiptDelivery, setFilterReceiptDelivery] = useState<"all" | "sent" | "failed" | "not_sent">("all");
   const filteredPayments = payments.filter((payment) => {
+    const receiptStatus = payment.paymentReceiptDelivery?.status ?? "not_sent";
+    if (filterReceiptDelivery !== "all" && receiptStatus !== filterReceiptDelivery) return false;
     if (filterMethod === "all") return true;
     const method = String(payment.paymentMethod || "").toLowerCase();
     if (filterMethod === "mobile_money") {
@@ -139,18 +150,21 @@ export function AdminPaymentManagement() {
     }
   };
 
-  const handleSendReceipt = (payment: Payment) => {
+  const handleSendReceipt = (payment: Payment, action: "initial" | "resend") => {
     setReceiptEmailPayment(payment);
+    setReceiptEmailAction(action);
   };
 
   const handleConfirmReceiptEmail = async () => {
     if (!receiptEmailPayment) return;
     try {
-      await sendPaymentReceiptMutation.mutateAsync({ id: receiptEmailPayment.id });
-      toast.success("Confirmation de paiement envoyée", {
+      await sendPaymentReceiptMutation.mutateAsync({ id: receiptEmailPayment.id, deliveryMode: receiptEmailAction });
+      toast.success(receiptEmailAction === "resend" ? "Confirmation de paiement renvoyée" : "Confirmation de paiement envoyée", {
         description: `Dossier ${receiptEmailPayment.dossierNumber} — ${receiptEmailPayment.email}`,
       });
       setReceiptEmailPayment(null);
+      setReceiptEmailAction("initial");
+      refetch();
       refetchAuditLogs();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "L’envoi de la confirmation a échoué");
@@ -417,6 +431,17 @@ export function AdminPaymentManagement() {
               <option value="mobile_money">Mobile Money</option>
               <option value="agency">Paiement en agence</option>
             </select>
+            <select
+              value={filterReceiptDelivery}
+              onChange={(e) => setFilterReceiptDelivery(e.target.value as "all" | "sent" | "failed" | "not_sent")}
+              aria-label="Filtrer les paiements par état de reçu"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">Tous les reçus</option>
+              <option value="sent">Reçu envoyé</option>
+              <option value="failed">Erreur d’envoi</option>
+              <option value="not_sent">Reçu non envoyé</option>
+            </select>
           </div>
 
           {/* Tableau */}
@@ -436,6 +461,7 @@ export function AdminPaymentManagement() {
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Mode / Référence</th>
                     <th className="text-right py-3 px-4 font-semibold text-gray-700">Montant</th>
                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Statut</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Remise SMTP</th>
                     <th className="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
                     <th className="text-center py-3 px-4 font-semibold text-gray-700">Actions</th>
                   </tr>
@@ -461,6 +487,23 @@ export function AdminPaymentManagement() {
                           {payment.paymentStatus === "FAILED" && "Échoué"}
                           {payment.paymentStatus === "CANCELLED" && "Annulé"}
                         </Badge>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-slate-600">
+                        {payment.paymentStatus !== "SUCCESS" ? (
+                          <span className="text-slate-500">Après validation</span>
+                        ) : payment.paymentReceiptDelivery?.status === "sent" ? (
+                          <div>
+                            <Badge className="bg-emerald-100 text-emerald-800">Reçu envoyé</Badge>
+                            <p className="mt-1 whitespace-nowrap">{payment.paymentReceiptDelivery.lastSentAt ? new Date(payment.paymentReceiptDelivery.lastSentAt).toLocaleString("fr-FR") : "Horodatage indisponible"}</p>
+                          </div>
+                        ) : payment.paymentReceiptDelivery?.status === "failed" ? (
+                          <div>
+                            <Badge className="bg-rose-100 text-rose-800">Erreur d’envoi</Badge>
+                            <p className="mt-1 whitespace-nowrap">{payment.paymentReceiptDelivery.lastFailureAt ? new Date(payment.paymentReceiptDelivery.lastFailureAt).toLocaleString("fr-FR") : "Dernière tentative inconnue"}</p>
+                          </div>
+                        ) : (
+                          <Badge className="bg-slate-100 text-slate-700">Reçu non envoyé</Badge>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-gray-600">
                         {payment.paymentDate
@@ -495,16 +538,31 @@ export function AdminPaymentManagement() {
                             </>
                           )}
                           {payment.paymentStatus === "SUCCESS" && (
-                            <Button
-                              onClick={() => handleSendReceipt(payment)}
-                              variant="ghost"
-                              size="sm"
-                              title="Envoyer le reçu"
-                              className="hover:bg-blue-50 transition-colors"
-                              disabled={isProcessing || sendPaymentReceiptMutation.isPending}
-                            >
-                              <Mail className="w-4 h-4" />
-                            </Button>
+                            payment.paymentReceiptDelivery?.status === "failed" ? (
+                              <Button
+                                onClick={() => handleSendReceipt(payment, "resend")}
+                                variant="ghost"
+                                size="sm"
+                                title="Renvoyer le reçu après échec"
+                                aria-label={`Renvoyer le reçu du dossier ${payment.dossierNumber}`}
+                                className="text-rose-700 hover:bg-rose-50 transition-colors"
+                                disabled={isProcessing || sendPaymentReceiptMutation.isPending}
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            ) : payment.paymentReceiptDelivery?.status !== "sent" ? (
+                              <Button
+                                onClick={() => handleSendReceipt(payment, "initial")}
+                                variant="ghost"
+                                size="sm"
+                                title="Envoyer le reçu"
+                                aria-label={`Envoyer le reçu du dossier ${payment.dossierNumber}`}
+                                className="hover:bg-blue-50 transition-colors"
+                                disabled={isProcessing || sendPaymentReceiptMutation.isPending}
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                            ) : null
                           )}
                         </div>
                       </td>
@@ -676,16 +734,16 @@ export function AdminPaymentManagement() {
       <Dialog open={Boolean(receiptEmailPayment)} onOpenChange={(open) => !open && setReceiptEmailPayment(null)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Envoyer la confirmation de paiement</DialogTitle>
+            <DialogTitle>{receiptEmailAction === "resend" ? "Renvoyer la confirmation de paiement" : "Envoyer la confirmation de paiement"}</DialogTitle>
             <DialogDescription>
-              {receiptEmailPayment ? `Un e-mail réel sera envoyé à ${receiptEmailPayment.email} pour le dossier ${receiptEmailPayment.dossierNumber}. Cette action sera journalisée.` : ""}
+              {receiptEmailPayment ? `Un e-mail réel sera ${receiptEmailAction === "resend" ? "renvoyé" : "envoyé"} à ${receiptEmailPayment.email} pour le dossier ${receiptEmailPayment.dossierNumber}. Cette action sera journalisée.` : ""}
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-slate-700">Confirmez uniquement si le paiement est déjà validé et si l’adresse affichée est correcte. Cet e-mail ne crée aucune réservation ni émission fournisseur.</p>
+          <p className="text-sm text-slate-700">Confirmez uniquement si le paiement est déjà validé et si l’adresse affichée est correcte. {receiptEmailAction === "resend" ? "Cette relance fait suite à un échec de remise enregistré." : ""} Cet e-mail ne crée aucune réservation ni émission fournisseur.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setReceiptEmailPayment(null)} disabled={sendPaymentReceiptMutation.isPending}>Annuler</Button>
+            <Button variant="outline" onClick={() => { setReceiptEmailPayment(null); setReceiptEmailAction("initial"); }} disabled={sendPaymentReceiptMutation.isPending}>Annuler</Button>
             <Button onClick={handleConfirmReceiptEmail} disabled={sendPaymentReceiptMutation.isPending} className="bg-blue-700 text-white hover:bg-blue-800">
-              {sendPaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />Confirmer l’envoi</>}
+              {sendPaymentReceiptMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Envoi…</> : <><Mail className="mr-2 h-4 w-4" />{receiptEmailAction === "resend" ? "Confirmer le renvoi" : "Confirmer l’envoi"}</>}
             </Button>
           </DialogFooter>
         </DialogContent>

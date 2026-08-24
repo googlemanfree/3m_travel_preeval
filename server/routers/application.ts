@@ -586,9 +586,43 @@ export const applicationRouter = router({
       for (const receipt of receipts) {
         if (!receiptByCandidateId.has(receipt.candidateId)) receiptByCandidateId.set(receipt.candidateId, receipt);
       }
+      const applicationIds = filtered.map((application) => application.id);
+      const receiptAuditLogs = applicationIds.length
+        ? await db.select().from(paymentAuditLogs)
+          .where(inArray(paymentAuditLogs.paymentId, applicationIds))
+          .orderBy(desc(paymentAuditLogs.createdAt))
+        : [];
+      const receiptDeliveryByApplicationId = new Map<number, {
+        status: "sent" | "failed" | "not_sent";
+        lastAttemptAt: Date | null;
+        lastSentAt: Date | null;
+        lastFailureAt: Date | null;
+      }>();
+      for (const log of receiptAuditLogs) {
+        if (!["receipt_sent", "receipt_resent", "receipt_failed"].includes(log.action)) continue;
+        const existing = receiptDeliveryByApplicationId.get(log.paymentId) ?? {
+          status: "not_sent" as const,
+          lastAttemptAt: null,
+          lastSentAt: null,
+          lastFailureAt: null,
+        };
+        if (!existing.lastAttemptAt) {
+          existing.lastAttemptAt = log.createdAt;
+          existing.status = log.action === "receipt_failed" ? "failed" : "sent";
+        }
+        if (!existing.lastSentAt && ["receipt_sent", "receipt_resent"].includes(log.action)) existing.lastSentAt = log.createdAt;
+        if (!existing.lastFailureAt && log.action === "receipt_failed") existing.lastFailureAt = log.createdAt;
+        receiptDeliveryByApplicationId.set(log.paymentId, existing);
+      }
       return filtered.map((application) => ({
         ...application,
         paymentReceipt: application.candidateId ? receiptByCandidateId.get(application.candidateId) ?? null : null,
+        paymentReceiptDelivery: receiptDeliveryByApplicationId.get(application.id) ?? {
+          status: "not_sent" as const,
+          lastAttemptAt: null,
+          lastSentAt: null,
+          lastFailureAt: null,
+        },
       }));
     }),
 
@@ -652,7 +686,10 @@ export const applicationRouter = router({
 
   /** Envoie une confirmation de paiement uniquement après validation manuelle et journalise le résultat. */
   adminSendPaymentReceipt: protectedProcedure
-    .input(z.object({ id: z.number().int().positive() }))
+    .input(z.object({
+      id: z.number().int().positive(),
+      deliveryMode: z.enum(["initial", "resend"]).default("initial"),
+    }))
     .mutation(async ({ ctx, input }) => {
       if (ctx.user.role !== "admin") {
         throw new TRPCError({ code: "FORBIDDEN", message: "Accès réservé aux administrateurs" });
@@ -677,20 +714,33 @@ export const applicationRouter = router({
         });
       } catch (error) {
         console.error("payment receipt delivery failed", { applicationId: application.id, error });
+        try {
+          await db.insert(paymentAuditLogs).values({
+            adminName: ctx.user.name || "Administrateur",
+            adminEmail: ctx.user.email || "",
+            action: "receipt_failed",
+            paymentId: application.id,
+            candidateEmail: application.email,
+            amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
+            details: `Échec de remise du reçu pour le dossier ${application.dossierNumber}. Aucun détail SMTP sensible n’est exposé.`,
+          });
+        } catch (auditError) {
+          console.error("payment receipt failure audit could not be written", { applicationId: application.id, auditError });
+        }
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "L’e-mail de confirmation n’a pas pu être envoyé. Réessayez après vérification du service e-mail." });
       }
 
       await db.insert(paymentAuditLogs).values({
         adminName: ctx.user.name || "Administrateur",
         adminEmail: ctx.user.email || "",
-        action: "receipt_sent",
+        action: input.deliveryMode === "resend" ? "receipt_resent" : "receipt_sent",
         paymentId: application.id,
         candidateEmail: application.email,
         amount: `${application.paymentAmount ?? 65000} ${application.paymentCurrency ?? "XAF"}`,
-        details: `Confirmation de paiement envoyée après validation manuelle du dossier ${application.dossierNumber}`,
+        details: `${input.deliveryMode === "resend" ? "Confirmation de paiement renvoyée" : "Confirmation de paiement envoyée"} après validation manuelle du dossier ${application.dossierNumber}`,
       });
 
-      return { success: true, dossierNumber: application.dossierNumber };
+      return { success: true, dossierNumber: application.dossierNumber, deliveryMode: input.deliveryMode };
     }),
 
   /** Changer le statut d'un dossier (admin) */

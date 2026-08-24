@@ -46,6 +46,36 @@ export function dailyFailures(logs: Array<{ status: string; createdAt: Date }>) 
   return logs.filter((log) => log.status === "failed" && log.createdAt.getTime() >= today.getTime()).length;
 }
 
+export function classifyTreatmentDeadline(dueAt: Date, now = new Date()) {
+  const remainingMs = dueAt.getTime() - now.getTime();
+  if (remainingMs < 0) return { key: "overdue" as const, label: "Échéance dépassée" };
+  if (remainingMs <= 24 * 60 * 60 * 1000) return { key: "today" as const, label: "À traiter sous 24 h" };
+  return { key: "upcoming" as const, label: "À venir" };
+}
+
+export function groupAdvisorTreatmentDeadlines(input: Array<{
+  id: string;
+  caseNumber: string;
+  candidateName: string | null;
+  label: string;
+  dueAt: Date;
+  priority: string;
+  assignedAdminId: number | null;
+}>, admins: Array<{ id: number; fullName: string; email: string }>, now = new Date()) {
+  const adminsById = new Map(admins.map((admin) => [admin.id, admin]));
+  const groups = new Map<string, { advisorId: number | null; advisorName: string; advisorEmail: string | null; items: Array<typeof input[number] & { deadline: ReturnType<typeof classifyTreatmentDeadline> }> }>();
+  for (const item of input) {
+    const advisor = item.assignedAdminId ? adminsById.get(item.assignedAdminId) : undefined;
+    const key = advisor ? String(advisor.id) : "unassigned";
+    const group = groups.get(key) ?? { advisorId: advisor?.id ?? null, advisorName: advisor?.fullName ?? "Non attribué", advisorEmail: advisor?.email ?? null, items: [] };
+    group.items.push({ ...item, deadline: classifyTreatmentDeadline(item.dueAt, now) });
+    groups.set(key, group);
+  }
+  return Array.from(groups.values())
+    .map((group) => ({ ...group, items: group.items.sort((left, right) => left.dueAt.getTime() - right.dueAt.getTime()) }))
+    .sort((left, right) => left.items[0]!.dueAt.getTime() - right.items[0]!.dueAt.getTime());
+}
+
 export function deliverySuccessRates30Days(logs: Array<{ status: string; createdAt: Date }>) {
   const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
   const recent = logs.filter((log) => log.createdAt.getTime() >= cutoff);
@@ -2947,6 +2977,50 @@ export const adminRouter = router({
       }
 
       return { success: true, legacyStatus, clientStatusLabel: clientStatus.label, notificationCreated };
+    }),
+
+  listAdvisorTreatmentDeadlines: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+
+      const [openCases, openTasks, activeAdmins, requestRows] = await Promise.all([
+        db.select().from(cases).where(and(isNotNull(cases.dueAt), isNull(cases.closedAt))),
+        db.select().from(caseTasks).where(and(isNotNull(caseTasks.dueAt), inArray(caseTasks.taskStatus, ["open", "in_progress"]))),
+        db.select({ id: adminAccounts.id, fullName: adminAccounts.fullName, email: adminAccounts.email }).from(adminAccounts).where(eq(adminAccounts.status, "active")),
+        db.select({ caseId: unifiedClientRequests.caseId, fullName: unifiedClientRequests.fullName }).from(unifiedClientRequests).where(isNotNull(unifiedClientRequests.caseId)),
+      ]);
+      const caseById = new Map(openCases.map((operationalCase) => [operationalCase.id, operationalCase]));
+      const candidateNameByCaseId = new Map<number, string>();
+      for (const request of requestRows) {
+        if (request.caseId && !candidateNameByCaseId.has(request.caseId)) candidateNameByCaseId.set(request.caseId, request.fullName);
+      }
+      const deadlineItems = [
+        ...openCases.map((operationalCase) => ({
+          id: `case:${operationalCase.id}`,
+          caseNumber: operationalCase.caseNumber,
+          candidateName: candidateNameByCaseId.get(operationalCase.id) ?? null,
+          label: `Dossier — ${operationalCase.currentStatus}`,
+          dueAt: operationalCase.dueAt!,
+          priority: operationalCase.priority,
+          assignedAdminId: operationalCase.assignedAdminId,
+        })),
+        ...openTasks.map((task) => {
+          const operationalCase = caseById.get(task.caseId);
+          return {
+            id: `task:${task.id}`,
+            caseNumber: operationalCase?.caseNumber ?? `Dossier #${task.caseId}`,
+            candidateName: candidateNameByCaseId.get(task.caseId) ?? null,
+            label: `Tâche — ${task.title}`,
+            dueAt: task.dueAt!,
+            priority: operationalCase?.priority ?? "normal",
+            assignedAdminId: task.assignedAdminId ?? operationalCase?.assignedAdminId ?? null,
+          };
+        }),
+      ];
+      return groupAdvisorTreatmentDeadlines(deadlineItems, activeAdmins);
     }),
 
   addCandidate360Task: publicProcedure

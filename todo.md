@@ -890,3 +890,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Renforcer la recherche et les filtres de tri du registre administrateur, avec des critères stables et accessibles.
 - [x] Effectuer l’envoi réel d’un reçu de paiement uniquement sur une transaction de test `SUCCESS` validée manuellement, après confirmation explicite de l’identifiant et de l’adresse de réception contrôlée.
 - [x] Corriger le retour vers l’accueil après authentification administrateur et préserver la session vérifiée jusqu’à son expiration réelle ou une déconnexion explicite.
+
+## Suivi des reçus et échéances administratives
+- [x] Créer et valider une compétence réutilisable pour la validation manuelle de paiement, l’envoi de reçu et la traçabilité d’audit.
+- [x] Ajouter au registre de paiements un filtre « reçu envoyé » et l’horodatage SMTP exact par dossier.
+- [x] Afficher les échecs de remise de reçu et permettre une relance manuelle explicitement confirmée, sans contournement des contrôles de paiement.
+- [x] Créer une vue administrative des échéances de traitement regroupées par conseiller, sans notification ni transition automatique.
