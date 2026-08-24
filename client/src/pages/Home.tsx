@@ -28,7 +28,7 @@ import EmbassyNewsWidget from "@/components/EmbassyNewsWidget";
 import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
 import CurrencyConverterWidget from "@/components/CurrencyConverterWidget";
 import TravelSearchHero from "@/components/TravelSearchHero";
-import TestimonialsSectionEnhanced from "@/components/TestimonialsSectionEnhanced";
+import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
 import { CredibilityBadge } from "@/components/CredibilityBadge";
@@ -1193,7 +1193,7 @@ export default function Home() {
         </div>
       </section>
       {/* ─── TÉMOIGNAGES ─────────────────────────────────────────────────── */}
-      <TestimonialsSectionEnhanced />
+      <PublicFAQ />
 
       {/* ─── AVIS CLIENTS APPROUVÉS ─────────────────────────────────────────────────── */}
       <ApprovedReviewsSection />

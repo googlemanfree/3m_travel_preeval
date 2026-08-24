@@ -9,6 +9,7 @@ const navbar = readFileSync(resolve(projectRoot, "client/src/components/Navbar.t
 const home = readFileSync(resolve(projectRoot, "client/src/pages/Home.tsx"), "utf8");
 const blog = readFileSync(resolve(projectRoot, "client/src/pages/Blog.tsx"), "utf8");
 const form = readFileSync(resolve(projectRoot, "client/src/components/SimpleMultiProjectForm.tsx"), "utf8");
+const publicCta = readFileSync(resolve(projectRoot, "client/src/components/PublicEvaluationCTA.tsx"), "utf8");
 
 describe("accès public au formulaire d’évaluation gratuite", () => {
   it("garde le formulaire gratuit ancré sur la page d’accueil", () => {
@@ -20,7 +21,8 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
   });
 
   it("oriente le hero, le menu et les anciens liens vers le formulaire sans compte", () => {
-    expect(hero).toContain('href="/?project=travail#evaluation-multi"');
+    expect(hero).toContain("PublicEvaluationCTA");
+    expect(publicCta).toContain('return `/?project=${encodeURIComponent(project)}#evaluation-multi`');
     expect(navbar).toContain('{ href: "/?project=travail#evaluation-multi", label: "Évaluation Rapide"');
     expect(app).toContain('<Redirect to="/#evaluation-multi" />');
     expect(app).not.toContain('<Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>');

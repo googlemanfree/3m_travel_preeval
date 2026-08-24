@@ -936,3 +936,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Retirer les composants publics d’évaluation, hero, assistant et procédures non référencés après confirmation statique de leur absence de route active.
 - [x] Corriger les liens d’évaluation restants du pied de page, de la navigation et du suivi candidat lorsqu’ils doivent ouvrir le formulaire gratuit public.
 - [x] Poursuivre les corrections d’audit sans supprimer de route, page, composant ou fonctionnalité supplémentaire sans confirmation explicite de l’utilisateur.
+
+## Avis modérés, CTA partagés et FAQ publique
+- [x] Créer un formulaire de recueil d’avis sans publication automatique et une modération administrateur autorisée.
+- [x] Centraliser les CTA publics dans un composant réutilisable accessible et cohérent.
+- [x] Remplacer les sections de témoignages de l’accueil par une FAQ dynamique et interactive sans contenu client inventé.
+- [x] Tester les contrôles de modération, les CTA et la FAQ avant publication.

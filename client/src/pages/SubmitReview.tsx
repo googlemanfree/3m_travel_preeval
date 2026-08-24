@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Star, CheckCircle, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
-export default function SubmitReview() {
+export default function SubmitReview({ embedded = false }: { embedded?: boolean }) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -98,7 +98,7 @@ export default function SubmitReview() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4">
+    <div className={embedded ? "mt-12" : "min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 py-12 px-4"}>
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <motion.div

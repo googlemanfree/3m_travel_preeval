@@ -229,7 +229,7 @@ export const customerReviewRouter = router({
         approvedReviews: 0,
         pendingReviews: 0,
         rejectedReviews: 0,
-        averageRating: 5.0,
+        averageRating: 0,
       };
     }
   }),

@@ -1,5 +1,6 @@
 import { CheckCircle2, MessageCircle, ShieldCheck } from "lucide-react";
-import { Link } from "wouter";
+import SubmitReview from "./SubmitReview";
+import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 
 export default function Avis() {
   return (
@@ -31,12 +32,11 @@ export default function Avis() {
         </div>
 
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href="/?project=travail#evaluation-multi"
+          <PublicEvaluationCTA
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-3 text-sm font-black text-white hover:bg-blue-800"
           >
             Commencer l’évaluation gratuite
-          </Link>
+          </PublicEvaluationCTA>
           <a
             href="https://wa.me/237698104832"
             target="_blank"
@@ -47,6 +47,19 @@ export default function Avis() {
             Échanger avec l’agence
           </a>
         </div>
+
+        <section id="deposer-un-avis" className="mt-14 border-t border-slate-200 pt-12" aria-labelledby="deposer-un-avis-title">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[.18em] text-blue-700">Retour d’expérience</p>
+            <h2 id="deposer-un-avis-title" className="mt-3 text-2xl font-black text-slate-950 sm:text-3xl">
+              Partagez votre expérience
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Votre retour est transmis à l’équipe pour modération. Il n’est jamais affiché automatiquement et ne peut être publié qu’après vérification et accord de publication.
+            </p>
+          </div>
+          <SubmitReview embedded />
+        </section>
       </section>
     </main>
   );

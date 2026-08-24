@@ -20,7 +20,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminCustomerReviews() {
-  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("admin_session_token") || "" : "";
+  const sessionToken = typeof window !== "undefined"
+    ? sessionStorage.getItem("admin_session_token") || localStorage.getItem("admin_session_token") || ""
+    : "";
   const { data: pendingReviews, isLoading, refetch } = trpc.customerReview.getPendingReviews.useQuery(
     { sessionToken },
     { refetchInterval: 30000, enabled: !!sessionToken }
