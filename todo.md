@@ -908,3 +908,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un export CSV filtré de la vue des échéances par conseiller.
 - [x] Ajouter des badges de couleur accessibles pour chaque priorité d’échéance.
 - [x] Ajouter un graphique de taux de réussite SMTP sur 30 jours à partir des journaux réels de remise.
+
+## Accès public à l’évaluation gratuite
+- [x] Auditer les routes publiques et les deux liens d’évaluation de la page d’accueil.
+- [x] Diriger le hero et le menu vers le formulaire d’évaluation gratuit sans compte.
+- [ ] Tester les redirections et vérifier la version publiée du formulaire public.

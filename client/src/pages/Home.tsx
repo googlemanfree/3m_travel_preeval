@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from 'wouter';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -433,6 +433,14 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const evalRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (window.location.hash !== "#evaluation-multi") return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -570,7 +578,7 @@ export default function Home() {
       />
 
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
-      <section id="evaluation-multi" className="py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
+      <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">
         <div className="max-w-4xl mx-auto px-4">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="text-center mb-10">
             <p className="text-sm font-bold text-[#2563eb] uppercase tracking-widest mb-2">Évaluation prioritaire</p>

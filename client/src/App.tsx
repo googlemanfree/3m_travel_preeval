@@ -239,8 +239,8 @@ function Router() {
       <Route path={"/procedures-complete"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/procedures-enhanced"}>{() => <Redirect to="/procedures" />}</Route>
       <Route path={"/procedures-advanced"}>{() => <Redirect to="/procedures" />}</Route>
-      <Route path={"/evaluation-rapide"}>{() => <Redirect to="/evaluation" />}</Route>
-      <Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/evaluation" />}</Route>
+      <Route path={"/evaluation-rapide"}>{() => <Redirect to="/#evaluation-multi" />}</Route>
+      <Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/#evaluation-multi" />}</Route>
       <Route path={"/admin/dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
@@ -256,7 +256,7 @@ function Router() {
           <AdminEmailSettings />
         </AdminGuard>
       </Route>
-      <Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>
+      <Route path={"/evaluation-primaire"}>{() => <Redirect to="/#evaluation-multi" />}</Route>
       <Route path={"/simple-signup"}>{() => <Redirect to="/register" />}</Route>
       <Route path={"/schedule-agency"}>{() => <Redirect to="/contact" />}</Route>
       <Route path={"/visa-types"}>{() => <Redirect to="/procedures" />}</Route>

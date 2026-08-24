@@ -35,7 +35,7 @@ const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: bo
   { href: "/procedures", label: "Procédures", icon: BookOpen },
   { href: "/ressources", label: "Ressources", icon: Globe2 },
   { href: "/guide-procedures", label: "Guide PDF", icon: FileText },
-  { href: "/evaluation-rapide-enhanced", label: "Évaluation Rapide", icon: Zap },
+  { href: "/#evaluation-multi", label: "Évaluation Rapide", icon: Zap },
   { href: "/mon-espace", label: "Suivi de dossier", icon: FolderKanban },
   { href: "/evisas", label: "E-Visa", icon: Smartphone, highlight: true },
   { href: "/3m-digital", label: "3M Digital", icon: UsersRound },

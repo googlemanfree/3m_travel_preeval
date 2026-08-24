@@ -1,7 +1,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { Star } from "lucide-react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { PROCEDURE_VISUALS } from "@/data/procedureVisuals";
 
@@ -195,13 +194,13 @@ export default function HeroSectionVIP({
             asChild
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
-            <Link href="/evaluation-primaire" aria-label="Commencer mon évaluation gratuite">
+            <a href="#evaluation-multi" aria-label="Commencer mon évaluation gratuite">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
               <span className="relative z-10 inline-flex items-center gap-2">
                 <span className="text-lg transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" aria-hidden="true">🚀</span>
                 <span>Évaluation gratuite — Commencer</span>
               </span>
-            </Link>
+            </a>
           </Button>
           <Button
             asChild
