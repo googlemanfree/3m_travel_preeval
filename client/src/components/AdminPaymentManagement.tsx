@@ -228,7 +228,8 @@ export function AdminPaymentManagement() {
       toast.error("Aucun paiement à exporter");
       return;
     }
-    const headers = ["Dossier", "Candidat", "Email", "Mode de paiement", "Référence", "Montant", "Statut", "Date"];
+    const quote = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const headers = ["Dossier", "Candidat", "E-mail", "Mode de paiement", "Référence", "Montant", "Statut paiement", "État reçu", "Dernière remise SMTP", "Date paiement"];
     const rows = filteredPayments.map((p) => [
       p.dossierNumber,
       p.fullName,
@@ -237,14 +238,18 @@ export function AdminPaymentManagement() {
       p.transactionId || "—",
       `${p.amount} ${p.currency}`,
       p.paymentStatus,
+      p.paymentReceiptDelivery?.status === "sent" ? "Reçu envoyé" : p.paymentReceiptDelivery?.status === "failed" ? "Erreur d’envoi" : "Reçu non envoyé",
+      p.paymentReceiptDelivery?.lastAttemptAt ? new Date(p.paymentReceiptDelivery.lastAttemptAt).toLocaleString("fr-FR") : "",
       p.paymentDate ? new Date(p.paymentDate).toLocaleDateString("fr-FR") : "",
     ]);
-    const csv = [headers.join(","), ...rows.map((r) => r.map((c) => `"${c}"`).join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
+    const csv = [headers, ...rows].map((row) => row.map(quote).join(",")).join("\n");
+    const blob = new Blob(["\ufeff", csv], { type: "text/csv;charset=utf-8" });
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    link.href = url;
     link.download = `paiements_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
+    URL.revokeObjectURL(url);
     toast.success("Export CSV téléchargé");
   };
 

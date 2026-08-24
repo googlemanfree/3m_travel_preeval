@@ -896,3 +896,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter au registre de paiements un filtre « reçu envoyé » et l’horodatage SMTP exact par dossier.
 - [x] Afficher les échecs de remise de reçu et permettre une relance manuelle explicitement confirmée, sans contournement des contrôles de paiement.
 - [x] Créer une vue administrative des échéances de traitement regroupées par conseiller, sans notification ni transition automatique.
+
+## Exports et supervision administrative
+- [x] Mettre à jour la compétence réutilisable de suivi sécurisé des paiements avec l’export et la supervision SMTP.
+- [x] Ajouter un export CSV limité aux données administratives nécessaires du registre des paiements.
+- [x] Ajouter un filtre de priorité à la vue des échéances par conseiller.
+- [x] Afficher un widget SMTP avec taux de réussite et dernières erreurs de remise, sans exposer de contenu d’e-mail sensible.

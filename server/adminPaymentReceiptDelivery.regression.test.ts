@@ -25,6 +25,8 @@ describe("envoi de confirmation de paiement administrateur", () => {
     expect(paymentPanel).toContain("Erreur d’envoi");
     expect(paymentPanel).toContain("Renvoyer le reçu après échec");
     expect(paymentPanel).toContain("Reçu non envoyé");
+    expect(paymentPanel).toContain("Dernière remise SMTP");
+    expect(paymentPanel).toContain("text/csv;charset=utf-8");
     expect(paymentPanel).not.toContain("Simuler l'envoi du reçu");
     expect(paymentPanel).not.toContain("setTimeout(() => {");
   });

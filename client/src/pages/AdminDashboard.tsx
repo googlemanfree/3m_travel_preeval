@@ -731,6 +731,7 @@ export default function AdminDashboard() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
 
@@ -780,6 +781,10 @@ export default function AdminDashboard() {
   });
   const { data: advisorDeadlineGroups = [], isLoading: isLoadingAdvisorDeadlines, refetch: refetchAdvisorDeadlines } = trpc.admin.listAdvisorTreatmentDeadlines.useQuery(
     { sessionToken },
+    { enabled: !!sessionToken },
+  );
+  const { data: smtpDeliveryOverview, isFetching: isFetchingSmtpDelivery, refetch: refetchSmtpDelivery } = trpc.admin.getEmailDeliveryLogs.useQuery(
+    { sessionToken, limit: 30, status: "all", errorType: "all" },
     { enabled: !!sessionToken },
   );
 
@@ -880,7 +885,7 @@ export default function AdminDashboard() {
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary(), refetchAdvisorDeadlines()]);
+      await Promise.all([refetch(), refetchCountryDistribution(), refetchFaqSatisfaction(), refetchFlightQueueSummary(), refetchAdvisorDeadlines(), refetchSmtpDelivery()]);
       const syncedAt = new Date();
       setLastSyncedAt(syncedAt);
       toast({
@@ -896,7 +901,7 @@ export default function AdminDashboard() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, refetchAdvisorDeadlines, toast]);
+  }, [refetch, refetchCountryDistribution, refetchFaqSatisfaction, refetchFlightQueueSummary, refetchAdvisorDeadlines, refetchSmtpDelivery, toast]);
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
@@ -924,6 +929,17 @@ export default function AdminDashboard() {
   };
   const externalEvaluationCandidates = candidates.filter((candidate) => candidate.source === "ACCOUNT_ONLY" && candidate.evaluationDeclarationStatus === "pending_validation");
   const pendingEvaluationCandidates = candidates.filter((candidate) => candidate.status === "PENDING_48H");
+  const visibleAdvisorDeadlineGroups = advisorDeadlineGroups
+    .map((group) => ({
+      ...group,
+      items: advisorDeadlinePriorityFilter === "all"
+        ? group.items
+        : group.items.filter((item) => item.priority === advisorDeadlinePriorityFilter),
+    }))
+    .filter((group) => group.items.length > 0);
+  const smtpSummary = smtpDeliveryOverview?.summary ?? { total: 0, sent: 0, failed: 0, pending: 0 };
+  const smtpSuccessRate = smtpSummary.total ? Math.round((smtpSummary.sent / smtpSummary.total) * 100) : null;
+  const recentSmtpFailures = (smtpDeliveryOverview?.logs ?? []).filter((log) => log.status === "failed").slice(0, 3);
   const manualPriorities = [
     {
       id: "external-evaluations",
@@ -1113,6 +1129,23 @@ export default function AdminDashboard() {
           </span>
         </div>
 
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Supervision des remises SMTP">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 font-black text-slate-950"><Mail className="h-5 w-5 text-blue-700" />Remises SMTP</h2>
+              <p className="mt-1 text-sm text-slate-600">Synthèse des 30 dernières remises enregistrées. Les détails sensibles ne sont pas affichés ici.</p>
+            </div>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => refetchSmtpDelivery()} disabled={isFetchingSmtpDelivery || !sessionToken} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetchingSmtpDelivery ? "animate-spin" : ""}`} />Actualiser</Button><Button variant="outline" size="sm" onClick={() => setActiveAdminTab("emails")}>Ouvrir les e-mails</Button></div>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><p className="text-xs font-semibold text-blue-800">Taux de réussite</p><p className="mt-1 text-2xl font-black text-blue-950">{smtpSuccessRate === null ? "—" : `${smtpSuccessRate}%`}</p><p className="text-xs text-blue-700">Sur les remises chargées</p></div>
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><p className="text-xs font-semibold text-emerald-800">Envoyés</p><p className="mt-1 text-2xl font-black text-emerald-950">{smtpSummary.sent}</p><p className="text-xs text-emerald-700">Remises confirmées</p></div>
+            <div className="rounded-xl border border-rose-100 bg-rose-50 p-3"><p className="text-xs font-semibold text-rose-800">Échecs</p><p className="mt-1 text-2xl font-black text-rose-950">{smtpSummary.failed}</p><p className="text-xs text-rose-700">À examiner manuellement</p></div>
+            <div className="rounded-xl border border-amber-100 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-800">En attente</p><p className="mt-1 text-2xl font-black text-amber-950">{smtpSummary.pending}</p><p className="text-xs text-amber-700">Suivi requis</p></div>
+          </div>
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Dernières erreurs de remise</p>{recentSmtpFailures.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun échec dans les remises chargées.</p> : <ul className="mt-2 space-y-1 text-sm text-slate-700">{recentSmtpFailures.map((failure) => <li key={failure.id} className="flex flex-wrap items-center justify-between gap-2"><span>Échec de remise à examiner</span><span className="text-xs text-slate-500">{new Date(failure.createdAt).toLocaleString("fr-FR")}</span></li>)}</ul>}</div>
+        </section>
+
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="File de priorités manuelle">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <div>
@@ -1150,15 +1183,24 @@ export default function AdminDashboard() {
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>
               <p className="mt-1 text-sm text-slate-600">Vue de travail fondée sur les échéances enregistrées. Aucun rappel, changement de statut ou notification n’est déclenché automatiquement.</p>
             </div>
-            <span className="text-xs font-semibold text-slate-500">Lecture seule · actualisation manuelle</span>
+            <Select value={advisorDeadlinePriorityFilter} onValueChange={(value) => setAdvisorDeadlinePriorityFilter(value as typeof advisorDeadlinePriorityFilter)}>
+              <SelectTrigger aria-label="Filtrer les échéances par priorité" className="w-full bg-white sm:w-48"><SelectValue placeholder="Toutes priorités" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes priorités</SelectItem>
+                <SelectItem value="urgent">Urgente</SelectItem>
+                <SelectItem value="high">Haute</SelectItem>
+                <SelectItem value="normal">Normale</SelectItem>
+                <SelectItem value="low">Basse</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {isLoadingAdvisorDeadlines ? (
             <p className="py-6 text-sm text-slate-500">Chargement des échéances…</p>
-          ) : advisorDeadlineGroups.length === 0 ? (
-            <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aucune échéance de dossier ou de tâche n’est actuellement enregistrée.</p>
+          ) : visibleAdvisorDeadlineGroups.length === 0 ? (
+            <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">Aucune échéance ne correspond à cette priorité.</p>
           ) : (
             <div className="mt-4 grid gap-3 xl:grid-cols-2">
-              {advisorDeadlineGroups.map((group) => (
+              {visibleAdvisorDeadlineGroups.map((group) => (
                 <article key={group.advisorId ?? "unassigned"} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div><h3 className="font-bold text-slate-950">{group.advisorName}</h3><p className="text-xs text-slate-500">{group.advisorEmail ?? "À attribuer à un conseiller"}</p></div>
