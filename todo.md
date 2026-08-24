@@ -913,3 +913,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer les routes publiques et les deux liens d’évaluation de la page d’accueil.
 - [x] Diriger le hero et le menu vers le formulaire d’évaluation gratuit sans compte.
 - [ ] Tester les redirections et vérifier la version publiée du formulaire public.
+- [ ] Diagnostiquer l’écart entre le checkpoint 90f891f2 et le bundle servi par le domaine de déploiement, puis revalider les anciennes URLs d’évaluation.
