@@ -977,3 +977,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inventorier tous les composants de footer et les pages qui les montent actuellement.
 - [x] Conserver un seul footer partagé complet avec les coordonnées Yaoundé et Ottawa, les liens légaux et les services.
 - [ ] Tester toutes les routes publiques pour confirmer l’absence de footer dupliqué, puis publier la correction.
+- [x] Fusionner visuellement l’alerte anti-fraude, l’appel de contact et les colonnes du footer en une seule surface continue, sans sections perçues comme plusieurs pieds de page.

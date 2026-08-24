@@ -6,178 +6,116 @@ import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
 
 const SOCIAL_LINKS = [
-  { icon: Facebook, href: 'https://www.facebook.com/3mtravelcm', label: 'Facebook officiel', color: 'hover:text-blue-600' },
-  { icon: Instagram, href: 'https://instagram.com/3mtravelagency', label: 'Instagram', color: 'hover:text-pink-600' },
-  { icon: Linkedin, href: 'https://linkedin.com/company/3mtravelagency', label: 'LinkedIn', color: 'hover:text-blue-700' },
-  { icon: Twitter, href: 'https://twitter.com/3mtravelagency', label: 'Twitter', color: 'hover:text-blue-400' },
+  { icon: Facebook, href: "https://www.facebook.com/3mtravelcm", label: "Facebook officiel", color: "hover:text-blue-300" },
+  { icon: Instagram, href: "https://instagram.com/3mtravelagency", label: "Instagram", color: "hover:text-pink-300" },
+  { icon: Linkedin, href: "https://linkedin.com/company/3mtravelagency", label: "LinkedIn", color: "hover:text-blue-300" },
+  { icon: Twitter, href: "https://twitter.com/3mtravelagency", label: "Twitter", color: "hover:text-sky-300" },
 ];
 
 const USEFUL_LINKS = [
-  { label: 'Destinations populaires', href: '/procedures' },
-  { label: 'Contact', href: '/contact' },
-  { label: 'Mentions légales', href: '/conditions-utilisation' },
-  { label: 'Plan du site', href: '/plan-du-site' },
-  { label: 'Accessibilité', href: '/accessibilite' },
-  { label: 'Service 3M Digital', href: '/3m-digital' },
-  { label: 'Sources officielles', href: '/sources-officielles' },
+  { label: "Destinations populaires", href: "/procedures" },
+  { label: "Contact", href: "/contact" },
+  { label: "Mentions légales", href: "/conditions-utilisation" },
+  { label: "Plan du site", href: "/plan-du-site" },
+  { label: "Accessibilité", href: "/accessibilite" },
+  { label: "Service 3M Digital", href: "/3m-digital" },
+  { label: "Sources officielles", href: "/sources-officielles" },
 ];
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0f2460] text-gray-300 mt-auto">
-      <div className="border-b-2 border-red-700 bg-red-600/90 px-4 py-3 text-white">
-        <div className="mx-auto flex max-w-7xl items-start gap-3 text-sm">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-          <p><strong>Avertissement anti-fraude :</strong> les règlements d’ouverture de dossier s’effectuent uniquement sur le guichet sécurisé officiel ou en agence avec reçu officiel. Méfiez-vous des intermédiaires non autorisés.</p>
-        </div>
-      </div>
-      {/* Newsletter Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="bg-gradient-to-r from-blue-600 to-blue-800 py-8 px-4"
-      >
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center">
-            <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-              Une question sur votre projet ?
-            </h3>
-            <p className="text-blue-100 text-sm">Contactez l’équipe 3M Travel pour une réponse adaptée à votre situation.</p>
-          </div>
-          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
-            <a href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50">Ouvrir le formulaire de contact</a>
-            <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">Écrire sur WhatsApp</a>
-          </div>
-        </div>
-      </motion.div>
-
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
-
-          {/* Colonne 1 — Identité */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <img
-                src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
-                alt="Logo 3M Travel Agency"
-                className="h-10 w-auto object-contain"
-              />
+    <footer className="mt-auto bg-[#0f2460] text-gray-300" aria-label="Informations et contacts 3M Travel">
+      <div className="mx-auto max-w-7xl px-4 py-9 sm:py-11">
+        <div className="grid gap-6 border-b border-white/15 pb-8 lg:grid-cols-[1.05fr_1.95fr] lg:items-center">
+          <div className="flex items-center gap-3">
+            <img
+              src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
+              alt="Logo 3M Travel Agency"
+              className="h-11 w-auto object-contain"
+            />
+            <div>
+              <p className="text-sm font-bold text-white">3M Travel &amp; Services</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-300">Accompagnement documenté en mobilité internationale, voyage et services administratifs.</p>
             </div>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Agence officielle d'accompagnement à l'immigration et à la mobilité internationale.
-            </p>
           </div>
 
-          {/* Colonne 2 — Navigation */}
+          <div className="grid gap-3 sm:grid-cols-[1.2fr_auto] sm:items-center">
+            <div className="flex items-start gap-3 rounded-xl border border-amber-200/25 bg-white/5 px-4 py-3 text-xs leading-relaxed text-slate-200">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
+              <p><strong className="text-white">Avertissement anti-fraude.</strong> Les règlements d’ouverture de dossier s’effectuent uniquement via le guichet sécurisé officiel ou en agence avec reçu officiel.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <p className="text-xs text-slate-300">Une question sur votre projet ?</p>
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                <Link href="/contact" className="inline-flex min-h-10 items-center justify-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-blue-800 hover:bg-blue-50">Nous contacter</Link>
+                <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/35 px-3 py-2 text-xs font-bold text-white hover:bg-white/10">WhatsApp Yaoundé</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 py-9 sm:grid-cols-2 lg:grid-cols-5">
           <div>
-            <h4 className="font-bold text-white text-sm mb-3">Navigation</h4>
+            <h2 className="mb-3 text-sm font-bold text-white">3M Travel</h2>
+            <p className="text-xs leading-relaxed text-slate-300">Un accompagnement fondé sur vos documents, les sources institutionnelles disponibles et des validations humaines à chaque étape sensible.</p>
+          </div>
+
+          <div>
+            <h2 className="mb-3 text-sm font-bold text-white">Navigation</h2>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/" className="hover:text-blue-300 transition-colors">Accueil</Link></li>
-              <li><Link href="/flights" className="hover:text-blue-300 transition-colors">Recherche de vols</Link></li>
-              <li><Link href="/procedures" className="hover:text-blue-300 transition-colors">Procédures & Destinations</Link></li>
-              <li><Link href="/register" className="hover:text-blue-300 transition-colors">Inscription</Link></li>
-              <li><Link href="/login" className="hover:text-blue-300 transition-colors">Mon Espace Candidat</Link></li>
+              <li><Link href="/" className="hover:text-blue-200">Accueil</Link></li>
+              <li><Link href="/flights" className="hover:text-blue-200">Recherche de vols</Link></li>
+              <li><Link href="/procedures" className="hover:text-blue-200">Procédures &amp; destinations</Link></li>
+              <li><Link href="/register" className="hover:text-blue-200">Inscription</Link></li>
+              <li><Link href="/login" className="hover:text-blue-200">Espace candidat</Link></li>
             </ul>
           </div>
 
-          {/* Colonne 3 — Destinations */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-3">Destinations</h4>
+            <h2 className="mb-3 text-sm font-bold text-white">Destinations</h2>
             <ul className="space-y-2 text-sm">
-              {["🇨🇦 Canada", "🇫🇷 France", "🇩🇪 Allemagne", "🇱🇺 Luxembourg", "🇵🇱 Pologne", "🇬🇧 Royaume-Uni", "🇶🇦 Qatar", "🇦🇺 Australie"].map(d => (
-                <li key={d}>
-                  <Link href="/procedures" className="hover:text-blue-300 transition-colors">{d}</Link>
-                </li>
+              {["Canada", "France", "Allemagne", "Luxembourg", "Royaume-Uni", "Australie"].map((destination) => (
+                <li key={destination}><Link href="/procedures" className="hover:text-blue-200">{destination}</Link></li>
               ))}
             </ul>
           </div>
 
-          {/* Colonne 4 — Contact */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-3">Contact</h4>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                <span>Siège : {COMPANY_CONTACTS.yaounde.address}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <span>Bureau d’information : {COMPANY_CONTACTS.ottawa.address}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp Yaoundé (principal) : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-300 transition-colors">Fixe Yaoundé : {COMPANY_CONTACTS.yaounde.phone}</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="hover:text-blue-300 transition-colors">Bureau Ottawa : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-blue-300 transition-colors">{COMPANY_CONTACTS.yaounde.email}</a>
-              </div>
+            <h2 className="mb-3 text-sm font-bold text-white">Coordonnées</h2>
+            <div className="space-y-3 text-xs leading-relaxed">
+              <div className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-blue-300" /><span>Yaoundé : {COMPANY_CONTACTS.yaounde.address}</span></div>
+              <div className="flex items-center gap-2"><MessageCircle className="h-4 w-4 shrink-0 text-emerald-300" /><a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-200">WhatsApp Yaoundé (principal) : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a></div>
+              <div className="flex items-center gap-2"><Phone className="h-4 w-4 shrink-0 text-blue-300" /><a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-200">Fixe Yaoundé : {COMPANY_CONTACTS.yaounde.phone}</a></div>
+              <div className="flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0 text-blue-300" /><span>Ottawa : {COMPANY_CONTACTS.ottawa.address}</span></div>
+              <div className="flex items-center gap-2"><Phone className="h-4 w-4 shrink-0 text-blue-300" /><a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="hover:text-blue-200">Bureau Ottawa : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</a></div>
+              <div className="flex items-center gap-2"><Mail className="h-4 w-4 shrink-0 text-blue-300" /><a href={`mailto:${COMPANY_CONTACTS.yaounde.email}`} className="hover:text-blue-200">{COMPANY_CONTACTS.yaounde.email}</a></div>
             </div>
           </div>
 
-          {/* Colonne 5 — Liens utiles */}
           <div>
-            <h4 className="font-bold text-white text-sm mb-3">Liens utiles</h4>
+            <h2 className="mb-3 text-sm font-bold text-white">Informations utiles</h2>
             <ul className="space-y-2 text-sm">
-              {USEFUL_LINKS.map((link) => (
-                <li key={link.label}>
-                  {link.href.startsWith('/') ? (
-                    <Link href={link.href} className="hover:text-blue-300 transition-colors">{link.label}</Link>
-                  ) : (
-                    <a href={link.href} className="hover:text-blue-300 transition-colors">{link.label}</a>
-                  )}
-                </li>
-              ))}
+              {USEFUL_LINKS.map((link) => <li key={link.label}><Link href={link.href} className="hover:text-blue-200">{link.label}</Link></li>)}
             </ul>
+            <div className="mt-5 border-t border-white/15 pt-4">
+              <p className="mb-2 text-xs font-semibold text-blue-200">Page officielle</p>
+              <FacebookQRCodeWidget />
+            </div>
           </div>
         </div>
 
-        {/* QR Code Facebook Widget */}
-        <div className="py-6 border-t border-gray-700/80 mt-8 flex flex-col items-center">
-          <p className="text-xs font-bold text-blue-300 uppercase tracking-wider mb-2">Rejoignez-nous sur notre page officielle</p>
-          <FacebookQRCodeWidget />
-        </div>
-
-        {/* Social Media Section */}
-        <div className="flex justify-center gap-4 py-6 border-t border-gray-700 mt-4">
-          {SOCIAL_LINKS.map((social) => {
-            const Icon = social.icon;
-            return (
-              <motion.a
-                key={social.label}
-                href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                whileHover={{ scale: 1.2, rotate: 5 }}
-                whileTap={{ scale: 0.95 }}
-                className={`w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center transition duration-200 ${social.color}`}
-                title={social.label}
-                aria-label={`Ouvrir la page ${social.label} de 3M Travel Agency`}
-              >
-                <Icon className="w-5 h-5" />
-              </motion.a>
-            );
-          })}
-        </div>
-
-        {/* Barre légale */}
-        <div className="border-t border-gray-700 pt-6 text-xs text-gray-500 text-center space-y-1">
-          <p>
-            <span className="text-gray-400 font-medium">{COMPANY_PROFILE.legalName}</span> — RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
-          </p>
-          <p>
-            Rôle de conseil et d'accompagnement. Les décisions d'octroi de visa appartiennent exclusivement aux autorités consulaires.
-          </p>
-          <p className="mt-2">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. Tous droits réservés.</p>
+        <div className="flex flex-col items-center justify-between gap-5 border-t border-white/15 pt-6 sm:flex-row">
+          <div className="flex gap-3">
+            {SOCIAL_LINKS.map((social) => {
+              const Icon = social.icon;
+              return <motion.a key={social.label} href={social.href} target="_blank" rel="noopener noreferrer" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.96 }} className={`flex h-9 w-9 items-center justify-center rounded-full bg-white/10 ${social.color}`} aria-label={`Ouvrir ${social.label}`}><Icon className="h-4 w-4" /></motion.a>;
+            })}
+          </div>
+          <div className="max-w-2xl text-center text-xs leading-relaxed text-slate-400 sm:text-right">
+            <p><span className="font-medium text-slate-300">{COMPANY_PROFILE.legalName}</span> — RC : {COMPANY_PROFILE.legalIdentifiers.registration} | NIU : {COMPANY_PROFILE.legalIdentifiers.taxpayerId}</p>
+            <p className="mt-1">Rôle de conseil et d’accompagnement. Les décisions de visa appartiennent aux autorités consulaires.</p>
+            <p className="mt-1">© {new Date().getFullYear()} {COMPANY_PROFILE.legalName}. Tous droits réservés.</p>
+          </div>
         </div>
       </div>
     </footer>
