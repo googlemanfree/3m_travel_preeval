@@ -1,6 +1,8 @@
-import { ExternalLink, Landmark, ShieldCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ExternalLink, Landmark, MailWarning, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 import { OFFICIAL_CONSULAR_PORTALS } from "@/data/officialConsularPortals";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 
 const DESTINATIONS = [
   ["canada", "Canada", "Immigration, Réfugiés et Citoyenneté Canada"],
@@ -17,7 +19,16 @@ const DESTINATIONS = [
   ["etats-unis", "États-Unis", "U.S. Department of State"],
 ] as const;
 
+const formatVerifiedDate = (value: string) =>
+  new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00Z`));
+
 export default function OfficialSources() {
+  const [destination, setDestination] = useState("all");
+  const visibleDestinations = useMemo(
+    () => DESTINATIONS.filter(([key]) => destination === "all" || destination === key),
+    [destination],
+  );
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
@@ -38,10 +49,25 @@ export default function OfficialSources() {
           </div>
         </section>
 
-        <section className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Portails institutionnels">
-          {DESTINATIONS.map(([key, country, authority]) => {
+        <section className="mt-10" aria-label="Filtrer les portails institutionnels">
+          <label htmlFor="official-source-destination" className="text-sm font-black text-slate-900">Filtrer par destination</label>
+          <select
+            id="official-source-destination"
+            value={destination}
+            onChange={(event) => setDestination(event.target.value)}
+            className="mt-2 block min-h-11 w-full max-w-sm rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          >
+            <option value="all">Toutes les destinations ({DESTINATIONS.length})</option>
+            {DESTINATIONS.map(([key, country]) => <option key={key} value={key}>{country}</option>)}
+          </select>
+          <p className="mt-3 text-sm text-slate-600">{visibleDestinations.length} portail{visibleDestinations.length > 1 ? "s" : ""} institutionnel{visibleDestinations.length > 1 ? "s" : ""} affiché{visibleDestinations.length > 1 ? "s" : ""}.</p>
+        </section>
+
+        <section className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Portails institutionnels">
+          {visibleDestinations.map(([key, country, authority]) => {
             const portal = OFFICIAL_CONSULAR_PORTALS[key];
             if (!portal) return null;
+            const reportHref = `mailto:${COMPANY_PROFILE.publicEmail}?subject=${encodeURIComponent(`Signalement de source officielle — ${country}`)}&body=${encodeURIComponent(`Bonjour,\n\nJe souhaite signaler une difficulté avec ce lien institutionnel :\n${portal.url}\nDestination : ${country}\n\nDécrivez le problème constaté :\n\n`)} `;
             return (
               <article key={key} className="flex min-h-58 flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                 <div className="flex items-start gap-3">
@@ -52,9 +78,12 @@ export default function OfficialSources() {
                   </div>
                 </div>
                 <p className="mt-5 text-sm leading-6 text-slate-600">{portal.label}</p>
-                <p className="mt-3 text-xs leading-5 text-slate-500">Contrôlé le {portal.verifiedAt}. Les exigences peuvent changer.</p>
+                <p className="mt-3 text-xs leading-5 text-slate-500">Dernière vérification : {formatVerifiedDate(portal.verifiedAt)}. Les exigences peuvent changer.</p>
                 <a href={portal.url} target="_blank" rel="noopener noreferrer" className="mt-auto inline-flex min-h-11 items-center gap-2 pt-6 text-sm font-black text-blue-800 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
                   Ouvrir la source officielle <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                </a>
+                <a href={reportHref.trim()} className="mt-3 inline-flex min-h-10 items-center gap-2 text-xs font-black text-slate-600 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
+                  <MailWarning className="h-4 w-4" aria-hidden="true" /> Signaler un lien à vérifier
                 </a>
               </article>
             );

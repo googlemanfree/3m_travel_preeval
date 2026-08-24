@@ -29,11 +29,24 @@ describe("coordonnées, sources institutionnelles et transparence tarifaire", ()
     expect(router).toContain('path={"/sources-officielles"}');
   });
 
+  it("propose un filtre, une date vérifiée et un signalement sans modification automatique", () => {
+    const page = read("client/src/pages/OfficialSources.tsx");
+    expect(page).toContain("setDestination");
+    expect(page).toContain("Toutes les destinations");
+    expect(page).toContain("Dernière vérification");
+    expect(page).toContain("Signalement de source officielle");
+    expect(page).toContain("mailto:");
+    expect(page).not.toContain("fetch(");
+  });
+
   it("clarifie les frais tiers et les limites de remboursement dans une FAQ interactive", () => {
     const tariffs = read("client/src/pages/Tarifs.tsx");
     expect(tariffs).toContain("Accordion");
     expect(tariffs).toContain("Quels frais peuvent être facturés par des tiers");
     expect(tariffs).toContain("Existe-t-il un remboursement automatique");
     expect(tariffs).toContain("ne sont jamais présumés remboursables");
+    expect(tariffs).toContain("TooltipProvider");
+    expect(tariffs).toContain("frais tiers");
+    expect(tariffs).toContain("remboursement");
   });
 });

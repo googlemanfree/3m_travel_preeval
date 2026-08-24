@@ -1,8 +1,9 @@
-import { CheckCircle2, Info, MessageCircle } from "lucide-react";
+import { CheckCircle2, CircleHelp, Info, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PublicEvaluationCTA } from "@/components/PublicEvaluationCTA";
 import { digitalWhatsAppUrl } from "@/lib/companyContacts";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SERVICE_OPTIONS = [
   {
@@ -25,8 +26,22 @@ const SERVICE_OPTIONS = [
   },
 ];
 
+function TechnicalTerm({ label, explanation }: { label: string; explanation: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button type="button" className="inline-flex items-center gap-1 rounded-sm font-semibold text-blue-800 underline decoration-dotted underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500" aria-label={`Définition : ${label}`}>
+          {label}<CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-xs text-sm leading-5">{explanation}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export default function Tarifs() {
   return (
+    <TooltipProvider delayDuration={180}>
     <main className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-50 px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <header className="mx-auto max-w-3xl text-center">
@@ -60,7 +75,7 @@ export default function Tarifs() {
             <div>
               <h2 id="tarifs-transparence" className="text-xl font-black text-amber-950">Ce qui doit être confirmé avant paiement</h2>
               <p className="mt-3 text-sm leading-6 text-amber-950/85">
-                Les frais gouvernementaux, consulaires, médicaux, biométriques, de traduction, d’assurance ou de fournisseur ne sont pas présumés inclus. Leur montant, leur destinataire et leurs conditions sont précisés selon la procédure. Aucune garantie générale de remboursement, de visa, de permis, de contrat ou de résultat n’est affichée sans politique écrite applicable à votre dossier.
+                Les <TechnicalTerm label="frais tiers" explanation="Sommes facturées par une autorité, un consulat, un centre biométrique, un assureur, un traducteur ou un autre fournisseur, et non par l’agence." /> ne sont pas présumés inclus. Leur montant, leur destinataire et leurs conditions sont précisés selon la procédure. Aucune garantie générale de <TechnicalTerm label="remboursement" explanation="Un remboursement éventuel dépend d’une politique écrite applicable au service concerné et, pour les frais tiers, des règles de l’organisme qui les reçoit." />, de visa, de permis, de contrat ou de résultat n’est affichée sans politique écrite applicable à votre dossier.
               </p>
             </div>
           </div>
@@ -78,5 +93,6 @@ export default function Tarifs() {
         </section>
       </div>
     </main>
+    </TooltipProvider>
   );
 }

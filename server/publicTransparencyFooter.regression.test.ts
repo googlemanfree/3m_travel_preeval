@@ -23,7 +23,8 @@ describe("transparence publique et footer consolidé", () => {
     expect(tarifs).not.toContain("Permis Garanti");
     expect(tarifs).not.toContain("Garantie satisfaction");
     expect(tarifs).toContain("frais gouvernementaux, consulaires, médicaux, biométriques");
-    expect(tarifs).toContain("Aucune garantie générale de remboursement");
+    expect(tarifs).toContain("Aucune garantie générale de");
+    expect(tarifs).toContain('TechnicalTerm label="remboursement"');
   });
 
   it("conserve un seul footer partagé sur l’accueil", () => {

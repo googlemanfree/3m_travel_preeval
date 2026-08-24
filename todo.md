@@ -959,3 +959,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester et publier les coordonnées centralisées, les sources officielles et la FAQ tarifaire.
 - [x] Diagnostiquer la route `/sources-officielles` absente du bundle publié et revalider les pages publiques associées.
 - [x] Remplacer l’affichage résiduel « Heure de Douala » par le fuseau horaire du bureau sélectionné dans la configuration centralisée.
+
+## Maintenance interactive des sources officielles
+- [x] Créer et valider une compétence réutilisable de maintenance des sources institutionnelles et signalements documentaires.
+- [x] Ajouter un filtre interactif par destination et la date de dernière vérification à chaque source officielle.
+- [x] Ajouter un bouton de signalement de lien expiré qui n’altère aucune source sans validation humaine.
+- [x] Ajouter des infobulles accessibles expliquant les termes techniques de la FAQ tarifaire.
+- [ ] Tester et publier les interactions documentaires et tarifaires vérifiées.
