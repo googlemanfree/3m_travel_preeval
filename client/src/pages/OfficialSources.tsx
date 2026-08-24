@@ -19,8 +19,11 @@ const DESTINATIONS = [
   ["etats-unis", "États-Unis", "U.S. Department of State"],
 ] as const;
 
-const formatVerifiedDate = (value: string) =>
-  new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(`${value}T12:00:00Z`));
+const formatVerifiedDate = (value: string) => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(parsed);
+};
 
 export default function OfficialSources() {
   const [destination, setDestination] = useState("all");

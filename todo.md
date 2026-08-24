@@ -971,6 +971,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Afficher le fixe du bureau Ottawa dans le pied de page partagé, sans remplacer le WhatsApp principal Yaoundé.
 - [ ] Vérifier et publier les sources interactives ainsi que les coordonnées Ottawa du footer.
 - [ ] Forcer une révision de diffusion afin que `/sources-officielles` ne présente plus l’écran de mise à jour sur le domaine public.
+- [ ] Corriger le formatage des dates de vérification des sources afin que la page ne bascule plus vers l’écran de secours.
 
 ## Footer unique et complet
 - [x] Inventorier tous les composants de footer et les pages qui les montent actuellement.

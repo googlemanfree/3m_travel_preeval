@@ -39,6 +39,12 @@ describe("coordonnées, sources institutionnelles et transparence tarifaire", ()
     expect(page).not.toContain("fetch(");
   });
 
+  it("affiche les libellés français de vérification sans provoquer une erreur de rendu", () => {
+    const page = read("client/src/pages/OfficialSources.tsx");
+    expect(page).toContain("Number.isNaN(parsed.getTime())");
+    expect(page).toContain("return value");
+  });
+
   it("clarifie les frais tiers et les limites de remboursement dans une FAQ interactive", () => {
     const tariffs = read("client/src/pages/Tarifs.tsx");
     expect(tariffs).toContain("Accordion");
