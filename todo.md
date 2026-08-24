@@ -958,3 +958,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une FAQ interactive complète sur `/tarifs` concernant les frais tiers et les limites de remboursement.
 - [ ] Tester et publier les coordonnées centralisées, les sources officielles et la FAQ tarifaire.
 - [ ] Diagnostiquer la route `/sources-officielles` absente du bundle publié et revalider les pages publiques associées.
+- [ ] Remplacer l’affichage résiduel « Heure de Douala » par le fuseau horaire du bureau sélectionné dans la configuration centralisée.

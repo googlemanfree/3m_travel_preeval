@@ -32,7 +32,7 @@ export const COMPANY_PROFILE = {
       whatsappDisplay: "+237 698 104 832",
       phoneDisplay: "+237 620 996 045",
       timeZone: "Africa/Douala",
-      timeZoneLabel: "Heure de Douala (WAT)",
+      timeZoneLabel: "Heure du Cameroun (WAT)",
       openingHours: ["Lun–ven : 08 h 00 – 20 h 00", "Sam–dim : 09 h 00 – 18 h 00"],
       addressLines: ["Biyem-Assi, Montée Chapelle Obili", "À 10 m de EHS, Yaoundé, Cameroun"],
       mapQuery: "Avenue Marché Biyem-Assi, Yaoundé, Cameroun",

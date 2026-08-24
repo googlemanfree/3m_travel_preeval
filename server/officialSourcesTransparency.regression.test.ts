@@ -14,6 +14,7 @@ describe("coordonnées, sources institutionnelles et transparence tarifaire", ()
     expect(config).toContain("legalIdentifiers");
     expect(config).toContain("cameroon");
     expect(config).toContain("ottawa");
+    expect(config).toContain("Heure du Cameroun (WAT)");
     expect(contact).toContain("COMPANY_PROFILE");
     expect(contact).toContain("officeMapEmbedUrl");
   });
