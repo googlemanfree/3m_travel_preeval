@@ -26,3 +26,11 @@ La nouvelle version publiée charge correctement après une première tentative 
 **Mode :** lecture seule.
 
 La page publique `/contact` charge désormais directement le sélecteur de bureau et le formulaire de message ; l’écran de secours « Oups, une mise à jour est requise » n’est plus affiché. La vérification de `/admin` avec ce même checkpoint a confirmé que la protection de session reste active : la session administrateur précédemment utilisée n’était plus présente et l’accès a donc été refusé sans exposer de donnée ni de commande de traitement. La compilation publiée contient aussi les filtres de source, destination et tri ainsi que les indicateurs d’échéance de la file manuelle ; leur contrôle visuel détaillé requiert une nouvelle session administrateur valide.
+
+## Retour administrateur après authentification OAuth
+
+**Checkpoint :** `a855953e`  
+**Date du contrôle :** 24 août 2026  
+**Mode :** lecture seule, session administrateur restaurée.
+
+Après le retour OAuth, le navigateur est resté sur `/admin` et le poste de travail s’est chargé avec une session active, sans retour à l’accueil ni nouvelle demande de vérification. La file manuelle affiche les règles visuelles attendues : deux échéances dépassées pour les bilans et paiements, une carte sans échéance lorsqu’aucun élément n’est présent et une cible de revue manuelle pour les vols. La recherche et les contrôles de statut, activation, source, destination et tri sont visibles. Aucune action de paiement, de reçu, de revalidation ou de traitement de dossier n’a été exécutée durant cette vérification.
