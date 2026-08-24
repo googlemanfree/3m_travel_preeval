@@ -29,8 +29,10 @@ describe("transparence publique et footer consolidé", () => {
 
   it("conserve un seul footer partagé sur l’accueil", () => {
     const home = read("client/src/pages/Home.tsx");
+    const legalFooter = read("client/src/components/FooterLegal.tsx");
     expect(home).toContain("<FooterLegal />");
     expect(home).not.toContain('<footer id="contact"');
     expect((home.match(/<FooterLegal\s*\/>/g) ?? [])).toHaveLength(1);
+    expect(legalFooter).toContain("return <Footer />");
   });
 });

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
+import { AlertCircle, Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 import { COMPANY_CONTACTS, COMPANY_PROFILE } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
@@ -19,11 +19,18 @@ const USEFUL_LINKS = [
   { label: 'Plan du site', href: '/plan-du-site' },
   { label: 'Accessibilité', href: '/accessibilite' },
   { label: 'Service 3M Digital', href: '/3m-digital' },
+  { label: 'Sources officielles', href: '/sources-officielles' },
 ];
 
 export default function Footer() {
   return (
     <footer className="bg-[#0f2460] text-gray-300 mt-auto">
+      <div className="border-b-2 border-red-700 bg-red-600/90 px-4 py-3 text-white">
+        <div className="mx-auto flex max-w-7xl items-start gap-3 text-sm">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          <p><strong>Avertissement anti-fraude :</strong> les règlements d’ouverture de dossier s’effectuent uniquement sur le guichet sécurisé officiel ou en agence avec reçu officiel. Méfiez-vous des intermédiaires non autorisés.</p>
+        </div>
+      </div>
       {/* Newsletter Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -100,12 +107,15 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a>
-                <span className="text-xs text-blue-200">Bureau 3M Travel d’Ottawa, Canada : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</span>
+                <a href={COMPANY_CONTACTS.yaounde.whatsappUrl} target="_blank" rel="noopener noreferrer" className="hover:text-green-300 transition-colors">WhatsApp Yaoundé (principal) : {COMPANY_CONTACTS.yaounde.whatsappNumber}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-300 transition-colors">Téléphone : {COMPANY_CONTACTS.yaounde.phone}</a>
+                <a href={`tel:${COMPANY_CONTACTS.yaounde.phone.replace(/\s/g, "")}`} className="hover:text-blue-300 transition-colors">Fixe Yaoundé : {COMPANY_CONTACTS.yaounde.phone}</a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <a href={`tel:+${OFFICE_CONTACTS.ottawa.whatsappNumber}`} className="hover:text-blue-300 transition-colors">Bureau Ottawa : {OFFICE_CONTACTS.ottawa.whatsappDisplay}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400 flex-shrink-0" />

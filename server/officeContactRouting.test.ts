@@ -42,22 +42,21 @@ describe("contacts multi-bureaux", () => {
   it("fait de Yaoundé le WhatsApp public principal et conserve Ottawa comme contact secondaire", () => {
     const context = read("client/src/contexts/OfficeContactContext.tsx");
     const footer = read("client/src/components/Footer.tsx");
-    const legalFooter = read("client/src/components/FooterLegal.tsx");
 
     expect(context).toContain('return "cameroon"');
     expect(footer).toContain('COMPANY_CONTACTS.yaounde.whatsappUrl');
     expect(footer).toContain('OFFICE_CONTACTS.ottawa.whatsappDisplay');
-    expect(legalFooter).toContain('cameroon.whatsappNumber');
-    expect(legalFooter).toContain('ottawa.shortLabel');
+    expect(footer).toContain('COMPANY_CONTACTS.yaounde.whatsappNumber');
+    expect(footer).toContain('OFFICE_CONTACTS.ottawa.whatsappDisplay');
   });
 
   it("distingue le WhatsApp principal, le fixe 620 de Yaoundé et le bureau Ottawa dans le footer", () => {
-    const legalFooter = read("client/src/components/FooterLegal.tsx");
-    expect(legalFooter).toContain("WhatsApp Yaoundé (principal)");
-    expect(legalFooter).toContain("Fixe Yaoundé");
-    expect(legalFooter).toContain("Bureau Ottawa");
-    expect(legalFooter).toContain("cameroon.phoneDisplay");
-    expect(legalFooter).toContain("ottawa.whatsappDisplay");
+    const footer = read("client/src/components/Footer.tsx");
+    expect(footer).toContain("WhatsApp Yaoundé (principal)");
+    expect(footer).toContain("Fixe Yaoundé");
+    expect(footer).toContain("Bureau Ottawa");
+    expect(footer).toContain("COMPANY_CONTACTS.yaounde.phone");
+    expect(footer).toContain("OFFICE_CONTACTS.ottawa.whatsappDisplay");
   });
 
   it("bascule la destination et le message rapide vers le bureau choisi", () => {

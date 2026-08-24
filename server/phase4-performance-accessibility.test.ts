@@ -56,9 +56,11 @@ describe("phase 4 performance and accessibility contracts", () => {
 
     for (const path of ["/conditions-utilisation", "/plan-du-site", "/accessibilite"]) {
       expect(footer).toContain(path);
-      expect(institutionalFooter).toContain(path);
       expect(app).toContain(path);
     }
+
+    expect(institutionalFooter).toContain('import Footer from "./Footer"');
+    expect(institutionalFooter).toContain("return <Footer />");
 
     expect(footer).toContain("aria-label");
     expect(floatingMenu).toBeDefined();
