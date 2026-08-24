@@ -194,7 +194,7 @@ export default function HeroSectionVIP({
             asChild
             className={`group relative ${heroButtonSize} flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 px-6 py-4 text-center font-bold text-white shadow-lg shadow-orange-950/25 transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-orange-300 hover:via-orange-500 hover:to-amber-500 hover:shadow-2xl hover:shadow-orange-500/30 focus-visible:ring-2 focus-visible:ring-orange-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#07162c] active:scale-[0.98] will-change-[opacity,transform]`}
           >
-            <a href="#evaluation-multi" aria-label="Commencer mon évaluation gratuite">
+            <a href="/?project=travail#evaluation-multi" aria-label="Commencer mon évaluation gratuite pour un projet professionnel">
               <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full" aria-hidden="true" />
               <span className="relative z-10 inline-flex items-center gap-2">
                 <span className="text-lg transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" aria-hidden="true">🚀</span>
@@ -254,7 +254,7 @@ export default function HeroSectionVIP({
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-md">🌍 Mobilité internationale</span>
         </motion.div>
 
-        {/* Statistiques */}
+        {/* Repères de service */}
         <motion.div
           initial="hidden"
           animate="visible"
@@ -263,16 +263,16 @@ export default function HeroSectionVIP({
           className="flex flex-col sm:flex-row gap-8 justify-center border-t border-white/10 pt-8"
         >
           <div>
-            <p className="text-2xl md:text-3xl font-bold">+1500</p>
-            <p className="text-sm text-slate-400">Dossiers Traités avec Succès</p>
+            <p className="text-2xl md:text-3xl font-bold">3M</p>
+            <p className="text-sm text-slate-400">Travel &amp; Services</p>
           </div>
           <div>
-            <p className="text-2xl md:text-3xl font-bold">98%</p>
-            <p className="text-sm text-slate-400">Clients Satisfaits</p>
+            <p className="text-2xl md:text-3xl font-bold">3</p>
+            <p className="text-sm text-slate-400">Projets : travail, études, tourisme</p>
           </div>
           <div>
             <p className="text-2xl md:text-3xl font-bold">24h</p>
-            <p className="text-sm text-slate-400">Réponse Garantie</p>
+            <p className="text-sm text-slate-400">Délai de réponse annoncé</p>
           </div>
         </motion.div>
       </div>

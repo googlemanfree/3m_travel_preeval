@@ -435,10 +435,15 @@ export default function Home() {
 
   useEffect(() => {
     if (window.location.hash !== "#evaluation-multi") return;
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: "auto", block: "start" });
-    });
-    return () => window.cancelAnimationFrame(frame);
+    const scrollToEvaluation = () => {
+      document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const frame = window.requestAnimationFrame(scrollToEvaluation);
+    const retry = window.setTimeout(scrollToEvaluation, 420);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+    };
   }, []);
 
   const {

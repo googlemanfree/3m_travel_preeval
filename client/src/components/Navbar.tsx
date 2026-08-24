@@ -35,7 +35,7 @@ const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: bo
   { href: "/procedures", label: "Procédures", icon: BookOpen },
   { href: "/ressources", label: "Ressources", icon: Globe2 },
   { href: "/guide-procedures", label: "Guide PDF", icon: FileText },
-  { href: "/#evaluation-multi", label: "Évaluation Rapide", icon: Zap },
+  { href: "/?project=travail#evaluation-multi", label: "Évaluation Rapide", icon: Zap },
   { href: "/mon-espace", label: "Suivi de dossier", icon: FolderKanban },
   { href: "/evisas", label: "E-Visa", icon: Smartphone, highlight: true },
   { href: "/3m-digital", label: "3M Digital", icon: UsersRound },
@@ -379,9 +379,9 @@ export default function Navbar() {
                 custom={menuItems.length + 2}
               >
                 <a
-                  href="/evaluation"
-                  onMouseEnter={() => handleNavigationIntent("/evaluation")}
-                  onFocus={() => handleNavigationIntent("/evaluation")}
+                  href="/?project=travail#evaluation-multi"
+                  onMouseEnter={() => handleNavigationIntent("/?project=travail#evaluation-multi")}
+                  onFocus={() => handleNavigationIntent("/?project=travail#evaluation-multi")}
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30`}
                 >

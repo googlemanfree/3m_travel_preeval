@@ -1,10 +1,6 @@
 import { Link } from "wouter";
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { toast } from "sonner";
-import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail, CheckCircle2, Send } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Twitter, MapPin, MessageCircle, Phone, Mail } from "lucide-react";
 import FacebookQRCodeWidget from "./FacebookQRCodeWidget";
 import { COMPANY_CONTACTS } from "@/lib/companyContacts";
 import { OFFICE_CONTACTS } from "@/lib/officeContacts";
@@ -26,31 +22,6 @@ const USEFUL_LINKS = [
 ];
 
 export default function Footer() {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email) {
-      toast.error('Veuillez entrer une adresse email');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setShowSuccess(true);
-      setEmail('');
-      setTimeout(() => setShowSuccess(false), 5000);
-    } catch (error) {
-      toast.error('Une erreur est survenue. Veuillez réessayer.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <footer className="bg-[#0f2460] text-gray-300 mt-auto">
       {/* Newsletter Section */}
@@ -61,56 +32,16 @@ export default function Footer() {
         className="bg-gradient-to-r from-blue-600 to-blue-800 py-8 px-4"
       >
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-4">
+          <div className="text-center">
             <h3 className="text-xl md:text-2xl font-bold text-white mb-2">
-              Restez informé de nos meilleures offres
+              Une question sur votre projet ?
             </h3>
-            <p className="text-blue-100 text-sm">Inscrivez-vous à notre newsletter pour recevoir les dernières actualités</p>
+            <p className="text-blue-100 text-sm">Contactez l’équipe 3M Travel pour une réponse adaptée à votre situation.</p>
           </div>
-          
-          <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <Input
-              type="email"
-              placeholder="Votre adresse email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-12 flex-1 rounded-xl bg-white text-gray-900 placeholder-gray-500 text-sm"
-              disabled={isLoading}
-            />
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="h-12 rounded-xl bg-white text-blue-600 hover:bg-blue-50 font-semibold whitespace-nowrap text-sm"
-            >
-              {isLoading ? 'Inscription...' : <span className="flex items-center gap-1"><Send className="w-4 h-4" />S'inscrire</span>}
-            </Button>
-          </form>
-          
-          {showSuccess && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: -20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="mt-6 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg p-4 text-center max-w-md mx-auto"
-            >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="inline-block mb-2"
-              >
-                <CheckCircle2 className="w-8 h-8 text-green-300" />
-              </motion.div>
-              <p className="text-white font-semibold text-lg">Inscription reussie !</p>
-              <p className="text-blue-100 text-sm mt-1">Verifiez votre email pour confirmer votre inscription</p>
-              <motion.div
-                initial={{ scaleX: 1 }}
-                animate={{ scaleX: 0 }}
-                transition={{ duration: 5, ease: 'linear' }}
-                className="h-1 bg-green-300 rounded-full mt-3 origin-left"
-              />
-            </motion.div>
-          )}
+          <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
+            <a href="/contact" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 hover:bg-blue-50">Ouvrir le formulaire de contact</a>
+            <a href="https://wa.me/237698104832" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/40 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">Écrire sur WhatsApp</a>
+          </div>
         </div>
       </motion.div>
 

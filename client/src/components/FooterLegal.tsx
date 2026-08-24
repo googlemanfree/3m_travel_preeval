@@ -58,7 +58,7 @@ export function FooterLegal() {
             <h4 className="font-bold mb-4">Liens Rapides</h4>
             <ul className="space-y-2 text-sm text-blue-100">
               <li>
-                <Link href="/evaluation" className="hover:text-white transition">
+                <Link href="/?project=travail#evaluation-multi" className="hover:text-white transition">
                   Évaluation Gratuite
                 </Link>
               </li>

@@ -86,7 +86,7 @@ export default function TestimonialsSectionEnhanced() {
             Une question avant de vous lancer ? Discutons-en directement.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/evaluation">
+            <Link href="/?project=travail#evaluation-multi">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

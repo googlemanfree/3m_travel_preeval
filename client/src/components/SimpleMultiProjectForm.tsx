@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 import React from "react";
 import { useLocation } from "wouter";
+import { CheckCircle2, MailCheck, MessageCircleMore } from "lucide-react";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -43,6 +44,17 @@ export function SimpleMultiProjectForm() {
   const [whatsappCopied, setWhatsappCopied] = React.useState(false);
   const [emailCopied, setEmailCopied] = React.useState(false);
   const [textCopied, setTextCopied] = React.useState(false);
+  const [contactTouched, setContactTouched] = React.useState({ email: false, whatsappPhone: false });
+  const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
+  const [submittedProject, setSubmittedProject] = React.useState<ProjectType | null>(null);
+
+  const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  const isWhatsappValid = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    return digits.length >= 8 && digits.length <= 15;
+  };
+  const emailError = contactTouched.email && formData.email.length > 0 && !isEmailValid(formData.email);
+  const whatsappError = contactTouched.whatsappPhone && formData.whatsappPhone.length > 0 && !isWhatsappValid(formData.whatsappPhone);
 
   React.useEffect(() => {
     if (projectParam && ["travail", "etudes", "tourisme"].includes(projectParam)) {
@@ -60,6 +72,8 @@ export function SimpleMultiProjectForm() {
   const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({
     onSuccess: () => {
       toast.success("Évaluation soumise avec succès ! Vérifiez votre email.");
+      setSubmittedProject(formData.projectType);
+      setIsSuccessVisible(true);
       setFormData({
         fullName: "",
         email: "",
@@ -85,8 +99,15 @@ export function SimpleMultiProjectForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    setContactTouched({ email: true, whatsappPhone: true });
+
     if (!formData.fullName || !formData.email || !formData.whatsappPhone || !formData.nationality) {
       toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    if (!isEmailValid(formData.email) || !isWhatsappValid(formData.whatsappPhone)) {
+      toast.error("Vérifiez le format de votre email et de votre numéro WhatsApp avant l’envoi.");
       return;
     }
 
@@ -108,7 +129,27 @@ export function SimpleMultiProjectForm() {
       <Card className="p-8 bg-white shadow-lg border-0">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Évaluation Gratuite en 24h</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {isSuccessVisible ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center" role="status" aria-live="polite">
+            <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" aria-hidden="true" />
+            <h3 className="mt-4 text-xl font-black text-emerald-950">Votre évaluation a bien été transmise</h3>
+            <p className="mt-2 text-sm leading-6 text-emerald-900">
+              Merci pour votre demande {submittedProject ? `de projet ${submittedProject}` : ""}. Un conseiller 3M Travel examinera les informations communiquées et vous répondra selon le délai annoncé.
+            </p>
+            <Button
+              type="button"
+              className="mt-5 bg-emerald-700 text-white hover:bg-emerald-800"
+              onClick={() => {
+                setIsSuccessVisible(false);
+                setSubmittedProject(null);
+                setContactTouched({ email: false, whatsappPhone: false });
+              }}
+            >
+              Envoyer une autre évaluation
+            </Button>
+          </div>
+        ) : (
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="fullName" className="text-gray-700 font-semibold">
@@ -134,9 +175,13 @@ export function SimpleMultiProjectForm() {
                 type="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                onBlur={() => setContactTouched((previous) => ({ ...previous, email: true }))}
                 placeholder="jean@example.com"
-                className="mt-2"
+                aria-invalid={emailError}
+                aria-describedby={emailError ? "email-help" : undefined}
+                className={`mt-2 ${emailError ? "border-red-500 focus-visible:ring-red-500" : contactTouched.email && formData.email ? "border-emerald-500" : ""}`}
               />
+              {emailError ? <p id="email-help" className="mt-1 text-xs font-medium text-red-600">Saisissez une adresse e-mail valide, par exemple nom@domaine.com.</p> : contactTouched.email && formData.email ? <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><MailCheck className="h-3.5 w-3.5" aria-hidden="true" /> Format d’e-mail valide</p> : null}
             </div>
 
             <div>
@@ -148,9 +193,13 @@ export function SimpleMultiProjectForm() {
                 name="whatsappPhone"
                 value={formData.whatsappPhone}
                 onChange={handleInputChange}
+                onBlur={() => setContactTouched((previous) => ({ ...previous, whatsappPhone: true }))}
                 placeholder="+237 6XX XXX XXX"
-                className="mt-2"
+                aria-invalid={whatsappError}
+                aria-describedby={whatsappError ? "whatsapp-help" : undefined}
+                className={`mt-2 ${whatsappError ? "border-red-500 focus-visible:ring-red-500" : contactTouched.whatsappPhone && formData.whatsappPhone ? "border-emerald-500" : ""}`}
               />
+              {whatsappError ? <p id="whatsapp-help" className="mt-1 text-xs font-medium text-red-600">Saisissez entre 8 et 15 chiffres, avec l’indicatif pays si possible.</p> : contactTouched.whatsappPhone && formData.whatsappPhone ? <p className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700"><MessageCircleMore className="h-3.5 w-3.5" aria-hidden="true" /> Numéro WhatsApp valide</p> : null}
             </div>
 
             <div>
@@ -341,6 +390,7 @@ export function SimpleMultiProjectForm() {
             </button>
           </div>
         </form>
+        )}
 
         <p className="text-sm text-gray-600 mt-4 text-center">
           ✓ Évaluation gratuite • ✓ Réponse en 24h • ✓ Confidentiel

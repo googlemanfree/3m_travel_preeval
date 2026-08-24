@@ -809,10 +809,10 @@ export default function AdminDashboard() {
   );
 
   useEffect(() => {
-    if (!isLoading && !isLoadingCountryDistribution && !isLoadingFaqSatisfaction && (data || countryDistribution || faqSatisfaction) && !lastSyncedAt) {
+    if (!isLoading && data !== undefined && !lastSyncedAt) {
       setLastSyncedAt(new Date());
     }
-  }, [data, countryDistribution, faqSatisfaction, isLoading, isLoadingCountryDistribution, isLoadingFaqSatisfaction, lastSyncedAt]);
+  }, [data, isLoading, lastSyncedAt]);
 
   const exportActivityMutation = trpc.admin.exportActivityReportCsv.useMutation({
     onSuccess: (result) => {

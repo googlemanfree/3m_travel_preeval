@@ -914,3 +914,24 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diriger le hero et le menu vers le formulaire d’évaluation gratuit sans compte.
 - [x] Tester les redirections et vérifier la version publiée du formulaire public.
 - [x] Diagnostiquer l’écart entre le checkpoint 90f891f2 et le bundle servi par le domaine de déploiement, puis revalider les anciennes URLs d’évaluation.
+
+## Expérience du formulaire d’évaluation gratuite
+- [x] Ajouter une confirmation visuelle accessible après la soumission réussie du formulaire gratuit.
+- [x] Activer un défilement fluide vers le formulaire et préremplir le type de projet selon le bouton d’entrée.
+- [x] Valider en temps réel les champs Email et WhatsApp avant soumission.
+
+## Audit exhaustif du site public et du back-office
+- [x] Inventorier les routes publiques du sitemap, les routes protégées et les composants fonctionnels critiques.
+- [x] Vérifier le chargement, les CTA, les liens internes et les formulaires des pages publiques listées par l’utilisateur, sans soumettre de données de test externes.
+- [x] Identifier et consolider les routes, composants ou contenus réellement redondants sans retirer de parcours utile.
+- [x] Vérifier les vues et actions du back-office sans déclencher d’opération sensible.
+- [ ] Tester, publier et documenter les corrections réellement vérifiées.
+- [x] Corriger le CTA du Blog qui dirige encore vers `/evaluation` afin qu’il ouvre le formulaire gratuit public.
+- [x] Retirer les témoignages, notes et statistiques clients non vérifiés de la page `/avis` et rétablir une page d’information non trompeuse.
+- [x] Corriger le CTA de la section de confiance de l’accueil afin qu’il ouvre le formulaire gratuit public.
+- [x] Retirer les publications, avis, métriques sociales et confirmation d’inscription e-mail simulés de l’accueil, puis conserver uniquement des actions transparentes et réelles.
+- [x] Corriger l’état de synchronisation admin qui reste « initial » quand une lecture secondaire tarde, sans masquer les données principales disponibles.
+- [x] Retirer ou remplacer les indicateurs de réussite et satisfaction non sourcés affichés dans le hero public.
+- [x] Retirer les composants publics d’évaluation, hero, assistant et procédures non référencés après confirmation statique de leur absence de route active.
+- [x] Corriger les liens d’évaluation restants du pied de page, de la navigation et du suivi candidat lorsqu’ils doivent ouvrir le formulaire gratuit public.
+- [x] Poursuivre les corrections d’audit sans supprimer de route, page, composant ou fonctionnalité supplémentaire sans confirmation explicite de l’utilisateur.
