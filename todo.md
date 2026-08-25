@@ -1102,5 +1102,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre aux gestionnaires de suspendre puis réactiver un collaborateur sans supprimer son compte.
 - [x] Ajouter un indicateur de notifications non lues et une action pour toutes les marquer comme lues.
 - [x] Mettre à jour et valider une compétence réutilisable de gouvernance collaborative.
-- [ ] Tester, publier et vérifier l’export, la suspension et les notifications.
+- [x] Tester, publier et vérifier l’export, la suspension et les notifications.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la gouvernance collaborative.
