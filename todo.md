@@ -1068,5 +1068,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des favoris privés pour les employeurs vérifiés sans révéler de profils ni de documents supplémentaires.
 - [x] Traduire les contenus secondaires et infobulles de l’accueil et des espaces publics prioritaires.
 - [x] Mettre à jour et valider une compétence réutilisable dédiée à la sécurité TOTP et au bilinguisme.
-- [ ] Tester, publier et vérifier les protections, favoris et parcours bilingues.
+- [x] Tester, publier et vérifier les protections, favoris et parcours bilingues.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la 2FA et aux favoris.
