@@ -1112,3 +1112,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Enrichir les libellés FR/EN des contrôles collaboratifs, états et messages d’erreur.
 - [x] Créer et valider une compétence réutilisable du suivi et de la révision collaborative.
 - [x] Tester, publier et vérifier les filtres, droits, bilinguisme et diffusion PWA.
+
+## Passe d’accessibilité et de cohérence premium
+- [x] Cartographier les parcours et boutons critiques des espaces public, administrateur, client et employeur.
+- [x] Auditer les contrastes, focus clavier, libellés, retours d’erreur et affichages mobile des interfaces critiques.
+- [x] Définir puis appliquer une palette premium accessible et cohérente aux composants partagés.
+- [x] Corriger les boutons, liens ou états inaccessibles identifiés sans modifier les protections ni les parcours sensibles.
+- [x] Valider les routes, contrôles d’accès, boutons critiques, TypeScript, tests et build avant publication.
+- [ ] Publier et vérifier la diffusion de la passe d’accessibilité et de style premium.

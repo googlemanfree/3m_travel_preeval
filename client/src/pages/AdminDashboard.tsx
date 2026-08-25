@@ -1028,9 +1028,9 @@ export default function AdminDashboard() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_rgba(135,185,255,0.2),_transparent_34rem),linear-gradient(180deg,_#f8fbff_0%,_#f1f6ff_100%)] text-slate-900 transition-colors duration-300 dark:bg-[#071426] dark:text-slate-100">
       {/* En-tête fixe */}
-      <div className="glass-admin-header bg-gradient-to-r from-blue-900/95 to-blue-950/95 text-white fixed top-0 left-0 right-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
+      <div className="glass-admin-header bg-gradient-to-r from-[#071b3d]/95 via-[#0b2f6f]/95 to-[#123c86]/95 text-white fixed top-0 left-0 right-0 z-50 shadow-lg backdrop-blur-xl transition-colors duration-300">
         <div className="mx-auto w-full max-w-[1920px] px-4 py-4 sm:px-6 xl:px-8 2xl:px-10 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
@@ -1047,7 +1047,7 @@ export default function AdminDashboard() {
                   placeholder="Chercher un dossier ou utilisateur..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-white/10 border border-white/20 text-white placeholder-gray-300 rounded-lg focus:bg-white/15 focus:border-white/40 transition-all"
+                  className="pl-10 pr-4 py-2 bg-white/10 border border-white/25 text-white placeholder-slate-200 rounded-lg shadow-inner shadow-black/10 focus:bg-white/15 focus:border-white/60 transition-all"
                 />
               </div>
             </div>
@@ -1104,7 +1104,7 @@ export default function AdminDashboard() {
             <Button
               size="sm"
               onClick={() => setShowImportModal(true)}
-              className="bg-white text-blue-900 hover:bg-blue-50 gap-1.5 font-semibold"
+              className="premium-action text-white hover:text-white gap-1.5 font-semibold"
             >
               <Plus className="w-4 h-4" />
               Saisir dossier agence
@@ -1115,7 +1115,7 @@ export default function AdminDashboard() {
             
             {/* Profil Admin */}
             <div className="flex items-center gap-2 pl-3 border-l border-white/20">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-md shadow-orange-900/30 text-sm">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#f4b942] to-[#d99b22] text-[#071b3d] font-bold rounded-full flex items-center justify-center shadow-md shadow-black/20 text-sm">
                 {getInitials(adminName)}
               </div>
               <div className="hidden sm:flex flex-col">
@@ -1128,7 +1128,7 @@ export default function AdminDashboard() {
               size="sm"
               onClick={() => logoutMutation.mutate({ sessionToken })}
               disabled={logoutMutation.isPending}
-              className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-lg shadow-red-900/40 transition-all duration-150 border-0 flex items-center"
+              className="border border-rose-300/60 bg-rose-600 hover:bg-rose-700 active:scale-[0.97] text-white gap-1.5 font-semibold shadow-lg shadow-rose-950/25 transition-all duration-150 flex items-center"
               title="Déconnecter votre session admin"
             >
               <LogOut className="w-4 h-4" />
@@ -1150,7 +1150,7 @@ export default function AdminDashboard() {
             { label: "Soumis", value: stats.submitted, icon: <Globe className="w-4 h-4" />, color: "text-indigo-700 bg-indigo-100" },
             { label: "Visa accordé", value: stats.approved, icon: <CheckCircle className="w-4 h-4" />, color: "text-green-700 bg-green-100" },
           ].map((s) => (
-            <Card key={s.label} className="border-0 shadow-sm">
+            <Card key={s.label} className="border border-white/90 bg-white/90 shadow-[0_12px_30px_-24px_rgba(7,27,61,0.55)]">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1177,7 +1177,7 @@ export default function AdminDashboard() {
           </span>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Supervision des remises SMTP">
+        <section className="premium-surface rounded-2xl p-4" aria-label="Supervision des remises SMTP">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Mail className="h-5 w-5 text-blue-700" />Remises SMTP</h2>
@@ -1198,7 +1198,7 @@ export default function AdminDashboard() {
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-600">Dernières erreurs de remise</p>{recentSmtpFailures.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun échec dans les remises chargées.</p> : <ul className="mt-2 space-y-1 text-sm text-slate-700">{recentSmtpFailures.map((failure) => <li key={failure.id} className="flex flex-wrap items-center justify-between gap-2"><span>Échec de remise à examiner</span><span className="text-xs text-slate-500">{new Date(failure.createdAt).toLocaleString("fr-FR")}</span></li>)}</ul>}</div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="File de priorités manuelle">
+        <section className="premium-surface rounded-2xl p-4" aria-label="File de priorités manuelle">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="flex items-center gap-2 font-black text-slate-950"><AlertCircle className="h-5 w-5 text-amber-600" />File de priorités</h2>
@@ -1229,7 +1229,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Échéances de traitement par conseiller">
+        <section className="premium-surface rounded-2xl p-4" aria-label="Échéances de traitement par conseiller">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="flex items-center gap-2 font-black text-slate-950"><Users className="h-5 w-5 text-blue-700" />Échéances par conseiller</h2>

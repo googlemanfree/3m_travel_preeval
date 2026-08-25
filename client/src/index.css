@@ -49,12 +49,13 @@
      Bleu ciel         : #7CB9E8  (anneau intérieur / texte 3M clair)
      Blanc             : #FFFFFF  (fond principal)
   ── */
-  --brand-royal:  #1e3a8a;
-  --brand-mid:    #2563eb;
-  --brand-sky:    #7cb9e8;
-  --brand-light:  #dbeafe;
+  --brand-royal:  #071b3d;
+  --brand-mid:    #1463ff;
+  --brand-sky:    #87b9ff;
+  --brand-light:  #eaf2ff;
+  --brand-gold:   #f4b942;
 
-  --primary: #1e3a8a;           /* bleu royal logo */
+  --primary: #0b2f6f;
   --primary-foreground: #ffffff;
   --sidebar-primary: #2563eb;
   --sidebar-primary-foreground: #ffffff;
@@ -74,13 +75,13 @@
   --secondary-foreground: #1f2937; /* Darker Gray for better contrast */
   --muted: #e5e7eb; /* Gray-200 */
   --muted-foreground: #374151; /* Darker Gray for better contrast */
-  --accent: #2563eb; /* Blue-600 */
+  --accent: #1463ff;
   --accent-foreground: #ffffff; /* White */
   --destructive: #dc2626; /* Red-600 */
   --destructive-foreground: #fafafa; /* Gray-50 */
-  --border: #dbeafe; /* Blue-100 */
-  --input: #dbeafe; /* Blue-100 */
-  --ring: #3b82f6; /* Blue-500 */
+  --border: #cbdcf8;
+  --input: #cbdcf8;
+  --ring: #1463ff;
   --sidebar: #ffffff; /* White */
   --secondary-foreground: #1f2937; /* Darker Gray for better contrast */
   --sidebar-accent: #2563eb; /* Blue-600 */
@@ -135,7 +136,7 @@
     scroll-padding-top: 6rem;
   }
   * {
-    @apply border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
   body {
     @apply bg-background text-foreground;
@@ -152,6 +153,11 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
 }
 
@@ -198,6 +204,21 @@
   .mobile-scroll-region {
     scrollbar-width: thin;
     scroll-padding-inline: 1rem;
+  }
+
+  .premium-surface {
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.88));
+    box-shadow: 0 18px 45px -32px rgba(7, 27, 61, 0.48);
+  }
+
+  .premium-action {
+    background: linear-gradient(135deg, #0b2f6f 0%, #1463ff 100%);
+    box-shadow: 0 10px 22px -14px rgba(20, 99, 255, 0.7);
+  }
+
+  .premium-action:hover {
+    background: linear-gradient(135deg, #071b3d 0%, #0b4fd7 100%);
   }
 
   @media (min-width: 640px) {
@@ -309,18 +330,18 @@
 
 /* ── Style Ease.travel UI Additions ────────────────────────────────────────── */
 .glass-card {
-  background: rgba(255, 255, 255, 0.88);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.9));
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(191, 219, 254, 0.88);
+  box-shadow: 0 18px 44px -28px rgba(7, 27, 61, 0.32), 0 1px 3px 0 rgba(15, 23, 42, 0.05);
 }
 
 .glass-nav {
-  background: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.97);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  border-bottom: 1px solid rgba(191, 219, 254, 0.82);
 }
 
 .ease-pill {
@@ -400,11 +421,11 @@
 
 /* ── Tables admin glassmorphism & préférence de mouvement ───────────────────── */
 .admin-glass-table {
-  background: rgba(255, 255, 255, 0.74);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(239, 246, 255, 0.76));
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(226, 232, 240, 0.82);
-  box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(191, 219, 254, 0.82);
+  box-shadow: 0 20px 50px -34px rgba(7, 27, 61, 0.44);
 }
 
 .admin-glass-table thead {
@@ -417,7 +438,7 @@
 }
 
 .admin-glass-table tbody tr:hover {
-  background: rgba(239, 246, 255, 0.7);
+  background: rgba(219, 234, 254, 0.66);
   transform: translateX(2px);
   box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.6);
 }
@@ -547,4 +568,10 @@ html.text-size-large {
 }
 html.text-size-xlarge {
   font-size: 20px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a, button, [role="button"] {
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
 }

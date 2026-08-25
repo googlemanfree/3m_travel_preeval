@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
@@ -68,8 +68,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-11 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105 inline-flex items-center gap-1"
-    : "min-h-11 px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
+    ? "min-h-11 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1"
+    : "min-h-11 px-4 py-2 text-sm font-semibold text-slate-700 hover:text-[#0b2f6f] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
 
 const authButtonClass = "inline-flex h-12 w-[148px] items-center justify-center rounded-xl px-4 text-center text-sm font-bold transition-all duration-200 active:scale-95";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -119,9 +119,19 @@ export default function Navbar() {
   const handleNavigationIntent = (href: string) => prefetchNavigation(href);
   const handleNavigationClick = () => notifyNavigationStart();
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      closeMenu();
+      closeProfile();
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
+
   return (
     <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
-      <div className="border-b border-amber-300/30 bg-[#071b3d] px-4 py-1.5 text-center text-[10px] font-bold tracking-wide text-amber-100 sm:text-xs">
+      <div className="border-b border-[#f4b942]/30 bg-[#071b3d] px-4 py-1.5 text-center text-[10px] font-bold tracking-wide text-[#fff5cf] sm:text-xs">
         {COMPANY_PROFILE.legalName} · {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -223,13 +233,14 @@ export default function Navbar() {
                   aria-expanded={isProfileOpen}
                   aria-haspopup="menu"
                   onClick={() => setIsProfileOpen((open) => !open)}
-                  className="touch-target rounded-xl p-2 text-gray-400 transition hover:bg-blue-50 hover:text-blue-700"
+                  aria-controls="candidate-account-menu"
+                  className="touch-target rounded-xl p-2 text-gray-500 transition hover:bg-blue-50 hover:text-[#0b2f6f]"
                 >
                   <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200" role="menu">
+                  <div id="candidate-account-menu" className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl border border-blue-100 rounded-3xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200" role="menu">
                     <div className="p-3 bg-slate-50/80 rounded-2xl mb-1 border border-gray-100/60">
                       <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{copy(NAV_COPY.accountSpace)}</p>
                       <p className="text-sm font-bold text-[#0a2540] truncate mt-0.5">{candidate.email}</p>
@@ -300,6 +311,7 @@ export default function Navbar() {
               type="button"
               aria-label={isMenuOpen ? copy(NAV_COPY.closeMenu) : copy(NAV_COPY.openMenu)}
               aria-expanded={isMenuOpen}
+              aria-controls="mobile-main-navigation"
               onClick={() => setIsMenuOpen((open) => !open)}
               className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
               animate={isMenuOpen ? "open" : "closed"}
@@ -315,7 +327,8 @@ export default function Navbar() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="lg:hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border-t border-gray-100 dark:border-white/10 px-4 pt-3 pb-8 shadow-2xl"
+            id="mobile-main-navigation"
+            className="lg:hidden bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl border-t border-blue-100 dark:border-white/10 px-4 pt-3 pb-8 shadow-2xl"
             variants={menuVariants}
             initial="hidden"
             animate="visible"
