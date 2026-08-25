@@ -32,6 +32,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import AgencyDossierDocumentCenter from "@/components/AgencyDossierDocumentCenter";
+import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, type AgencyDossierStatus } from "@shared/agencyDossierStatus";
 import {
   ArrowLeft,
   Plus,
@@ -60,13 +61,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type DossierStatus =
-  | "nouveau"
-  | "en_cours"
-  | "documents_requis"
-  | "soumis"
-  | "approuve"
-  | "refuse";
+type DossierStatus = AgencyDossierStatus;
 
 interface Dossier {
   id: number;
@@ -97,6 +92,8 @@ const STATUS_CONFIG: Record<DossierStatus, { label: string; color: string; icon:
   nouveau:           { label: "Nouveau",            color: "bg-blue-500/20 text-blue-300 border-blue-500/30",    icon: <FileText className="w-3 h-3" /> },
   en_cours:          { label: "En cours",            color: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30", icon: <Clock className="w-3 h-3" /> },
   documents_requis:  { label: "Docs requis",         color: "bg-orange-500/20 text-orange-300 border-orange-500/30", icon: <MessageSquare className="w-3 h-3" /> },
+  recherche_employeur: { label: "Recherche d’employeur", color: "bg-cyan-500/20 text-cyan-200 border-cyan-500/30", icon: <Search className="w-3 h-3" /> },
+  validation_adem: { label: "Validation de l’ADEM", color: "bg-indigo-500/20 text-indigo-200 border-indigo-500/30", icon: <CheckCircle2 className="w-3 h-3" /> },
   soumis:            { label: "Soumis",              color: "bg-purple-500/20 text-purple-300 border-purple-500/30", icon: <CheckCircle2 className="w-3 h-3" /> },
   approuve:          { label: "Approuvé",            color: "bg-green-500/20 text-green-300 border-green-500/30",  icon: <CheckCircle2 className="w-3 h-3" /> },
   refuse:            { label: "Refusé",              color: "bg-red-500/20 text-red-300 border-red-500/30",       icon: <XCircle className="w-3 h-3" /> },
@@ -281,6 +278,11 @@ export default function AdminAgencyDossiers() {
     setStatusNote("");
     setShowStatusModal(true);
   };
+
+  const availableStatuses = (dossier: Dossier) => AGENCY_DOSSIER_STATUS_VALUES.filter((status) => {
+    const requiresLuxembourgEmployment = status === "recherche_employeur" || status === "validation_adem";
+    return !requiresLuxembourgEmployment || isLuxembourgEmploymentProcedure(dossier.destination, dossier.visaType);
+  });
 
   const openNotesModal = (d: Dossier) => {
     setSelectedDossier(d);
@@ -849,6 +851,10 @@ export default function AdminAgencyDossiers() {
                 </div>
               )}
 
+              <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-sm text-blue-100">
+                <p className="font-semibold">Documents remis en agence</p>
+                <p className="mt-1 text-xs leading-5 text-blue-200">Ajoutez ici les scans des pièces déposées physiquement. Chaque dépôt est privé, horodaté et synchronisé avec l’espace client.</p>
+              </div>
               <AgencyDossierDocumentCenter dossierId={selectedDossier.id} />
 
               {/* Créé par */}
@@ -911,11 +917,14 @@ export default function AdminAgencyDossiers() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-slate-800 border-slate-600">
-                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                      <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
-                        <span className="flex items-center gap-2">{cfg.icon} {cfg.label}</span>
-                      </SelectItem>
-                    ))}
+                    {availableStatuses(selectedDossier).map((key) => {
+                      const cfg = STATUS_CONFIG[key];
+                      return (
+                        <SelectItem key={key} value={key} className="text-white hover:bg-slate-700">
+                          <span className="flex items-center gap-2">{cfg.icon} {cfg.label}</span>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

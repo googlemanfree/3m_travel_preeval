@@ -346,6 +346,15 @@ export function CandidateDetailModal({
     onError: (err) => toast({ title: "Décision impossible", description: err.message, variant: "destructive" }),
   });
 
+  const deliverValidatedEvaluationMutation = trpc.adminCandidateManagement.deliverValidatedEvaluation.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Évaluation remise", description: result.emailSent ? "L’évaluation est disponible dans l’espace client et envoyée par e-mail." : "L’évaluation est disponible dans l’espace client ; l’envoi e-mail devra être relancé." });
+      void refetch();
+      onStatusUpdated();
+    },
+    onError: (err) => toast({ title: "Remise impossible", description: err.message, variant: "destructive" }),
+  });
+
   useEffect(() => {
     if (!isPreDossierAccount || !candidate) return;
     setPreDossierDestination(candidate.destinationCountry === "Non spécifiée" ? "" : candidate.destinationCountry);
@@ -434,6 +443,8 @@ export function CandidateDetailModal({
                   reviewNote={candidate.evaluationReviewNote}
                   isReviewing={reviewEvaluationMutation.isPending}
                   onReview={(decision, note) => reviewEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, decision, note })}
+                  isDelivering={deliverValidatedEvaluationMutation.isPending}
+                  onDeliver={(subject, message) => deliverValidatedEvaluationMutation.mutate({ sessionToken, candidateId: candidate.internalId, subject, message, confirmed: true })}
                 />
                 <section className="rounded-xl border border-blue-200 bg-white p-5 shadow-sm" aria-label="Actions de traitement du compte pré-dossier">
                   <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">

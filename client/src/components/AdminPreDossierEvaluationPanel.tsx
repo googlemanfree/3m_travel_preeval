@@ -12,10 +12,15 @@ type Props = {
   reviewNote?: string | null;
   onReview?: (decision: "validate" | "refuse" | "request_correction", note?: string) => void;
   isReviewing?: boolean;
+  onDeliver?: (subject: string, message: string) => void;
+  isDelivering?: boolean;
 };
 
-export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false }: Props) {
+export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt, reviewedBy, reviewNote, onReview, isReviewing = false, onDeliver, isDelivering = false }: Props) {
   const [note, setNote] = useState("");
+  const [deliverySubject, setDeliverySubject] = useState("Votre évaluation 3M Travel & Services");
+  const [deliveryMessage, setDeliveryMessage] = useState("");
+  const [deliveryConfirmed, setDeliveryConfirmed] = useState(false);
   const pending = status === "pending_validation" || status === "refused";
   const validated = status === "validated";
   return (
@@ -44,6 +49,23 @@ export function AdminPreDossierEvaluationPanel({ status, declaredAt, reviewedAt,
             <Button type="button" size="sm" variant="outline" disabled={isReviewing || !note.trim()} onClick={() => onReview("request_correction", note)}>Demander un complément</Button>
             <Button type="button" size="sm" variant="destructive" disabled={isReviewing || !note.trim()} onClick={() => onReview("refuse", note)}>Refuser la déclaration</Button>
           </div>
+        </div>
+      )}
+      {validated && onDeliver && (
+        <div className="mt-4 border-t border-violet-200 pt-4">
+          <p className="text-sm font-semibold text-slate-800">Remettre l’évaluation validée</p>
+          <p className="mt-1 text-sm leading-6 text-slate-700">Le contenu approuvé sera ajouté à l’espace client et envoyé par e-mail au même moment. Cette action reste soumise à votre confirmation explicite.</p>
+          <label htmlFor="evaluation-delivery-subject" className="mt-3 block text-sm font-semibold text-slate-800">Objet</label>
+          <input id="evaluation-delivery-subject" value={deliverySubject} onChange={(event) => setDeliverySubject(event.target.value)} maxLength={255} className="mt-1 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-600" />
+          <label htmlFor="evaluation-delivery-message" className="mt-3 block text-sm font-semibold text-slate-800">Évaluation validée</label>
+          <textarea id="evaluation-delivery-message" value={deliveryMessage} onChange={(event) => setDeliveryMessage(event.target.value)} minLength={20} maxLength={12000} placeholder="Saisissez ou collez l’évaluation validée à remettre au candidat…" className="mt-1 min-h-32 w-full rounded-md border border-violet-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-violet-600" />
+          <label className="mt-3 flex items-start gap-2 text-sm text-slate-800">
+            <input type="checkbox" checked={deliveryConfirmed} onChange={(event) => setDeliveryConfirmed(event.target.checked)} className="mt-1 rounded border-violet-300 text-violet-700" />
+            <span>J’ai vérifié le contenu et confirme la remise dans l’espace client et par e-mail.</span>
+          </label>
+          <Button type="button" size="sm" disabled={isDelivering || !deliveryConfirmed || deliverySubject.trim().length < 5 || deliveryMessage.trim().length < 20} onClick={() => onDeliver(deliverySubject.trim(), deliveryMessage.trim())} className="mt-3 bg-violet-700 hover:bg-violet-800">
+            {isDelivering ? "Remise en cours…" : "Confirmer la remise"}
+          </Button>
         </div>
       )}
     </section>

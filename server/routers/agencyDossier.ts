@@ -10,6 +10,7 @@ import { getDb } from "../db";
 import { agencyDossiers, agencyDossierHistory } from "../../drizzle/schema";
 import { eq, and, like, desc } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
+import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 
 export const agencyDossierRouter = router({
   /**
@@ -216,7 +217,7 @@ export const agencyDossierRouter = router({
   updateStatus: protectedProcedure
     .input(z.object({
       dossierId: z.number(),
-      newStatus: z.enum(["nouveau", "en_cours", "documents_requis", "soumis", "approuve", "refuse"]),
+      newStatus: z.enum(AGENCY_DOSSIER_STATUS_VALUES),
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
@@ -241,6 +242,16 @@ export const agencyDossierRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Dossier non trouvé",
+          });
+        }
+
+        if (
+          isLuxembourgEmploymentStatus(input.newStatus) &&
+          !isLuxembourgEmploymentProcedure(dossier[0].destination, dossier[0].visaType)
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cette étape est réservée aux procédures de travail au Luxembourg.",
           });
         }
 
@@ -269,6 +280,8 @@ export const agencyDossierRouter = router({
             nouveau: "Votre dossier a été créé",
             en_cours: "Votre dossier est en cours de traitement",
             documents_requis: "Des documents supplémentaires sont requis",
+            recherche_employeur: "Votre dossier est à l’étape de recherche d’employeur",
+            validation_adem: "Votre dossier est à l’étape de validation de l’ADEM",
             soumis: "Votre dossier a été soumis",
             approuve: "Félicitations! Votre dossier a été approuvé",
             refuse: "Votre dossier a été refusé",

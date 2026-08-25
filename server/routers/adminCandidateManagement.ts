@@ -273,6 +273,57 @@ export const adminCandidateManagementRouter = router({
       return { success: true, status: nextStatus, reviewedAt, reviewedBy: admin.email };
     }),
 
+  deliverValidatedEvaluation: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.number().int().positive(),
+      subject: z.string().trim().min(5).max(255),
+      message: z.string().trim().min(20).max(12_000),
+      confirmed: z.literal(true),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const admin = await requireAdminTreatmentSession(ctx.req.headers.cookie, input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const [candidate] = await db.select().from(candidates).where(eq(candidates.id, input.candidateId)).limit(1);
+      if (!candidate) throw new TRPCError({ code: "NOT_FOUND", message: "Compte candidat introuvable." });
+      if (candidate.evaluationDeclarationStatus !== "validated") {
+        throw new TRPCError({ code: "CONFLICT", message: "L’évaluation doit être validée par un conseiller avant sa remise." });
+      }
+
+      const body = input.message.trim();
+      const notificationResult = await db.insert(clientNotifications).values({
+        candidateId: candidate.id,
+        type: "evaluation_delivered",
+        title: input.subject.trim(),
+        body,
+        actionUrl: "/mon-espace",
+        isRead: false,
+      });
+      const notificationId = Number((notificationResult as any)[0]?.insertId || 0);
+      await db.insert(candidateMessages).values({
+        candidateId: candidate.id,
+        notificationId: notificationId || null,
+        senderRole: "advisor",
+        content: body,
+        isRead: false,
+      });
+
+      const emailSent = await sendClientNotificationEmail({
+        to: candidate.email,
+        fullName: candidate.fullName,
+        title: input.subject.trim(),
+        body,
+        actionUrl: "/mon-espace",
+        sourceLabel: "3M Travel & Services",
+      });
+      if (emailSent && notificationId > 0) {
+        await db.update(clientNotifications).set({ emailSentAt: new Date() }).where(eq(clientNotifications.id, notificationId));
+      }
+
+      return { success: true, deliveredToClientSpace: true, emailSent, deliveredBy: admin.email };
+    }),
+
   activatePreDossierAccount: publicProcedure
     .input(z.object({ sessionToken: z.string().min(1), candidateId: z.number().int().positive(), destination: z.string().trim().min(2).max(100), visaType: z.string().trim().min(2).max(100), adminNotes: z.string().trim().max(5000).optional() }))
     .mutation(async ({ input, ctx }) => {
@@ -286,8 +337,17 @@ export const adminCandidateManagementRouter = router({
         throw new TRPCError({ code: "CONFLICT", message: "L’évaluation déclarée doit être validée manuellement avant l’ouverture du dossier." });
       }
       const existing = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).limit(1);
-      if (existing.length) throw new TRPCError({ code: "CONFLICT", message: "Un dossier agence existe déjà pour ce candidat." });
-      await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+      const linkedExistingDossier = existing.length > 0;
+      if (linkedExistingDossier) {
+        await db.update(agencyDossiers).set({
+          destination: input.destination,
+          visaType: input.visaType,
+          assignedToAdmin: admin.email,
+          ...(input.adminNotes ? { adminNotes: input.adminNotes } : {}),
+        }).where(eq(agencyDossiers.id, existing[0].id));
+      } else {
+        await db.insert(agencyDossiers).values({ fullName: candidate.fullName, email: candidate.email, phone: candidate.phone ?? "Non renseigné", dateOfBirth: candidate.dateOfBirth, nationality: candidate.nationality, destination: input.destination, visaType: input.visaType, status: "nouveau", createdByAdmin: admin.email, assignedToAdmin: admin.email, adminNotes: input.adminNotes ?? null, source: "manual_admin" });
+      }
       await db.update(candidates).set({ dossierStatus: "documents", destination: input.destination as any, visaType: input.visaType, dossierNote: input.adminNotes ?? null }).where(eq(candidates.id, candidate.id));
       let emailSent = false;
       try {
@@ -295,7 +355,7 @@ export const adminCandidateManagementRouter = router({
       } catch {
         emailSent = false;
       }
-      return { success: true, emailSent };
+      return { success: true, emailSent, linkedExistingDossier };
     }),
 
   list: publicProcedure.input(candidateFilterSchema).query(async ({ input, ctx }) => {

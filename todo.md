@@ -1023,3 +1023,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester, publier et vérifier les droits admin et les parcours publics.
 - [x] Aligner les régressions de navigation sur les libellés bilingues centralisés.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux statistiques et au menu bilingue.
+
+## Traitement agence, statuts de procédure et remise d’évaluation
+- [x] Diagnostiquer et corriger les actions « Rattacher » et « Activer » inactives pour les nouveaux comptes pré-dossier.
+- [x] Auditer les dossiers, documents, statuts par pays et remises d’évaluation existants.
+- [x] Autoriser les administrateurs à enregistrer de manière traçable les documents déposés physiquement en agence.
+- [x] Ajouter les statuts « Recherche d’employeur » et « Validation de l’ADEM » pour les procédures luxembourgeoises, sans les exposer aux dossiers non concernés.
+- [x] Permettre la validation humaine d’une évaluation dans le dossier d’un candidat, y compris après création de compte.
+- [x] Permettre l’envoi contrôlé de l’évaluation validée à la fois dans l’espace client et par e-mail, avec trace de remise.
+- [ ] Tester les droits, synchronisations et déclenchements sensibles avant publication.
+- [x] Protéger la route d’interface des dossiers agence afin de ne jamais exposer les informations candidats hors session administrateur.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours pré-dossier corrigé.
