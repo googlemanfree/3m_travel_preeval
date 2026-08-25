@@ -1132,3 +1132,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir www.3mtravelagency.com comme domaine officiel dans les signaux publics contrôlables par le site.
 - [ ] Vérifier les réponses HTTP, canoniques et sitemap publiés sans promettre le délai de réindexation Google.
 - [ ] Publier et consigner la correction de domaine officiel.
+- [ ] Configurer dans Manus une redirection permanente de .click vers https://www.3mtravelagency.com et vérifier la réponse HTTP 301 publique.
