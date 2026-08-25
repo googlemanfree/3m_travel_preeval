@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   candidatePlacementConsents,
@@ -9,6 +9,7 @@ import {
   placementCandidateProfiles,
   placementEmployerAccounts,
   placementEmployerFavorites,
+  placementEmployerFavoriteShares,
   placementOrganizations,
   placementProfileSubmissions,
   placementSubmissionEvents,
@@ -155,15 +156,30 @@ export const placementPortalRouter = router({
 
   employerProfiles: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
-    const [submissions, favorites] = await Promise.all([
+    const [submissions, favorites, receivedShares] = await Promise.all([
       db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))),
       db.select().from(placementEmployerFavorites).where(eq(placementEmployerFavorites.employerAccountId, account.id)),
+      db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.organizationId, organization.id), eq(placementEmployerFavoriteShares.recipientEmployerAccountId, account.id), isNull(placementEmployerFavoriteShares.revokedAt))),
     ]);
     const favoritesBySubmission = new Map(favorites.map((favorite) => [favorite.submissionId, favorite]));
+    const sourceFavoriteIds = receivedShares.map((share) => share.sourceFavoriteId);
+    const sourceFavorites = sourceFavoriteIds.length ? await db.select().from(placementEmployerFavorites).where(inArray(placementEmployerFavorites.id, sourceFavoriteIds)) : [];
+    const submissionBySourceFavorite = new Map(sourceFavorites.map((favorite) => [favorite.id, favorite.submissionId]));
+    const sharedByIds = Array.from(new Set(receivedShares.map((share) => share.sharedByEmployerAccountId)));
+    const sharers = sharedByIds.length ? await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName }).from(placementEmployerAccounts).where(inArray(placementEmployerAccounts.id, sharedByIds)) : [];
+    const sharerName = new Map(sharers.map((sharer) => [sharer.id, sharer.fullName]));
+    const shareBySubmission = new Map(receivedShares.map((share) => [submissionBySourceFavorite.get(share.sourceFavoriteId), share]));
     return submissions.map(({ submission, profile }) => {
       const favorite = favoritesBySubmission.get(submission.id);
-      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
+      const shared = shareBySubmission.get(submission.id);
+      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
     });
+  }),
+
+  employerCollaborators: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active")));
+    return collaborators.filter((collaborator) => collaborator.id !== account.id);
   }),
 
   employerToggleFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).mutation(async ({ input }) => {
@@ -187,6 +203,20 @@ export const placementPortalRouter = router({
     if (!favorite) throw new TRPCError({ code: "NOT_FOUND", message: "Ajoutez d’abord ce profil à vos favoris." });
     await db.update(placementEmployerFavorites).set({ privateNote: input.note || null }).where(eq(placementEmployerFavorites.id, favorite.id));
     return { note: input.note || null };
+  }),
+
+  employerShareFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), recipientEmployerAccountId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    if (input.recipientEmployerAccountId === account.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez un autre collaborateur." });
+    const favorite = (await db.select({ favorite: placementEmployerFavorites }).from(placementEmployerFavorites).innerJoin(placementProfileSubmissions, eq(placementEmployerFavorites.submissionId, placementProfileSubmissions.id)).where(and(eq(placementEmployerFavorites.employerAccountId, account.id), eq(placementEmployerFavorites.submissionId, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0]?.favorite;
+    if (!favorite) throw new TRPCError({ code: "NOT_FOUND", message: "Ajoutez d’abord ce profil à vos favoris." });
+    const recipient = (await db.select().from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.id, input.recipientEmployerAccountId), eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active"))).limit(1))[0];
+    if (!recipient) throw new TRPCError({ code: "FORBIDDEN", message: "Collaborateur non disponible dans cette organisation." });
+    const existing = (await db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.sourceFavoriteId, favorite.id), eq(placementEmployerFavoriteShares.recipientEmployerAccountId, recipient.id))).limit(1))[0];
+    if (existing) await db.update(placementEmployerFavoriteShares).set({ revokedAt: null }).where(eq(placementEmployerFavoriteShares.id, existing.id));
+    else await db.insert(placementEmployerFavoriteShares).values({ sourceFavoriteId: favorite.id, organizationId: organization.id, recipientEmployerAccountId: recipient.id, sharedByEmployerAccountId: account.id });
+    await db.insert(placementSubmissionEvents).values({ submissionId: input.submissionId, actorType: "employer", actorId: account.id, action: "favorite_shared_internally", note: "Favori partagé avec un collaborateur de la même organisation." });
+    return { message: "Favori partagé au sein de votre organisation." };
   }),
 
   employerExportFavorites: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {

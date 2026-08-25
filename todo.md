@@ -1078,3 +1078,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les droits, l’isolement organisationnel et le contenu de l’export.
 - [x] Publier et vérifier l’espace employeur enrichi.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux notes et à l’export.
+
+## Partage collaboratif des favoris employeur
+- [x] Auditer les comptes employeurs, favoris et limites d’organisation existantes.
+- [x] Ajouter un partage de favoris limité aux collaborateurs actifs de la même organisation.
+- [x] Afficher les favoris partagés avec l’auteur et l’horodatage, sans exposer de nouveaux profils.
+- [x] Tester l’isolement des organisations, la traçabilité et les droits de partage.
+- [ ] Publier et vérifier le partage collaboratif des favoris.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au partage collaboratif.

@@ -33,3 +33,17 @@ export const placementEmployerFavorites = mysqlTable("placement_employer_favorit
   uniqueIndex("uniq_employer_favorite_submission").on(table.employerAccountId, table.submissionId),
   index("idx_employer_favorites_account").on(table.employerAccountId, table.createdAt),
 ]);
+
+/** Partage interne d’un favori : il ne rend aucun nouveau profil visible hors de l’organisation déjà autorisée. */
+export const placementEmployerFavoriteShares = mysqlTable("placement_employer_favorite_shares", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceFavoriteId: int("source_favorite_id").notNull(),
+  organizationId: int("organization_id").notNull(),
+  recipientEmployerAccountId: int("recipient_employer_account_id").notNull(),
+  sharedByEmployerAccountId: int("shared_by_employer_account_id").notNull(),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("uniq_favorite_share_recipient").on(table.sourceFavoriteId, table.recipientEmployerAccountId),
+  index("idx_favorite_share_recipient").on(table.organizationId, table.recipientEmployerAccountId, table.revokedAt),
+]);
