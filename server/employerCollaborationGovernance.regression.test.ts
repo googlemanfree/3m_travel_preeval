@@ -28,4 +28,29 @@ describe("gouvernance collaborative employeur", () => {
     expect(portalSource).toContain("markAllNotificationsRead");
     expect(portalSource).toContain("Tout marquer comme lu");
   });
+
+  it("filtre le journal côté serveur dans la seule organisation du gestionnaire", () => {
+    expect(routerSource).toContain("employerCollaborationActivity");
+    expect(routerSource).toContain("requireEmployerManager(account)");
+    expect(routerSource).toContain("eq(placementEmployerCollaborationEvents.organizationId, organization.id)");
+    expect(routerSource).toContain("collaborationAuditActionSchema");
+    expect(routerSource).toContain("limit: z.number().int().min(1).max(100)");
+    expect(portalSource).toContain("Journal d’activité filtrable");
+  });
+
+  it("réserve la révision des accès suspendus aux gestionnaires sans réactivation automatique", () => {
+    expect(routerSource).toContain("employerReviewSuspendedCollaborator");
+    expect(routerSource).toContain('decision: z.enum(["keep_suspended", "reactivate"])');
+    expect(routerSource).toContain('eq(placementEmployerAccounts.status, "suspended")');
+    expect(routerSource).toContain('action: "collaborator_suspension_reviewed"');
+    expect(portalSource).toContain("Révision manuelle des accès suspendus");
+    expect(portalSource).toContain("Conserver la suspension");
+  });
+
+  it("présente les contrôles collaboratifs en français et en anglais", () => {
+    expect(portalSource).toContain("Manual review of suspended access");
+    expect(portalSource).toContain("Filterable activity log");
+    expect(portalSource).toContain("Notifications are private to their recipient");
+    expect(portalSource).toContain("collaborationActionLabel");
+  });
 });

@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 import { createHash, randomBytes } from "node:crypto";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   candidatePlacementConsents,
@@ -25,6 +25,15 @@ import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatu
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
 const makeProfileCode = () => `PRF-${randomBytes(4).toString("hex").toUpperCase()}`;
+const collaborationAuditActionSchema = z.enum([
+  "favorite_shared",
+  "favorite_share_revoked",
+  "collaborator_promoted",
+  "collaborator_role_reader",
+  "collaborator_suspended",
+  "collaborator_reactivated",
+  "collaborator_suspension_reviewed",
+]);
 
 async function getEmployerSession(rawToken: string) {
   const db = await getDb();
@@ -217,6 +226,34 @@ export const placementPortalRouter = router({
     return { currentRole: account.collaborationRole, collaborators: collaborators.filter((collaborator) => collaborator.id !== account.id) };
   }),
 
+  employerCollaborationActivity: publicProcedure.input(z.object({
+    sessionToken: z.string().min(32),
+    action: collaborationAuditActionSchema.optional(),
+    actorEmployerAccountId: z.number().int().positive().optional(),
+    targetEmployerAccountId: z.number().int().positive().optional(),
+    range: z.enum(["7d", "30d", "all"]).default("30d"),
+    limit: z.number().int().min(1).max(100).default(50),
+  })).query(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
+    const filters = [eq(placementEmployerCollaborationEvents.organizationId, organization.id)];
+    if (input.action) filters.push(eq(placementEmployerCollaborationEvents.action, input.action));
+    if (input.actorEmployerAccountId) filters.push(eq(placementEmployerCollaborationEvents.actorEmployerAccountId, input.actorEmployerAccountId));
+    if (input.targetEmployerAccountId) filters.push(eq(placementEmployerCollaborationEvents.targetEmployerAccountId, input.targetEmployerAccountId));
+    if (input.range !== "all") {
+      const days = input.range === "7d" ? 7 : 30;
+      filters.push(gte(placementEmployerCollaborationEvents.createdAt, new Date(Date.now() - days * 24 * 60 * 60 * 1000)));
+    }
+    const events = await db.select({
+      id: placementEmployerCollaborationEvents.id,
+      action: placementEmployerCollaborationEvents.action,
+      actorName: placementEmployerCollaborationEvents.actorName,
+      targetName: placementEmployerCollaborationEvents.targetName,
+      createdAt: placementEmployerCollaborationEvents.createdAt,
+    }).from(placementEmployerCollaborationEvents).where(and(...filters)).orderBy(desc(placementEmployerCollaborationEvents.createdAt)).limit(input.limit);
+    return { events, count: events.length };
+  }),
+
   employerToggleFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     const submission = (await db.select().from(placementProfileSubmissions).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0];
@@ -318,6 +355,32 @@ export const placementPortalRouter = router({
     await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: collaborator.id, actorEmployerAccountId: account.id, type: action, message: input.active ? "Votre accès collaborateur a été réactivé." : "Votre accès collaborateur a été temporairement suspendu." });
     await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: collaborator.id, targetName: collaborator.fullName, action });
     return { status };
+  }),
+
+  employerReviewSuspendedCollaborator: publicProcedure.input(z.object({
+    sessionToken: z.string().min(32),
+    collaboratorId: z.number().int().positive(),
+    decision: z.enum(["keep_suspended", "reactivate"]),
+  })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
+    if (input.collaboratorId === account.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Vous ne pouvez pas réviser votre propre accès." });
+    const collaborator = (await db.select().from(placementEmployerAccounts).where(and(
+      eq(placementEmployerAccounts.id, input.collaboratorId),
+      eq(placementEmployerAccounts.organizationId, organization.id),
+      eq(placementEmployerAccounts.status, "suspended"),
+    )).limit(1))[0];
+    if (!collaborator) throw new TRPCError({ code: "NOT_FOUND", message: "Collaborateur suspendu introuvable ou déjà mis à jour." });
+
+    if (input.decision === "reactivate") {
+      await db.update(placementEmployerAccounts).set({ status: "active", sessionTokenHash: null, sessionExpiresAt: null }).where(eq(placementEmployerAccounts.id, collaborator.id));
+      await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: collaborator.id, actorEmployerAccountId: account.id, type: "collaborator_reactivated", message: "Votre accès collaborateur a été réactivé après révision manuelle." });
+      await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: collaborator.id, targetName: collaborator.fullName, action: "collaborator_reactivated" });
+      return { status: "active" as const, decision: input.decision };
+    }
+
+    await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: collaborator.id, targetName: collaborator.fullName, action: "collaborator_suspension_reviewed" });
+    return { status: "suspended" as const, decision: input.decision };
   }),
 
   employerExportCollaborationActivity: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
