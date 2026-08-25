@@ -38,7 +38,7 @@
             return;
           }
 
-          const SW_REVISION = '2026-08-25-placement-consent-employer-portal-static';
+          const SW_REVISION = '2026-08-25-public-prerender-credibility-static';
           navigator.serviceWorker.register('/sw.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.
@@ -91,7 +91,7 @@
   </head>
 
   <body>
-    <div id="root">
+    <div id="root"><!--prerender-app-->
       <div class="boot-fallback" role="status" aria-live="polite">
         <div class="boot-fallback__content">
           <strong>3M Travel &amp; Services</strong>

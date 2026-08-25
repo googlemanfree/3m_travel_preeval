@@ -38,6 +38,7 @@ import { VisasCarousel } from "@/components/VisasCarousel";
 import { SimulatorExpress } from "@/components/SimulatorExpress";
 import AureolQuestionField from "@/components/AureolQuestionField";
 import FacebookFeedSection from "@/components/FacebookFeedSection";
+import ProfileVerificationModule from "@/components/ProfileVerificationModule";
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -579,6 +580,8 @@ export default function Home() {
         logoUrl="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
         whatsappNumber={WHATSAPP_NUMBER}
       />
+
+      <ProfileVerificationModule />
 
       {/* ─── ÉVALUATION MULTI-PROJETS : ACTION PRINCIPALE ──────────────────── */}
       <section id="evaluation-multi" className="scroll-mt-24 py-12 md:py-16 bg-gradient-to-b from-white to-blue-50">

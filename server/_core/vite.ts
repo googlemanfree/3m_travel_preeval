@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
+import { composePublicPrerender } from "../publicPrerender";
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -83,10 +84,11 @@ export async function setupVite(app: Express, server: Server) {
       // néanmoins son client dans index.html ; le retirer ici évite les erreurs
       // de connexion vers localhost:5173 tout en conservant l’actualisation via
       // rechargement de page.
-      const page = (await vite.transformIndexHtml(url, template))
+      const transformedPage = (await vite.transformIndexHtml(url, template))
         .replace(/<script\b[^>]*\bsrc=["']\/@vite\/client(?:\?[^"']*)?["'][^>]*>\s*<\/script>/gi, "")
         .replace(/import\s+["']\/@vite\/client(?:\?[^"']*)?["'];?/gi, "");
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      const rendered = composePublicPrerender(transformedPage, url);
+      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(rendered.html);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
@@ -103,9 +105,15 @@ export function serveStatic(app: Express) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
-  app.use(express.static(distPath));
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  app.use(express.static(distPath, { index: false, redirect: false }));
+  app.use("*", async (req, res) => {
+    try {
+      const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
+      const rendered = composePublicPrerender(template, req.originalUrl);
+      res.status(rendered.status).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(rendered.html);
+    } catch (error) {
+      console.error("[SEO prerender] Unable to render public shell", error);
+      res.status(500).end("Erreur de rendu");
+    }
   });
 }

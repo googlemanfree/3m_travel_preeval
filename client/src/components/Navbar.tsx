@@ -5,6 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 import { prefetchNavigation } from "@/lib/navigationCache";
 import { notifyNavigationStart } from "./NavigationProgress";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { COMPANY_PROFILE } from "@/lib/companyContacts";
 import {
   BookOpen,
   ChevronDown,
@@ -120,6 +121,9 @@ export default function Navbar() {
 
   return (
     <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
+      <div className="border-b border-amber-300/30 bg-[#071b3d] px-4 py-1.5 text-center text-[10px] font-bold tracking-wide text-amber-100 sm:text-xs">
+        {COMPANY_PROFILE.legalName} · {COMPANY_PROFILE.legalIdentifiers.registration} · NIU {COMPANY_PROFILE.legalIdentifiers.taxpayerId}
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <a

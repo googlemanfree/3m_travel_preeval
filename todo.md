@@ -1048,3 +1048,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer un portail employeur réservé aux organisations vérifiées, limité aux profils autorisés par les candidats et l’administration.
 - [ ] Tester les droits, consentements, historiques et synchronisations avant publication.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours de placement sécurisé.
+
+## Crédibilité, indexabilité et sécurité publique
+- [x] Auditer le rendu initial, les métadonnées, les sitemaps et les preuves légales du site public.
+- [x] Mettre en place un pré-rendu statique des pages publiques prioritaires et des métadonnées uniques par route.
+- [x] Rendre les références légales RC/YAO/2019/A/2567 et NIU M112417203369H visibles en continu sur les pages publiques.
+- [x] Créer sur l’accueil un module de vérification transparent sans statistiques non sourcées.
+- [x] Ajouter au portail employeur des filtres de profils et des indicateurs reposant uniquement sur des données vérifiées.
+- [x] Auditer la 2FA et documenter clairement la couverture effective pour les accès admin et employeur.
+- [ ] Étendre la bascule FR/EN à l’ensemble des pages publiques prioritaires.
+- [ ] Tester, publier et vérifier le rendu indexable, les protections et les parcours bilingues.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la passe de crédibilité.
