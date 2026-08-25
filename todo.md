@@ -1084,5 +1084,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un partage de favoris limité aux collaborateurs actifs de la même organisation.
 - [x] Afficher les favoris partagés avec l’auteur et l’horodatage, sans exposer de nouveaux profils.
 - [x] Tester l’isolement des organisations, la traçabilité et les droits de partage.
-- [ ] Publier et vérifier le partage collaboratif des favoris.
+- [x] Publier et vérifier le partage collaboratif des favoris.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au partage collaboratif.
