@@ -1111,4 +1111,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer une révision manuelle des accès suspendus réservée aux gestionnaires, sans réactivation automatique ni suppression de compte.
 - [x] Enrichir les libellés FR/EN des contrôles collaboratifs, états et messages d’erreur.
 - [x] Créer et valider une compétence réutilisable du suivi et de la révision collaborative.
-- [ ] Tester, publier et vérifier les filtres, droits, bilinguisme et diffusion PWA.
+- [x] Tester, publier et vérifier les filtres, droits, bilinguisme et diffusion PWA.
