@@ -9,6 +9,8 @@ const footer = fs.readFileSync(path.join(root, "client/src/components/Footer.tsx
 const qrWidget = fs.readFileSync(path.join(root, "client/src/components/FacebookQRCodeWidget.tsx"), "utf8");
 const adminDashboard = fs.readFileSync(path.join(root, "client/src/pages/AdminDashboard.tsx"), "utf8");
 const canadaScoreSimulator = fs.readFileSync(path.join(root, "client/src/components/CanadaScoreSimulator.tsx"), "utf8");
+const adminDocuments = fs.readFileSync(path.join(root, "client/src/components/AdminDocumentsManagement.tsx"), "utf8");
+const candidateDocuments = fs.readFileSync(path.join(root, "client/src/components/DocumentManagement.tsx"), "utf8");
 
 describe("passe accessibilité et style premium", () => {
   it("préserve des focus visibles et des cibles tactiles cohérentes", () => {
@@ -42,5 +44,12 @@ describe("passe accessibilité et style premium", () => {
   it("rend les conseils du simulateur accessibles au clavier", () => {
     expect(canadaScoreSimulator).toContain('<button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted');
     expect(canadaScoreSimulator).not.toContain('<p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration');
+  });
+
+  it("préserve des commandes documentaires accessibles dans les espaces client et administrateur", () => {
+    expect(adminDocuments).toContain('aria-label={`Prévisualiser ${doc.documentName}`}');
+    expect(adminDocuments).toContain('aria-pressed={activeMarkerId === zone.id}');
+    expect(candidateDocuments).toContain('aria-describedby="file-upload-help"');
+    expect(candidateDocuments).toContain("document.getElementById('file-upload')?.click()");
   });
 });

@@ -778,17 +778,19 @@ export function AdminDocumentsManagement() {
                         <td className="py-3 px-4 font-mono text-blue-600">{doc.dossierNumber}</td>
                         <td className="py-3 px-4 font-medium text-gray-900">{doc.candidateName}</td>
                         <td className="py-3 px-4">
-                          <div 
+                          <button
+                            type="button"
                             onClick={() => setPreviewingDoc(doc)} 
-                            className="w-10 h-10 rounded border border-slate-200 bg-slate-100 flex items-center justify-center overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
-                            title="Cliquer pour agrandir la miniature"
+                            className="flex h-10 w-10 items-center justify-center overflow-hidden rounded border border-slate-200 bg-slate-100 transition hover:ring-2 hover:ring-blue-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                            aria-label={`Prévisualiser ${doc.documentName}`}
+                            title="Prévisualiser le document"
                           >
                             {doc.documentUrl && (doc.documentUrl.endsWith(".png") || doc.documentUrl.endsWith(".jpg") || doc.documentUrl.endsWith(".jpeg") || doc.documentUrl.includes("image")) ? (
                               <img src={doc.documentUrl} alt={doc.documentName} className="w-full h-full object-cover" />
                             ) : (
                               <FileText className="w-5 h-5 text-blue-600" />
                             )}
-                          </div>
+                          </button>
                         </td>
                         <td className="py-3 px-4 text-gray-600">{getDocumentTypeLabel(doc.documentType)}</td>
                         <td className="py-3 px-4 text-gray-600 max-w-xs"><p className="truncate">{doc.documentName}</p>{doc.replacesId ? <span className="mt-1 inline-flex rounded bg-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-orange-700">Correction de la version #{doc.replacesId}</span> : null}</td>
@@ -920,17 +922,20 @@ export function AdminDocumentsManagement() {
                       {(typeof previewingDoc.readabilityIssues === 'string' ? JSON.parse(previewingDoc.readabilityIssues) : previewingDoc.readabilityIssues).annotatedZones?.map((zone: any) => {
                         const borderColor = zone.severity === 'success' ? 'border-emerald-400 bg-emerald-500/10 text-emerald-200' : zone.severity === 'warning' ? 'border-amber-400 bg-amber-500/10 text-amber-200' : 'border-rose-400 bg-rose-500/10 text-rose-200';
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={zone.id}
                             style={{ left: `${zone.x}%`, top: `${zone.y}%`, width: `${zone.width}%`, height: `${zone.height}%` }}
                             onClick={() => setActiveMarkerId(zone.id)}
-                            className={`absolute border-2 rounded-md p-1 flex flex-col justify-between backdrop-blur-[1px] cursor-pointer transition-transform hover:scale-[1.02] ${borderColor}`}
+                            aria-label={`Sélectionner la zone ${zone.label} : ${zone.description}`}
+                            aria-pressed={activeMarkerId === zone.id}
+                            className={`absolute flex flex-col justify-between rounded-md border-2 p-1 text-left backdrop-blur-[1px] transition-transform hover:scale-[1.02] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${borderColor}`}
                             title={zone.description}
                           >
                             <span className="text-[9px] font-bold px-1 bg-black/70 rounded text-white truncate inline-block">
                               {zone.label}
                             </span>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>

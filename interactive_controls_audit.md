@@ -21,3 +21,7 @@ Le simulateur Canada utilise quatre éléments `<p>` comme déclencheurs d’inf
 Les quatre conseils du simulateur sont désormais des boutons réels, atteignables au clavier et munis du focus commun du site. Dans la fiche administrative, les actions « Ouvrir le dossier et activer le suivi » et « Enregistrer la décision » exposent désormais la raison précise de leur indisponibilité, avec une annonce de statut.
 
 Les contrôles d’entrée mobile ont été vérifiés sur l’accueil, la connexion administrateur et le portail employeur. Les champs, actions principales, bascule FR/EN, thème, menu mobile et boutons flottants restent visibles et atteignables. Les routes protégées continuent d’afficher leur formulaire d’accès sans exécuter d’action métier hors session.
+
+## Corrections documentaires complémentaires
+
+L’audit statique a aussi identifié des actions réelles rendues par des éléments non sémantiques dans les modules documentaires. Les miniatures de documents administratifs, ainsi que les marqueurs de lisibilité, sont désormais des boutons natifs avec étiquette, état sélectionné et focus visible. Le sélecteur de fichiers dans l’espace candidat est désormais commandé par un bouton réel, associé à son aide de format et de taille. Les actions de validation, rejet, téléchargement et enregistrement existantes restent inchangées et protégées par leurs confirmations ou leurs droits serveur.

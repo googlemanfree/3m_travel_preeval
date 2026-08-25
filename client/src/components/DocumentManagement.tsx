@@ -139,21 +139,18 @@ export function DocumentManagement({
             multiple
             onChange={handleFileUpload}
             disabled={isUploading}
-            className="hidden"
+            className="sr-only"
             id="file-upload"
           />
-          <label htmlFor="file-upload">
-            <Button
-              asChild
-              disabled={isUploading}
-              className="cursor-pointer"
-            >
-              <span>
-                {isUploading ? 'Upload en cours...' : 'Sélectionner des fichiers'}
-              </span>
-            </Button>
-          </label>
-          <p className="text-xs text-gray-500 mt-3">
+          <Button
+            type="button"
+            disabled={isUploading}
+            aria-describedby="file-upload-help"
+            onClick={() => document.getElementById('file-upload')?.click()}
+          >
+            {isUploading ? 'Upload en cours...' : 'Sélectionner des fichiers'}
+          </Button>
+          <p id="file-upload-help" className="text-xs text-gray-500 mt-3">
             Formats acceptés: PDF, JPG, PNG | Taille max: 10 MB
           </p>
         </div>
