@@ -6,7 +6,17 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { composePublicPrerender } from "../publicPrerender";
+import { canonicalRedirectTarget } from "../canonicalDomain";
+
+function applyCanonicalDomainRedirect(app: Express) {
+  app.use((req, res, next) => {
+    const target = canonicalRedirectTarget(req.hostname, req.originalUrl);
+    if (!target) return next();
+    return res.redirect(301, target);
+  });
+}
 export async function setupVite(app: Express, server: Server) {
+  applyCanonicalDomainRedirect(app);
   const serverOptions = {
     middlewareMode: true,
     // Le proxy de prévisualisation ne relaie pas de WebSocket Vite fiable dans
@@ -96,6 +106,7 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 export function serveStatic(app: Express) {
+  applyCanonicalDomainRedirect(app);
   const distPath =
     process.env.NODE_ENV === "development"
       ? path.resolve(import.meta.dirname, "../..", "dist", "public")

@@ -1,4 +1,6 @@
-const ORIGIN = "https://www.3mtravelagency.com";
+import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
+
+const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 

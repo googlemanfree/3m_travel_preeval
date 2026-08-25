@@ -1126,3 +1126,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Traduire les microcopies prioritaires de navigation, footer, connexion et états d’aide.
 - [x] Vérifier la bascule FR/EN sur desktop et mobile sans modifier les contenus légaux ou les données de dossiers.
 - [ ] Valider, publier et vérifier la diffusion de l’harmonisation bilingue.
+
+## Domaine officiel et signaux SEO
+- [x] Auditer les canoniques, sitemap, métadonnées, robots et redirections associés à .click et .com.
+- [x] Définir www.3mtravelagency.com comme domaine officiel dans les signaux publics contrôlables par le site.
+- [ ] Vérifier les réponses HTTP, canoniques et sitemap publiés sans promettre le délai de réindexation Google.
+- [ ] Publier et consigner la correction de domaine officiel.
