@@ -159,8 +159,11 @@ export const placementPortalRouter = router({
       db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))),
       db.select().from(placementEmployerFavorites).where(eq(placementEmployerFavorites.employerAccountId, account.id)),
     ]);
-    const favoriteIds = new Set(favorites.map((favorite) => favorite.submissionId));
-    return submissions.map(({ submission, profile }) => ({ submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: favoriteIds.has(submission.id), profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } }));
+    const favoritesBySubmission = new Map(favorites.map((favorite) => [favorite.submissionId, favorite]));
+    return submissions.map(({ submission, profile }) => {
+      const favorite = favoritesBySubmission.get(submission.id);
+      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
+    });
   }),
 
   employerToggleFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).mutation(async ({ input }) => {
@@ -174,6 +177,29 @@ export const placementPortalRouter = router({
     }
     await db.insert(placementEmployerFavorites).values({ employerAccountId: account.id, submissionId: submission.id });
     return { favorite: true };
+  }),
+
+  employerUpdateFavoriteNote: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), note: z.string().trim().max(2000) })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const favorite = (await db.select({ favorite: placementEmployerFavorites }).from(placementEmployerFavorites)
+      .innerJoin(placementProfileSubmissions, eq(placementEmployerFavorites.submissionId, placementProfileSubmissions.id))
+      .where(and(eq(placementEmployerFavorites.employerAccountId, account.id), eq(placementEmployerFavorites.submissionId, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0]?.favorite;
+    if (!favorite) throw new TRPCError({ code: "NOT_FOUND", message: "Ajoutez d’abord ce profil à vos favoris." });
+    await db.update(placementEmployerFavorites).set({ privateNote: input.note || null }).where(eq(placementEmployerFavorites.id, favorite.id));
+    return { note: input.note || null };
+  }),
+
+  employerExportFavorites: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const rows = await db.select({ favorite: placementEmployerFavorites, submission: placementProfileSubmissions, profile: placementCandidateProfiles })
+      .from(placementEmployerFavorites)
+      .innerJoin(placementProfileSubmissions, eq(placementEmployerFavorites.submissionId, placementProfileSubmissions.id))
+      .innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id))
+      .where(and(eq(placementEmployerFavorites.employerAccountId, account.id), eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt)));
+    const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""').replaceAll("\n", " ")}"`;
+    const headers = ["Code profil", "Statut", "Pays cible", "Procédure", "Secteur", "Expérience", "Langues", "Note privée", "Ajouté le"];
+    const csv = `\ufeff${headers.map(quote).join(";")}\n${rows.map(({ favorite, submission, profile }) => [profile.profileCode, submission.status, profile.targetDestination, profile.targetProcedure, profile.sector, profile.yearsExperience, profile.languagesSummary, favorite.privateNote, favorite.createdAt.toISOString()].map(quote).join(";")).join("\n")}`;
+    return { filename: `favoris-profils-${new Date().toISOString().slice(0, 10)}.csv`, csv, count: rows.length };
   }),
 
   employerRecordDecision: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), decision: z.enum(["under_review", "shortlisted", "selected", "not_selected", "documents_requested"]), note: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {

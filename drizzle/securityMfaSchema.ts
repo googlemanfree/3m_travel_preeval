@@ -27,6 +27,7 @@ export const placementEmployerFavorites = mysqlTable("placement_employer_favorit
   id: int("id").autoincrement().primaryKey(),
   employerAccountId: int("employer_account_id").notNull(),
   submissionId: int("submission_id").notNull(),
+  privateNote: text("private_note"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [
   uniqueIndex("uniq_employer_favorite_submission").on(table.employerAccountId, table.submissionId),

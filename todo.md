@@ -1070,3 +1070,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre à jour et valider une compétence réutilisable dédiée à la sécurité TOTP et au bilinguisme.
 - [x] Tester, publier et vérifier les protections, favoris et parcours bilingues.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la 2FA et aux favoris.
+
+## Notes et export des favoris employeur
+- [x] Auditer les favoris employeur et les contrôles d’organisation existants.
+- [x] Ajouter des notes privées par profil favori, limitées à l’organisation employeur propriétaire.
+- [x] Ajouter un export CSV des favoris autorisés, sans documents, coordonnées ou identifiants candidats.
+- [x] Tester les droits, l’isolement organisationnel et le contenu de l’export.
+- [ ] Publier et vérifier l’espace employeur enrichi.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux notes et à l’export.
