@@ -6,14 +6,19 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { composePublicPrerender } from "../publicPrerender";
-import { canonicalRedirectTarget } from "../canonicalDomain";
+import { canonicalRedirectFromHosts } from "../canonicalDomain";
 
 function applyCanonicalDomainRedirect(app: Express) {
   app.use((req, res, next) => {
-    // Derrière le proxy de production, l'hôte externe peut être fourni dans
-    // X-Forwarded-Host alors que req.hostname contient l'hôte interne Railway.
-    const forwardedHost = req.get("x-forwarded-host")?.split(",")[0]?.trim();
-    const target = canonicalRedirectTarget(forwardedHost || req.hostname, req.originalUrl);
+    // Selon le maillon proxy, l'hôte externe peut être fourni sous l'un de ces
+    // en-têtes alors que req.hostname contient un nom interne de plateforme.
+    const target = canonicalRedirectFromHosts([
+      req.get("x-forwarded-host"),
+      req.get("x-original-host"),
+      req.get("x-host"),
+      req.get("host"),
+      req.hostname,
+    ], req.originalUrl);
     if (!target) return next();
     return res.redirect(301, target);
   });

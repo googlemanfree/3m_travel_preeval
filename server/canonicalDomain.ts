@@ -8,4 +8,14 @@ export function canonicalRedirectTarget(hostname: string | undefined, originalUr
   return `${OFFICIAL_ORIGIN}${path}`;
 }
 
+export function canonicalRedirectFromHosts(hostnames: Array<string | undefined>, originalUrl: string) {
+  for (const value of hostnames) {
+    for (const host of (value ?? "").split(",")) {
+      const target = canonicalRedirectTarget(host.trim(), originalUrl);
+      if (target) return target;
+    }
+  }
+  return null;
+}
+
 export const OFFICIAL_SITE_ORIGIN = OFFICIAL_ORIGIN;

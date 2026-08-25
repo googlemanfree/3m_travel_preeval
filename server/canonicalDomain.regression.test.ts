@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalRedirectTarget, OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
+import { canonicalRedirectFromHosts, canonicalRedirectTarget, OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 
 describe("domaine officiel 3M Travel", () => {
   it("redirige les deux variantes .click vers www.3mtravelagency.com en conservant le chemin", () => {
@@ -11,5 +11,10 @@ describe("domaine officiel 3M Travel", () => {
     expect(canonicalRedirectTarget("www.3mtravelagency.com", "/")).toBeNull();
     expect(canonicalRedirectTarget("localhost", "/")).toBeNull();
     expect(OFFICIAL_SITE_ORIGIN).toBe("https://www.3mtravelagency.com");
+  });
+
+  it("reconnaît l’hôte original à travers plusieurs en-têtes de proxy", () => {
+    expect(canonicalRedirectFromHosts(["internal.railway.local", "3mtravelagency.click"], "/contact")).toBe("https://www.3mtravelagency.com/contact");
+    expect(canonicalRedirectFromHosts(["internal", "www.3mtravelagency.click, internal"], "/sitemap.xml")).toBe("https://www.3mtravelagency.com/sitemap.xml");
   });
 });
