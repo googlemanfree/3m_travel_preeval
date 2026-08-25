@@ -1031,22 +1031,22 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter les statuts « Recherche d’employeur » et « Validation de l’ADEM » pour les procédures luxembourgeoises, sans les exposer aux dossiers non concernés.
 - [x] Permettre la validation humaine d’une évaluation dans le dossier d’un candidat, y compris après création de compte.
 - [x] Permettre l’envoi contrôlé de l’évaluation validée à la fois dans l’espace client et par e-mail, avec trace de remise.
-- [ ] Tester les droits, synchronisations et déclenchements sensibles avant publication.
+- [x] Tester les droits, synchronisations et déclenchements sensibles avant publication.
 - [x] Protéger la route d’interface des dossiers agence afin de ne jamais exposer les informations candidats hors session administrateur.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours pré-dossier corrigé.
 
 ## Cockpit de pilotage des dossiers
-- [ ] Auditer les vues admin, priorités, échéances et données de blocage existantes.
-- [ ] Ajouter un cockpit de priorités avec prochaines actions, échéances et raisons de blocage explicites.
-- [ ] Ajouter des filtres et une actualisation manuelle pour orienter le traitement sans automatiser les décisions sensibles.
-- [ ] Tester, publier et vérifier le pilotage des dossiers côté administrateur.
+- [x] Auditer les vues admin, priorités, échéances et données de blocage existantes.
+- [x] Ajouter un cockpit de priorités avec prochaines actions, échéances et raisons de blocage explicites.
+- [x] Ajouter des filtres et une actualisation manuelle pour orienter le traitement sans automatiser les décisions sensibles.
+- [x] Tester, publier et vérifier le pilotage des dossiers côté administrateur.
 
 ## Parcours mobilité candidats, partenaires et employeurs
 - [x] Auditer les consentements, profils candidats, partenaires de placement et transmissions de dossier existants.
 - [x] Ajouter un suivi administratif traçable des étapes évaluation, soumission partenaire, sélection employeur et procédure.
 - [x] Améliorer l’espace client avec le suivi lisible des retours de placement et des pièces attendues.
 - [x] Créer un portail employeur réservé aux organisations vérifiées, limité aux profils autorisés par les candidats et l’administration.
-- [ ] Tester les droits, consentements, historiques et synchronisations avant publication.
+- [x] Tester les droits, consentements, historiques et synchronisations avant publication.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours de placement sécurisé.
 
 ## Crédibilité, indexabilité et sécurité publique
@@ -1056,6 +1056,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer sur l’accueil un module de vérification transparent sans statistiques non sourcées.
 - [x] Ajouter au portail employeur des filtres de profils et des indicateurs reposant uniquement sur des données vérifiées.
 - [x] Auditer la 2FA et documenter clairement la couverture effective pour les accès admin et employeur.
-- [ ] Étendre la bascule FR/EN à l’ensemble des pages publiques prioritaires.
-- [ ] Tester, publier et vérifier le rendu indexable, les protections et les parcours bilingues.
+- [x] Étendre la bascule FR/EN à l’ensemble des pages publiques prioritaires.
+- [x] Tester, publier et vérifier le rendu indexable, les protections et les parcours bilingues.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la passe de crédibilité.
+- [x] Réviser la diffusion PWA pour diffuser la couverture bilingue du module de vérification.

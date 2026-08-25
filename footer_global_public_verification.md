@@ -41,3 +41,9 @@ Le domaine public affiche la barre « Rechercher dans le plan du site », les co
 URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=608959b8&footer-analytics-menu-bilingual=deployment-confirmed`.
 
 Le domaine public a chargé le menu principal issu de la révision v18. Après sélection de « English », les éléments observés sont notamment « Home », « Procedures », « Resources », « PDF guide », « Quick assessment » et « Case tracking », avec les actions « Client access » et « Sign up ». La recherche publique accepte le synonyme `hotel` et conserve le résultat « 3M Booking » (`1 results`). La route admin locale affiche le refus d’accès sans authentification, tandis que le résumé agrégé d’engagement est contrôlé côté serveur par une session administrateur valide. Aucun clic artificiel n’a été enregistré dans le registre d’engagement.
+
+## Vérification après la révision PWA v21 — indexabilité et crédibilité
+
+URL contrôlée : `https://www.3mtravelagency.com/?release=eac7c02a&public-prerender-credibility=propagated`.
+
+Le domaine public sert désormais un contenu initial indexable avant l’exécution complète du JavaScript : le HTML contient un titre unique, une meta description, une balise `robots` à `index,follow`, une balise Open Graph et un titre éditorial (`h1`). Le header affiche en continu l’identité légale centralisée : « 3M Travel Agency SARL · RC/YAO/2019/A/2567 · NIU M112417203369H ». Le module « Consulter les sources officielles » est visible sur l’accueil sans afficher de statistiques de placement non étayées. Le worker public est propagé en cache v21.
