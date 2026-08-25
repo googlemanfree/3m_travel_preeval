@@ -1,13 +1,8 @@
-/**
- * Hook personnalisé pour évaluer la force d'un mot de passe
- * Retourne un score, une description et des recommandations
- */
-
-import { useMemo } from 'react';
+import { useMemo } from "react";
 
 export interface PasswordStrengthResult {
-  score: number; // 0-100
-  level: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong';
+  score: number;
+  level: "weak" | "fair" | "good" | "strong" | "very-strong";
   percentage: number;
   color: string;
   message: string;
@@ -15,113 +10,36 @@ export interface PasswordStrengthResult {
   isValid: boolean;
 }
 
-export function usePasswordStrength(password: string): PasswordStrengthResult {
+type Language = "fr" | "en";
+
+export function usePasswordStrength(password: string, language: Language = "fr"): PasswordStrengthResult {
   return useMemo(() => {
+    const t = (fr: string, en: string) => language === "en" ? en : fr;
     const recommendations: string[] = [];
     let score = 0;
 
-    // Vérifications de base
-    if (!password) {
-      return {
-        score: 0,
-        level: 'weak',
-        percentage: 0,
-        color: 'bg-red-500',
-        message: 'Aucun mot de passe',
-        recommendations: ['Entrez un mot de passe'],
-        isValid: false,
-      };
-    }
-
-    // Longueur (20 points max)
+    if (!password) return { score: 0, level: "weak", percentage: 0, color: "bg-red-500", message: t("Aucun mot de passe", "No password"), recommendations: [t("Saisissez un mot de passe", "Enter a password")], isValid: false };
     if (password.length >= 8) score += 10;
     if (password.length >= 12) score += 5;
     if (password.length >= 16) score += 5;
-    if (password.length < 8) {
-      recommendations.push('Au moins 8 caractères');
-    }
+    if (password.length < 8) recommendations.push(t("Au moins 8 caractères", "At least 8 characters"));
+    if (/[A-Z]/.test(password)) score += 15; else recommendations.push(t("Au moins une majuscule", "At least one uppercase letter"));
+    if (/[a-z]/.test(password)) score += 15; else recommendations.push(t("Au moins une minuscule", "At least one lowercase letter"));
+    if (/\d/.test(password)) score += 15; else recommendations.push(t("Au moins un chiffre", "At least one number"));
+    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 20; else recommendations.push(t("Au moins un caractère spécial (!@#$%^&*)", "At least one special character (!@#$%^&*)"));
+    if (!/(.)\1{2,}/.test(password)) score += 5; else recommendations.push(t("Évitez les caractères répétés (aaa, 111)", "Avoid repeated characters (aaa, 111)"));
+    if (!["password", "pass", "123456", "qwerty", "admin", "user", "test"].some(word => password.toLowerCase().includes(word))) score += 5; else recommendations.push(t("Évitez les mots courants", "Avoid common words"));
 
-    // Majuscules (15 points)
-    if (/[A-Z]/.test(password)) {
-      score += 15;
-    } else {
-      recommendations.push('Au moins une lettre majuscule');
-    }
-
-    // Minuscules (15 points)
-    if (/[a-z]/.test(password)) {
-      score += 15;
-    } else {
-      recommendations.push('Au moins une lettre minuscule');
-    }
-
-    // Chiffres (15 points)
-    if (/\d/.test(password)) {
-      score += 15;
-    } else {
-      recommendations.push('Au moins un chiffre');
-    }
-
-    // Caractères spéciaux (20 points)
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      score += 20;
-    } else {
-      recommendations.push('Au moins un caractère spécial (!@#$%^&*)');
-    }
-
-    // Pas de caractères répétés (5 points)
-    if (!/(.)\1{2,}/.test(password)) {
-      score += 5;
-    } else {
-      recommendations.push('Évitez les caractères répétés (aaa, 111)');
-    }
-
-    // Pas de mots courants (5 points)
-    const commonWords = ['password', 'pass', '123456', 'qwerty', 'admin', 'user', 'test'];
-    if (!commonWords.some(word => password.toLowerCase().includes(word))) {
-      score += 5;
-    } else {
-      recommendations.push('Évitez les mots courants');
-    }
-
-    // Déterminer le niveau et la couleur
-    let level: PasswordStrengthResult['level'];
-    let color: string;
-    let message: string;
-
-    if (score < 20) {
-      level = 'weak';
-      color = 'bg-red-500';
-      message = '🔴 Très faible';
-    } else if (score < 40) {
-      level = 'fair';
-      color = 'bg-orange-500';
-      message = '🟠 Faible';
-    } else if (score < 60) {
-      level = 'good';
-      color = 'bg-yellow-500';
-      message = '🟡 Acceptable';
-    } else if (score < 80) {
-      level = 'strong';
-      color = 'bg-lime-500';
-      message = '🟢 Fort';
-    } else {
-      level = 'very-strong';
-      color = 'bg-green-600';
-      message = '✅ Très fort';
-    }
-
-    // Capper le score à 100
     const cappedScore = Math.min(score, 100);
-
-    return {
-      score: cappedScore,
-      level,
-      percentage: cappedScore,
-      color,
-      message,
-      recommendations,
-      isValid: cappedScore >= 60, // Valide si au moins 60/100
-    };
-  }, [password]);
+    const strength = cappedScore < 20
+      ? { level: "weak" as const, color: "bg-red-500", message: t("Très faible", "Very weak") }
+      : cappedScore < 40
+        ? { level: "fair" as const, color: "bg-orange-500", message: t("Faible", "Weak") }
+        : cappedScore < 60
+          ? { level: "good" as const, color: "bg-yellow-500", message: t("Acceptable", "Fair") }
+          : cappedScore < 80
+            ? { level: "strong" as const, color: "bg-lime-500", message: t("Fort", "Strong") }
+            : { level: "very-strong" as const, color: "bg-green-600", message: t("Très fort", "Very strong") };
+    return { score: cappedScore, percentage: cappedScore, recommendations, isValid: cappedScore >= 60, ...strength };
+  }, [password, language]);
 }

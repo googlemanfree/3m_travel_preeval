@@ -10,6 +10,7 @@ import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength";
 import { resolveCandidateReturnPath } from "@/lib/candidateRedirect";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
 const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
@@ -17,6 +18,8 @@ const LOGO_URL = "/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg";
 export default function Login() {
   const [location, navigate] = useLocation();
   const { login } = useCandidateAuth();
+  const { language } = useLanguage();
+  const t = (fr: string, en: string) => language === "en" ? en : fr;
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,14 +30,14 @@ export default function Login() {
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [modalAnnouncement, setModalAnnouncement] = useState("");
   const [isGoogleRedirecting, setIsGoogleRedirecting] = useState(false);
-  const passwordStrength = usePasswordStrength(password);
+  const passwordStrength = usePasswordStrength(password, language);
   const closeResendModal = () => {
     setShowResendModal(false);
-    setModalAnnouncement("Fenêtre de renvoi d’email fermée.");
+    setModalAnnouncement(t("Fenêtre de renvoi d’e-mail fermée.", "Verification email dialog closed."));
   };
   const closeForgotPasswordModal = () => {
     setShowForgotPasswordModal(false);
-    setModalAnnouncement("Fenêtre de réinitialisation du mot de passe fermée.");
+    setModalAnnouncement(t("Fenêtre de réinitialisation du mot de passe fermée.", "Password reset dialog closed."));
   };
   const resendDialogRef = useFocusTrap(showResendModal, closeResendModal);
   const forgotDialogRef = useFocusTrap(showForgotPasswordModal, closeForgotPasswordModal);
@@ -188,8 +191,8 @@ export default function Login() {
         {/* Header coloré */}
         <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-8 text-center text-white">
           <img src={LOGO_URL} alt="3M Travel" className="w-16 h-16 rounded-xl mx-auto mb-4 shadow-lg object-cover" />
-          <h1 className="text-2xl font-black">Mon Espace Candidat</h1>
-          <p className="text-blue-200 text-sm mt-1">Connectez-vous pour accéder à votre dossier</p>
+          <h1 className="text-2xl font-black">{t("Mon espace candidat", "My candidate space")}</h1>
+          <p className="text-blue-200 text-sm mt-1">{t("Connectez-vous pour accéder à votre dossier", "Sign in to access your case")}</p>
         </div>
 
         {/* Bandeau d'alerte si redirigé depuis une page protégée */}
@@ -197,9 +200,9 @@ export default function Login() {
           <div className="mx-6 mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
             <span className="text-amber-500 text-lg leading-none mt-0.5">🔒</span>
             <div>
-              <p className="text-amber-800 text-sm font-semibold">Accès réservé aux membres</p>
+              <p className="text-amber-800 text-sm font-semibold">{t("Accès réservé aux membres", "Members-only access")}</p>
               <p className="text-amber-700 text-xs mt-0.5">
-                Connectez-vous ou créez un compte gratuit pour accéder à ce contenu.
+                {t("Connectez-vous ou créez un compte gratuit pour accéder à ce contenu.", "Sign in or create a free account to access this content.")}
               </p>
             </div>
           </div>
@@ -209,13 +212,13 @@ export default function Login() {
         <div className="p-5 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loginMutation.isPending}>
             <div>
-              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Adresse email</Label>
+              <Label htmlFor="email" className="text-sm font-semibold text-gray-700">{t("Adresse e-mail", "Email address")}</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="votre@email.com"
+                  placeholder={t("votre@email.com", "you@example.com")}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="h-12 pl-10"
@@ -226,7 +229,7 @@ export default function Login() {
             </div>
 
             <div>
-              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">Mot de passe</Label>
+              <Label htmlFor="password" className="text-sm font-semibold text-gray-700">{t("Mot de passe", "Password")}</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
@@ -241,7 +244,7 @@ export default function Login() {
                 />
                 <button
                   type="button"
-                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  aria-label={showPassword ? t("Masquer le mot de passe", "Hide password") : t("Afficher le mot de passe", "Show password")}
                   onClick={() => setShowPassword(v => !v)}
                   className="touch-target absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
@@ -258,7 +261,7 @@ export default function Login() {
                   className="mt-3 space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">Force du mot de passe</span>
+                    <span className="text-xs font-medium text-gray-600">{t("Robustesse du mot de passe", "Password strength")}</span>
                     <span className="text-xs font-bold">{passwordStrength.message}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -291,11 +294,11 @@ export default function Login() {
               {loginMutation.isPending ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Connexion...
+                  {t("Connexion…", "Signing in…")}
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <LogIn className="w-4 h-4" /> Se connecter <ArrowRight className="w-4 h-4" />
+                  <LogIn className="w-4 h-4" /> {t("Se connecter", "Sign in")} <ArrowRight className="w-4 h-4" />
                 </span>
               )}
             </Button>
@@ -310,7 +313,7 @@ export default function Login() {
                 onChange={e => setRememberMe(e.target.checked)}
                 className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer"
               />
-              <span className="text-sm text-gray-600">Se souvenir de moi</span>
+              <span className="text-sm text-gray-600">{t("Se souvenir de moi", "Remember me")}</span>
             </label>
             <div className="flex flex-wrap gap-x-3 gap-y-2 text-sm">
               <button
@@ -318,7 +321,7 @@ export default function Login() {
                 onClick={() => setShowResendModal(true)}
                 className="text-[#2563EB] hover:underline font-medium transition-colors"
               >
-                Renvoyer l'email
+                {t("Renvoyer l’e-mail", "Resend email")}
               </button>
               <span className="text-gray-300">•</span>
               <button
@@ -326,7 +329,7 @@ export default function Login() {
                 onClick={() => setShowForgotPasswordModal(true)}
                 className="text-[#2563EB] hover:underline font-medium transition-colors"
               >
-                Mot de passe oublié ?
+                {t("Mot de passe oublié ?", "Forgot password?")}
               </button>
             </div>
           </div>
@@ -334,13 +337,13 @@ export default function Login() {
           {/* Sécurité */}
           <div className="mt-4 flex items-center gap-2 text-xs text-gray-400 justify-center">
             <Shield className="w-3.5 h-3.5" />
-            <span>Connexion sécurisée — vos données sont chiffrées</span>
+            <span>{t("Connexion sécurisée — vos données sont chiffrées", "Secure sign-in — your data is encrypted")}</span>
           </div>
 
           {/* Séparateur */}
           <div className="flex items-center gap-3 my-6">
             <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-400 font-medium">OU</span>
+            <span className="text-xs text-gray-400 font-medium">{t("OU", "OR")}</span>
             <div className="flex-1 h-px bg-gray-200" />
           </div>
 
@@ -362,10 +365,10 @@ export default function Login() {
                   <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                 </svg>
                 {isGoogleRedirecting || consumeGoogleOAuthMutation.isPending ? (
-                  <><span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" aria-hidden="true" /> Redirection Google...</>
+                  <><span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" aria-hidden="true" /> {t("Redirection Google…", "Redirecting to Google…")}</>
                 ) : "Google"}
               </button>
-              {!googleOAuthConfigured && <span id="google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>}
+              {!googleOAuthConfigured && <span id="google-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">{t("Bientôt disponible", "Coming soon")}</span>}
             </div>
             <div className="group relative">
               <button
@@ -380,7 +383,7 @@ export default function Login() {
                 </svg>
                 Facebook
               </button>
-              <span id="facebook-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">Bientôt disponible</span>
+              <span id="facebook-coming-soon" role="tooltip" className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded bg-slate-900 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">{t("Bientôt disponible", "Coming soon")}</span>
             </div>
           </div>
 
@@ -393,31 +396,31 @@ export default function Login() {
             >
               <div className="flex items-center gap-2 text-sm font-semibold">
                 <span className="w-4 h-4 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin" aria-hidden="true" />
-                <span>{consumeGoogleOAuthMutation.isPending ? "Finalisation de votre espace candidat…" : "Redirection sécurisée vers Google…"}</span>
+                <span>{consumeGoogleOAuthMutation.isPending ? t("Finalisation de votre espace candidat…", "Finishing your candidate space…") : t("Redirection sécurisée vers Google…", "Secure redirect to Google…")}</span>
               </div>
               <div
                 className="mt-2 h-1.5 overflow-hidden rounded-full bg-blue-100"
                 role="progressbar"
-                aria-label="Progression de la connexion Google"
+                aria-label={t("Progression de la connexion Google", "Google sign-in progress")}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={consumeGoogleOAuthMutation.isPending ? 75 : 35}
               >
                 <div className="h-full w-2/5 rounded-full bg-blue-600 transition-all duration-500" />
               </div>
-              <p className="mt-1 text-xs text-blue-700">Ne fermez pas cette fenêtre : votre profil et votre photo seront synchronisés après le retour.</p>
+              <p className="mt-1 text-xs text-blue-700">{t("Ne fermez pas cette fenêtre : votre profil et votre photo seront synchronisés après le retour.", "Do not close this window: your profile and photo will synchronise after you return.")}</p>
             </div>
           )}
 
           <div className="mt-6 text-center space-y-2">
             <p className="text-sm text-gray-500">
-              Pas encore de compte ?{" "}
+              {t("Pas encore de compte ?", "No account yet?")}{" "}
               <Link href="/register" className="text-[#2563EB] font-semibold hover:underline">
-                Créer mon compte
+                {t("Créer mon compte", "Create my account")}
               </Link>
             </p>
             <p className="text-xs text-gray-400">
-              <Link href="/" className="hover:underline">← Retour à l'accueil</Link>
+              <Link href="/" className="hover:underline">← {t("Retour à l’accueil", "Back to home")}</Link>
             </p>
           </div>
         </div>
@@ -446,12 +449,12 @@ export default function Login() {
             {/* Header */}
             <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white flex items-center justify-between">
               <div>
-                <h2 id="resend-title" className="text-xl font-bold">Renvoyer l'email</h2>
-                <p className="text-blue-200 text-sm mt-1">Nous vous enverrons un nouveau lien de vérification</p>
+                <h2 id="resend-title" className="text-xl font-bold">{t("Renvoyer l’e-mail", "Resend email")}</h2>
+                <p className="text-blue-200 text-sm mt-1">{t("Nous vous enverrons un nouveau lien de vérification", "We will send you a new verification link")}</p>
               </div>
               <button
                 type="button"
-                aria-label="Fermer la fenêtre de renvoi d’email"
+                aria-label={t("Fermer la fenêtre de renvoi d’e-mail", "Close verification email dialog")}
                 onClick={closeResendModal}
                 className="touch-target text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
               >
@@ -464,14 +467,14 @@ export default function Login() {
               <form onSubmit={handleResendVerification} className="space-y-4" aria-busy={resendVerificationMutation.isPending}>
                 <div>
                   <Label htmlFor="resend-email" className="text-sm font-semibold text-gray-700">
-                    Adresse email
+                    {t("Adresse e-mail", "Email address")}
                   </Label>
                   <div className="relative mt-2">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                       id="resend-email"
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={t("votre@email.com", "you@example.com")}
                       value={resendEmail}
                       onChange={e => setResendEmail(e.target.value)}
                       className="pl-10"
@@ -480,7 +483,7 @@ export default function Login() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Entrez l'adresse email associée à votre compte. Nous vous enverrons un nouveau lien de vérification valable 24 heures.
+                    {t("Saisissez l’adresse e-mail associée à votre compte. Nous vous enverrons un nouveau lien de vérification valable 24 heures.", "Enter the email address linked to your account. We will send a new verification link valid for 24 hours.")}
                   </p>
                 </div>
 
@@ -492,11 +495,11 @@ export default function Login() {
                   {resendVerificationMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Envoi en cours...
+                      {t("Envoi en cours…", "Sending…")}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" /> Renvoyer l'email
+                      <Mail className="w-4 h-4" /> {t("Renvoyer l’e-mail", "Resend email")}
                     </span>
                   )}
                 </Button>
@@ -506,7 +509,7 @@ export default function Login() {
                   onClick={closeResendModal}
                   className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
                 >
-                  Annuler
+                  {t("Annuler", "Cancel")}
                 </button>
               </form>
             </div>
@@ -537,12 +540,12 @@ export default function Login() {
             {/* Header */}
             <div className="bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] p-6 text-white flex items-center justify-between">
               <div>
-                <h2 id="forgot-title" className="text-xl font-bold">Mot de passe oublié</h2>
-                <p className="text-blue-200 text-sm mt-1">Nous vous enverrons un lien de réinitialisation</p>
+                <h2 id="forgot-title" className="text-xl font-bold">{t("Mot de passe oublié", "Forgot password")}</h2>
+                <p className="text-blue-200 text-sm mt-1">{t("Nous vous enverrons un lien de réinitialisation", "We will send you a password reset link")}</p>
               </div>
               <button
                 type="button"
-                aria-label="Fermer la fenêtre de récupération"
+                aria-label={t("Fermer la fenêtre de récupération", "Close password recovery dialog")}
                 onClick={closeForgotPasswordModal}
                 className="touch-target text-white hover:bg-white/20 p-1 rounded-lg transition-colors"
               >
@@ -556,7 +559,7 @@ export default function Login() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!forgotPasswordEmail) {
-                    toast.error("Veuillez entrer votre adresse email");
+                    toast.error(t("Veuillez saisir votre adresse e-mail.", "Enter your email address."));
                     return;
                   }
                   // Ouvrir la page d’envoi réelle en conservant l’adresse saisie.
@@ -566,14 +569,14 @@ export default function Login() {
               >
                 <div>
                   <Label htmlFor="forgot-email" className="text-sm font-semibold text-gray-700">
-                    Adresse email
+                    {t("Adresse e-mail", "Email address")}
                   </Label>
                   <div className="relative mt-2">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
                       id="forgot-email"
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={t("votre@email.com", "you@example.com")}
                       value={forgotPasswordEmail}
                       onChange={e => setForgotPasswordEmail(e.target.value)}
                       className="pl-10"
@@ -582,7 +585,7 @@ export default function Login() {
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    Entrez l'adresse email associée à votre compte. Nous vous enverrons un lien de réinitialisation valable 1 heure.
+                    {t("Saisissez l’adresse e-mail associée à votre compte. Nous vous enverrons un lien de réinitialisation valable 1 heure.", "Enter the email address linked to your account. We will send a password reset link valid for one hour.")}
                   </p>
                 </div>
 
@@ -592,7 +595,7 @@ export default function Login() {
                 >
                   <span className="flex items-center gap-2">
                     <Mail className="w-4 h-4" />
-                    Envoyer le lien
+                    {t("Envoyer le lien", "Send link")}
                   </span>
                 </Button>
 
@@ -601,7 +604,7 @@ export default function Login() {
                   onClick={closeForgotPasswordModal}
                   className="w-full text-gray-600 hover:text-gray-800 font-medium py-2 rounded-lg transition-colors"
                 >
-                  Annuler
+                  {t("Annuler", "Cancel")}
                 </button>
               </form>
             </div>

@@ -1120,3 +1120,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger les boutons, liens ou états inaccessibles identifiés sans modifier les protections ni les parcours sensibles.
 - [x] Valider les routes, contrôles d’accès, boutons critiques, TypeScript, tests et build avant publication.
 - [x] Publier et vérifier la diffusion de la passe d’accessibilité et de style premium.
+
+## Harmonisation des microcopies publiques FR/EN
+- [x] Inventorier les libellés publics résiduels affichés dans une langue incohérente.
+- [x] Traduire les microcopies prioritaires de navigation, footer, connexion et états d’aide.
+- [x] Vérifier la bascule FR/EN sur desktop et mobile sans modifier les contenus légaux ou les données de dossiers.
+- [ ] Valider, publier et vérifier la diffusion de l’harmonisation bilingue.
