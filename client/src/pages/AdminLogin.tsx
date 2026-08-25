@@ -13,6 +13,8 @@ export default function AdminLogin() {
   const [, navigate] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [needsTwoFactor, setNeedsTwoFactor] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState<string>('');
 
@@ -40,7 +42,10 @@ export default function AdminLogin() {
       }
     },
     onError: (err) => {
-      setLocalError(err.message || 'Email ou mot de passe incorrect.');
+      if (err.message.includes('TOTP_REQUIRED')) {
+        setNeedsTwoFactor(true);
+        setLocalError('Saisissez votre code 2FA ou un code de récupération.');
+      } else setLocalError(err.message || 'Email ou mot de passe incorrect.');
     },
   });
 
@@ -62,7 +67,7 @@ export default function AdminLogin() {
       return;
     }
 
-    loginMutation.mutate({ email: email.trim(), password });
+    loginMutation.mutate({ email: email.trim(), password, twoFactorCode: twoFactorCode || undefined });
   };
 
   return (
@@ -135,6 +140,11 @@ export default function AdminLogin() {
                   </button>
                 </div>
               </div>
+
+              {needsTwoFactor && <div>
+                <Label htmlFor="admin-two-factor" className="text-gray-700 font-semibold mb-2 block">Code 2FA ou récupération</Label>
+                <Input id="admin-two-factor" inputMode="numeric" autoComplete="one-time-code" value={twoFactorCode} onChange={(e) => { setTwoFactorCode(e.target.value); setLocalError(''); }} placeholder="Code à six chiffres" disabled={loginMutation.isPending} />
+              </div>}
 
               {localError && (
                 <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

@@ -15,6 +15,7 @@ import { count, desc, eq } from "drizzle-orm";
 import { sendEmail } from "../_core/email";
 import { getPasswordChangedEmailTemplate, getPasswordChangeFailedEmailTemplate } from "../_core/emailTemplates";
 import { randomBytes, randomInt } from "node:crypto";
+import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 export const ADMIN_SESSION_COOKIE = "admin_session";
 const ADMIN_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
@@ -94,6 +95,9 @@ export const adminAuthRouter = router({
     const admin = rows[0];
     if (!admin || admin.status !== "active") return { authenticated: false } as const;
 
+    const twoFactor = await getTwoFactorStatus("admin", admin.id);
+    if (twoFactor.enabled) return { authenticated: false, requiresTwoFactor: true } as const;
+
     const sessionToken = generateSessionToken();
     const sessionExpiresAt = new Date(Date.now() + ADMIN_SESSION_DURATION_MS);
     await db.update(adminAccounts).set({ sessionToken, sessionExpiresAt, lastLoginAt: new Date(), lastActivityAt: new Date() }).where(eq(adminAccounts.id, admin.id));
@@ -115,6 +119,7 @@ export const adminAuthRouter = router({
     .input(z.object({
       email: z.string().email(),
       password: z.string().min(1),
+      twoFactorCode: z.string().trim().min(6).max(32).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -143,6 +148,11 @@ export const adminAuthRouter = router({
       const valid = await bcrypt.compare(input.password, admin.passwordHash);
       if (!valid) {
         throw new TRPCError({ code: "UNAUTHORIZED", message: "Email ou mot de passe incorrect." });
+      }
+
+      const twoFactor = await verifyTwoFactor("admin", admin.id, input.twoFactorCode ?? "");
+      if (twoFactor.required && !twoFactor.valid) {
+        throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
       }
 
       const sessionToken = generateSessionToken();
@@ -176,6 +186,27 @@ export const adminAuthRouter = router({
         email: admin.email,
         requiresPasswordChange: admin.requiresPasswordChange || false,  // Indique si le changement de mot de passe est obligatoire
       };
+    }),
+
+  twoFactorStatus: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      return getTwoFactorStatus("admin", admin.id);
+    }),
+
+  beginTwoFactorEnrollment: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      return beginTwoFactorEnrollment("admin", admin.id, admin.email);
+    }),
+
+  confirmTwoFactorEnrollment: publicProcedure
+    .input(z.object({ sessionToken: z.string().min(1), code: z.string().trim().min(6).max(32) }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken, { allowPasswordChange: true });
+      return confirmTwoFactorEnrollment("admin", admin.id, input.code);
     }),
 
   /** Vérifie la session HttpOnly côté serveur pour protéger l’interface admin. */

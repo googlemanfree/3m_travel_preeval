@@ -38,7 +38,7 @@
             return;
           }
 
-          const SW_REVISION = '2026-08-25-public-prerender-bilingual-credibility-static';
+          const SW_REVISION = '2026-08-25-totp-employer-favorites-static';
           navigator.serviceWorker.register('/sw.js?revision=' + SW_REVISION, { updateViaCache: 'none' }).then(registration => {
             // Toujours rechercher une nouvelle version après un déploiement :
             // cela évite qu’une ancienne page ou un ancien bundle reste affiché.

@@ -7,6 +7,7 @@ export * from "./routeHealthSchema";
 export * from "./richTextSchema";
 export * from "./footerEngagementSchema";
 export * from "./placementPortalSchema";
+export * from "./securityMfaSchema";
 
 /**
  * Core user table backing auth flow.

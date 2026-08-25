@@ -91,6 +91,7 @@ const Blog = lazyWithTimeout(() => import("./pages/Blog"));
 const StudyDestinationArticle = lazyWithTimeout(() => import("./pages/StudyDestinationArticle"));
 const EvaluationSpace = lazyWithTimeout(() => import("./pages/EvaluationSpace"));
 const AdminDashboard = lazyWithTimeout(() => import("./pages/AdminDashboard"));
+const AdminSecurityTotp = lazyWithTimeout(() => import("./pages/AdminSecurityTotp"));
 const AdminEmailCenter = lazyWithTimeout(() => import("./pages/AdminEmailCenter"));
 const AdminEmailSettings = lazyWithTimeout(() => import("./pages/AdminEmailSettings"));
 const FlightAgentDashboard = lazyWithTimeout(() => import("./pages/FlightAgentDashboard"));
@@ -249,6 +250,11 @@ function Router() {
       <Route path={"/admin/dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/securite"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminSecurityTotp />
         </AdminGuard>
       </Route>
       <Route path={"/admin/emails"}>

@@ -1060,3 +1060,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester, publier et vérifier le rendu indexable, les protections et les parcours bilingues.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la passe de crédibilité.
 - [x] Réviser la diffusion PWA pour diffuser la couverture bilingue du module de vérification.
+
+## 2FA, favoris employeur et bilinguisme secondaire
+- [x] Auditer les sessions admin et employeur, les profils, les traductions secondaires et les contrôles existants.
+- [x] Mettre en place un enrôlement 2FA TOTP administrateur et employeur avec codes de récupération à usage unique.
+- [x] Exiger une preuve TOTP ou un code de récupération pour les nouvelles authentifications sans écourter les sessions 24 h valides.
+- [x] Ajouter des favoris privés pour les employeurs vérifiés sans révéler de profils ni de documents supplémentaires.
+- [x] Traduire les contenus secondaires et infobulles de l’accueil et des espaces publics prioritaires.
+- [x] Mettre à jour et valider une compétence réutilisable dédiée à la sécurité TOTP et au bilinguisme.
+- [ ] Tester, publier et vérifier les protections, favoris et parcours bilingues.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la 2FA et aux favoris.

@@ -8,6 +8,7 @@ import {
   candidates,
   placementCandidateProfiles,
   placementEmployerAccounts,
+  placementEmployerFavorites,
   placementOrganizations,
   placementProfileSubmissions,
   placementSubmissionEvents,
@@ -16,6 +17,7 @@ import { getDb } from "../db";
 import { publicProcedure, router } from "../_core/trpc";
 import { requireValidAdminSession } from "./adminAuth";
 import { verifyCandidateToken } from "./candidate";
+import { beginTwoFactorEnrollment, confirmTwoFactorEnrollment, getTwoFactorStatus, verifyTwoFactor } from "../twoFactor";
 
 const employerSessionHours = 24;
 const hashToken = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -121,23 +123,57 @@ export const placementPortalRouter = router({
     return { submissionId };
   }),
 
-  employerLogin: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(1) })).mutation(async ({ input }) => {
+  employerLogin: publicProcedure.input(z.object({ email: z.string().email(), password: z.string().min(1), twoFactorCode: z.string().trim().min(6).max(32).optional() })).mutation(async ({ input }) => {
     const db = await getDb();
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base indisponible." });
     const account = (await db.select().from(placementEmployerAccounts).where(eq(placementEmployerAccounts.email, input.email.toLowerCase())).limit(1))[0];
     if (!account || account.status !== "active" || !(await bcrypt.compare(input.password, account.passwordHash))) throw new TRPCError({ code: "UNAUTHORIZED", message: "Identifiants employeur invalides." });
     const organization = (await db.select().from(placementOrganizations).where(and(eq(placementOrganizations.id, account.organizationId), eq(placementOrganizations.verificationStatus, "verified"))).limit(1))[0];
     if (!organization) throw new TRPCError({ code: "FORBIDDEN", message: "Accès organisation non vérifié." });
+    const twoFactor = await verifyTwoFactor("employer", account.id, input.twoFactorCode ?? "");
+    if (twoFactor.required && !twoFactor.valid) throw new TRPCError({ code: "UNAUTHORIZED", message: input.twoFactorCode ? "Code 2FA invalide ou déjà utilisé." : "TOTP_REQUIRED" });
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));
     return { sessionToken: rawToken, expiresAt, organization: { name: organization.legalName, country: organization.country } };
   }),
 
+  employerTwoFactorStatus: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
+    const { account } = await getEmployerSession(input.sessionToken);
+    return getTwoFactorStatus("employer", account.id);
+  }),
+
+  employerBeginTwoFactorEnrollment: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
+    const { account } = await getEmployerSession(input.sessionToken);
+    return beginTwoFactorEnrollment("employer", account.id, account.email);
+  }),
+
+  employerConfirmTwoFactorEnrollment: publicProcedure.input(z.object({ sessionToken: z.string().min(32), code: z.string().trim().min(6).max(32) })).mutation(async ({ input }) => {
+    const { account } = await getEmployerSession(input.sessionToken);
+    return confirmTwoFactorEnrollment("employer", account.id, input.code);
+  }),
+
   employerProfiles: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
-    const { db, organization } = await getEmployerSession(input.sessionToken);
-    const submissions = await db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt)));
-    return submissions.map(({ submission, profile }) => ({ submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } }));
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const [submissions, favorites] = await Promise.all([
+      db.select({ submission: placementProfileSubmissions, profile: placementCandidateProfiles }).from(placementProfileSubmissions).innerJoin(placementCandidateProfiles, eq(placementProfileSubmissions.profileId, placementCandidateProfiles.id)).where(and(eq(placementProfileSubmissions.organizationId, organization.id), isNull(placementCandidateProfiles.archivedAt))),
+      db.select().from(placementEmployerFavorites).where(eq(placementEmployerFavorites.employerAccountId, account.id)),
+    ]);
+    const favoriteIds = new Set(favorites.map((favorite) => favorite.submissionId));
+    return submissions.map(({ submission, profile }) => ({ submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: favoriteIds.has(submission.id), profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } }));
+  }),
+
+  employerToggleFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const submission = (await db.select().from(placementProfileSubmissions).where(and(eq(placementProfileSubmissions.id, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0];
+    if (!submission) throw new TRPCError({ code: "NOT_FOUND", message: "Profil non accessible." });
+    const favorite = (await db.select().from(placementEmployerFavorites).where(and(eq(placementEmployerFavorites.employerAccountId, account.id), eq(placementEmployerFavorites.submissionId, submission.id))).limit(1))[0];
+    if (favorite) {
+      await db.delete(placementEmployerFavorites).where(eq(placementEmployerFavorites.id, favorite.id));
+      return { favorite: false };
+    }
+    await db.insert(placementEmployerFavorites).values({ employerAccountId: account.id, submissionId: submission.id });
+    return { favorite: true };
   }),
 
   employerRecordDecision: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), decision: z.enum(["under_review", "shortlisted", "selected", "not_selected", "documents_requested"]), note: z.string().trim().max(1000).optional() })).mutation(async ({ input }) => {
