@@ -20,7 +20,9 @@ describe("Navbar avec icônes Lucide", () => {
   it("préserve les contrôles tactiles et les libellés accessibles", () => {
     expect(source).toContain("min-h-11");
     expect(source).toContain("touch-target");
-    expect(source).toContain('aria-label="Navigation principale"');
-    expect(source).toContain('aria-label="Navigation mobile"');
+    expect(source).toContain('mainNav: { fr: "Navigation principale", en: "Main navigation" }');
+    expect(source).toContain('mobileNav: { fr: "Navigation mobile", en: "Mobile navigation" }');
+    expect(source).toContain("aria-label={copy(NAV_COPY.mainNav)}");
+    expect(source).toContain("aria-label={copy(NAV_COPY.mobileNav)}");
   });
 });

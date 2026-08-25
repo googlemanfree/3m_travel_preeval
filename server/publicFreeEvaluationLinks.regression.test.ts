@@ -23,7 +23,7 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
   it("oriente le hero, le menu et les anciens liens vers le formulaire sans compte", () => {
     expect(hero).toContain("PublicEvaluationCTA");
     expect(publicCta).toContain('return `/?project=${encodeURIComponent(project)}#evaluation-multi`');
-    expect(navbar).toContain('{ href: "/?project=travail#evaluation-multi", label: "Évaluation Rapide"');
+    expect(navbar).toContain('{ href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }');
     expect(app).toContain('<Redirect to="/#evaluation-multi" />');
     expect(app).not.toContain('<Route path={"/evaluation-primaire"}>{() => <Redirect to="/evaluation" />}</Route>');
     expect(app).not.toContain('<Route path={"/evaluation-rapide-enhanced"}>{() => <Redirect to="/evaluation" />}</Route>');

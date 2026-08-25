@@ -29,17 +29,41 @@ import {
 } from "lucide-react";
 import { useMultiServiceCart } from "@/contexts/MultiServiceCartContext";
 
-const menuItems: { href: string; label: string; icon: LucideIcon; highlight?: boolean }[] = [
-  { href: "/", label: "Accueil", icon: Home },
-  { href: "/billets", label: "3M Booking", icon: Plane },
-  { href: "/procedures", label: "Procédures", icon: BookOpen },
-  { href: "/ressources", label: "Ressources", icon: Globe2 },
-  { href: "/guide-procedures", label: "Guide PDF", icon: FileText },
-  { href: "/?project=travail#evaluation-multi", label: "Évaluation Rapide", icon: Zap },
-  { href: "/mon-espace", label: "Suivi de dossier", icon: FolderKanban },
-  { href: "/evisas", label: "E-Visa", icon: Smartphone, highlight: true },
-  { href: "/3m-digital", label: "3M Digital", icon: UsersRound },
+type NavCopy = { fr: string; en: string };
+
+const menuItems: { href: string; label: NavCopy; icon: LucideIcon; highlight?: boolean }[] = [
+  { href: "/", label: { fr: "Accueil", en: "Home" }, icon: Home },
+  { href: "/billets", label: { fr: "3M Booking", en: "3M Booking" }, icon: Plane },
+  { href: "/procedures", label: { fr: "Procédures", en: "Procedures" }, icon: BookOpen },
+  { href: "/ressources", label: { fr: "Ressources", en: "Resources" }, icon: Globe2 },
+  { href: "/guide-procedures", label: { fr: "Guide PDF", en: "PDF guide" }, icon: FileText },
+  { href: "/?project=travail#evaluation-multi", label: { fr: "Évaluation rapide", en: "Quick assessment" }, icon: Zap },
+  { href: "/mon-espace", label: { fr: "Suivi de dossier", en: "Case tracking" }, icon: FolderKanban },
+  { href: "/evisas", label: { fr: "E-Visa", en: "e-Visa" }, icon: Smartphone, highlight: true },
+  { href: "/3m-digital", label: { fr: "3M Digital", en: "3M Digital" }, icon: UsersRound },
 ];
+
+const NAV_COPY = {
+  mainNav: { fr: "Navigation principale", en: "Main navigation" },
+  mobileNav: { fr: "Navigation mobile", en: "Mobile navigation" },
+  languageGroup: { fr: "Sélection de langue", en: "Language selector" },
+  cart: { fr: "Panier multi-services", en: "Multi-service cart" },
+  empty: { fr: "vide", en: "empty" },
+  item: { fr: "élément", en: "item" },
+  items: { fr: "éléments", en: "items" },
+  account: { fr: "Accès Client", en: "Client access" },
+  register: { fr: "Inscription", en: "Sign up" },
+  accountSpace: { fr: "Espace Candidat", en: "Candidate space" },
+  accountDashboard: { fr: "Tableau de bord / Dossier", en: "Dashboard / Case" },
+  newAssessment: { fr: "Nouvelle évaluation", en: "New assessment" },
+  logout: { fr: "Se déconnecter", en: "Sign out" },
+  openAccount: { fr: "Ouvrir le menu du compte", en: "Open account menu" },
+  openSpace: { fr: "Ouvrir mon espace", en: "Open my space" },
+  connected: { fr: "Connecté", en: "Signed in" },
+  evaluate: { fr: "Évaluer mon profil", en: "Assess my profile" },
+  openMenu: { fr: "Ouvrir le menu", en: "Open menu" },
+  closeMenu: { fr: "Fermer le menu", en: "Close menu" },
+} satisfies Record<string, NavCopy>;
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
@@ -52,6 +76,7 @@ const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center 
 export default function Navbar() {
   const { candidate, logout } = useCandidateAuth();
   const { language, setLanguage } = useLanguage();
+  const copy = (value: NavCopy) => value[language];
   const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -112,7 +137,7 @@ export default function Navbar() {
           </a>
 
           <nav
-            aria-label="Navigation principale"
+            aria-label={copy(NAV_COPY.mainNav)}
             className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80"
           >
             {menuItems.map((item) => {
@@ -127,7 +152,7 @@ export default function Navbar() {
                 className={nativeLinkClass(item.highlight)}
               >
                 <Icon className="h-4 w-4" aria-hidden="true" />
-                <span>{item.label}</span>
+                <span>{copy(item.label)}</span>
               </a>
               );
             })}
@@ -139,13 +164,13 @@ export default function Navbar() {
               onMouseEnter={() => handleNavigationIntent("/panier")}
               onFocus={() => handleNavigationIntent("/panier")}
               onClick={handleNavigationClick}
-              aria-label={`Panier multi-services${totalItems ? `, ${totalItems} élément${totalItems > 1 ? "s" : ""}` : " vide"}`}
+              aria-label={`${copy(NAV_COPY.cart)}${totalItems ? `, ${totalItems} ${copy(totalItems > 1 ? NAV_COPY.items : NAV_COPY.item)}` : ` ${copy(NAV_COPY.empty)}`}`}
               className="relative inline-flex h-12 w-12 items-center justify-center rounded-xl border border-blue-100 bg-blue-50/80 text-blue-700 transition hover:bg-blue-100"
             >
               <ShoppingBag className="h-5 w-5" aria-hidden="true" />
               {totalItems > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-white">{totalItems > 9 ? "9+" : totalItems}</span>}
             </a>
-            <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label="Sélection de langue / Language selector">
+            <div className="flex items-center gap-1 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60 dark:border-blue-900/40" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
               <button
                 type="button"
                 onClick={() => setLanguage('fr')}
@@ -173,7 +198,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/mon-espace")}
                   onFocus={() => handleNavigationIntent("/mon-espace")}
                   onClick={() => { handleNavigationClick(); closeProfile(); }}
-                  aria-label={`Ouvrir l'espace de ${candidate.fullName || "votre compte"}`}
+                  aria-label={`${copy(NAV_COPY.openSpace)} : ${candidate.fullName || copy(NAV_COPY.accountSpace)}`}
                   className="flex items-center gap-3 rounded-2xl border border-blue-100/80 bg-gradient-to-r from-slate-50 to-blue-50/50 p-1.5 pr-3 transition-all duration-200 hover:from-blue-50 hover:to-indigo-50 hover:shadow"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-sm font-black text-white shadow-md shadow-blue-500/20">
@@ -181,16 +206,16 @@ export default function Navbar() {
                   </div>
                   <div className="text-left">
                     <span className="block max-w-[120px] truncate text-xs font-bold text-[#0a2540]">
-                      {candidate.fullName || "Mon Compte"}
+                      {candidate.fullName || copy(NAV_COPY.accountSpace)}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-600">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Connecté
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> {copy(NAV_COPY.connected)}
                     </span>
                   </div>
                 </a>
                 <button
                   type="button"
-                  aria-label="Ouvrir le menu du compte"
+                  aria-label={copy(NAV_COPY.openAccount)}
                   aria-expanded={isProfileOpen}
                   aria-haspopup="menu"
                   onClick={() => setIsProfileOpen((open) => !open)}
@@ -202,7 +227,7 @@ export default function Navbar() {
                 {isProfileOpen && (
                   <div className="absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl border border-gray-100 rounded-3xl shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200" role="menu">
                     <div className="p-3 bg-slate-50/80 rounded-2xl mb-1 border border-gray-100/60">
-                      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Espace Candidat</p>
+                      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">{copy(NAV_COPY.accountSpace)}</p>
                       <p className="text-sm font-bold text-[#0a2540] truncate mt-0.5">{candidate.email}</p>
                     </div>
                     <a
@@ -213,7 +238,7 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
-                      <FolderKanban className="h-4 w-4" aria-hidden="true" /> Tableau de bord / Dossier
+                      <FolderKanban className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.accountDashboard)}
                     </a>
                     <a
                       href="/evaluation"
@@ -223,7 +248,7 @@ export default function Navbar() {
                       className="flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 rounded-xl transition w-full text-left"
                       role="menuitem"
                     >
-                      <Star className="h-4 w-4" aria-hidden="true" /> Nouvelle Évaluation
+                      <Star className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.newAssessment)}
                     </a>
                     <div className="my-1 border-t border-gray-100" />
                     <button
@@ -232,7 +257,7 @@ export default function Navbar() {
                       className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition text-left"
                       role="menuitem"
                     >
-                      <LogOut className="h-4 w-4" aria-hidden="true" /> Se déconnecter
+                      <LogOut className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.logout)}
                     </button>
                   </div>
                 )}
@@ -246,7 +271,7 @@ export default function Navbar() {
                   onClick={handleNavigationClick}
                   className={`${authButtonClass} bg-blue-50/80 text-blue-700 border border-blue-100 hover:bg-blue-100/80`}
                 >
-                  <UserRound className="h-4 w-4" aria-hidden="true" /> Accès Client
+                  <UserRound className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.account)}
                 </a>
                 <a
                   href="/register"
@@ -255,21 +280,21 @@ export default function Navbar() {
                   onClick={handleNavigationClick}
                   className={`${authButtonClass} bg-blue-600 text-white shadow-sm hover:bg-blue-700`}
                 >
-                  <PenLine className="h-4 w-4" aria-hidden="true" /> Inscription
+                  <PenLine className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.register)}
                 </a>
               </>
             )}
           </div>
 
           <div className="flex lg:hidden items-center gap-2">
-            <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label="Sélection de langue / Language selector">
+            <div className="flex items-center gap-0.5 rounded-xl bg-blue-50 dark:bg-slate-800 p-1 border border-blue-200/60" role="group" aria-label={copy(NAV_COPY.languageGroup)}>
               <button type="button" onClick={() => setLanguage('fr')} aria-label="Français" aria-pressed={language === 'fr'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span></button>
               <button type="button" onClick={() => setLanguage('en')} aria-label="English" aria-pressed={language === 'en'} className={`touch-target inline-flex items-center gap-1 px-1.5 py-1 rounded-lg text-xs transition ${language === 'en' ? 'bg-white dark:bg-slate-700 shadow-sm' : 'opacity-60'}`}><Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span></button>
             </div>
             <ThemeToggle compact />
             <motion.button
               type="button"
-              aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-label={isMenuOpen ? copy(NAV_COPY.closeMenu) : copy(NAV_COPY.openMenu)}
               aria-expanded={isMenuOpen}
               onClick={() => setIsMenuOpen((open) => !open)}
               className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
@@ -298,7 +323,7 @@ export default function Navbar() {
                 href="/mon-espace"
                 onClick={() => { handleNavigationClick(); closeMenu(); }}
                 className="flex items-center gap-3 rounded-2xl border border-blue-100/60 bg-gradient-to-r from-blue-50 to-indigo-50/50 p-3.5 transition hover:bg-white"
-                aria-label={`Ouvrir l'espace de ${candidate.fullName || "votre compte"}`}
+                aria-label={`${copy(NAV_COPY.openSpace)} : ${candidate.fullName || copy(NAV_COPY.accountSpace)}`}
                 variants={itemVariants}
                 initial="hidden"
                 animate="visible"
@@ -308,8 +333,8 @@ export default function Navbar() {
                   {getInitial(candidate.fullName)}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || "Candidat"}</p>
-                  <p className="text-xs font-medium text-blue-600">Ouvrir mon espace</p>
+                  <p className="text-sm font-bold text-[#0a2540]">{candidate.fullName || copy(NAV_COPY.accountSpace)}</p>
+                  <p className="text-xs font-medium text-blue-600">{copy(NAV_COPY.openSpace)}</p>
                   <p className="max-w-[220px] truncate text-[11px] text-slate-500">{candidate.email}</p>
                 </div>
               </motion.a>
@@ -321,13 +346,13 @@ export default function Navbar() {
               onFocus={() => handleNavigationIntent("/panier")}
               onClick={() => { handleNavigationClick(); closeMenu(); }}
               className="mb-2 flex w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 font-bold text-blue-700"
-              aria-label={`Panier multi-services${totalItems ? `, ${totalItems} élément${totalItems > 1 ? "s" : ""}` : " vide"}`}
+              aria-label={`${copy(NAV_COPY.cart)}${totalItems ? `, ${totalItems} ${copy(totalItems > 1 ? NAV_COPY.items : NAV_COPY.item)}` : ` ${copy(NAV_COPY.empty)}`}`}
             >
-              <span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden="true" /> Panier multi-services</span>
+              <span className="flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.cart)}</span>
               <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-black text-white">{totalItems}</span>
             </a>
 
-            <nav aria-label="Navigation mobile" className="space-y-1 mb-4">
+            <nav aria-label={copy(NAV_COPY.mobileNav)} className="space-y-1 mb-4">
               {menuItems.map((item, index) => {
                 const Icon = item.icon;
                 return (
@@ -344,7 +369,7 @@ export default function Navbar() {
                   custom={candidate ? index + 1 : index}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  <span>{item.label}</span>
+                  <span>{copy(item.label)}</span>
                 </motion.a>
                 );
               })}
@@ -368,7 +393,7 @@ export default function Navbar() {
                 animate="visible"
                 custom={menuItems.length + 2}
               >
-                <LogOut className="h-4 w-4" aria-hidden="true" /> Se déconnecter
+                <LogOut className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.logout)}
               </motion.button>
             ) : (
               <motion.div
@@ -385,7 +410,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30`}
                 >
-                  <Star className="h-4 w-4" aria-hidden="true" /> Évaluer mon profil
+                  <Star className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.evaluate)}
                 </a>
                 <a
                   href="/login"
@@ -394,7 +419,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100`}
                 >
-                  <LogIn className="h-4 w-4" aria-hidden="true" /> Accès Client
+                  <LogIn className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.account)}
                 </a>
                 <a
                   href="/register"
@@ -403,7 +428,7 @@ export default function Navbar() {
                   onClick={() => { handleNavigationClick(); closeMenu(); }}
                   className={`${mobileAuthButtonClass} mt-2 bg-blue-600 text-white hover:bg-blue-700`}
                 >
-                  <PenLine className="h-4 w-4" aria-hidden="true" /> Inscription
+                  <PenLine className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.register)}
                 </a>
               </motion.div>
             )}

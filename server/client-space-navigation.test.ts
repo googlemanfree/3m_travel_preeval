@@ -10,8 +10,8 @@ describe("client space navigation", () => {
 
   it("links the authenticated client name and mobile profile card to mon-espace", () => {
     expect(navbar).toContain('href="/mon-espace"');
-    expect(navbar).toContain("Ouvrir mon espace");
-    expect(navbar).toContain("Ouvrir l'espace de");
+    expect(navbar).toContain("openSpace: { fr: \"Ouvrir mon espace\", en: \"Open my space\" }");
+    expect(navbar).toContain("aria-label={`${copy(NAV_COPY.openSpace)}");
   });
 
   it("provides bidirectional client shortcuts without exposing agent routes", () => {

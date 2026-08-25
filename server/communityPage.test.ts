@@ -27,7 +27,7 @@ describe("page communautaire 3M", () => {
     expect(app).toContain('path={"/3m-digital"} component={Community}');
     expect(app).toContain('Redirect to="/3m-digital"');
     expect(app).toContain('path={"/admin/digital-services"}');
-    expect(navbar).toContain('{ href: "/3m-digital", label: "3M Digital"');
+    expect(navbar).toContain('{ href: "/3m-digital", label: { fr: "3M Digital", en: "3M Digital" }');
     expect(footer).toContain("Service 3M Digital");
   });
 });

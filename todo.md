@@ -1012,3 +1012,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester, publier et vérifier publiquement la navigation bilingue et le suivi d’engagement.
 - [x] Rétablir l’alias de routeur Jinko attendu par le composant de recherche d’hôtels afin de valider TypeScript.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public précédant la navigation bilingue.
+
+## Tableau de bord d’engagement, recherche et navigation bilingue
+- [x] Auditer l’analytique, l’administration, la recherche et la navigation existantes.
+- [x] Vérifier l’accessibilité publiée de la page /plan-du-site et de son lien dans le footer.
+- [x] Ajouter une interface admin protégée pour visualiser les statistiques d’engagement du footer.
+- [x] Étendre la recherche du plan du site avec un dictionnaire de synonymes bilingue.
+- [x] Traduire l’intégralité du menu principal de navigation selon la langue sélectionnée.
+- [x] Mettre à jour la compétence réutilisable avec ce workflow et ses contrôles de confidentialité.
+- [ ] Tester, publier et vérifier les droits admin et les parcours publics.
+- [x] Aligner les régressions de navigation sur les libellés bilingues centralisés.

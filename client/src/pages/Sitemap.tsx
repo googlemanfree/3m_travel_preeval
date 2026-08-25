@@ -71,6 +71,33 @@ const SITE_SECTIONS: SitemapSection[] = [
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
+const SITEMAP_SYNONYMS: Record<string, string[]> = {
+  home: ["home", "accueil", "start", "depart"],
+  pricing: ["tarif", "tarifs", "price", "pricing", "cout", "cost", "frais", "fee"],
+  contact: ["contact", "whatsapp", "telephone", "phone", "email", "adresse", "office", "bureau"],
+  assessment: ["evaluation", "assessment", "bilan", "eligibility", "eligibilite", "profil", "score", "preassessment"],
+  booking: ["booking", "billet", "billets", "flight", "flights", "vol", "vols", "hotel", "hotels", "sejour", "stay", "voyage", "travel", "reservation"],
+  procedures: ["procedure", "procedures", "demarche", "demarches", "destination", "visa", "immigration"],
+  evisas: ["evisa", "e-visa", "electronic visa", "visa electronique"],
+  insurance: ["assurance", "insurance", "couverture", "coverage", "travel insurance"],
+  translation: ["traduction", "translation", "certifie", "certified", "document"],
+  official_sources: ["source", "sources", "official", "officiel", "government", "gouvernement", "ambassade", "embassy"],
+  register: ["inscription", "register", "signup", "sign up", "compte", "account"],
+  login: ["connexion", "login", "sign in", "connecter", "connect"],
+  candidate_space: ["espace", "dashboard", "dossier", "case", "suivi", "tracking"],
+};
+
+function linkMatchesQuery(link: SitemapLink, section: SitemapSection, query: string) {
+  if (!query) return true;
+  const searchable = [
+    link.key,
+    ...(SITEMAP_SYNONYMS[link.key] ?? []),
+    link.label.fr, link.label.en, link.description.fr, link.description.en,
+    section.title.fr, section.title.en, section.description.fr, section.description.en,
+  ].map(normalize);
+  return searchable.some((value) => value.includes(query) || query.includes(value));
+}
+
 export default function Sitemap() {
   const { language, setLanguage } = useLanguage();
   const [query, setQuery] = useState("");
@@ -78,8 +105,8 @@ export default function Sitemap() {
   const normalizedQuery = normalize(query);
   const sections = useMemo(() => SITE_SECTIONS.map((section) => ({
     ...section,
-    links: section.links.filter((link) => !normalizedQuery || [link.label[language], link.description[language], section.title[language]].some((value) => normalize(value).includes(normalizedQuery))),
-  })).filter((section) => section.links.length > 0), [language, normalizedQuery]);
+    links: section.links.filter((link) => linkMatchesQuery(link, section, normalizedQuery)),
+  })).filter((section) => section.links.length > 0), [normalizedQuery]);
   const resultCount = sections.reduce((count, section) => count + section.links.length, 0);
 
   return (
