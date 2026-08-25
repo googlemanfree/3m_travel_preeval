@@ -10,7 +10,10 @@ import { canonicalRedirectTarget } from "../canonicalDomain";
 
 function applyCanonicalDomainRedirect(app: Express) {
   app.use((req, res, next) => {
-    const target = canonicalRedirectTarget(req.hostname, req.originalUrl);
+    // Derrière le proxy de production, l'hôte externe peut être fourni dans
+    // X-Forwarded-Host alors que req.hostname contient l'hôte interne Railway.
+    const forwardedHost = req.get("x-forwarded-host")?.split(",")[0]?.trim();
+    const target = canonicalRedirectTarget(forwardedHost || req.hostname, req.originalUrl);
     if (!target) return next();
     return res.redirect(301, target);
   });
