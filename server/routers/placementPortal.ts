@@ -10,6 +10,7 @@ import {
   placementEmployerAccounts,
   placementEmployerFavorites,
   placementEmployerFavoriteShares,
+  placementEmployerNotifications,
   placementOrganizations,
   placementProfileSubmissions,
   placementSubmissionEvents,
@@ -37,6 +38,12 @@ async function getEmployerSession(rawToken: string) {
     .where(and(eq(placementOrganizations.id, account.organizationId), eq(placementOrganizations.verificationStatus, "verified"))).limit(1))[0];
   if (!organization) throw new TRPCError({ code: "FORBIDDEN", message: "Organisation non vérifiée ou accès suspendu." });
   return { db, account, organization };
+}
+
+function requireEmployerManager(account: { collaborationRole: "reader" | "manager" }) {
+  if (account.collaborationRole !== "manager") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Cette action est réservée aux gestionnaires de l’organisation." });
+  }
 }
 
 export const placementPortalRouter = router({
@@ -89,7 +96,8 @@ export const placementPortalRouter = router({
     if (!organization) throw new TRPCError({ code: "BAD_REQUEST", message: "Vérifiez l’organisation avant de créer son accès." });
     const temporaryPassword = randomBytes(12).toString("base64url");
     const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-    await db.insert(placementEmployerAccounts).values({ organizationId: organization.id, fullName: input.fullName, email: input.email.toLowerCase(), passwordHash, status: "active", createdByAdminId: admin.id });
+    const existingAccounts = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.organizationId, organization.id));
+    await db.insert(placementEmployerAccounts).values({ organizationId: organization.id, fullName: input.fullName, email: input.email.toLowerCase(), passwordHash, status: "active", collaborationRole: existingAccounts.length === 0 ? "manager" : "reader", createdByAdminId: admin.id });
     return { temporaryPassword, message: "Accès créé. Remettez les identifiants par un canal approuvé après vérification humaine." };
   }),
 
@@ -136,7 +144,7 @@ export const placementPortalRouter = router({
     const rawToken = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + employerSessionHours * 60 * 60 * 1000);
     await db.update(placementEmployerAccounts).set({ sessionTokenHash: hashToken(rawToken), sessionExpiresAt: expiresAt, lastLoginAt: new Date() }).where(eq(placementEmployerAccounts.id, account.id));
-    return { sessionToken: rawToken, expiresAt, organization: { name: organization.legalName, country: organization.country } };
+    return { sessionToken: rawToken, expiresAt, organization: { name: organization.legalName, country: organization.country }, collaborationRole: account.collaborationRole };
   }),
 
   employerTwoFactorStatus: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
@@ -169,17 +177,27 @@ export const placementPortalRouter = router({
     const sharers = sharedByIds.length ? await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName }).from(placementEmployerAccounts).where(inArray(placementEmployerAccounts.id, sharedByIds)) : [];
     const sharerName = new Map(sharers.map((sharer) => [sharer.id, sharer.fullName]));
     const shareBySubmission = new Map(receivedShares.map((share) => [submissionBySourceFavorite.get(share.sourceFavoriteId), share]));
+    const ownFavoriteIds = favorites.map((favorite) => favorite.id);
+    const outgoingRows = ownFavoriteIds.length ? await db.select({ share: placementEmployerFavoriteShares, recipient: placementEmployerAccounts }).from(placementEmployerFavoriteShares).innerJoin(placementEmployerAccounts, eq(placementEmployerFavoriteShares.recipientEmployerAccountId, placementEmployerAccounts.id)).where(and(eq(placementEmployerFavoriteShares.organizationId, organization.id), inArray(placementEmployerFavoriteShares.sourceFavoriteId, ownFavoriteIds), isNull(placementEmployerFavoriteShares.revokedAt))) : [];
+    const outgoingBySubmission = new Map<number, Array<{ shareId: number; recipientName: string; recipientAccountId: number; sharedAt: Date }>>();
+    for (const { share, recipient } of outgoingRows) {
+      const submissionId = submissionBySourceFavorite.get(share.sourceFavoriteId);
+      if (!submissionId) continue;
+      const collection = outgoingBySubmission.get(submissionId) ?? [];
+      collection.push({ shareId: share.id, recipientName: recipient.fullName, recipientAccountId: recipient.id, sharedAt: share.createdAt });
+      outgoingBySubmission.set(submissionId, collection);
+    }
     return submissions.map(({ submission, profile }) => {
       const favorite = favoritesBySubmission.get(submission.id);
       const shared = shareBySubmission.get(submission.id);
-      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
+      return { submissionId: submission.id, status: submission.status, submittedAt: submission.submittedAt, lastResponseAt: submission.lastResponseAt, isFavorite: Boolean(favorite), privateNote: favorite?.privateNote ?? null, sharedWithMe: shared ? { shareId: shared.id, sharedByName: sharerName.get(shared.sharedByEmployerAccountId) ?? "Collaborateur", sharedAt: shared.createdAt } : null, outgoingShares: outgoingBySubmission.get(submission.id) ?? [], profile: { code: profile.profileCode, summary: profile.summary, targetDestination: profile.targetDestination, targetProcedure: profile.targetProcedure, sector: profile.sector, yearsExperience: profile.yearsExperience, languagesSummary: profile.languagesSummary } };
     });
   }),
 
   employerCollaborators: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
-    const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active")));
-    return collaborators.filter((collaborator) => collaborator.id !== account.id);
+    const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName, collaborationRole: placementEmployerAccounts.collaborationRole }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active")));
+    return { currentRole: account.collaborationRole, collaborators: collaborators.filter((collaborator) => collaborator.id !== account.id) };
   }),
 
   employerToggleFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive() })).mutation(async ({ input }) => {
@@ -207,16 +225,54 @@ export const placementPortalRouter = router({
 
   employerShareFavorite: publicProcedure.input(z.object({ sessionToken: z.string().min(32), submissionId: z.number().int().positive(), recipientEmployerAccountId: z.number().int().positive() })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
     if (input.recipientEmployerAccountId === account.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez un autre collaborateur." });
     const favorite = (await db.select({ favorite: placementEmployerFavorites }).from(placementEmployerFavorites).innerJoin(placementProfileSubmissions, eq(placementEmployerFavorites.submissionId, placementProfileSubmissions.id)).where(and(eq(placementEmployerFavorites.employerAccountId, account.id), eq(placementEmployerFavorites.submissionId, input.submissionId), eq(placementProfileSubmissions.organizationId, organization.id))).limit(1))[0]?.favorite;
     if (!favorite) throw new TRPCError({ code: "NOT_FOUND", message: "Ajoutez d’abord ce profil à vos favoris." });
     const recipient = (await db.select().from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.id, input.recipientEmployerAccountId), eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active"))).limit(1))[0];
     if (!recipient) throw new TRPCError({ code: "FORBIDDEN", message: "Collaborateur non disponible dans cette organisation." });
     const existing = (await db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.sourceFavoriteId, favorite.id), eq(placementEmployerFavoriteShares.recipientEmployerAccountId, recipient.id))).limit(1))[0];
+    let shareId = existing?.id;
     if (existing) await db.update(placementEmployerFavoriteShares).set({ revokedAt: null }).where(eq(placementEmployerFavoriteShares.id, existing.id));
-    else await db.insert(placementEmployerFavoriteShares).values({ sourceFavoriteId: favorite.id, organizationId: organization.id, recipientEmployerAccountId: recipient.id, sharedByEmployerAccountId: account.id });
+    else {
+      const result = await db.insert(placementEmployerFavoriteShares).values({ sourceFavoriteId: favorite.id, organizationId: organization.id, recipientEmployerAccountId: recipient.id, sharedByEmployerAccountId: account.id });
+      shareId = Number((result as any)[0]?.insertId ?? 0);
+    }
+    await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: recipient.id, actorEmployerAccountId: account.id, type: "favorite_shared", shareId: shareId || null, message: "Un profil favori déjà autorisé a été partagé avec vous par un collaborateur." });
     await db.insert(placementSubmissionEvents).values({ submissionId: input.submissionId, actorType: "employer", actorId: account.id, action: "favorite_shared_internally", note: "Favori partagé avec un collaborateur de la même organisation." });
     return { message: "Favori partagé au sein de votre organisation." };
+  }),
+
+  employerRevokeFavoriteShare: publicProcedure.input(z.object({ sessionToken: z.string().min(32), shareId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    const share = (await db.select().from(placementEmployerFavoriteShares).where(and(eq(placementEmployerFavoriteShares.id, input.shareId), eq(placementEmployerFavoriteShares.organizationId, organization.id), isNull(placementEmployerFavoriteShares.revokedAt))).limit(1))[0];
+    if (!share) throw new TRPCError({ code: "NOT_FOUND", message: "Partage actif introuvable." });
+    if (share.sharedByEmployerAccountId !== account.id) requireEmployerManager(account);
+    await db.update(placementEmployerFavoriteShares).set({ revokedAt: new Date() }).where(eq(placementEmployerFavoriteShares.id, share.id));
+    await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: share.recipientEmployerAccountId, actorEmployerAccountId: account.id, type: "share_revoked", shareId: share.id, message: "Un partage de profil favori a été révoqué dans votre organisation." });
+    return { message: "Partage révoqué." };
+  }),
+
+  employerNotifications: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    return db.select().from(placementEmployerNotifications).where(and(eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id))).orderBy(placementEmployerNotifications.createdAt);
+  }),
+
+  employerMarkNotificationRead: publicProcedure.input(z.object({ sessionToken: z.string().min(32), notificationId: z.number().int().positive() })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    await db.update(placementEmployerNotifications).set({ readAt: new Date() }).where(and(eq(placementEmployerNotifications.id, input.notificationId), eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id)));
+    return { ok: true };
+  }),
+
+  employerSetCollaboratorRole: publicProcedure.input(z.object({ sessionToken: z.string().min(32), collaboratorId: z.number().int().positive(), role: z.enum(["reader", "manager"]) })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
+    if (input.collaboratorId === account.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Modifiez votre propre rôle via un autre gestionnaire." });
+    const collaborator = (await db.select().from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.id, input.collaboratorId), eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active"))).limit(1))[0];
+    if (!collaborator) throw new TRPCError({ code: "FORBIDDEN", message: "Collaborateur non disponible dans cette organisation." });
+    await db.update(placementEmployerAccounts).set({ collaborationRole: input.role }).where(eq(placementEmployerAccounts.id, collaborator.id));
+    await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: collaborator.id, actorEmployerAccountId: account.id, type: "role_changed", message: input.role === "manager" ? "Votre rôle de collaboration est désormais gestionnaire." : "Votre rôle de collaboration est désormais lecteur." });
+    return { role: input.role };
   }),
 
   employerExportFavorites: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {

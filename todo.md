@@ -1086,3 +1086,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester l’isolement des organisations, la traçabilité et les droits de partage.
 - [x] Publier et vérifier le partage collaboratif des favoris.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au partage collaboratif.
+
+## Partage collaboratif avancé
+- [x] Auditer les partages, collaborateurs, notifications et contrôles de rôles existants.
+- [x] Ajouter la révocation ciblée d’un partage par son auteur ou un gestionnaire d’organisation.
+- [x] Ajouter des notifications internes pour les nouveaux partages reçus dans la même organisation.
+- [x] Ajouter les rôles lecteur et gestionnaire aux collaborateurs et appliquer leurs droits au partage.
+- [x] Mettre à jour et valider une compétence réutilisable dédiée au partage collaboratif sécurisé.
+- [ ] Tester, publier et vérifier les rôles, révocations et notifications internes.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux rôles et notifications.

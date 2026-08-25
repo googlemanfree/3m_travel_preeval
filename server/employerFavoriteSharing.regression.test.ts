@@ -26,4 +26,23 @@ describe("partage collaboratif des favoris employeur", () => {
     expect(router).toContain("favorite_shared_internally");
     expect(router).not.toContain("privateNote: shared");
   });
+
+  it("réserve la gestion du partage aux gestionnaires et conserve une révocation traçable", () => {
+    const router = read("server/routers/placementPortal.ts");
+    expect(router).toContain("requireEmployerManager");
+    expect(router).toContain("employerRevokeFavoriteShare");
+    expect(router).toContain("revokedAt: new Date()");
+    expect(router).toContain("share.sharedByEmployerAccountId !== account.id");
+  });
+
+  it("crée uniquement des notifications internes limitées à l’organisation", () => {
+    const schema = read("drizzle/securityMfaSchema.ts");
+    const router = read("server/routers/placementPortal.ts");
+    expect(schema).toContain("placementEmployerNotifications");
+    expect(schema).toContain("recipientEmployerAccountId");
+    expect(router).toContain("employerNotifications");
+    expect(router).toContain("favorite_shared");
+    expect(router).toContain("share_revoked");
+    expect(router).toContain("role_changed");
+  });
 });

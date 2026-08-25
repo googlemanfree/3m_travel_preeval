@@ -24,6 +24,7 @@ export const placementEmployerAccounts = mysqlTable("placement_employer_accounts
   sessionTokenHash: varchar("session_token_hash", { length: 128 }),
   sessionExpiresAt: timestamp("session_expires_at"),
   status: mysqlEnum("status", ["invited", "active", "suspended"]).notNull().default("invited"),
+  collaborationRole: mysqlEnum("collaboration_role", ["reader", "manager"]).notNull().default("reader"),
   createdByAdminId: int("created_by_admin_id").notNull(),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),

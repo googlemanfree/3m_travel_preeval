@@ -47,3 +47,16 @@ export const placementEmployerFavoriteShares = mysqlTable("placement_employer_fa
   uniqueIndex("uniq_favorite_share_recipient").on(table.sourceFavoriteId, table.recipientEmployerAccountId),
   index("idx_favorite_share_recipient").on(table.organizationId, table.recipientEmployerAccountId, table.revokedAt),
 ]);
+
+/** Alerte interne limitée à l’organisation : jamais de donnée candidat détaillée dans le message. */
+export const placementEmployerNotifications = mysqlTable("placement_employer_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  recipientEmployerAccountId: int("recipient_employer_account_id").notNull(),
+  actorEmployerAccountId: int("actor_employer_account_id"),
+  type: mysqlEnum("type", ["favorite_shared", "share_revoked", "role_changed"]).notNull(),
+  shareId: int("share_id"),
+  message: varchar("message", { length: 500 }).notNull(),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_employer_notification_recipient").on(table.organizationId, table.recipientEmployerAccountId, table.readAt, table.createdAt)]);
