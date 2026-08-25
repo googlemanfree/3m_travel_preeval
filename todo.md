@@ -1093,5 +1093,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des notifications internes pour les nouveaux partages reçus dans la même organisation.
 - [x] Ajouter les rôles lecteur et gestionnaire aux collaborateurs et appliquer leurs droits au partage.
 - [x] Mettre à jour et valider une compétence réutilisable dédiée au partage collaboratif sécurisé.
-- [ ] Tester, publier et vérifier les rôles, révocations et notifications internes.
+- [x] Tester, publier et vérifier les rôles, révocations et notifications internes.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux rôles et notifications.
