@@ -1119,4 +1119,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir puis appliquer une palette premium accessible et cohérente aux composants partagés.
 - [x] Corriger les boutons, liens ou états inaccessibles identifiés sans modifier les protections ni les parcours sensibles.
 - [x] Valider les routes, contrôles d’accès, boutons critiques, TypeScript, tests et build avant publication.
-- [ ] Publier et vérifier la diffusion de la passe d’accessibilité et de style premium.
+- [x] Publier et vérifier la diffusion de la passe d’accessibilité et de style premium.
