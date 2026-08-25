@@ -337,6 +337,17 @@ export function CandidateDetailModal({
     },
     onError: (err) => toast({ title: "Activation impossible", description: err.message, variant: "destructive" }),
   });
+  const isPreDossierActivationDisabled = !preDossierDestination.trim()
+    || !preDossierVisaType.trim()
+    || evaluationBlocksActivation
+    || activatePreDossierMutation.isPending;
+  const preDossierActivationGuidance = activatePreDossierMutation.isPending
+    ? "Activation en cours : veuillez patienter."
+    : evaluationBlocksActivation
+      ? "Validez l’évaluation déclarée ou demandez un complément avant d’ouvrir le dossier."
+      : !preDossierDestination.trim() || !preDossierVisaType.trim()
+        ? "Renseignez la destination confirmée et la procédure pour activer ce bouton."
+        : "Les informations requises sont complètes. Une confirmation sera demandée avant l’activation.";
 
   const reviewEvaluationMutation = trpc.adminCandidateManagement.reviewEvaluationDeclaration.useMutation({
     onSuccess: (result) => {
@@ -462,7 +473,7 @@ export function CandidateDetailModal({
                     <div><Label htmlFor="predossier-procedure-modal">Procédure</Label><Input id="predossier-procedure-modal" className="mt-2" value={preDossierVisaType} onChange={(event) => setPreDossierVisaType(event.target.value)} placeholder="Ex. Études, travail, tourisme" /></div>
                   </div>
                   <div className="mt-4"><Label htmlFor="predossier-notes-modal">Note interne</Label><textarea id="predossier-notes-modal" value={preDossierNotes} onChange={(event) => setPreDossierNotes(event.target.value)} placeholder="Pièces déposées, suite attendue, décision de l’agence…" className="mt-2 min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50" /></div>
-                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={!preDossierDestination.trim() || !preDossierVisaType.trim() || evaluationBlocksActivation || activatePreDossierMutation.isPending} className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p className="text-xs text-slate-500">Une confirmation explicite est demandée avant création du dossier et notification du client.</p></div>
+                  <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center"><Button onClick={() => setPreDossierConfirmationOpen(true)} disabled={isPreDossierActivationDisabled} aria-describedby="predossier-activation-guidance" className="bg-blue-700 hover:bg-blue-800"><FileCheck className="mr-2 h-4 w-4" />Ouvrir le dossier et activer le suivi</Button><p id="predossier-activation-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{preDossierActivationGuidance}</p></div>
                 </section>
               </>
             ) : (
@@ -506,7 +517,8 @@ export function CandidateDetailModal({
                     <input type="checkbox" checked={notifyClient} onChange={(e) => setNotifyClient(e.target.checked)} className="mt-0.5 rounded border-slate-300 text-blue-700" />
                     <span>Notifier le candidat par e-mail après la mise à jour.</span>
                   </label>
-                  <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} className="w-full bg-blue-700 hover:bg-blue-800">
+                  <p id="candidate-status-guidance" role="status" aria-live="polite" className="text-xs text-slate-500">{updateStatusMutation.isPending ? "Mise à jour du statut en cours." : selectedStatus ? "Le statut est prêt à être enregistré." : "Choisissez un statut pour activer l’enregistrement."}</p>
+                  <Button onClick={handleStatusUpdate} disabled={!selectedStatus || updateStatusMutation.isPending} aria-describedby="candidate-status-guidance" className="w-full bg-blue-700 hover:bg-blue-800">
                     {updateStatusMutation.isPending ? <><RefreshCw className="mr-2 h-4 w-4 animate-spin" />Mise à jour…</> : "Enregistrer la décision"}
                   </Button>
                 </div>

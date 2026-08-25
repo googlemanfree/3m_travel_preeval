@@ -768,7 +768,7 @@ export default function CanadaScoreSimulator() {
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     <p>Le capital points d’âge est maximal entre 20 et 29 ans. Pensez à déposer rapidement votre dossier.</p>
@@ -789,7 +789,7 @@ export default function CanadaScoreSimulator() {
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     <p>Un Master ou un Doctorat ou une double diplomation augmente significativement votre score académique.</p>
@@ -810,7 +810,7 @@ export default function CanadaScoreSimulator() {
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     <p>Justifier de 3 ans ou plus d’expérience qualifiée (NOC TEER 0, 1, 2 ou 3) maximise ce volet.</p>
@@ -831,7 +831,7 @@ export default function CanadaScoreSimulator() {
               <TooltipProvider delayDuration={150}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <p className="text-xs text-gray-500 cursor-help underline decoration-dotted">Conseil d’amélioration &gt;</p>
+                    <button type="button" className="text-left text-xs text-gray-500 underline decoration-dotted outline-none focus-visible:rounded-sm focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2">Conseil d’amélioration &gt;</button>
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs text-xs">
                     <p>Le bilinguisme (Français NCLC 7 + Anglais CLB 9) est le moyen le plus rapide de gagner jusqu'à 60 points bonus.</p>

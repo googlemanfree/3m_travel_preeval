@@ -1133,3 +1133,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier les réponses HTTP, canoniques et sitemap publiés sans promettre le délai de réindexation Google.
 - [x] Publier et consigner la correction de domaine officiel.
 - [x] Configurer dans Manus une redirection permanente de .click vers https://www.3mtravelagency.com et vérifier la réponse HTTP 301 publique.
+
+## Audit exhaustif des boutons et contrôles interactifs
+- [x] Cartographier les routes et les contrôles prioritaires du site public, des espaces client, employeur et administrateur.
+- [x] Tester les boutons, liens, modales et navigations non sensibles, y compris au clavier et sur mobile.
+- [x] Corriger les contrôles inaccessibles ou sans retour clair identifiés lors de l’audit.
+- [x] Couvrir les régressions des contrôles corrigés et vérifier les parcours protégés sans déclencher d’action métier.
+- [ ] Publier et vérifier la diffusion de la passe d’accessibilité fonctionnelle.
