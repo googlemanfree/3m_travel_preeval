@@ -91,7 +91,15 @@
   </head>
 
   <body>
-    <div id="root"><!--prerender-app-->
+    <script>
+      (function () {
+        var legacyHosts = { "3mtravelagency.click": true, "www.3mtravelagency.click": true };
+        if (legacyHosts[window.location.hostname]) {
+          window.location.replace("https://www.3mtravelagency.com" + window.location.pathname + window.location.search + window.location.hash);
+        }
+      })();
+    </script>
+    <div id="root"><!--prerender-app--></div>
       <div class="boot-fallback" role="status" aria-live="polite">
         <div class="boot-fallback__content">
           <strong>3M Travel &amp; Services</strong>
