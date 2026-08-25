@@ -1139,4 +1139,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester les boutons, liens, modales et navigations non sensibles, y compris au clavier et sur mobile.
 - [x] Corriger les contrôles inaccessibles ou sans retour clair identifiés lors de l’audit.
 - [x] Couvrir les régressions des contrôles corrigés et vérifier les parcours protégés sans déclencher d’action métier.
-- [ ] Publier et vérifier la diffusion de la passe d’accessibilité fonctionnelle.
+- [x] Publier et vérifier la diffusion de la passe d’accessibilité fonctionnelle.
