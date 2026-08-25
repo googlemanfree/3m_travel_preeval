@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v17-sitemap-search-language-engagement-static';
+const CACHE_NAME = '3m-travel-pwa-v18-footer-analytics-menu-bilingual-static';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'

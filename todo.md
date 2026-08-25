@@ -1022,3 +1022,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre à jour la compétence réutilisable avec ce workflow et ses contrôles de confidentialité.
 - [ ] Tester, publier et vérifier les droits admin et les parcours publics.
 - [x] Aligner les régressions de navigation sur les libellés bilingues centralisés.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux statistiques et au menu bilingue.
