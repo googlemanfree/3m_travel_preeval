@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AvatarCropperModal } from "@/components/AvatarCropperModal";
+import { PlacementConsentCard } from "@/components/PlacementConsentCard";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -904,6 +905,8 @@ export default function ClientDashboard() {
             )}
           </CardContent>
         </Card>
+
+        <PlacementConsentCard />
 
         <Card id="payment-dossier" className={`border ${paymentStatusClass}`}>
           <CardHeader className="pb-3">

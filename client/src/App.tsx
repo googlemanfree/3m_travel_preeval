@@ -61,6 +61,7 @@ const DossierConfirmation = lazyWithTimeout(() => import("./pages/DossierConfirm
 const ConditionsUtilisation = lazyWithTimeout(() => import("./pages/ConditionsUtilisation"));
 const Accessibility = lazyWithTimeout(() => import("./pages/Accessibility"));
 const Sitemap = lazyWithTimeout(() => import("./pages/Sitemap"));
+const EmployerPortal = lazyWithTimeout(() => import("./pages/EmployerPortal"));
 const AdminEvaluation = lazyWithTimeout(() => import("./pages/AdminEvaluation"));
 const AdminLogin = lazyWithTimeout(() => import("./pages/AdminLogin"));
 const AdminChangePasswordRequired = lazyWithTimeout(() => import("./pages/AdminChangePasswordRequired"));
@@ -176,6 +177,7 @@ function Router() {
       <Route path={"/conditions-utilisation"} component={ConditionsUtilisation} />
       <Route path={"/accessibilite"} component={Accessibility} />
       <Route path={"/plan-du-site"} component={Sitemap} />
+      <Route path={"/employeurs"} component={EmployerPortal} />
       <Route path={"/traduction/order"} component={TranslationOrder} />
       {/* Entrée historique : l’espace client unique est désormais /mon-espace. */}
       <Route path={"/dashboard"}>{() => <Redirect to="/mon-espace" />}</Route>

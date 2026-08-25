@@ -1034,3 +1034,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tester les droits, synchronisations et déclenchements sensibles avant publication.
 - [x] Protéger la route d’interface des dossiers agence afin de ne jamais exposer les informations candidats hors session administrateur.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours pré-dossier corrigé.
+
+## Cockpit de pilotage des dossiers
+- [ ] Auditer les vues admin, priorités, échéances et données de blocage existantes.
+- [ ] Ajouter un cockpit de priorités avec prochaines actions, échéances et raisons de blocage explicites.
+- [ ] Ajouter des filtres et une actualisation manuelle pour orienter le traitement sans automatiser les décisions sensibles.
+- [ ] Tester, publier et vérifier le pilotage des dossiers côté administrateur.
+
+## Parcours mobilité candidats, partenaires et employeurs
+- [x] Auditer les consentements, profils candidats, partenaires de placement et transmissions de dossier existants.
+- [x] Ajouter un suivi administratif traçable des étapes évaluation, soumission partenaire, sélection employeur et procédure.
+- [x] Améliorer l’espace client avec le suivi lisible des retours de placement et des pièces attendues.
+- [x] Créer un portail employeur réservé aux organisations vérifiées, limité aux profils autorisés par les candidats et l’administration.
+- [ ] Tester les droits, consentements, historiques et synchronisations avant publication.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur au parcours de placement sécurisé.

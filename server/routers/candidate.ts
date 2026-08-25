@@ -48,7 +48,7 @@ export function signCandidateToken(candidateId: number): string {
   });
 }
 
-function verifyCandidateToken(token: string): number {
+export function verifyCandidateToken(token: string): number {
   try {
     const payload = jwt.verify(token, JWT_SECRET) as unknown as { sub: number; type: string };
     if (payload.type !== "candidate") throw new Error("wrong token type");

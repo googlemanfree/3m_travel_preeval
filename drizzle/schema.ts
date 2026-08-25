@@ -6,6 +6,7 @@ export * from "./evisaCatalogueSchema";
 export * from "./routeHealthSchema";
 export * from "./richTextSchema";
 export * from "./footerEngagementSchema";
+export * from "./placementPortalSchema";
 
 /**
  * Core user table backing auth flow.

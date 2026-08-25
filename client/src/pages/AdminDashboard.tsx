@@ -92,6 +92,7 @@ import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueMana
 import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
 import { AdminSystemStatus } from "@/components/AdminSystemStatus";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
+import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1261,6 +1262,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </section>
+
+        <AdminPlacementPipeline sessionToken={sessionToken} />
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (
