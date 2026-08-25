@@ -35,3 +35,9 @@ Après propagation, le domaine public affiche le plan du site structuré en quat
 URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=56fce112&navigation-search-language=public-v17`.
 
 Le domaine public affiche la barre « Rechercher dans le plan du site », les commandes « Français » et « English », ainsi que la page complète en anglais. La bascule vers le français a été vérifiée dans la même session : les titres, descriptions et raccourcis du footer sont revenus en français. L’infobulle du raccourci « Évaluation gratuite » est visible au focus clavier en français. Le registre d’engagement minimal a été migré et le code de suivi est diffusé ; aucun clic de démonstration n’a été envoyé afin de ne pas fausser les statistiques réelles. À ce contrôle, le chemin statique du worker public renvoyait encore le cache v16, mais le bundle de navigation v17 et ses fonctionnalités sont effectivement chargés et vérifiés sur le domaine public.
+
+## Vérification après la révision PWA v18 — menu global et recherche à synonymes
+
+URL contrôlée : `https://www.3mtravelagency.com/plan-du-site?release=608959b8&footer-analytics-menu-bilingual=deployment-confirmed`.
+
+Le domaine public a chargé le menu principal issu de la révision v18. Après sélection de « English », les éléments observés sont notamment « Home », « Procedures », « Resources », « PDF guide », « Quick assessment » et « Case tracking », avec les actions « Client access » et « Sign up ». La recherche publique accepte le synonyme `hotel` et conserve le résultat « 3M Booking » (`1 results`). La route admin locale affiche le refus d’accès sans authentification, tandis que le résumé agrégé d’engagement est contrôlé côté serveur par une session administrateur valide. Aucun clic artificiel n’a été enregistré dans le registre d’engagement.

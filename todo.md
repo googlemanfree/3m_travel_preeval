@@ -1020,6 +1020,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Étendre la recherche du plan du site avec un dictionnaire de synonymes bilingue.
 - [x] Traduire l’intégralité du menu principal de navigation selon la langue sélectionnée.
 - [x] Mettre à jour la compétence réutilisable avec ce workflow et ses contrôles de confidentialité.
-- [ ] Tester, publier et vérifier les droits admin et les parcours publics.
+- [x] Tester, publier et vérifier les droits admin et les parcours publics.
 - [x] Aligner les régressions de navigation sur les libellés bilingues centralisés.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux statistiques et au menu bilingue.
