@@ -1095,3 +1095,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre à jour et valider une compétence réutilisable dédiée au partage collaboratif sécurisé.
 - [x] Tester, publier et vérifier les rôles, révocations et notifications internes.
 - [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur aux rôles et notifications.
+
+## Gouvernance collaborative et journal d’activité
+- [x] Auditer les journaux, collaborateurs et notifications internes existants.
+- [x] Ajouter un journal d’activité exportable des partages, révocations et changements de rôles.
+- [x] Permettre aux gestionnaires de suspendre puis réactiver un collaborateur sans supprimer son compte.
+- [x] Ajouter un indicateur de notifications non lues et une action pour toutes les marquer comme lues.
+- [x] Mettre à jour et valider une compétence réutilisable de gouvernance collaborative.
+- [ ] Tester, publier et vérifier l’export, la suspension et les notifications.
+- [x] Réviser la diffusion PWA pour évacuer le bundle public antérieur à la gouvernance collaborative.

@@ -10,6 +10,7 @@ import {
   placementEmployerAccounts,
   placementEmployerFavorites,
   placementEmployerFavoriteShares,
+  placementEmployerCollaborationEvents,
   placementEmployerNotifications,
   placementOrganizations,
   placementProfileSubmissions,
@@ -44,6 +45,22 @@ function requireEmployerManager(account: { collaborationRole: "reader" | "manage
   if (account.collaborationRole !== "manager") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Cette action est réservée aux gestionnaires de l’organisation." });
   }
+}
+
+async function writeCollaborationEvent(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  data: { organizationId: number; actorId: number; actorName: string; action: string; targetId?: number | null; targetName?: string | null; shareId?: number | null; profileCode?: string | null },
+) {
+  await db.insert(placementEmployerCollaborationEvents).values({
+    organizationId: data.organizationId,
+    actorEmployerAccountId: data.actorId,
+    actorName: data.actorName,
+    action: data.action,
+    targetEmployerAccountId: data.targetId ?? null,
+    targetName: data.targetName ?? null,
+    shareId: data.shareId ?? null,
+    profileCode: data.profileCode ?? null,
+  });
 }
 
 export const placementPortalRouter = router({
@@ -196,7 +213,7 @@ export const placementPortalRouter = router({
 
   employerCollaborators: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).query(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
-    const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName, collaborationRole: placementEmployerAccounts.collaborationRole }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active")));
+    const collaborators = await db.select({ id: placementEmployerAccounts.id, fullName: placementEmployerAccounts.fullName, collaborationRole: placementEmployerAccounts.collaborationRole, status: placementEmployerAccounts.status }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), inArray(placementEmployerAccounts.status, ["active", "suspended"])));
     return { currentRole: account.collaborationRole, collaborators: collaborators.filter((collaborator) => collaborator.id !== account.id) };
   }),
 
@@ -240,6 +257,7 @@ export const placementPortalRouter = router({
     }
     await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: recipient.id, actorEmployerAccountId: account.id, type: "favorite_shared", shareId: shareId || null, message: "Un profil favori déjà autorisé a été partagé avec vous par un collaborateur." });
     await db.insert(placementSubmissionEvents).values({ submissionId: input.submissionId, actorType: "employer", actorId: account.id, action: "favorite_shared_internally", note: "Favori partagé avec un collaborateur de la même organisation." });
+    await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: recipient.id, targetName: recipient.fullName, action: "favorite_shared", shareId: shareId || null });
     return { message: "Favori partagé au sein de votre organisation." };
   }),
 
@@ -250,6 +268,8 @@ export const placementPortalRouter = router({
     if (share.sharedByEmployerAccountId !== account.id) requireEmployerManager(account);
     await db.update(placementEmployerFavoriteShares).set({ revokedAt: new Date() }).where(eq(placementEmployerFavoriteShares.id, share.id));
     await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: share.recipientEmployerAccountId, actorEmployerAccountId: account.id, type: "share_revoked", shareId: share.id, message: "Un partage de profil favori a été révoqué dans votre organisation." });
+    const recipient = (await db.select({ fullName: placementEmployerAccounts.fullName }).from(placementEmployerAccounts).where(eq(placementEmployerAccounts.id, share.recipientEmployerAccountId)).limit(1))[0];
+    await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: share.recipientEmployerAccountId, targetName: recipient?.fullName ?? null, action: "favorite_share_revoked", shareId: share.id });
     return { message: "Partage révoqué." };
   }),
 
@@ -264,6 +284,12 @@ export const placementPortalRouter = router({
     return { ok: true };
   }),
 
+  employerMarkAllNotificationsRead: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    await db.update(placementEmployerNotifications).set({ readAt: new Date() }).where(and(eq(placementEmployerNotifications.organizationId, organization.id), eq(placementEmployerNotifications.recipientEmployerAccountId, account.id), isNull(placementEmployerNotifications.readAt)));
+    return { ok: true };
+  }),
+
   employerSetCollaboratorRole: publicProcedure.input(z.object({ sessionToken: z.string().min(32), collaboratorId: z.number().int().positive(), role: z.enum(["reader", "manager"]) })).mutation(async ({ input }) => {
     const { db, account, organization } = await getEmployerSession(input.sessionToken);
     requireEmployerManager(account);
@@ -272,7 +298,36 @@ export const placementPortalRouter = router({
     if (!collaborator) throw new TRPCError({ code: "FORBIDDEN", message: "Collaborateur non disponible dans cette organisation." });
     await db.update(placementEmployerAccounts).set({ collaborationRole: input.role }).where(eq(placementEmployerAccounts.id, collaborator.id));
     await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: collaborator.id, actorEmployerAccountId: account.id, type: "role_changed", message: input.role === "manager" ? "Votre rôle de collaboration est désormais gestionnaire." : "Votre rôle de collaboration est désormais lecteur." });
+    await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: collaborator.id, targetName: collaborator.fullName, action: input.role === "manager" ? "collaborator_promoted" : "collaborator_role_reader" });
     return { role: input.role };
+  }),
+
+  employerSetCollaboratorAccess: publicProcedure.input(z.object({ sessionToken: z.string().min(32), collaboratorId: z.number().int().positive(), active: z.boolean() })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
+    if (input.collaboratorId === account.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Vous ne pouvez pas modifier votre propre accès." });
+    const collaborator = (await db.select().from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.id, input.collaboratorId), eq(placementEmployerAccounts.organizationId, organization.id))).limit(1))[0];
+    if (!collaborator || collaborator.status === "invited") throw new TRPCError({ code: "FORBIDDEN", message: "Collaborateur non disponible dans cette organisation." });
+    if (!input.active && collaborator.status === "active" && collaborator.collaborationRole === "manager") {
+      const managers = await db.select({ id: placementEmployerAccounts.id }).from(placementEmployerAccounts).where(and(eq(placementEmployerAccounts.organizationId, organization.id), eq(placementEmployerAccounts.status, "active"), eq(placementEmployerAccounts.collaborationRole, "manager")));
+      if (managers.length <= 1) throw new TRPCError({ code: "BAD_REQUEST", message: "Conservez au moins un gestionnaire actif dans l’organisation." });
+    }
+    const status = input.active ? "active" as const : "suspended" as const;
+    await db.update(placementEmployerAccounts).set({ status, sessionTokenHash: null, sessionExpiresAt: null }).where(eq(placementEmployerAccounts.id, collaborator.id));
+    const action = input.active ? "collaborator_reactivated" : "collaborator_suspended";
+    await db.insert(placementEmployerNotifications).values({ organizationId: organization.id, recipientEmployerAccountId: collaborator.id, actorEmployerAccountId: account.id, type: action, message: input.active ? "Votre accès collaborateur a été réactivé." : "Votre accès collaborateur a été temporairement suspendu." });
+    await writeCollaborationEvent(db, { organizationId: organization.id, actorId: account.id, actorName: account.fullName, targetId: collaborator.id, targetName: collaborator.fullName, action });
+    return { status };
+  }),
+
+  employerExportCollaborationActivity: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {
+    const { db, account, organization } = await getEmployerSession(input.sessionToken);
+    requireEmployerManager(account);
+    const rows = await db.select().from(placementEmployerCollaborationEvents).where(eq(placementEmployerCollaborationEvents.organizationId, organization.id)).orderBy(placementEmployerCollaborationEvents.createdAt);
+    const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""').replaceAll("\n", " ")}"`;
+    const headers = ["Date", "Action", "Auteur", "Cible"];
+    const csv = `\ufeff${headers.map(quote).join(";")}\n${rows.map((row) => [row.createdAt.toISOString(), row.action, row.actorName, row.targetName].map(quote).join(";")).join("\n")}`;
+    return { filename: `journal-collaboration-${new Date().toISOString().slice(0, 10)}.csv`, csv, count: rows.length };
   }),
 
   employerExportFavorites: publicProcedure.input(z.object({ sessionToken: z.string().min(32) })).mutation(async ({ input }) => {

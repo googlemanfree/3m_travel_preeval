@@ -54,9 +54,23 @@ export const placementEmployerNotifications = mysqlTable("placement_employer_not
   organizationId: int("organization_id").notNull(),
   recipientEmployerAccountId: int("recipient_employer_account_id").notNull(),
   actorEmployerAccountId: int("actor_employer_account_id"),
-  type: mysqlEnum("type", ["favorite_shared", "share_revoked", "role_changed"]).notNull(),
+  type: mysqlEnum("type", ["favorite_shared", "share_revoked", "role_changed", "collaborator_suspended", "collaborator_reactivated"]).notNull(),
   shareId: int("share_id"),
   message: varchar("message", { length: 500 }).notNull(),
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (table) => [index("idx_employer_notification_recipient").on(table.organizationId, table.recipientEmployerAccountId, table.readAt, table.createdAt)]);
+
+/** Journal organisationnel : conserve la gouvernance sans inclure de documents, contacts ou notes privées. */
+export const placementEmployerCollaborationEvents = mysqlTable("placement_employer_collaboration_events", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organization_id").notNull(),
+  actorEmployerAccountId: int("actor_employer_account_id").notNull(),
+  actorName: varchar("actor_name", { length: 255 }).notNull(),
+  targetEmployerAccountId: int("target_employer_account_id"),
+  targetName: varchar("target_name", { length: 255 }),
+  action: varchar("action", { length: 100 }).notNull(),
+  shareId: int("share_id"),
+  profileCode: varchar("profile_code", { length: 48 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("idx_collaboration_event_organization").on(table.organizationId, table.createdAt)]);
