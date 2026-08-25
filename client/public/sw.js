@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v30-public-microcopy-bilingual-static';
+const CACHE_NAME = '3m-travel-pwa-v31-canonical-domain-static';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
