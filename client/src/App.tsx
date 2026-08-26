@@ -494,11 +494,13 @@ function App() {
                       <NavigationProgress />
                       <Navbar />
                       {/* Contenu des pages avec transition douce entre les routes */}
-                      <PageTransition>
-                        <React.Suspense fallback={<PageLoadingFallback />}>
-                          <Router />
-                        </React.Suspense>
-                      </PageTransition>
+                      <div className={!location.startsWith("/admin") ? "secondary-page-surface" : undefined}>
+                        <PageTransition>
+                          <React.Suspense fallback={<PageLoadingFallback />}>
+                            <Router />
+                          </React.Suspense>
+                        </PageTransition>
+                      </div>
                       {showPublicFooter && <FooterLegal />}
                       {/* Menu d'actions flottantes unifié */}
                       {showFloatingTools && <FloatingActionMenu />}

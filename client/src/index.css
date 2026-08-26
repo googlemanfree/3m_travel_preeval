@@ -590,3 +590,55 @@ html.text-size-xlarge {
     transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
   }
 }
+
+
+/* Page secondaires — composition premium partagée */
+@layer components {
+  .secondary-page-surface {
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 46%, #f3f7fd 100%);
+    color: #10233f;
+  }
+
+  .secondary-page-surface h1,
+  .secondary-page-surface h2,
+  .secondary-page-surface h3 {
+    color: #10233f;
+    letter-spacing: -0.025em;
+  }
+
+  .secondary-page-surface input,
+  .secondary-page-surface select,
+  .secondary-page-surface textarea {
+    border-color: rgba(16, 35, 63, 0.16);
+    background-color: rgba(255, 255, 255, 0.94);
+  }
+
+  .secondary-page-surface input:focus,
+  .secondary-page-surface select:focus,
+  .secondary-page-surface textarea:focus {
+    border-color: #d5a84b;
+    box-shadow: 0 0 0 3px rgba(213, 168, 75, 0.2);
+    outline: none;
+  }
+
+  .secondary-page-surface a:not([class*="text-"]) {
+    color: #1559b7;
+  }
+
+  .secondary-page-surface button:not(:disabled),
+  .secondary-page-surface a[role="button"] {
+    transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out), background-color 160ms var(--ease-out);
+  }
+
+  .secondary-page-surface button:not(:disabled):active,
+  .secondary-page-surface a[role="button"]:active {
+    transform: scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secondary-page-surface button:not(:disabled),
+  .secondary-page-surface a[role="button"] {
+    transition: none;
+  }
+}

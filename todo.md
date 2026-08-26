@@ -1212,3 +1212,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Améliorer les interfaces publiques et protégées prioritaires sans modifier les droits ni les actions métier.
 - [x] Vérifier le responsive, les contrastes, la cohérence et les régressions.
 - [x] Publier et vérifier la modernisation visuelle.
+
+## Harmonisation des pages secondaires
+- [x] Inventorier les pages secondaires et leurs composants visuels sans modifier les routes.
+- [x] Définir les règles communes de composition, couleur, typographie et états d’interface.
+- [x] Appliquer la nouvelle charte aux pages secondaires et composants concernés.
+- [x] Vérifier responsive, accessibilité, liens, formulaires et régressions.
+- [ ] Publier et vérifier l’harmonisation des pages secondaires.
