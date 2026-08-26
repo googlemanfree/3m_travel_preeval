@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderOgImageSvg } from "./seoAssets";
+import { buildShareUrls } from "@/components/SocialShareButtons";
 import { renderRobotsTxt, renderSitemapXml } from "./seoRoutes";
 import { composePublicPrerender } from "./publicPrerender";
 
@@ -21,6 +22,19 @@ describe("SEO dynamique", () => {
     expect(sitemap).not.toContain("/admin");
     expect(renderRobotsTxt()).toContain("Sitemap: https://www.3mtravelagency.com/sitemap.xml");
     expect(renderRobotsTxt()).toContain("Disallow: /admin");
+  });
+
+  it("génère un BlogPosting pour la page éditoriale Blog", () => {
+    const html = composePublicPrerender(template, "/blog").html;
+    expect(html).toContain('"@type":"BlogPosting"');
+    expect(html).toContain('"headline":"Ressources mobilité internationale | 3M Travel & Services"');
+  });
+
+  it("construit des URL de partage encodées pour les trois réseaux", () => {
+    const urls = buildShareUrls("https://www.3mtravelagency.com/blog?topic=visa&lang=fr", "Guide Canada & Schengen");
+    expect(urls.facebook).toContain("%26lang%3Dfr");
+    expect(urls.twitter).toContain("Guide%20Canada%20%26%20Schengen");
+    expect(urls.linkedin).toContain("share-offsite");
   });
 
   it("ajoute un BreadcrumbList aux sous-pages publiques indexables", () => {

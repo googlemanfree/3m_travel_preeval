@@ -1447,3 +1447,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des boutons Facebook, Twitter et LinkedIn sur les pages de contenu
 - [x] Ajouter un JSON-LD BreadcrumbList sur les sous-pages publiques
 - [x] Tester l’accessibilité, les URLs de partage, le HTML initial et publier
+
+
+## Partage enrichi et contenu éditorial structuré
+- [x] Mettre à jour la compétence SEO réutilisable avec copie de lien, animations et Article/BlogPosting
+- [x] Ajouter un bouton « Copier le lien » avec confirmation visuelle de succès
+- [x] Ajouter des animations de survol fluides et compatibles avec la réduction de mouvement
+- [x] Ajouter un JSON-LD Article ou BlogPosting aux pages de contenu éditorial
+- [x] Tester les interactions, le JSON-LD et le rendu, puis publier

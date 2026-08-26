@@ -88,6 +88,16 @@ export function composePublicPrerender(template: string, url: string) {
       { "@type": "ListItem", position: 2, name: current.heading, item: canonical },
     ],
   } : null;
+  const article = (path === "/blog" || path.startsWith("/blog/")) && !current.noindex ? {
+    "@type": "BlogPosting",
+    headline: current.title,
+    description: current.description,
+    mainEntityOfPage: canonical,
+    image: socialImage,
+    author: { "@type": "Organization", name: "3M Travel & Services", url: ORIGIN },
+    publisher: { "@type": "Organization", name: "3M Travel & Services", url: ORIGIN, logo: { "@type": "ImageObject", url: socialImage } },
+    inLanguage: "fr-FR",
+  } : null;
   const structuredData = path === "/"
     ? { "@context": "https://schema.org", "@graph": [
         { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
@@ -98,7 +108,9 @@ export function composePublicPrerender(template: string, url: string) {
           { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
           breadcrumb,
         ] }
-      : breadcrumb;
+      : article
+        ? { "@context": "https://schema.org", "@graph": [article, breadcrumb] }
+        : breadcrumb;
   const structuredDataTag = structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : "";
   const head = [
     `<title>${esc(current.title)}</title>`,
