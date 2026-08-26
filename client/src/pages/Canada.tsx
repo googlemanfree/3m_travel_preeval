@@ -3,15 +3,25 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
-import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock } from "lucide-react";
+import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";
 
 const pathways = [
-  { title: "Entrée express", icon: PlaneTakeoff, text: "Système fédéral de gestion de demandes pour certains travailleurs qualifiés. L’étude tient compte notamment de l’expérience, des études, des langues, de l’âge, de la situation familiale et du score du profil." },
-  { title: "Programmes des candidats des provinces", icon: Building2, text: "Chaque province définit ses volets, secteurs recherchés et critères. Une nomination peut être pertinente selon votre profil, mais les exigences et invitations évoluent selon la province." },
-  { title: "Programmes régionaux", icon: MapPinned, text: "Certaines voies ciblent les provinces atlantiques, des communautés rurales ou francophones. Elles peuvent exiger un employeur désigné, une offre admissible ou un projet d’établissement dans une zone précise." },
-  { title: "Voies liées à l’emploi", icon: BriefcaseBusiness, text: "Un permis de travail et une offre d’emploi sont des démarches distinctes de la résidence permanente. Les exigences liées à l’employeur, au poste et aux autorisations applicables doivent être vérifiées avant toute décision." },
-  { title: "Parrainage familial", icon: HeartHandshake, text: "Cette voie concerne certains liens familiaux admissibles. Le parrain et la personne parrainée doivent répondre aux conditions officielles et fournir les preuves du lien demandées." },
-  { title: "Québec et autres options", icon: Flag, text: "Le Québec applique une sélection distincte. Selon le profil, une stratégie peut aussi examiner les voies francophones, les besoins régionaux et les programmes actuellement ouverts." },
+  { title: "Entrée express", icon: PlaneTakeoff, tag: "Résidence permanente", text: "IRCC gère trois programmes : Catégorie de l’expérience canadienne, Programme des travailleurs qualifiés (fédéral) et Programme des travailleurs de métiers spécialisés. Le profil est classé dans un bassin et une invitation dépend des rondes et du classement." },
+  { title: "Candidats des provinces", icon: Building2, tag: "Nomination provinciale", text: "Les provinces et territoires définissent leurs propres volets, secteurs et critères. Une nomination peut renforcer une stratégie, mais elle n’est ni automatique ni interchangeable d’une province à l’autre." },
+  { title: "Voies régionales", icon: MapPinned, tag: "Projet d’établissement", text: "Certaines voies ciblent des communautés ou régions déterminées et peuvent prévoir un employeur désigné, une offre admissible, une expérience précise ou une intention d’établissement vérifiable." },
+  { title: "Permis de travail", icon: BriefcaseBusiness, tag: "Mobilité temporaire", text: "Le permis lié à un employeur et le permis ouvert répondent à des situations différentes. Une offre d’emploi, une étude d’impact ou une exemption peut être nécessaire selon le cas ; la résidence permanente est une démarche distincte." },
+  { title: "Études au Canada", icon: GraduationCap, tag: "Permis d’études", text: "Le parcours comprend le choix d’un établissement, la vérification du permis d’études, les conditions de séjour et, selon l’admissibilité, les possibilités de travail ou de permis postdiplôme. L’admission relève de l’établissement." },
+  { title: "Visite et séjour temporaire", icon: Plane, tag: "Visa ou AVE/eTA", text: "Selon la nationalité et la situation, un visa de visiteur ou une AVE/eTA peut être requis. Un séjour temporaire ne constitue pas une promesse d’installation ou de travail au Canada." },
+  { title: "Parrainage familial", icon: HeartHandshake, tag: "Famille admissible", text: "Le parrain et la personne parrainée doivent répondre à des conditions précises et fournir les preuves demandées. L’éligibilité dépend du lien familial et de la situation de chacun." },
+  { title: "Québec et autres options", icon: Flag, tag: "Sélection distincte", text: "Le Québec applique une sélection distincte. Une analyse peut aussi examiner les voies francophones, les programmes régionaux, les études ou d’autres programmes ouverts au moment de l’étude." },
+];
+
+const officialResources = [
+  { label: "Immigrer au Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada.html", note: "Vue d’ensemble des programmes de résidence permanente." },
+  { label: "Entrée express", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/immigrate-canada/express-entry.html", note: "Programmes et étapes du système fédéral." },
+  { label: "Travailler temporairement", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html", note: "Types de permis et conditions à vérifier." },
+  { label: "Étudier au Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada.html", note: "Permis d’études, établissement et après-diplôme." },
+  { label: "Visiter le Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html", note: "Visa de visiteur, AVE/eTA et séjour temporaire." },
 ];
 
 const profileChecks = [
@@ -44,6 +54,40 @@ export default function Canada() {
       officialLabel="Vérifier les programmes IRCC"
       notice="Les programmes, critères, quotas et délais peuvent évoluer. Aucun emploi, contrat de travail, invitation ou résidence permanente n’est garanti par 3M Travel & Services."
     >
+      <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-xl">
+        <div className="grid items-stretch lg:grid-cols-[1.05fr_.95fr]">
+          <div className="relative min-h-[330px] overflow-hidden">
+            <img src="/manus-storage/canada-hero-original_5fe49ae0.jpg" alt="Skyline de Toronto au bord de l’eau" className="h-full min-h-[330px] w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-950/45 to-transparent" aria-hidden="true" />
+            <div className="absolute left-6 top-6 rounded-full border border-amber-300/60 bg-slate-950/60 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-amber-200">Cap sur le Canada</div>
+            <div className="absolute bottom-7 left-6 max-w-md pr-6 sm:left-8">
+              <p className="text-sm font-semibold text-amber-200">Mobilité · études · travail · visite</p>
+              <h2 className="mt-2 text-3xl font-black leading-tight sm:text-4xl">Un projet solide commence par une lecture claire de votre situation.</h2>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center bg-[#102747] p-7 sm:p-9">
+            <Globe2 className="h-9 w-9 text-amber-300" aria-hidden="true" />
+            <h3 className="mt-5 text-2xl font-black text-white">Comprendre les voies avant de choisir</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-200">Le Canada propose plusieurs parcours. Le rôle de 3M Travel est de structurer les informations, d’identifier les points à vérifier et de vous orienter vers les sources officielles — jamais de garantir une décision d’IRCC.</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="border-l-2 border-amber-300 pl-3"><p className="text-xs font-black uppercase tracking-wide text-amber-200">Repère 01</p><p className="mt-1 text-sm text-white">Profil et projet</p></div>
+              <div className="border-l-2 border-amber-300 pl-3"><p className="text-xs font-black uppercase tracking-wide text-amber-200">Repère 02</p><p className="mt-1 text-sm text-white">Programme à confirmer</p></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-5 md:grid-cols-2">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <img src="/manus-storage/canada-study-original_87390e3b.jpg" alt="Étudiants internationaux sur un campus canadien" className="h-52 w-full object-cover" />
+          <div className="p-6"><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Études et avenir professionnel</p><h3 className="mt-2 text-xl font-black text-slate-950">Préparer un projet cohérent</h3><p className="mt-2 text-sm leading-6 text-slate-600">Établissement, niveau d’études, ressources, projet et conditions du permis doivent être examinés ensemble.</p></div>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <img src="/manus-storage/canada-nature-original_f93309aa.jpg" alt="Paysage des montagnes Rocheuses au Canada" className="h-52 w-full object-cover" />
+          <div className="p-6"><p className="text-xs font-black uppercase tracking-[0.16em] text-blue-700">Installation et mobilité</p><h3 className="mt-2 text-xl font-black text-slate-950">Choisir selon sa réalité</h3><p className="mt-2 text-sm leading-6 text-slate-600">Province, langue, métier, famille et capacité financière influencent l’orientation, sans remplacer les critères officiels.</p></div>
+        </div>
+      </section>
+
       {/* ÉTAPE 1 OBLIGATOIRE : SIMULATEUR DE SCORE AU DÉBUT DE LA SECTION CANADA */}
       <ServiceSection
         tone="blue"
@@ -136,8 +180,8 @@ export default function Canada() {
                   {pathways.map((pathway) => {
                     const Icon = pathway.icon;
                     return (
-                      <article key={pathway.title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
-                        <Icon className="h-7 w-7 text-blue-700" aria-hidden="true" />
+                      <article key={pathway.title} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
+                        <div className="flex items-start justify-between gap-3"><Icon className="h-7 w-7 text-blue-700" aria-hidden="true" /><span className="text-right text-[10px] font-black uppercase tracking-wide text-amber-700">{pathway.tag}</span></div>
                         <h3 className="mt-4 text-lg font-black text-slate-950">{pathway.title}</h3>
                         <p className="mt-2 text-sm leading-6 text-slate-600">{pathway.text}</p>
                       </article>
@@ -202,6 +246,21 @@ export default function Canada() {
             </li>
           ))}
         </ol>
+      </ServiceSection>
+
+      <ServiceSection
+        tone="blue"
+        title="Les sources officielles à consulter"
+        introduction="Les règles, frais, délais et documents sont susceptibles d’évoluer. Consultez toujours IRCC et les autorités compétentes avant toute décision."
+      >
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          {officialResources.map((resource) => (
+            <a key={resource.href} href={resource.href} target="_blank" rel="noreferrer" className="group flex min-h-28 items-start gap-3 rounded-xl border border-blue-100 bg-white p-4 transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500">
+              <ExternalLink className="mt-1 h-5 w-5 shrink-0 text-blue-700" aria-hidden="true" />
+              <span><span className="block font-black text-slate-950 group-hover:text-blue-800">{resource.label}</span><span className="mt-1 block text-xs leading-5 text-slate-600">{resource.note}</span></span>
+            </a>
+          ))}
+        </div>
       </ServiceSection>
 
       <ServiceSection

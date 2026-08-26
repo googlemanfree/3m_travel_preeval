@@ -1312,3 +1312,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Appliquer les tokens navy/or/blanc aux sections secondaires, au footer et aux formulaires concernés.
 - [x] Auditer automatiquement les contrastes WCAG du footer et des formulaires, corriger les écarts confirmés.
 - [x] Mettre à jour et valider la compétence de design accessible, tester et publier.
+
+## Enrichissement espace procédure Canada
+
+- [x] Ajouter des visuels Canada premium, originaux et accessibles dans la page `/canada`.
+- [x] Détailler les principaux parcours Canada à partir des sources IRCC et du contenu fourni, sans promesse de résultat.
+- [x] Ajouter une section ressources officielles et une présentation responsive avec tests de régression.
