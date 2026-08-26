@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { evaluations } from "../../drizzle/schema";
+import { clientDocuments, evaluations } from "../../drizzle/schema";
 import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
@@ -10,8 +10,10 @@ import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/con
 import { sendEmail } from "../_core/email";
 import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport, getPdfPageCount } from "../aiEvaluationService";
 import { computeDestinationScore } from "../destinationScoringEngine";
+import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
 import { logger } from "../_core/logger";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { createHmac, timingSafeEqual } from "crypto";
 import { candidateProcedure } from "./candidate";
 import { requireValidAdminSession } from "./adminAuth";
 
@@ -27,6 +29,36 @@ const visaTypeEnum = z.enum([
 
 const destinationCategoryEnum = z.enum(["schengen", "canada", "autre"]);
 const acquisitionSourceEnum = z.enum(["facebook", "whatsapp", "direct", "other"]);
+const DOCUMENT_UPLOAD_TTL_MS = 30 * 60 * 1000;
+const MAX_EVALUATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
+const ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
+const evaluationDocumentTypeEnum = z.enum(["passport", "cv", "diploma", "certificate", "birth_certificate", "bank_statement", "language_test", "educational_transcript", "proof_of_residence", "other"]);
+
+function getEvaluationUploadSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Configuration de sécurité des documents indisponible." });
+  return secret;
+}
+
+export function createEvaluationUploadToken(evaluationId: number, email: string): string {
+  const expiresAt = Date.now() + DOCUMENT_UPLOAD_TTL_MS;
+  const payload = Buffer.from(JSON.stringify({ evaluationId, email: email.toLowerCase(), expiresAt })).toString("base64url");
+  const signature = createHmac("sha256", getEvaluationUploadSecret()).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+export function verifyEvaluationUploadToken(token: string, evaluationId: number, email: string): void {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) throw new TRPCError({ code: "FORBIDDEN", message: "Lien de dépôt invalide ou expiré." });
+  const expected = createHmac("sha256", getEvaluationUploadSecret()).update(payload).digest("base64url");
+  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) throw new TRPCError({ code: "FORBIDDEN", message: "Lien de dépôt invalide ou expiré." });
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { evaluationId: number; email: string; expiresAt: number };
+    if (parsed.evaluationId !== evaluationId || parsed.email !== email.toLowerCase() || !Number.isFinite(parsed.expiresAt) || parsed.expiresAt < Date.now()) throw new Error("invalid");
+  } catch {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Lien de dépôt invalide ou expiré." });
+  }
+}
 
 const evaluationInput = z.object({
   // État civil & famille
@@ -116,6 +148,11 @@ const multiProjectEvaluationInput = z.object({
   canadaStudyPlan: z.string().max(1000).optional(),
   luxEmployerStatus: z.enum(["aucun", "candidatures", "contact", "offre"]).optional(),
   luxAademStatus: z.string().max(500).optional(),
+  franceProjectStatus: z.string().max(500).optional(),
+  belgiumRegion: z.string().max(120).optional(),
+  germanyLanguageLevel: z.string().max(120).optional(),
+  germanyRecognitionStatus: z.string().max(500).optional(),
+  geminiAnalysisConsent: z.boolean().default(false),
 });
 
 export const evaluationRouter = router({
@@ -162,13 +199,27 @@ export const evaluationRouter = router({
           canadaStudyPlan: input.canadaStudyPlan,
           luxEmployerStatus: input.luxEmployerStatus,
           luxAademStatus: input.luxAademStatus,
+          franceProjectStatus: input.franceProjectStatus,
+          belgiumRegion: input.belgiumRegion,
+          germanyLanguageLevel: input.germanyLanguageLevel,
+          germanyRecognitionStatus: input.germanyRecognitionStatus,
         }),
         cvFileUrl: undefined,
         cvFileName: undefined,
         status: "pending" as const,
       };
 
-      await db.insert(evaluations).values(evaluationData);
+      const inserted = await db.insert(evaluations).values(evaluationData).$returningId();
+      const evaluationId = inserted[0]?.id;
+      if (!evaluationId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La référence d’évaluation n’a pas pu être créée." });
+      if (input.geminiAnalysisConsent) {
+        try {
+          const draft = await generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: { canadaLanguageTest: input.canadaLanguageTest, canadaStudyPlan: input.canadaStudyPlan, luxEmployerStatus: input.luxEmployerStatus, luxAademStatus: input.luxAademStatus, franceProjectStatus: input.franceProjectStatus, belgiumRegion: input.belgiumRegion, germanyLanguageLevel: input.germanyLanguageLevel, germanyRecognitionStatus: input.germanyRecognitionStatus } });
+          await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
+        } catch (error) {
+          await db.update(evaluations).set({ aiProcessingError: error instanceof Error ? error.message.slice(0, 500) : "Analyse Gemini indisponible." }).where(eq(evaluations.id, evaluationId));
+        }
+      }
 
       // Notifier le propriétaire
       const projectTypeLabels: Record<string, string> = {
@@ -212,8 +263,23 @@ export const evaluationRouter = router({
         console.warn("[MultiProjectEvaluation] Email confirmation failed:", emailErr);
       }
 
-      return { success: true, message: "Votre demande a été soumise avec succès. Vérifiez votre email pour le numéro de dossier.", dossierCode };
+      return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre demande a été soumise avec succès. Vérifiez votre email pour le numéro de dossier.", dossierCode };
     }),
+
+  uploadSupportingDocument: publicProcedure.input(z.object({ evaluationId: z.number().int().positive(), email: z.string().email(), uploadToken: z.string().min(30), documentType: evaluationDocumentTypeEnum, fileName: z.string().min(1).max(180), mimeType: z.string().refine((value) => ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES.has(value), "Format non autorisé."), sizeBytes: z.number().int().positive().max(MAX_EVALUATION_DOCUMENT_BYTES), fileBase64: z.string().min(8) })).mutation(async ({ input }) => {
+    verifyEvaluationUploadToken(input.uploadToken, input.evaluationId, input.email);
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données non disponible." });
+    const [evaluation] = await db.select({ id: evaluations.id }).from(evaluations).where(and(eq(evaluations.id, input.evaluationId), eq(evaluations.email, input.email))).limit(1);
+    if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+    const base64 = input.fileBase64.includes(",") ? input.fileBase64.split(",")[1] : input.fileBase64;
+    const buffer = Buffer.from(base64, "base64");
+    if (!buffer.length || buffer.length !== input.sizeBytes || buffer.length > MAX_EVALUATION_DOCUMENT_BYTES) throw new TRPCError({ code: "BAD_REQUEST", message: "Le fichier est invalide ou dépasse 10 Mo." });
+    const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-150) || "document";
+    const stored = await storagePut(`evaluation-documents/${input.evaluationId}/${Date.now()}-${safeName}`, buffer, input.mimeType);
+    const result = await db.insert(clientDocuments).values({ evaluationId: input.evaluationId, candidateEmail: input.email.toLowerCase(), documentType: input.documentType, documentName: safeName, documentUrl: stored.url, fileSize: buffer.length, source: "online", receivedByAdmin: false }).$returningId();
+    return { success: true, documentId: result[0]?.id, documentName: safeName };
+  }),
 
   submit: publicProcedure
     .input(evaluationInput)

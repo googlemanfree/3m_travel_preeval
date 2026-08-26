@@ -54,6 +54,39 @@ const COUNTRY_REQUIREMENTS: Partial<Record<string, Partial<Record<EvaluationProj
       { category: "Études", label: "Admission et parcours académique", detail: "Préparer la preuve d’admission et les documents académiques pertinents.", priority: "à préparer" },
     ],
   },
+  France: {
+    travail: [
+      { category: "Projet", label: "Éléments liés à l’emploi visé", detail: "Contrat, promesse d’embauche ou éléments de candidature uniquement s’ils sont déjà disponibles.", priority: "selon le cas" },
+      { category: "Profil", label: "CV et justificatifs de qualification", detail: "Préparer un CV à jour, diplômes et preuves d’expérience correspondant au métier envisagé.", priority: "à préparer" },
+    ],
+    etudes: [
+      { category: "Études", label: "Admission ou preuve de candidature", detail: "Préparer les éléments académiques et toute admission déjà obtenue.", priority: "selon le cas" },
+      { category: "Financier", label: "Plan de financement du séjour", detail: "Documenter l’origine des ressources prévues ; les critères sont confirmés selon la procédure applicable.", priority: "à préparer" },
+    ],
+    tourisme: [{ category: "Voyage", label: "Projet de séjour et hébergement", detail: "Préparer un itinéraire cohérent et les preuves disponibles d’hébergement ou d’invitation.", priority: "selon le cas" }],
+  },
+  Belgique: {
+    travail: [
+      { category: "Projet", label: "Éléments liés à l’employeur et à la région", detail: "La région et le statut de l’employeur peuvent modifier la procédure ; ils seront vérifiés par un conseiller.", priority: "selon le cas" },
+      { category: "Profil", label: "Qualifications et expérience", detail: "Préparer CV, diplômes et attestations professionnelles lisibles.", priority: "à préparer" },
+    ],
+    etudes: [
+      { category: "Études", label: "Admission et parcours académique", detail: "Conserver les lettres de l’établissement, diplômes et relevés pertinents.", priority: "à préparer" },
+      { category: "Financier", label: "Justificatifs de financement", detail: "Préparer les éléments relatifs à l’épargne, au garant ou à une bourse.", priority: "à préparer" },
+    ],
+    tourisme: [{ category: "Voyage", label: "Preuves de séjour temporaire", detail: "Préparer un motif, un calendrier et les justificatifs disponibles de retour ou d’attaches.", priority: "selon le cas" }],
+  },
+  Allemagne: {
+    travail: [
+      { category: "Profil", label: "Qualifications reconnues ou à vérifier", detail: "Préparer diplômes, expérience et traduction disponible ; la reconnaissance dépend du métier et de la procédure.", priority: "selon le cas" },
+      { category: "Projet", label: "Niveau de langue et projet d’emploi", detail: "Indiquer la langue maîtrisée et tout échange professionnel existant, sans présenter une offre comme acquise.", priority: "selon le cas" },
+    ],
+    etudes: [
+      { category: "Études", label: "Admission et justificatifs académiques", detail: "Préparer les relevés, diplômes et éléments de candidature déjà disponibles.", priority: "à préparer" },
+      { category: "Financier", label: "Financement du projet", detail: "Documenter la source prévue des ressources conformément aux exigences qui seront confirmées.", priority: "à préparer" },
+    ],
+    tourisme: [{ category: "Voyage", label: "Itinéraire, ressources et attaches", detail: "Préparer les éléments permettant d’expliquer un séjour temporaire cohérent.", priority: "selon le cas" }],
+  },
 };
 
 export function getEvaluationDocumentRequirements(country: string, project: EvaluationProjectType): EvaluationDocumentRequirement[] {

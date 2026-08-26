@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
 import { useLocation } from "wouter";
-import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, MailCheck, MessageCircleMore } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, MailCheck, MessageCircleMore, Pencil, ShieldCheck, UploadCloud } from "lucide-react";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
 
@@ -35,6 +35,11 @@ type FormData = {
   canadaStudyPlan?: string;
   luxEmployerStatus?: "aucun" | "candidatures" | "contact" | "offre";
   luxAademStatus?: string;
+  franceProjectStatus?: string;
+  belgiumRegion?: string;
+  germanyLanguageLevel?: string;
+  germanyRecognitionStatus?: string;
+  geminiAnalysisConsent?: boolean;
 };
 
 type CountryOption = { value: string; label: string; flag: string; hint: string };
@@ -43,7 +48,8 @@ const STEPS = [
   { label: "Profil", description: "Vos coordonnées" },
   { label: "Projet", description: "Pays et objectif" },
   { label: "Critères", description: "Questions ciblées" },
-  { label: "Checklist", description: "Pièces à préparer" },
+  { label: "Documents", description: "Pièces à préparer" },
+  { label: "Récapitulatif", description: "Vérifiez avant envoi" },
 ];
 
 const COUNTRIES_BY_PROJECT: Record<ProjectType, CountryOption[]> = {
@@ -105,7 +111,10 @@ export function SimpleMultiProjectForm() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSuccessVisible, setIsSuccessVisible] = React.useState(false);
   const [contactTouched, setContactTouched] = React.useState({ email: false, whatsappPhone: false });
-  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: destinationParam, projectType: initialProject });
+  const [formData, setFormData] = React.useState<FormData>({ fullName: "", email: "", whatsappPhone: "", nationality: "", destinationCountry: destinationParam, projectType: initialProject, geminiAnalysisConsent: false });
+  const [selectedDocuments, setSelectedDocuments] = React.useState<Array<{ file: File; documentType: "passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other" }>>([]);
+  const [selectedDocumentType, setSelectedDocumentType] = React.useState<"passport" | "cv" | "diploma" | "certificate" | "bank_statement" | "language_test" | "other">("other");
+  const [uploadedDocumentCount, setUploadedDocumentCount] = React.useState(0);
 
   const isEmailValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
   const isWhatsappValid = (value: string) => { const digits = value.replace(/\D/g, ""); return digits.length >= 8 && digits.length <= 15; };
@@ -119,13 +128,8 @@ export function SimpleMultiProjectForm() {
     if (destinationParam) setFormData((prev) => ({ ...prev, destinationCountry: destinationParam }));
   }, [destinationParam, projectParam]);
 
-  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({
-    onSuccess: () => {
-      toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
-      setIsSuccessVisible(true);
-    },
-    onError: (error: { message?: string }) => toast.error(error.message || "Erreur lors de la soumission"),
-  });
+  const submitEvaluation = trpc.evaluation.submitEvaluation.useMutation({ onError: (error: { message?: string }) => toast.error(error.message || "Erreur lors de la soumission") });
+  const uploadSupportingDocument = trpc.evaluation.uploadSupportingDocument.useMutation();
 
   const update = (name: keyof FormData, value: string) => setFormData((prev) => ({ ...prev, [name]: value }));
   const onTextChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => update(event.target.name as keyof FormData, event.target.value);
@@ -148,17 +152,33 @@ export function SimpleMultiProjectForm() {
   const next = () => { if (validateStep(currentStep)) setCurrentStep((step) => Math.min(step + 1, STEPS.length - 1)); };
   const previous = () => setCurrentStep((step) => Math.max(step - 1, 0));
 
+  const addDocuments = (files: FileList | null) => {
+    if (!files) return;
+    const accepted = Array.from(files).filter((file) => ["application/pdf", "image/jpeg", "image/png"].includes(file.type) && file.size <= 10 * 1024 * 1024).slice(0, Math.max(0, 5 - selectedDocuments.length));
+    if (accepted.length !== files.length) toast.message("Seuls 5 fichiers PDF, JPG ou PNG de 10 Mo maximum peuvent être ajoutés.");
+    setSelectedDocuments((previous) => [...previous, ...accepted.map((file) => ({ file, documentType: selectedDocumentType }))]);
+  };
+  const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("Lecture du fichier impossible")); reader.readAsDataURL(file); });
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateStep(0) || !validateStep(1)) return;
     setIsSubmitting(true);
     try {
-      await submitEvaluation.mutateAsync({
+      const created = await submitEvaluation.mutateAsync({
         ...formData,
         age: formData.age ? Number(formData.age) : undefined,
         yearsOfExperience: formData.yearsOfExperience ? Number(formData.yearsOfExperience) : undefined,
         destinationCategory: categoryForCountry(formData.destinationCountry),
       });
+      let uploaded = 0;
+      for (const item of selectedDocuments) {
+        await uploadSupportingDocument.mutateAsync({ evaluationId: created.evaluationId, email: formData.email, uploadToken: created.documentUploadToken, documentType: item.documentType, fileName: item.file.name, mimeType: item.file.type as "application/pdf" | "image/jpeg" | "image/png", sizeBytes: item.file.size, fileBase64: await readFileAsDataUrl(item.file) });
+        uploaded += 1;
+      }
+      setUploadedDocumentCount(uploaded);
+      toast.success("Évaluation soumise avec succès. Vérifiez votre e-mail.");
+      setIsSuccessVisible(true);
     } finally { setIsSubmitting(false); }
   };
 
@@ -178,7 +198,7 @@ export function SimpleMultiProjectForm() {
         </div>
 
         {isSuccessVisible ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center" role="status" aria-live="polite"><CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" /><h3 className="mt-3 text-xl font-black text-emerald-950">Votre évaluation a été transmise</h3><p className="mt-2 text-sm leading-6 text-emerald-900">Un conseiller examinera les éléments communiqués. Cette pré-évaluation ne constitue pas une décision de visa, d’admission ou d’emploi.</p><Button type="button" className="mt-5 bg-emerald-700 text-white hover:bg-emerald-800" onClick={() => { setIsSuccessVisible(false); setCurrentStep(0); }}>Envoyer une autre évaluation</Button></div>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center" role="status" aria-live="polite"><CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" /><h3 className="mt-3 text-xl font-black text-emerald-950">Votre évaluation a été transmise</h3><p className="mt-2 text-sm leading-6 text-emerald-900">Un conseiller examinera les éléments communiqués. {uploadedDocumentCount > 0 ? `${uploadedDocumentCount} pièce(s) ont été ajoutée(s) au dossier pour vérification.` : ""} Cette pré-évaluation ne constitue pas une décision de visa, d’admission ou d’emploi.</p><Button type="button" className="mt-5 bg-emerald-700 text-white hover:bg-emerald-800" onClick={() => { setIsSuccessVisible(false); setCurrentStep(0); setSelectedDocuments([]); setUploadedDocumentCount(0); }}>Envoyer une autre évaluation</Button></div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <AnimatePresence mode="wait" initial={false}>
@@ -202,8 +222,12 @@ export function SimpleMultiProjectForm() {
                   {formData.projectType === "tourisme" && <><Field label="Motif du séjour"><Input name="visitReason" value={formData.visitReason || ""} onChange={onTextChange} placeholder="Visite familiale, tourisme, événement…" /></Field><Field label="Historique de voyages"><Input name="travelHistory" value={formData.travelHistory || ""} onChange={onTextChange} placeholder="Pays visités et années" /></Field><Field label="Attaches dans le pays de résidence" full><Textarea name="socialTies" value={formData.socialTies || ""} onChange={onTextChange} placeholder="Emploi, études, famille ou autres obligations" /></Field></>}
                   {formData.destinationCountry === "Canada" && <div className="md:col-span-2 rounded-xl border border-red-100 bg-red-50 p-4"><h4 className="font-black text-red-950">Questions Canada</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Test de langue ou niveau estimé"><Input name="canadaLanguageTest" value={formData.canadaLanguageTest || ""} onChange={onTextChange} placeholder="TEF, IELTS, niveau estimé…" /></Field>{formData.projectType === "etudes" && <Field label="Projet d’études"><Input name="canadaStudyPlan" value={formData.canadaStudyPlan || ""} onChange={onTextChange} placeholder="Programme et objectif professionnel" /></Field>}</div><p className="mt-3 text-xs text-red-900">Ces réponses servent à préparer un entretien ; elles ne confirment aucune admissibilité ou décision.</p></div>}
                   {formData.destinationCountry === "Luxembourg" && <div className="md:col-span-2 rounded-xl border border-amber-100 bg-amber-50 p-4"><h4 className="font-black text-amber-950">Questions Luxembourg</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Situation vis-à-vis d’un employeur"><Select value={formData.luxEmployerStatus || ""} onValueChange={(value) => update("luxEmployerStatus", value)}><SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger><SelectContent><SelectItem value="aucun">Aucun employeur identifié</SelectItem><SelectItem value="candidatures">Candidatures en cours</SelectItem><SelectItem value="contact">Contact ou entretien en cours</SelectItem><SelectItem value="offre">Offre ou proposition reçue</SelectItem></SelectContent></Select></Field><Field label="Situation ADEM / autorisation"><Input name="luxAademStatus" value={formData.luxAademStatus || ""} onChange={onTextChange} placeholder="À confirmer avec le conseiller" /></Field></div><p className="mt-3 text-xs text-amber-900">Toute procédure liée à un employeur, à l’ADEM ou à une autorisation reste soumise aux règles officielles et à validation humaine.</p></div>}
+                  {formData.destinationCountry === "France" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Question France</h4><Field label="Situation actuelle : admission, candidature ou employeur"><Input name="franceProjectStatus" value={formData.franceProjectStatus || ""} onChange={onTextChange} placeholder="Décrivez uniquement les éléments déjà obtenus ou en cours" /></Field><p className="mt-3 text-xs text-blue-900">Le type de séjour, les ressources et les pièces définitives seront confirmés sur la source officielle et par un conseiller.</p></div>}
+                  {formData.destinationCountry === "Belgique" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Question Belgique</h4><Field label="Région concernée si elle est connue"><Select value={formData.belgiumRegion || ""} onValueChange={(value) => update("belgiumRegion", value)}><SelectTrigger><SelectValue placeholder="À confirmer" /></SelectTrigger><SelectContent><SelectItem value="bruxelles">Bruxelles-Capitale</SelectItem><SelectItem value="flandre">Flandre</SelectItem><SelectItem value="wallonie">Wallonie</SelectItem><SelectItem value="inconnue">Je ne sais pas encore</SelectItem></SelectContent></Select></Field><p className="mt-3 text-xs text-blue-900">Les règles peuvent varier selon la région, l’établissement ou l’employeur : aucune procédure n’est confirmée automatiquement.</p></div>}
+                  {formData.destinationCountry === "Allemagne" && <div className="md:col-span-2 rounded-xl border border-blue-100 bg-blue-50 p-4"><h4 className="font-black text-blue-950">Questions Allemagne</h4><div className="mt-3 grid gap-4 md:grid-cols-2"><Field label="Niveau d’allemand ou d’anglais"><Input name="germanyLanguageLevel" value={formData.germanyLanguageLevel || ""} onChange={onTextChange} placeholder="Ex. A2, B1, anglais professionnel" /></Field><Field label="Situation de la qualification"><Input name="germanyRecognitionStatus" value={formData.germanyRecognitionStatus || ""} onChange={onTextChange} placeholder="À vérifier, traduction disponible, reconnaissance en cours…" /></Field></div><p className="mt-3 text-xs text-blue-900">La reconnaissance dépend notamment du métier ; l’équipe vérifie les critères applicables avant toute démarche.</p></div>}
                 </div>}
-                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">Préparez ces pièces à l’avance. La liste finale est confirmée par l’équipe selon votre cas et la procédure officielle.</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><Field label="Lien vers votre CV (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." /></Field><p className="rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">En soumettant, vous demandez une pré-évaluation. Les pièces ne doivent être transmises que via les canaux indiqués par l’équipe ; aucune décision officielle n’est garantie.</p></div>}
+                {currentStep === 3 && <div className="space-y-5"><div className="rounded-2xl border border-[#D8A928]/35 bg-amber-50/70 p-4"><div className="flex gap-3"><ClipboardList className="mt-0.5 h-5 w-5 shrink-0 text-[#9A7200]" /><div><h4 className="font-black text-slate-950">Catalogue documentaire — {formData.destinationCountry || "sélectionnez un pays"}</h4><p className="mt-1 text-sm text-slate-600">Préparez les pièces pertinentes. La liste finale est confirmée par l’équipe selon votre cas et la procédure officielle.</p></div></div><div className="mt-4 grid gap-2 sm:grid-cols-2">{requirements.map((item) => <div key={`${item.category}-${item.label}`} className="rounded-xl border border-amber-100 bg-white p-3"><span className="text-[11px] font-black uppercase tracking-wide text-[#9A7200]">{item.category} · {item.priority}</span><p className="mt-1 flex gap-2 text-sm font-bold text-slate-900"><FileText className="h-4 w-4 shrink-0 text-blue-700" />{item.label}</p><p className="mt-1 text-xs leading-5 text-slate-600">{item.detail}</p></div>)}</div></div><div className="rounded-2xl border border-blue-100 bg-slate-50 p-4"><div className="flex items-start gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" /><div><h4 className="font-black text-slate-950">Dépôt sécurisé facultatif</h4><p className="mt-1 text-xs leading-5 text-slate-600">Ajoutez au maximum 5 fichiers PDF, JPG ou PNG de 10 Mo. Ils sont envoyés après la création du dossier, puis restent à vérifier par l’équipe.</p></div></div><div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]"><Select value={selectedDocumentType} onValueChange={(value) => setSelectedDocumentType(value as typeof selectedDocumentType)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="passport">Passeport</SelectItem><SelectItem value="cv">CV</SelectItem><SelectItem value="diploma">Diplôme</SelectItem><SelectItem value="certificate">Attestation</SelectItem><SelectItem value="bank_statement">Ressources financières</SelectItem><SelectItem value="language_test">Test de langue</SelectItem><SelectItem value="other">Autre pièce</SelectItem></SelectContent></Select><Label className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-[#0B2A52] px-4 py-2 text-sm font-bold text-white hover:bg-[#163d73]"><UploadCloud className="h-4 w-4" />Ajouter<input className="sr-only" type="file" accept="application/pdf,image/jpeg,image/png" multiple onChange={(event) => { addDocuments(event.target.files); event.target.value = ""; }} /></Label></div>{selectedDocuments.length > 0 && <ul className="mt-3 space-y-2" aria-label="Documents sélectionnés">{selectedDocuments.map((item, index) => <li key={`${item.file.name}-${index}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate"><strong>{item.file.name}</strong> <span className="text-slate-500">({Math.ceil(item.file.size / 1024)} Ko)</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setSelectedDocuments((items) => items.filter((_, itemIndex) => itemIndex !== index))}>Retirer</Button></li>)}</ul>}</div><Field label="Lien vers votre CV (optionnel)"><Input name="cvLink" type="url" value={formData.cvLink || ""} onChange={onTextChange} placeholder="https://drive.google.com/..." /></Field></div>}
+                {currentStep === 4 && <div className="space-y-4"><div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><div className="flex gap-3"><MailCheck className="mt-0.5 h-5 w-5 text-emerald-700" /><div><h4 className="font-black text-emerald-950">Vérifiez votre évaluation avant l’envoi</h4><p className="mt-1 text-sm text-emerald-900">Utilisez Modifier pour corriger une étape. Aucun résultat automatique, visa, admission ou emploi n’est garanti.</p></div></div></div><SummarySection title="Profil" onEdit={() => setCurrentStep(0)} lines={[formData.fullName, formData.email, formData.whatsappPhone, formData.nationality]} /><SummarySection title="Projet" onEdit={() => setCurrentStep(1)} lines={[formData.projectType, formData.destinationCountry, COUNTRY_GUIDANCE[formData.destinationCountry] || "Orientation à confirmer"]} /><SummarySection title="Critères" onEdit={() => setCurrentStep(2)} lines={[formData.sector, formData.languages, formData.financialGuarantee, formData.franceProjectStatus, formData.belgiumRegion, formData.germanyLanguageLevel, formData.germanyRecognitionStatus].filter(Boolean) as string[]} /><SummarySection title="Documents" onEdit={() => setCurrentStep(3)} lines={[`${selectedDocuments.length} pièce(s) sélectionnée(s)`, formData.cvLink ? "Lien CV indiqué" : "Aucun lien CV indiqué"]} /><label className="flex cursor-pointer items-start gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950"><input type="checkbox" checked={Boolean(formData.geminiAnalysisConsent)} onChange={(event) => setFormData((previous) => ({ ...previous, geminiAnalysisConsent: event.target.checked }))} className="mt-1 h-4 w-4 accent-[#0B2A52]" /><span><strong>Préparer un brouillon d’orientation assisté</strong><br /><span className="text-xs leading-5">J’accepte l’analyse des réponses déclarées, sans les fichiers joints, pour préparer un brouillon interne. Il ne sera pas envoyé automatiquement et reste soumis à une vérification humaine et aux sources officielles.</span></span></label></div>}
               </motion.section>
             </AnimatePresence>
             <div className="mt-7 flex items-center justify-between gap-3 border-t border-slate-100 pt-5"><Button type="button" variant="outline" onClick={previous} disabled={currentStep === 0} className="gap-2"><ChevronLeft className="h-4 w-4" />Précédent</Button>{currentStep < STEPS.length - 1 ? <Button type="button" onClick={next} className="gap-2 bg-[#0B2A52] text-white hover:bg-[#163d73]">Continuer<ChevronRight className="h-4 w-4" /></Button> : <Button type="submit" disabled={isSubmitting} className="bg-[#D8A928] text-slate-950 hover:bg-[#c6971f]">{isSubmitting ? "Envoi…" : "Soumettre l’évaluation"}</Button>}</div>
@@ -214,6 +238,10 @@ export function SimpleMultiProjectForm() {
       </Card>
     </motion.div>
   );
+}
+
+function SummarySection({ title, lines, onEdit }: { title: string; lines: string[]; onEdit: () => void }) {
+  return <section className="rounded-xl border border-slate-200 bg-white p-4" aria-label={`Récapitulatif ${title}`}><div className="flex items-start justify-between gap-3"><div><h4 className="font-black text-slate-950">{title}</h4><ul className="mt-2 space-y-1 text-sm text-slate-700">{lines.length > 0 ? lines.map((line, index) => <li key={`${title}-${index}`}>{line}</li>) : <li>Non renseigné</li>}</ul></div><Button type="button" variant="outline" size="sm" className="shrink-0 gap-1" onClick={onEdit}><Pencil className="h-3.5 w-3.5" />Modifier</Button></div></section>;
 }
 
 function Field({ label, hint, full, children }: { label: string; hint?: string; full?: boolean; children: React.ReactNode }) {

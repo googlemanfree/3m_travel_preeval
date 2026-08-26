@@ -1484,10 +1484,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Exécuter les validations de test après installation
 - [x] Vérifier l’origine de l’écran de maintenance sur le domaine public
 - [x] Publier la mise à jour technique et documenter le diagnostic
-
 ## Dépendance de test et état de maintenance
 - [x] Inspecter le correctif joint sans exécuter son contenu et vérifier les dépendances existantes
 - [x] Ajouter `@testing-library/dom` aux dépendances de développement et mettre à jour le verrouillage
 - [x] Exécuter les validations de test après installation
 - [x] Vérifier l’origine de l’écran de maintenance sur le domaine public
 - [x] Publier la mise à jour technique et documenter le diagnostic
+
+## Évaluation documentaire sécurisée et contrôle final
+- [x] Mettre à jour la compétence réutilisable du parcours d’évaluation documentaire contrôlé
+- [x] Ajouter les exigences et questions ciblées pour la France, la Belgique et l’Allemagne
+- [x] Ajouter un récapitulatif modifiable avant la soumission finale
+- [x] Ajouter un dépôt de documents sécurisé et relié au dossier d’évaluation
+- [x] Configurer Gemini pour une analyse assistée structurée avec validation humaine obligatoire
+- [x] Tester les autorisations, la persistance, les parcours et publier
