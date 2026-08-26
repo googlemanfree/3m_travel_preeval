@@ -410,7 +410,7 @@ export default function Contact() {
                   href="https://www.facebook.com/3mtravelcm"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+                  className="inline-block bg-[#0b2f6b] !text-white px-6 py-2 rounded-lg hover:bg-[#08244f] transition-colors text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2f6b]"
                 >
                   Visiter Facebook
                 </a>
@@ -450,7 +450,7 @@ export default function Contact() {
                 <p className="text-gray-600 mb-6">Appelez nos conseillers</p>
                 <a
                   href="tel:+237698104832"
-                  className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-block bg-[#0b2f6b] !text-white px-6 py-2 rounded-lg hover:bg-[#08244f] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0b2f6b]"
                 >
                   +237 698 104 832
                 </a>

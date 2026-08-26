@@ -169,7 +169,7 @@ function Router() {
       <Route path={"/flights"} component={Flights} />
       <Route path={"/billets"} component={Billets} />
       <Route path={"/3m-booking"} component={Billets} />
-      <Route path={"/vols"}>{() => <Redirect to="/billets" />}</Route>
+      <Route path={"/vols"}>{() => <Redirect to="/flights" />}</Route>
       <Route path={"/assurance"} component={AssuranceInscription} />
       <Route path={"/assurance-inscription"} component={AssuranceInscription} />
       <Route path={"/insurance"}>{() => <Redirect to="/assurance" />}</Route>

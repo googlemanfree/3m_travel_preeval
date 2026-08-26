@@ -13,7 +13,13 @@ interface AdminGuardProps {
 
 export default function AdminGuard({ children, message = "Accès réservé aux administrateurs." }: AdminGuardProps) {
   const [location, navigate] = useLocation();
-  const [sessionToken, setSessionToken] = useState(() => typeof window === "undefined" ? "" : sessionStorage.getItem("adminSessionToken") || localStorage.getItem("adminSessionToken") || "");
+  const [sessionToken, setSessionToken] = useState(() => {
+    if (typeof window === "undefined") return "";
+    // Prefer the persistent 24-hour token when both stores exist. A stale
+    // sessionStorage value must not hide a valid localStorage session after a
+    // refresh or a browser restart.
+    return localStorage.getItem("adminSessionToken") || sessionStorage.getItem("adminSessionToken") || "";
+  });
   const [queryTimedOut, setQueryTimedOut] = useState(false);
   const adminSession = trpc.adminAuth.me.useQuery(sessionToken ? { sessionToken } : undefined, { retry: false, refetchOnWindowFocus: true });
   const platformBootstrap = trpc.adminAuth.bootstrapPlatformSession.useQuery(undefined, {
