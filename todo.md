@@ -1336,3 +1336,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inventorier les écrans admin, les actions de traitement, les états de chargement et les erreurs d’accessibilité.
 - [x] Améliorer l’organisation, la lisibilité et l’accès aux actions sans modifier les autorisations ni exposer de données sensibles.
 - [x] Vérifier les parcours admin, la synchronisation client, les contrôles clavier et publier les corrections confirmées.
+
+## Recherche globale espace administrateur
+
+- [x] Définir les destinations admin recherchables sans exposer de données sensibles.
+- [x] Ajouter une palette de recherche globale avec raccourci Ctrl/Cmd+K et navigation clavier.
+- [x] Tester la recherche, les autorisations, l’accessibilité et publier la fonctionnalité.

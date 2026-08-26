@@ -207,6 +207,21 @@ const PROJECT_TYPE_OPTIONS = [
   "Résidence Permanente", "Visa Affaires", "Autre",
 ];
 
+const ADMIN_GLOBAL_SEARCH_ITEMS = [
+  { label: "Dossiers candidats", hint: "Rechercher et traiter les dossiers", tab: "candidates" },
+  { label: "Pré-dossiers", hint: "Activer les comptes et valider les évaluations", tab: "pre-dossiers" },
+  { label: "Demandes unifiées", hint: "Centraliser les demandes entrantes", tab: "inbox" },
+  { label: "Bilans à valider", hint: "Revoir les évaluations déclarées", tab: "evaluation-review" },
+  { label: "Documents", hint: "Vérifier les pièces déposées", tab: "documents" },
+  { label: "Paiements", hint: "Contrôler les paiements en attente", tab: "payments" },
+  { label: "Réservations vols", hint: "Traiter la file des demandes de vol", tab: "flights" },
+  { label: "E-mails", hint: "Suivre les remises et relances", tab: "emails" },
+  { label: "Journal d’audit", hint: "Consulter les actions tracées", tab: "audit" },
+  { label: "État système", hint: "Vérifier les services et connexions", tab: "system-status" },
+  { label: "Liens et routes", hint: "Contrôler les liens publics", tab: "route-health" },
+  { label: "Visuels destinations", hint: "Gérer les médias des destinations", path: "/admin/destination-media" },
+] as const;
+
 type ManualPriorityDeadline = {
   label: string;
   detail: string;
@@ -755,12 +770,37 @@ export default function AdminDashboard() {
   const [sortBy, setSortBy] = useState<"priority" | "recent" | "oldest" | "name" | "score_desc">("priority");
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [activeAdminTab, setActiveAdminTab] = useState("candidates");
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [globalSearch, setGlobalSearch] = useState("");
   const [showImportModal, setShowImportModal] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
+
+  useEffect(() => {
+    const handleGlobalShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setIsGlobalSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalShortcut);
+    return () => window.removeEventListener("keydown", handleGlobalShortcut);
+  }, []);
+
+  const filteredGlobalSearchItems = ADMIN_GLOBAL_SEARCH_ITEMS.filter((item) => {
+    const query = globalSearch.trim().toLocaleLowerCase("fr-FR");
+    return !query || `${item.label} ${item.hint}`.toLocaleLowerCase("fr-FR").includes(query);
+  });
+
+  const openGlobalSearchItem = (item: (typeof ADMIN_GLOBAL_SEARCH_ITEMS)[number]) => {
+    setIsGlobalSearchOpen(false);
+    setGlobalSearch("");
+    if ("tab" in item) setActiveAdminTab(item.tab);
+    else navigate(item.path);
+  };
 
   const addRagDocMutation = trpc.admin.addDestinationDocumentAdmin.useMutation({
     onSuccess: () => {
@@ -1050,15 +1090,21 @@ export default function AdminDashboard() {
               <p className="text-blue-200 text-sm">Bienvenue, {adminName} — 3M Travel & Services</p>
             </div>
             
-            {/* Barre de recherche rapide */}
-            <div className="flex-1 max-w-xs">
-              <div className="relative">
+            {/* Recherche globale + filtre dossiers */}
+            <div className="flex flex-1 max-w-xl items-center gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsGlobalSearchOpen(true)} className="shrink-0 gap-2 border-white/30 bg-white/10 text-white hover:bg-white/20" aria-label="Ouvrir la recherche globale admin">
+                <Search className="h-4 w-4" />
+                <span className="hidden lg:inline">Recherche globale</span>
+                <kbd className="hidden rounded border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold text-blue-100 lg:inline">Ctrl K</kbd>
+              </Button>
+              <div className="relative min-w-0 flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Chercher un dossier ou utilisateur..."
+                  placeholder="Filtrer les dossiers..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
+                  aria-label="Filtrer les dossiers candidats"
                   className="pl-10 pr-4 py-2 bg-white/10 border border-white/25 text-white placeholder-slate-200 rounded-lg shadow-inner shadow-black/10 focus:bg-white/15 focus:border-white/60 transition-all"
                 />
               </div>
@@ -1150,6 +1196,21 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isGlobalSearchOpen} onOpenChange={(open) => { setIsGlobalSearchOpen(open); if (!open) setGlobalSearch(""); }}>
+        <DialogContent className="max-w-xl overflow-hidden border-slate-200 p-0 shadow-2xl">
+          <DialogHeader className="border-b border-slate-100 bg-slate-50 px-5 py-4">
+            <DialogTitle className="flex items-center gap-2 text-slate-950"><Search className="h-5 w-5 text-blue-700" />Recherche globale admin</DialogTitle>
+            <p className="text-sm text-slate-600">Accédez rapidement aux espaces autorisés. Raccourci : <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs font-semibold">Ctrl/Cmd + K</kbd></p>
+          </DialogHeader>
+          <div className="p-4">
+            <Input autoFocus value={globalSearch} onChange={(event) => setGlobalSearch(event.target.value)} placeholder="Rechercher un espace ou un outil..." aria-label="Recherche globale administrateur" className="h-11" />
+            <div className="mt-3 max-h-80 space-y-1 overflow-y-auto" role="listbox" aria-label="Résultats de recherche admin">
+              {filteredGlobalSearchItems.length === 0 ? <p className="px-3 py-8 text-center text-sm text-slate-500">Aucun espace ne correspond à votre recherche.</p> : filteredGlobalSearchItems.map((item) => <button key={item.label} type="button" role="option" onClick={() => openGlobalSearchItem(item)} className="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700"><Search className="h-4 w-4" /></span><span className="min-w-0"><strong className="block text-sm font-bold text-slate-950">{item.label}</strong><span className="block text-xs text-slate-600">{item.hint}</span></span></button>)}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="mx-auto w-full max-w-[1920px] px-4 py-6 space-y-6 sm:px-6 xl:px-8 2xl:px-10">
         {/* Statistiques */}
