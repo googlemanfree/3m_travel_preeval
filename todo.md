@@ -1288,3 +1288,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un mode compact de header pour les écrans tablette.
 - [x] Renforcer l’ordre de tabulation, les focus visibles et les annonces ARIA du header.
 - [x] Tester les breakpoints et publier les corrections avec la compétence.
+
+## Préférences des widgets et feedback du header
+- [x] Ajouter un réglage utilisateur pour masquer ou réafficher les widgets flottants.
+- [x] Améliorer la transition du mode compact du header sur tablette en respectant les préférences de mouvement.
+- [x] Harmoniser les états hover, focus-visible et active/clic de tous les boutons du header.
+- [x] Mettre à jour et valider la compétence responsive accessible, tester et publier.

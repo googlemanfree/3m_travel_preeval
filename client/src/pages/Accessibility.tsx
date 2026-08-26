@@ -1,12 +1,14 @@
 import React from "react";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 import { useFontSizePreferences } from "@/contexts/FontSizePreferencesContext";
+import { useFloatingWidgetsPreferences } from "@/contexts/FloatingWidgetsPreferencesContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 
 export default function Accessibility() {
   const { preference, setPreference } = useAnimationPreferences();
   const { fontSize, setFontSize } = useFontSizePreferences();
+  const { widgetsVisible, setWidgetsVisible } = useFloatingWidgetsPreferences();
   const { language } = useLanguage();
   const t = (fr: string, en: string) => language === "en" ? en : fr;
   const fontSizeLabel = { standard: t("Standard", "Standard"), large: t("Grand", "Large"), xlarge: t("Très grand", "Extra large") }[fontSize];
@@ -49,6 +51,20 @@ export default function Accessibility() {
               <Button type="button" variant={preference === "off" ? "destructive" : "outline"} onClick={() => setPreference("off")} className="justify-center">{t("Désactivé (statique)", "Disabled (static)")}</Button>
             </div>
             <p className="text-xs text-gray-500 pt-1">{t("Réglage actuel :", "Current setting:")} <span className="font-medium text-gray-800">{motionLabel}</span>.</p>
+          </div>
+        </div>
+
+        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900">{t("Widgets flottants", "Floating widgets")}</h2>
+          <p className="leading-relaxed text-gray-700">{t("Masquez les boutons d’assistance flottants si vous préférez une page plus dégagée. Votre choix est conservé sur cet appareil.", "Hide floating assistance buttons if you prefer a clearer page. Your choice is saved on this device.")}</p>
+          <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900 text-lg">{t("Afficher les widgets d’assistance", "Show assistance widgets")}</h3>
+              <p className="text-sm text-gray-600">{widgetsVisible ? t("Les widgets sont visibles.", "Widgets are visible.") : t("Les widgets sont masqués.", "Widgets are hidden.")}</p>
+            </div>
+            <Button type="button" variant={widgetsVisible ? "default" : "outline"} onClick={() => setWidgetsVisible(!widgetsVisible)} aria-pressed={widgetsVisible} className="min-h-11 shrink-0">
+              {widgetsVisible ? t("Masquer les widgets", "Hide widgets") : t("Afficher les widgets", "Show widgets")}
+            </Button>
           </div>
         </div>
 

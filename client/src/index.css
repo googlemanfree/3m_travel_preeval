@@ -557,6 +557,7 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 @media (min-width: 768px) and (max-width: 1023px) {
   .tablet-compact-header {
     min-height: 4.25rem;
+    transition: min-height 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms ease;
   }
 
   .tablet-compact-header .max-w-7xl {
@@ -565,6 +566,43 @@ html.motion-disabled .admin-glass-table tbody tr:hover {
 
   .tablet-compact-header img {
     height: 2.75rem;
+    transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), opacity 180ms ease;
+  }
+}
+
+/* Feedback cohérent pour les actions du header : survol, focus clavier et clic. */
+.glass-nav a,
+.glass-nav button {
+  transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease, transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.glass-nav a:hover,
+.glass-nav button:hover {
+  box-shadow: 0 6px 16px rgba(15, 47, 111, 0.12);
+}
+
+.glass-nav a:active,
+.glass-nav button:active {
+  transform: scale(0.97);
+}
+
+.glass-nav a:focus-visible,
+.glass-nav button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.42);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tablet-compact-header,
+  .tablet-compact-header img,
+  .glass-nav a,
+  .glass-nav button {
+    transition: none !important;
+  }
+
+  .glass-nav a:active,
+  .glass-nav button:active {
+    transform: none;
   }
 }
 

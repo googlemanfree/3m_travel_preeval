@@ -83,6 +83,7 @@ const MultiServiceCart = lazyWithTimeout(() => import("./pages/MultiServiceCart"
 const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookingCheckout"));
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
 import { OfficeContactProvider } from "./contexts/OfficeContactContext";
+import { FloatingWidgetsPreferencesProvider, useFloatingWidgetsPreferences } from "./contexts/FloatingWidgetsPreferencesContext";
 
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
@@ -467,12 +468,13 @@ function Router() {
   );
 }
 
-function App() {
+function AppShell() {
   const [location] = useLocation();
+  const { widgetsVisible } = useFloatingWidgetsPreferences();
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
-  const showFloatingTools = location !== "/contact";
+  const showFloatingTools = widgetsVisible && location !== "/contact";
   const showPublicFooter = !location.startsWith("/admin");
 
   return (
@@ -521,4 +523,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <FloatingWidgetsPreferencesProvider>
+      <AppShell />
+    </FloatingWidgetsPreferencesProvider>
+  );
+}
