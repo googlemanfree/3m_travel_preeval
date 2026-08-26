@@ -1330,3 +1330,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Remplacer le petit monogramme de chargement par le logo 3M complet, agrandi et correctement cadré.
 - [x] Moderniser l’indicateur de progression avec une hiérarchie visuelle plus premium et une alternative accessible.
 - [x] Vérifier desktop/mobile, la réduction de mouvement et publier la correction globale.
+
+## Modernisation espace administrateur
+
+- [x] Inventorier les écrans admin, les actions de traitement, les états de chargement et les erreurs d’accessibilité.
+- [x] Améliorer l’organisation, la lisibilité et l’accès aux actions sans modifier les autorisations ni exposer de données sensibles.
+- [x] Vérifier les parcours admin, la synchronisation client, les contrôles clavier et publier les corrections confirmées.
