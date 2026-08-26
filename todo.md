@@ -1349,3 +1349,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir un contrat de synchronisation commun, sécurisé et traçable entre dossier admin, espace client et espace partenaire.
 - [x] Améliorer le centre de pilotage, les alertes, les échéances et la visibilité partenaire sans exposer les notes ou documents privés.
 - [x] Tester la cohérence des statuts, les autorisations, la confidentialité et les parcours de traitement avant publication.
+
+## Vue Kanban dossiers clients
+
+- [x] Cartographier les statuts Kanban et réutiliser la mutation de synchronisation existante.
+- [x] Ajouter une vue Kanban avec glisser-déposer, alternative clavier et confirmation des changements sensibles.
+- [x] Conserver l’historique, les notifications client et les autorisations lors d’un déplacement.
+- [x] Tester le Kanban, la confidentialité, l’accessibilité et publier la fonctionnalité.

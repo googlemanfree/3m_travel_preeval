@@ -94,6 +94,7 @@ import { AdminSystemStatus } from "@/components/AdminSystemStatus";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
+import { AdminCandidateKanban, type KanbanCandidate } from "@/components/AdminCandidateKanban";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -779,6 +780,13 @@ export default function AdminDashboard() {
   const [advisorDeadlinePriorityFilter, setAdvisorDeadlinePriorityFilter] = useState<"all" | "low" | "normal" | "high" | "urgent">("all");
   const { toast } = useToast();
   const trpcUtils = trpc.useUtils();
+  const updateKanbanStatusMutation = trpc.admin.updateCandidateStatus.useMutation({
+    onSuccess: (result) => {
+      toast({ title: "Dossier déplacé", description: result.message + (result.notificationSent ? " — Client notifié par e-mail." : "") });
+      void refetch();
+    },
+    onError: (error) => toast({ title: "Déplacement impossible", description: error.message, variant: "destructive" }),
+  });
 
   useEffect(() => {
     const handleGlobalShortcut = (event: KeyboardEvent) => {
@@ -977,6 +985,21 @@ export default function AdminDashboard() {
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
+  const kanbanCandidates: KanbanCandidate[] = candidates.filter((candidate) => Boolean(candidate.id)).map((candidate) => ({
+    id: candidate.id!,
+    fullName: candidate.fullName ?? "Candidat sans nom",
+    folderCode: candidate.folderCode ?? "Dossier non référencé",
+    destinationCountry: candidate.destinationCountry ?? "",
+    projectType: candidate.projectType ?? "",
+    status: candidate.status ?? "PENDING_48H",
+    source: candidate.source ?? "WEB",
+  }));
+  const handleKanbanMove = (candidate: KanbanCandidate, newStatus: AdminStatus) => {
+    if (!sessionToken || candidate.status === newStatus || updateKanbanStatusMutation.isPending) return;
+    const statusLabel = STATUS_CONFIG[newStatus].label;
+    if (!window.confirm(`Confirmer le déplacement de ${candidate.fullName} vers « ${statusLabel} » ? Le changement sera tracé et pourra déclencher une notification client.`)) return;
+    updateKanbanStatusMutation.mutate({ sessionToken, candidateId: candidate.id, newStatus, notifyClient: true });
+  };
   const availableDestinations = data?.availableDestinations || [];
   const hasCandidateFilters = Boolean(search || statusFilter !== "ALL" || activationFilter !== "ALL" || sourceFilter !== "ALL" || destinationFilter !== "ALL" || sortBy !== "priority");
   const resetCandidateFilters = () => {
@@ -1442,7 +1465,7 @@ export default function AdminDashboard() {
           </div>
           <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div>
 
-          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} /></TabsContent>
+          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} /><AdminCandidateKanban candidates={kanbanCandidates} onMove={handleKanbanMove} onOpen={(candidate) => setSelectedCandidateId(candidate.id)} /></TabsContent>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />
