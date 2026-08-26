@@ -50,6 +50,12 @@ describe("pré-rendu public indexable", () => {
     }
   });
 
+  it("préserve des CTA Canada exploitables dans le fallback public", () => {
+    const rendered = composePublicPrerender(template, "/canada");
+    expect(rendered.html).toContain('/evaluation?destination=canada');
+    expect(rendered.html).toContain("Consulter les programmes IRCC");
+  });
+
   it("garde toutes les routes de l’incident en shell 200 non indexable", () => {
     for (const path of ["/admin", "/document-upload", "/mes-vols-favoris", "/flights", "/mon-espace?section=profile"]) {
       const privatePage = composePublicPrerender(template, path);

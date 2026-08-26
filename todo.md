@@ -1543,3 +1543,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Fiabiliser l’activation du pré-dossier avec validation explicite des champs requis
 - [x] Enrichir les raccourcis et actions du poste 360° sans exposer de données sensibles
 - [x] Tester les rôles, restauration, export et actions de la fiche puis publier
+
+## Audit Canada : écrans blancs et actions inactives
+- [x] Reproduire les défauts signalés sur `/canada` et les routes accessibles depuis cette page
+- [x] Identifier les liens statiques, boutons inactifs et composants qui affichent une page vide
+- [x] Corriger les destinations, états d’erreur et retours utilisateur concernés
+- [x] Tester les routes, CTA et formulaires Canada avant publication

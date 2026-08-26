@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
-import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";
+
+const CanadaScoreSimulator = React.lazy(() => import("@/components/CanadaScoreSimulator"));
 
 const pathways = [
   { title: "Entrée express", icon: PlaneTakeoff, tag: "Résidence permanente", text: "IRCC gère trois programmes : Catégorie de l’expérience canadienne, Programme des travailleurs qualifiés (fédéral) et Programme des travailleurs de métiers spécialisés. Le profil est classé dans un bassin et une invitation dépend des rondes et du classement." },
@@ -54,6 +55,7 @@ const supportSteps = [
 
 export default function Canada() {
   const [scoreCompleted, setScoreCompleted] = useState(false);
+  const [showSimulator, setShowSimulator] = useState(false);
 
   return (
     <ServicePageShell
@@ -114,7 +116,16 @@ export default function Canada() {
             </p>
           </div>
 
-          <CanadaScoreSimulator />
+          {showSimulator ? (
+            <Suspense fallback={<div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm font-semibold text-blue-900" role="status">Chargement du simulateur Canada…</div>}>
+              <CanadaScoreSimulator />
+            </Suspense>
+          ) : (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+              <p className="text-sm font-semibold text-blue-950">Le simulateur détaillé se charge uniquement à votre demande afin de préserver un accès rapide à la page.</p>
+              <button type="button" onClick={() => setShowSimulator(true)} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white shadow transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Ouvrir le simulateur de score</button>
+            </div>
+          )}
 
           <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-xl bg-slate-50 p-5 sm:flex-row">
             <div>
