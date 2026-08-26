@@ -1281,3 +1281,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Réorganiser la navigation, les actions, la langue, le panier, le thème et le profil sans supprimer de fonctionnalité.
 - [x] Vérifier desktop/tablette/mobile, l’accessibilité clavier et publier la correction.
 - [x] Réorganiser le header en deux rangées : navigation principale puis actions utilisateur, avec repli mobile accessible.
+
+## Compétence responsive accessible et confort mobile
+- [x] Créer et valider une compétence réutilisable pour les headers responsives, les contrôles clavier et les boutons flottants.
+- [x] Éloigner les boutons flottants des CTA sur mobile sans perdre l’accès aux actions.
+- [x] Ajouter un mode compact de header pour les écrans tablette.
+- [x] Renforcer l’ordre de tabulation, les focus visibles et les annonces ARIA du header.
+- [x] Tester les breakpoints et publier les corrections avec la compétence.

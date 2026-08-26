@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import ThemeToggle from "./ThemeToggle";
@@ -81,6 +81,8 @@ export default function Navbar() {
   const { totalItems } = useMultiServiceCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
 
   const getInitial = (name: string | undefined) =>
     name ? name.charAt(0).toUpperCase() : "C";
@@ -124,13 +126,15 @@ export default function Navbar() {
       if (event.key !== "Escape") return;
       closeMenu();
       closeProfile();
+      if (isMenuOpen) menuTriggerRef.current?.focus();
+      if (isProfileOpen) profileTriggerRef.current?.focus();
     };
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
+  }, [isMenuOpen, isProfileOpen]);
 
   return (
-    <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
+    <header className="glass-nav tablet-compact-header sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 py-3 lg:gap-x-4 lg:gap-y-2 lg:py-3">
           <a
@@ -233,6 +237,7 @@ export default function Navbar() {
                   aria-haspopup="menu"
                   onClick={() => setIsProfileOpen((open) => !open)}
                   aria-controls="candidate-account-menu"
+                  ref={profileTriggerRef}
                   className="touch-target rounded-xl p-2 text-gray-500 transition hover:bg-blue-50 hover:text-[#0b2f6f]"
                 >
                   <ChevronDown className={`h-4 w-4 transition-transform ${isProfileOpen ? "rotate-180" : ""}`} aria-hidden="true" />
@@ -311,8 +316,9 @@ export default function Navbar() {
               aria-label={isMenuOpen ? copy(NAV_COPY.closeMenu) : copy(NAV_COPY.openMenu)}
               aria-expanded={isMenuOpen}
               aria-controls="mobile-main-navigation"
+              ref={menuTriggerRef}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition"
+              className="touch-target p-2.5 rounded-2xl bg-gray-50 text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               animate={isMenuOpen ? "open" : "closed"}
               variants={hamburgerVariants}
               transition={{ duration: 0.3 }}
