@@ -1387,3 +1387,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier la disponibilité et l’accès contrôlé des routes `/admin`, `/admin/dossiers` et des vues admin associées.
 - [x] Vérifier la cohérence des statuts, documents, notifications, échéances, paiements et historiques avec l’espace client.
 - [x] Rejouer les tests ciblés et documenter séparément les blocages d’hébergement et les erreurs applicatives.
+
+## Recontrôle admin-client — 26 août 2026
+
+- [x] Recontrôler les réponses des routes `/admin`, `/admin/dossiers` et des vues administratives associées ; le domaine répond 200 mais sert encore la page de suspension d’hébergement.
+- [x] Rejouer les tests de synchronisation des dossiers clients, statuts, documents, notifications et historiques ; 7 tests ciblés passent.
+- [x] Documenter précisément les résultats production et preview, sans exposer de données privées.
