@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { startLogin } from '@/const';
 import { trpc } from '@/lib/trpc';
+import FormErrorSummary from '@/components/FormErrorSummary';
 
 interface EvaluationFormData {
   fullName: string;
@@ -286,11 +287,14 @@ export default function PrimaryEvaluationForm() {
             Évaluation Primaire
           </h1>
           <p className="text-lg text-gray-600 mb-8">
-            Soumettez vos informations et votre CV pour une évaluation par IA
+            Soumettez vos informations et votre CV pour une évaluation par un conseiller
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {errors.submit && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">{errors.submit}</p>}
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <FormErrorSummary
+              errors={errors}
+              labels={{ phone: 'Téléphone', destination: 'Destination', visaType: 'Type de visa', education: 'Niveau d’études', experience: 'Expérience', englishLevel: 'Niveau d’anglais', currentJob: 'Emploi actuel', sector: 'Secteur', cvFile: 'CV', submit: 'Soumission' }}
+            />
             {/* Informations personnelles */}
             <div className="border-b border-gray-200 pb-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -327,6 +331,7 @@ export default function PrimaryEvaluationForm() {
                   </label>
                   <input
                     type="tel"
+                    id="form-field-phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
@@ -353,6 +358,7 @@ export default function PrimaryEvaluationForm() {
                     Destination souhaitée *
                   </label>
                   <select
+                    id="form-field-destination"
                     name="destination"
                     value={formData.destination}
                     onChange={handleInputChange}
@@ -376,6 +382,7 @@ export default function PrimaryEvaluationForm() {
                     Type de visa *
                   </label>
                   <select
+                    id="form-field-visaType"
                     name="visaType"
                     value={formData.visaType}
                     onChange={handleInputChange}
@@ -408,6 +415,7 @@ export default function PrimaryEvaluationForm() {
                     Niveau d'études *
                   </label>
                   <select
+                    id="form-field-education"
                     name="education"
                     value={formData.education}
                     onChange={handleInputChange}
@@ -432,6 +440,7 @@ export default function PrimaryEvaluationForm() {
                   </label>
                   <input
                     type="number"
+                    id="form-field-experience"
                     name="experience"
                     value={formData.experience}
                     onChange={handleInputChange}
@@ -450,6 +459,7 @@ export default function PrimaryEvaluationForm() {
                     Niveau d'anglais *
                   </label>
                   <select
+                    id="form-field-englishLevel"
                     name="englishLevel"
                     value={formData.englishLevel}
                     onChange={handleInputChange}
@@ -483,6 +493,7 @@ export default function PrimaryEvaluationForm() {
                   </label>
                   <input
                     type="text"
+                    id="form-field-currentJob"
                     name="currentJob"
                     value={formData.currentJob}
                     onChange={handleInputChange}
@@ -500,6 +511,7 @@ export default function PrimaryEvaluationForm() {
                     Secteur *
                   </label>
                   <select
+                    id="form-field-sector"
                     name="sector"
                     value={formData.sector}
                     onChange={handleInputChange}
@@ -548,6 +560,7 @@ export default function PrimaryEvaluationForm() {
                   </span>
                   <input
                     type="file"
+                    id="form-field-cvFile"
                     name="cvFile"
                     onChange={handleFileChange}
                     accept=".pdf,.doc,.docx"
