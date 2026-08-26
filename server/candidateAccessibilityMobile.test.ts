@@ -16,7 +16,7 @@ describe("accessibilité et mobilité des parcours candidats", () => {
 
   it("annonce et rend utilisables les contrôles de connexion sur mobile", () => {
     const login = source("client/src/pages/Login.tsx");
-    expect(login).toContain('aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}');
+    expect(login).toContain('aria-label={showPassword ? t("Masquer le mot de passe", "Hide password") : t("Afficher le mot de passe", "Show password")}');
     expect(login).toContain('className="touch-target absolute right-1');
     expect(login).toContain('flex flex-col items-start justify-between gap-3 sm:flex-row');
   });

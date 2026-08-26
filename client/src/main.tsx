@@ -7,7 +7,7 @@ import superjson from "superjson";
 
 import App from "./App";
 import { toast } from "sonner";
-import { CHUNK_RELOAD_NOTICE_KEY } from "./lib/lazyWithTimeout";
+import { CHUNK_RELOAD_NOTICE_KEY, clearStaleClientCaches } from "./lib/lazyWithTimeout";
 import { startLogin } from "./const";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { translateApiErrorMessage } from "./lib/apiErrorTranslator";
@@ -37,7 +37,7 @@ window.addEventListener("unhandledrejection", (event) => {
         description: "Une page n’a pas pu être chargée. Rechargement automatique en cours…",
         duration: 5000,
       });
-      window.location.reload();
+      void clearStaleClientCaches().finally(() => window.location.reload());
     }
   }
 });

@@ -33,7 +33,7 @@ export default function Login() {
   const passwordStrength = usePasswordStrength(password, language);
   const closeResendModal = () => {
     setShowResendModal(false);
-    setModalAnnouncement(t("Fenêtre de renvoi d’e-mail fermée.", "Verification email dialog closed."));
+    setModalAnnouncement(t("Fenêtre de renvoi d’email fermée.", "Verification email dialog closed."));
   };
   const closeForgotPasswordModal = () => {
     setShowForgotPasswordModal(false);

@@ -1,6 +1,6 @@
 import { AlertTriangle, RotateCcw, PhoneCall, MessageCircle } from "lucide-react";
 import { Component, ReactNode } from "react";
-import { CHUNK_RELOAD_NOTICE_KEY } from "@/lib/lazyWithTimeout";
+import { CHUNK_RELOAD_NOTICE_KEY, clearStaleClientCaches } from "@/lib/lazyWithTimeout";
 
 interface Props {
   children: ReactNode;
@@ -23,12 +23,13 @@ function isChunkLoadError(error: Error): boolean {
 
 const RELOAD_FLAG_KEY = "3m_chunk_error_reload_attempted";
 
-function reloadPageAfterChunkFailure() {
+async function reloadPageAfterChunkFailure() {
   try {
     sessionStorage.setItem(CHUNK_RELOAD_NOTICE_KEY, "network");
   } catch {
     // Le rechargement reste possible si le stockage est indisponible.
   }
+  await clearStaleClientCaches();
   window.location.reload();
 }
 
@@ -44,13 +45,21 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error) {
     if (isChunkLoadError(error)) {
-      const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
-      if (!alreadyAttempted) {
-        sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
-        reloadPageAfterChunkFailure();
+      try {
+        const alreadyAttempted = sessionStorage.getItem(RELOAD_FLAG_KEY);
+        if (!alreadyAttempted) {
+          sessionStorage.setItem(RELOAD_FLAG_KEY, "1");
+          void reloadPageAfterChunkFailure();
+        }
+      } catch {
+        void reloadPageAfterChunkFailure();
       }
     } else {
-      sessionStorage.removeItem(RELOAD_FLAG_KEY);
+      try {
+        sessionStorage.removeItem(RELOAD_FLAG_KEY);
+      } catch {
+        // Le stockage de session peut être indisponible en mode privé.
+      }
     }
   }
 
@@ -62,7 +71,7 @@ class ErrorBoundary extends Component<Props, State> {
     } catch {
       // Le navigateur peut bloquer le stockage en mode privé.
     }
-    reloadPageAfterChunkFailure();
+    void reloadPageAfterChunkFailure();
   };
 
   render() {
@@ -74,9 +83,9 @@ class ErrorBoundary extends Component<Props, State> {
               <AlertTriangle size={32} />
             </div>
 
-            <h2 className="text-2xl font-bold mb-2">Oups, une mise à jour est requise</h2>
+            <h2 className="text-2xl font-bold mb-2">Cette page n’a pas pu être chargée</h2>
             <p className="text-muted-foreground text-sm mb-6">
-              Le site a été mis à jour et votre navigateur conservait une ancienne version en cache. Veuillez actualiser la page pour profiter de la dernière version.
+              Le chargement d’un module a échoué. Le cache local a été nettoyé ; réessayez sans perdre votre session.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full mb-6">

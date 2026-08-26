@@ -2,6 +2,22 @@ import { ComponentType, LazyExoticComponent, lazy } from "react";
 
 export const LAZY_PAGE_TIMEOUT_MS = 15_000;
 export const CHUNK_RELOAD_NOTICE_KEY = "3m_chunk_reload_notice";
+
+export async function clearStaleClientCaches(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const registrations = await navigator.serviceWorker?.getRegistrations?.();
+    await Promise.all((registrations ?? []).map((registration) => registration.unregister()));
+  } catch {
+    // Une politique de navigateur peut bloquer la gestion des service workers.
+  }
+  try {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  } catch {
+    // Le chargement peut continuer même si Cache Storage est indisponible.
+  }
+}
 const LAZY_PAGE_TIMEOUT_MESSAGE =
   "Failed to fetch dynamically imported module: page load timed out after 15000ms";
 

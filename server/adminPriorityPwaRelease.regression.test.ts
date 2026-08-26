@@ -7,7 +7,7 @@ const serviceWorker = readFileSync(resolve(import.meta.dirname, "../client/publi
 
 describe("révision PWA du poste administrateur", () => {
   it("enregistre une révision de service worker distincte pour évacuer les bundles périmés", () => {
-    expect(indexHtml).toContain("2026-08-26-premium-hover-interactions-static");
+    expect(indexHtml).toContain("2026-08-26-route-hotfix-c6a2c54a");
     expect(indexHtml).toContain("/sw.js?revision=");
     expect(indexHtml).toContain("updateViaCache: 'none'");
   });

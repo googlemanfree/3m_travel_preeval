@@ -17,6 +17,7 @@ vi.mock("@/lib/trpc", () => ({
     adminCandidateManagement: {
       activatePreDossierAccount: { useMutation: () => ({ mutate: activatePreDossierAccount, isPending: false }) },
       reviewEvaluationDeclaration: { useMutation: () => ({ mutate: reviewEvaluationDeclaration, isPending: false }) },
+      deliverValidatedEvaluation: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
   },
 }));
