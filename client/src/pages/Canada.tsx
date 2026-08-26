@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import CanadaScoreSimulator from "@/components/CanadaScoreSimulator";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";
 
 const pathways = [
@@ -22,6 +23,17 @@ const officialResources = [
   { label: "Travailler temporairement", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/work-canada.html", note: "Types de permis et conditions à vérifier." },
   { label: "Étudier au Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada.html", note: "Permis d’études, établissement et après-diplôme." },
   { label: "Visiter le Canada", href: "https://www.canada.ca/en/immigration-refugees-citizenship/services/visit-canada.html", note: "Visa de visiteur, AVE/eTA et séjour temporaire." },
+];
+
+const canadaFaq = [
+  { question: "Quelle est la différence entre Entrée express et une nomination provinciale ?", answer: "Entrée express est un système fédéral qui gère des profils dans un bassin pour certains programmes. Une nomination provinciale relève d’une province ou d’un territoire et suit ses propres critères. Les deux parcours ne sont pas interchangeables et une invitation ou nomination n’est jamais garantie." },
+  { question: "Dois-je obligatoirement avoir une offre d’emploi pour immigrer au Canada ?", answer: "Pas nécessairement. Certaines voies peuvent être examinées sans offre d’emploi, tandis que d’autres reposent sur un employeur, un poste admissible ou une désignation. Le programme pertinent dépend de votre profil et des critères en vigueur au moment de l’analyse." },
+  { question: "Le test de langue est-il nécessaire ?", answer: "Pour plusieurs programmes économiques, un test de langue reconnu peut être exigé ou fortement déterminant. Le niveau, la validité du résultat et la langue acceptée varient selon le programme ; il faut vérifier les exigences officielles avant de déposer un profil." },
+  { question: "Un permis d’études permet-il automatiquement de rester au Canada ?", answer: "Non. Un permis d’études autorise un séjour selon ses conditions et sa durée. L’admission relève de l’établissement et toute possibilité ultérieure de travail ou de résidence permanente dépend de règles et d’une admissibilité distinctes." },
+  { question: "Quelle est la différence entre un visa de visiteur et une AVE/eTA ?", answer: "Le document requis dépend notamment de la nationalité, du mode de transport et de la situation du voyageur. Une AVE/eTA n’est pas un visa de visiteur et aucun de ces documents ne garantit l’entrée au Canada, qui est évaluée à la frontière." },
+  { question: "Combien coûte une procédure canadienne ?", answer: "Les coûts peuvent comprendre les frais gouvernementaux, les tests de langue, l’évaluation des diplômes, les biométries, les examens médicaux, les traductions et, le cas échéant, l’accompagnement professionnel. Les frais et montants officiels doivent être vérifiés sur Canada.ca avant toute décision." },
+  { question: "Que fait 3M Travel dans l’accompagnement ?", answer: "3M Travel aide à structurer les informations, repérer les documents à vérifier, préparer les prochaines étapes et suivre les éléments communiqués dans un espace sécurisé. L’agence ne remplace pas IRCC, les provinces, les établissements ni les autorités frontalières." },
+  { question: "Les délais et les résultats sont-ils garantis ?", answer: "Non. Les délais, invitations, admissions, permis, visas et décisions dépendent des autorités ou organismes compétents et peuvent évoluer. 3M Travel ne garantit ni emploi, ni contrat, ni invitation, ni permis, ni résidence permanente." },
 ];
 
 const profileChecks = [
@@ -261,6 +273,21 @@ export default function Canada() {
             </a>
           ))}
         </div>
+      </ServiceSection>
+
+      <ServiceSection
+        tone="slate"
+        title="Questions fréquentes sur les procédures canadiennes"
+        introduction="Cette FAQ donne des repères généraux. Les exigences applicables doivent toujours être confirmées dans les sources officielles, car elles peuvent changer."
+      >
+        <Accordion type="single" collapsible className="mx-auto max-w-4xl divide-y divide-blue-100 rounded-2xl border border-blue-100 bg-white px-5 shadow-sm">
+          {canadaFaq.map((item, index) => (
+            <AccordionItem key={item.question} value={`faq-${index}`} className="border-blue-100">
+              <AccordionTrigger className="py-5 text-left text-base font-black text-slate-950 hover:no-underline focus-visible:ring-2 focus-visible:ring-amber-500 [&>svg]:text-blue-700">{item.question}</AccordionTrigger>
+              <AccordionContent className="pb-5 text-sm leading-7 text-slate-700">{item.answer}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </ServiceSection>
 
       <ServiceSection

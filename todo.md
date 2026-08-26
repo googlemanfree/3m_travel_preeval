@@ -1318,3 +1318,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des visuels Canada premium, originaux et accessibles dans la page `/canada`.
 - [x] Détailler les principaux parcours Canada à partir des sources IRCC et du contenu fourni, sans promesse de résultat.
 - [x] Ajouter une section ressources officielles et une présentation responsive avec tests de régression.
+
+## FAQ dynamique — procédures Canada
+
+- [x] Définir des réponses FAQ exactes, transparentes et alignées sur les sources officielles canadiennes.
+- [x] Intégrer des menus déroulants accessibles et dynamiques dans `/canada`.
+- [x] Tester l’ouverture, la fermeture, le clavier, le responsive et publier la FAQ.
