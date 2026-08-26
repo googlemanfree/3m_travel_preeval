@@ -1294,3 +1294,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Améliorer la transition du mode compact du header sur tablette en respectant les préférences de mouvement.
 - [x] Harmoniser les états hover, focus-visible et active/clic de tous les boutons du header.
 - [x] Mettre à jour et valider la compétence responsive accessible, tester et publier.
+
+## Tests responsive et audit WCAG du header
+- [x] Ajouter un test navigateur automatisé du bouton de masquage des widgets.
+- [x] Mémoriser séparément la visibilité des widgets pour mobile et tablette, avec migration sûre de l’ancienne préférence.
+- [x] Exécuter un audit automatisé des contrastes hover/focus/clic du header et corriger les écarts confirmés.
+- [x] Mettre à jour et valider la compétence responsive accessible, tester et publier.

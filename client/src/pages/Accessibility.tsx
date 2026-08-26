@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 export default function Accessibility() {
   const { preference, setPreference } = useAnimationPreferences();
   const { fontSize, setFontSize } = useFontSizePreferences();
-  const { widgetsVisible, setWidgetsVisible } = useFloatingWidgetsPreferences();
+  const { widgetsVisible, deviceMode, setWidgetsVisible } = useFloatingWidgetsPreferences();
   const { language } = useLanguage();
   const t = (fr: string, en: string) => language === "en" ? en : fr;
   const fontSizeLabel = { standard: t("Standard", "Standard"), large: t("Grand", "Large"), xlarge: t("Très grand", "Extra large") }[fontSize];
@@ -60,7 +60,7 @@ export default function Accessibility() {
           <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-semibold text-gray-900 text-lg">{t("Afficher les widgets d’assistance", "Show assistance widgets")}</h3>
-              <p className="text-sm text-gray-600">{widgetsVisible ? t("Les widgets sont visibles.", "Widgets are visible.") : t("Les widgets sont masqués.", "Widgets are hidden.")}</p>
+              <p className="text-sm text-gray-600">{widgetsVisible ? t("Les widgets sont visibles.", "Widgets are visible.") : t("Les widgets sont masqués.", "Widgets are hidden.")} {t(`Réglage pour : ${deviceMode === "mobile" ? "mobile" : deviceMode === "tablet" ? "tablette" : "ordinateur"}.`, `Setting for: ${deviceMode}.`)}</p>
             </div>
             <Button type="button" variant={widgetsVisible ? "default" : "outline"} onClick={() => setWidgetsVisible(!widgetsVisible)} aria-pressed={widgetsVisible} className="min-h-11 shrink-0">
               {widgetsVisible ? t("Masquer les widgets", "Hide widgets") : t("Afficher les widgets", "Show widgets")}

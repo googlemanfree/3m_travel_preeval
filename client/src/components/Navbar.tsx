@@ -193,7 +193,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('fr')}
                 aria-label="Français"
                 aria-pressed={language === 'fr'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
+                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'fr' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>FR</span>
               </button>
@@ -202,7 +202,7 @@ export default function Navbar() {
                 onClick={() => setLanguage('en')}
                 aria-label="English"
                 aria-pressed={language === 'en'}
-                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-blue-700'}`}
+                className={`px-2 py-1.5 rounded-lg text-xs font-black transition ${language === 'en' ? 'bg-white dark:bg-slate-700 text-blue-700 dark:text-blue-300 shadow-sm' : 'text-gray-700 dark:text-gray-300 hover:text-blue-700'}`}
               >
                 <Languages className="h-3.5 w-3.5" aria-hidden="true" /><span>EN</span>
               </button>
