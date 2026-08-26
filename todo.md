@@ -1140,3 +1140,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger les contrôles inaccessibles ou sans retour clair identifiés lors de l’audit.
 - [x] Couvrir les régressions des contrôles corrigés et vérifier les parcours protégés sans déclencher d’action métier.
 - [x] Publier et vérifier la diffusion de la passe d’accessibilité fonctionnelle.
+
+## Incident — écran de maintenance public
+- [x] Comparer les réponses et contenus publics des variantes .com, .click et du domaine de prévisualisation.
+- [x] Identifier puis corriger la source confirmée de la page de maintenance, sans modification DNS non justifiée.
+- [x] Vérifier le retour de la page publique et des entrées protégées après correction.
+- [ ] Publier et consigner la résolution de l’incident.
