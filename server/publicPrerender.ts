@@ -1,10 +1,11 @@
 import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
+import { PUBLIC_FAQ_ITEMS } from "@shared/publicFaq";
 
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
-const SOCIAL_IMAGE = `${ORIGIN}/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg`;
-const SOCIAL_IMAGE_ALT = "Logo 3M Travel & Services";
+const SOCIAL_IMAGE_ALT = "Aperçu 3M Travel & Services";
+const socialImageFor = (title: string, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title)}&path=${encodeURIComponent(path)}`;
 
 type PublicMeta = {
   title: string;
@@ -15,7 +16,7 @@ type PublicMeta = {
   noindex?: boolean;
 };
 
-const PUBLIC_PAGES: Record<string, PublicMeta> = {
+export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/": { title: "3M Travel Agency | Mobilité internationale en confiance", description: "Accompagnement documenté pour vos projets de mobilité internationale, avec évaluation, sources officielles et validation humaine des étapes sensibles.", keywords: ["mobilité internationale", "visa", "immigration", "voyage", "évaluation de profil", "3M Travel Agency"], heading: "Votre projet de mobilité, préparé avec méthode", lead: "3M Travel & Services accompagne les candidats dans la préparation de leurs démarches. Les décisions des autorités, employeurs et partenaires externes restent indépendantes de l’agence." },
   "/canada": { title: `Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M Travel"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
@@ -60,6 +61,10 @@ export function isPublicIndexablePath(url: string) {
   return Boolean(PUBLIC_PAGES[publicPath(url)]);
 }
 
+export function getIndexablePublicPaths() {
+  return Object.entries(PUBLIC_PAGES).filter(([, meta]) => !meta.noindex).map(([path]) => path);
+}
+
 export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
@@ -74,7 +79,17 @@ export function composePublicPrerender(template: string, url: string) {
     noindex: privatePath || unknown,
   };
   const canonical = `${ORIGIN}${path}`;
+  const socialImage = socialImageFor(current.title, path);
   const robot = current.noindex ? `<meta name="robots" content="noindex,follow" />` : `<meta name="robots" content="index,follow" />`;
+  const structuredData = path === "/"
+    ? { "@context": "https://schema.org", "@graph": [
+        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
+        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
+      ] }
+    : path === "/procedures"
+      ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) }
+      : null;
+  const structuredDataTag = structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : "";
   const head = [
     `<title>${esc(current.title)}</title>`,
     `<meta name="description" content="${esc(current.description)}" />`,
@@ -87,20 +102,14 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
-    `<meta property="og:image" content="${SOCIAL_IMAGE}" />`,
+    `<meta property="og:image" content="${socialImage}" />`,
     `<meta property="og:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(current.title)}" />`,
     `<meta name="twitter:description" content="${esc(current.description)}" />`,
-    `<meta name="twitter:image" content="${SOCIAL_IMAGE}" />`,
+    `<meta name="twitter:image" content="${socialImage}" />`,
     `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
-    ...(path === "/" ? [`<script type="application/ld+json">${JSON.stringify({
-      "@context": "https://schema.org",
-      "@graph": [
-        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: SOCIAL_IMAGE, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
-        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
-      ],
-    }).replace(/</g, "\\u003c")}</script>`] : []),
+    structuredDataTag,
   ].join("\n");
   const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p><section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template

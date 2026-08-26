@@ -1431,3 +1431,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Harmoniser les titres, descriptions et mots-clés de `/canada`, `/procedures` et `/contact`
 - [x] Ajouter Open Graph et Twitter Cards avec une image par défaut locale et durable
 - [x] Tester le HTML initial, les longueurs, le JSON-LD et les cartes sociales, puis publier
+
+
+## SEO dynamique, sitemap et FAQ structurée
+- [x] Mettre à jour la compétence réutilisable avec les contrôles d’images sociales, sitemap, robots et FAQPage
+- [x] Générer dynamiquement une image Open Graph/Twitter selon le titre de chaque page
+- [x] Générer automatiquement sitemap.xml et robots.txt depuis les routes publiques indexables
+- [x] Ajouter les données structurées JSON-LD FAQPage sur `/procedures`
+- [x] Tester les routes, les URLs, les balises sociales et les données structurées, puis publier

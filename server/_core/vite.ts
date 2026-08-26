@@ -7,6 +7,22 @@ import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 import { composePublicPrerender } from "../publicPrerender";
 import { canonicalRedirectFromHosts } from "../canonicalDomain";
+import { renderOgImageSvg } from "../seoAssets";
+import { renderRobotsTxt, renderSitemapXml } from "../seoRoutes";
+
+function registerSeoAssetRoutes(app: Express) {
+  app.get("/api/og", (req, res) => {
+    const title = typeof req.query.title === "string" ? req.query.title : "3M Travel Agency";
+    const pagePath = typeof req.query.path === "string" ? req.query.path : "/";
+    res.status(200).set({ "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderOgImageSvg(title, pagePath));
+  });
+  app.get("/sitemap.xml", (_req, res) => {
+    res.status(200).set({ "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderSitemapXml());
+  });
+  app.get("/robots.txt", (_req, res) => {
+    res.status(200).set({ "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" }).send(renderRobotsTxt());
+  });
+}
 
 function applyCanonicalDomainRedirect(app: Express) {
   app.use((req, res, next) => {
@@ -25,6 +41,7 @@ function applyCanonicalDomainRedirect(app: Express) {
 }
 export async function setupVite(app: Express, server: Server) {
   applyCanonicalDomainRedirect(app);
+  registerSeoAssetRoutes(app);
   const serverOptions = {
     middlewareMode: true,
     // Le proxy de prévisualisation ne relaie pas de WebSocket Vite fiable dans
@@ -115,6 +132,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 export function serveStatic(app: Express) {
   applyCanonicalDomainRedirect(app);
+  registerSeoAssetRoutes(app);
   const distPath =
     process.env.NODE_ENV === "development"
       ? path.resolve(import.meta.dirname, "../..", "dist", "public")

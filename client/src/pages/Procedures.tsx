@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle, Upload, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
+import { PublicFAQ } from '@/components/PublicFAQ';
 
 export default function EvisaDemande() {
   const [step, setStep] = useState(1);
@@ -346,6 +347,7 @@ export default function EvisaDemande() {
           </div>
         </div>
       </section>
+      <PublicFAQ />
     </div>
   );
 }
