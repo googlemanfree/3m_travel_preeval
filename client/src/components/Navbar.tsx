@@ -68,8 +68,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-10 w-10 justify-center px-2 py-2 text-[12px] font-bold text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5"
-    : "min-h-10 w-10 justify-center px-2 py-2 text-[12px] font-semibold text-slate-700 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5";
+    ? "min-h-10 w-auto justify-start px-1.5 py-2 text-[11px] font-bold text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5"
+    : "min-h-10 w-auto justify-start px-1.5 py-2 text-[11px] font-semibold text-slate-700 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5";
 
 const authButtonClass = "inline-flex h-11 w-[118px] items-center justify-center rounded-xl px-2 text-center text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -132,13 +132,13 @@ export default function Navbar() {
   return (
     <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 justify-between items-center gap-3 h-20">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 py-3 lg:gap-x-4 lg:gap-y-2 lg:py-3">
           <a
             href="/"
             onMouseEnter={() => handleNavigationIntent("/")}
             onFocus={() => handleNavigationIntent("/")}
             onClick={handleNavigationClick}
-            className="flex items-center gap-3 group hover:opacity-80 transition-opacity"
+            className="order-1 flex shrink-0 items-center gap-3 group hover:opacity-80 transition-opacity"
           >
             <img
               src="/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg"
@@ -149,7 +149,7 @@ export default function Navbar() {
 
           <nav
             aria-label={copy(NAV_COPY.mainNav)}
-            className="hidden lg:flex min-w-0 items-center space-x-0.5 bg-gray-50/80 p-1 rounded-2xl border border-gray-100/80"
+            className="order-2 hidden min-w-0 flex-1 items-center justify-center space-x-0.5 rounded-2xl border border-gray-100/80 bg-gray-50/80 p-1 lg:flex"
           >
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -165,13 +165,13 @@ export default function Navbar() {
                 className={nativeLinkClass(item.highlight)}
               >
                 <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-                <span className="hidden 2xl:inline">{copy(item.label)}</span>
+                <span className="inline">{copy(item.label)}</span>
               </a>
               );
             })}
           </nav>
 
-          <div className="hidden lg:flex shrink-0 items-center gap-1.5">
+          <div className="order-3 hidden basis-full flex-wrap items-center justify-end gap-1.5 border-t border-slate-200/70 pt-2 lg:flex">
             <a
               href="/panier"
               onMouseEnter={() => handleNavigationIntent("/panier")}

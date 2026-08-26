@@ -1275,3 +1275,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger la récupération de chunks, le service worker et la détection de version sans rediriger inutilement l’utilisateur.
 - [x] Vérifier `/flights` et les routes protégées avec une session restaurée, puis publier la correction.
 - [x] Rejouer les contrôles publics et confirmer l’absence de faux écran de cache sur les routes critiques.
+
+## En-tête responsive — boutons masqués
+- [x] Identifier les contrôles comprimés ou recouverts dans le header selon la largeur d’écran.
+- [x] Réorganiser la navigation, les actions, la langue, le panier, le thème et le profil sans supprimer de fonctionnalité.
+- [x] Vérifier desktop/tablette/mobile, l’accessibilité clavier et publier la correction.
+- [x] Réorganiser le header en deux rangées : navigation principale puis actions utilisateur, avec repli mobile accessible.
