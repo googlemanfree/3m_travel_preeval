@@ -84,8 +84,11 @@ const multiProjectEvaluationInput = z.object({
   fullName: z.string().min(2, "Le nom complet est requis"),
   email: z.string().email("Email invalide"),
   whatsappPhone: z.string().min(8, "Numéro WhatsApp invalide"),
+  age: z.number().int().min(16).max(100).optional(),
   currentCity: z.string().optional(),
   nationality: z.string().optional(),
+  destinationCategory: destinationCategoryEnum,
+  destinationCountry: z.string().min(2, "Pays de destination requis"),
   projectType: z.enum(["travail", "etudes", "tourisme"]),
 
   // Étape 2 : Champs conditionnels
@@ -108,6 +111,7 @@ const multiProjectEvaluationInput = z.object({
   travelHistory: z.string().optional(),
   previousRefusal: z.boolean().optional(),
   socialTies: z.string().optional(),
+  cvLink: z.string().url("Lien CV invalide").optional(),
 });
 
 export const evaluationRouter = router({
@@ -125,14 +129,17 @@ export const evaluationRouter = router({
         email: input.email,
         phone: input.whatsappPhone,
         nationality: input.nationality,
+        cityOfResidence: input.currentCity,
         dateOfBirth: undefined,
-        destinationCategory: "autre" as const,
-        destinationCountry: undefined,
-        visaType: "autre" as const,
-        educationLevel: input.educationLevel,
-        employmentStatus: undefined,
-        message: JSON.stringify({
+        destinationCategory: input.destinationCategory,
+        destinationCountry: input.destinationCountry,
+        visaType: (input.destinationCountry === "Canada" ? (input.projectType === "travail" ? "canada_travail" : input.projectType === "etudes" ? "canada_etude" : "canada_tourisme") : ["France", "Belgique", "Allemagne", "Luxembourg"].includes(input.destinationCountry) ? (`schengen_${input.projectType === "etudes" ? "etude" : input.projectType}` as const) : "autre") as any,
+        projectType: input.projectType,
+        projectDetailsJson: JSON.stringify({
+          destinationCountry: input.destinationCountry,
           projectType: input.projectType,
+          age: input.age,
+          cvLink: input.cvLink,
           currentCity: input.currentCity,
           sector: input.sector,
           yearsOfExperience: input.yearsOfExperience,

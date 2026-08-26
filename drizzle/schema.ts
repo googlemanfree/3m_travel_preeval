@@ -102,6 +102,7 @@ export const evaluations = mysqlTable("evaluations", {
     "schengen_tourisme",
     "schengen_travail",
     "canada_rp",
+    "canada_travail",
     "canada_etude",
     "canada_tourisme",
     "autre",

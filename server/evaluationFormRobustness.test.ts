@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { categoryForCountry, visaTypeFor } from "@/components/SimpleMultiProjectForm";
 
 describe("Formulaire d'évaluation et robustesse des redirections", () => {
   it("valide les paramètres de projet et de destination supportés", () => {
@@ -27,5 +28,21 @@ describe("Formulaire d'évaluation et robustesse des redirections", () => {
     expect(expectedUrl).toContain("wa.me");
     expect(expectedUrl).toContain("Canada");
     expect(expectedUrl).toContain("ETUDES");
+  });
+
+  it("catégorise correctement les pays pour le SEO et le scoring", () => {
+    expect(categoryForCountry("Canada")).toBe("canada");
+    expect(categoryForCountry("France")).toBe("schengen");
+    expect(categoryForCountry("Luxembourg")).toBe("schengen");
+    expect(categoryForCountry("USA")).toBe("autre");
+  });
+
+  it("détermine le type de visa adapté selon le pays et le projet", () => {
+    expect(visaTypeFor("travail", "Canada")).toBe("canada_travail");
+    expect(visaTypeFor("etudes", "Canada")).toBe("canada_etude");
+    expect(visaTypeFor("travail", "France")).toBe("schengen_travail");
+    expect(visaTypeFor("tourisme", "Belgique")).toBe("schengen_tourisme");
+    expect(visaTypeFor("etudes", "Allemagne")).toBe("schengen_etude");
+    expect(visaTypeFor("travail", "USA")).toBe("autre");
   });
 });

@@ -1455,3 +1455,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des animations de survol fluides et compatibles avec la réduction de mouvement
 - [x] Ajouter un JSON-LD Article ou BlogPosting aux pages de contenu éditorial
 - [x] Tester les interactions, le JSON-LD et le rendu, puis publier
+
+
+## Évaluation adaptative par pays et projet
+- [x] Auditer le formulaire public lié à `#evaluation-multi` et son pré-remplissage `project=travail`
+- [x] Cartographier les champs et critères par pays, destination et type de projet
+- [x] Implémenter des questions, documents et garde-fous adaptatifs sans promesse de résultat
+- [x] Synchroniser les réponses structurées avec l’espace administrateur
+- [x] Ajouter les tests client/serveur et vérifier les parcours avant publication

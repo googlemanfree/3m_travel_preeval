@@ -17,13 +17,73 @@ interface FormData {
   fullName: string;
   email: string;
   whatsappPhone: string;
+  age?: number;
+  currentCity?: string;
   nationality: string;
+  destinationCountry: string;
   projectType: ProjectType;
   sector?: string;
   yearsOfExperience?: number;
   educationLevel?: string;
   languages?: string;
+  financialGuarantee?: string;
+  visitReason?: string;
+  travelHistory?: string;
+  previousRefusal?: boolean;
+  socialTies?: string;
+  cvLink?: string;
 }
+
+type CountryOption = { value: string; label: string; flag: string; hint: string };
+
+const COUNTRIES_BY_PROJECT: Record<ProjectType, CountryOption[]> = {
+  travail: [
+    { value: "Canada", label: "Canada", flag: "🇨🇦", hint: "Permis de travail, mobilité qualifiée" },
+    { value: "Luxembourg", label: "Luxembourg", flag: "🇱🇺", hint: "Emploi et autorisation de travail" },
+    { value: "France", label: "France", flag: "🇫🇷", hint: "Mobilité professionnelle" },
+    { value: "Belgique", label: "Belgique", flag: "🇧🇪", hint: "Travail et séjour professionnel" },
+    { value: "Allemagne", label: "Allemagne", flag: "🇩🇪", hint: "Emploi qualifié et recherche d’employeur" },
+    { value: "Autre pays", label: "Autre pays", flag: "🌍", hint: "Un conseiller précisera la procédure" },
+  ],
+  etudes: [
+    { value: "Canada", label: "Canada", flag: "🇨🇦", hint: "Permis d’études et admission" },
+    { value: "France", label: "France", flag: "🇫🇷", hint: "Études supérieures et visa long séjour" },
+    { value: "Belgique", label: "Belgique", flag: "🇧🇪", hint: "Admission et séjour étudiant" },
+    { value: "Allemagne", label: "Allemagne", flag: "🇩🇪", hint: "Études et ressources financières" },
+    { value: "Luxembourg", label: "Luxembourg", flag: "🇱🇺", hint: "Admission et autorisation de séjour" },
+    { value: "Autre pays", label: "Autre pays", flag: "🌍", hint: "Un conseiller précisera la procédure" },
+  ],
+  tourisme: [
+    { value: "Canada", label: "Canada", flag: "🇨🇦", hint: "Visite, famille ou tourisme" },
+    { value: "France", label: "France", flag: "🇫🇷", hint: "Court séjour Schengen" },
+    { value: "Belgique", label: "Belgique", flag: "🇧🇪", hint: "Visite familiale ou séjour court" },
+    { value: "Allemagne", label: "Allemagne", flag: "🇩🇪", hint: "Court séjour Schengen" },
+    { value: "Royaume-Uni", label: "Royaume-Uni", flag: "🇬🇧", hint: "Visitor visa" },
+    { value: "Autre pays", label: "Autre pays", flag: "🌍", hint: "Un conseiller précisera la procédure" },
+  ],
+};
+
+export function categoryForCountry(country: string): "schengen" | "canada" | "autre" {
+  if (country === "Canada") return "canada";
+  if (["France", "Belgique", "Allemagne", "Luxembourg"].includes(country)) return "schengen";
+  return "autre";
+}
+
+export function visaTypeFor(project: ProjectType, country: string): string {
+  if (country === "Canada") return project === "travail" ? "canada_travail" : project === "etudes" ? "canada_etude" : "canada_tourisme";
+  if (categoryForCountry(country) === "schengen") return `schengen_${project === "etudes" ? "etude" : project}`;
+  return "autre";
+}
+
+const COUNTRY_GUIDANCE: Record<string, string> = {
+  Canada: "Préparez votre niveau de langue, vos études, votre expérience et, selon le projet, les éléments d’admission ou de permis.",
+  Luxembourg: "Pour un projet de travail, l’existence d’un employeur et les autorisations applicables doivent être vérifiées par un conseiller.",
+  France: "Le type de séjour, l’admission ou l’employeur et les ressources à justifier dépendent de votre situation.",
+  Belgique: "La région, l’établissement ou l’employeur et les justificatifs financiers peuvent modifier la procédure.",
+  Allemagne: "Le métier, le niveau de qualification, la langue et l’existence d’un employeur sont à examiner séparément.",
+  "Royaume-Uni": "Les exigences du Royaume-Uni sont distinctes de Schengen et doivent être confirmées sur la source officielle.",
+  "Autre pays": "Un conseiller qualifiera la procédure et vous orientera vers les sources officielles du pays choisi.",
+};
 
 export function SimpleMultiProjectForm() {
   const [location] = useLocation();
@@ -31,12 +91,14 @@ export function SimpleMultiProjectForm() {
   const projectParam = searchParams.get("project") as ProjectType | null;
   const destinationParam = searchParams.get("destination") || "";
 
+  const initialProject = projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : (destinationParam ? "etudes" : "travail");
   const [formData, setFormData] = React.useState<FormData>({
     fullName: "",
     email: "",
     whatsappPhone: "",
     nationality: "",
-    projectType: projectParam && ["travail", "etudes", "tourisme"].includes(projectParam) ? projectParam : (destinationParam ? "etudes" : "travail"),
+    destinationCountry: destinationParam || "",
+    projectType: initialProject,
     sector: destinationParam ? `Destination souhaitée : ${destinationParam}` : undefined,
   });
 
@@ -63,7 +125,7 @@ export function SimpleMultiProjectForm() {
     if (destinationParam) {
       setFormData((prev) => ({
         ...prev,
-        projectType: "etudes",
+        destinationCountry: destinationParam,
         sector: prev.sector ? prev.sector : `Destination souhaitée : ${destinationParam}`,
       }));
     }
@@ -79,6 +141,7 @@ export function SimpleMultiProjectForm() {
         email: "",
         whatsappPhone: "",
         nationality: "",
+        destinationCountry: "",
         projectType: "travail",
       });
     },
@@ -101,8 +164,8 @@ export function SimpleMultiProjectForm() {
 
     setContactTouched({ email: true, whatsappPhone: true });
 
-    if (!formData.fullName || !formData.email || !formData.whatsappPhone || !formData.nationality) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+    if (!formData.fullName || !formData.email || !formData.whatsappPhone || !formData.nationality || !formData.destinationCountry) {
+      toast.error("Veuillez remplir votre identité, votre nationalité et votre pays de destination.");
       return;
     }
 
@@ -113,7 +176,10 @@ export function SimpleMultiProjectForm() {
 
     setIsSubmitting(true);
     try {
-      await submitEvaluation.mutateAsync(formData as any);
+      await submitEvaluation.mutateAsync({
+        ...formData,
+        destinationCategory: categoryForCountry(formData.destinationCountry),
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -216,13 +282,26 @@ export function SimpleMultiProjectForm() {
               />
             </div>
 
+            <div>
+              <Label htmlFor="age" className="text-gray-700 font-semibold">Âge</Label>
+              <Input
+                id="age"
+                name="age"
+                type="number"
+                value={formData.age || ""}
+                onChange={handleInputChange}
+                placeholder="Ex: 28"
+                className="mt-2"
+              />
+            </div>
+
             <div className="md:col-span-2">
               <Label htmlFor="projectType" className="text-gray-700 font-semibold">
                 Type de projet *
               </Label>
-              <Select
+                <Select
                 value={formData.projectType}
-                onValueChange={(value) => handleSelectChange("projectType", value)}
+                onValueChange={(value) => setFormData((prev) => ({ ...prev, projectType: value as ProjectType, destinationCountry: "", sector: "" }))}
               >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="Sélectionner un projet" />
@@ -233,6 +312,18 @@ export function SimpleMultiProjectForm() {
                   <SelectItem value="tourisme">Visa Tourisme</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="destinationCountry" className="text-gray-700 font-semibold">Pays de destination *</Label>
+              <Select value={formData.destinationCountry} onValueChange={(value) => handleSelectChange("destinationCountry", value)}>
+                <SelectTrigger id="destinationCountry" className="mt-2"><SelectValue placeholder="Sélectionner un pays" /></SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES_BY_PROJECT[formData.projectType].map((country) => <SelectItem key={country.value} value={country.value}><span className="mr-2">{country.flag}</span>{country.label} — {country.hint}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-gray-500">Les questions et la checklist seront adaptées à ce pays et à votre projet.</p>
+              {formData.destinationCountry && <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-900"><strong>À vérifier pour {formData.destinationCountry} :</strong> {COUNTRY_GUIDANCE[formData.destinationCountry]}</div>}
             </div>
 
             {formData.projectType === "travail" && (
@@ -249,6 +340,11 @@ export function SimpleMultiProjectForm() {
                     placeholder="Ex: Informatique ou Destination : Canada"
                     className="mt-2"
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="languages" className="text-gray-700 font-semibold">Niveaux de langue</Label>
+                  <Input id="languages" name="languages" value={formData.languages || ""} onChange={handleInputChange} placeholder="Français, anglais, IELTS/TEF si disponible" className="mt-2" />
                 </div>
 
                 <div>
@@ -304,6 +400,26 @@ export function SimpleMultiProjectForm() {
                 </div>
               </>
             )}
+
+            {formData.projectType === "etudes" && <div className="md:col-span-2"><Label htmlFor="financialGuarantee" className="text-gray-700 font-semibold">Comment prévoyez-vous de financer le projet ?</Label><Input id="financialGuarantee" name="financialGuarantee" value={formData.financialGuarantee || ""} onChange={handleInputChange} placeholder="Épargne, garant, bourse…" className="mt-2" /></div>}
+            {formData.projectType === "tourisme" && <>
+              <div><Label htmlFor="visitReason" className="text-gray-700 font-semibold">Motif du séjour</Label><Input id="visitReason" name="visitReason" value={formData.visitReason || ""} onChange={handleInputChange} placeholder="Visite familiale, tourisme, événement…" className="mt-2" /></div>
+              <div><Label htmlFor="travelHistory" className="text-gray-700 font-semibold">Historique de voyages</Label><Input id="travelHistory" name="travelHistory" value={formData.travelHistory || ""} onChange={handleInputChange} placeholder="Pays visités et années" className="mt-2" /></div>
+              <div className="md:col-span-2"><Label htmlFor="socialTies" className="text-gray-700 font-semibold">Attaches dans le pays de résidence</Label><Textarea id="socialTies" name="socialTies" value={formData.socialTies || ""} onChange={handleInputChange} placeholder="Emploi, famille, études ou obligations à préciser" className="mt-2" /></div>
+            </>}
+
+            <div className="md:col-span-2">
+              <Label htmlFor="cvLink" className="text-gray-700 font-semibold">Lien vers votre CV (Google Drive, Dropbox, etc.)</Label>
+              <Input
+                id="cvLink"
+                name="cvLink"
+                value={formData.cvLink || ""}
+                onChange={handleInputChange}
+                placeholder="https://..."
+                className="mt-2"
+              />
+              <p className="mt-1 text-xs text-gray-500">Optionnel mais fortement recommandé pour une évaluation précise.</p>
+            </div>
           </div>
 
           <Button
