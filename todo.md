@@ -1157,7 +1157,7 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Auditer le fallback de chargement et identifier la fuite de contenu non stylé.
 - [x] Créer un écran de chargement premium, léger et accessible avec identité 3M.
 - [x] Vérifier la réduction de mouvement, le rendu mobile et les transitions de routes.
-- [ ] Publier et vérifier l’écran de chargement premium.
+- [x] Publier et vérifier l’écran de chargement premium.
 
 ## Réorganisation premium du bandeau légal
 - [x] Déplacer le bandeau RC/NIU du haut de page vers le footer légal unique.
@@ -1168,13 +1168,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inventorier les formulaires publics et protégés concernés.
 - [x] Intégrer le résumé d’erreurs avec liens vers les champs invalides.
 - [x] Tester les états invalides et l’accessibilité clavier/lecteur d’écran.
-- [ ] Publier et vérifier le résumé d’erreurs.
+- [x] Publier et vérifier le résumé d’erreurs.
 
 ## Écran de chargement premium
 - [x] Auditer le fallback de chargement et identifier la fuite de contenu non stylé.
 - [x] Créer un écran de chargement premium, léger et accessible avec identité 3M.
 - [x] Vérifier la réduction de mouvement, le rendu mobile et les transitions de routes.
-- [ ] Publier et vérifier l’écran de chargement premium.
+- [x] Publier et vérifier l’écran de chargement premium.
 
 ## Réorganisation premium du bandeau légal
 - [x] Déplacer le bandeau RC/NIU du haut de page vers le footer légal unique.
@@ -1185,4 +1185,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Inventorier les formulaires publics et protégés concernés.
 - [x] Intégrer le résumé d’erreurs avec liens vers les champs invalides.
 - [x] Tester les états invalides et l’accessibilité clavier/lecteur d’écran.
-- [ ] Publier et vérifier le résumé d’erreurs.
+- [x] Publier et vérifier le résumé d’erreurs.
+
+## Incident public urgent — rétablissement du site
+- [x] Contrôler immédiatement le statut HTTP des domaines officiels et des routes publiques critiques.
+- [x] Identifier la cause reproductible de toute erreur bloquante sans modifier les DNS à l’aveugle.
+- [x] Corriger et tester la page d’état, le shell public et les entrées protégées.
+- [x] Publier le correctif et confirmer honnêtement les routes réellement opérationnelles.
