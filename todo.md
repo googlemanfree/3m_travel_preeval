@@ -1393,3 +1393,16 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Recontrôler les réponses des routes `/admin`, `/admin/dossiers` et des vues administratives associées ; le domaine répond 200 mais sert encore la page de suspension d’hébergement.
 - [x] Rejouer les tests de synchronisation des dossiers clients, statuts, documents, notifications et historiques ; 7 tests ciblés passent.
 - [x] Documenter précisément les résultats production et preview, sans exposer de données privées.
+
+## Kanban admin enrichi
+
+- [x] Étendre la compétence réutilisable avec les règles d’historique, de filtrage et d’échéance.
+- [x] Afficher l’historique visuel des déplacements sur chaque carte Kanban.
+- [x] Ajouter les filtres par destination et conseiller assigné.
+- [x] Ajouter les échéances, alertes de proximité et contrôles d’autorisation associés.
+- [x] Tester les interactions, la confidentialité et publier la version enrichie.
+
+## Vérification Kanban enrichi
+- [x] Vérifier le Kanban enrichi : historique visuel, filtres destination/conseiller et alertes SLA
+- [x] Ajouter et exécuter les tests de filtrage Kanban et de calcul des échéances
+- [ ] Finaliser l’audit de disponibilité du domaine public après rétablissement de l’hébergement

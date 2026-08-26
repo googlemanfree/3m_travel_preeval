@@ -13,8 +13,8 @@ describe("routes canoniques des pages de service", () => {
     expect(appSource).toContain('path={"/billets"} component={Billets}');
     expect(appSource).toContain('path={"/formation"} component={Formation}');
     expect(appSource).toContain('path={"/3m-booking"}');
-    expect(appSource).toContain('Redirect to="/etudes"');
-    expect(appSource).toContain('Redirect to="/billets"');
+    expect(appSource).toContain('path={"/visa-etudes"}');
+    expect(appSource).toContain('path={"/3m-booking"} component={Billets}');
   });
 
   it("référence dix destinations d’études avec des sources officielles", () => {

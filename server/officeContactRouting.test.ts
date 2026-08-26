@@ -36,7 +36,7 @@ describe("contacts multi-bureaux", () => {
     expect(page).toContain('<OfficeContactPanel />');
     expect(floating).toContain('officeWhatsAppUrl(office');
     expect(floating).toContain('OFFICE_CONTACTS.cameroon');
-    expect(read("client/src/App.tsx")).toContain('const showFloatingTools = location !== "/contact"');
+    expect(read("client/src/App.tsx")).toContain('const showFloatingTools = widgetsVisible && location !== "/contact"');
   });
 
   it("fait de Yaoundé le WhatsApp public principal et conserve Ottawa comme contact secondaire", () => {

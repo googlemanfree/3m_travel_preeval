@@ -1462,6 +1462,9 @@ export const adminRouter = router({
           activationStatus: getActivationStatus(app.email),
           evaluationDeclarationStatus: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclarationStatus ?? "not_declared",
           evaluationDeclaredAt: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclaredAt ?? null,
+          adminAssignedTo: app.adminAssignedTo ?? null,
+          lastStatusUpdateAt: app.lastStatusUpdateAt ?? app.updatedAt,
+          evaluationScheduledAt: app.evaluationScheduledAt ?? null,
         }));
 
         // Normaliser les dossiers agence
@@ -1485,6 +1488,9 @@ export const adminRouter = router({
           activationStatus: getActivationStatus(app.email),
           evaluationDeclarationStatus: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclarationStatus ?? "not_declared",
           evaluationDeclaredAt: candidateByEmail.get(app.email.toLowerCase())?.evaluationDeclaredAt ?? null,
+          adminAssignedTo: null,
+          lastStatusUpdateAt: app.updatedAt,
+          evaluationScheduledAt: null,
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
@@ -1510,6 +1516,9 @@ export const adminRouter = router({
             activationStatus: getActivationStatus(candidate.email),
             evaluationDeclarationStatus: candidate.evaluationDeclarationStatus,
             evaluationDeclaredAt: candidate.evaluationDeclaredAt,
+            adminAssignedTo: null,
+            lastStatusUpdateAt: candidate.updatedAt,
+            evaluationScheduledAt: null,
           }));
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.

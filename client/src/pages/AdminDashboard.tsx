@@ -137,6 +137,9 @@ interface Candidate {
   evaluationReviewedAt?: Date | string | null;
   evaluationReviewedBy?: string | null;
   evaluationReviewNote?: string | null;
+  adminAssignedTo?: string | null;
+  lastStatusUpdateAt?: Date | string | null;
+  evaluationScheduledAt?: Date | string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -985,15 +988,14 @@ export default function AdminDashboard() {
 
   const candidates = data?.candidates || [];
   const total = data?.total || 0;
-  const kanbanCandidates: KanbanCandidate[] = candidates.filter((candidate) => Boolean(candidate.id)).map((candidate) => ({
-    id: candidate.id!,
-    fullName: candidate.fullName ?? "Candidat sans nom",
-    folderCode: candidate.folderCode ?? "Dossier non référencé",
-    destinationCountry: candidate.destinationCountry ?? "",
-    projectType: candidate.projectType ?? "",
-    status: candidate.status ?? "PENDING_48H",
-    source: candidate.source ?? "WEB",
-  }));
+  const kanbanCandidates: KanbanCandidate[] = candidates.filter((candidate) => Boolean(candidate.id)).map((candidate) => {
+    const status = (candidate.status ?? "PENDING_48H") as AdminStatus;
+    const referenceDate = candidate.evaluationScheduledAt ?? candidate.lastStatusUpdateAt ?? candidate.updatedAt ?? candidate.createdAt;
+    const slaHours = status === "PENDING_48H" ? 48 : status === "PUBLISHED" ? 72 : 120;
+    const dueAt = referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null;
+    const history = [{ status, label: STATUS_CONFIG[status]?.label ?? status, at: candidate.lastStatusUpdateAt ?? candidate.updatedAt }, ...(candidate.createdAt ? [{ status: "created", label: "Dossier créé", at: candidate.createdAt }] : [])];
+    return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history };
+  });
   const handleKanbanMove = (candidate: KanbanCandidate, newStatus: AdminStatus) => {
     if (!sessionToken || candidate.status === newStatus || updateKanbanStatusMutation.isPending) return;
     const statusLabel = STATUS_CONFIG[newStatus].label;
