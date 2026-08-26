@@ -140,6 +140,9 @@ export function serveStatic(app: Express) {
   // un shell 200/noindex, puis laisser AuthGuard gérer la session côté client.
   app.get("/etat-du-service", renderExplicitShell);
   app.get("/mon-dossier", renderExplicitShell);
+  app.get("/document-upload", renderExplicitShell);
+  app.get("/mes-vols-favoris", renderExplicitShell);
+  app.get("/flights", renderExplicitShell);
   app.use(express.static(distPath, { index: false, redirect: false }));
   app.use("*", async (req, res) => {
     try {

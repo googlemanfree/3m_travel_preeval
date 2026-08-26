@@ -51,7 +51,7 @@ export function composePublicPrerender(template: string, url: string) {
   const path = publicPath(url);
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
   const meta = PUBLIC_PAGES[path] ?? blogArticle;
-  const privatePath = /^\/(admin|mon-espace|mon-dossier|employeurs|login|panier)(?:\/|$)/.test(path);
+  const privatePath = /^\/(admin|mon-espace|mon-dossier|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
     title: unknown ? `Page introuvable | ${SITE}` : SITE,

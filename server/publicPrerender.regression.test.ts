@@ -13,11 +13,17 @@ describe("pré-rendu public indexable", () => {
     expect((rendered.html.match(/<title>/g) ?? []).length).toBe(1);
   });
 
-  it("garde les routes privées en noindex et renvoie une vraie 404 pour une page inconnue", () => {
-    const privatePage = composePublicPrerender(template, "/admin");
+  it("garde toutes les routes de l’incident en shell 200 non indexable", () => {
+    for (const path of ["/admin", "/document-upload", "/mes-vols-favoris", "/flights", "/mon-espace?section=profile"]) {
+      const privatePage = composePublicPrerender(template, path);
+      expect(privatePage.status, path).toBe(200);
+      expect(privatePage.html, path).toContain('name="robots" content="noindex,follow"');
+      expect(privatePage.html, path).toContain("Espace réservé");
+    }
+  });
+
+  it("renvoie une vraie 404 pour une page inconnue", () => {
     const missingPage = composePublicPrerender(template, "/route-inconnue");
-    expect(privatePage.status).toBe(200);
-    expect(privatePage.html).toContain('name="robots" content="noindex,follow"');
     expect(missingPage.status).toBe(404);
     expect(missingPage.html).toContain("Page introuvable");
   });

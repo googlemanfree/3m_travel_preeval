@@ -634,6 +634,22 @@ export default function Flights() {
     return () => window.clearTimeout(timeoutId);
   }, [isFetching, isSearchSubmitting]);
 
+  // Une navigation directe vers /flights#3m-booking peut arriver avant que la
+  // section soit montée (notamment après un chargement lazy). Rejouer le scroll
+  // après le premier rendu garantit un parcours stable sans modifier l’URL.
+  useEffect(() => {
+    if (window.location.hash !== "#3m-booking") return;
+    const scrollToBooking = () => {
+      document.getElementById("3m-booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const frame = window.requestAnimationFrame(scrollToBooking);
+    const retry = window.setTimeout(scrollToBooking, 180);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
+    };
+  }, []);
+
   const saveSearchMutation = trpc.flights.saveSearchHistory.useMutation();
 
   useEffect(() => {

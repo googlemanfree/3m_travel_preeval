@@ -1241,3 +1241,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [ ] Tester la diffusion publique et publier uniquement après preuve HTTP/rendu.
 
 - [x] Ajouter un handler serveur explicite pour `/mon-dossier` afin d’éviter le 404 de la couche publique avant le fallback SPA.
+
+## Incident multi-routes — pages blanches et navigation protégée
+- [x] Vérifier `/document-upload`, `/mes-vols-favoris`, `/flights`, `/mon-espace?section=profile` et `/flights#3m-booking` en public et en preview.
+- [x] Corriger les fallbacks privés et empêcher les pages blanches ou boucles de redirection sans exposer de données.
+- [x] Corriger l’ancre et le rendu de la section 3M Booking sur `/flights`.
+- [ ] Tester chaque URL signalée, publier et confirmer les réponses réellement servies.
