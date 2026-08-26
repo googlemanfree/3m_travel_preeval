@@ -1192,3 +1192,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier la cause reproductible de toute erreur bloquante sans modifier les DNS à l’aveugle.
 - [x] Corriger et tester la page d’état, le shell public et les entrées protégées.
 - [x] Publier le correctif et confirmer honnêtement les routes réellement opérationnelles.
+
+## Transitions premium entre pages
+- [x] Auditer le composant de transition global et les préférences de mouvement existantes.
+- [x] Intégrer une transition courte, fluide et non bloquante entre les routes.
+- [x] Respecter la réduction de mouvement, le clavier, le mobile et les performances.
+- [x] Tester, publier et vérifier le rendu public des transitions.
