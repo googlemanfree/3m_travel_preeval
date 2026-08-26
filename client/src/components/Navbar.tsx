@@ -68,8 +68,8 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-10 px-2.5 py-2 text-[12px] font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap"
-    : "min-h-10 px-2.5 py-2 text-[12px] font-semibold text-slate-700 hover:text-[#0b2f6f] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap";
+    ? "min-h-10 w-10 justify-center px-2 py-2 text-[12px] font-bold text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5"
+    : "min-h-10 w-10 justify-center px-2 py-2 text-[12px] font-semibold text-slate-700 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5";
 
 const authButtonClass = "inline-flex h-11 w-[118px] items-center justify-center rounded-xl px-2 text-center text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
@@ -160,10 +160,12 @@ export default function Navbar() {
                 onMouseEnter={() => handleNavigationIntent(item.href)}
                 onFocus={() => handleNavigationIntent(item.href)}
                 onClick={handleNavigationClick}
+                aria-label={copy(item.label)}
+                title={copy(item.label)}
                 className={nativeLinkClass(item.highlight)}
               >
-                <Icon className="h-4 w-4" aria-hidden="true" />
-                <span>{copy(item.label)}</span>
+                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="hidden 2xl:inline">{copy(item.label)}</span>
               </a>
               );
             })}
@@ -290,7 +292,7 @@ export default function Navbar() {
                   onMouseEnter={() => handleNavigationIntent("/register")}
                   onFocus={() => handleNavigationIntent("/register")}
                   onClick={handleNavigationClick}
-                  className={`${authButtonClass} bg-blue-600 text-white shadow-sm hover:bg-blue-700`}
+                  className={`${authButtonClass} premium-action text-white shadow-sm hover:shadow-md`}
                 >
                   <PenLine className="h-4 w-4" aria-hidden="true" /> {copy(NAV_COPY.register)}
                 </a>
