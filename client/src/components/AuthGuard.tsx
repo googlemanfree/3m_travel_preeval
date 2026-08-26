@@ -2,7 +2,7 @@
  * AuthGuard — Protège les routes réservées aux candidats connectés.
  * Redirige vers /login avec un message d'avertissement si non authentifié.
  */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { motion } from "framer-motion";
@@ -31,6 +31,12 @@ export default function AuthGuard({
 }: AuthGuardProps) {
   const { isAuthenticated } = useCandidateAuth();
   const [location, navigate] = useLocation();
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setIsRestoringSession(false));
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated && autoRedirect) {
@@ -38,6 +44,22 @@ export default function AuthGuard({
       navigate(`/login?redirect=1&from=${encodedFrom}`);
     }
   }, [isAuthenticated, autoRedirect, location, navigate]);
+
+  if (isRestoringSession) {
+    return (
+      <div role="status" aria-live="polite" aria-label="Restauration de la session" className="min-h-screen bg-gradient-to-br from-[#07152f] via-[#102a5c] to-[#1d4ed8] px-4 py-12 text-white">
+        <div className="mx-auto flex min-h-[60vh] max-w-4xl flex-col justify-center gap-8">
+          <div className="h-10 w-48 animate-pulse rounded-xl bg-white/15" />
+          <div className="grid gap-5 md:grid-cols-3">
+            {["w-full", "w-11/12", "w-10/12"].map((width, index) => (
+              <div key={index} className={`h-32 ${width} animate-pulse rounded-2xl border border-white/10 bg-white/10`} />
+            ))}
+          </div>
+          <p className="text-center text-sm font-semibold text-blue-100">Restauration sécurisée de votre espace…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <>{children}</>;

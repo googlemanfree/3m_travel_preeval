@@ -8,6 +8,7 @@ import { Upload, FileText, CheckCircle2, AlertCircle, X, Loader } from 'lucide-r
 import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { PassportCropDialog } from '@/components/PassportCropDialog';
+import { toast } from 'sonner';
 
 interface UploadedDocument {
   id: string;
@@ -99,6 +100,7 @@ export default function DocumentUploadPage() {
       });
 
       setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'completed', progress: 100, fileUrl: data.fileUrl } : d)));
+      toast.success("Document téléversé avec succès", { description: `${doc.name} est maintenant enregistré dans votre dossier.` });
 
       // Si c'est un passeport, lancer l'analyse automatique de lisibilité
       if (doc.type === 'passport') {
@@ -113,7 +115,9 @@ export default function DocumentUploadPage() {
         }
       }
     } catch (err: any) {
-      setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'error', error: err.message || 'Échec de l\'envoi' } : d)));
+      const message = err.message || "Échec de l'envoi";
+      setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'error', error: message } : d)));
+      toast.error("Téléversement impossible", { description: `${doc.name} : ${message}` });
     }
   };
 

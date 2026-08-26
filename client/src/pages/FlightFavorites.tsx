@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
-import { Heart, Loader2, Plane, Search, Trash2 } from "lucide-react";
+import { Heart, Loader2, Plane, Search, Trash2, Download } from "lucide-react";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { trpc } from "@/lib/trpc";
+import { favoriteFlightRows, favoriteFlightsFilename } from "@shared/favoriteFlightExport";
 import { toast } from "sonner";
 import ClientSpaceNavigation from "@/components/ClientSpaceNavigation";
 
@@ -30,6 +33,31 @@ export default function FlightFavorites() {
     onError: () => toast.error("Impossible de retirer ce vol des favoris"),
   });
 
+  const exportFavoritesPdf = () => {
+    const items = favoritesQuery.data ?? [];
+    if (!items.length) {
+      toast.error("Aucun vol favori à exporter");
+      return;
+    }
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    doc.setFontSize(18);
+    doc.setTextColor(15, 36, 96);
+    doc.text("3M Travel & Services — Mes vols favoris", 14, 18);
+    doc.setFontSize(9);
+    doc.setTextColor(90, 100, 115);
+    doc.text(`Export généré le ${new Date().toLocaleString("fr-FR")}`, 14, 25);
+    autoTable(doc, {
+      startY: 32,
+      head: [["Itinéraire", "Compagnie", "Vol", "Départ"]],
+      body: favoriteFlightRows(items),
+      theme: "grid",
+      headStyles: { fillColor: [15, 36, 96], textColor: 255 },
+      styles: { fontSize: 9, cellPadding: 3 },
+    });
+    doc.save(favoriteFlightsFilename());
+    toast.success("Export PDF téléchargé", { description: "La liste affichée de vos vols favoris a été exportée." });
+  };
+
   const favorites = useMemo(() => {
     const normalized = search.trim().toLowerCase();
     return (favoritesQuery.data ?? []).filter((item) => {
@@ -48,7 +76,12 @@ export default function FlightFavorites() {
         <Card className="border-rose-100 shadow-sm">
           <CardHeader className="flex flex-col gap-4 border-b border-rose-100 sm:flex-row sm:items-center sm:justify-between">
             <div><CardTitle className="flex items-center gap-2 text-2xl font-black text-slate-900"><Heart className="h-6 w-6 fill-rose-500 text-rose-500" /> Mes vols favoris</CardTitle><p className="mt-1 text-sm text-slate-600">Retrouvez, comparez et relancez rapidement vos itinéraires enregistrés.</p></div>
-            <span className="rounded-full bg-rose-50 px-3 py-2 text-sm font-black text-rose-700">{favoritesQuery.data?.length ?? 0} enregistré(s)</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-rose-50 px-3 py-2 text-sm font-black text-rose-700">{favoritesQuery.data?.length ?? 0} enregistré(s)</span>
+              <Button type="button" variant="outline" onClick={exportFavoritesPdf} disabled={favoritesQuery.isLoading || !(favoritesQuery.data?.length)} className="h-10 rounded-xl border-blue-200 font-bold text-blue-800 hover:bg-blue-50">
+                <Download className="mr-2 h-4 w-4" /> Exporter PDF
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-5 md:p-6">
             <label className="relative block" htmlFor="favorite-flight-search"><Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-slate-400" /><span className="sr-only">Rechercher dans mes vols favoris</span><input id="favorite-flight-search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher par ville, compagnie ou numéro de vol" className="h-12 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500" /></label>

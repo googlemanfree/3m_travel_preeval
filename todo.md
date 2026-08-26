@@ -1246,4 +1246,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier `/document-upload`, `/mes-vols-favoris`, `/flights`, `/mon-espace?section=profile` et `/flights#3m-booking` en public et en preview.
 - [x] Corriger les fallbacks privés et empêcher les pages blanches ou boucles de redirection sans exposer de données.
 - [x] Corriger l’ancre et le rendu de la section 3M Booking sur `/flights`.
-- [ ] Tester chaque URL signalée, publier et confirmer les réponses réellement servies.
+- [x] Tester chaque URL signalée, publier et confirmer les réponses réellement servies.
+
+## Compétence et amélioration des parcours protégés
+- [x] Créer et valider une compétence réutilisable pour diagnostiquer et corriger les routes protégées, le pré-rendu, les caches et les erreurs 503/404.
+- [x] Ajouter un skeleton premium lors du chargement des routes protégées, notamment `/flights` et `/mon-espace`.
+- [x] Ajouter un export PDF sécurisé de la liste des vols favoris, sans données sensibles inutiles.
+- [x] Ajouter des notifications toast de succès ou d’erreur après le téléversement d’un document sur `/document-upload`.
+- [ ] Tester, publier et livrer la compétence avec la version du projet.
