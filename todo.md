@@ -1463,3 +1463,31 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Implémenter des questions, documents et garde-fous adaptatifs sans promesse de résultat
 - [x] Synchroniser les réponses structurées avec l’espace administrateur
 - [x] Ajouter les tests client/serveur et vérifier les parcours avant publication
+
+## Formulaire d’évaluation guidé par destination
+- [x] Créer un catalogue documentaire dynamique selon le pays et le projet sélectionnés
+- [x] Ajouter une étape de questions spécifiques pour le Canada et le Luxembourg
+- [x] Transformer l’évaluation en parcours à étapes avec contrôle de validation progressif
+- [x] Ajouter une barre de progression et des transitions accessibles entre les étapes
+- [x] Tester les parcours, la persistance et le rendu, puis publier
+
+## Formulaire d’évaluation guidé par destination
+- [x] Créer un catalogue documentaire dynamique selon le pays et le projet sélectionnés
+- [x] Ajouter une étape de questions spécifiques pour le Canada et le Luxembourg
+- [x] Transformer l’évaluation en parcours à étapes avec contrôle de validation progressif
+- [x] Ajouter une barre de progression et des transitions accessibles entre les étapes
+- [x] Tester les parcours, la persistance et le rendu, puis publier
+
+## Dépendance de test et état de maintenance
+- [x] Inspecter le correctif joint sans exécuter son contenu et vérifier les dépendances existantes
+- [x] Ajouter `@testing-library/dom` aux dépendances de développement et mettre à jour le verrouillage
+- [x] Exécuter les validations de test après installation
+- [x] Vérifier l’origine de l’écran de maintenance sur le domaine public
+- [x] Publier la mise à jour technique et documenter le diagnostic
+
+## Dépendance de test et état de maintenance
+- [x] Inspecter le correctif joint sans exécuter son contenu et vérifier les dépendances existantes
+- [x] Ajouter `@testing-library/dom` aux dépendances de développement et mettre à jour le verrouillage
+- [x] Exécuter les validations de test après installation
+- [x] Vérifier l’origine de l’écran de maintenance sur le domaine public
+- [x] Publier la mise à jour technique et documenter le diagnostic

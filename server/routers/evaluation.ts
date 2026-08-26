@@ -112,6 +112,10 @@ const multiProjectEvaluationInput = z.object({
   previousRefusal: z.boolean().optional(),
   socialTies: z.string().optional(),
   cvLink: z.string().url("Lien CV invalide").optional(),
+  canadaLanguageTest: z.string().max(500).optional(),
+  canadaStudyPlan: z.string().max(1000).optional(),
+  luxEmployerStatus: z.enum(["aucun", "candidatures", "contact", "offre"]).optional(),
+  luxAademStatus: z.string().max(500).optional(),
 });
 
 export const evaluationRouter = router({
@@ -154,6 +158,10 @@ export const evaluationRouter = router({
           travelHistory: input.travelHistory,
           previousRefusal: input.previousRefusal,
           socialTies: input.socialTies,
+          canadaLanguageTest: input.canadaLanguageTest,
+          canadaStudyPlan: input.canadaStudyPlan,
+          luxEmployerStatus: input.luxEmployerStatus,
+          luxAademStatus: input.luxAademStatus,
         }),
         cvFileUrl: undefined,
         cvFileName: undefined,

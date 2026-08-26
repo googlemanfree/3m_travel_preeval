@@ -41,11 +41,14 @@ describe("evaluation.submitEvaluation", () => {
       email: "jean@example.com",
       whatsappPhone: "+237698104832",
       nationality: "Camerounais",
+      destinationCategory: "canada",
+      destinationCountry: "Canada",
       projectType: "travail",
       sector: "Informatique",
       yearsOfExperience: 5,
       educationLevel: "Master",
       languages: "Français, Anglais",
+      canadaLanguageTest: "TEF en préparation",
     });
 
     expect(result).toBeDefined();
@@ -62,11 +65,14 @@ describe("evaluation.submitEvaluation", () => {
       email: "marie@example.com",
       whatsappPhone: "+237698104832",
       nationality: "Française",
+      destinationCategory: "canada",
+      destinationCountry: "Canada",
       projectType: "etudes",
       diplomaLevel: "Baccalauréat",
       averageGrade: "15/20",
       admissionLetter: true,
       financialGuarantee: "Oui",
+      canadaStudyPlan: "Licence en informatique",
     });
 
     expect(result).toBeDefined();
@@ -82,6 +88,8 @@ describe("evaluation.submitEvaluation", () => {
       email: "pierre@example.com",
       whatsappPhone: "+237698104832",
       nationality: "Belge",
+      destinationCategory: "schengen",
+      destinationCountry: "Belgique",
       projectType: "tourisme",
       visitReason: "Tourisme culturel",
       travelHistory: "Canada, USA, France",
@@ -103,6 +111,8 @@ describe("evaluation.submitEvaluation", () => {
         email: "invalid-email",
         whatsappPhone: "123",
         nationality: "Camerounais",
+        destinationCategory: "canada",
+        destinationCountry: "Canada",
         projectType: "travail",
       });
       expect.fail("Devrait lever une erreur de validation");
@@ -121,8 +131,12 @@ describe("evaluation.submitEvaluation", () => {
       email: "test@example.com",
       whatsappPhone: "+237698104832",
       nationality: "Camerounais",
+      destinationCategory: "schengen",
+      destinationCountry: "Luxembourg",
       projectType: "travail",
       sector: "Santé",
+      luxEmployerStatus: "candidatures",
+      luxAademStatus: "À confirmer",
     });
 
     expect(result).toBeDefined();
