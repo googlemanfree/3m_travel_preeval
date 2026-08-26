@@ -1439,3 +1439,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Générer automatiquement sitemap.xml et robots.txt depuis les routes publiques indexables
 - [x] Ajouter les données structurées JSON-LD FAQPage sur `/procedures`
 - [x] Tester les routes, les URLs, les balises sociales et les données structurées, puis publier
+
+
+## Partage social et navigation structurée
+- [x] Mettre à jour la compétence SEO réutilisable avec les règles de secours d’image, partage et fil d’Ariane
+- [x] Ajouter une image Open Graph/Twitter de secours lorsque le titre est absent
+- [x] Ajouter des boutons Facebook, Twitter et LinkedIn sur les pages de contenu
+- [x] Ajouter un JSON-LD BreadcrumbList sur les sous-pages publiques
+- [x] Tester l’accessibilité, les URLs de partage, le HTML initial et publier

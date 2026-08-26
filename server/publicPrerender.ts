@@ -5,7 +5,7 @@ const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
 const SOCIAL_IMAGE_ALT = "Aperçu 3M Travel & Services";
-const socialImageFor = (title: string, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title)}&path=${encodeURIComponent(path)}`;
+const socialImageFor = (title: string | undefined, path: string) => `${ORIGIN}/api/og?title=${encodeURIComponent(title?.trim() || SITE)}&path=${encodeURIComponent(path)}`;
 
 type PublicMeta = {
   title: string;
@@ -81,14 +81,24 @@ export function composePublicPrerender(template: string, url: string) {
   const canonical = `${ORIGIN}${path}`;
   const socialImage = socialImageFor(current.title, path);
   const robot = current.noindex ? `<meta name="robots" content="noindex,follow" />` : `<meta name="robots" content="index,follow" />`;
+  const breadcrumb = path !== "/" && !current.noindex ? {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Accueil", item: ORIGIN },
+      { "@type": "ListItem", position: 2, name: current.heading, item: canonical },
+    ],
+  } : null;
   const structuredData = path === "/"
     ? { "@context": "https://schema.org", "@graph": [
         { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: socialImage, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
         { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
       ] }
     : path === "/procedures"
-      ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) }
-      : null;
+      ? { "@context": "https://schema.org", "@graph": [
+          { "@type": "FAQPage", mainEntity: PUBLIC_FAQ_ITEMS.map(({ question, answer }) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+          breadcrumb,
+        ] }
+      : breadcrumb;
   const structuredDataTag = structuredData ? `<script type="application/ld+json">${JSON.stringify(structuredData).replace(/</g, "\\u003c")}</script>` : "";
   const head = [
     `<title>${esc(current.title)}</title>`,

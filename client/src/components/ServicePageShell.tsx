@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight, CheckCircle2, ExternalLink, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
+import { SocialShareButtons } from "@/components/SocialShareButtons";
 
 type ServicePageShellProps = {
   eyebrow: string;
@@ -28,6 +29,7 @@ export function ServicePageShell({ eyebrow, title, introduction, primaryHref, pr
       </div>
     </section>
     {notice && <section className="border-b border-amber-200 bg-amber-50 px-4 py-4 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-7xl gap-3 text-sm leading-6 text-amber-950"><CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />{notice}</div></section>}
+    <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><SocialShareButtons title={title} /></div></div>
     {children}
   </main>;
 }

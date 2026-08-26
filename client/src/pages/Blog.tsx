@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Link } from "wouter";
 import { studyDestinationArticles } from "@/data/studyDestinationArticles";
+import { SocialShareButtons } from "@/components/SocialShareButtons";
 
 const resources = [
   {
@@ -68,6 +69,7 @@ export default function Blog() {
           <p className="mt-5 text-base leading-7 text-slate-600">
             Des repères utiles pour préparer un projet de mobilité internationale. Les règles et disponibilités peuvent évoluer : les liens officiels restent la référence avant toute démarche.
           </p>
+          <SocialShareButtons title="Le centre d’information 3M Travel" className="mt-6" />
         </header>
 
         <section className="mt-12 grid gap-5 md:grid-cols-2">

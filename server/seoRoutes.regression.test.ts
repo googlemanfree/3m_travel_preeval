@@ -11,6 +11,7 @@ describe("SEO dynamique", () => {
     expect(svg).toContain("Canada &amp; procédures");
     expect(svg).toContain("/canada");
     expect(svg).toContain('width="1200" height="630"');
+    expect(renderOgImageSvg("")).toContain("3M Travel Agency");
   });
 
   it("génère un sitemap avec les routes indexables et robots avec les espaces privés bloqués", () => {
@@ -22,9 +23,19 @@ describe("SEO dynamique", () => {
     expect(renderRobotsTxt()).toContain("Disallow: /admin");
   });
 
+  it("ajoute un BreadcrumbList aux sous-pages publiques indexables", () => {
+    for (const path of ["/canada", "/contact", "/procedures"]) {
+      const html = composePublicPrerender(template, path).html;
+      expect(html).toContain('"@type":"BreadcrumbList"');
+      expect(html).toContain('"name":"Accueil"');
+      expect(html).toContain(`"item":"https://www.3mtravelagency.com${path}"`);
+    }
+  });
+
   it("expose une FAQPage sur /procedures avec les mêmes questions que la FAQ visible", () => {
     const html = composePublicPrerender(template, "/procedures").html;
     expect(html).toContain('"@type":"FAQPage"');
+    expect(html).toContain('"@type":"BreadcrumbList"');
     expect(html).toContain('"@type":"Question"');
     expect(html).toContain("L’évaluation gratuite engage-t-elle une procédure ?");
   });
