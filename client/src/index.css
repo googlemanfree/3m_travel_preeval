@@ -690,3 +690,52 @@ html.text-size-xlarge {
   border-color: rgba(147, 197, 253, 0.42);
   box-shadow: 0 24px 58px -32px rgba(0, 0, 0, 0.86), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
+
+
+/* ─── Finition premium des pages secondaires ─────────────────────────────── */
+@layer components {
+  .premium-page-shell {
+    letter-spacing: -0.005em;
+  }
+
+  .premium-page-shell h1,
+  .premium-page-shell h2,
+  .premium-page-shell h3 {
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .premium-page-shell h1 {
+    line-height: 1.08;
+  }
+
+  .premium-page-shell p,
+  .premium-page-shell li {
+    line-height: 1.7;
+  }
+
+  .premium-page-shell section {
+    scroll-margin-top: 7rem;
+  }
+
+  .premium-card-enter {
+    animation: premium-card-enter 420ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+  }
+
+  @keyframes premium-card-enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .premium-card-enter {
+      animation: none;
+    }
+  }
+}

@@ -14,7 +14,7 @@ describe("Chargement frais après déploiement", () => {
     expect(source).toContain("controllerchange");
     expect(source).toContain("isPreviewHost");
     expect(source).toContain("registration.unregister()");
-    expect(worker).toContain("3m-travel-pwa-v33-status-and-form-feedback-static");
+    expect(worker).toContain("3m-travel-pwa-v34-premium-hover-interactions-static");
     expect(source).toContain("SW_REVISION");
     expect(source).toContain("/sw.js?revision=");
     expect(worker).toContain("IS_PREVIEW_HOST");

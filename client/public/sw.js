@@ -1,4 +1,4 @@
-const CACHE_NAME = '3m-travel-pwa-v33-status-and-form-feedback-static';
+const CACHE_NAME = '3m-travel-pwa-v34-premium-hover-interactions-static';
 const IS_PREVIEW_HOST = /\.manus\.computer$|\.manuspre\.computer$|\.manuscomputer\.ai$/i.test(self.location.hostname);
 const ASSETS_TO_CACHE = [
   '/manifest.json'
