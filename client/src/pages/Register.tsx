@@ -99,7 +99,7 @@ export default function Register() {
       // Attendre 2 secondes avant d’afficher l’écran d’activation
       setTimeout(() => {
         toast.success("Compte créé ! Un lien d’activation a été envoyé à votre adresse email.");
-        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}`);
+        navigate(`/verify-email-sent?email=${encodeURIComponent(form.email)}${from ? `&from=${encodeURIComponent(from)}` : ""}`);
       }, 2000);
     },
     onError: (err) => {

@@ -10,7 +10,10 @@ import { toast } from "sonner";
 export default function VerifyEmailSent() {
   const [, setLocation] = useLocation();
   const [resendSuccess, setResendSuccess] = React.useState(false);
-  const email = new URLSearchParams(window.location.search).get("email") || localStorage.getItem("registrationEmail") || "";
+  const searchParams = new URLSearchParams(window.location.search);
+  const email = searchParams.get("email") || localStorage.getItem("registrationEmail") || "";
+  const from = searchParams.get("from");
+  const loginPath = `/login${from ? `?redirect=1&from=${encodeURIComponent(from)}` : ""}`;
 
   const resendMutation = trpc.candidate.resendVerificationEmail.useMutation({
     onSuccess: () => {
@@ -24,7 +27,7 @@ export default function VerifyEmailSent() {
   const handleResendEmail = () => {
     if (!email) {
       toast.error("Adresse e-mail introuvable. Veuillez recommencer l’inscription.");
-      setLocation("/register");
+      setLocation(`/register${from ? `?from=${encodeURIComponent(from)}` : ""}`);
       return;
     }
     resendMutation.mutate({ email });
@@ -126,7 +129,7 @@ export default function VerifyEmailSent() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setLocation("/login")}
+              onClick={() => setLocation(loginPath)}
               className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 px-6 rounded-lg transition flex items-center justify-center gap-2"
             >
               Aller à la connexion

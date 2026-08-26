@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
 import { useLocation } from "wouter";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, FileText, LoaderCircle, MailCheck, MessageCircleMore, Pencil, ShieldCheck, Sparkles, UploadCloud } from "lucide-react";
 
 type ProjectType = "travail" | "etudes" | "tourisme";
@@ -113,7 +114,8 @@ export function visaTypeFor(project: ProjectType, country: string): string {
 }
 
 export function SimpleMultiProjectForm() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
+  const { isAuthenticated } = useCandidateAuth();
   const searchParams = new URLSearchParams(location.split("?")[1] || "");
   const projectParam = searchParams.get("project") as ProjectType | null;
   const destinationParam = searchParams.get("destination") || "";
@@ -159,6 +161,13 @@ export function SimpleMultiProjectForm() {
       toast.error("Sélectionnez le pays de destination afin d’afficher la checklist adaptée.");
       return false;
     }
+    if (step === 3) {
+      const hasCv = selectedDocuments.some((item) => item.documentType === "cv") || Boolean(formData.cvLink?.trim());
+      if (!hasCv) {
+        toast.error("Ajoutez d’abord votre CV en fichier ou indiquez un lien CV sécurisé.");
+        return false;
+      }
+    }
     return true;
   };
 
@@ -175,7 +184,12 @@ export function SimpleMultiProjectForm() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!validateStep(0) || !validateStep(1)) return;
+    if (!isAuthenticated) {
+      toast.error("Créez un compte ou connectez-vous avant de soumettre votre évaluation.");
+      setLocation(`/register?from=${encodeURIComponent(`/?project=${formData.projectType}#evaluation-multi`)}`);
+      return;
+    }
+    if (!validateStep(0) || !validateStep(1) || !validateStep(3)) return;
     setIsSubmitting(true);
     try {
       const created = await submitEvaluation.mutateAsync({
@@ -206,6 +220,22 @@ export function SimpleMultiProjectForm() {
   };
 
   const summary = `Bonjour 3M Travel, voici mon projet :\n- Nom : ${formData.fullName || "Non renseigné"}\n- Destination : ${formData.destinationCountry || "Non renseignée"}\n- Projet : ${formData.projectType}\n- Secteur / filière : ${formData.sector || "Non renseigné"}`;
+
+  if (!isAuthenticated) {
+    const evaluationReturnPath = `/?project=${initialProject}#evaluation-multi`;
+    return (
+      <Card className="border border-blue-100 bg-white p-6 text-center shadow-xl sm:p-8">
+        <ShieldCheck className="mx-auto h-12 w-12 text-[#0B2A52]" />
+        <h3 className="mt-4 text-xl font-black text-slate-950">Créez votre compte avant l’évaluation</h3>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">Votre évaluation et votre CV seront associés à un espace candidat sécurisé. Les autres pièces pourront être ajoutées ensuite, selon les besoins de votre dossier.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <Button type="button" onClick={() => setLocation(`/register?from=${encodeURIComponent(evaluationReturnPath)}`)} className="bg-[#0B2A52] text-white hover:bg-[#163d73]">Créer mon compte</Button>
+          <Button type="button" variant="outline" onClick={() => setLocation(`/login?redirect=1&from=${encodeURIComponent(evaluationReturnPath)}`)} className="border-blue-200 text-blue-900 hover:bg-blue-50">Se connecter</Button>
+        </div>
+        <p className="mt-4 text-xs text-slate-500">Après activation, vous reviendrez directement à cette évaluation.</p>
+      </Card>
+    );
+  }
 
   return (
     <motion.div className="w-full max-w-2xl mx-auto" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>

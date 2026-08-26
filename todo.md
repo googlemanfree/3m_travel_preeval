@@ -1512,3 +1512,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer un historique protégé des évaluations et comparaisons pour les candidats connectés
 - [x] Ajouter un export PDF du récapitulatif et des recommandations Gemini
 - [x] Mettre à jour la compétence, tester les autorisations et publier
+
+## Pilotage admin et synchronisation CV-premier
+- [x] Auditer les routes admin et le parcours d’évaluation actuel
+- [x] Ajouter des raccourcis et liens de retour contextuels dans l’espace administrateur
+- [x] Imposer la création de compte avant l’évaluation et rendre le CV prioritaire
+- [x] Synchroniser le dépôt documentaire progressif avec l’espace candidat
+- [x] Encadrer Gemini comme assistant de préparation avec validation humaine obligatoire

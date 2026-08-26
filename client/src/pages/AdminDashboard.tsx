@@ -1164,6 +1164,13 @@ export default function AdminDashboard() {
                 <ImagePlus className="w-4 h-4" /> Visuels destinations
               </Button>
             </div>
+            <nav aria-label="Raccourcis de pilotage admin" className="flex w-full flex-wrap gap-2 border-t border-white/15 pt-3">
+              {[['pilotage', 'Pilotage'], ['candidates', 'Dossiers'], ['pre-dossiers', 'Pré-dossiers'], ['payments', 'Paiements'], ['documents', 'Documents'], ['flights', 'Vols'], ['emails', 'E-mails']].map(([tab, label]) => (
+                <Button key={tab} type="button" variant="outline" size="sm" onClick={() => setActiveAdminTab(tab)} aria-current={activeAdminTab === tab ? 'page' : undefined} className={`border-white/25 text-white hover:bg-white/15 ${activeAdminTab === tab ? 'bg-white/20 ring-1 ring-white/50' : 'bg-white/5'}`}>
+                  {label}
+                </Button>
+              ))}
+            </nav>
             <Button
               variant="outline"
               size="sm"

@@ -116,7 +116,7 @@ export default function AuthGuard({
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <Button
-                onClick={() => navigate("/register")}
+                onClick={() => navigate(`/register?from=${encodeURIComponent(getRequestedInternalPath(location))}`)}
                 variant="outline"
                 className="h-12 font-semibold border-2 border-[#1E3A8A] text-[#1E3A8A] hover:bg-blue-50"
               >
