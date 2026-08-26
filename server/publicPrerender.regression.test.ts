@@ -28,6 +28,26 @@ describe("pré-rendu public indexable", () => {
     expect(heading.length).toBeLessThanOrEqual(80);
     expect(rendered.html).toContain("3M Travel Agency | Mobilité internationale en confiance");
     expect(rendered.html).toContain("<h2>Informations vérifiables avant toute démarche</h2>");
+    expect(rendered.html).toContain('<script type="application/ld+json">');
+    expect(rendered.html).toContain('"@type":"Organization"');
+    expect(rendered.html).toContain('"@type":"WebSite"');
+  });
+
+  it("harmonise le SEO et les cartes sociales des pages prioritaires", () => {
+    for (const path of ["/canada", "/procedures", "/contact"]) {
+      const rendered = composePublicPrerender(template, path);
+      const title = rendered.html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+      const description = rendered.html.match(/<meta name="description" content="([^"]*)"/)?.[1] ?? "";
+      const keywords = rendered.html.match(/<meta name="keywords" content="([^"]*)"/)?.[1].split(", ") ?? [];
+      expect(title.length, path).toBeGreaterThanOrEqual(30);
+      expect(title.length, path).toBeLessThanOrEqual(60);
+      expect(description.length, path).toBeGreaterThanOrEqual(50);
+      expect(description.length, path).toBeLessThanOrEqual(160);
+      expect(keywords.length, path).toBeGreaterThanOrEqual(3);
+      expect(keywords.length, path).toBeLessThanOrEqual(8);
+      expect(rendered.html, path).toContain('property="og:image"');
+      expect(rendered.html, path).toContain('name="twitter:image"');
+    }
   });
 
   it("garde toutes les routes de l’incident en shell 200 non indexable", () => {

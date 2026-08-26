@@ -1423,3 +1423,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir un document.title compris entre 30 et 60 caractères
 - [x] Ajouter une meta description comprise entre 50 et 160 caractères
 - [x] Tester les longueurs, le HTML initial et le rendu local, puis publier
+
+
+## SEO structuré et partage social
+- [x] Créer ou enrichir la compétence réutilisable de contrôle SEO pré-rendu et de données structurées
+- [x] Ajouter les JSON-LD Organization et WebSite sur la page d’accueil
+- [x] Harmoniser les titres, descriptions et mots-clés de `/canada`, `/procedures` et `/contact`
+- [x] Ajouter Open Graph et Twitter Cards avec une image par défaut locale et durable
+- [x] Tester le HTML initial, les longueurs, le JSON-LD et les cartes sociales, puis publier

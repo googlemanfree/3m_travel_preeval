@@ -3,6 +3,8 @@ import { OFFICIAL_SITE_ORIGIN } from "./canonicalDomain";
 const ORIGIN = OFFICIAL_SITE_ORIGIN;
 const SITE = "3M Travel & Services";
 const LEGAL = "RC/YAO/2019/A/2567 · NIU M112417203369H";
+const SOCIAL_IMAGE = `${ORIGIN}/manus-storage/pasted_file_lJvrPx_logo3Mfull_25c12e97.jpeg`;
+const SOCIAL_IMAGE_ALT = "Logo 3M Travel & Services";
 
 type PublicMeta = {
   title: string;
@@ -15,7 +17,7 @@ type PublicMeta = {
 
 const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/": { title: "3M Travel Agency | Mobilité internationale en confiance", description: "Accompagnement documenté pour vos projets de mobilité internationale, avec évaluation, sources officielles et validation humaine des étapes sensibles.", keywords: ["mobilité internationale", "visa", "immigration", "voyage", "évaluation de profil", "3M Travel Agency"], heading: "Votre projet de mobilité, préparé avec méthode", lead: "3M Travel & Services accompagne les candidats dans la préparation de leurs démarches. Les décisions des autorités, employeurs et partenaires externes restent indépendantes de l’agence." },
-  "/canada": { title: `Canada | ${SITE}`, description: "Informations de préparation de dossiers pour le Canada, avec sources institutionnelles et accompagnement administratif documenté.", heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
+  "/canada": { title: `Canada | ${SITE}`, description: "Préparez votre projet Canada avec des informations officielles et un accompagnement administratif documenté, sans promesse de résultat.", keywords: ["visa Canada", "immigration Canada", "permis de travail", "études au Canada", "3M Travel"], heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
   "/etudes": { title: `Études à l’international | ${SITE}`, description: "Accompagnement documenté pour les projets d’études à l’international et les dossiers associés.", heading: "Projet d’études à l’international", lead: "L’admission et les décisions consulaires relèvent exclusivement des établissements et autorités compétents." },
   "/billets": { title: `3M Booking | ${SITE}`, description: "Demandes de vols, hôtels et services de voyage avec traitement et confirmation humaine.", heading: "3M Booking", lead: "Les disponibilités et tarifs sont confirmés avant toute réservation ou paiement." },
@@ -26,11 +28,11 @@ const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/visa-etudes": { title: `Études à l’international | ${SITE}`, description: "Ancien accès au parcours études, redirigé vers la page canonique des études.", heading: "Études à l’international", lead: "Redirection vers le parcours études de 3M Travel." },
   "/formation": { title: `Formations | ${SITE}`, description: "Découvrez les programmes de formation et d’orientation proposés par 3M Travel & Services.", heading: "Formation et orientation", lead: "Les contenus sont présentés à titre d’information ; chaque inscription est confirmée selon les conditions applicables." },
   "/blog": { title: `Ressources mobilité internationale | ${SITE}`, description: "Guides et articles pratiques sur les démarches de mobilité internationale.", heading: "Ressources et guides", lead: "Consultez nos contenus de préparation et complétez-les avec les sources officielles de votre destination." },
-  "/procedures": { title: `Procédures de mobilité | ${SITE}`, description: "Parcours de préparation de dossier, documents et étapes administratives par destination.", heading: "Procédures par destination", lead: "Chaque procédure est adaptée à la destination et vérifiée par l’équipe avant toute étape sensible." },
+  "/procedures": { title: `Procédures de mobilité | ${SITE}`, description: "Consultez les étapes, documents et repères administratifs des procédures de mobilité internationale par destination.", keywords: ["procédures visa", "documents visa", "mobilité internationale", "dossier immigration", "3M Travel"], heading: "Procédures par destination", lead: "Chaque procédure est adaptée à la destination et vérifiée par l’équipe avant toute étape sensible." },
   "/evisas": { title: `e-Visas | ${SITE}`, description: "Préparation et suivi des demandes d’e-Visa avec circuit documentaire sécurisé.", heading: "Services e-Visa", lead: "La décision de délivrance relève de l’autorité compétente ; les documents sont traités avec traçabilité." },
   "/tarifs": { title: `Tarifs et informations de frais | ${SITE}`, description: "Informations transparentes sur les prestations, frais tiers possibles et conditions de traitement.", heading: "Tarifs et transparence", lead: "Les frais externes et décisions partenaires sont présentés avant engagement lorsqu’ils sont connus." },
   "/avis": { title: `Avis et retours | ${SITE}`, description: "Retours publiés après modération et informations de transparence de 3M Travel & Services.", heading: "Avis et transparence", lead: "Les retours sont traités avec modération ; aucun résultat individuel n’est garanti." },
-  "/contact": { title: `Contact | ${SITE}`, description: "Contactez 3M Travel & Services à Yaoundé ou Ottawa pour une orientation administrative.", heading: "Contacter 3M Travel & Services", lead: "Nos équipes répondent aux demandes d’orientation et précisent les étapes à confirmer." },
+  "/contact": { title: `Contact | ${SITE}`, description: "Contactez 3M Travel & Services à Yaoundé ou Ottawa pour une orientation sur votre projet de mobilité internationale.", keywords: ["contact 3M Travel", "agence visa Yaoundé", "agence voyage Cameroun", "mobilité internationale", "Ottawa"], heading: "Contacter 3M Travel & Services", lead: "Nos équipes répondent aux demandes d’orientation et précisent les étapes à confirmer." },
   "/about": { title: `Qui sommes-nous | ${SITE}`, description: "Présentation, engagements de transparence et informations légales de 3M Travel & Services.", heading: "Une agence de mobilité internationale documentée", lead: "Notre rôle est d’accompagner la préparation administrative ; les décisions externes restent indépendantes." },
   "/politique-confidentialite": { title: `Politique de confidentialité | ${SITE}`, description: "Informations sur le traitement des données et documents confiés à 3M Travel & Services.", heading: "Confidentialité et données", lead: "Les données sensibles sont limitées aux finalités de traitement et aux accès autorisés." },
   "/conditions-utilisation": { title: `Conditions d’utilisation | ${SITE}`, description: "Conditions d’utilisation des services et informations de responsabilité.", heading: "Conditions d’utilisation", lead: "Les services d’accompagnement ne remplacent ni les autorités compétentes ni les décisions de partenaires externes." },
@@ -85,9 +87,20 @@ export function composePublicPrerender(template: string, url: string) {
     `<meta property="og:title" content="${esc(current.title)}" />`,
     `<meta property="og:description" content="${esc(current.description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
-    `<meta name="twitter:card" content="summary" />`,
+    `<meta property="og:image" content="${SOCIAL_IMAGE}" />`,
+    `<meta property="og:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${esc(current.title)}" />`,
     `<meta name="twitter:description" content="${esc(current.description)}" />`,
+    `<meta name="twitter:image" content="${SOCIAL_IMAGE}" />`,
+    `<meta name="twitter:image:alt" content="${SOCIAL_IMAGE_ALT}" />`,
+    ...(path === "/" ? [`<script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        { "@type": "Organization", "@id": `${ORIGIN}/#organization`, name: "3M Travel & Services", url: ORIGIN, logo: SOCIAL_IMAGE, description: current.description, identifier: ["RC/YAO/2019/A/2567", "M112417203369H"], sameAs: ["https://www.facebook.com/3mtravelcm", "https://instagram.com/3mtravelagency"] },
+        { "@type": "WebSite", "@id": `${ORIGIN}/#website`, name: "3M Travel Agency", url: ORIGIN, description: current.description, publisher: { "@id": `${ORIGIN}/#organization` }, inLanguage: "fr-FR" },
+      ],
+    }).replace(/</g, "\\u003c")}</script>`] : []),
   ].join("\n");
   const body = `<article class="seo-prerender" data-prerendered="true"><header><p class="seo-prerender__legal">${LEGAL}</p>${publicNav}</header><main><h1>${esc(current.heading)}</h1><p>${esc(current.lead)}</p><section aria-label="Repères de transparence"><h2>Informations vérifiables avant toute démarche</h2><ul><li>Les documents et informations à fournir sont confirmés selon la destination et la procédure.</li><li>Les décisions d’employeurs, d’agences partenaires et d’autorités compétentes ne sont pas garanties par 3M Travel &amp; Services.</li><li>Les actions sensibles sont contrôlées par une personne habilitée.</li></ul></section></main><footer><p>${LEGAL}</p><p>Yaoundé · Ottawa · <a href="/contact">Nous contacter</a></p></footer></article>`;
   let html = template
