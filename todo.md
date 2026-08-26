@@ -1218,4 +1218,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir les règles communes de composition, couleur, typographie et états d’interface.
 - [x] Appliquer la nouvelle charte aux pages secondaires et composants concernés.
 - [x] Vérifier responsive, accessibilité, liens, formulaires et régressions.
-- [ ] Publier et vérifier l’harmonisation des pages secondaires.
+- [x] Publier et vérifier l’harmonisation des pages secondaires.
+
+## Micro-interactions premium des pages secondaires
+- [x] Auditer les cartes, boutons et états interactifs des pages secondaires.
+- [x] Définir des animations de survol courtes, subtiles et compatibles avec l’accessibilité.
+- [x] Intégrer les micro-interactions aux composants partagés et pages concernées.
+- [x] Vérifier clavier, mobile, réduction de mouvement et régressions.
+- [ ] Publier et vérifier les animations de survol.

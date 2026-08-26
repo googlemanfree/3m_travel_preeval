@@ -642,3 +642,51 @@ html.text-size-xlarge {
     transition: none;
   }
 }
+
+
+/* Micro-interactions premium : uniquement sur pointeur fin, jamais bloquantes au tactile. */
+@media (hover: hover) and (pointer: fine) {
+  .premium-surface,
+  .glass-card {
+    transition: transform 180ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1), border-color 180ms ease;
+  }
+
+  .premium-surface:hover,
+  .glass-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(213, 168, 75, 0.46);
+    box-shadow: 0 24px 58px -32px rgba(6, 26, 54, 0.48), 0 1px 0 rgba(255, 255, 255, 0.94) inset;
+  }
+
+  .premium-action:not(:disabled),
+  .btn-form:not(:disabled) {
+    transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1), filter 160ms ease;
+  }
+
+  .premium-action:not(:disabled):hover,
+  .btn-form:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px -17px rgba(10, 43, 92, 0.78);
+    filter: saturate(1.08);
+  }
+
+  .premium-action:not(:disabled):active,
+  .btn-form:not(:disabled):active {
+    transform: translateY(0) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-surface,
+  .glass-card,
+  .premium-action,
+  .btn-form {
+    transition: none !important;
+  }
+}
+
+.dark .premium-surface:hover,
+.dark .glass-card:hover {
+  border-color: rgba(147, 197, 253, 0.42);
+  box-shadow: 0 24px 58px -32px rgba(0, 0, 0, 0.86), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+}
