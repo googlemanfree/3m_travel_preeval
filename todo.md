@@ -1405,4 +1405,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 ## Vérification Kanban enrichi
 - [x] Vérifier le Kanban enrichi : historique visuel, filtres destination/conseiller et alertes SLA
 - [x] Ajouter et exécuter les tests de filtrage Kanban et de calcul des échéances
-- [ ] Finaliser l’audit de disponibilité du domaine public après rétablissement de l’hébergement
+- [x] Vérifier la disponibilité du domaine public : contrôle effectué le 26/08/2026, domaine encore suspendu pour facturation ; audit HTTP complet reporté jusqu’au rétablissement
