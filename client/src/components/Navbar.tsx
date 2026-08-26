@@ -68,10 +68,10 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-11 px-4 py-2 text-sm font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1"
-    : "min-h-11 px-4 py-2 text-sm font-semibold text-slate-700 hover:text-[#0b2f6f] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1";
+    ? "min-h-10 px-2.5 py-2 text-[12px] font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap"
+    : "min-h-10 px-2.5 py-2 text-[12px] font-semibold text-slate-700 hover:text-[#0b2f6f] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap";
 
-const authButtonClass = "inline-flex h-12 w-[148px] items-center justify-center rounded-xl px-4 text-center text-sm font-bold transition-all duration-200 active:scale-95";
+const authButtonClass = "inline-flex h-11 w-[118px] items-center justify-center rounded-xl px-2 text-center text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
 
 export default function Navbar() {
@@ -132,7 +132,7 @@ export default function Navbar() {
   return (
     <header className="glass-nav sticky top-0 z-50 transition-all duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex min-w-0 justify-between items-center gap-3 h-20">
           <a
             href="/"
             onMouseEnter={() => handleNavigationIntent("/")}
@@ -149,7 +149,7 @@ export default function Navbar() {
 
           <nav
             aria-label={copy(NAV_COPY.mainNav)}
-            className="hidden lg:flex items-center space-x-1 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-100/80"
+            className="hidden lg:flex min-w-0 items-center space-x-0.5 bg-gray-50/80 p-1 rounded-2xl border border-gray-100/80"
           >
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -169,7 +169,7 @@ export default function Navbar() {
             })}
           </nav>
 
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex shrink-0 items-center gap-1.5">
             <a
               href="/panier"
               onMouseEnter={() => handleNavigationIntent("/panier")}

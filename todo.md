@@ -1148,24 +1148,41 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Publier et consigner la résolution de l’incident.
 
 ## Page d’état publique
-- [ ] Auditer les routes, composants partagés et contenus de maintenance existants pour définir la page d’état.
-- [ ] Créer une page d’état accessible présentant les services, une maintenance planifiée et les contacts de support.
-- [ ] Ajouter un accès public cohérent sans exposer de détails techniques ou de données internes.
-- [ ] Tester, publier et vérifier la page d’état publique.
+- [x] Auditer les routes, composants partagés et contenus de maintenance existants pour définir la page d’état.
+- [x] Créer une page d’état accessible présentant les services, une maintenance planifiée et les contacts de support.
+- [x] Ajouter un accès public cohérent sans exposer de détails techniques ou de données internes.
+- [x] Tester, publier et vérifier la page d’état publique.
 
 ## Écran de chargement premium
-- [ ] Auditer le fallback de chargement et identifier la fuite de contenu non stylé.
-- [ ] Créer un écran de chargement premium, léger et accessible avec identité 3M.
-- [ ] Vérifier la réduction de mouvement, le rendu mobile et les transitions de routes.
+- [x] Auditer le fallback de chargement et identifier la fuite de contenu non stylé.
+- [x] Créer un écran de chargement premium, léger et accessible avec identité 3M.
+- [x] Vérifier la réduction de mouvement, le rendu mobile et les transitions de routes.
 - [ ] Publier et vérifier l’écran de chargement premium.
 
 ## Réorganisation premium du bandeau légal
-- [ ] Déplacer le bandeau RC/NIU du haut de page vers le footer légal unique.
-- [ ] Rééquilibrer l’en-tête et l’accueil avec une composition premium, aérée et accessible.
-- [ ] Tester le rendu mobile et desktop, puis publier la réorganisation premium.
+- [x] Déplacer le bandeau RC/NIU du haut de page vers le footer légal unique.
+- [x] Rééquilibrer l’en-tête et l’accueil avec une composition premium, aérée et accessible.
+- [x] Tester le rendu mobile et desktop, puis publier la réorganisation premium.
 
 ## Résumé d’erreurs de formulaire
-- [ ] Inventorier les formulaires publics et protégés concernés.
-- [ ] Intégrer le résumé d’erreurs avec liens vers les champs invalides.
-- [ ] Tester les états invalides et l’accessibilité clavier/lecteur d’écran.
+- [x] Inventorier les formulaires publics et protégés concernés.
+- [x] Intégrer le résumé d’erreurs avec liens vers les champs invalides.
+- [x] Tester les états invalides et l’accessibilité clavier/lecteur d’écran.
+- [ ] Publier et vérifier le résumé d’erreurs.
+
+## Écran de chargement premium
+- [x] Auditer le fallback de chargement et identifier la fuite de contenu non stylé.
+- [x] Créer un écran de chargement premium, léger et accessible avec identité 3M.
+- [x] Vérifier la réduction de mouvement, le rendu mobile et les transitions de routes.
+- [ ] Publier et vérifier l’écran de chargement premium.
+
+## Réorganisation premium du bandeau légal
+- [x] Déplacer le bandeau RC/NIU du haut de page vers le footer légal unique.
+- [x] Rééquilibrer l’en-tête et l’accueil avec une composition premium, aérée et accessible.
+- [x] Tester le rendu mobile et desktop, puis publier la réorganisation premium.
+
+## Résumé d’erreurs de formulaire
+- [x] Inventorier les formulaires publics et protégés concernés.
+- [x] Intégrer le résumé d’erreurs avec liens vers les champs invalides.
+- [x] Tester les états invalides et l’accessibilité clavier/lecteur d’écran.
 - [ ] Publier et vérifier le résumé d’erreurs.

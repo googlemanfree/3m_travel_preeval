@@ -47,6 +47,7 @@ const USEFUL_LINKS: FooterLink[] = [
   { key: "useful_terms", label: { fr: "Mentions légales", en: "Legal notice" }, href: "/conditions-utilisation", description: { fr: "Lire les conditions d’utilisation et le cadre de service.", en: "Read terms of use and the service framework." } },
   { key: "useful_sitemap", label: { fr: "Plan du site", en: "Sitemap" }, href: "/plan-du-site", description: { fr: "Retrouver l’ensemble des accès publics en une seule page.", en: "Find all public entry points on a single page." } },
   { key: "useful_accessibility", label: { fr: "Accessibilité", en: "Accessibility" }, href: "/accessibilite", description: { fr: "Adapter l’affichage et les préférences d’interaction.", en: "Adjust display and interaction preferences." } },
+  { key: "useful_status", label: { fr: "État du service", en: "Service status" }, href: "/etat-du-service", description: { fr: "Consulter la disponibilité publique et les maintenances annoncées.", en: "Check public availability and announced maintenance." } },
   { key: "useful_digital", label: { fr: "Service 3M Digital", en: "3M Digital service" }, href: "/3m-digital", description: { fr: "Découvrir les services numériques complémentaires de 3M.", en: "Discover 3M’s complementary digital services." } },
   { key: "useful_sources", label: { fr: "Sources officielles", en: "Official sources" }, href: "/sources-officielles", description: { fr: "Consulter les liens institutionnels par destination.", en: "View institutional links by destination." } },
 ];
