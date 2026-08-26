@@ -7,6 +7,7 @@ describe("public service status page", () => {
   const app = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
   const footer = readFileSync(resolve(process.cwd(), "client/src/components/Footer.tsx"), "utf8");
   const prerender = readFileSync(resolve(process.cwd(), "server/publicPrerender.ts"), "utf8");
+  const server = readFileSync(resolve(process.cwd(), "server/_core/vite.ts"), "utf8");
 
   it("exposes a bilingual public status route and footer access", () => {
     expect(app).toContain('path={"/etat-du-service"}');
@@ -15,6 +16,7 @@ describe("public service status page", () => {
     expect(page).toContain("No planned maintenance is currently announced.");
     expect(page).toContain("Aucune maintenance planifiée n’est actuellement annoncée.");
     expect(prerender).toContain('"/etat-du-service"');
+    expect(server).toContain('app.get("/etat-du-service"');
   });
 
   it("keeps the page informational and free of internal operational details", () => {

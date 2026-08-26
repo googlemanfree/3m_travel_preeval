@@ -124,6 +124,17 @@ export function serveStatic(app: Express) {
       `Could not find the build directory: ${distPath}, make sure to build the client first`
     );
   }
+  // Route explicite pour les plateformes qui appliquent leur propre fallback
+  // avant le catch-all Express : la page d’état doit rester une page publique 200.
+  app.get("/etat-du-service", async (req, res, next) => {
+    try {
+      const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
+      const rendered = composePublicPrerender(template, req.originalUrl);
+      res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(rendered.html);
+    } catch (error) {
+      next(error);
+    }
+  });
   app.use(express.static(distPath, { index: false, redirect: false }));
   app.use("*", async (req, res) => {
     try {
