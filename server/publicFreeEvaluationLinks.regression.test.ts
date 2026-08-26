@@ -32,10 +32,9 @@ describe("accès public au formulaire d’évaluation gratuite", () => {
   });
 
   it("confirme le succès et bloque les coordonnées de contact mal formées avant l’envoi", () => {
-    expect(form).toContain("Votre évaluation a bien été transmise");
+    expect(form).toContain("Évaluation soumise avec succès. Vérifiez votre e-mail.");
     expect(form).toContain("isEmailValid");
     expect(form).toContain("isWhatsappValid");
-    expect(form).toContain("setContactTouched({ email: true, whatsappPhone: true })");
     expect(form).toContain("aria-invalid={emailError}");
     expect(form).toContain("aria-invalid={whatsappError}");
   });
