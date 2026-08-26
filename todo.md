@@ -1505,3 +1505,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un aperçu Gemini de destinations alternatives dans le récapitulatif d’évaluation
 - [x] Exiger la validation humaine et l’affichage de limites explicites avant toute utilisation administrative
 - [x] Tester le temps réel, les garde-fous et les erreurs Gemini, puis publier
+
+## Sources, historique et PDF des orientations
+- [x] Associer chaque destination alternative à une source gouvernementale officielle vérifiable
+- [x] Afficher les liens officiels dans les suggestions Gemini sans présenter une décision comme acquise
+- [x] Créer un historique protégé des évaluations et comparaisons pour les candidats connectés
+- [x] Ajouter un export PDF du récapitulatif et des recommandations Gemini
+- [x] Mettre à jour la compétence, tester les autorisations et publier

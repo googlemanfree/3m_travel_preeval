@@ -24,6 +24,7 @@ import {
   Calendar,
   ArrowLeftRight,
   Sparkles,
+  History,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCandidateAuth } from "@/hooks/useCandidateAuth";
@@ -37,6 +38,7 @@ import DossierDocumentChecklist from "@/components/DossierDocumentChecklist";
 import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
+import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -46,7 +48,7 @@ export default function EvaluationSpace() {
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "documents" | "profile" | "messages" | "testimonials">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "history" | "documents" | "profile" | "messages" | "testimonials">("overview");
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -82,7 +84,7 @@ export default function EvaluationSpace() {
   useEffect(() => {
     if (searchParams.get("section")) {
       const s = searchParams.get("section") as any;
-      if (["overview", "dossier", "flights", "comparisons", "documents", "profile", "messages", "testimonials"].includes(s)) {
+      if (["overview", "dossier", "flights", "comparisons", "history", "documents", "profile", "messages", "testimonials"].includes(s)) {
         setActiveTab(s);
       }
     }
@@ -221,6 +223,7 @@ export default function EvaluationSpace() {
             { id: "dossier", label: "Mon Dossier & Étapes", icon: FolderOpen },
             { id: "flights", label: "Vols Favoris & Réservations", icon: Plane },
             { id: "comparisons", label: "Comparaisons", icon: ArrowLeftRight },
+            { id: "history", label: "Historique", icon: History },
             { id: "documents", label: "Centre Documentaire", icon: FileText },
             { id: "profile", label: "Mon Profil & Avatar", icon: User },
             { id: "messages", label: `Messagerie ${stats.unreadMessages > 0 ? `(${stats.unreadMessages})` : ""}`, icon: MessageSquare },
@@ -856,6 +859,7 @@ Ce rapport est généré automatiquement par l'espace client
           )}
 
           {activeTab === "comparisons" && <SavedDestinationComparisonsPanel />}
+          {activeTab === "history" && <div className="space-y-6"><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Historique des évaluations</h2><p className="mt-1 text-sm text-slate-600">Retrouvez vos évaluations, brouillons d’orientation et exports PDF. Les suggestions restent à vérifier par un conseiller.</p></div><EvaluationHistoryPanel evaluations={evaluations as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} /></section><section><div className="mb-4"><h2 className="text-xl font-black text-slate-950">Comparaisons sauvegardées</h2><p className="mt-1 text-sm text-slate-600">Vos comparaisons enregistrées depuis l’espace candidat.</p></div><SavedDestinationComparisonsPanel /></section></div>}
 
           {activeTab === "documents" && (
             <div className="space-y-6">
