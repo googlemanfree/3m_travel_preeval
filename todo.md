@@ -1145,4 +1145,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Comparer les réponses et contenus publics des variantes .com, .click et du domaine de prévisualisation.
 - [x] Identifier puis corriger la source confirmée de la page de maintenance, sans modification DNS non justifiée.
 - [x] Vérifier le retour de la page publique et des entrées protégées après correction.
-- [ ] Publier et consigner la résolution de l’incident.
+- [x] Publier et consigner la résolution de l’incident.
