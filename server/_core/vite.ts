@@ -144,6 +144,11 @@ export function serveStatic(app: Express) {
   // Express. Les pages protégées doivent donc être servies explicitement avec
   // un shell 200/noindex, puis laisser AuthGuard gérer la session côté client.
   app.get("/etat-du-service", renderExplicitShell);
+  app.get("/tourisme", renderExplicitShell);
+  app.get("/assurance", renderExplicitShell);
+  app.get("/traduction/order", renderExplicitShell);
+  app.get("/hotels", renderExplicitShell);
+  app.get("/visa-etudes", renderExplicitShell);
   app.get("/mon-dossier", renderExplicitShell);
   app.get("/document-upload", renderExplicitShell);
   app.get("/mes-vols-favoris", renderExplicitShell);

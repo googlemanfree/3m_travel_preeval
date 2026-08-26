@@ -8,7 +8,7 @@ const services = [
     subtitle: 'Évaluation initiale et accompagnement structuré de votre projet.',
     icon: '🛂',
     badgeColor: 'bg-blue-100 text-blue-600',
-    link: '/evaluation',
+    link: '/procedures',
     isExternal: false,
   },
   {
@@ -17,7 +17,7 @@ const services = [
     subtitle: 'Recherche d’options adaptées à vos dates, itinéraire et budget.',
     icon: '✈️',
     badgeColor: 'bg-indigo-100 text-indigo-600',
-    link: '/flights',
+    link: '/billets',
     isExternal: false,
   },
   {
@@ -26,7 +26,7 @@ const services = [
     subtitle: 'Hébergements confortables et réservations simplifiées',
     icon: '🏨',
     badgeColor: 'bg-rose-100 text-rose-600',
-    link: '/hotels',
+    link: '/tourisme',
     isExternal: false,
   },
   {
@@ -58,10 +58,30 @@ const services = [
   },
 ];
 
+const intentRoutes = [
+  { label: 'Vols', description: 'Rechercher un itinéraire', href: '/billets', icon: '✈️' },
+  { label: 'Tourisme', description: 'Préparer un séjour', href: '/tourisme', icon: '✦' },
+  { label: 'Hôtels', description: 'Trouver un hébergement', href: '/tourisme', icon: '⌂' },
+  { label: 'Visa', description: 'Explorer les procédures', href: '/procedures', icon: '◈' },
+  { label: 'Assurance', description: 'Préparer une couverture', href: '/assurance', icon: '▣' },
+  { label: 'Traduction', description: 'Commander une traduction', href: '/traduction/order', icon: '文' },
+  { label: 'Ressources', description: 'Consulter les guides', href: '/ressources', icon: '▤' },
+];
+
 export default function ServicesSection() {
   return (
     <section className="py-16 bg-slate-50/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <nav aria-label="Choisir un besoin" className="mb-10 grid grid-cols-2 gap-2 rounded-2xl border border-blue-100 bg-white p-2 shadow-sm sm:grid-cols-4 lg:grid-cols-7">
+          {intentRoutes.map((item) => (
+            <Link key={`${item.label}-${item.href}`} href={item.href} className="group flex min-h-16 flex-col items-center justify-center rounded-xl px-2 py-2 text-center transition-colors hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700">
+              <span className="text-lg text-blue-700" aria-hidden="true">{item.icon}</span>
+              <span className="text-xs font-extrabold text-slate-900">{item.label}</span>
+              <span className="hidden text-[10px] font-medium text-slate-500 sm:block">{item.description}</span>
+            </Link>
+          ))}
+        </nav>
 
         {/* Titre section */}
         <div className="text-center mb-12">

@@ -53,21 +53,21 @@ const SearchBarWithAutocomplete = () => {
   const [searchResults, setSearchResults] = useState(countriesData.slice(0, 0));
 
   const destinations = [
-    { emoji: '🇨🇦', name: 'Canada', type: 'destination' },
-    { emoji: '🇫🇷', name: 'France', type: 'destination' },
-    { emoji: '🇦🇪', name: 'Dubaï', type: 'destination' },
-    { emoji: '🇩🇪', name: 'Allemagne', type: 'destination' },
-    { emoji: '🇬🇧', name: 'Royaume-Uni', type: 'destination' },
-    { emoji: '🇦🇺', name: 'Australie', type: 'destination' },
-    { emoji: '🇧🇪', name: 'Belgique', type: 'destination' },
-    { emoji: '🇵🇱', name: 'Pologne', type: 'destination' },
+    { emoji: '🇨🇦', name: 'Canada', type: 'destination', href: '/canada' },
+    { emoji: '🇫🇷', name: 'France', type: 'destination', href: '/procedures/france' },
+    { emoji: '🇦🇪', name: 'Dubaï', type: 'destination', href: '/procedures/dubai' },
+    { emoji: '🇩🇪', name: 'Allemagne', type: 'destination', href: '/procedures/allemagne' },
+    { emoji: '🇬🇧', name: 'Royaume-Uni', type: 'destination', href: '/procedures/royaume-uni' },
+    { emoji: '🇦🇺', name: 'Australie', type: 'destination', href: '/procedures/australie' },
+    { emoji: '🇧🇪', name: 'Belgique', type: 'destination', href: '/procedures/belgique' },
+    { emoji: '🇵🇱', name: 'Pologne', type: 'destination', href: '/procedures/pologne' },
   ];
 
   const procedures = [
-    { emoji: '🎓', name: 'Visa Étudiant', type: 'procedure' },
-    { emoji: '💼', name: 'Permis de Travail', type: 'procedure' },
-    { emoji: '🏠', name: 'Résidence Permanente', type: 'procedure' },
-    { emoji: '✈️', name: 'Visa Visiteur', type: 'procedure' },
+    { emoji: '🎓', name: 'Visa Étudiant', type: 'procedure', href: '/etudes' },
+    { emoji: '💼', name: 'Permis de Travail', type: 'procedure', href: '/procedures' },
+    { emoji: '🏠', name: 'Résidence Permanente', type: 'procedure', href: '/procedures' },
+    { emoji: '✈️', name: 'Visa Visiteur', type: 'procedure', href: '/evisas' },
   ];
 
   const allItems = [...destinations, ...procedures];
@@ -122,7 +122,7 @@ const SearchBarWithAutocomplete = () => {
                   {filteredItems.filter(item => item.type === 'destination').map((item, idx) => (
                     <motion.a
                       key={idx}
-                      href="/procedures"
+                      href={item.href ?? '/procedures'}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.02 * idx }}
@@ -145,7 +145,7 @@ const SearchBarWithAutocomplete = () => {
                   {filteredItems.filter(item => item.type === 'procedure').map((item, idx) => (
                     <motion.a
                       key={idx}
-                      href="/procedures"
+                      href={item.href ?? '/procedures'}
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.02 * idx }}
@@ -166,12 +166,12 @@ const SearchBarWithAutocomplete = () => {
       {/* Tags de destinations populaires */}
       <div className="flex flex-wrap gap-2">
         {[
-          { emoji: '🇨🇦', name: 'Canada', href: '/procedures' },
-          { emoji: '🇫🇷', name: 'France', href: '/procedures' },
-          { emoji: '🇦🇪', name: 'Dubaï', href: '/procedures' },
-          { emoji: '🇩🇪', name: 'Allemagne', href: '/procedures' },
-          { emoji: '🇬🇧', name: 'UK', href: '/procedures' },
-          { emoji: '🇦🇺', name: 'Australie', href: '/procedures' },
+          { emoji: '🇨🇦', name: 'Canada', href: '/canada' },
+          { emoji: '🇫🇷', name: 'France', href: '/procedures/france' },
+          { emoji: '🇦🇪', name: 'Dubaï', href: '/procedures/dubai' },
+          { emoji: '🇩🇪', name: 'Allemagne', href: '/procedures/allemagne' },
+          { emoji: '🇬🇧', name: 'UK', href: '/procedures/royaume-uni' },
+          { emoji: '🇦🇺', name: 'Australie', href: '/procedures/australie' },
         ].map((dest, idx) => (
           <motion.a
             key={idx}

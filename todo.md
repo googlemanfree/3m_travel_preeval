@@ -1356,3 +1356,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter une vue Kanban avec glisser-déposer, alternative clavier et confirmation des changements sensibles.
 - [x] Conserver l’historique, les notifications client et les autorisations lors d’un déplacement.
 - [x] Tester le Kanban, la confidentialité, l’accessibilité et publier la fonctionnalité.
+
+## Architecture de routes inspirée de la référence ease.travel
+
+- [x] Analyser la navigation, les parcours et les regroupements de services visibles sur `ease.travel/fr`.
+- [x] Comparer cette structure aux routes 3M Travel existantes et repérer les doublons ou impasses.
+- [x] Définir puis implémenter une architecture de routes originale, premium, bilingue et cohérente avec les guards existants.
+- [x] Tester les routes, CTA, formulaires, redirections, accès protégés et affichages responsive avant publication.
