@@ -93,6 +93,7 @@ import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
 import { AdminSystemStatus } from "@/components/AdminSystemStatus";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
+import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
 import { AdminCalendarView } from "@/components/AdminCalendarView";
 import { UnifiedRequestInbox } from "@/components/UnifiedRequestInbox";
 import { Candidate360Workspace } from "@/components/Candidate360Workspace";
@@ -1336,7 +1337,7 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        <AdminPlacementPipeline sessionToken={sessionToken} />
+        <div id="admin-placement-pipeline"><AdminPlacementPipeline sessionToken={sessionToken} /></div>
 
         {/* Modal de secours si les e-mails de réinitialisation ont échoué */}
         {resetModalData && (
@@ -1433,13 +1434,15 @@ export default function AdminDashboard() {
         <Tabs value={activeAdminTab} onValueChange={setActiveAdminTab} className="w-full" aria-label="Sections du tableau de bord administrateur">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-black uppercase tracking-[0.14em] text-blue-700">Pilotage centralisé</p><h2 className="text-xl font-black tracking-tight text-slate-950">Espaces de travail</h2></div><p className="text-xs font-medium text-slate-500">Sélectionnez une section pour traiter les demandes manuellement.</p></div>
           <div className="mb-6 grid gap-3 lg:grid-cols-2 2xl:grid-cols-5">
-            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="candidates">Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox">Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="activations">Activations</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Pilotage des dossiers"><TabsTrigger value="pilotage" className="font-bold text-cyan-700">Pilotage synchronisé</TabsTrigger><TabsTrigger value="candidates">Dossiers</TabsTrigger><TabsTrigger value="pre-dossiers" className="font-bold text-blue-700">Pré-dossiers</TabsTrigger><TabsTrigger value="inbox">Demandes unifiées</TabsTrigger><TabsTrigger value="evaluation-review" className="font-bold text-amber-700">Bilans à valider</TabsTrigger><TabsTrigger value="evaluation-reminders" className="font-bold text-violet-700">Bilans à relancer</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="activations">Activations</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism">Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar">Calendrier</TabsTrigger><TabsTrigger value="payments">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails">E-mails</TabsTrigger><TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag">Guides & RAG</TabsTrigger><TabsTrigger value="passport-history">Passeports</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="footer-engagement" className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="audit">Journal d’audit</TabsTrigger></AdminNavGroup>
           </div>
           <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div>
+
+          <TabsContent value="pilotage" className="space-y-6"><AdminOperationsControlCenter totalCandidates={total} pendingEvaluations={pendingEvaluationCandidates.length} pendingPayments={pendingPaymentApplications.length} pendingFlights={flightQueueSummary?.pending_review ?? 0} openDeadlines={advisorDeadlineGroups.reduce((count, group) => count + group.items.length, 0)} smtpFailures={smtpSummary.failed} lastSyncedAt={lastSyncedAt} isRefreshing={isRefreshing} onRefresh={handleRefresh} onNavigate={setActiveAdminTab} /></TabsContent>
 
           <TabsContent value="tourism" className="space-y-6">
             <AdminTourismRequests />

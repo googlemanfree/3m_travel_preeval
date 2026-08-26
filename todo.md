@@ -1342,3 +1342,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir les destinations admin recherchables sans exposer de données sensibles.
 - [x] Ajouter une palette de recherche globale avec raccourci Ctrl/Cmd+K et navigation clavier.
 - [x] Tester la recherche, les autorisations, l’accessibilité et publier la fonctionnalité.
+
+## Pilotage synchronisé admin-client-partenaire
+
+- [x] Cartographier les statuts, rôles, sources de vérité et actions existantes pour chaque espace.
+- [x] Définir un contrat de synchronisation commun, sécurisé et traçable entre dossier admin, espace client et espace partenaire.
+- [x] Améliorer le centre de pilotage, les alertes, les échéances et la visibilité partenaire sans exposer les notes ou documents privés.
+- [x] Tester la cohérence des statuts, les autorisations, la confidentialité et les parcours de traitement avant publication.
