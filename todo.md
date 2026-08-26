@@ -1200,15 +1200,15 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Tester, publier et vérifier le rendu public des transitions.
 
 ## Modernisation design premium
-- [ ] Auditer le système visuel, les composants partagés et les pages clés.
-- [ ] Définir une direction artistique premium et des tokens de couleur accessibles.
-- [ ] Améliorer les interfaces publiques et protégées prioritaires sans modifier les droits ni les actions métier.
-- [ ] Vérifier le responsive, les contrastes, la cohérence et les régressions.
-- [ ] Publier et vérifier la modernisation visuelle.
+- [x] Auditer le système visuel, les composants partagés et les pages clés.
+- [x] Définir une direction artistique premium et des tokens de couleur accessibles.
+- [x] Améliorer les interfaces publiques et protégées prioritaires sans modifier les droits ni les actions métier.
+- [x] Vérifier le responsive, les contrastes, la cohérence et les régressions.
+- [x] Publier et vérifier la modernisation visuelle.
 
 ## Modernisation design premium
-- [ ] Auditer le système visuel, les composants partagés et les pages clés.
-- [ ] Définir une direction artistique premium et des tokens de couleur accessibles.
-- [ ] Améliorer les interfaces publiques et protégées prioritaires sans modifier les droits ni les actions métier.
-- [ ] Vérifier le responsive, les contrastes, la cohérence et les régressions.
-- [ ] Publier et vérifier la modernisation visuelle.
+- [x] Auditer le système visuel, les composants partagés et les pages clés.
+- [x] Définir une direction artistique premium et des tokens de couleur accessibles.
+- [x] Améliorer les interfaces publiques et protégées prioritaires sans modifier les droits ni les actions métier.
+- [x] Vérifier le responsive, les contrastes, la cohérence et les régressions.
+- [x] Publier et vérifier la modernisation visuelle.
