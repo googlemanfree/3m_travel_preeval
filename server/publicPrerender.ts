@@ -33,6 +33,7 @@ const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/3m-digital": { title: `3M Digital | ${SITE}`, description: "Services numériques et accompagnement documentaire de 3M Travel & Services.", heading: "3M Digital", lead: "Découvrez les services numériques et soumettez une demande détaillée à l’équipe." },
   "/plan-du-site": { title: `Plan du site | ${SITE}`, description: "Accédez aux principales pages, procédures, ressources et informations de 3M Travel & Services.", heading: "Plan du site", lead: "Trouvez rapidement les pages utiles à votre démarche de mobilité internationale." },
   "/sources-officielles": { title: `Sources officielles | ${SITE}`, description: "Liens institutionnels par destination pour préparer une démarche de mobilité internationale.", heading: "Sources officielles par destination", lead: "Les informations institutionnelles constituent la référence pour les exigences, délais et décisions applicables." },
+  "/etat-du-service": { title: `État du service | ${SITE}`, description: "Consultez l’état public des services et les informations de maintenance de 3M Travel & Services.", heading: "État du service", lead: "Retrouvez ici les informations publiques sur la disponibilité des services et les maintenances annoncées." },
 };
 
 const esc = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char] ?? char);
