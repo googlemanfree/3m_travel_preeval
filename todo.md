@@ -1225,11 +1225,17 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir des animations de survol courtes, subtiles et compatibles avec l’accessibilité.
 - [x] Intégrer les micro-interactions aux composants partagés et pages concernées.
 - [x] Vérifier clavier, mobile, réduction de mouvement et régressions.
-- [ ] Publier et vérifier les animations de survol.
+- [x] Publier et vérifier les animations de survol.
 
 ## Micro-interactions et finition typographique v34
-- [ ] Rafraîchir ou republier la diffusion publique v34 sans modifier les DNS à l’aveugle.
+- [x] Rafraîchir ou republier la diffusion publique v34 sans modifier les DNS à l’aveugle.
 - [x] Améliorer la typographie, les espacements et la respiration des pages secondaires.
 - [x] Ajouter un fondu d’apparition accessible aux cartes partagées.
-- [ ] Tester la diffusion publique réelle de v34 après publication.
+- [x] Tester la diffusion publique réelle de v34 après publication.
 - [x] Créer et valider la compétence réutilisable de finition premium.
+
+## Incident /mon-dossier — écran de maintenance
+- [x] Vérifier les réponses HTTP et le routage public de `/mon-dossier`.
+- [x] Corriger le fallback afin qu’un visiteur non connecté reçoive un accès clair sans données.
+- [ ] Vérifier le parcours d’un utilisateur connecté sans exposer de données client.
+- [ ] Tester la diffusion publique et publier uniquement après preuve HTTP/rendu.

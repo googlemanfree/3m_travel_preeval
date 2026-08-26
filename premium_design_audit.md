@@ -8,3 +8,9 @@ Le contrôle public sur `www.3mtravelagency.com` répond en HTTP 200 et affiche 
 ## Vérification de diffusion v34
 
 La version locale contient la typographie premium, le fondu accessible des cartes et le worker v34. Les pages secondaires répondent HTTP 200, mais le domaine public sert encore le cache v33 lors du dernier contrôle. Une republication contrôlée est nécessaire avant de clore la preuve publique.
+
+## Contrôle Chrome après purge Cloudflare — 26 août 2026
+
+Source publique contrôlée : https://www.3mtravelagency.com/about?premium-v34-check=1
+
+Le worker public répond désormais `const CACHE_NAME = '3m-travel-pwa-v34-premium-hover-interactions-static';`. Dans Chrome, `/about` se charge après la transition initiale et affiche une hiérarchie premium lisible : titre principal net, texte respirant, quatre cartes de confiance avec surfaces blanches, bordures légères et accents bleus, boutons et navigation accessibles. Le pied de page légal et les coordonnées officielles restent visibles. Les pages publiques `/about`, `/tarifs`, `/contact` et `/sources-officielles` répondent HTTP 200. Le survol d’une carte a été déclenché dans Chrome ; la validation visuelle confirme le rendu de la carte après la transition, sans exécuter d’action métier.
