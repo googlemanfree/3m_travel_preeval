@@ -1498,3 +1498,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un dépôt de documents sécurisé et relié au dossier d’évaluation
 - [x] Configurer Gemini pour une analyse assistée structurée avec validation humaine obligatoire
 - [x] Tester les autorisations, la persistance, les parcours et publier
+
+## Orientation Gemini comparative en temps réel
+- [x] Auditer les scores, seuils et affirmations non vérifiés du modèle fourni
+- [x] Définir des suggestions comparatives sans conclusion réglementaire ni redirection automatique
+- [x] Ajouter un aperçu Gemini de destinations alternatives dans le récapitulatif d’évaluation
+- [x] Exiger la validation humaine et l’affichage de limites explicites avant toute utilisation administrative
+- [x] Tester le temps réel, les garde-fous et les erreurs Gemini, puis publier

@@ -33,6 +33,14 @@ const DOCUMENT_UPLOAD_TTL_MS = 30 * 60 * 1000;
 const MAX_EVALUATION_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png"]);
 const evaluationDocumentTypeEnum = z.enum(["passport", "cv", "diploma", "certificate", "birth_certificate", "bank_statement", "language_test", "educational_transcript", "proof_of_residence", "other"]);
+const orientationAlternativeCandidates: Record<string, string[]> = {
+  Canada: ["France", "Belgique", "Allemagne", "Luxembourg", "Royaume-Uni"],
+  Luxembourg: ["France", "Belgique", "Allemagne", "Canada"],
+  France: ["Belgique", "Allemagne", "Luxembourg", "Canada"],
+  Belgique: ["France", "Allemagne", "Luxembourg", "Canada"],
+  Allemagne: ["France", "Belgique", "Luxembourg", "Canada"],
+  "Royaume-Uni": ["Canada", "France", "Belgique", "Allemagne"],
+};
 
 function getEvaluationUploadSecret(): string {
   const secret = process.env.JWT_SECRET;
@@ -156,6 +164,11 @@ const multiProjectEvaluationInput = z.object({
 });
 
 export const evaluationRouter = router({
+  geminiOrientationPreview: publicProcedure.input(z.object({ destinationCountry: z.string().min(2).max(80), projectType: z.enum(["travail", "etudes", "tourisme"]), nationality: z.string().max(120).optional(), age: z.number().int().min(16).max(100).optional(), sector: z.string().max(300).optional(), yearsOfExperience: z.number().min(0).max(80).optional(), educationLevel: z.string().max(120).optional(), languages: z.string().max(500).optional(), financialGuarantee: z.string().max(500).optional(), countryDetails: z.record(z.string(), z.union([z.string().max(1000), z.number(), z.boolean()])).default({}), consent: z.literal(true) })).mutation(async ({ input }) => {
+    const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
+    return generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: input.countryDetails, alternativeCountries: alternatives });
+  }),
+
   submitEvaluation: publicProcedure
     .input(multiProjectEvaluationInput)
     .mutation(async ({ input }) => {
