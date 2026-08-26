@@ -130,7 +130,12 @@ export function serveStatic(app: Express) {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
-      res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(rendered.html);
+      res.status(200).set({
+        "Content-Type": "text/html",
+        "Cache-Control": "no-cache",
+        "X-3M-Build": "c6a2c54a-route-hotfix",
+        "X-3M-Route-Source": "express-prerender",
+      }).end(rendered.html);
     } catch (error) {
       next(error);
     }
