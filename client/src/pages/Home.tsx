@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useLocation } from 'wouter';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,10 +35,11 @@ import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
 import { VisasCarousel } from "@/components/VisasCarousel";
-import { SimulatorExpress } from "@/components/SimulatorExpress";
 import AureolQuestionField from "@/components/AureolQuestionField";
 import FacebookFeedSection from "@/components/FacebookFeedSection";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
+
+const SimulatorExpress = lazy(() => import("@/components/SimulatorExpress").then((module) => ({ default: module.SimulatorExpress })));
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -421,6 +422,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const { isAuthenticated } = useCandidateAuth();
   const [showEvalModal, setShowEvalModal] = useState(false);
+  const [showExpressSimulator, setShowExpressSimulator] = useState(false);
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DestinationCategory | null>(null);
@@ -1329,7 +1331,17 @@ export default function Home() {
       <VisasCarousel />
 
       {/* ─── SIMULATEUR EXPRESS 30 SECONDES ────────────────────────────────────── */}
-      <SimulatorExpress />
+      {showExpressSimulator ? (
+        <Suspense fallback={<section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du simulateur express…</section>}>
+          <SimulatorExpress />
+        </Suspense>
+      ) : (
+        <section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
+          <h2 className="text-xl font-black text-slate-950">Simulateur express</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-700">Ouvrez le simulateur seulement si vous souhaitez une estimation indicative : cela préserve la rapidité de la page d’accueil.</p>
+          <button type="button" onClick={() => setShowExpressSimulator(true)} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Ouvrir le simulateur express</button>
+        </section>
+      )}
 
       {/* ─── MODAL AUTO-ÉVALUATION EXPRESS ────────────────────────── */}
       <EvaluationFormModal isOpen={showEvalModal} onClose={() => setShowEvalModal(false)} />

@@ -1,13 +1,16 @@
+import React, { Suspense, lazy, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, CheckCircle, FileText, Users, Award, ArrowRight, AlertCircle, Globe, Clock, MessageCircle, Landmark } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import StudyVisaEvaluationWidget from '@/components/StudyVisaEvaluationWidget';
 import { Link } from 'wouter';
 
 import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
 
+const StudyVisaEvaluationWidget = lazy(() => import('@/components/StudyVisaEvaluationWidget'));
+
 export default function VisaEtudes() {
+  const [showStudyEvaluation, setShowStudyEvaluation] = useState(false);
   // Informations factuelles sur les démarches propres à chaque destination.
   // Campus France, uni-assist, etc. sont des plateformes officielles réelles
   // gérées par les autorités de chaque pays — 3M Travel n'en est pas
@@ -65,12 +68,12 @@ export default function VisaEtudes() {
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-8">
               De l'évaluation de votre profil à la préparation de votre dossier, 3M Travel & Services vous accompagne dans la constitution et le suivi de vos démarches — Campus France, IRCC, uni-assist et autres procédures officielles comprises.
             </p>
-            <a href="#evaluation">
+            <Link href="/evaluation?destination=etudes">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center gap-2">
                 Évaluer mon profil gratuitement
                 <ArrowRight size={20} />
               </motion.button>
-            </a>
+            </Link>
           </motion.div>
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }} className="max-w-xl mx-auto mt-12">
             <StudyAbroadIllustration className="w-full h-auto" />
@@ -136,7 +139,16 @@ export default function VisaEtudes() {
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Quelles sont vos chances aujourd'hui ?</h2>
           <p className="text-gray-600">Répondez à ces quelques questions pour obtenir une estimation immédiate, gratuite et sans engagement.</p>
         </div>
-        <StudyVisaEvaluationWidget />
+        {showStudyEvaluation ? (
+          <Suspense fallback={<div className="mx-auto max-w-2xl rounded-2xl border border-blue-200 bg-white p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du questionnaire études…</div>}>
+            <StudyVisaEvaluationWidget />
+          </Suspense>
+        ) : (
+          <div className="mx-auto max-w-2xl rounded-2xl border border-blue-200 bg-white p-6 text-center shadow-sm">
+            <p className="text-sm leading-6 text-slate-700">Ouvrez le questionnaire détaillé lorsque vous êtes prêt à renseigner votre projet d’études.</p>
+            <button type="button" onClick={() => setShowStudyEvaluation(true)} className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-black text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">Ouvrir le questionnaire études</button>
+          </div>
+        )}
       </section>
 
       {/* Requirements */}
@@ -189,12 +201,12 @@ export default function VisaEtudes() {
           <h2 className="text-3xl font-bold text-gray-900 mb-6">Prêt à démarrer votre projet d'études ?</h2>
           <p className="text-lg text-gray-600 mb-8">Une évaluation gratuite et sans engagement pour savoir où vous en êtes.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#evaluation">
+            <Link href="/evaluation?destination=etudes">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-bold rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl inline-flex items-center justify-center gap-2">
                 Faire mon évaluation gratuite
                 <ArrowRight size={20} />
               </motion.button>
-            </a>
+            </Link>
             <a href="https://wa.me/237698104832?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20visa%20\u00e9tudes." target="_blank" rel="noopener noreferrer">
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-green-500 text-green-600 font-bold rounded-full text-lg transition-all duration-300 hover:bg-green-50 inline-flex items-center justify-center gap-2">
                 <MessageCircle size={20} />

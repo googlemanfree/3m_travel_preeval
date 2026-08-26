@@ -1549,3 +1549,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier les liens statiques, boutons inactifs et composants qui affichent une page vide
 - [x] Corriger les destinations, états d’erreur et retours utilisateur concernés
 - [x] Tester les routes, CTA et formulaires Canada avant publication
+
+## Chargement progressif et CTA des procédures
+- [x] Mettre à jour la compétence réutilisable avec la vérification des simulateurs et CTA publics
+- [x] Auditer les liens, boutons et composants lourds des pages Schengen et Études
+- [x] Ajouter les états de chargement progressif aux simulateurs lourds concernés
+- [x] Corriger les liens statiques et CTA inactifs de Schengen et Études
+- [x] Ajouter des tests de navigation automatisés pour les CTA Canada
+- [x] Tester les pages, les liens et le rendu avant publication
