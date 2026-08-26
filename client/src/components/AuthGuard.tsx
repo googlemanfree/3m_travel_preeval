@@ -148,8 +148,8 @@ export default function AuthGuard({
               </ul>
             </div>
 
-            <p className="mt-4 text-xs text-gray-400">
-              <button onClick={() => navigate("/")} className="hover:underline">← Retour à l'accueil</button>
+            <p className="mt-4 text-xs text-gray-700">
+              <button onClick={() => navigate("/")} className="font-medium text-blue-900 underline-offset-2 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700">← Retour à l'accueil</button>
             </p>
           </div>
         </div>

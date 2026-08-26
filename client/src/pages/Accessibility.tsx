@@ -2,6 +2,7 @@ import React from "react";
 import { useAnimationPreferences } from "@/contexts/AnimationPreferencesContext";
 import { useFontSizePreferences } from "@/contexts/FontSizePreferencesContext";
 import { useFloatingWidgetsPreferences } from "@/contexts/FloatingWidgetsPreferencesContext";
+import { useHighContrast } from "@/contexts/HighContrastContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 
@@ -9,6 +10,7 @@ export default function Accessibility() {
   const { preference, setPreference } = useAnimationPreferences();
   const { fontSize, setFontSize } = useFontSizePreferences();
   const { widgetsVisible, deviceMode, setWidgetsVisible } = useFloatingWidgetsPreferences();
+  const { highContrast, setHighContrast } = useHighContrast();
   const { language } = useLanguage();
   const t = (fr: string, en: string) => language === "en" ? en : fr;
   const fontSizeLabel = { standard: t("Standard", "Standard"), large: t("Grand", "Large"), xlarge: t("Très grand", "Extra large") }[fontSize];
@@ -51,6 +53,20 @@ export default function Accessibility() {
               <Button type="button" variant={preference === "off" ? "destructive" : "outline"} onClick={() => setPreference("off")} className="justify-center">{t("Désactivé (statique)", "Disabled (static)")}</Button>
             </div>
             <p className="text-xs text-gray-500 pt-1">{t("Réglage actuel :", "Current setting:")} <span className="font-medium text-gray-800">{motionLabel}</span>.</p>
+          </div>
+        </div>
+
+        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-gray-900">{t("Contraste élevé", "High contrast")}</h2>
+          <p className="leading-relaxed text-gray-700">{t("Renforcez les contrastes des textes, surfaces et contrôles pour améliorer la lisibilité. Votre choix est conservé sur cet appareil.", "Increase contrast for text, surfaces and controls to improve readability. Your choice is saved on this device.")}</p>
+          <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50/60 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{t("Activer le mode contraste élevé", "Enable high contrast mode")}</h3>
+              <p className="text-sm text-gray-700">{highContrast ? t("Le mode contraste élevé est actif.", "High contrast mode is active.") : t("Le mode standard est actif.", "Standard contrast is active.")}</p>
+            </div>
+            <Button type="button" variant={highContrast ? "default" : "outline"} onClick={() => setHighContrast(!highContrast)} aria-pressed={highContrast} className="min-h-11 shrink-0">
+              {highContrast ? t("Désactiver", "Disable") : t("Activer", "Enable")}
+            </Button>
           </div>
         </div>
 

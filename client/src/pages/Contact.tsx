@@ -431,7 +431,7 @@ export default function Contact() {
                   href="https://wa.me/237698104832?text=Bonjour%203M%20Travel%20%26%20Services"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                  className="inline-block bg-[#0f6b46] text-white px-6 py-2 rounded-lg hover:bg-[#0b5538] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0f6b46]"
                 >
                   Ouvrir WhatsApp
                 </a>

@@ -796,3 +796,58 @@ html.text-size-xlarge {
     }
   }
 }
+
+/* Mode contraste élevé activable depuis les paramètres utilisateurs. */
+html.high-contrast {
+  --background: #ffffff;
+  --foreground: #071426;
+  --card: #ffffff;
+  --card-foreground: #071426;
+  --muted-foreground: #26384f;
+  --secondary: #e7eef8;
+  --secondary-foreground: #071426;
+  --muted: #dce7f3;
+  --border: #6d829b;
+  --input: #6d829b;
+  --ring: #8a5b00;
+}
+
+html.high-contrast body { color: #071426; background: #ffffff; }
+html.high-contrast .secondary-page-surface { background: #ffffff; }
+html.high-contrast .secondary-page-surface section,
+html.high-contrast .premium-surface,
+html.high-contrast .glass-card { border-color: #60758e; }
+html.high-contrast footer { background: #061a36 !important; color: #f7fbff !important; }
+html.high-contrast footer a,
+html.high-contrast footer p,
+html.high-contrast footer span { color: #f1f6fc; }
+html.high-contrast footer a:hover,
+html.high-contrast footer a:focus-visible { color: #ffe08a; }
+html.high-contrast form label,
+html.high-contrast .form-group label { color: #071426 !important; }
+html.high-contrast form input,
+html.high-contrast form select,
+html.high-contrast form textarea,
+html.high-contrast .form-group input,
+html.high-contrast .form-group select,
+html.high-contrast .form-group textarea {
+  color: #071426 !important;
+  background-color: #ffffff !important;
+  border-color: #526b86 !important;
+}
+html.high-contrast form input::placeholder,
+html.high-contrast form textarea::placeholder,
+html.high-contrast .form-group input::placeholder,
+html.high-contrast .form-group textarea::placeholder { color: #40536a !important; opacity: 1; }
+html.high-contrast form input:focus,
+html.high-contrast form select:focus,
+html.high-contrast form textarea:focus,
+html.high-contrast .form-group input:focus,
+html.high-contrast .form-group select:focus,
+html.high-contrast .form-group textarea:focus {
+  border-color: #0a2b5c !important;
+  box-shadow: 0 0 0 3px rgba(10, 43, 92, 0.25) !important;
+}
+html.high-contrast .premium-action,
+html.high-contrast .btn-next,
+html.high-contrast .btn-submit { color: #ffffff !important; background: #082b5c !important; }

@@ -84,6 +84,7 @@ const FlightBookingCheckout = lazyWithTimeout(() => import("./pages/FlightBookin
 import { MultiServiceCartProvider } from "./contexts/MultiServiceCartContext";
 import { OfficeContactProvider } from "./contexts/OfficeContactContext";
 import { FloatingWidgetsPreferencesProvider, useFloatingWidgetsPreferences } from "./contexts/FloatingWidgetsPreferencesContext";
+import { HighContrastProvider } from "./contexts/HighContrastContext";
 
 import AdminGuard from "./components/AdminGuard";
 const Tarifs = lazyWithTimeout(() => import("./pages/Tarifs"));
@@ -526,7 +527,9 @@ function AppShell() {
 export default function App() {
   return (
     <FloatingWidgetsPreferencesProvider>
-      <AppShell />
+      <HighContrastProvider>
+        <AppShell />
+      </HighContrastProvider>
     </FloatingWidgetsPreferencesProvider>
   );
 }

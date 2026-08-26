@@ -1305,3 +1305,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier les textes et surfaces à faible contraste dans la section de vérification.
 - [x] Renforcer la palette navy/or/blanc et la hiérarchie typographique sans changer le contenu.
 - [x] Vérifier les contrastes desktop/mobile et publier la correction.
+
+## Harmonisation premium et contraste élevé
+- [x] Inventorier les surfaces secondaires, le footer et les formulaires publics à harmoniser.
+- [x] Ajouter un mode contraste élevé persistant dans les paramètres utilisateurs.
+- [x] Appliquer les tokens navy/or/blanc aux sections secondaires, au footer et aux formulaires concernés.
+- [x] Auditer automatiquement les contrastes WCAG du footer et des formulaires, corriger les écarts confirmés.
+- [x] Mettre à jour et valider la compétence de design accessible, tester et publier.
