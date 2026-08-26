@@ -494,7 +494,7 @@ function App() {
                       <NavigationProgress />
                       <Navbar />
                       {/* Contenu des pages avec transition douce entre les routes */}
-                      <div className={!location.startsWith("/admin") ? "secondary-page-surface" : undefined}>
+                      <div className={`app-content flex min-w-0 flex-1 flex-col ${!location.startsWith("/admin") ? "secondary-page-surface" : ""}`}>
                         <PageTransition>
                           <React.Suspense fallback={<PageLoadingFallback />}>
                             <Router />

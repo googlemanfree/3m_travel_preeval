@@ -1254,3 +1254,18 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un export PDF sécurisé de la liste des vols favoris, sans données sensibles inutiles.
 - [x] Ajouter des notifications toast de succès ou d’erreur après le téléversement d’un document sur `/document-upload`.
 - [x] Tester, publier et livrer la compétence avec la version du projet.
+
+## Audit de régression du site
+- [ ] Établir la matrice des routes publiques, protégées et administratives à contrôler.
+- [ ] Vérifier les statuts HTTP, shells pré-rendus, erreurs console et navigation des routes critiques.
+- [ ] Corriger les erreurs effectivement reproduites et ajouter des tests de régression.
+- [ ] Rejouer l’audit local/public, publier si nécessaire et livrer l’état de chaque route.
+
+## Correction de positionnement visuel
+- [x] Identifier les pages et composants présentant des décalages, superpositions ou débordements.
+- [x] Corriger les conteneurs, espacements, alignements et points de rupture responsive concernés.
+- [x] Vérifier le rendu desktop/mobile et publier la correction.
+
+## Correction visuelle ciblée — positionnement
+- [x] Stabiliser le layout global afin d’éviter les décalages de hauteur, les espacements incohérents et les débordements desktop/mobile.
+- [x] Vérifier les pages publiques et protégées après correction et publier la version validée.

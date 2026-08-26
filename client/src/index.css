@@ -594,7 +594,14 @@ html.text-size-xlarge {
 
 /* Page secondaires — composition premium partagée */
 @layer components {
+  .app-content {
+    min-height: 0;
+    width: 100%;
+  }
+
   .secondary-page-surface {
+    min-width: 0;
+    overflow-x: clip;
     background: linear-gradient(180deg, #f8fbff 0%, #ffffff 46%, #f3f7fd 100%);
     color: #10233f;
   }
