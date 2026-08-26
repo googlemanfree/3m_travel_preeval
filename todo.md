@@ -1324,3 +1324,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Définir des réponses FAQ exactes, transparentes et alignées sur les sources officielles canadiennes.
 - [x] Intégrer des menus déroulants accessibles et dynamiques dans `/canada`.
 - [x] Tester l’ouverture, la fermeture, le clavier, le responsive et publier la FAQ.
+
+## Écran de chargement premium
+
+- [x] Remplacer le petit monogramme de chargement par le logo 3M complet, agrandi et correctement cadré.
+- [x] Moderniser l’indicateur de progression avec une hiérarchie visuelle plus premium et une alternative accessible.
+- [x] Vérifier desktop/mobile, la réduction de mouvement et publier la correction globale.
