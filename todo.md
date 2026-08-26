@@ -1274,4 +1274,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Diagnostiquer le fallback qui remplace `/flights` malgré une session connectée.
 - [x] Corriger la récupération de chunks, le service worker et la détection de version sans rediriger inutilement l’utilisateur.
 - [x] Vérifier `/flights` et les routes protégées avec une session restaurée, puis publier la correction.
-- [ ] Rejouer les contrôles publics et confirmer l’absence de faux écran de cache sur les routes critiques.
+- [x] Rejouer les contrôles publics et confirmer l’absence de faux écran de cache sur les routes critiques.
