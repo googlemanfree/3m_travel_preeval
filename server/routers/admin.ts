@@ -1818,6 +1818,7 @@ export const adminRouter = router({
         let candidateEmail = "";
         let candidateName = "";
         let documentName = "";
+        let candidateId: number | null = null;
 
         if (input.source === "client") {
           const [doc] = await db.select().from(clientDocuments).where(eq(clientDocuments.id, input.documentId)).limit(1);
@@ -1840,6 +1841,8 @@ export const adminRouter = router({
           // Récupérer le nom du candidat
           const [app] = await db.select().from(applications).where(eq(applications.email, doc.candidateEmail)).limit(1);
           candidateName = app?.fullName || doc.candidateEmail.split("@")[0];
+          const [candidate] = await db.select().from(candidates).where(eq(candidates.email, doc.candidateEmail)).limit(1);
+          candidateId = candidate?.id ?? null;
         } else {
           const [fileRec] = await db.select().from(candidateFiles).where(eq(candidateFiles.id, input.documentId)).limit(1);
           if (!fileRec) throw new TRPCError({ code: "NOT_FOUND", message: "Fichier candidat introuvable" });
@@ -1857,6 +1860,17 @@ export const adminRouter = router({
           const [cand] = await db.select().from(candidates).where(eq(candidates.id, fileRec.candidateId)).limit(1);
           candidateEmail = cand?.email || "";
           candidateName = cand?.fullName || "Candidat";
+          candidateId = cand?.id ?? fileRec.candidateId;
+        }
+
+        if (input.status === "approved" && candidateId && /\bcv\b/i.test(documentName)) {
+          await db.insert(clientNotifications).values({
+            candidateId,
+            type: "cv_validated",
+            title: "Votre CV a été validé",
+            body: "Votre CV a été contrôlé par l’agence. Vous pouvez consulter l’avancement de votre évaluation dans votre espace candidat.",
+            actionUrl: "/mon-espace?section=evaluation",
+          });
         }
 
         // Envoyer la notification e-mail automatique au candidat

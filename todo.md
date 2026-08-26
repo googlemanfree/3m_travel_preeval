@@ -1526,3 +1526,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un fil d’Ariane et des raccourcis administrateur accessibles au clavier
 - [x] Augmenter la taille et la lisibilité de la typographie hero
 - [x] Tester les interactions, l’accessibilité et les affichages responsive, puis publier
+
+## Pilotage des validations CV et correction de dossiers
+- [x] Créer ou mettre à jour une compétence réutilisable de pilotage admin-candidat auditable
+- [x] Notifier le candidat lorsque son CV est validé et enregistrer l’événement
+- [x] Ajouter un filtre admin pour les dossiers avec documents manquants
+- [x] Permettre au conseiller de définir un délai de revue visible côté candidat
+- [x] Ajouter des raccourcis admin accessibles et contextuels
+- [x] Permettre la modification encadrée et la suppression confirmée de dossiers mal créés
+- [x] Tester les autorisations, notifications, traçabilité et publier

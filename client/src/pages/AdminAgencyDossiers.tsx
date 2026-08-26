@@ -136,6 +136,8 @@ export default function AdminAgencyDossiers() {
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState<Dossier | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
 
   // Formulaire d'ajout
   const [form, setForm] = useState({
@@ -415,6 +417,9 @@ export default function AdminAgencyDossiers() {
                   ))}
                 </SelectContent>
               </Select>
+              <Button type="button" variant={filterStatus === "documents_requis" ? "default" : "outline"} onClick={() => setFilterStatus(filterStatus === "documents_requis" ? "all" : "documents_requis")} className="border-orange-400/50 text-orange-200 hover:bg-orange-400/10 focus-visible:ring-2 focus-visible:ring-orange-300" aria-pressed={filterStatus === "documents_requis"}>
+                <FileText className="mr-2 h-4 w-4" />Documents manquants
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -522,6 +527,7 @@ export default function AdminAgencyDossiers() {
                                   onClick={() => openDetailModal(d)}
                                   className="w-8 h-8 text-slate-400 hover:text-blue-400 hover:bg-blue-400/10"
                                   title="Voir le détail"
+                                  aria-label={`Voir le dossier de ${d.fullName}`}
                                 >
                                   <Eye className="w-4 h-4" />
                                 </Button>
@@ -531,6 +537,7 @@ export default function AdminAgencyDossiers() {
                                   onClick={() => openStatusModal(d)}
                                   className="w-8 h-8 text-slate-400 hover:text-yellow-400 hover:bg-yellow-400/10"
                                   title="Changer le statut"
+                                  aria-label={`Modifier le statut du dossier de ${d.fullName}`}
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
@@ -540,6 +547,7 @@ export default function AdminAgencyDossiers() {
                                   onClick={() => openNotesModal(d)}
                                   className="w-8 h-8 text-slate-400 hover:text-green-400 hover:bg-green-400/10"
                                   title="Ajouter des notes"
+                                  aria-label={`Modifier les notes du dossier de ${d.fullName}`}
                                 >
                                   <StickyNote className="w-4 h-4" />
                                 </Button>
@@ -549,6 +557,7 @@ export default function AdminAgencyDossiers() {
                                   onClick={() => openDeleteModal(d)}
                                   className="w-8 h-8 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
                                   title="Supprimer"
+                                  aria-label={`Supprimer le dossier de ${d.fullName}`}
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -1047,21 +1056,23 @@ export default function AdminAgencyDossiers() {
               <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/30 rounded-lg p-3">
                 Cette action est irréversible. Le dossier sera définitivement supprimé.
               </p>
+              <div className="space-y-2"><Label htmlFor="delete-reason">Motif de suppression</Label><Textarea id="delete-reason" value={deleteReason} onChange={(event) => setDeleteReason(event.target.value)} placeholder="Ex. doublon créé par erreur" className="border-slate-600 bg-slate-900 text-white" /></div>
+              <div className="space-y-2"><Label htmlFor="delete-confirmation">Tapez SUPPRIMER pour confirmer</Label><Input id="delete-confirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value.toUpperCase())} className="border-slate-600 bg-slate-900 text-white" /></div>
             </div>
           )}
           <DialogFooter className="gap-2 mt-4">
             <Button
               variant="outline"
-              onClick={() => setShowDeleteModal(false)}
+              onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(""); setDeleteReason(""); }}
               className="border-slate-600 text-slate-300 hover:bg-slate-700"
             >
               Annuler
             </Button>
             <Button
-              disabled={deleteMutation.isPending}
+              disabled={deleteMutation.isPending || deleteConfirmation !== "SUPPRIMER" || deleteReason.trim().length < 8}
               onClick={() => {
                 if (!selectedDossier) return;
-                deleteMutation.mutate({ dossierId: selectedDossier.id });
+                deleteMutation.mutate({ dossierId: selectedDossier.id, confirmation: "SUPPRIMER", reason: deleteReason.trim() });
               }}
               className="bg-red-600 hover:bg-red-700 text-white"
             >

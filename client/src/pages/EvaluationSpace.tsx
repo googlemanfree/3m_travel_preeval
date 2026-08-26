@@ -168,6 +168,8 @@ export default function EvaluationSpace() {
   const evaluationStatusDetail = !latestEvaluation
     ? "Créez ou poursuivez votre évaluation pour initier le dossier."
     : cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
+  const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
+  const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
@@ -280,6 +282,7 @@ export default function EvaluationSpace() {
                     <div className="rounded-xl bg-violet-50 p-3 text-violet-700"><Sparkles className="h-6 w-6" /></div>
                   </div>
                   <p className="mt-3 text-xs leading-5 text-violet-800">{evaluationStatusDetail}</p>
+                  {reviewDueLabel && <p className="mt-2 text-xs font-semibold text-violet-900">Revue estimée au plus tard le {reviewDueLabel}</p>}
                 </Card>
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">

@@ -389,6 +389,8 @@ export const agencyDossierRouter = router({
   deleteDossier: protectedProcedure
     .input(z.object({
       dossierId: z.number(),
+      confirmation: z.literal("SUPPRIMER"),
+      reason: z.string().trim().min(8).max(500),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = await getDb();
@@ -423,9 +425,9 @@ export const agencyDossierRouter = router({
           dossierId: input.dossierId,
           action: "deleted",
           changedBy: ctx.user.email || "unknown",
-          oldValue: null,
+          oldValue: JSON.stringify(dossier[0]),
           newValue: null,
-          details: "Dossier supprimé par l'administrateur",
+          details: `Dossier supprimé par l'administrateur. Motif : ${input.reason}`,
         });
 
         return {
