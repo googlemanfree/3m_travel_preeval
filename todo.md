@@ -1300,3 +1300,8 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mémoriser séparément la visibilité des widgets pour mobile et tablette, avec migration sûre de l’ancienne préférence.
 - [x] Exécuter un audit automatisé des contrastes hover/focus/clic du header et corriger les écarts confirmés.
 - [x] Mettre à jour et valider la compétence responsive accessible, tester et publier.
+
+## Lisibilité premium — Vérification des profils
+- [x] Identifier les textes et surfaces à faible contraste dans la section de vérification.
+- [x] Renforcer la palette navy/or/blanc et la hiérarchie typographique sans changer le contenu.
+- [x] Vérifier les contrastes desktop/mobile et publier la correction.
