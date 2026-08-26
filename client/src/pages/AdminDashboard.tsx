@@ -1164,9 +1164,14 @@ export default function AdminDashboard() {
                 <ImagePlus className="w-4 h-4" /> Visuels destinations
               </Button>
             </div>
-            <nav aria-label="Raccourcis de pilotage admin" className="flex w-full flex-wrap gap-2 border-t border-white/15 pt-3">
+            <nav aria-label="Fil d’Ariane du pilotage admin" className="flex w-full items-center gap-2 border-t border-white/15 pt-3 text-sm text-blue-100">
+              <button type="button" onClick={() => setActiveAdminTab("pilotage")} className="rounded px-1 font-semibold underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Administration</button>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page" className="font-bold text-white">{({ pilotage: "Pilotage", candidates: "Dossiers", "pre-dossiers": "Pré-dossiers", payments: "Paiements", documents: "Documents", flights: "Vols", emails: "E-mails" } as Record<string, string>)[activeAdminTab] || "Pilotage"}</span>
+            </nav>
+            <nav aria-label="Raccourcis de pilotage admin" className="flex w-full flex-wrap gap-2">
               {[['pilotage', 'Pilotage'], ['candidates', 'Dossiers'], ['pre-dossiers', 'Pré-dossiers'], ['payments', 'Paiements'], ['documents', 'Documents'], ['flights', 'Vols'], ['emails', 'E-mails']].map(([tab, label]) => (
-                <Button key={tab} type="button" variant="outline" size="sm" onClick={() => setActiveAdminTab(tab)} aria-current={activeAdminTab === tab ? 'page' : undefined} className={`border-white/25 text-white hover:bg-white/15 ${activeAdminTab === tab ? 'bg-white/20 ring-1 ring-white/50' : 'bg-white/5'}`}>
+                <Button key={tab} type="button" variant="outline" size="sm" onClick={() => setActiveAdminTab(tab)} aria-current={activeAdminTab === tab ? 'page' : undefined} aria-label={`Afficher ${label}`} className={`border-white/25 text-white hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b2f6f] ${activeAdminTab === tab ? 'bg-white/20 ring-1 ring-white/50' : 'bg-white/5'}`}>
                   {label}
                 </Button>
               ))}

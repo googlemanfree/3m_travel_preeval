@@ -159,6 +159,15 @@ export default function EvaluationSpace() {
     documentName: document.documentName ?? document.fileName,
     verificationStatus: document.verificationStatus,
   }));
+  const latestEvaluation = evaluations[0] as any;
+  const evaluationStatusLabel = !latestEvaluation
+    ? "Aucune évaluation transmise"
+    : cProfile.evaluationReviewedAt
+      ? "Évaluation examinée par l’agence"
+      : "Évaluation reçue — examen en cours";
+  const evaluationStatusDetail = !latestEvaluation
+    ? "Créez ou poursuivez votre évaluation pour initier le dossier."
+    : cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
@@ -262,6 +271,16 @@ export default function EvaluationSpace() {
               {portraitIsMissing && <Card className="border-amber-200 bg-amber-50 p-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-bold text-amber-950">Complétez votre profil</p><p className="text-sm text-amber-800">Ajoutez votre portrait pour faciliter l’identification de votre dossier par l’agence.</p></div><Button onClick={() => { setActiveTab("profile"); setLocation("/mon-espace?section=profile"); }} className="bg-amber-700 text-white hover:bg-amber-800">Compléter</Button></div></Card>}
               {/* Widgets statistiques et progression */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-5 border-violet-100 bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Évaluation</p>
+                      <h3 className="mt-1 text-base font-bold text-gray-900">{evaluationStatusLabel}</h3>
+                    </div>
+                    <div className="rounded-xl bg-violet-50 p-3 text-violet-700"><Sparkles className="h-6 w-6" /></div>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-violet-800">{evaluationStatusDetail}</p>
+                </Card>
                 <Card className="p-5 border-blue-100 bg-white shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
@@ -325,6 +344,14 @@ export default function EvaluationSpace() {
                 </h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+
+              <section aria-label="Documents recommandés à compléter">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
+                  <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
+                </div>
+                <DossierDocumentChecklist destination={cProfile.destination} documents={checklistDocuments} />
+              </section>
 
               {/* Résumé des dernières activités */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

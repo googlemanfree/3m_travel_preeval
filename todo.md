@@ -1519,3 +1519,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Imposer la création de compte avant l’évaluation et rendre le CV prioritaire
 - [x] Synchroniser le dépôt documentaire progressif avec l’espace candidat
 - [x] Encadrer Gemini comme assistant de préparation avec validation humaine obligatoire
+
+## Expérience de suivi candidat et navigation admin
+- [x] Ajouter un indicateur de chargement clair pendant l’analyse CV par Gemini
+- [x] Afficher le statut d’évaluation et les documents optionnels manquants au tableau de bord candidat
+- [x] Ajouter un fil d’Ariane et des raccourcis administrateur accessibles au clavier
+- [x] Augmenter la taille et la lisibilité de la typographie hero
+- [x] Tester les interactions, l’accessibilité et les affichages responsive, puis publier

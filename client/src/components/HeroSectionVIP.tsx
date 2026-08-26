@@ -82,7 +82,7 @@ export default function HeroSectionVIP({
   return (
     <section
       ref={heroRef}
-      className="relative py-16 md:py-24 overflow-hidden text-center text-white"
+      className="relative py-18 md:py-28 overflow-hidden text-center text-white"
       style={{
         background: "radial-gradient(circle at center, #1e3a8a 0%, #07162c 70%)",
       }}
@@ -118,13 +118,13 @@ export default function HeroSectionVIP({
         <div className="absolute bottom-10 right-1/4 w-96 h-96 rounded-full bg-indigo-500 blur-3xl opacity-15" />
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 relative z-10">
+      <div className="max-w-5xl mx-auto px-4 relative z-10">
         {/* Badge animé */}
         <motion.div
           initial="hidden"
           animate="visible"
           variants={fadeUp}
-          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-sm font-semibold mb-6"
+          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full text-base font-semibold mb-6"
         >
           <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity }}>
             <Star className="w-4 h-4 text-yellow-300" />
@@ -156,7 +156,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={2}
-          className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
+          className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-5 bg-gradient-to-r from-white via-blue-100 to-sky-200 bg-clip-text text-transparent drop-shadow-md will-change-[opacity,transform]"
         >
           3M Travel Agency
         </motion.h1>
@@ -167,7 +167,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={3}
-          className="text-xl md:text-2xl text-blue-200 font-medium mb-6"
+          className="text-2xl md:text-3xl text-blue-100 font-semibold mb-6"
         >
           Votre Avenir Commence Ici — <span className="text-white font-bold underline decoration-blue-500 underline-offset-4">Voyages & Immigrations d'Exception</span>
         </motion.h2>
@@ -178,7 +178,7 @@ export default function HeroSectionVIP({
           animate="visible"
           variants={fadeUp}
           custom={4}
-          className="text-slate-200 text-base md:text-lg max-w-3xl mx-auto mb-8 leading-relaxed font-light"
+          className="text-slate-100 text-lg md:text-xl max-w-4xl mx-auto mb-8 leading-relaxed font-normal"
         >
           Spécialistes de la mobilité internationale vers le <strong className="text-white font-semibold">Canada</strong>, l'<strong className="text-white font-semibold">Europe Schengen</strong> et les <strong className="text-white font-semibold">États-Unis</strong>. Nous transformons vos projets d'études, de carrière ou d'installation en réalité grâce à un accompagnement sur-mesure et une expertise reconnue.
         </motion.p>
