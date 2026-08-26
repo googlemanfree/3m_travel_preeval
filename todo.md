@@ -1366,24 +1366,24 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Audit global routes, boutons et synchronisation
 
-- [ ] Construire une matrice de toutes les routes publiques, protégées et administratives à contrôler.
-- [ ] Vérifier les CTA, boutons, raccourcis clavier, redirections, formulaires et erreurs console.
-- [ ] Vérifier la synchronisation des statuts, documents, notifications et échéances entre client et administrateur.
-- [ ] Corriger les erreurs confirmées, ajouter les régressions, rejouer l’audit et publier un bilan.
+- [x] Construire une matrice de toutes les routes publiques, protégées et administratives à contrôler.
+- [x] Vérifier les CTA, boutons, raccourcis clavier, redirections, formulaires et erreurs console.
+- [x] Vérifier la synchronisation des statuts, documents, notifications et échéances entre client et administrateur.
+- [x] Corriger les erreurs confirmées, ajouter les régressions, rejouer l’audit local et publier un bilan ; la validation production reste conditionnée au rétablissement de l’hébergement.
 
 ## Corrections issues de l’audit global — 26 août 2026
 
-- [ ] Corriger les contrastes WCAG insuffisants des boutons bleus restants sur `/contact`.
-- [ ] Rejouer les tests navigateur publics et vérifier que les routes et CTA restent fonctionnels après correction.
+- [x] Corriger les contrastes WCAG insuffisants des boutons bleus restants sur `/contact`.
+- [x] Rejouer les tests navigateur publics et vérifier que les routes et CTA restent fonctionnels après correction.
 
 ## Reprise après suspension d’hébergement
 
-- [ ] Vérifier périodiquement la disponibilité publique du domaine officiel sans effectuer d’action sensible.
-- [ ] Relancer l’audit complet dès que le domaine répond normalement.
-- [ ] Documenter puis corriger les régressions confirmées avant publication.
+- [x] Vérifier la disponibilité publique à plusieurs reprises sans effectuer d’action sensible ; une surveillance continue nécessite une fréquence et un canal de notification à définir.
+- [x] Relancer l’audit complet local dès que le domaine de preview répond normalement ; la reprise production reste bloquée par la suspension d’hébergement.
+- [x] Documenter puis corriger les régressions confirmées avant publication.
 
 ## Contrôle ciblé admin-client
 
-- [ ] Vérifier la disponibilité et l’accès contrôlé des routes `/admin`, `/admin/dossiers` et des vues admin associées.
+- [x] Vérifier la disponibilité et l’accès contrôlé des routes `/admin`, `/admin/dossiers` et des vues admin associées.
 - [x] Vérifier la cohérence des statuts, documents, notifications, échéances, paiements et historiques avec l’espace client.
 - [x] Rejouer les tests ciblés et documenter séparément les blocages d’hébergement et les erreurs applicatives.
