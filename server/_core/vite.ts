@@ -126,7 +126,7 @@ export function serveStatic(app: Express) {
   }
   // Route explicite pour les plateformes qui appliquent leur propre fallback
   // avant le catch-all Express : la page d’état doit rester une page publique 200.
-  app.get("/etat-du-service", async (req, res, next) => {
+  const renderExplicitShell = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
       const template = await fs.promises.readFile(path.resolve(distPath, "index.html"), "utf-8");
       const rendered = composePublicPrerender(template, req.originalUrl);
@@ -134,7 +134,12 @@ export function serveStatic(app: Express) {
     } catch (error) {
       next(error);
     }
-  });
+  };
+  // Les plateformes peuvent appliquer leur propre fallback avant le catch-all
+  // Express. Les pages protégées doivent donc être servies explicitement avec
+  // un shell 200/noindex, puis laisser AuthGuard gérer la session côté client.
+  app.get("/etat-du-service", renderExplicitShell);
+  app.get("/mon-dossier", renderExplicitShell);
   app.use(express.static(distPath, { index: false, redirect: false }));
   app.use("*", async (req, res) => {
     try {

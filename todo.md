@@ -1239,3 +1239,5 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger le fallback afin qu’un visiteur non connecté reçoive un accès clair sans données.
 - [ ] Vérifier le parcours d’un utilisateur connecté sans exposer de données client.
 - [ ] Tester la diffusion publique et publier uniquement après preuve HTTP/rendu.
+
+- [x] Ajouter un handler serveur explicite pour `/mon-dossier` afin d’éviter le 404 de la couche publique avant le fallback SPA.
