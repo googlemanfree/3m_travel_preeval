@@ -69,4 +69,5 @@ export interface CountryProcedure {
     consulate: string;
   };
   documentNote: string;
+  officialSources?: { label: string; url: string; description: string }[];
 }

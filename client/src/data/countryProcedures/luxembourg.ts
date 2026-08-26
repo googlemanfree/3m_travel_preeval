@@ -9,8 +9,8 @@ export const luxembourgProcedure: CountryProcedure = {
   subtitle: "Procédure officielle & anti-arnaque",
   editionYear: "2026",
   intro: {
-    vision: "Le Grand-Duché de Luxembourg offre les meilleures conditions de travail d'Europe. 3M Travel & Services vous accompagne de l'analyse de profil jusqu'à votre installation, avec une transparence totale à chaque étape.",
-    eligibility: "Analyse gratuite, confidentielle et sans engagement. Aucune transmission de dossier sans accord explicite.",
+    vision: "Le Luxembourg applique des démarches encadrées pour le recrutement de ressortissants de pays tiers. 3M Travel & Services vous accompagne dans la préparation du dossier, sans garantir un emploi, un permis ou une autorisation de séjour.",
+    eligibility: "Analyse gratuite, confidentielle et sans engagement. Aucune transmission de dossier sans accord explicite. Les conditions doivent être vérifiées sur les portails officiels au moment de la démarche.",
     sectors: ["BTP", "Hôtellerie / Restauration", "Santé & Aide à la personne", "Logistique & Transport", "IT & Ingénierie"],
     requiredDocs: "CV détaillé (FR/EN), copies de diplômes, certificats de travail, passeport valide, casier judiciaire Bulletin n°3 (moins de 3 mois).",
     commitment: "Un conseiller dédié vous informe à chaque étape clé de l'avancement de votre dossier.",
@@ -159,4 +159,9 @@ export const luxembourgProcedure: CountryProcedure = {
     consulate: "Consulat du Luxembourg — Représentation : Ambassade de Belgique, Rue Mvolyé, Yaoundé",
   },
   documentNote: "Consultation personnalisée gratuite disponible sur rendez-vous. Document établi par 3M Travel & Services SARL à titre informatif — les conditions sont susceptibles d'évoluer.",
+  officialSources: [
+    { label: "ADEM — Recrutement de ressortissants de pays tiers", url: "https://adem.public.lu/fr/marche-emploi-luxembourg/international-dynamique/etranger.html", description: "Repères officiels sur le marché de l’emploi luxembourgeois et les démarches liées au recrutement international." },
+    { label: "Guichet.lu — Salarié ressortissant d’un pays tiers", url: "https://guichet.public.lu/fr/citoyens/immigration/plus-3-mois/ressortissant-pays-tiers/salarie.html", description: "Portail administratif officiel pour vérifier les conditions et formalités applicables." },
+    { label: "MAE Luxembourg — Visas", url: "https://mae.gouvernement.lu/fr/services-aux-citoyens/visa-immigration.html", description: "Informations officielles sur les visas et la représentation consulaire à vérifier avant dépôt." },
+  ],
 };

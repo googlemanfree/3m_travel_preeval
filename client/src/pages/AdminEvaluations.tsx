@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { 
   Search, FileText, CheckCircle2, Clock, AlertCircle, 
-  Download, Mail, Eye, Edit2, Trash2, Send 
+  Download, Mail, Eye, Edit2, Trash2, Send, FolderOpen 
 } from "lucide-react";
 import Footer from "@/components/Footer";
 import { toast } from "sonner";
@@ -239,6 +239,15 @@ export default function AdminEvaluations() {
                           >
                             <Edit2 className="w-4 h-4" />
                             Éditer
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-2 border-blue-200 text-blue-800 hover:bg-blue-50"
+                            onClick={() => setLocation(`/admin/agency-dossiers?search=${encodeURIComponent(bilan.candidateEmail || bilan.candidateName || "")}`)}
+                          >
+                            <FolderOpen className="w-4 h-4" />
+                            Ouvrir le dossier candidat
                           </Button>
                           {bilan.status === 'validated' && (
                             <Button

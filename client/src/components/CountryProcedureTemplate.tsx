@@ -49,6 +49,23 @@ export default function CountryProcedureTemplate({ data }: { data: CountryProced
           </Card>
         </section>
 
+        {data.officialSources?.length ? (
+          <section aria-labelledby="official-sources-title">
+            <h2 id="official-sources-title" className="text-xl font-bold text-blue-900 mb-4">Sources officielles à vérifier</h2>
+            <Card className="p-6 border-blue-100 bg-blue-50/40">
+              <p className="text-sm text-gray-600 mb-4">Ces portails publics servent de référence. Les conditions et pièces doivent être vérifiées au moment de la démarche.</p>
+              <ul className="space-y-3">
+                {data.officialSources.map((source) => (
+                  <li key={source.url} className="rounded-lg border border-blue-100 bg-white p-4">
+                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-blue-800 underline underline-offset-2 hover:text-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600">{source.label}</a>
+                    <p className="mt-1 text-sm text-gray-600">{source.description}</p>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
+        ) : null}
+
         {/* 02 — Alerte anti-arnaque */}
         <section>
           <h2 className="text-xl font-bold text-red-700 mb-4 flex items-center gap-2">

@@ -125,7 +125,7 @@ export default function AdminAgencyDossiers() {
   const [, navigate] = useLocation();
 
   // Filtres
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("search") || "" : "");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDestination, setFilterDestination] = useState<string>("all");
 
