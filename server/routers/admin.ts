@@ -218,6 +218,62 @@ function parseEvaluationProjectDetails(value: string | null | undefined) {
   }
 }
 
+const CANDIDATE360_STATUS_LABELS: Record<string, string> = {
+  new: "Dossier créé",
+  qualifying: "Évaluation en cours",
+  waiting_customer: "Action attendue du candidat",
+  documents_review: "Documents à vérifier",
+  payment_review: "Paiement à confirmer",
+  processing: "Dossier en traitement",
+  submitted: "Dossier soumis",
+  completed: "Dossier approuvé",
+  closed: "Dossier clôturé",
+  rejected: "Dossier à revoir",
+};
+
+export function candidate360StatusLabel(status: string | null | undefined) {
+  return CANDIDATE360_STATUS_LABELS[String(status ?? "")] ?? String(status ?? "Statut non renseigné");
+}
+
+export function buildCandidate360Timeline(input: {
+  statusHistory: Array<{ id: number; oldStatus: string | null; newStatus: string; changedByRole: string; comment?: string | null; createdAt: Date }>;
+  activity: Array<{ id: number; actionType: string; description?: string | null; actorRole: string; createdAt: Date }>;
+  requestHistory?: Array<{ id: number; actionType: string; comment?: string | null; createdAt: Date }>;
+}) {
+  return [
+    ...input.statusHistory.map((entry) => ({
+      id: `status-${entry.id}`,
+      kind: "status" as const,
+      previousStatus: entry.oldStatus,
+      status: entry.newStatus,
+      label: `${candidate360StatusLabel(entry.oldStatus)} → ${candidate360StatusLabel(entry.newStatus)}`,
+      comment: entry.comment ?? "Statut actualisé",
+      actor: entry.changedByRole,
+      createdAt: entry.createdAt,
+    })),
+    ...input.activity.map((entry) => ({
+      id: `activity-${entry.id}`,
+      kind: "activity" as const,
+      previousStatus: null,
+      status: entry.actionType,
+      label: entry.actionType === "deadline_updated" ? "Échéance métier modifiée" : entry.actionType.replaceAll("_", " "),
+      comment: entry.description ?? "Action enregistrée",
+      actor: entry.actorRole,
+      createdAt: entry.createdAt,
+    })),
+    ...(input.requestHistory ?? []).map((entry) => ({
+      id: `request-${entry.id}`,
+      kind: "request" as const,
+      previousStatus: null,
+      status: entry.actionType,
+      label: entry.actionType.replaceAll("_", " "),
+      comment: entry.comment ?? "Événement de demande enregistré",
+      actor: "admin",
+      createdAt: entry.createdAt,
+    })),
+  ].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 100);
+}
+
 export function determineCandidate360NextAction(input: { workflowStatus: string; paymentStatus?: string | null; pendingDocuments: number; openTasks: number; dueAt?: Date | null }) {
   if (input.paymentStatus && !["SUCCESS", "success", "completed", "paye"].includes(input.paymentStatus)) {
     return { key: "payment", label: "Vérifier le paiement", description: "Le paiement ou son justificatif doit être contrôlé avant la suite du dossier.", urgency: "high" as const };
@@ -1361,6 +1417,15 @@ export const adminRouter = router({
           .from(agencyDossiers)
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(input.limit);
+        const caseRows = await db
+          .select({ legacyApplicationId: cases.legacyApplicationId, legacyAgencyDossierId: cases.legacyAgencyDossierId, dueAt: cases.dueAt })
+          .from(cases)
+          .limit(input.limit * 2);
+        const dueAtByLegacyReference = new Map<string, Date | null>();
+        for (const item of caseRows) {
+          if (item.legacyApplicationId) dueAtByLegacyReference.set(`online:${item.legacyApplicationId}`, item.dueAt);
+          if (item.legacyAgencyDossierId) dueAtByLegacyReference.set(`agency:${item.legacyAgencyDossierId}`, item.dueAt);
+        }
 
         const candidateRows = await db
           .select({
@@ -1465,6 +1530,7 @@ export const adminRouter = router({
           adminAssignedTo: app.adminAssignedTo ?? null,
           lastStatusUpdateAt: app.lastStatusUpdateAt ?? app.updatedAt,
           evaluationScheduledAt: app.evaluationScheduledAt ?? null,
+          dueAt: dueAtByLegacyReference.get(`online:${app.id}`) ?? null,
         }));
 
         // Normaliser les dossiers agence
@@ -1491,6 +1557,7 @@ export const adminRouter = router({
           adminAssignedTo: null,
           lastStatusUpdateAt: app.updatedAt,
           evaluationScheduledAt: null,
+          dueAt: dueAtByLegacyReference.get(`agency:${app.id}`) ?? null,
         }));
 
         const dossierEmails = new Set([...onlineApps, ...agencyApps].map((record) => record.email.toLowerCase()));
@@ -1519,6 +1586,7 @@ export const adminRouter = router({
             adminAssignedTo: null,
             lastStatusUpdateAt: candidate.updatedAt,
             evaluationScheduledAt: null,
+            dueAt: null,
           }));
 
         // Combiner les sources avant les filtres et le tri explicitement choisis par l’administrateur.
@@ -2914,6 +2982,7 @@ export const adminRouter = router({
         tasks,
         notes,
         statusHistory,
+        timeline: buildCandidate360Timeline({ statusHistory, activity: activityLogs, requestHistory }),
         activity: [...activityLogs.map((item) => ({ type: item.actionType, description: item.description, createdAt: item.createdAt, actor: item.actorRole })), ...requestHistory.map((item) => ({ type: item.actionType, description: item.comment, createdAt: item.createdAt, actor: "admin" }))].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 50),
         communications: { notifications, messages },
         evaluationVersions,
@@ -3000,6 +3069,37 @@ export const adminRouter = router({
       }
 
       return { success: true, legacyStatus, clientStatusLabel: clientStatus.label, notificationCreated };
+    }),
+
+  updateCandidate360Deadline: publicProcedure
+    .input(z.object({
+      sessionToken: z.string().min(1),
+      candidateId: z.string().min(1),
+      dueAt: z.date().nullable(),
+      reason: z.string().trim().max(500).optional(),
+    }))
+    .mutation(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      const reference = parseAdminCandidateReference(input.candidateId);
+      if (!reference) throw new TRPCError({ code: "BAD_REQUEST", message: "Référence candidat invalide." });
+      const operationalCase = await ensureOperationalCase(db, reference);
+      const previousDueAt = operationalCase.dueAt ?? null;
+      await db.update(cases).set({ dueAt: input.dueAt }).where(eq(cases.id, operationalCase.id));
+      const previousLabel = previousDueAt ? previousDueAt.toISOString() : "aucune";
+      const nextLabel = input.dueAt ? input.dueAt.toISOString() : "aucune";
+      const reason = input.reason?.trim();
+      await db.insert(caseActivityLogs).values({
+        caseId: operationalCase.id,
+        actorRole: "admin",
+        actorId: admin.id,
+        actionType: "deadline_updated",
+        entityType: "case",
+        entityId: String(operationalCase.id),
+        description: `Échéance métier : ${previousLabel} → ${nextLabel}${reason ? ` · Motif : ${reason}` : ""}`,
+      });
+      return { success: true, dueAt: input.dueAt, previousDueAt };
     }),
 
   listAdvisorTreatmentDeadlines: publicProcedure

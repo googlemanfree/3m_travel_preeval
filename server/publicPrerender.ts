@@ -9,11 +9,12 @@ type PublicMeta = {
   description: string;
   heading: string;
   lead: string;
+  keywords?: string[];
   noindex?: boolean;
 };
 
 const PUBLIC_PAGES: Record<string, PublicMeta> = {
-  "/": { title: `${SITE} | Mobilité internationale et démarches accompagnées`, description: "Accompagnement documenté pour les démarches de mobilité internationale, avec évaluation, sources officielles et validation humaine des étapes sensibles.", heading: "Mobilité internationale accompagnée avec transparence", lead: "3M Travel & Services accompagne les candidats dans la préparation de leurs démarches. Les décisions des autorités, employeurs et partenaires externes restent indépendantes de l’agence." },
+  "/": { title: "3M Travel Agency | Mobilité internationale en confiance", description: "Accompagnement documenté pour vos projets de mobilité internationale, avec évaluation, sources officielles et validation humaine des étapes sensibles.", keywords: ["mobilité internationale", "visa", "immigration", "voyage", "évaluation de profil", "3M Travel Agency"], heading: "Votre projet de mobilité, préparé avec méthode", lead: "3M Travel & Services accompagne les candidats dans la préparation de leurs démarches. Les décisions des autorités, employeurs et partenaires externes restent indépendantes de l’agence." },
   "/canada": { title: `Canada | ${SITE}`, description: "Informations de préparation de dossiers pour le Canada, avec sources institutionnelles et accompagnement administratif documenté.", heading: "Démarches Canada", lead: "Préparez votre projet avec des informations vérifiables, sans promesse d’admission, d’emploi ou de résidence." },
   "/schengen": { title: `Espace Schengen | ${SITE}`, description: "Repères administratifs pour les projets de visa et de mobilité vers l’espace Schengen.", heading: "Démarches Schengen", lead: "Les exigences varient selon le pays et la situation individuelle ; les liens institutionnels sont prioritaires." },
   "/etudes": { title: `Études à l’international | ${SITE}`, description: "Accompagnement documenté pour les projets d’études à l’international et les dossiers associés.", heading: "Projet d’études à l’international", lead: "L’admission et les décisions consulaires relèvent exclusivement des établissements et autorités compétents." },
@@ -75,6 +76,7 @@ export function composePublicPrerender(template: string, url: string) {
   const head = [
     `<title>${esc(current.title)}</title>`,
     `<meta name="description" content="${esc(current.description)}" />`,
+    ...(current.keywords?.length ? [`<meta name="keywords" content="${esc(current.keywords.join(", "))}" />`] : []),
     robot,
     `<link rel="canonical" href="${canonical}" />`,
     `<meta property="og:type" content="website" />`,
@@ -91,6 +93,7 @@ export function composePublicPrerender(template: string, url: string) {
   let html = template
     .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
     .replace(/<meta\s+name="description"[^>]*>\s*/i, "")
+    .replace(/<meta\s+name="keywords"[^>]*>\s*/i, "")
     .replace(/<meta\s+name="robots"[^>]*>\s*/i, "")
     .replace(/<link\s+rel="canonical"[^>]*>\s*/i, "")
     .replace(/<meta\s+property="og:[^"]+"[^>]*>\s*/gi, "")

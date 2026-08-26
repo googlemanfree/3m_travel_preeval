@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { determineCandidate360NextAction, parseCandidate360Labels, procedureChecklistFor } from "./routers/admin";
+import { buildCandidate360Timeline, candidate360StatusLabel, determineCandidate360NextAction, parseCandidate360Labels, procedureChecklistFor } from "./routers/admin";
 import { calculateAdvisorWorkload } from "./routers/unifiedRequests";
 
 describe("Fiche Client 360° — règles de pilotage", () => {
@@ -21,6 +21,17 @@ describe("Fiche Client 360° — règles de pilotage", () => {
     expect(checklist.label).toBe("Visa / permis de travail");
     expect(checklist.documents.map((item) => item.documentType)).toContain("Offre d’emploi ou contrat");
     expect(new Set(checklist.documents.map((item) => item.documentType.toLowerCase())).size).toBe(checklist.documents.length);
+  });
+
+  it("normalise une timeline serveur complète dans l’ordre décroissant", () => {
+    const timeline = buildCandidate360Timeline({
+      statusHistory: [{ id: 2, oldStatus: "qualifying", newStatus: "documents_review", changedByRole: "admin", comment: "Pièces reçues", createdAt: new Date("2026-08-20T10:00:00Z") }],
+      activity: [{ id: 3, actionType: "deadline_updated", actorRole: "admin", description: "Échéance métier modifiée", createdAt: new Date("2026-08-21T10:00:00Z") }],
+      requestHistory: [{ id: 4, actionType: "request_updated", comment: "Demande relue", createdAt: new Date("2026-08-19T10:00:00Z") }],
+    });
+    expect(timeline.map((entry) => entry.id)).toEqual(["activity-3", "status-2", "request-4"]);
+    expect(timeline[1]).toMatchObject({ kind: "status", label: "Évaluation en cours → Documents à vérifier", actor: "admin" });
+    expect(candidate360StatusLabel("unknown_status")).toBe("unknown_status");
   });
 
   it("calcule les urgences, retards et blocages par conseiller", () => {

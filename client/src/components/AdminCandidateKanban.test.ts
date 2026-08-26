@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterKanbanCandidates, getDeadlineLevel, type KanbanCandidate } from "./AdminCandidateKanban";
+import { filterKanbanCandidates, getDeadlineExplanation, getDeadlineLevel, type KanbanCandidate } from "./AdminCandidateKanban";
 
 const candidates: KanbanCandidate[] = [
   { id: "1", fullName: "A", folderCode: "A", destinationCountry: "canada", projectType: "travail", status: "PENDING_48H", source: "WEB", advisorName: "Nadia" },
@@ -21,5 +21,7 @@ describe("AdminCandidateKanban", () => {
     expect(getDeadlineLevel("2026-08-26T20:00:00.000Z", now)).toBe("soon");
     expect(getDeadlineLevel("2026-08-28T12:00:00.000Z", now)).toBe("on_track");
     expect(getDeadlineLevel("not-a-date", now)).toBe("invalid");
+    expect(getDeadlineExplanation("2026-08-26T20:00:00.000Z", now)).toContain("moins de 24 heures");
+    expect(getDeadlineExplanation(undefined, now)).toContain("Aucune date métier");
   });
 });

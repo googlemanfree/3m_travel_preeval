@@ -140,6 +140,7 @@ interface Candidate {
   adminAssignedTo?: string | null;
   lastStatusUpdateAt?: Date | string | null;
   evaluationScheduledAt?: Date | string | null;
+  dueAt?: Date | string | null;
 }
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -992,7 +993,7 @@ export default function AdminDashboard() {
     const status = (candidate.status ?? "PENDING_48H") as AdminStatus;
     const referenceDate = candidate.evaluationScheduledAt ?? candidate.lastStatusUpdateAt ?? candidate.updatedAt ?? candidate.createdAt;
     const slaHours = status === "PENDING_48H" ? 48 : status === "PUBLISHED" ? 72 : 120;
-    const dueAt = referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null;
+    const dueAt = candidate.dueAt ?? (referenceDate ? new Date(new Date(referenceDate).getTime() + slaHours * 60 * 60 * 1000) : null);
     const history = [{ status, label: STATUS_CONFIG[status]?.label ?? status, at: candidate.lastStatusUpdateAt ?? candidate.updatedAt }, ...(candidate.createdAt ? [{ status: "created", label: "Dossier créé", at: candidate.createdAt }] : [])];
     return { id: candidate.id!, fullName: candidate.fullName ?? "Candidat sans nom", folderCode: candidate.folderCode ?? "Dossier non référencé", destinationCountry: candidate.destinationCountry ?? "", projectType: candidate.projectType ?? "", status, source: candidate.source ?? "WEB", advisorName: candidate.adminAssignedTo ?? null, dueAt, history };
   });

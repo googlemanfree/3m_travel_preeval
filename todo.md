@@ -1406,3 +1406,20 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Vérifier le Kanban enrichi : historique visuel, filtres destination/conseiller et alertes SLA
 - [x] Ajouter et exécuter les tests de filtrage Kanban et de calcul des échéances
 - [x] Vérifier la disponibilité du domaine public : contrôle effectué le 26/08/2026, domaine encore suspendu pour facturation ; audit HTTP complet reporté jusqu’au rétablissement
+
+
+## Échéances persistantes et timeline serveur
+- [x] Créer une compétence réutilisable de pilotage des dossiers avec règles SLA, historique et validation humaine
+- [x] Ajouter une échéance métier persistante au schéma et aux procédures administrateur — le champ opérationnel `cases.dueAt` existant est réutilisé, sans migration destructive
+- [x] Permettre la modification sécurisée de l’échéance depuis la fiche détaillée du dossier
+- [x] Alimenter la timeline visuelle avec l’historique serveur des statuts
+- [x] Ajouter des infobulles accessibles pour les alertes SLA proches ou dépassées
+- [x] Écrire et exécuter les tests, vérifier le rendu, puis publier
+
+
+## SEO page d’accueil — métadonnées strictes
+- [x] Ajouter 3 à 8 mots-clés ciblés dans la meta keywords de `/`
+- [x] Ajouter un titre H2 descriptif de 80 caractères maximum sur `/`
+- [x] Définir un document.title compris entre 30 et 60 caractères
+- [x] Ajouter une meta description comprise entre 50 et 160 caractères
+- [x] Tester les longueurs, le HTML initial et le rendu local, puis publier

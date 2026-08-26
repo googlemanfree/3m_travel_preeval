@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export type KanbanStatus = "PENDING_48H" | "PUBLISHED" | "DOCUMENTS_CHECK" | "SUBMITTED" | "APPROVED";
 type HistoryEntry = { status: string; label: string; at?: Date | string | null };
@@ -42,14 +43,24 @@ export function getDeadlineLevel(dueAt?: Date | string | null, now = Date.now())
   return "on_track" as const;
 }
 
+export function getDeadlineExplanation(dueAt?: Date | string | null, now = Date.now()) {
+  const level = getDeadlineLevel(dueAt, now);
+  if (level === "unspecified") return "Aucune date métier n’est enregistrée. Ouvrez la fiche pour planifier le prochain traitement.";
+  if (level === "invalid") return "La date reçue est incohérente. Vérifiez la fiche détaillée avant toute action.";
+  const due = new Date(dueAt as Date | string);
+  if (level === "overdue") return `Cette échéance est dépassée depuis le ${due.toLocaleString("fr-FR")}. Traitez ou replanifiez le dossier après validation humaine.`;
+  if (level === "soon") return `Il reste moins de 24 heures avant le ${due.toLocaleString("fr-FR")}. Priorisez le dossier et consignez l’action effectuée.`;
+  return `Le traitement est actuellement dans le délai prévu, jusqu’au ${due.toLocaleString("fr-FR")}.`;
+}
+
 function deadlineState(dueAt?: Date | string | null) {
-  if (!dueAt) return { label: "Échéance à définir", className: "border-slate-200 bg-slate-50 text-slate-600", icon: Clock };
+  if (!dueAt) return { label: "Échéance à définir", explanation: getDeadlineExplanation(dueAt), className: "border-slate-200 bg-slate-50 text-slate-600", icon: Clock };
   const due = new Date(dueAt);
-  const remaining = due.getTime() - Date.now();
-  if (!Number.isFinite(due.getTime())) return { label: "Échéance à vérifier", className: "border-slate-200 bg-slate-50 text-slate-600", icon: Clock };
-  if (remaining < 0) return { label: `Dépassée · ${due.toLocaleDateString("fr-FR")}`, className: "border-rose-200 bg-rose-50 text-rose-800", icon: AlertTriangle };
-  if (remaining <= 24 * 60 * 60 * 1000) return { label: `Bientôt · ${due.toLocaleDateString("fr-FR")}`, className: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle };
-  return { label: `Avant le ${due.toLocaleDateString("fr-FR")}`, className: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: Clock };
+  if (!Number.isFinite(due.getTime())) return { label: "Échéance à vérifier", explanation: getDeadlineExplanation(dueAt), className: "border-slate-200 bg-slate-50 text-slate-600", icon: Clock };
+  const level = getDeadlineLevel(dueAt);
+  if (level === "overdue") return { label: `Dépassée · ${due.toLocaleDateString("fr-FR")}`, explanation: getDeadlineExplanation(dueAt), className: "border-rose-200 bg-rose-50 text-rose-800", icon: AlertTriangle };
+  if (level === "soon") return { label: `Bientôt · ${due.toLocaleDateString("fr-FR")}`, explanation: getDeadlineExplanation(dueAt), className: "border-amber-200 bg-amber-50 text-amber-800", icon: AlertTriangle };
+  return { label: `Avant le ${due.toLocaleDateString("fr-FR")}`, explanation: getDeadlineExplanation(dueAt), className: "border-emerald-200 bg-emerald-50 text-emerald-800", icon: Clock };
 }
 
 export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidates: KanbanCandidate[]; onMove: (candidate: KanbanCandidate, status: KanbanStatus) => void; onOpen: (candidate: KanbanCandidate) => void }) {
@@ -81,7 +92,7 @@ export function AdminCandidateKanban({ candidates, onMove, onOpen }: { candidate
                 const DeadlineIcon = deadline.icon;
                 return <Card key={candidate.id} draggable onDragStart={(event) => { event.dataTransfer.setData("text/plain", candidate.id); event.dataTransfer.effectAllowed = "move"; setDraggedId(candidate.id); }} onDragEnd={() => setDraggedId(null)} className={`border-slate-200 bg-white shadow-sm ${draggedId === candidate.id ? "opacity-50" : ""}`}>
                   <CardHeader className="space-y-2 pb-2"><CardTitle className="flex items-start gap-2 text-sm"><GripVertical className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" /><button type="button" className="min-w-0 text-left font-bold text-blue-950 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" onClick={() => onOpen(candidate)}>{candidate.fullName}</button></CardTitle><p className="pl-6 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{candidate.folderCode}</p></CardHeader>
-                  <CardContent className="space-y-3 text-xs text-slate-600"><p>{candidate.destinationCountry || "Destination à confirmer"} · {candidate.projectType || "Procédure à qualifier"}</p><p className="text-[11px] text-slate-500">Origine : {candidate.source === "AGENCY_PHYSICAL" ? "Agence" : candidate.source === "ACCOUNT_ONLY" ? "Compte créé" : "En ligne"} · Conseiller : {candidate.advisorName || "Non attribué"}</p><div className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-semibold ${deadline.className}`}><DeadlineIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>{deadline.label}</span></div><div className="rounded-md border border-slate-200 bg-slate-50/70 p-2"><p className="flex items-center gap-1 text-[11px] font-bold text-slate-700"><History className="h-3.5 w-3.5" aria-hidden="true" />Historique récent</p>{candidate.history?.length ? <ol className="mt-1.5 space-y-1 border-l border-slate-300 pl-2.5">{candidate.history.slice(0, 3).map((entry, index) => <li key={`${entry.status}-${index}`} className="text-[10px] text-slate-600"><span className="font-semibold text-slate-800">{entry.label}</span>{entry.at ? ` · ${new Date(entry.at).toLocaleDateString("fr-FR")}` : ""}</li>)}</ol> : <p className="mt-1 text-[10px] text-slate-500">Les changements apparaîtront ici.</p>}</div><Select value={candidate.status} onValueChange={(value) => onMove(candidate, value as KanbanStatus)}><SelectTrigger className="h-8 bg-white text-xs" aria-label={`Déplacer ${candidate.fullName}`}><SelectValue placeholder="Déplacer vers…" /></SelectTrigger><SelectContent>{columns.map((option) => <SelectItem key={option.status} value={option.status}>{option.label}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="sm" className="w-full" onClick={() => onOpen(candidate)}>Ouvrir la fiche</Button></CardContent>
+                  <CardContent className="space-y-3 text-xs text-slate-600"><p>{candidate.destinationCountry || "Destination à confirmer"} · {candidate.projectType || "Procédure à qualifier"}</p><p className="text-[11px] text-slate-500">Origine : {candidate.source === "AGENCY_PHYSICAL" ? "Agence" : candidate.source === "ACCOUNT_ONLY" ? "Compte créé" : "En ligne"} · Conseiller : {candidate.advisorName || "Non attribué"}</p><Tooltip><TooltipTrigger asChild><div tabIndex={0} role="status" aria-label={`Alerte SLA : ${deadline.label}`} className={`flex cursor-help items-center gap-1.5 rounded-md border px-2 py-1.5 text-[11px] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${deadline.className}`}><DeadlineIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /><span>{deadline.label}</span></div></TooltipTrigger><TooltipContent side="top" className="max-w-xs">{deadline.explanation}</TooltipContent></Tooltip><div className="rounded-md border border-slate-200 bg-slate-50/70 p-2"><p className="flex items-center gap-1 text-[11px] font-bold text-slate-700"><History className="h-3.5 w-3.5" aria-hidden="true" />Historique récent</p>{candidate.history?.length ? <ol className="mt-1.5 space-y-1 border-l border-slate-300 pl-2.5">{candidate.history.slice(0, 3).map((entry, index) => <li key={`${entry.status}-${index}`} className="text-[10px] text-slate-600"><span className="font-semibold text-slate-800">{entry.label}</span>{entry.at ? ` · ${new Date(entry.at).toLocaleDateString("fr-FR")}` : ""}</li>)}</ol> : <p className="mt-1 text-[10px] text-slate-500">Les changements apparaîtront ici.</p>}</div><Select value={candidate.status} onValueChange={(value) => onMove(candidate, value as KanbanStatus)}><SelectTrigger className="h-8 bg-white text-xs" aria-label={`Déplacer ${candidate.fullName}`}><SelectValue placeholder="Déplacer vers…" /></SelectTrigger><SelectContent>{columns.map((option) => <SelectItem key={option.status} value={option.status}>{option.label}</SelectItem>)}</SelectContent></Select><Button type="button" variant="outline" size="sm" className="w-full" onClick={() => onOpen(candidate)}>Ouvrir la fiche</Button></CardContent>
                 </Card>;
               })}
               {grouped[status].length === 0 && <p className="rounded-xl border border-dashed border-slate-300 bg-white/60 p-4 text-center text-xs text-slate-500">Aucun dossier dans cette étape.</p>}

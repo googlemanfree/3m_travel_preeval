@@ -433,6 +433,10 @@ export default function Home() {
   const evalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    document.title = "3M Travel Agency | Mobilité internationale en confiance";
+  }, []);
+
+  useEffect(() => {
     if (window.location.hash !== "#evaluation-multi") return;
     const scrollToEvaluation = () => {
       document.getElementById("evaluation-multi")?.scrollIntoView({ behavior: "smooth", block: "start" });

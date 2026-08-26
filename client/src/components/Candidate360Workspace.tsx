@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { EvaluationDeliveryEditor } from "@/components/EvaluationDeliveryEditor";
 import { CommunicationHistoryPdfButton } from "@/components/CommunicationHistoryPdfButton";
@@ -151,6 +152,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     },
     onError: (mutationError) => toast.error("Mise à jour impossible", { description: mutationError.message }),
   });
+  const updateDeadlineMutation = trpc.admin.updateCandidate360Deadline.useMutation({
+    onSuccess: async () => {
+      toast.success("Échéance enregistrée", { description: "La date métier est persistée et ajoutée à la timeline du dossier." });
+      await refresh();
+    },
+    onError: (mutationError) => toast.error("Échéance impossible à enregistrer", { description: mutationError.message }),
+  });
   const createTaskMutation = trpc.admin.addCandidate360Task.useMutation({
     onSuccess: async () => {
       toast.success("Action ajoutée", { description: "La tâche est visible dans le dossier et la vue quotidienne." });
@@ -218,6 +226,13 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
     const target = new Date(Date.now() + hours * 60 * 60 * 1000);
     setDueAt(target.toISOString().slice(0, 16));
   };
+
+  const saveDeadline = () => updateDeadlineMutation.mutate({
+    sessionToken,
+    candidateId: candidate.id,
+    dueAt: dueAt ? new Date(dueAt) : null,
+    reason: "Échéance métier modifiée depuis la fiche 360°.",
+  });
 
   const quickWorkflowOptions = [
     { value: "qualifying", label: "Qualifier", description: "Vérifier le projet", icon: Sparkles, tone: "border-violet-200 bg-violet-50 text-violet-800" },
@@ -467,16 +482,17 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
             </div>
             <p className="mt-2 text-xs text-slate-500">Les raccourcis préparent l’étape. Cliquez sur « Enregistrer le pilotage » pour appliquer et notifier le candidat.</p>
 
-            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+                            <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.9fr)]">
+
               <div className="space-y-4">
                 <div className="grid gap-3 md:grid-cols-3">
                   <div><Label>Étape de traitement</Label><Select value={workflowStatus} onValueChange={setWorkflowStatus}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(STATUS_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
                   <div><Label>Priorité</Label><Select value={priority} onValueChange={setPriority}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(PRIORITY_LABELS).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div>
                   <div><Label>Conseiller responsable</Label><Select value={advisorId} onValueChange={setAdvisorId}><SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="unassigned">À attribuer</SelectItem>{data.advisors.map((advisor: any) => <SelectItem key={advisor.id} value={String(advisor.id)}>{advisor.fullName} · {advisor.adminType}</SelectItem>)}</SelectContent></Select></div>
                 </div>
-                <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
-                  <div><Label>Échéance / relance</Label><Input className="mt-1 h-11" type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} /></div>
-                  <div className="flex items-end gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(24)}>24 h</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(72)}>3 j</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(168)}>7 j</Button></div>
+                  <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                  <div><div className="flex items-center gap-2"><Label htmlFor="business-deadline">Échéance métier</Label><Tooltip><TooltipTrigger asChild><button type="button" aria-label="À propos de l’échéance métier" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700">?</button></TooltipTrigger><TooltipContent side="top">Cette date est enregistrée sur le dossier opérationnel. L’alerte passe à « bientôt » dans les 24 dernières heures et à « dépassée » après l’heure fixée.</TooltipContent></Tooltip></div><Input id="business-deadline" className="mt-1 h-11" type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} aria-describedby="business-deadline-help" /><p id="business-deadline-help" className="mt-1 text-xs text-slate-500">La date est persistée en UTC puis affichée dans votre fuseau local.</p></div>
+                  <div className="flex flex-wrap items-end gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(24)}>24 h</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(72)}>3 j</Button><Button type="button" size="sm" variant="outline" onClick={() => setDueShortcut(168)}>7 j</Button><Button type="button" size="sm" onClick={saveDeadline} disabled={updateDeadlineMutation.isPending} className="bg-blue-700 hover:bg-blue-800">{updateDeadlineMutation.isPending ? "Enregistrement…" : "Enregistrer l’échéance"}</Button></div>
                 </div>
                 <div><Label>Étiquettes personnalisées</Label><Input className="mt-1 h-11" value={labels} onChange={(event) => setLabels(event.target.value)} placeholder="Ex. prioritaire, Canada, appel requis" /><p className="mt-1 text-xs text-slate-500">Séparez les étiquettes par des virgules pour filtrer et retrouver le dossier plus vite.</p></div>
                 <div><Label>Commentaire interne et décision</Label><Textarea className="mt-1 min-h-30" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Précisez l’action effectuée, le blocage rencontré, la décision prise et ce qui est attendu du candidat…" /></div>
@@ -522,12 +538,15 @@ export function Candidate360Workspace({ sessionToken, candidate, onRefresh }: Pr
           <div className="rounded-xl border p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h4 className="flex items-center gap-2 font-semibold"><MessageSquare className="h-4 w-4 text-blue-700" />Échanges</h4><CommunicationHistoryPdfButton sessionToken={sessionToken} candidateId={candidate.id} candidateName={candidate.fullName} folderCode={candidate.folderCode} messages={data.communications.messages} notifications={data.communications.notifications} /></div><div className="mt-3 space-y-2">{data.communications.messages.length ? data.communications.messages.map((message: any) => { const snapshot = message.evisaSnapshotJson ? (() => { try { return JSON.parse(message.evisaSnapshotJson); } catch { return null; } })() : null; return <div key={message.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium">{message.senderRole === "candidate" ? "Candidat" : "Administration"}</p><p className="mt-1 text-xs text-slate-600 line-clamp-3">{message.content}</p>{snapshot?.items?.length ? <div className="mt-2 rounded border border-cyan-200 bg-cyan-50 p-2 text-xs text-cyan-950"><p className="font-semibold">Instantané e‑Visa partagé</p>{snapshot.items.map((item: any) => <p key={item.destinationId}>{item.country} · vérifié le {item.officialVerifiedAt} · <a className="underline" href={item.officialPortalUrl} target="_blank" rel="noreferrer">portail officiel</a></p>)}</div> : null}<p className="mt-1 text-xs text-slate-400">{formatDate(message.createdAt)}</p></div>; }) : <p className="text-sm text-slate-500">Aucun message dans ce fil.</p>}</div></div>
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-3 pt-4">
+        <TabsContent value="history" className="space-y-4 pt-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3"><div><h4 className="flex items-center gap-2 font-semibold text-slate-950"><History className="h-4 w-4 text-blue-700" />Timeline complète du dossier</h4><p className="mt-1 text-sm text-slate-500">Statuts, échéances et actions sont affichés dans l’ordre de réception depuis les journaux serveur.</p></div><Badge variant="outline">{(data.timeline ?? []).length} événement(s)</Badge></div>
+            <div className="mt-5">{data.timeline?.length ? <ol aria-label="Historique détaillé du dossier" className="space-y-0">{data.timeline.map((entry: any, index: number) => <li key={entry.id} className="grid grid-cols-[82px_24px_minmax(0,1fr)] gap-3"><time dateTime={new Date(entry.createdAt).toISOString()} className="pt-1 text-right text-xs text-slate-500">{new Date(entry.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</time><div className="relative flex justify-center"><span className={`z-10 mt-1 h-3 w-3 rounded-full border-2 border-white shadow ${entry.kind === "status" ? "bg-blue-700" : entry.status === "deadline_updated" ? "bg-amber-500" : "bg-slate-500"}`} />{index < data.timeline.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold capitalize text-slate-900">{entry.label}</p><Badge variant="outline" className="text-[10px]">{entry.kind === "status" ? "Statut" : entry.status === "deadline_updated" ? "Échéance" : "Activité"}</Badge></div><p className="mt-1 text-sm leading-6 text-slate-600">{entry.comment || "Événement enregistré"}</p><p className="mt-1 text-xs text-slate-400">{entry.actor || "Système"} · {formatDate(entry.createdAt)}</p></div></li>)}</ol> : <p className="rounded-lg border border-dashed p-4 text-sm text-slate-500">Aucun événement serveur n’est encore enregistré pour ce dossier.</p>}</div>
+          </div>
           <div className="grid gap-3 lg:grid-cols-2">
             <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FileText className="h-4 w-4 text-blue-700" />Décisions et notes internes</h4><div className="mt-3 space-y-2">{data.notes.length ? data.notes.slice(0, 12).map((note: any) => <div key={note.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm text-slate-700">{note.note}</p><p className="mt-1 text-xs text-slate-400">{formatDate(note.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Aucune note interne. Ajoutez une décision dans Vue d’ensemble.</p>}</div></div>
-            <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Changements de procédure</h4><div className="mt-3 space-y-2">{data.statusHistory.length ? data.statusHistory.slice(0, 12).map((entry: any) => <div key={entry.id} className="rounded-lg bg-slate-50 p-3"><p className="text-sm font-medium text-slate-700">{STATUS_LABELS[entry.oldStatus] ?? entry.oldStatus} → {STATUS_LABELS[entry.newStatus] ?? entry.newStatus}</p><p className="mt-1 text-xs text-slate-600">{entry.comment || "Statut actualisé"}</p><p className="mt-1 text-xs text-slate-400">{formatDate(entry.createdAt)}</p></div>) : <p className="text-sm text-slate-500">Les changements de statut apparaîtront ici.</p>}</div></div>
+            <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><FolderKanban className="h-4 w-4 text-blue-700" />Détails statut serveur</h4><p className="mt-2 text-sm text-slate-600">{data.statusHistory.length} changement(s) de statut conservé(s), relu(s) depuis le dossier opérationnel.</p><p className="mt-1 text-xs text-slate-500">Les transitions restent séparées des notes privées et des tâches.</p></div>
           </div>
-          <div className="rounded-xl border p-4"><h4 className="flex items-center gap-2 font-semibold"><History className="h-4 w-4 text-blue-700" />Frise chronologique du dossier</h4><p className="mt-1 text-sm text-slate-500">Chaque jalon est daté et attribué pour visualiser rapidement l’évolution globale.</p><div className="mt-5 space-y-0">{data.activity.length ? data.activity.map((activity: any, index: number) => <div key={`${activity.type}-${index}`} className="grid grid-cols-[92px_24px_minmax(0,1fr)] gap-3"><p className="pt-1 text-right text-xs text-slate-500">{new Date(activity.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}</p><div className="relative flex justify-center"><span className="z-10 mt-1 h-3 w-3 rounded-full border-2 border-white bg-blue-600 shadow" />{index < data.activity.length - 1 && <span className="absolute top-4 h-full w-px bg-blue-100" />}</div><div className="pb-5"><p className="text-sm font-semibold capitalize text-slate-800">{String(activity.type).replaceAll("_", " ")}</p><p className="mt-1 text-sm text-slate-600">{activity.description || "Action enregistrée"}</p><p className="mt-1 text-xs text-slate-400">{activity.actor} · {formatDate(activity.createdAt)}</p></div></div>) : <p className="text-sm text-slate-500">L’historique s’alimentera au fil des actions de traitement.</p>}</div></div>
         </TabsContent>
       </Tabs>
 
