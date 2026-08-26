@@ -1253,4 +1253,4 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un skeleton premium lors du chargement des routes protégées, notamment `/flights` et `/mon-espace`.
 - [x] Ajouter un export PDF sécurisé de la liste des vols favoris, sans données sensibles inutiles.
 - [x] Ajouter des notifications toast de succès ou d’erreur après le téléversement d’un document sur `/document-upload`.
-- [ ] Tester, publier et livrer la compétence avec la version du projet.
+- [x] Tester, publier et livrer la compétence avec la version du projet.
