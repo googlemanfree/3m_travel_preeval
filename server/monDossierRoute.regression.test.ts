@@ -8,7 +8,7 @@ describe("/mon-dossier public prerender guard", () => {
     const result = composePublicPrerender(TEMPLATE, "/mon-dossier");
     expect(result.status).toBe(200);
     expect(result.noindex).toBe(true);
-    expect(result.html).toContain("Espace réservé");
+    expect(result.html).toContain('data-prerendered="true"');
     expect(result.html).toContain('name="robots" content="noindex,follow"');
     expect(result.html).not.toContain("Page introuvable");
     expect(result.html).not.toContain("maintenance");

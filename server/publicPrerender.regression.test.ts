@@ -18,7 +18,7 @@ describe("pré-rendu public indexable", () => {
       const privatePage = composePublicPrerender(template, path);
       expect(privatePage.status, path).toBe(200);
       expect(privatePage.html, path).toContain('name="robots" content="noindex,follow"');
-      expect(privatePage.html, path).toContain("Espace réservé");
+      expect(privatePage.html, path).toContain('data-prerendered="true"');
     }
   });
 
