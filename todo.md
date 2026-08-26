@@ -1146,3 +1146,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Identifier puis corriger la source confirmée de la page de maintenance, sans modification DNS non justifiée.
 - [x] Vérifier le retour de la page publique et des entrées protégées après correction.
 - [x] Publier et consigner la résolution de l’incident.
+
+## Page d’état publique
+- [ ] Auditer les routes, composants partagés et contenus de maintenance existants pour définir la page d’état.
+- [ ] Créer une page d’état accessible présentant les services, une maintenance planifiée et les contacts de support.
+- [ ] Ajouter un accès public cohérent sans exposer de détails techniques ou de données internes.
+- [ ] Tester, publier et vérifier la page d’état publique.
