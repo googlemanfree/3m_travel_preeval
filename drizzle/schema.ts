@@ -833,6 +833,9 @@ export const agencyDossiers = mysqlTable("agency_dossiers", {
   
   // Métadonnées
   source: mysqlEnum("source", ["manual_admin", "online_form"]).default("manual_admin").notNull(),
+  deletedAt: timestamp("deletedAt"),
+  deletedBy: varchar("deletedBy", { length: 320 }),
+  deletionReason: text("deletionReason"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

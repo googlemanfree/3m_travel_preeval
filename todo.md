@@ -1535,3 +1535,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter des raccourcis admin accessibles et contextuels
 - [x] Permettre la modification encadrée et la suppression confirmée de dossiers mal créés
 - [x] Tester les autorisations, notifications, traçabilité et publier
+
+## Poste 360° : corbeille, export et relances
+- [x] Ajouter une corbeille de dossiers restaurables pendant une période limitée avec audit
+- [x] Exporter en CSV les dossiers filtrés avec documents manquants
+- [x] Ajouter une relance manuelle candidate sécurisée depuis la fiche dossier
+- [x] Fiabiliser l’activation du pré-dossier avec validation explicite des champs requis
+- [x] Enrichir les raccourcis et actions du poste 360° sans exposer de données sensibles
+- [x] Tester les rôles, restauration, export et actions de la fiche puis publier

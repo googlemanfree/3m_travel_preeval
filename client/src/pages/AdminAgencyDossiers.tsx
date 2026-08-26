@@ -57,6 +57,8 @@ import {
   Calendar,
   StickyNote,
   History,
+  Bell,
+  RotateCcw,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -128,6 +130,7 @@ export default function AdminAgencyDossiers() {
   const [search, setSearch] = useState(() => typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("search") || "" : "");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDestination, setFilterDestination] = useState<string>("all");
+  const [showTrash, setShowTrash] = useState(false);
 
   // Modales
   const [showAddModal, setShowAddModal] = useState(false);
@@ -166,6 +169,7 @@ export default function AdminAgencyDossiers() {
   const { data, isLoading, refetch } = trpc.agencyDossier.getDossiers.useQuery({
     limit: 100,
     offset: 0,
+    includeDeleted: showTrash,
   });
 
   const dossiers: Dossier[] = (data?.dossiers ?? []) as Dossier[];
@@ -191,6 +195,14 @@ export default function AdminAgencyDossiers() {
     en_cours: dossiers.filter((d) => d.status === "en_cours").length,
     approuve: dossiers.filter((d) => d.status === "approuve").length,
     refuse: dossiers.filter((d) => d.status === "refuse").length,
+  };
+  const exportMissingDocumentsCsv = () => {
+    const rows = filtered.filter((dossier) => dossier.status === "documents_requis");
+    const escape = (value: string | null | undefined) => `"${(value ?? "").replaceAll('"', '""')}"`;
+    const csv = ["Nom;E-mail;Téléphone;Destination;Procédure;Statut;Dernière mise à jour", ...rows.map((dossier) => [dossier.fullName, dossier.email, dossier.phone, dossier.destination, dossier.visaType, STATUS_CONFIG[dossier.status].label, dossier.lastStatusChangeAt ? formatDate(dossier.lastStatusChangeAt) : ""].map((value) => escape(String(value))).join(";"))].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a"); anchor.href = url; anchor.download = "dossiers-documents-manquants.csv"; anchor.click(); URL.revokeObjectURL(url);
+    toast.success(`${rows.length} dossier(s) exporté(s) sans données de document sensibles.`);
   };
 
   // ─── Mutations ─────────────────────────────────────────────────────────────
@@ -241,6 +253,14 @@ export default function AdminAgencyDossiers() {
     onError: (err) => {
       toast.error(err.message || "Erreur lors de la suppression");
     },
+  });
+  const restoreMutation = trpc.agencyDossier.restoreDossier.useMutation({
+    onSuccess: () => { toast.success("Dossier restauré."); refetch(); },
+    onError: (err) => toast.error(err.message || "Restauration impossible"),
+  });
+  const reminderMutation = trpc.agencyDossier.sendManualReminder.useMutation({
+    onSuccess: () => toast.success("Relance envoyée au candidat."),
+    onError: (err) => toast.error(err.message || "Relance non envoyée"),
   });
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
@@ -420,6 +440,12 @@ export default function AdminAgencyDossiers() {
               <Button type="button" variant={filterStatus === "documents_requis" ? "default" : "outline"} onClick={() => setFilterStatus(filterStatus === "documents_requis" ? "all" : "documents_requis")} className="border-orange-400/50 text-orange-200 hover:bg-orange-400/10 focus-visible:ring-2 focus-visible:ring-orange-300" aria-pressed={filterStatus === "documents_requis"}>
                 <FileText className="mr-2 h-4 w-4" />Documents manquants
               </Button>
+              <Button type="button" variant="outline" onClick={exportMissingDocumentsCsv} className="border-cyan-400/50 text-cyan-100 hover:bg-cyan-400/10 focus-visible:ring-2 focus-visible:ring-cyan-200">
+                <FileText className="mr-2 h-4 w-4" />Exporter CSV
+              </Button>
+              <Button type="button" variant={showTrash ? "default" : "outline"} onClick={() => setShowTrash((value) => !value)} className="border-slate-500 text-slate-100 hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-white" aria-pressed={showTrash}>
+                <Trash2 className="mr-2 h-4 w-4" />{showTrash ? "Dossiers actifs" : "Corbeille"}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -551,6 +577,15 @@ export default function AdminAgencyDossiers() {
                                 >
                                   <StickyNote className="w-4 h-4" />
                                 </Button>
+                                {showTrash ? (
+                                  <Button size="icon" variant="ghost" onClick={() => { const reason = window.prompt("Motif de restauration du dossier :"); if (reason?.trim()) restoreMutation.mutate({ dossierId: d.id, reason: reason.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-emerald-400 hover:bg-emerald-400/10" title="Restaurer" aria-label={`Restaurer le dossier de ${d.fullName}`}>
+                                    <RotateCcw className="w-4 h-4" />
+                                  </Button>
+                                ) : (
+                                  <Button size="icon" variant="ghost" onClick={() => { const message = window.prompt("Message de relance au candidat :"); if (message?.trim()) reminderMutation.mutate({ dossierId: d.id, message: message.trim() }); }} className="w-8 h-8 text-slate-400 hover:text-cyan-300 hover:bg-cyan-400/10" title="Envoyer une relance" aria-label={`Envoyer une relance à ${d.fullName}`}>
+                                    <Bell className="w-4 h-4" />
+                                  </Button>
+                                )}
                                 <Button
                                   size="icon"
                                   variant="ghost"

@@ -8,7 +8,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getDb } from "../db";
 import { agencyDossiers, agencyDossierHistory } from "../../drizzle/schema";
-import { eq, and, like, desc } from "drizzle-orm";
+import { eq, and, like, desc, isNull, isNotNull } from "drizzle-orm";
 import { sendEmail as sendGenericEmail, SendEmailOptions } from "../_core/email";
 import { AGENCY_DOSSIER_STATUS_VALUES, isLuxembourgEmploymentProcedure, isLuxembourgEmploymentStatus } from "../../shared/agencyDossierStatus";
 
@@ -119,6 +119,7 @@ export const agencyDossierRouter = router({
     .input(z.object({
       status: z.string().optional(),
       destination: z.string().optional(),
+      includeDeleted: z.boolean().optional().default(false),
       limit: z.number().default(50),
       offset: z.number().default(0),
     }))
@@ -137,11 +138,12 @@ export const agencyDossierRouter = router({
         const dossiers = await db
           .select()
           .from(agencyDossiers)
+          .where(input.includeDeleted ? isNotNull(agencyDossiers.deletedAt) : isNull(agencyDossiers.deletedAt))
           .orderBy(desc(agencyDossiers.createdAt))
           .limit(input.limit)
           .offset(input.offset);
 
-        const countResult = await db.select().from(agencyDossiers);
+        const countResult = await db.select().from(agencyDossiers).where(input.includeDeleted ? isNotNull(agencyDossiers.deletedAt) : isNull(agencyDossiers.deletedAt));
         const total = countResult.length;
 
         return {
@@ -417,9 +419,11 @@ export const agencyDossierRouter = router({
           });
         }
 
-        await db
-          .delete(agencyDossiers)
-          .where(eq(agencyDossiers.id, input.dossierId));
+        await db.update(agencyDossiers).set({
+          deletedAt: new Date(),
+          deletedBy: ctx.user.email || "unknown",
+          deletionReason: input.reason,
+        }).where(eq(agencyDossiers.id, input.dossierId));
 
         await db.insert(agencyDossierHistory).values({
           dossierId: input.dossierId,
@@ -427,12 +431,12 @@ export const agencyDossierRouter = router({
           changedBy: ctx.user.email || "unknown",
           oldValue: JSON.stringify(dossier[0]),
           newValue: null,
-          details: `Dossier supprimé par l'administrateur. Motif : ${input.reason}`,
+          details: `Dossier placé dans la corbeille. Motif : ${input.reason}`,
         });
 
         return {
           success: true,
-          message: "Dossier supprimé avec succès",
+          message: "Dossier placé dans la corbeille. Il peut être restauré par un administrateur.",
         };
       } catch (err) {
         console.error("[Agency Dossier] Delete error:", err);
@@ -442,5 +446,32 @@ export const agencyDossierRouter = router({
           message: "Erreur lors de la suppression du dossier",
         });
       }
+    }),
+
+  restoreDossier: protectedProcedure
+    .input(z.object({ dossierId: z.number(), reason: z.string().trim().min(3).max(500) }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent restaurer un dossier" });
+      const [dossier] = await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, input.dossierId)).limit(1);
+      if (!dossier || !dossier.deletedAt) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier introuvable dans la corbeille" });
+      if (Date.now() - dossier.deletedAt.getTime() > 30 * 24 * 60 * 60 * 1000) throw new TRPCError({ code: "BAD_REQUEST", message: "La période de restauration de 30 jours est expirée" });
+      await db.update(agencyDossiers).set({ deletedAt: null, deletedBy: null, deletionReason: null }).where(eq(agencyDossiers.id, input.dossierId));
+      await db.insert(agencyDossierHistory).values({ dossierId: input.dossierId, action: "restored", changedBy: ctx.user.email || "unknown", oldValue: "corbeille", newValue: "actif", details: `Dossier restauré. Motif : ${input.reason}` });
+      return { success: true };
+    }),
+
+  sendManualReminder: protectedProcedure
+    .input(z.object({ dossierId: z.number(), message: z.string().trim().min(10).max(1200) }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB non disponible" });
+      if (ctx.user?.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Seuls les administrateurs peuvent envoyer une relance" });
+      const [dossier] = await db.select().from(agencyDossiers).where(and(eq(agencyDossiers.id, input.dossierId), isNull(agencyDossiers.deletedAt))).limit(1);
+      if (!dossier) throw new TRPCError({ code: "NOT_FOUND", message: "Dossier actif introuvable" });
+      await sendGenericEmail({ to: dossier.email, subject: "Rappel concernant votre dossier — 3M Travel & Services", html: `<p>Bonjour ${dossier.fullName},</p><p>${input.message}</p><p>Cordialement,<br/>3M Travel & Services</p>` });
+      await db.insert(agencyDossierHistory).values({ dossierId: input.dossierId, action: "manual_reminder", changedBy: ctx.user.email || "unknown", oldValue: null, newValue: null, details: "Relance manuelle envoyée" });
+      return { success: true };
     }),
 });
