@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { getGuideLastUpdatedAt, getPublicDestinationDetail, isDestinationRecentlyUpdated } from '@/lib/publicDestinationCatalog';
 import { DestinationCallbackDialog } from '@/components/DestinationCallbackDialog';
 import { DestinationComparisonDialog } from '@/components/DestinationComparisonDialog';
+import { PublicProcedurePdfButton } from '@/components/PublicProcedurePdfButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureRegionBadges, getProcedureVisualSources } from '@/data/procedureVisuals';
@@ -167,7 +168,7 @@ export default function CountryDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto md:shrink-0 items-center">
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:w-[336px] md:shrink-0">
               <Button
                 onClick={toggleFavorite}
                 variant="outline"
@@ -193,6 +194,7 @@ export default function CountryDetailPage() {
                   </Button>
                 </a>
               )}
+              <PublicProcedurePdfButton destination={destinationDetail} updatedAt={pageUpdatedAt} portal={portal} language={language} />
             </div>
           </div>
         </motion.div>

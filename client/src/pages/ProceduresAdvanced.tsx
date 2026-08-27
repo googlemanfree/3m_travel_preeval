@@ -1,17 +1,16 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'wouter';
-import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink } from 'lucide-react';
+import { Search, Download, Filter, MapPin, Clock, DollarSign, FileText, ChevronDown, Star, Eye, EyeOff, ArrowUpDown, Calculator, CheckSquare, MessageCircle, ExternalLink, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
-import { getPublicDestinationDetail, getPublicDestinationPath } from '@/lib/publicDestinationCatalog';
+import { getPublicDestinationDetail, getPublicDestinationPath, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
 import { trpc } from '@/lib/trpc';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
@@ -24,6 +23,11 @@ const VISA_DOCUMENT_CHECKLISTS = {
 } as const;
 
 const visaChecklistLabels = { travail: "Travail", etudes: "Études", visiteur: "Visiteur / tourisme" } as const;
+const PUBLIC_PROCEDURES = PUBLIC_DESTINATION_DETAILS.map((detail) => detail.procedure);
+const VISA_COUNTS = PUBLIC_PROCEDURES.reduce<Record<string, number>>((counts, procedure) => {
+  counts[procedure.visaType] = (counts[procedure.visaType] ?? 0) + 1;
+  return counts;
+}, {});
 
 export default function ProceduresAdvanced() {
   const { language } = useLanguage();
@@ -60,7 +64,7 @@ export default function ProceduresAdvanced() {
 
   // Filter countries
   const filteredCountries = useMemo(() => {
-    let filtered = procedures107Complete.filter(country => {
+    let filtered = PUBLIC_PROCEDURES.filter(country => {
       const normalizedQuery = searchQuery.trim().toLocaleLowerCase('fr');
       const searchableVisa = visaChecklistLabels[country.visaType as keyof typeof visaChecklistLabels] ?? country.visaType;
       const matchesSearch = !normalizedQuery || [
@@ -76,15 +80,15 @@ export default function ProceduresAdvanced() {
       
       // Salary filter
       const salaryNum = country.minSalary ? parseInt(country.minSalary.split(' ')[0]) : 0;
-      const matchesSalary = salaryNum >= minSalaryFilter;
+      const matchesSalary = minSalaryFilter === 0 || Number.isNaN(salaryNum) || salaryNum >= minSalaryFilter;
       
       // Cost filter
       const costNum = parseInt(country.cost.split('-')[1] || country.cost.split('-')[0]);
-      const matchesCost = costNum <= maxCostFilter;
+      const matchesCost = maxCostFilter === 10000 || Number.isNaN(costNum) || costNum <= maxCostFilter;
       
       // Time filter
       const timeNum = parseInt(country.processingTime.split('-')[1] || country.processingTime.split('-')[0]);
-      const matchesTime = timeNum <= maxTimeFilter;
+      const matchesTime = maxTimeFilter === 52 || Number.isNaN(timeNum) || timeNum <= maxTimeFilter;
 
       return matchesSearch && matchesRegion && matchesVisaType && matchesDifficulty && matchesSalary && matchesCost && matchesTime;
     });
@@ -137,20 +141,20 @@ export default function ProceduresAdvanced() {
   };
 
   const comparisonCountries = selectedForComparison
-    .map(id => procedures107Complete.find(c => c.id === id))
+    .map(id => PUBLIC_PROCEDURES.find(c => c.id === id))
     .filter(Boolean);
 
   const selectedCountryBudget = selectedCountryForBudget 
-    ? procedures107Complete.find(c => c.id === selectedCountryForBudget)
+    ? PUBLIC_PROCEDURES.find(c => c.id === selectedCountryForBudget)
     : null;
 
-  const calculateBudget = (country: typeof procedures107Complete[0]) => {
+  const calculateBudget = (country: typeof PUBLIC_PROCEDURES[0]) => {
     const costNum = parseInt(country.cost.split('-')[1] || country.cost.split('-')[0]);
     const totalCostNum = parseInt(country.totalCost?.split('-')[1] || '0');
     return costNum + totalCostNum + servicesFee;
   };
 
-  const getEvaluationHref = (country: typeof procedures107Complete[0]) =>
+  const getEvaluationHref = (country: typeof PUBLIC_PROCEDURES[0]) =>
     `/?project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}#evaluation-multi`;
 
   return (
@@ -163,7 +167,7 @@ export default function ProceduresAdvanced() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
-            📋 Procédures Avancées - 107 Destinations
+            📋 Procédures Avancées - {PUBLIC_PROCEDURES.length} Destinations
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
             Filtres avancés, comparaisons interactives et calculateur de budget pour trouver la meilleure destination.
@@ -276,24 +280,31 @@ export default function ProceduresAdvanced() {
         >
           <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             {/* Search Bar */}
-            <div className="relative">
+            <div role="search" className="relative">
               <Search className="absolute left-4 top-3.5 w-5 h-5 text-slate-400" />
+              <label htmlFor="procedure-country-search" className="sr-only">Rechercher parmi les 107 procédures pays</label>
               <Input
-                placeholder="Rechercher un pays, une région..."
+                id="procedure-country-search"
+                type="search"
+                autoComplete="off"
+                placeholder="Rechercher un pays, une région ou un type de visa…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-12 py-3 text-base border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                aria-describedby="procedure-search-help procedure-results-count"
+                className="pl-12 pr-12 py-3 text-base border-slate-200 focus:border-blue-500 focus:ring-blue-500"
               />
+              {searchQuery ? <button type="button" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700" aria-label="Effacer la recherche"><X className="h-4 w-4" /></button> : null}
             </div>
+            <p id="procedure-search-help" className="text-xs text-slate-500">Filtrez les {PUBLIC_PROCEDURES.length} fiches par pays, identifiant, région ou type de visa.</p>
 
             {/* Type de Visa Tabs & Comparateur */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <Tabs value={visaType} onValueChange={(v) => setVisaType(v as any)} className="w-full sm:w-auto flex-1">
                 <TabsList className="grid w-full grid-cols-4 bg-slate-100">
-                  <TabsTrigger value="tous">Tous (107)</TabsTrigger>
-                  <TabsTrigger value="travail">Travail (34)</TabsTrigger>
-                  <TabsTrigger value="etudes">Études (22)</TabsTrigger>
-                  <TabsTrigger value="visiteur">Visiteur (27)</TabsTrigger>
+                  <TabsTrigger value="tous">Tous ({PUBLIC_PROCEDURES.length})</TabsTrigger>
+                  <TabsTrigger value="travail">Travail ({VISA_COUNTS.travail ?? 0})</TabsTrigger>
+                  <TabsTrigger value="etudes">Études ({VISA_COUNTS.etudes ?? 0})</TabsTrigger>
+                  <TabsTrigger value="visiteur">Visiteur ({VISA_COUNTS.visiteur ?? 0})</TabsTrigger>
                 </TabsList>
               </Tabs>
               <a href="/procedures/comparaison" className="w-full sm:w-auto shrink-0">
@@ -450,7 +461,7 @@ export default function ProceduresAdvanced() {
                       className="w-full px-4 py-2 rounded-lg border border-slate-300 bg-white text-sm"
                     >
                       <option value="">-- Choisir un pays --</option>
-                      {procedures107Complete.map(country => (
+                      {PUBLIC_PROCEDURES.map(country => (
                         <option key={country.id} value={country.id}>
                           {country.flag} {country.name}
                         </option>
@@ -556,7 +567,7 @@ export default function ProceduresAdvanced() {
         </AnimatePresence>
 
         {/* Results Count */}
-        <div className="mb-6 text-slate-600 font-medium">
+        <div id="procedure-results-count" aria-live="polite" className="mb-6 text-slate-600 font-medium">
           {filteredCountries.length} destination{filteredCountries.length !== 1 ? 's' : ''} trouvée{filteredCountries.length !== 1 ? 's' : ''}
           {selectedForComparison.length > 0 && ` • ${selectedForComparison.length} sélectionnée(s) pour comparaison`}
         </div>

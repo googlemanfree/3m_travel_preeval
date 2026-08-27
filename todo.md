@@ -1597,3 +1597,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Retirer les liens sociaux non vérifiés dans le footer et les données structurées, en conservant uniquement la page Facebook confirmée
 - [x] Harmoniser les FAQ publiques et les données structurées avec la règle compte/CV obligatoire
 - [x] Harmoniser le libellé du raccourci d’évaluation du footer avec la règle compte/CV obligatoire
+
+## Annuaire, contact Yaoundé et export des fiches pays
+- [x] Créer une compétence réutilisable pour la recherche de procédures, la carte de contact et l’export PDF prudent
+- [x] Vérifier et améliorer la recherche accessible des 107 fiches par pays, région et type de visa
+- [x] Intégrer une carte interactive de l’adresse confirmée de Yaoundé sur la page Contact
+- [x] Ajouter un export PDF des informations publiques et vérifiables de chaque fiche pays
+- [x] Tester les parcours, l’accessibilité, la carte et le contenu des PDF, puis publier

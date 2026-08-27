@@ -8,7 +8,7 @@ import { ChatModal } from '@/components/ChatModal';
 import OfficeContactPanel from '@/components/OfficeContactPanel';
 import { trpc } from '@/lib/trpc';
 import { COMPANY_PROFILE } from '@/lib/companyContacts';
-import { officeMapEmbedUrl } from '@/lib/officeContacts';
+import { officeMapEmbedUrl, officeMapsUrl } from '@/lib/officeContacts';
 
 export default function Contact() {
   const cameroon = COMPANY_PROFILE.offices.cameroon;
@@ -136,7 +136,7 @@ export default function Contact() {
       </section>
 
       {/* Google Maps Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section id="carte-yaounde" className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Nos localisations
@@ -150,18 +150,23 @@ export default function Contact() {
               className="rounded-lg overflow-hidden shadow-lg"
             >
               <div className="bg-white p-4">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{cameroon.shortLabel}</h3>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Bureau principal</p>
+                <h3 className="mt-1 text-lg font-bold text-gray-900 mb-2">Carte interactive — {cameroon.shortLabel}</h3>
                 <p className="text-sm text-gray-600 mb-4">{cameroon.label}</p>
               </div>
               <iframe
                 src={officeMapEmbedUrl({ id: "cameroon", ...cameroon })}
+                title={`Carte interactive du ${cameroon.label}`}
                 width="100%"
                 height="300"
                 style={{ border: 0 }}
                 allowFullScreen={true}
-                loading="lazy"
+                loading="eager"
                 referrerPolicy="no-referrer-when-downgrade"
               />
+              <div className="bg-white px-4 pb-4">
+                <a href={officeMapsUrl({ id: "cameroon", ...cameroon })} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2">Ouvrir l’itinéraire vers Yaoundé</a>
+              </div>
             </motion.div>
 
             {/* Carte du bureau Ottawa */}
@@ -177,6 +182,7 @@ export default function Contact() {
               </div>
               <iframe
                 src={officeMapEmbedUrl({ id: "ottawa", ...ottawa })}
+                title={`Carte interactive du ${ottawa.label}`}
                 width="100%"
                 height="300"
                 style={{ border: 0 }}
