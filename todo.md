@@ -1587,3 +1587,12 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Harmoniser les emblèmes nationaux et visuels représentatifs des fiches destination
 - [x] Afficher une date de mise à jour et une source officielle vérifiable sur chaque fiche
 - [x] Tester la recherche, les filtres, la navigation et les rendus responsive, puis publier
+
+## Indexation, données structurées et présence de marque
+- [x] Vérifier l’accès Search Console, valider la propriété de domaine et consigner l’état initial de collecte des données
+- [x] Auditer les JSON-LD et balises sémantiques pour les moteurs de recherche et conversationnels
+- [x] Définir un plan d’optimisation Google Business Profile et annuaires professionnels de confiance
+- [x] Documenter les mesures, responsabilités et priorités sans publier de profil externe sans confirmation
+- [ ] Après validation, inclure les fiches destination canoniques dans le sitemap public
+- [ ] Après confirmation des réseaux officiels, retirer ou corriger les liens sociaux non vérifiés dans le footer et les données structurées
+- [ ] Après validation du parcours client, harmoniser les FAQ publiques et les données structurées avec la règle compte/CV obligatoire
