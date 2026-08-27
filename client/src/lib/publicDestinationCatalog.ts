@@ -31,6 +31,35 @@ const normalizeDestination = (value: string) => {
     .replace(/^-|-$/g, "");
 };
 
+const destinationSearchSynonyms: Record<string, readonly string[]> = {
+  allemagne: ["germany", "deutschland"],
+  belgique: ["belgium"],
+  canada: ["canadien", "canadian"],
+  "coree-du-sud": ["south korea", "korea"],
+  "cote-d-ivoire": ["ivory coast", "ivoire"],
+  egypte: ["egypt"],
+  "emirats-arabes-unis": ["dubai", "dubaï", "eau", "uae", "united arab emirates"],
+  espagne: ["spain"],
+  ethiopie: ["ethiopia"],
+  "etats-unis": ["usa", "united states", "america", "amerique"],
+  italie: ["italy"],
+  japon: ["japan"],
+  "nouvelle-zelande": ["new zealand", "nz"],
+  "pays-bas": ["hollande", "holland", "netherlands"],
+  "republique-tcheque": ["tchequie", "czech republic", "czechia"],
+  "royaume-uni": ["angleterre", "england", "uk", "grande-bretagne", "united kingdom"],
+  "sri-lanka": ["ceylan", "ceylon"],
+  turquie: ["turkey", "turkiye", "türkiye"],
+};
+
+export const normalizePublicDestinationSearchTerm = (value: string) => normalizeDestination(value);
+
+export const getPublicDestinationSearchTerms = (procedure: Pick<CountryProcedureComplete, "id" | "name">) => [
+  procedure.name,
+  procedure.id,
+  ...(destinationSearchSynonyms[normalizeDestination(procedure.name)] ?? []),
+];
+
 const categoryToVisaType = {
   travail: "travail",
   etudes: "etudes",

@@ -2,7 +2,12 @@ import fs from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";
 import { OFFICE_CONTACTS, officeMapsUrl } from "../client/src/lib/officeContacts";
-import { PUBLIC_DESTINATION_PAGE_COUNT } from "../client/src/lib/publicDestinationCatalog";
+import {
+  getPublicDestinationDetail,
+  getPublicDestinationSearchTerms,
+  normalizePublicDestinationSearchTerm,
+  PUBLIC_DESTINATION_PAGE_COUNT,
+} from "../client/src/lib/publicDestinationCatalog";
 
 describe("découverte publique des procédures et contact", () => {
   it("base la recherche de l’annuaire sur le catalogue canonique des 107 fiches", () => {
@@ -11,6 +16,23 @@ describe("découverte publique des procédures et contact", () => {
     expect(page).toContain("PUBLIC_DESTINATION_DETAILS.map");
     expect(page).toContain('id="procedure-country-search"');
     expect(page).toContain('aria-live="polite"');
+  });
+
+  it("normalise les synonymes pays et rend visibles les filtres de confiance", () => {
+    const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/ProceduresAdvanced.tsx"), "utf8");
+    const unitedArabEmirates = getPublicDestinationDetail("dubai-evisa");
+    expect(unitedArabEmirates).toBeTruthy();
+    expect(getPublicDestinationSearchTerms(unitedArabEmirates!.procedure).map(normalizePublicDestinationSearchTerm)).toContain("dubai");
+    expect(page).toContain("Portail vérifié uniquement");
+    expect(page).toContain("verifiedPortalOnly");
+  });
+
+  it("limite le comparateur à deux fiches et présente les deux colonnes côte à côte", () => {
+    const page = fs.readFileSync(path.resolve(process.cwd(), "client/src/pages/ProceduresAdvanced.tsx"), "utf8");
+    expect(page).toContain("previous.length >= 2");
+    expect(page).toContain("Comparer deux destinations");
+    expect(page).toContain("md:grid-cols-2");
+    expect(page).toContain("Retirez une destination avant d’en sélectionner une troisième.");
   });
 
   it("expose un itinéraire Google Maps pour le bureau principal et des titres de carte accessibles", () => {

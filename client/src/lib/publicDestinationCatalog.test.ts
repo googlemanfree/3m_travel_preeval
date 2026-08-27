@@ -6,6 +6,8 @@ import {
   getDestinationDetailForProcedure,
   getDestinationDetailForResource,
   getPublicDestinationDetail,
+  getPublicDestinationSearchTerms,
+  normalizePublicDestinationSearchTerm,
 } from "./publicDestinationCatalog";
 
 describe("catalogue public des fiches destination", () => {
@@ -34,6 +36,17 @@ describe("catalogue public des fiches destination", () => {
   it("relie une ressource pays-procédure à sa fiche dédiée", () => {
     const detail = getDestinationDetailForResource({ country: "France", category: "visiteur" });
     expect(detail?.procedure.id).toBe("france-visiteur");
+  });
+
+  it("expose des synonymes normalisés pour la recherche de pays", () => {
+    const unitedArabEmirates = getPublicDestinationDetail("dubai-evisa");
+    expect(unitedArabEmirates).toBeTruthy();
+    const terms = getPublicDestinationSearchTerms(unitedArabEmirates!.procedure).map(normalizePublicDestinationSearchTerm);
+    expect(terms).toContain("dubai");
+
+    const unitedKingdom = PUBLIC_DESTINATION_DETAILS.find((detail) => detail.procedure.name === "Royaume-Uni");
+    expect(unitedKingdom).toBeTruthy();
+    expect(getPublicDestinationSearchTerms(unitedKingdom!.procedure).map(normalizePublicDestinationSearchTerm)).toContain("england");
   });
 
   it("produit une date lisible pour les guides 3M associés", () => {

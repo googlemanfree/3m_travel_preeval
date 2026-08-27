@@ -10,7 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
-import { getPublicDestinationDetail, getPublicDestinationPath, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { getPublicDestinationDetail, getPublicDestinationPath, getPublicDestinationSearchTerms, normalizePublicDestinationSearchTerm, PUBLIC_DESTINATION_DETAILS } from '@/lib/publicDestinationCatalog';
+import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
@@ -56,6 +57,7 @@ export default function ProceduresAdvanced() {
   const [maxCostFilter, setMaxCostFilter] = useState(10000);
   const [maxTimeFilter, setMaxTimeFilter] = useState(52);
   const [difficultyFilter, setDifficultyFilter] = useState<'tous' | 'facile' | 'moyen' | 'difficile'>('tous');
+  const [verifiedPortalOnly, setVerifiedPortalOnly] = useState(false);
   const [documentVisaType, setDocumentVisaType] = useState<keyof typeof VISA_DOCUMENT_CHECKLISTS>('travail');
 
   // Budget calculator state
@@ -65,18 +67,21 @@ export default function ProceduresAdvanced() {
   // Filter countries
   const filteredCountries = useMemo(() => {
     let filtered = PUBLIC_PROCEDURES.filter(country => {
-      const normalizedQuery = searchQuery.trim().toLocaleLowerCase('fr');
+      const normalizedQuery = normalizePublicDestinationSearchTerm(searchQuery);
       const searchableVisa = visaChecklistLabels[country.visaType as keyof typeof visaChecklistLabels] ?? country.visaType;
       const matchesSearch = !normalizedQuery || [
-        country.name,
-        country.id,
+        ...getPublicDestinationSearchTerms(country),
         country.region,
         country.visaType,
         searchableVisa,
-      ].some((value) => value.toLocaleLowerCase('fr').includes(normalizedQuery));
+      ].some((value) => normalizePublicDestinationSearchTerm(value).includes(normalizedQuery));
       const matchesRegion = selectedRegion === 'Tous' || country.region === selectedRegion;
       const matchesVisaType = visaType === 'tous' || country.visaType === visaType;
       const matchesDifficulty = difficultyFilter === 'tous' || country.difficulty === difficultyFilter;
+      const destinationDetail = getPublicDestinationDetail(country.id);
+      const matchesVerifiedPortal = !verifiedPortalOnly || (
+        destinationDetail?.consular.verificationStatus === 'verifie' && Boolean(destinationDetail.consular.officialPortalUrl)
+      );
       
       // Salary filter
       const salaryNum = country.minSalary ? parseInt(country.minSalary.split(' ')[0]) : 0;
@@ -90,7 +95,7 @@ export default function ProceduresAdvanced() {
       const timeNum = parseInt(country.processingTime.split('-')[1] || country.processingTime.split('-')[0]);
       const matchesTime = maxTimeFilter === 52 || Number.isNaN(timeNum) || timeNum <= maxTimeFilter;
 
-      return matchesSearch && matchesRegion && matchesVisaType && matchesDifficulty && matchesSalary && matchesCost && matchesTime;
+      return matchesSearch && matchesRegion && matchesVisaType && matchesDifficulty && matchesVerifiedPortal && matchesSalary && matchesCost && matchesTime;
     });
 
     // Sort
@@ -117,7 +122,7 @@ export default function ProceduresAdvanced() {
     }
 
     return filtered;
-  }, [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter]);
+  }, [searchQuery, selectedRegion, visaType, sortBy, minSalaryFilter, maxCostFilter, maxTimeFilter, difficultyFilter, verifiedPortalOnly]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -133,11 +138,14 @@ export default function ProceduresAdvanced() {
   };
 
   const toggleComparison = (countryId: string) => {
-    setSelectedForComparison(prev =>
-      prev.includes(countryId)
-        ? prev.filter(id => id !== countryId)
-        : [...prev, countryId].slice(-3)
-    );
+    setSelectedForComparison((previous) => {
+      if (previous.includes(countryId)) return previous.filter((id) => id !== countryId);
+      if (previous.length >= 2) {
+        toast.info('Retirez une destination avant d’en sélectionner une troisième.');
+        return previous;
+      }
+      return [...previous, countryId];
+    });
   };
 
   const comparisonCountries = selectedForComparison
@@ -332,6 +340,14 @@ export default function ProceduresAdvanced() {
                   {region}
                 </motion.button>
               ))}
+              <button
+                type="button"
+                aria-pressed={verifiedPortalOnly}
+                onClick={() => setVerifiedPortalOnly((value) => !value)}
+                className={`min-h-10 rounded-full px-4 py-2 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 ${verifiedPortalOnly ? 'bg-emerald-700 text-white' : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'}`}
+              >
+                Portail vérifié uniquement
+              </button>
             </div>
 
             {/* Advanced Filters */}
@@ -432,7 +448,7 @@ export default function ProceduresAdvanced() {
                   }`}
                 >
                   {showComparison ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  Comparer ({selectedForComparison.length}/3)
+                  Comparer deux destinations ({selectedForComparison.length}/2)
                 </motion.button>
               </div>
             </div>
@@ -514,7 +530,7 @@ export default function ProceduresAdvanced() {
 
         {/* Comparison Table */}
         <AnimatePresence>
-          {showComparison && comparisonCountries.length > 0 && (
+          {showComparison && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -522,45 +538,19 @@ export default function ProceduresAdvanced() {
               className="mb-8 bg-white rounded-2xl shadow-lg overflow-hidden"
             >
               <div className="p-6">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <ArrowUpDown className="w-6 h-6" /> Tableau Comparatif
+                <h2 className="text-2xl font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <ArrowUpDown className="w-6 h-6" /> Comparer deux destinations
                 </h2>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-slate-200 bg-slate-50">
-                        <th className="text-left py-3 px-4 font-bold text-slate-900">Pays</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Région</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Type</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Délai</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Coût</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Salaire min</th>
-                        <th className="text-center py-3 px-4 font-bold text-slate-900">Difficulté</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparisonCountries.map((country, idx) => (
-                        <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                          <td className="py-3 px-4 font-semibold text-slate-900">
-                            {country.flag} {country.name}
-                          </td>
-                          <td className="text-center py-3 px-4 text-slate-600">{country.region}</td>
-                          <td className="text-center py-3 px-4">
-                            <Badge variant="outline" className="capitalize">{country.visaType}</Badge>
-                          </td>
-                          <td className="text-center py-3 px-4 text-slate-600 font-medium">{country.processingTime}</td>
-                          <td className="text-center py-3 px-4 text-slate-600 font-medium">{country.cost}</td>
-                          <td className="text-center py-3 px-4 text-slate-600 font-medium">{country.minSalary || '-'}</td>
-                          <td className="text-center py-3 px-4">
-                            <Badge className={getDifficultyColor(country.difficulty)}>
-                              {country.difficulty}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <p className="mb-5 text-sm text-slate-600">{comparisonCountries.length === 2 ? 'Les deux fiches sélectionnées sont présentées côte à côte. Les délais et coûts restent indicatifs.' : `Sélectionnez ${2 - comparisonCountries.length} destination${2 - comparisonCountries.length > 1 ? 's' : ''} dans les cartes pour lancer la comparaison.`}</p>
+                {comparisonCountries.length === 2 ? <div className="grid gap-4 md:grid-cols-2">
+                  {comparisonCountries.map((country) => (
+                    <section key={country.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <div className="flex items-center justify-between gap-3"><h3 className="text-lg font-black text-slate-950">{country.flag} {country.name}</h3><button type="button" onClick={() => toggleComparison(country.id)} className="text-xs font-bold text-blue-700 underline underline-offset-2">Retirer</button></div>
+                      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm"><div><dt className="text-slate-500">Région</dt><dd className="font-bold text-slate-900">{country.region}</dd></div><div><dt className="text-slate-500">Type</dt><dd className="font-bold capitalize text-slate-900">{country.visaType}</dd></div><div><dt className="text-slate-500">Délai indicatif</dt><dd className="font-bold text-slate-900">{country.processingTime}</dd></div><div><dt className="text-slate-500">Coût indicatif</dt><dd className="font-bold text-slate-900">{country.cost}</dd></div><div><dt className="text-slate-500">Documents</dt><dd className="font-bold text-slate-900">{country.requiredDocuments.reduce((count, group) => count + group.documents.length, 0)}</dd></div><div><dt className="text-slate-500">Portail</dt><dd className="font-bold text-slate-900">{getPublicDestinationDetail(country.id)?.consular.verificationStatus === 'verifie' ? 'Vérifié' : 'À vérifier'}</dd></div></dl>
+                      <Link href={getPublicDestinationPath(country.id)} className="mt-5 inline-flex text-sm font-bold text-blue-700 hover:underline">Voir la fiche complète</Link>
+                    </section>
+                  ))}
+                </div> : null}
               </div>
             </motion.div>
           )}
@@ -569,7 +559,7 @@ export default function ProceduresAdvanced() {
         {/* Results Count */}
         <div id="procedure-results-count" aria-live="polite" className="mb-6 text-slate-600 font-medium">
           {filteredCountries.length} destination{filteredCountries.length !== 1 ? 's' : ''} trouvée{filteredCountries.length !== 1 ? 's' : ''}
-          {selectedForComparison.length > 0 && ` • ${selectedForComparison.length} sélectionnée(s) pour comparaison`}
+          {selectedForComparison.length > 0 && ` • ${selectedForComparison.length}/2 sélectionnée(s) pour comparaison`}
         </div>
 
         {/* Countries Grid */}
@@ -639,13 +629,15 @@ export default function ProceduresAdvanced() {
                                 e.stopPropagation();
                                 toggleComparison(country.id);
                               }}
-                              className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+                              aria-pressed={isSelected}
+                              aria-label={`${isSelected ? 'Retirer' : 'Ajouter'} ${country.name} de la comparaison`}
+                              className={`rounded-full px-3 py-1 text-xs font-bold transition-all ${
                                 isSelected
                                   ? 'bg-green-500 text-white'
                                   : 'bg-white/20 text-white hover:bg-white/30'
                               }`}
                             >
-                              ✓
+                              {isSelected ? 'Retirer' : 'Comparer'}
                             </button>
                           )}
                           <ChevronDown

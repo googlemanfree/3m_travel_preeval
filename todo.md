@@ -1604,3 +1604,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Intégrer une carte interactive de l’adresse confirmée de Yaoundé sur la page Contact
 - [x] Ajouter un export PDF des informations publiques et vérifiables de chaque fiche pays
 - [x] Tester les parcours, l’accessibilité, la carte et le contenu des PDF, puis publier
+
+## Synonymes, comparaison et portail vérifié
+- [x] Créer une compétence réutilisable pour la recherche par synonymes, la comparaison de deux destinations et les sources vérifiées
+- [x] Ajouter des synonymes normalisés aux recherches de fiches pays
+- [x] Ajouter un filtre accessible limitant les résultats aux portails institutionnels vérifiés
+- [x] Permettre de sélectionner puis comparer exactement deux destinations côte à côte
+- [x] Tester les filtres, la comparaison, les contrôles clavier et les routes, puis publier
