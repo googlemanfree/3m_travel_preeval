@@ -9,7 +9,7 @@ import { storagePut } from "../storage";
 import { randomBytes } from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "../db";
-import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidates } from "../../drizzle/schema";
+import { agencyDossierDocuments, agencyDossierHistory, agencyDossiers, candidateFiles, candidates } from "../../drizzle/schema";
 import { notifyDocumentSubmission } from "../services/documentSubmissionNotification";
 import { imageSize } from "image-size";
 import { createPortraitProof } from "../portraitVerification";
@@ -210,9 +210,28 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
       const { key, url } = await storagePut(fileKey, file.buffer, file.mimetype);
       const db = await getDb();
       if (!db) throw new Error("Base de données indisponible");
-      const [candidate] = await db.select({ email: candidates.email }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
+      const [candidate] = await db.select({ email: candidates.email, dossierStatus: candidates.dossierStatus }).from(candidates).where(eq(candidates.id, candidateId)).limit(1);
       if (!candidate) throw new Error("Candidat introuvable");
+      const candidateFileType = documentType === "passport" ? "passeport"
+        : documentType === "diploma" ? "diplome"
+        : documentType === "cv" ? "cv"
+        : "autre";
+      const candidateFileResult = await db.insert(candidateFiles).values({
+        candidateId,
+        fileType: candidateFileType,
+        fileName: safeName,
+        fileUrl: url,
+        fileKey: key,
+        fileSizeBytes: file.size,
+        mimeType: file.mimetype,
+        status: "uploaded",
+      });
+      const candidateFileId = Number((candidateFileResult as any)[0]?.insertId || 0);
+      if (candidate.dossierStatus === "nouveau" || candidate.dossierStatus === "evaluation") {
+        await db.update(candidates).set({ dossierStatus: "documents" }).where(eq(candidates.id, candidateId));
+      }
       const [agencyDossier] = await db.select({ id: agencyDossiers.id }).from(agencyDossiers).where(eq(agencyDossiers.email, candidate.email)).orderBy(desc(agencyDossiers.createdAt)).limit(1);
+      let dossierNumber = `COMPTE-${candidateId.toString().padStart(5, "0")}`;
       if (agencyDossier) {
         const insertResult = await db.insert(agencyDossierDocuments).values({
           dossierId: agencyDossier.id,
@@ -233,18 +252,18 @@ export function registerCandidateUploadRoute(app: import("express").Express) {
           newValue: JSON.stringify({ documentId, documentType, documentName: safeName }),
           details: "Document téléversé par le candidat depuis son espace",
         });
-        await notifyDocumentSubmission({
-          candidateEmail: candidate.email,
-          documentType,
-          documentName: safeName,
-          receiptNumber: `DOC-${documentId}`,
-          dossierNumber: `DOS-${agencyDossier.id}`,
-
-        }).catch((notificationError) => {
-          console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
-        });
+        dossierNumber = `DOS-${agencyDossier.id}`;
       }
-      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, synchronized: Boolean(agencyDossier) });
+      await notifyDocumentSubmission({
+        candidateEmail: candidate.email,
+        documentType,
+        documentName: safeName,
+        receiptNumber: `DOC-${candidateFileId || candidateId}`,
+        dossierNumber,
+      }).catch((notificationError) => {
+        console.error("[CandidateUpload] Notification document non envoyée:", notificationError);
+      });
+      res.json({ fileUrl: url, fileKey: key, fileName: safeName, fileSizeBytes: file.size, mimeType: file.mimetype, documentId: candidateFileId, synchronized: true, agencySynchronized: Boolean(agencyDossier) });
     } catch (error) {
       console.error("[CandidateUpload] Error:", error);
       uploadErrorResponse(res, error);

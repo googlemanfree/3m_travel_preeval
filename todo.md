@@ -1729,3 +1729,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Reproduire et corriger l’échec du suivi sécurisé par numéro de dossier et adresse e-mail.
 - [x] Simplifier l’activation de compte et le renvoi de confirmation sans contourner la vérification de l’adresse.
 - [x] Tester les parcours d’inscription, confirmation, suivi et les réponses non divulguantes avant publication.
+
+## Parcours candidat pré-évalué et pièces justificatives
+- [x] Auditer l’activation après évaluation préalable, la restitution dans l’espace candidat et le dépôt documentaire.
+- [x] Activer et orienter le compte du candidat déclarant une évaluation préalable, avec un état de revue explicite mais non auto-validant.
+- [x] Présenter les pièces demandées dans l’espace candidat et rappeler le dépôt sécurisé sans envoyer de décision automatique.
+- [x] Corriger la remontée des pièces déposées vers la file administrative et assurer leur traçabilité.
+- [x] Tester les flux d’activation, dépôt, accès administratif et confidentialité avant publication.

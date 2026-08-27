@@ -20,7 +20,8 @@ describe("Candidate email activation", () => {
     expect(source).toContain('message: "EMAIL_VERIFICATION_REQUIRED"');
     expect(source).toContain("candidateToken: null");
     expect(source).toContain("eq(candidates.verificationToken, hashVerificationToken(input.token))");
-    expect(source).toContain("sendVerificationLink(input.email, input.fullName, rawToken)");
+    expect(source).toContain("sendVerificationLink(normalizedEmail, input.fullName, rawToken, {");
+    expect(source).toContain("priorEvaluationRecognized: Boolean(priorDeliveredEvaluation)");
   });
 
   it("utilise le contrat tRPC actif pour renvoyer le lien depuis l’écran d’attente", () => {

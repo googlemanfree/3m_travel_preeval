@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 interface UploadedDocument {
   id: string;
   name: string;
-  type: 'passport' | 'diplome' | 'certificate' | 'other';
+  type: 'cv' | 'passport' | 'diplome' | 'certificate' | 'other';
   file: File;
   progress: number;
   status: 'pending' | 'uploading' | 'completed' | 'error';
@@ -22,6 +22,7 @@ interface UploadedDocument {
 }
 
 const DOCUMENT_TYPES = [
+  { id: 'cv', label: 'CV', description: 'CV à jour, lisible et complet' },
   { id: 'passport', label: '🛂 Passeport', description: 'Copie couleur lisible' },
   { id: 'diplome', label: '🎓 Diplômes', description: 'Diplôme(s) et relevés de notes' },
   { id: 'certificate', label: '📜 Certificats', description: 'Certificats professionnels ou de langue' },
@@ -30,6 +31,7 @@ const DOCUMENT_TYPES = [
 
 // Correspondance avec les types acceptés par le serveur (server/routers/candidate.ts)
 const SERVER_FILE_TYPE: Record<string, string> = {
+  cv: 'cv',
   passport: 'passeport',
   diplome: 'diplome',
   certificate: 'autre',
@@ -46,7 +48,6 @@ export default function DocumentUploadPage() {
   const [passportToCrop, setPassportToCrop] = useState<File | null>(null);
   const [markerReply, setMarkerReply] = useState<Record<string, string>>({});
 
-  const saveDocumentMutation = trpc.candidate.saveDocument.useMutation();
   const analyzePassportMutation = trpc.clientDocuments.analyzePassport.useMutation();
   const [passportAnalysis, setPassportAnalysis] = useState<any>(null);
   const passportReviewsQuery = trpc.candidate.getPassportAnnotationHistory.useQuery(undefined, { enabled: isAuthenticated });
@@ -89,18 +90,8 @@ export default function DocumentUploadPage() {
       }
       const data = await res.json();
 
-      // Enregistrer le document dans le dossier du candidat (base de données réelle)
-      await saveDocumentMutation.mutateAsync({
-        fileType: SERVER_FILE_TYPE[doc.type] as any,
-        fileName: data.fileName,
-        fileUrl: data.fileUrl,
-        fileKey: data.fileKey,
-        fileSizeBytes: data.fileSizeBytes,
-        mimeType: data.mimeType,
-      });
-
       setUploadedDocs((prev) => prev.map((d) => (d.id === doc.id ? { ...d, status: 'completed', progress: 100, fileUrl: data.fileUrl } : d)));
-      toast.success("Document téléversé avec succès", { description: `${doc.name} est maintenant enregistré dans votre dossier.` });
+      toast.success("Document téléversé avec succès", { description: `${doc.name} est enregistré dans votre dossier et disponible dans la file de traitement de l’agence.` });
 
       // Si c'est un passeport, lancer l'analyse automatique de lisibilité
       if (doc.type === 'passport') {
@@ -131,8 +122,6 @@ export default function DocumentUploadPage() {
       status: 'pending',
     }));
     setUploadedDocs((prev) => [...prev, ...newDocs]);
-    // Envoi immédiat au serveur — pas d'attente d'un clic supplémentaire
-    newDocs.forEach((doc) => uploadFileToServer(doc));
   };
 
   const handleCroppedPassport = (file: File) => {
@@ -190,6 +179,10 @@ export default function DocumentUploadPage() {
       setGlobalError("Attendez la fin de l'envoi de tous les documents.");
       return;
     }
+    if (uploadedDocs.some((d) => d.status === 'pending' || d.status === 'error')) {
+      setGlobalError("Téléversez ou réessayez chaque document avant de terminer.");
+      return;
+    }
     setGlobalError('');
     setSubmitSuccess(true);
     setTimeout(() => navigate('/mon-espace'), 2500);
@@ -231,7 +224,7 @@ export default function DocumentUploadPage() {
         >
           <Upload className="w-12 h-12 text-blue-600 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">Déposez vos documents ici</h3>
-          <p className="text-gray-600 mb-4">ou cliquez pour parcourir votre ordinateur</p>
+          <p className="text-gray-600 mb-4">choisissez les fichiers, indiquez leur type, puis lancez chaque envoi</p>
           <label className="inline-block cursor-pointer">
             <input type="file" multiple onChange={handleFileInput} className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
             <span className="inline-flex items-center justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium h-10 px-4">
@@ -364,7 +357,7 @@ export default function DocumentUploadPage() {
                           value={doc.type}
                           onChange={(e) => updateDocumentType(doc.id, e.target.value)}
                           className="text-sm text-gray-500 mt-1 border border-gray-200 rounded px-2 py-1"
-                          disabled={doc.status === 'uploading'}
+                          disabled={doc.status === 'uploading' || doc.status === 'completed'}
                         >
                           {DOCUMENT_TYPES.map((t) => (
                             <option key={t.id} value={t.id}>{t.label}</option>
@@ -380,9 +373,10 @@ export default function DocumentUploadPage() {
                       {doc.status === 'uploading' && <Loader className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0" />}
                       {doc.status === 'completed' && <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />}
                       {doc.status === 'error' && <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />}
-                      <button onClick={() => removeDocument(doc.id)} aria-label="Retirer" className="text-gray-400 hover:text-red-600 flex-shrink-0">
+                      {doc.status !== 'completed' && <Button type="button" size="sm" onClick={() => uploadFileToServer(doc)} disabled={doc.status === 'uploading'} className="shrink-0 bg-blue-700 hover:bg-blue-800">{doc.status === 'error' ? 'Réessayer' : 'Téléverser'}</Button>}
+                      {doc.status === 'pending' && <button onClick={() => removeDocument(doc.id)} aria-label="Retirer" className="text-gray-400 hover:text-red-600 flex-shrink-0">
                         <X className="w-4 h-4" />
-                      </button>
+                      </button>}
                     </div>
                   </Card>
                 </motion.div>

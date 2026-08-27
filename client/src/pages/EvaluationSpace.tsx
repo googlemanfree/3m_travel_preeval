@@ -167,13 +167,17 @@ export default function EvaluationSpace() {
     verificationStatus: document.verificationStatus,
   }));
   const latestEvaluation = evaluations[0] as any;
-  const evaluationStatusLabel = !latestEvaluation
+  const evaluationStatusLabel = cProfile.evaluationDeclarationStatus === "validated"
+    ? "Évaluation validée"
+    : !latestEvaluation
     ? "Aucune évaluation transmise"
     : cProfile.evaluationReviewedAt
       ? "Évaluation examinée par l’agence"
       : "Évaluation reçue — examen en cours";
-  const validatedEvaluationResponse = latestEvaluation?.reviewedAt && latestEvaluation?.reviewDraft ? String(latestEvaluation.reviewDraft) : null;
-  const evaluationStatusDetail = !latestEvaluation
+  const validatedEvaluationResponse = latestEvaluation?.finalResponseSentAt && latestEvaluation?.reviewDraft ? String(latestEvaluation.reviewDraft) : null;
+  const evaluationStatusDetail = cProfile.evaluationDeclarationStatus === "validated"
+    ? "Votre évaluation reçue avant la création du compte a été rapprochée de manière sécurisée. Déposez les pièces demandées dans le centre documentaire."
+    : !latestEvaluation
     ? "Créez ou poursuivez votre évaluation pour initier le dossier."
     : validatedEvaluationResponse || cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;

@@ -4,7 +4,7 @@
  */
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { parse as parseCookieHeader } from "cookie";
 import { z } from "zod";
@@ -301,12 +301,39 @@ export const candidateRouter = router({
     .mutation(async ({ input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+      const normalizedEmail = input.email.trim().toLowerCase();
 
       // Vérifier si l'email existe déjà
-      const existing = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+      const existing = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, normalizedEmail)).limit(1);
       if (existing.length > 0) {
         throw new TRPCError({ code: "CONFLICT", message: "Un compte existe déjà avec cet email." });
       }
+
+      // Une déclaration ne valide jamais seule l’évaluation. Le rapprochement
+      // n’est automatique que si l’adresse appartient à une évaluation déjà
+      // relue et effectivement transmise par l’équipe.
+      const [priorDeliveredEvaluation] = input.evaluationAlreadyCompleted
+        ? await db.select({ reviewedAt: evaluations.reviewedAt })
+          .from(evaluations)
+          .where(and(
+            eq(evaluations.email, normalizedEmail),
+            eq(evaluations.status, "reviewed"),
+            isNotNull(evaluations.reviewedAt),
+            isNotNull(evaluations.finalResponseSentAt),
+          ))
+          .orderBy(desc(evaluations.reviewedAt))
+          .limit(1)
+        : [undefined];
+      const priorEvaluationFields = priorDeliveredEvaluation
+        ? {
+            dossierStatus: "documents" as const,
+            evaluationDeclarationStatus: "validated" as const,
+            evaluationDeclaredAt: new Date(),
+            evaluationReviewedAt: priorDeliveredEvaluation.reviewedAt,
+            evaluationReviewedBy: null,
+            evaluationReviewNote: null,
+          }
+        : resolveEvaluationDeclaration(input.evaluationAlreadyCompleted);
 
       const portraitProof = verifyPortraitProof(input.portraitVerificationToken, input.email.toLowerCase());
       const passwordHash = await bcrypt.hash(input.password, 12);
@@ -319,13 +346,13 @@ export const candidateRouter = router({
       try {
         await db.insert(candidates).values({
           fullName: input.fullName,
-          email: input.email,
+          email: normalizedEmail,
           passwordHash,
           phone: input.phone ?? null,
           destination: input.destination ?? "autre",
           nationality: input.nationality ?? null,
           dossierStatus: "nouveau",
-          ...resolveEvaluationDeclaration(input.evaluationAlreadyCompleted),
+          ...priorEvaluationFields,
           emailVerified: false,
           avatarUrl: portraitProof.url,
           avatarVerificationStatus: "verified",
@@ -338,7 +365,7 @@ export const candidateRouter = router({
         });
 
         // Recuperer le candidateId insere
-        const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, input.email)).limit(1);
+        const inserted = await db.select({ id: candidates.id }).from(candidates).where(eq(candidates.email, normalizedEmail)).limit(1);
         if (!inserted.length) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Erreur lors de la creation du compte." });
         }
@@ -357,7 +384,9 @@ export const candidateRouter = router({
 
       // Envoyer l'email de confirmation avec lien
       try {
-        await sendVerificationLink(input.email, input.fullName, rawToken);
+        await sendVerificationLink(normalizedEmail, input.fullName, rawToken, {
+          priorEvaluationRecognized: Boolean(priorDeliveredEvaluation),
+        });
       } catch (err) {
         console.error("[Register] Email verification link send error:", err);
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Compte créé, mais l’e-mail d’activation n’a pas pu être envoyé. Utilisez le renvoi d’activation." });
@@ -368,7 +397,10 @@ export const candidateRouter = router({
         candidateToken: null,
         requiresEmailVerification: true,
         requiresPortrait: false,
-        message: "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email.",
+        priorEvaluationMatched: Boolean(priorDeliveredEvaluation),
+        message: priorDeliveredEvaluation
+          ? "Compte créé. Votre évaluation déjà transmise par l’équipe est reconnue ; confirmez votre adresse e-mail pour accéder au dépôt sécurisé des pièces demandées."
+          : "Compte créé avec portrait humain vérifié. Un lien de confirmation a été envoyé à votre adresse email.",
       };
     }),
 
@@ -1753,7 +1785,7 @@ export const candidateRouter = router({
       reviewDeadline: evaluation.reviewDeadline,
       reviewedAt: evaluation.reviewedAt,
       finalResponseSentAt: evaluation.finalResponseSentAt,
-      reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null,
+      reviewDraft: evaluation.finalResponseSentAt ? evaluation.reviewDraft : null,
     }));
 
     let profileFieldsFilled = 0;

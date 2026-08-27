@@ -204,9 +204,17 @@ export async function sendPaymentConfirmationEmail(
   }
 }
 
-export async function sendVerificationLink(to: string, fullName: string, verificationToken: string): Promise<void> {
+export async function sendVerificationLink(
+  to: string,
+  fullName: string,
+  verificationToken: string,
+  options: { priorEvaluationRecognized?: boolean } = {},
+): Promise<void> {
   const baseUrl = (SITE_URL || "https://www.3mtravelagency.com").replace(/\/+$/, "");
   const verifyUrl = `${baseUrl}/verify-email-link?token=${encodeURIComponent(verificationToken)}`;
+  const priorEvaluationNotice = options.priorEvaluationRecognized
+    ? `<p>Votre évaluation déjà transmise par notre équipe a été reconnue. Après confirmation de cette adresse, vous accéderez directement à votre espace pour déposer les pièces justificatives indiquées dans votre communication.</p>`
+    : "";
   try {
     await sendGenericEmail({
       to,
@@ -220,6 +228,7 @@ export async function sendVerificationLink(to: string, fullName: string, verific
             <p>Bonjour <strong>${fullName}</strong>,</p>
             <p>Bienvenue dans votre <strong>Espace Candidat 3M Travel</strong> ! 🎉</p>
             <p>Pour finaliser votre inscription et activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous :</p>
+            ${priorEvaluationNotice}
             
             <p style="text-align: center; margin-top: 30px;">
               <a href="${verifyUrl}" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 12px 32px; text-decoration: none; border-radius: 8px; display: inline-block;">

@@ -27,6 +27,7 @@ export default function VerifyEmailLink() {
   const [isResending, setIsResending] = useState(false);
   const [nextPath, setNextPath] = useState(redirect === "/dashboard" ? "/mon-espace" : redirect);
   const [requiresEvaluation, setRequiresEvaluation] = useState(false);
+  const priorEvaluationRecognized = candidateData?.candidate?.evaluationDeclarationStatus === "validated";
 
   // Compte à rebours avant redirection
   useEffect(() => {
@@ -46,7 +47,12 @@ export default function VerifyEmailLink() {
     onSuccess: (data) => {
       const candidate = data.candidate;
       const needsEvaluation = candidate?.evaluationDeclarationStatus === "not_declared";
-      const destination = needsEvaluation ? "/evaluation?onboarding=registration" : "/mon-espace";
+      const priorEvaluationValidated = candidate?.evaluationDeclarationStatus === "validated";
+      const destination = needsEvaluation
+        ? "/evaluation?onboarding=registration"
+        : priorEvaluationValidated
+          ? "/mon-espace?section=documents"
+          : "/mon-espace";
       if (candidate && data.token) {
         const sessionExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
         localStorage.setItem("3m_candidate_token", data.token);
@@ -216,7 +222,9 @@ export default function VerifyEmailLink() {
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-green-900 mb-1">Email Confirmé</h3>
                       <p className="text-green-700">
-                        Votre adresse e-mail est confirmée. Vous pouvez maintenant vous connecter avec vos identifiants pour accéder à votre espace candidat.
+                        {priorEvaluationRecognized
+                          ? "Votre adresse est confirmée et votre évaluation déjà remise par l’équipe est reconnue. Vous pouvez accéder à votre dossier et déposer les pièces justificatives demandées."
+                          : "Votre adresse e-mail est confirmée. Vous pouvez maintenant accéder à votre espace candidat."}
                       </p>
                     </div>
                   </div>
@@ -286,7 +294,7 @@ export default function VerifyEmailLink() {
                     onClick={() => navigate(nextPath)}
                     className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 rounded-xl transition-all duration-200 hover:shadow-xl flex items-center justify-center gap-3 text-lg"
                   >
-                    {requiresEvaluation ? "Commencer mon évaluation" : "Accéder à mon espace candidat"}
+                    {requiresEvaluation ? "Commencer mon évaluation" : priorEvaluationRecognized ? "Accéder à mon dossier et mes pièces" : "Accéder à mon espace candidat"}
                     <ArrowRight className="w-6 h-6" />
                   </Button>
                 </motion.div>
