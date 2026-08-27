@@ -74,6 +74,7 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/mon-espace": { title: `Mon espace | ${SITE}`, description: "Espace privé de suivi des démarches et communications.", heading: "Mon espace client", lead: "Connectez-vous pour consulter votre espace personnel. Cette page n’est pas indexée.", noindex: true },
   "/mon-dossier": { title: `Mon dossier | ${SITE}`, description: "Espace privé de suivi du dossier client.", heading: "Mon dossier", lead: "Connectez-vous pour suivre votre dossier. Cette page n’est pas indexée.", noindex: true },
   "/confirm-email-change": { title: `Confirmer mon adresse e-mail | ${SITE}`, description: "Page sécurisée de confirmation du changement d’adresse e-mail.", heading: "Confirmer le changement d’adresse", lead: "Cette page sécurisée n’est pas indexée.", noindex: true },
+  "/assistance-acces": { title: `Assistance accès | ${SITE}`, description: "Demande d’assistance sécurisée pour la récupération d’accès à un espace client.", heading: "Assistance pour récupérer l’accès", lead: "Cette page de récupération nécessite une vérification humaine et n’est pas indexée.", noindex: true },
 };
 
 const esc = (value: string) => value.replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char] ?? char);

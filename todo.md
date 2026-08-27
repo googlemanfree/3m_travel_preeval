@@ -1627,3 +1627,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Mettre à jour l’identité, les dossiers liés et l’audit uniquement après validation du lien
 - [x] Ajouter les contrôles d’interface du profil, l’annulation et les messages de sécurité
 - [x] Tester les autorisations, le doublon, l’expiration, la confirmation et publier
+
+## Assistance pour perte d’accès à l’adresse e-mail
+- [x] Auditer les formulaires, routes et contrôles administratifs d’assistance existants
+- [x] Créer une demande publique minimale de récupération d’accès, sans changement automatique d’identité
+- [x] Créer une file d’administration avec validation humaine, décision, motif et audit
+- [x] Protéger la demande contre l’énumération, le spam et l’exposition de données de dossier
+- [x] Ajouter les tests d’autorisation, de validation et de cycle de traitement, puis publier

@@ -19,6 +19,7 @@ const VerifyEmail = lazyWithTimeout(() => import("./pages/VerifyEmail"));
 const VerifyEmailLink = lazyWithTimeout(() => import("./pages/VerifyEmailLink"));
 const VerifyEmailSent = lazyWithTimeout(() => import("./pages/VerifyEmailSent"));
 const ConfirmEmailChange = lazyWithTimeout(() => import("./pages/ConfirmEmailChange"));
+const AccessRecoveryRequest = lazyWithTimeout(() => import("./pages/AccessRecoveryRequest"));
 const CompleteProfile = lazyWithTimeout(() => import("./pages/CompleteProfile"));
 const ForgotPassword = lazyWithTimeout(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazyWithTimeout(() => import("./pages/ResetPassword"));
@@ -105,6 +106,7 @@ const PaymentMethodSelection = lazyWithTimeout(() => import("./pages/PaymentMeth
 const PaymentAgencyConfirmation = lazyWithTimeout(() => import("./pages/PaymentAgencyConfirmation"));
 const AdminCustomerReviews = lazyWithTimeout(() => import("./pages/AdminCustomerReviews"));
 const AdminInsuranceRequests = lazyWithTimeout(() => import("./pages/AdminInsuranceRequests"));
+const AdminAccessRecovery = lazyWithTimeout(() => import("./pages/AdminAccessRecovery"));
 const ClientCaseTracking = lazyWithTimeout(() => import("./pages/ClientCaseTracking"));
 const SubmitReview = lazyWithTimeout(() => import("./pages/SubmitReview"));
 import { useSessionTimeout } from "./_core/hooks/useSessionTimeout";
@@ -158,6 +160,7 @@ function Router() {
       <Route path={"/verify-email-link"} component={VerifyEmailLink} />
       <Route path={"/verify-email-sent"} component={VerifyEmailSent} />
       <Route path={"/confirm-email-change"} component={ConfirmEmailChange} />
+      <Route path={"/assistance-acces"} component={AccessRecoveryRequest} />
       <Route path={"/complete-profile"} component={CompleteProfile} />
       <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/reset-password"} component={ResetPassword} />
@@ -256,6 +259,11 @@ function Router() {
       <Route path={"/admin/dossiers"}>
         <AdminGuard message="Accès réservé aux administrateurs.">
           <AdminDashboard />
+        </AdminGuard>
+      </Route>
+      <Route path={"/admin/recuperation-acces"}>
+        <AdminGuard message="Accès réservé aux administrateurs.">
+          <AdminAccessRecovery />
         </AdminGuard>
       </Route>
       <Route path={"/admin/securite"}>

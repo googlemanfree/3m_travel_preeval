@@ -79,6 +79,7 @@ import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
 import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
+import { accessRecoveryRouter } from "./routers/accessRecovery";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -123,6 +124,7 @@ export const appRouter = router({
   unifiedRequests: unifiedRequestsRouter,
   tourism: tourismRouter,
   candidate: candidateRouter,
+  accessRecovery: accessRecoveryRouter,
   candidateAuthOTP: candidateAuthOTPRouter,
   application: applicationRouter,
   heartbeat: heartbeatRouter,

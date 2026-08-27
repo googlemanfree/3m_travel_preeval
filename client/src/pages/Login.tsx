@@ -331,6 +331,14 @@ export default function Login() {
               >
                 {t("Mot de passe oublié ?", "Forgot password?")}
               </button>
+              <span className="text-gray-300">•</span>
+              <button
+                type="button"
+                onClick={() => navigate("/assistance-acces")}
+                className="text-[#2563EB] hover:underline font-medium transition-colors"
+              >
+                {t("Ancien e-mail inaccessible ?", "Lost access to your old email?")}
+              </button>
             </div>
           </div>
 

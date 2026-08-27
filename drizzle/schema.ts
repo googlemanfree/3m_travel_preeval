@@ -228,6 +228,44 @@ export const candidateEmailChangeRequests = mysqlTable("candidate_email_change_r
 export type CandidateEmailChangeRequest = typeof candidateEmailChangeRequests.$inferSelect;
 
 /**
+ * Demandes d’assistance lorsque le candidat ne contrôle plus son ancienne
+ * adresse. Cette file ne modifie jamais un compte automatiquement : un
+ * administrateur doit vérifier l’identité en dehors du formulaire avant toute
+ * action sensible.
+ */
+export const candidateAccessRecoveryRequests = mysqlTable("candidate_access_recovery_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 255 }).notNull(),
+  dossierNumber: varchar("dossierNumber", { length: 40 }),
+  newEmail: varchar("newEmail", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  preferredContact: mysqlEnum("preferredContact", ["phone", "whatsapp", "email"]).notNull(),
+  details: varchar("details", { length: 500 }),
+  status: mysqlEnum("status", ["pending", "reviewing", "identity_verified", "rejected", "closed"]).default("pending").notNull(),
+  reviewedBy: varchar("reviewedBy", { length: 320 }),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewNote: varchar("reviewNote", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => [
+  index("candidate_access_recovery_requests_status_idx").on(table.status, table.createdAt),
+]);
+export type CandidateAccessRecoveryRequest = typeof candidateAccessRecoveryRequests.$inferSelect;
+
+/** Journal minimal et immuable des décisions humaines de récupération d’accès. */
+export const candidateAccessRecoveryEvents = mysqlTable("candidate_access_recovery_events", {
+  id: int("id").autoincrement().primaryKey(),
+  requestId: int("requestId").notNull(),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  action: mysqlEnum("action", ["reviewing", "identity_verified", "rejected", "closed"]).notNull(),
+  note: varchar("note", { length: 500 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  index("candidate_access_recovery_events_request_idx").on(table.requestId, table.createdAt),
+]);
+export type CandidateAccessRecoveryEvent = typeof candidateAccessRecoveryEvents.$inferSelect;
+
+/**
  * Documents uploadés par le candidat (CV, passeport, diplômes, etc.)
  */
 export const candidateFiles = mysqlTable("candidate_files", {
