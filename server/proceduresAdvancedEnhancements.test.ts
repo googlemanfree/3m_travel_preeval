@@ -19,7 +19,7 @@ describe("améliorations Procédures et suivi administratif", () => {
   it("préserve le pays et la procédure choisis jusqu’au formulaire d’évaluation", () => {
     const procedures = readProjectFile("client/src/pages/ProceduresAdvanced.tsx");
     expect(procedures).toContain("getEvaluationHref");
-    expect(procedures).toContain("destination=${encodeURIComponent(country.id)}&project=${encodeURIComponent(country.visaType)}");
+    expect(procedures).toContain("project=${encodeURIComponent(country.visaType)}&destination=${encodeURIComponent(country.id)}");
     expect(procedures).toContain("Préparer mon dossier");
     expect(procedures).not.toContain("window.location.href = `/procedures/${country.id}`");
   });

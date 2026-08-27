@@ -48,6 +48,7 @@ export default function EvaluationSpace() {
   const trpcUtils = trpc.useUtils();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "history" | "documents" | "profile" | "messages" | "testimonials">("overview");
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
@@ -77,9 +78,14 @@ export default function EvaluationSpace() {
 
   const handleManualRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
+    const result = await refetch();
+    if (!result.error) setLastSyncedAt(Date.now());
     setTimeout(() => setIsRefreshing(false), 500);
   };
+
+  useEffect(() => {
+    if (dashboardData) setLastSyncedAt(Date.now());
+  }, [dashboardData]);
 
   useEffect(() => {
     if (searchParams.get("section")) {
@@ -170,6 +176,18 @@ export default function EvaluationSpace() {
     : cProfile.evaluationReviewNote || "Un conseiller vérifie vos éléments et vous contactera si une précision est nécessaire.";
   const reviewDueAt = (latestEvaluation as any)?.reviewDeadline ?? (cProfile as any).dueAt ?? null;
   const reviewDueLabel = reviewDueAt ? new Date(reviewDueAt).toLocaleDateString("fr-FR", { dateStyle: "long" }) : null;
+  const priority = stats.unreadMessages > 0
+    ? { title: "Lire la réponse de votre conseiller", detail: `${stats.unreadMessages} message${stats.unreadMessages > 1 ? "s" : ""} attend${stats.unreadMessages > 1 ? "ent" : ""} votre lecture.`, target: "messages" as const, label: "Ouvrir la messagerie", icon: MessageSquare, tone: "bg-amber-50 border-amber-200 text-amber-950" }
+    : cProfile.dossierStatus === "documents"
+      ? { title: "Compléter les documents demandés", detail: "Consultez la checklist : l’agence précise les pièces réellement nécessaires à votre dossier.", target: "documents" as const, label: "Voir mes documents", icon: FileText, tone: "bg-blue-50 border-blue-200 text-blue-950" }
+      : !latestEvaluation
+        ? { title: "Poursuivre votre évaluation", detail: "Votre dossier reste préparatoire tant que les informations et le CV requis ne sont pas transmis.", target: "dossier" as const, label: "Voir mon dossier", icon: Sparkles, tone: "bg-violet-50 border-violet-200 text-violet-950" }
+        : { title: "Suivre l’avancement de votre dossier", detail: reviewDueLabel ? `Une revue est indiquée au plus tard le ${reviewDueLabel}.` : "Votre conseiller publiera la prochaine étape après vérification.", target: "dossier" as const, label: "Suivre mon dossier", icon: FolderOpen, tone: "bg-emerald-50 border-emerald-200 text-emerald-950" };
+  const PriorityIcon = priority.icon;
+  const switchToSection = (nextSection: typeof activeTab) => {
+    setActiveTab(nextSection);
+    setLocation(`/mon-espace?section=${nextSection}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 pb-16">
@@ -347,6 +365,39 @@ export default function EvaluationSpace() {
                 </h3>
                 <DossierProgressTimeline dossierStatus={cProfile.dossierStatus} dossierKey={cProfile.dossierNumber} evaluationDeclarationStatus={cProfile.evaluationDeclarationStatus} />
               </Card>
+
+              <section aria-labelledby="client-priority-title">
+                <Card className={`border p-5 shadow-sm ${priority.tone}`}>
+                  <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                    <div className="flex min-w-0 gap-3">
+                      <span className="shrink-0 rounded-xl bg-white/80 p-3 shadow-sm"><PriorityIcon className="h-5 w-5" aria-hidden="true" /></span>
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">Priorité du dossier</p>
+                        <h3 id="client-priority-title" className="mt-1 text-lg font-black">{priority.title}</h3>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-90">{priority.detail}</p>
+                        <p className="mt-2 text-xs leading-5 opacity-80">Les statuts et demandes sont synchronisés depuis l’agence. Aucune décision n’est prise automatiquement dans cet espace.</p>
+                      </div>
+                    </div>
+                    <Button type="button" onClick={() => switchToSection(priority.target)} className="h-11 shrink-0 bg-slate-950 text-white hover:bg-slate-800">
+                      {priority.label}<ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="mt-5 grid gap-2 border-t border-current/15 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <button type="button" onClick={() => setLocation("/mon-dossier")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                      <span className="block text-xs font-semibold opacity-70">Référence de dossier</span><span className="mt-1 block font-mono">{cProfile.dossierNumber || "En cours d’attribution"}</span>
+                    </button>
+                    <button type="button" onClick={() => switchToSection("documents")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                      <span className="block text-xs font-semibold opacity-70">Documents synchronisés</span><span className="mt-1 block">{stats.totalDocuments} élément{stats.totalDocuments > 1 ? "s" : ""}</span>
+                    </button>
+                    <button type="button" onClick={() => switchToSection("messages")} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                      <span className="block text-xs font-semibold opacity-70">Messagerie</span><span className="mt-1 block">{stats.unreadMessages ? `${stats.unreadMessages} non lu${stats.unreadMessages > 1 ? "s" : ""}` : "À jour"}</span>
+                    </button>
+                    <button type="button" onClick={handleManualRefresh} disabled={isRefreshing} className="rounded-xl bg-white/70 p-3 text-left text-sm font-bold hover:bg-white disabled:cursor-wait focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900">
+                      <span className="block text-xs font-semibold opacity-70">Synchronisation</span><span className="mt-1 flex items-center gap-1.5">{isRefreshing ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}{lastSyncedAt ? `Mise à jour à ${new Date(lastSyncedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "Actualiser"}</span>
+                    </button>
+                  </div>
+                </Card>
+              </section>
 
               <section aria-label="Documents recommandés à compléter">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

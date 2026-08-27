@@ -1634,3 +1634,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Créer une file d’administration avec validation humaine, décision, motif et audit
 - [x] Protéger la demande contre l’énumération, le spam et l’exposition de données de dossier
 - [x] Ajouter les tests d’autorisation, de validation et de cycle de traitement, puis publier
+
+## Pilotage complet de l’espace client
+- [x] Auditer les dossiers, statuts, documents, communications, échéances et raccourcis réellement visibles au client
+- [x] Unifier les priorités et prochaines actions client à partir des données synchronisées du serveur
+- [x] Renforcer les états vides, erreurs, reprises et actualisation manuelle sans effacer les données existantes
+- [x] Ajouter ou corriger les raccourcis client nécessaires vers le dossier, les documents, les messages et l’aide
+- [x] Vérifier la cohérence des mises à jour administrateur vers l’espace client sans décision automatique
+- [x] Tester les rôles, synchronisations, routes et affichages responsive, puis publier
