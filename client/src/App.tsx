@@ -485,7 +485,10 @@ function AppShell() {
   // Les accès authentifiés sont vérifiés par les procédures serveur et les cookies
   // HttpOnly : aucune session ou identité n’est restaurée depuis le navigateur.
   const sessionRestored = true;
-  const showFloatingTools = widgetsVisible && location !== "/contact";
+  const isAccessRoute = ["/login", "/signup", "/mon-espace", "/mon-dossier", "/document-upload"].some(
+    (path) => location === path || location.startsWith(`${path}?`),
+  );
+  const showFloatingTools = widgetsVisible && location !== "/contact" && !isAccessRoute;
   const showPublicFooter = !location.startsWith("/admin");
 
   return (
@@ -518,9 +521,9 @@ function AppShell() {
                       {/* Menu d'actions flottantes unifié */}
                       {showFloatingTools && <FloatingActionMenu />}
                       {/* Guide d’information flottant */}
-                      <AiCopilotWidgetEnhanced />
+                      {showFloatingTools && <AiCopilotWidgetEnhanced />}
                       {/* Assistant intelligent de réservation de vol */}
-                      <SmartFlightAssistant />
+                      {showFloatingTools && <SmartFlightAssistant />}
                     </>
                   )}
                   </MultiServiceCartProvider>

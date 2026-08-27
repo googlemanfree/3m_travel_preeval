@@ -76,10 +76,9 @@ export function BilanActionModal({
     }
 
     requestAppointmentMutation.mutate({
-      candidateEmail,
-      dossierNumber,
       preferredDate: appointmentDate,
       preferredTime: appointmentTime,
+      preferredContact: 'email',
       reason: appointmentReason || 'Discussion du bilan',
     });
   };

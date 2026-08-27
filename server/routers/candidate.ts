@@ -1654,18 +1654,28 @@ export const candidateRouter = router({
    */
   requestBilanAppointment: candidateProcedure
     .input(z.object({
-      candidateEmail: z.string().email(),
-      dossierNumber: z.string(),
-      preferredDate: z.string(),
-      preferredTime: z.string(),
-      reason: z.string(),
+      preferredDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide"),
+      preferredTime: z.string().regex(/^\d{2}:\d{2}$/, "Heure invalide"),
+      preferredContact: z.enum(["phone", "whatsapp", "email"]),
+      reason: z.string().trim().min(4, "Motif requis").max(280, "Motif trop long"),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
       try {
-        const appointmentRequest = `[RENDEZ-VOUS ${input.dossierNumber}]\n\nDate preferee: ${input.preferredDate}\nHeure preferee: ${input.preferredTime}\n\nSujet: ${input.reason}`;
+        const preferredAt = new Date(`${input.preferredDate}T${input.preferredTime}:00`);
+        if (Number.isNaN(preferredAt.getTime()) || preferredAt.getTime() < Date.now() + 30 * 60 * 1000) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Choisissez un créneau futur d’au moins 30 minutes." });
+        }
+        const applicationRows = await db.select({ dossierNumber: applications.dossierNumber })
+          .from(applications)
+          .where(eq(applications.candidateId, ctx.candidate.id))
+          .orderBy(desc(applications.createdAt))
+          .limit(1);
+        const dossierNumber = applicationRows[0]?.dossierNumber || (ctx.candidate as any).dossierNumber || "Dossier en cours d’attribution";
+        const contactLabels = { phone: "Téléphone", whatsapp: "WhatsApp", email: "E-mail" } as const;
+        const appointmentRequest = `[RENDEZ-VOUS]\n\nDossier : ${dossierNumber}\nCréneau souhaité : ${input.preferredDate} à ${input.preferredTime}\nCanal préféré : ${contactLabels[input.preferredContact]}\n\nMotif : ${input.reason}`;
 
         const message = await db
           .insert(candidateMessages)
@@ -1679,8 +1689,9 @@ export const candidateRouter = router({
 
         return {
           success: true,
-          message: "Demande de rendez-vous envoyee",
+          message: "Demande de rendez-vous transmise pour confirmation humaine.",
           requestId: message[0].id,
+          status: "pending_agency_confirmation" as const,
         };
       } catch (err) {
         console.error("[Request Bilan Appointment] Error:", err);

@@ -1642,3 +1642,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter ou corriger les raccourcis client nécessaires vers le dossier, les documents, les messages et l’aide
 - [x] Vérifier la cohérence des mises à jour administrateur vers l’espace client sans décision automatique
 - [x] Tester les rôles, synchronisations, routes et affichages responsive, puis publier
+
+## Prise de rendez-vous depuis l’espace client
+- [x] Auditer les demandes de rendez-vous, calendriers et routes existants
+- [x] Ajouter un module client lié au dossier avec motifs, créneaux préférés et canal de contact
+- [x] Afficher le statut de la demande sans présenter la réservation comme confirmée avant revue humaine
+- [x] Rendre la demande visible et actionnable dans la file administrative existante avec audit
+- [x] Tester les autorisations, les validations, les états de confirmation et publier
+- [x] Corriger le chevauchement des widgets flottants avec les actions d’accès client sur mobile

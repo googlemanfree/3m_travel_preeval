@@ -39,6 +39,7 @@ import { DocumentUploader } from "@/components/DocumentUploader";
 import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
 import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
+import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -398,6 +399,12 @@ export default function EvaluationSpace() {
                   </div>
                 </Card>
               </section>
+
+              <ClientAppointmentRequest
+                dossierNumber={cProfile.dossierNumber === "N/A" ? null : cProfile.dossierNumber}
+                messages={messages}
+                onRequested={handleManualRefresh}
+              />
 
               <section aria-label="Documents recommandés à compléter">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
