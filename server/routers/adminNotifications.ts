@@ -11,7 +11,7 @@ import { publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { adminNotifications } from "../../drizzle/schema";
-import { eq, desc, or, isNull, and } from "drizzle-orm";
+import { eq, desc, or, isNull, and, gte } from "drizzle-orm";
 import { requireValidAdminSession } from "./adminAuth";
 import { logger } from "../_core/logger";
 
@@ -45,6 +45,48 @@ export async function notifyAdmins(input: {
 }
 
 export const adminNotificationsRouter = router({
+  simulatorHealth: publicProcedure
+    .input(z.object({ sessionToken: z.string() }))
+    .query(async ({ input }) => {
+      const admin = await requireValidAdminSession(input.sessionToken);
+      const db = await getDb();
+      const simulators = [
+        { key: "express", label: "Simulateur express", route: "/" },
+        { key: "canada_score", label: "Simulateur Canada", route: "/canada" },
+        { key: "study_evaluation", label: "Questionnaire Études", route: "/etudes" },
+      ] as const;
+      if (!db) {
+        return {
+          updatedAt: new Date(),
+          incidents: [],
+          simulators: simulators.map((simulator) => ({ ...simulator, status: "unknown" as const, incidents24h: 0, lastIncidentAt: null })),
+        };
+      }
+
+      const rows = await db
+        .select()
+        .from(adminNotifications)
+        .where(and(
+          eq(adminNotifications.type, "simulator_load_failed"),
+          or(isNull(adminNotifications.targetAdminType), eq(adminNotifications.targetAdminType, admin.adminType)),
+        ))
+        .orderBy(desc(adminNotifications.createdAt))
+        .limit(100);
+      const since = Date.now() - 24 * 60 * 60 * 1000;
+      const incidents = rows.map((row) => ({ id: row.id, message: row.message, createdAt: row.createdAt, isRead: row.isRead }));
+      const health = simulators.map((simulator) => {
+        const matching = rows.filter((row) => row.message.includes(`simulateur ${simulator.key}`));
+        const incidents24h = matching.filter((row) => row.createdAt.getTime() >= since).length;
+        return {
+          ...simulator,
+          status: incidents24h === 0 ? (matching.length === 0 ? "normal" : "recovered") : (incidents24h >= 3 ? "attention" : "degraded"),
+          incidents24h,
+          lastIncidentAt: matching[0]?.createdAt ?? null,
+        };
+      });
+      return { updatedAt: new Date(), incidents, simulators: health };
+    }),
+
   /**
    * Liste des notifications pour l'admin connecté (les siennes + celles
    * sans type ciblé), les plus récentes en premier.

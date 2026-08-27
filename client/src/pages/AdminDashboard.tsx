@@ -91,6 +91,7 @@ import { AdminPassportCorrectionHistory } from "@/components/AdminPassportCorrec
 import { AdminEvisaCatalogueManager } from "@/components/AdminEvisaCatalogueManager";
 import { AdminRouteHealthManager } from "@/components/AdminRouteHealthManager";
 import { AdminSystemStatus } from "@/components/AdminSystemStatus";
+import { AdminSimulatorHealth } from "@/components/AdminSimulatorHealth";
 import { AdminFooterEngagement } from "@/components/AdminFooterEngagement";
 import { AdminPlacementPipeline } from "@/components/AdminPlacementPipeline";
 import { AdminOperationsControlCenter } from "@/components/AdminOperationsControlCenter";
@@ -1476,7 +1477,7 @@ export default function AdminDashboard() {
             <AdminNavGroup title="Services & catalogue"><TabsTrigger value="tourism">Tourisme & Devis</TabsTrigger><TabsTrigger value="consular" className="font-bold text-blue-600">Consulats & Liens</TabsTrigger><TabsTrigger value="destination-analytics" className="font-bold text-indigo-700">Destinations</TabsTrigger><TabsTrigger value="evisa-catalogue" className="font-bold text-cyan-700">Catalogue e‑Visa</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Réservations & finance"><TabsTrigger value="calendar">Calendrier</TabsTrigger><TabsTrigger value="payments">Paiements {pendingPaymentApplications.length > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{pendingPaymentApplications.length}</Badge>}</TabsTrigger><TabsTrigger value="flights" className="font-bold text-sky-700"><Plane className="h-4 w-4" /> Réservations vols {(flightQueueSummary?.pending_review ?? 0) > 0 && <Badge className="h-5 min-w-5 rounded-full bg-amber-500 px-1.5 text-[10px] text-white">{flightQueueSummary?.pending_review}</Badge>}</TabsTrigger><TabsTrigger value="rates" className="font-bold text-emerald-600">Taux de change</TabsTrigger></AdminNavGroup>
             <AdminNavGroup title="Communication & qualité"><TabsTrigger value="emails">E-mails</TabsTrigger><TabsTrigger value="faq">Satisfaction FAQ</TabsTrigger><TabsTrigger value="rag">Guides & RAG</TabsTrigger><TabsTrigger value="passport-history">Passeports</TabsTrigger></AdminNavGroup>
-            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="footer-engagement" className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="audit">Journal d’audit</TabsTrigger></AdminNavGroup>
+            <AdminNavGroup title="Supervision"><TabsTrigger value="route-health" className="font-bold text-rose-700">404 & Liens</TabsTrigger><TabsTrigger value="simulator-health" className="font-bold text-amber-700">Santé simulateurs</TabsTrigger><TabsTrigger value="footer-engagement" className="font-bold text-blue-700">Engagement footer</TabsTrigger><TabsTrigger value="system-status" className="font-bold text-emerald-700">État système</TabsTrigger><TabsTrigger value="audit">Journal d’audit</TabsTrigger></AdminNavGroup>
           </div>
           <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-xs text-slate-600"><span>Section active : <strong className="text-slate-950">{activeAdminTab === "candidates" ? "Dossiers" : activeAdminTab === "pre-dossiers" ? "Pré-dossiers" : activeAdminTab === "flights" ? "Réservations vols" : activeAdminTab}</strong></span><span className="hidden sm:inline">Les changements sensibles nécessitent une validation humaine.</span></div>
 
@@ -1487,6 +1488,7 @@ export default function AdminDashboard() {
           </TabsContent>
           <TabsContent value="evisa-catalogue" className="space-y-6"><AdminEvisaCatalogueManager sessionToken={sessionToken} /></TabsContent>
           <TabsContent value="route-health" className="space-y-6"><AdminRouteHealthManager sessionToken={sessionToken} /></TabsContent>
+          <TabsContent value="simulator-health" className="space-y-6"><AdminSimulatorHealth sessionToken={sessionToken} /></TabsContent>
           <TabsContent value="system-status" className="space-y-6"><AdminSystemStatus /></TabsContent>
           <TabsContent value="footer-engagement" className="space-y-6"><AdminFooterEngagement sessionToken={sessionToken} /></TabsContent>
 

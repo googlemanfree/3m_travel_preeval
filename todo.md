@@ -1564,3 +1564,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Signaler les erreurs de chargement de simulateur dans l’espace administrateur
 - [x] Ajouter des tests navigateur mobile pour les CTA publics
 - [x] Tester la lisibilité, l’accessibilité et les parcours de reprise avant publication
+
+## Santé des simulateurs et CTA tablette
+- [x] Créer une compétence réutilisable pour le suivi admin des simulateurs et les CTA responsive
+- [x] Ajouter un indicateur de santé des simulateurs au tableau de bord administrateur
+- [x] Ajouter un historique détaillé, filtrable et respectueux de la vie privée des incidents
+- [x] Optimiser les zones de clic et les libellés CTA sur tablette
+- [x] Ajouter des tests navigateur spécifiques au format tablette
+- [x] Tester les contrôles admin, les routes et les régressions, puis publier

@@ -26,7 +26,6 @@ export const simulatorDiagnosticsRouter = router({
         type: "simulator_load_failed",
         title: "Chargement simulateur à surveiller",
         message: `Le simulateur ${input.simulator} a signalé un échec de chargement sur ${input.route}. Aucun renseignement candidat n’a été transmis.`,
-        targetAdminType: "evaluation",
       });
       return { reported: true, throttled: false };
     }),
