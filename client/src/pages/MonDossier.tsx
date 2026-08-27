@@ -35,6 +35,8 @@ type DossierStatus = "nouveau" | "paye" | "en_cours" | "documents_requis" | "en_
 
 interface DossierData {
   id: number;
+  trackingKind?: "dossier" | "evaluation";
+  evaluationReviewState?: "pending" | "reviewed";
   dossierNumber: string;
   fullName: string;
   destination: string;
@@ -358,7 +360,7 @@ export default function MonDossier() {
               <p className="text-gray-500">Chargement de votre dossier...</p>
             </div>
           ) : dossier ? (
-            <div className="space-y-6">
+            dossier.trackingKind === "evaluation" ? <Card className="mx-auto max-w-2xl overflow-hidden border-0 shadow-md"><div className="bg-gradient-to-r from-[#0B2A52] to-[#1E4D8F] p-6 text-white"><p className="text-sm font-semibold text-blue-100">Suivi de votre évaluation</p><h2 className="mt-1 text-2xl font-bold">{dossier.dossierNumber}</h2><p className="mt-2 text-blue-50">Votre demande a bien été enregistrée. Un conseiller vérifie les éléments déclarés avant toute réponse.</p></div><CardContent className="space-y-4 p-6"><div className="rounded-lg border border-amber-200 bg-amber-50 p-4"><p className="font-semibold text-amber-950">{dossier.evaluationReviewState === "reviewed" ? "Revue enregistrée" : "Revue en cours"}</p><p className="mt-1 text-sm text-amber-900">{dossier.evaluationReviewState === "reviewed" ? "Votre conseiller a enregistré la revue. Consultez votre espace candidat ou vos e-mails pour toute réponse validée." : "Votre évaluation est dans la file de revue. Aucune décision ni réponse définitive n’est produite automatiquement."}</p></div><p className="text-sm text-slate-600">Destination déclarée : <strong>{dossier.destination}</strong></p><p className="text-xs text-slate-500">Le suivi par référence et adresse e-mail protège l’accès à vos informations. Les documents, notes internes et brouillons ne sont jamais affichés ici.</p><Button type="button" variant="outline" className="w-full" onClick={() => { setCredentials(null); setSubmitted(false); setDossierNumber(""); setEmail(""); }}>Consulter un autre dossier</Button></CardContent></Card> : <div className="space-y-6">
               {/* Barre de progression visuelle */}
               <DossierProgressBar
                 status={dossier.dossierStatus as any}

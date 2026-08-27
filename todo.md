@@ -1723,3 +1723,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Alerter les conseillers autorisés avant les échéances de revue à 24 heures, sans communication candidate automatique.
 - [x] Permettre aux administrateurs de créer, modifier et supprimer des modèles de réponse de manière auditée.
 - [x] Vérifier les autorisations, l’idempotence des alertes, l’assainissement des modèles et les parcours administratifs.
+
+## Incident prioritaire — inscription et suivi de dossier
+- [x] Reproduire et corriger le repli « maintenance » sur les liens de confirmation d’adresse.
+- [x] Reproduire et corriger l’échec du suivi sécurisé par numéro de dossier et adresse e-mail.
+- [x] Simplifier l’activation de compte et le renvoi de confirmation sans contourner la vérification de l’adresse.
+- [x] Tester les parcours d’inscription, confirmation, suivi et les réponses non divulguantes avant publication.

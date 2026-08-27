@@ -3,7 +3,7 @@
  */
 
 import { getDb } from "../db";
-import { applications, agencyDossiers, aiReportHistory, candidateFiles, paymentAuditLogs } from "../../drizzle/schema";
+import { applications, agencyDossiers, aiReportHistory, candidateFiles, evaluations, paymentAuditLogs } from "../../drizzle/schema";
 import type { Application } from "../../drizzle/schema";
 import { publicProcedure, router, protectedProcedure } from "../_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -1019,15 +1019,51 @@ export const applicationRouter = router({
       const [agencyDossier] = agencyId
         ? await db.select().from(agencyDossiers).where(eq(agencyDossiers.id, agencyId)).limit(1)
         : [undefined];
-      if (!app && !agencyDossier) throw new TRPCError({ code: 'NOT_FOUND', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
+      const [evaluation] = !app && !agencyDossier
+        ? await db.select({
+          id: evaluations.id,
+          referenceCode: evaluations.referenceCode,
+          fullName: evaluations.fullName,
+          email: evaluations.email,
+          destinationCountry: evaluations.destinationCountry,
+          visaType: evaluations.visaType,
+          status: evaluations.status,
+          reviewedAt: evaluations.reviewedAt,
+          createdAt: evaluations.createdAt,
+          updatedAt: evaluations.updatedAt,
+        }).from(evaluations).where(inArray(evaluations.referenceCode, dossierReferenceCandidates(input.dossierNumber))).limit(1)
+        : [undefined];
+      if (!app && !agencyDossier && !evaluation) throw new TRPCError({ code: 'NOT_FOUND', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
       // Vérification email pour sécuriser l'accès
-      const matchedEmail = (app ?? agencyDossier)!.email.trim().toLowerCase() === input.email.trim().toLowerCase();
+      const matchedEmail = (app ?? agencyDossier ?? evaluation)!.email.trim().toLowerCase() === input.email.trim().toLowerCase();
       if (!matchedEmail) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
+      }
+      if (!app && !agencyDossier && evaluation) {
+        return {
+          id: evaluation.id,
+          trackingKind: "evaluation" as const,
+          dossierNumber: evaluation.referenceCode ?? `Évaluation ${evaluation.id}`,
+          fullName: evaluation.fullName,
+          destination: evaluation.destinationCountry ?? "Destination à confirmer",
+          visaType: evaluation.visaType,
+          formulaChosen: "Pré-évaluation",
+          dossierStatus: evaluation.reviewedAt ? "en_cours" : "nouveau",
+          paymentStatus: "NON_APPLICABLE",
+          paymentDate: null,
+          emailVerified: false,
+          agreementSigned: false,
+          agreementSignedAt: null,
+          procedureTracking: null,
+          evaluationReviewState: evaluation.reviewedAt ? "reviewed" as const : "pending" as const,
+          createdAt: evaluation.createdAt,
+          updatedAt: evaluation.updatedAt,
+        };
       }
       if (!app && agencyDossier) {
         return {
           id: agencyDossier.id,
+          trackingKind: "dossier" as const,
           dossierNumber: `3M-AGN-${agencyDossier.id.toString().padStart(4, "0")}`,
           fullName: agencyDossier.fullName,
           destination: agencyDossier.destination,
@@ -1093,6 +1129,7 @@ export const applicationRouter = router({
       // autre donnée sensible ne doit être remis par ce point d'accès.
       return {
         id: app!.id,
+        trackingKind: "dossier" as const,
         dossierNumber: app!.dossierNumber,
         fullName: app!.fullName,
         destination: app!.destination,

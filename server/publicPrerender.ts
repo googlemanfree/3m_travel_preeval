@@ -73,6 +73,11 @@ export const PUBLIC_PAGES: Record<string, PublicMeta> = {
   "/flights": { title: `Recherche de vols | ${SITE}`, description: "Espace de recherche et de demande de vols 3M Booking.", heading: "Recherche de vols", lead: "Les recherches et demandes de réservation sont traitées dans un espace non indexé.", noindex: true },
   "/register": { title: `Inscription | ${SITE}`, description: "Création sécurisée d’un espace client 3M Travel & Services.", heading: "Créer mon espace client", lead: "Créez votre espace pour suivre vos démarches et communiquer avec l’agence. Cette page n’est pas indexée.", noindex: true },
   "/signup": { title: `Inscription | ${SITE}`, description: "Création sécurisée d’un espace client 3M Travel & Services.", heading: "Créer mon espace client", lead: "Créez votre espace pour suivre vos démarches et communiquer avec l’agence. Cette page n’est pas indexée.", noindex: true },
+  "/confirm-email": { title: `Activer mon compte | ${SITE}`, description: "Page sécurisée d’activation du compte candidat.", heading: "Activer mon compte", lead: "Utilisez le lien sécurisé reçu par e-mail. Cette page n’est pas indexée.", noindex: true },
+  "/verify-email-link": { title: `Activer mon compte | ${SITE}`, description: "Page sécurisée de confirmation de l’adresse e-mail du candidat.", heading: "Confirmer mon adresse e-mail", lead: "Utilisez le lien sécurisé reçu par e-mail. Cette page n’est pas indexée.", noindex: true },
+  "/verify-email": { title: `Vérifier mon adresse e-mail | ${SITE}`, description: "Page sécurisée de vérification de l’adresse e-mail du candidat.", heading: "Vérifier mon adresse e-mail", lead: "Cette page n’est pas indexée.", noindex: true },
+  "/verify-email-sent": { title: `Lien d’activation envoyé | ${SITE}`, description: "Confirmation de l’envoi du lien d’activation du compte candidat.", heading: "Consultez votre e-mail", lead: "Cette page n’est pas indexée.", noindex: true },
+  "/verify-application-email": { title: `Confirmer mon dossier | ${SITE}`, description: "Page sécurisée de confirmation d’accès au dossier candidat.", heading: "Confirmer mon dossier", lead: "Cette page n’est pas indexée.", noindex: true },
   "/mon-espace": { title: `Mon espace | ${SITE}`, description: "Espace privé de suivi des démarches et communications.", heading: "Mon espace client", lead: "Connectez-vous pour consulter votre espace personnel. Cette page n’est pas indexée.", noindex: true },
   "/mon-dossier": { title: `Mon dossier | ${SITE}`, description: "Espace privé de suivi du dossier client.", heading: "Mon dossier", lead: "Connectez-vous pour suivre votre dossier. Cette page n’est pas indexée.", noindex: true },
   "/confirm-email-change": { title: `Confirmer mon adresse e-mail | ${SITE}`, description: "Page sécurisée de confirmation du changement d’adresse e-mail.", heading: "Confirmer le changement d’adresse", lead: "Cette page sécurisée n’est pas indexée.", noindex: true },
@@ -103,7 +108,7 @@ export function composePublicPrerender(template: string, url: string) {
   const blogArticle = path.startsWith("/blog/") ? { title: `Article mobilité internationale | ${SITE}`, description: "Ressource de préparation pour un projet de mobilité internationale.", heading: "Ressource mobilité internationale", lead: "Cette ressource complète les informations officielles applicables à votre destination." } : undefined;
   const procedurePage = procedureMetaForPath(path);
   const meta = PUBLIC_PAGES[path] ?? procedurePage ?? blogArticle;
-  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
+  const privatePath = /^\/(admin|mon-espace|mon-dossier|confirm-email|verify-email-link|verify-email|verify-email-sent|verify-application-email|confirm-email-change|employeurs|login|panier|document-upload|mes-vols-favoris|flights)(?:\/|$)/.test(path);
   const unknown = !meta && !privatePath;
   const current: PublicMeta = meta ?? {
     title: unknown ? `Page introuvable | ${SITE}` : SITE,
