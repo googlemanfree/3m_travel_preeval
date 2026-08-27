@@ -67,6 +67,14 @@ type DashboardItem = {
   reviewDraft?: string | null;
   reviewedAt?: Date | string | null;
   finalResponseSentAt?: Date | string | null;
+  preparationState?: "ready" | "unavailable" | "not_requested";
+  preparationDraft?: {
+    summary: string;
+    strengths: string[];
+    gapsToClarify: string[];
+    documentPriorities: string[];
+    advisorQuestions: string[];
+  } | null;
   priorVisaRefusal?: boolean | null;
   criminalRecord?: boolean | null;
   familyAbroad?: boolean | null;
@@ -205,6 +213,26 @@ function actionLabel(action: ActivityLog["action"]) {
   return "Statut modifié";
 }
 
+function initialReviewDraft(item: DashboardItem) {
+  if (item.reviewDraft?.trim()) return item.reviewDraft;
+  const draft = item.preparationDraft;
+  if (!draft) return "";
+  const verificationItems = [...draft.gapsToClarify, ...draft.documentPriorities].slice(0, 5);
+  return [
+    `Bonjour ${item.fullName},`,
+    "",
+    "Merci pour les informations déclarées dans votre demande. Après une première revue préparatoire, voici les éléments que nous vous proposons de confirmer avec votre conseiller.",
+    "",
+    draft.summary,
+    ...(verificationItems.length ? ["", "Éléments à confirmer ou à préparer :", ...verificationItems.map((value) => `• ${value}`)] : []),
+    "",
+    "Cette réponse reste une orientation préparatoire. Les conditions applicables seront vérifiées avec vous sur les sources officielles avant toute démarche.",
+    "",
+    "Cordialement,",
+    "3M Travel & Services",
+  ].join("\n");
+}
+
 export default function AdminAIEvaluationDashboard() {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("adminSessionToken") || "" : "";
   const { data, isLoading, refetch, isFetching } = trpc.aiEvaluationManagement.getUnifiedDashboard.useQuery(
@@ -328,7 +356,7 @@ export default function AdminAIEvaluationDashboard() {
 
   const openReview = (item: DashboardItem) => {
     setEditingId(item.id);
-    setReviewDraft(item.reviewDraft ?? "");
+    setReviewDraft(initialReviewDraft(item));
     setReviewReason("");
     setDeliveryNotice(null);
   };
@@ -395,6 +423,8 @@ export default function AdminAIEvaluationDashboard() {
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
               {item.type === "evaluation" && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div>
+                {item.preparationState === "ready" && item.preparationDraft && <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs text-slate-700"><p className="font-semibold text-slate-950">Contexte préparatoire interne</p><p className="mt-1 leading-5">{item.preparationDraft.summary}</p>{item.preparationDraft.gapsToClarify.length > 0 && <p className="mt-2 leading-5"><strong>À vérifier :</strong> {item.preparationDraft.gapsToClarify.join(" · ")}</p>}{item.preparationDraft.advisorQuestions.length > 0 && <p className="mt-2 leading-5"><strong>Questions préparées :</strong> {item.preparationDraft.advisorQuestions.join(" · ")}</p>}</div>}
+                {item.preparationState === "unavailable" && <p className="mt-2 text-xs text-amber-800">Le contexte préparatoire n’est pas disponible. La revue manuelle reste possible.</p>}
                 {item.reviewDeadline && !item.reviewedAt && <p className="mt-1 text-xs text-indigo-800">Échéance interne : {new Date(item.reviewDeadline).toLocaleString("fr-FR")}</p>}
                 {item.reviewedAt && <p className="mt-1 text-xs text-emerald-800">Validation enregistrée le {new Date(item.reviewedAt).toLocaleString("fr-FR")}{item.finalResponseSentAt ? " — e-mail envoyé" : " — diffusion à vérifier"}.</p>}
                 {editingId === item.id && <div className="mt-3 space-y-2"><label className="block text-xs font-medium text-slate-700">Projet de réponse<textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value)} rows={6} maxLength={8000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Rédigez une réponse factuelle, sans promesse de visa, emploi, admission ou délai garanti." /></label><label className="block text-xs font-medium text-slate-700">Motif de modification / validation<input value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. informations relues avec le candidat" /></label><div className="flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => saveDraft(item)} disabled={saveReviewDraft.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}>Enregistrer le brouillon</Button><Button type="button" size="sm" className="gap-1 bg-emerald-700 hover:bg-emerald-800" onClick={() => validateResponse(item)} disabled={validateAndSend.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}><Send className="h-3.5 w-3.5" /> Valider puis envoyer</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Annuler</Button></div>{deliveryNotice && <p role="status" className="text-xs text-slate-700">{deliveryNotice}</p>}</div>}

@@ -1,6 +1,8 @@
+import { randomBytes } from "node:crypto";
+
 /**
- * Génère un code dossier simple au format #3M-YYYYMMDD-XXXX
- * Exemple : #3M-20260726-0001
+ * Génère un code dossier lisible au format #3M-YYYYMMDD-XXXX-YYYYYY.
+ * Le suffixe aléatoire protège l’unicité en cas de plusieurs processus.
  */
 let dailyCounter = 0;
 let lastDate = "";
@@ -22,5 +24,6 @@ export function generateDossierCode(): string {
   dailyCounter++;
   const sequence = String(dailyCounter).padStart(4, "0");
 
-  return `#3M-${dateStr}-${sequence}`;
+  const nonce = randomBytes(3).toString("hex").toUpperCase();
+  return `#3M-${dateStr}-${sequence}-${nonce}`;
 }

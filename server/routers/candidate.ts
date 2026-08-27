@@ -1741,6 +1741,20 @@ export const candidateRouter = router({
     ]);
 
     const activeApp = appRows[0] || null;
+    const clientEvaluations = evalRows.map((evaluation) => ({
+      id: evaluation.id,
+      referenceCode: evaluation.referenceCode,
+      destinationCategory: evaluation.destinationCategory,
+      destinationCountry: evaluation.destinationCountry,
+      projectType: evaluation.projectType,
+      status: evaluation.status,
+      createdAt: evaluation.createdAt,
+      receiptSentAt: evaluation.receiptSentAt,
+      reviewDeadline: evaluation.reviewDeadline,
+      reviewedAt: evaluation.reviewedAt,
+      finalResponseSentAt: evaluation.finalResponseSentAt,
+      reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null,
+    }));
 
     let profileFieldsFilled = 0;
     const totalProfileFields = 5;
@@ -1775,12 +1789,12 @@ export const candidateRouter = router({
       activeDossier: activeApp,
       applications: appRows,
       favoriteFlights: favFlights,
-      evaluations: evalRows,
+      evaluations: clientEvaluations,
       messages: messageRows,
       candidateFiles: fileRows,
       agencyDocuments: agencyDocRows,
       stats: {
-        totalEvaluations: evalRows.length,
+        totalEvaluations: clientEvaluations.length,
         totalFavoriteFlights: favFlights.length,
         totalDocuments: fileRows.length + agencyDocRows.length,
         unreadMessages: messageRows.filter((m: any) => m.senderRole === "advisor" && !m.isRead).length,

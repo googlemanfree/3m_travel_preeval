@@ -10,9 +10,10 @@ const adminShortcuts = readFileSync(resolve(root, "client/src/components/AdminNa
 const hero = readFileSync(resolve(root, "client/src/components/HeroSectionVIP.tsx"), "utf8");
 
 describe("expérience candidat et navigation admin", () => {
-  it("affiche un état de chargement Gemini explicite et protecteur", () => {
-    expect(form).toContain("Gemini prépare votre brouillon d’orientation");
-    expect(form).toContain("Vos fichiers joints ne sont pas transmis à Gemini");
+  it("affiche un état de chargement neutre et protecteur", () => {
+    expect(form).toContain("Préparation personnalisée en cours");
+    expect(form).toContain("Vos pièces jointes ne sont pas concernées");
+    expect(form).not.toContain("Gemini prépare votre brouillon d’orientation");
     expect(form).toContain('role="status"');
   });
 
@@ -30,8 +31,8 @@ describe("expérience candidat et navigation admin", () => {
   });
 
   it("renforce la hiérarchie typographique du hero", () => {
-    expect(hero).toContain("text-5xl sm:text-6xl md:text-7xl lg:text-8xl");
-    expect(hero).toContain("text-2xl md:text-3xl");
-    expect(hero).toContain("text-lg md:text-xl");
+    expect(hero).toContain("text-5xl sm:text-6xl md:text-7xl lg:text-[6.5rem]");
+    expect(hero).toContain("text-2xl sm:text-3xl md:text-4xl");
+    expect(hero).toContain("text-xl md:text-2xl");
   });
 });

@@ -55,6 +55,37 @@ interface UnifiedItem {
   reviewDraft?: string | null;
   reviewedAt?: Date | null;
   finalResponseSentAt?: Date | null;
+  preparationState?: "ready" | "unavailable" | "not_requested";
+  preparationDraft?: {
+    summary: string;
+    strengths: string[];
+    gapsToClarify: string[];
+    documentPriorities: string[];
+    advisorQuestions: string[];
+  } | null;
+}
+
+function preparationTextList(value: unknown, maximum: number): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean).slice(0, maximum)
+    : [];
+}
+
+function parsePreparationDraft(value: string | null): UnifiedItem["preparationDraft"] {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object" || typeof parsed.summary !== "string") return null;
+    return {
+      summary: parsed.summary.trim().slice(0, 600),
+      strengths: preparationTextList(parsed.strengths, 4),
+      gapsToClarify: preparationTextList(parsed.gapsToClarify, 6),
+      documentPriorities: preparationTextList(parsed.documentPriorities, 6),
+      advisorQuestions: preparationTextList(parsed.advisorQuestions, 5),
+    };
+  } catch {
+    return null;
+  }
 }
 
 function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
@@ -111,6 +142,7 @@ export const aiEvaluationManagementRouter = router({
       for (const e of genEvals) {
         const hasConverted = convertedEmails.has(e.email.toLowerCase());
         const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
+        const preparationDraft = parsePreparationDraft(e.aiReportContent);
         const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
@@ -120,6 +152,8 @@ export const aiEvaluationManagementRouter = router({
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
           referenceCode: e.referenceCode, reviewDeadline: e.reviewDeadline, reviewDraft: e.reviewDraft, reviewedAt: e.reviewedAt, finalResponseSentAt: e.finalResponseSentAt,
+          preparationState: preparationDraft ? "ready" : e.aiProcessingError ? "unavailable" : "not_requested",
+          preparationDraft,
         });
       }
 

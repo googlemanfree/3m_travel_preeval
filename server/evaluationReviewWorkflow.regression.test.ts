@@ -26,7 +26,9 @@ describe("workflow de revue humaine des évaluations", () => {
 
   it("n’affiche au candidat qu’une réponse déjà validée", () => {
     const source = read("client/src/pages/EvaluationSpace.tsx");
+    const candidateRouter = read("server/routers/candidate.ts");
     expect(source).toContain("latestEvaluation?.reviewedAt && latestEvaluation?.reviewDraft");
     expect(source).toContain("Réponse validée par l’agence.");
+    expect(candidateRouter).toContain("reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null");
   });
 });

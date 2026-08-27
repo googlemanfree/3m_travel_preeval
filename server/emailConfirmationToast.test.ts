@@ -9,9 +9,9 @@ describe("confirmation email redirect toast", () => {
       "utf8",
     );
 
-    expect(source).toContain('toast.info("Redirection vers la page de connexion…"');
-    expect(source).toContain('description: "Votre compte est activé. Connectez-vous avec vos identifiants."');
-    expect(source).toContain('navigate("/login")');
+    expect(source).toContain('toast.info(requiresEvaluation ? "Redirection vers votre évaluation…" : "Redirection vers votre espace candidat…"');
+    expect(source).toContain('"Votre évaluation déclarée restera soumise à vérification humaine."');
+    expect(source).toContain("navigate(nextPath)");
   });
 
   it("keeps a visible success toast after activation", () => {

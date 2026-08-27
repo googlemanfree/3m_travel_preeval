@@ -1,4 +1,10 @@
 import { describe, it, expect } from "vitest";
+import { vi } from "vitest";
+
+vi.mock("./emailService", () => ({
+  sendEvaluationReceptionEmail: vi.fn().mockResolvedValue(true),
+}));
+
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 

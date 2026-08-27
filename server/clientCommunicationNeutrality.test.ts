@@ -23,8 +23,9 @@ describe("communications client neutres", () => {
 
     expect(cvAnalysis).toContain("Rapport préparé le");
     expect(cvAnalysis).not.toContain("Rapport généré par l'IA");
-    expect(evaluation).toContain("--- ANALYSE DU DOSSIER ---");
-    expect(evaluation).not.toContain("--- RAPPORT IA ---");
+    expect(evaluation).toContain("Brouillon préparatoire indisponible ; revue manuelle requise.");
+    expect(evaluation).not.toContain("SCORE D'ADMISSIBILITÉ");
+    expect(evaluation).not.toContain("generateAIEvaluationReport");
     expect(application).toContain("Rapport d\\'évaluation généré et envoyé avec succès");
     expect(application).not.toContain("Rapport d\\'évaluation IA généré et envoyé avec succès");
   });

@@ -1697,3 +1697,14 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre à un administrateur autorisé de modifier une évaluation avant validation avec motif et audit
 - [x] Tester les délais, les autorisations, les synchronisations et les modèles, puis publier
 - [x] Persister chaque référence d’évaluation avant son envoi et la rendre résoluble dans le suivi client
+
+## Évaluation dynamique assistée par Gemini
+- [x] Auditer le modèle transmis et les appels Gemini existants avec leurs garde-fous
+- [x] Définir les informations dynamiques utilisables, le consentement explicite et les interdictions de décision automatique
+- [x] Générer un brouillon structuré d’analyse, de questions complémentaires et de pistes sourcées par destination
+- [x] Présenter les brouillons dans l’administration pour modification et validation humaines avant diffusion
+- [x] Afficher au client uniquement les informations validées et les prochaines actions réellement confirmées
+- [x] Tester les consentements, les erreurs Gemini, les autorisations et les flux de validation, puis publier
+
+## Fiabilité des références d’évaluation
+- [x] Éliminer les collisions de références lors de soumissions simultanées ou multi-processus, puis couvrir le comportement par un test.

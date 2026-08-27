@@ -8,8 +8,7 @@ import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
 import { sendEvaluationReceptionEmail } from "../emailService";
-import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport, getPdfPageCount } from "../aiEvaluationService";
-import { computeDestinationScore } from "../destinationScoringEngine";
+import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, getPdfPageCount } from "../aiEvaluationService";
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
 import { logger } from "../_core/logger";
 import { and, eq } from "drizzle-orm";
@@ -116,6 +115,7 @@ const evaluationInput = z.object({
   // Attribution de campagne pour relier l’entrée Facebook/WhatsApp au dossier
   acquisitionSource: acquisitionSourceEnum.default("direct"),
   acquisitionCampaign: z.string().trim().max(160).optional(),
+  geminiAnalysisConsent: z.boolean().default(false),
 });
 
 // Schéma pour le formulaire multi-projets
@@ -161,6 +161,10 @@ const multiProjectEvaluationInput = z.object({
   germanyLanguageLevel: z.string().max(120).optional(),
   germanyRecognitionStatus: z.string().max(500).optional(),
   geminiAnalysisConsent: z.boolean().default(false),
+  dynamicResponses: z.array(z.object({
+    question: z.string().trim().min(3).max(260),
+    answer: z.string().trim().min(1).max(1000),
+  })).max(5).default([]),
 });
 
 export const evaluationRouter = router({
@@ -218,6 +222,9 @@ export const evaluationRouter = router({
           belgiumRegion: input.belgiumRegion,
           germanyLanguageLevel: input.germanyLanguageLevel,
           germanyRecognitionStatus: input.germanyRecognitionStatus,
+          preparatoryAnalysisConsent: input.geminiAnalysisConsent,
+          preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
+          dynamicResponses: input.dynamicResponses,
         }),
         cvFileUrl: undefined,
         cvFileName: undefined,
@@ -230,13 +237,43 @@ export const evaluationRouter = router({
       const evaluationId = inserted[0]?.id;
       if (!evaluationId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "La référence d’évaluation n’a pas pu être créée." });
       if (input.geminiAnalysisConsent) {
-        try {
-          const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
-          const draft = await generateGeminiEvaluationDraft({ destinationCountry: input.destinationCountry, projectType: input.projectType, nationality: input.nationality, age: input.age, sector: input.sector, yearsOfExperience: input.yearsOfExperience, educationLevel: input.educationLevel, languages: input.languages, financialGuarantee: input.financialGuarantee, countryDetails: { canadaLanguageTest: input.canadaLanguageTest, canadaStudyPlan: input.canadaStudyPlan, luxEmployerStatus: input.luxEmployerStatus, luxAademStatus: input.luxAademStatus, franceProjectStatus: input.franceProjectStatus, belgiumRegion: input.belgiumRegion, germanyLanguageLevel: input.germanyLanguageLevel, germanyRecognitionStatus: input.germanyRecognitionStatus }, alternativeCountries: alternatives });
-          await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
-        } catch (error) {
-          await db.update(evaluations).set({ aiProcessingError: error instanceof Error ? error.message.slice(0, 500) : "Analyse Gemini indisponible." }).where(eq(evaluations.id, evaluationId));
-        }
+        const alternatives = (orientationAlternativeCandidates[input.destinationCountry] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== input.destinationCountry);
+        const dynamicDetails = Object.fromEntries(input.dynamicResponses.flatMap((response, index) => [
+          [`question_complementaire_${index + 1}`, response.question],
+          [`reponse_complementaire_${index + 1}`, response.answer],
+        ]));
+        void (async () => {
+          try {
+            const draft = await generateGeminiEvaluationDraft({
+              destinationCountry: input.destinationCountry,
+              projectType: input.projectType,
+              nationality: input.nationality,
+              age: input.age,
+              sector: input.sector,
+              yearsOfExperience: input.yearsOfExperience,
+              educationLevel: input.educationLevel,
+              languages: input.languages,
+              financialGuarantee: input.financialGuarantee,
+              countryDetails: {
+                canadaLanguageTest: input.canadaLanguageTest,
+                canadaStudyPlan: input.canadaStudyPlan,
+                luxEmployerStatus: input.luxEmployerStatus,
+                luxAademStatus: input.luxAademStatus,
+                franceProjectStatus: input.franceProjectStatus,
+                belgiumRegion: input.belgiumRegion,
+                germanyLanguageLevel: input.germanyLanguageLevel,
+                germanyRecognitionStatus: input.germanyRecognitionStatus,
+                ...dynamicDetails,
+              },
+              alternativeCountries: alternatives,
+            });
+            await db.update(evaluations).set({ aiReportContent: JSON.stringify(draft), aiProcessedAt: new Date(), aiProcessingError: null }).where(eq(evaluations.id, evaluationId));
+            logger.info("evaluation.preparation_draft.completed", { evaluationId });
+          } catch {
+            await db.update(evaluations).set({ aiProcessingError: "Brouillon préparatoire indisponible ; revue manuelle requise." }).where(eq(evaluations.id, evaluationId));
+            logger.info("evaluation.preparation_draft.unavailable", { evaluationId });
+          }
+        })();
       }
 
       // Notifier le propriétaire
@@ -362,7 +399,11 @@ export const evaluationRouter = router({
         travelReason: input.travelReason,
         availableBudget: input.availableBudget,
         projectType: input.projectType,
-        projectDetailsJson: input.projectDetails ? JSON.stringify(input.projectDetails) : undefined,
+        projectDetailsJson: input.projectDetails || input.geminiAnalysisConsent ? JSON.stringify({
+          ...(input.projectDetails ?? {}),
+          preparatoryAnalysisConsent: input.geminiAnalysisConsent,
+          preparatoryAnalysisConsentRecordedAt: input.geminiAnalysisConsent ? new Date().toISOString() : null,
+        }) : undefined,
         priorVisaRefusal: input.priorVisaRefusal,
         priorVisaRefusalCountry: input.priorVisaRefusalCountry,
         criminalRecord: input.criminalRecord,
@@ -377,66 +418,36 @@ export const evaluationRouter = router({
 
       const evaluationId = inserted[0]?.id;
 
-      // Scoring déterministe par pays + rapport IA explicatif. Le calcul est
-      // lancé en arrière-plan pour ne pas ralentir la confirmation de dépôt.
-      // Aucun nouveau champ SQL n'est requis : le score et sa grille sont
-      // conservés au début de aiReportContent, puis affichés dans l'espace
-      // candidat avec le rapport généré.
-      if (evaluationId) {
+      // Le parcours historique est conservé, mais aucun score ni rapport
+      // OpenAI n’est plus produit. Le brouillon Gemini est facultatif,
+      // expressément consenti et ne reçoit jamais le CV ou une pièce jointe.
+      if (evaluationId && input.geminiAnalysisConsent && input.projectType && ["travail", "etudes", "tourisme"].includes(input.projectType)) {
+        const projectType = input.projectType as "travail" | "etudes" | "tourisme";
+        const destinationCountry = input.destinationCountry || input.destinationCategory;
+        const alternatives = (orientationAlternativeCandidates[destinationCountry ?? ""] ?? ["Canada", "France", "Belgique", "Allemagne", "Luxembourg"]).filter((country) => country !== destinationCountry);
         (async () => {
           try {
-            const scoring = computeDestinationScore({
-              destinationCategory: input.destinationCategory,
-              destinationCountry: input.destinationCountry,
+            const draft = await generateGeminiEvaluationDraft({
+              destinationCountry,
+              projectType,
+              nationality: input.nationality,
+              sector: input.industrySector || input.currentJobTitle,
+              yearsOfExperience: input.yearsOfExperience ? Number(input.yearsOfExperience) : undefined,
               educationLevel: input.educationLevel,
-              yearsOfExperience: input.yearsOfExperience,
-              frenchLevel: input.frenchLevel,
-              englishLevel: input.englishLevel,
-              currentJobTitle: input.currentJobTitle,
-              industrySector: input.industrySector,
-              priorVisaRefusal: input.priorVisaRefusal,
-              criminalRecord: input.criminalRecord,
-              familyAbroad: input.familyAbroad,
+              languages: [input.frenchLevel, input.englishLevel, input.languageTestsTaken].filter(Boolean).join(", "),
+              financialGuarantee: input.availableBudget,
+              countryDetails: input.projectDetails ?? {},
+              alternativeCountries: alternatives,
             });
-
-            let cvText = "";
-            if (input.cvBase64) {
-              const base64Data = input.cvBase64.includes(",") ? input.cvBase64.split(",")[1] : input.cvBase64;
-              const cvBuffer = Buffer.from(base64Data!, "base64");
-              cvText = await extractTextFromPDF(cvBuffer);
-            }
-
-            const scoreSummary = [
-              `SCORE D'ADMISSIBILITÉ : ${scoring.scoreTotal}/100`,
-              `STATUT : ${scoring.statusLabel}`,
-              `STRATÉGIE : ${scoring.strategyType}`,
-              "DÉTAIL DU SCORE :",
-              ...scoring.breakdown.map((item) => `- ${item.label}: ${item.points}/${item.max}`),
-              `VOIE RECOMMANDÉE : ${scoring.recommendedPath}`,
-              `CONTEXTE : ${scoring.legalContext}`,
-              "DOCUMENTS À PRÉPARER :",
-              ...scoring.documentChecklist.map((document) => `- ${document}`),
-            ].join("\\n");
-
-            const openaiKey = process.env.OPENAI_API_KEY;
-            const contextForAI = `${cvText || "CV non fourni — analyse basée sur les informations déclarées."}\\n\\n--- SCORE VÉRIFIABLE ---\\n${scoreSummary}`;
-            const report = await generateAIEvaluationReport(
-              contextForAI,
-              input.fullName,
-              input.destinationCountry || input.destinationCategory,
-              openaiKey
-            );
-
             await db.update(evaluations).set({
-              aiReportContent: `${scoreSummary}\n\n--- ANALYSE DU DOSSIER ---\n${report}`,
+              aiReportContent: JSON.stringify(draft),
               aiProcessedAt: new Date(),
               aiProcessingError: null,
             }).where(eq(evaluations.id, evaluationId));
-            logger.info("evaluation.ai_analysis.completed", { evaluationId, score: scoring.scoreTotal, strategy: scoring.strategyType });
-          } catch (err) {
-            logger.error("evaluation.ai_analysis.failed", { evaluationId }, err);
+            logger.info("evaluation.preparation_draft.completed", { evaluationId });
+          } catch {
             try {
-              await db.update(evaluations).set({ aiProcessingError: err instanceof Error ? err.message : String(err) }).where(eq(evaluations.id, evaluationId));
+              await db.update(evaluations).set({ aiProcessingError: "Brouillon préparatoire indisponible ; revue manuelle requise." }).where(eq(evaluations.id, evaluationId));
             } catch {}
           }
         })();
@@ -486,10 +497,8 @@ export const evaluationRouter = router({
       return { success: true, message: "Votre évaluation est reçue et placée en revue humaine.", emailSent, dossierCode, reviewDeadline };
     }),
 
-  /**
-   * Évaluations (pré-évaluations générales) du candidat connecté, avec le
-   * rapport IA quand il est disponible — pour "Mon Espace".
-   */
+  /** Évaluations du candidat connecté : uniquement les éléments de suivi
+   * nécessaires et la réponse effectivement validée par un conseiller. */
   getMyEvaluations: candidateProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) throw new Error("Base de données non disponible");
@@ -498,7 +507,20 @@ export const evaluationRouter = router({
       .where(eq(evaluations.email, ctx.candidate.email))
       .orderBy(evaluations.createdAt);
 
-    return rows;
+    return rows.map((evaluation) => ({
+      id: evaluation.id,
+      referenceCode: evaluation.referenceCode,
+      destinationCategory: evaluation.destinationCategory,
+      destinationCountry: evaluation.destinationCountry,
+      projectType: evaluation.projectType,
+      status: evaluation.status,
+      createdAt: evaluation.createdAt,
+      receiptSentAt: evaluation.receiptSentAt,
+      reviewDeadline: evaluation.reviewDeadline,
+      reviewedAt: evaluation.reviewedAt,
+      finalResponseSentAt: evaluation.finalResponseSentAt,
+      reviewDraft: evaluation.reviewedAt ? evaluation.reviewDraft : null,
+    }));
   }),
 
   /**

@@ -15,6 +15,11 @@ vi.mock("./db", () => ({
         $returningId: vi.fn().mockResolvedValue([{ id: 1 }]),
       }),
     }),
+    update: vi.fn().mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    }),
   }),
 }));
 
@@ -24,6 +29,10 @@ vi.mock("./storage", () => ({
 
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
+}));
+
+vi.mock("./emailService", () => ({
+  sendEvaluationReceptionEmail: vi.fn().mockResolvedValue(true),
 }));
 
 function createPublicContext(): TrpcContext {
@@ -61,7 +70,7 @@ describe("evaluation.submit", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.message).toContain("succès");
+    expect(result.message).toContain("revue humaine");
   }, 15000);
 
   it("soumet une demande Canada RP avec CV", async () => {
