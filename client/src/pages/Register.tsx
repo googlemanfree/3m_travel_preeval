@@ -114,6 +114,9 @@ export default function Register() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (registerMutation.isPending || isUploadingPortrait || showSuccessAnimation) {
+      return;
+    }
     if (!form.fullName || !form.email || !form.password) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
@@ -434,7 +437,7 @@ export default function Register() {
                 className="h-12 w-full bg-gradient-to-r from-[#1E3A8A] to-[#2563EB] hover:from-[#2563EB] hover:to-[#1E3A8A] text-white font-bold rounded-xl transition-all active:scale-[0.98] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {registerMutation.isPending || isUploadingPortrait ? (
-                  <span className="flex items-center justify-center gap-2" role="status" aria-live="polite">
+                  <span className="flex items-center justify-center gap-2" role="status" aria-live="polite" aria-atomic="true">
                     <motion.span
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -445,7 +448,7 @@ export default function Register() {
                     <motion.span
                       animate={{ opacity: [0.55, 1, 0.55] }}
                       transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
-                    >{isUploadingPortrait ? "Vérification et envoi du portrait..." : "Création en cours..."}</motion.span>
+                    >{isUploadingPortrait ? "Vérification et envoi du portrait..." : "Création de votre espace en cours..."}</motion.span>
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
@@ -463,6 +466,7 @@ export default function Register() {
                     className="mt-2 h-1 origin-left overflow-hidden rounded-full bg-blue-100"
                     role="progressbar"
                     aria-label="Création du compte en cours"
+                    aria-valuetext={isUploadingPortrait ? "Vérification du portrait et envoi en cours" : "Création de l’espace client en cours"}
                   >
                     <motion.div
                       className="h-full w-2/5 rounded-full bg-gradient-to-r from-[#7CB9E8] via-[#2563EB] to-[#1E3A8A]"
@@ -472,6 +476,7 @@ export default function Register() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              {(registerMutation.isPending || isUploadingPortrait) && <p className="mt-2 text-center text-xs text-slate-500" aria-live="polite">Veuillez patienter sans actualiser la page.</p>}
             </motion.div>
 
             {/* Séparateur */}

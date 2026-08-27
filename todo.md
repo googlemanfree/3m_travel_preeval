@@ -1672,3 +1672,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Renommer l’accès client en « Se connecter » dans les interfaces publiques
 - [x] Corriger la route ou le chargement d’inscription sans supprimer le parcours existant
 - [x] Tester connexion, inscription, erreurs et accessibilité mobile, puis publier
+
+## Soumission d’inscription lisible et sûre
+- [x] Auditer le bouton et la mutation d’inscription existants
+- [x] Ajouter une progression de soumission, un bouton bloqué et une annonce accessible
+- [x] Prévenir les doubles soumissions sans masquer les messages d’erreur
+- [x] Tester la soumission, les erreurs et le rendu mobile, puis publier
+- [x] Masquer les widgets flottants sur les parcours de connexion et d’inscription mobile afin de libérer tous les champs
