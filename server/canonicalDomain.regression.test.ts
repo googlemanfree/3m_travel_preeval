@@ -26,4 +26,11 @@ describe("domaine officiel 3M Travel", () => {
     expect(indexHtml).toContain("window.location.replace");
     expect(indexHtml).toContain("https://www.3mtravelagency.com");
   });
+
+  it("désindexe explicitement les redirections historiques avant consolidation sur le .com", () => {
+    const viteMiddleware = fs.readFileSync(path.resolve(import.meta.dirname, "_core/vite.ts"), "utf8");
+    expect(viteMiddleware).toContain('"X-Robots-Tag": "noindex, nofollow, noarchive"');
+    expect(viteMiddleware).toContain('"Link": `<${target}>; rel=\\"canonical\\"`');
+    expect(viteMiddleware).toContain("return res.redirect(301, target)");
+  });
 });

@@ -36,6 +36,15 @@ function applyCanonicalDomainRedirect(app: Express) {
       req.hostname,
     ], req.originalUrl);
     if (!target) return next();
+    // Le domaine .click est conservé uniquement comme filet de redirection
+    // historique. Les robots doivent consolider leurs signaux sur le .com,
+    // sans indexer une copie concurrente de chaque page.
+    res.set({
+      "Cache-Control": "public, max-age=3600",
+      "Link": `<${target}>; rel=\"canonical\"`,
+      "Vary": "Host, X-Forwarded-Host",
+      "X-Robots-Tag": "noindex, nofollow, noarchive",
+    });
     return res.redirect(301, target);
   });
 }

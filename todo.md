@@ -1749,3 +1749,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Permettre au conseiller de créer, modifier ou retirer une demande depuis l’administration.
 - [x] Afficher les demandes actives dans la checklist candidate avec un raccourci de dépôt.
 - [x] Tester les autorisations, l’audit, les statuts et la confidentialité avant publication.
+
+## Domaine .com et fiches de procédures
+- [x] Auditer les redirections, canoniques, métadonnées, sitemap et références résiduelles au domaine .click.
+- [x] Renforcer les signaux techniques qui désignent exclusivement www.3mtravelagency.com comme domaine canonique.
+- [x] Inventorier les ressources disponibles des 107 destinations et relier chaque fiche à son contenu vérifiable.
+- [ ] Enrichir les fiches de procédure sans inventer de règles ni présenter de décision ou de garantie.
+- [ ] Vérifier les 107 routes, les rendus publics et les documents SEO avant publication.
+- [x] Éliminer l’écran de chargement transitoire des fiches pays publiques afin que leur contenu s’affiche immédiatement.

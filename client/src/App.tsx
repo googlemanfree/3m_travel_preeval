@@ -12,6 +12,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 import AuthGuard from "./components/AuthGuard";
 import SessionLoader from "./components/SessionLoader";
 import Home from "./pages/Home";
+import CountryDetailPage from "./pages/CountryDetailPage";
 const Flights = lazyWithTimeout(() => import("./pages/Flights"));
 import Register from "./pages/Register";
 const Login = lazyWithTimeout(() => import("./pages/Login"));
@@ -124,7 +125,6 @@ const AdminAIEvaluationDashboard = lazyWithTimeout(() => import("./pages/AdminAI
 const CVGenerator = lazyWithTimeout(() => import("./pages/CVGenerator"));
 const Admin = lazyWithTimeout(() => import("./pages/Admin"));
 const ProceduresAdvanced = lazyWithTimeout(() => import("./pages/ProceduresAdvanced"));
-const CountryDetailPage = lazyWithTimeout(() => import("./pages/CountryDetailPage"));
 const CountryComparisonPage = lazyWithTimeout(() => import("./pages/CountryComparisonPage"));
 const EvisasAdvanced = lazyWithTimeout(() => import("./pages/EvisasAdvanced"));
 const Evaluation = lazyWithTimeout(() => import("./pages/Evaluation"));
