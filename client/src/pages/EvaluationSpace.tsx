@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import {
   CheckCircle2,
   Clock,
@@ -40,6 +43,7 @@ import { AureolAssistantChat } from "@/components/AureolAssistantChat";
 import SavedDestinationComparisonsPanel from "@/components/SavedDestinationComparisonsPanel";
 import EvaluationHistoryPanel from "@/components/EvaluationHistoryPanel";
 import ClientAppointmentRequest from "@/components/ClientAppointmentRequest";
+import { buildDocumentClarificationMessage } from "@/components/DossierDocumentChecklist";
 
 export default function EvaluationSpace() {
   const [location, setLocation] = useLocation();
@@ -51,6 +55,8 @@ export default function EvaluationSpace() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "dossier" | "flights" | "comparisons" | "history" | "documents" | "profile" | "messages" | "testimonials">("overview");
+  const [clarificationDocument, setClarificationDocument] = useState<string | null>(null);
+  const [clarificationDetails, setClarificationDetails] = useState("");
 
   // États pour les filtres budgétaires, le calculateur consulaire et l'export PDF
   const [budgetCategoryFilter, setBudgetCategoryFilter] = useState<string>("all");
@@ -69,6 +75,17 @@ export default function EvaluationSpace() {
     enabled: isAuthenticated,
     refetchOnWindowFocus: false,
     retry: 2,
+  });
+  const clarificationMutation = trpc.candidate.sendMessage.useMutation({
+    onSuccess: () => {
+      toast.success("Votre demande de clarification a été transmise à l’agence.");
+      setClarificationDocument(null);
+      setClarificationDetails("");
+      void trpcUtils.candidate.getClientDashboardSummary.invalidate();
+    },
+    onError: (requestError) => {
+      toast.error(requestError.message || "Votre demande n’a pas pu être envoyée. Réessayez dans quelques instants.");
+    },
   });
   const sessionConfirmedInvalid = isError && /non authentifi|expir|invalid/i.test(error instanceof Error ? error.message : "");
   const [loadingTimeoutReached, setLoadingTimeoutReached] = useState(false);
@@ -203,6 +220,14 @@ export default function EvaluationSpace() {
   const switchToSection = (nextSection: typeof activeTab) => {
     setActiveTab(nextSection);
     setLocation(`/mon-espace?section=${nextSection}`);
+  };
+  const openDocumentClarification = (documentLabel: string) => {
+    setClarificationDocument(documentLabel);
+    setClarificationDetails("");
+  };
+  const submitDocumentClarification = () => {
+    if (!clarificationDocument) return;
+    clarificationMutation.mutate({ content: buildDocumentClarificationMessage(clarificationDocument, clarificationDetails) });
   };
 
   return (
@@ -427,7 +452,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} />
+                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -967,7 +992,7 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "documents" && (
             <div className="space-y-6">
-              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} />
+              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} customRequirements={customRequirements} onOpenDocuments={() => switchToSection("documents")} onRequestClarification={openDocumentClarification} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
@@ -1104,8 +1129,27 @@ Ce rapport est généré automatiquement par l'espace client
               </Card>
             </div>
           )}
-        </div>
-      </div>
+	        </div>
+	      </div>
+	      <Dialog open={Boolean(clarificationDocument)} onOpenChange={(open) => { if (!open && !clarificationMutation.isPending) setClarificationDocument(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Demander une clarification</DialogTitle>
+            <DialogDescription>
+              Votre demande concerne la pièce « {clarificationDocument} ». Elle est transmise à l’équipe en charge de votre dossier.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="grid gap-2 text-sm font-medium text-slate-800" htmlFor="document-clarification-details">
+            Votre question <span className="font-normal text-slate-500">(facultatif)</span>
+            <Textarea id="document-clarification-details" value={clarificationDetails} onChange={(event) => setClarificationDetails(event.target.value.slice(0, 1500))} placeholder="Ex. Quel format ou quelle période est attendue ?" maxLength={1500} className="min-h-28" />
+          </label>
+          <p className="text-xs text-slate-500">N’ajoutez ni numéro de passeport, ni mot de passe, ni données bancaires dans cette demande.</p>
+          <DialogFooter>
+            <Button type="button" variant="outline" disabled={clarificationMutation.isPending} onClick={() => setClarificationDocument(null)}>Annuler</Button>
+            <Button type="button" disabled={clarificationMutation.isPending} onClick={submitDocumentClarification}>{clarificationMutation.isPending ? "Envoi…" : "Envoyer ma demande"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1783,3 +1783,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Calculer un pourcentage de progression uniquement à partir des pièces réellement requises et de leurs statuts.
 - [x] Afficher une barre de progression accessible dans l’espace client avec un libellé explicite.
 - [x] Tester les cas vide, en cours, complet et les états à remplacer avant publication.
+
+## Clarification d’une pièce documentaire
+- [x] Auditer la checklist, la messagerie sécurisée et les files internes déjà disponibles.
+- [x] Créer une demande de clarification liée à une pièce et au dossier du candidat.
+- [x] Afficher une action de clarification accessible dans la checklist et un suivi de traitement côté client.
+- [x] Diriger la demande vers l’équipe autorisée sans divulguer de notes internes.
+- [x] Tester les autorisations, les réponses non divulguantes et le parcours complet avant publication.

@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Circle, ClipboardList, Clock3 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle, CircleHelp, ClipboardList, Clock3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getCountryById, procedures107Complete } from "@/data/procedures107Complete";
@@ -106,6 +106,15 @@ export function calculateChecklistProgress(states: Array<{ state: { kind: string
   };
 }
 
+export function buildDocumentClarificationMessage(documentLabel: string, details?: string) {
+  const safeLabel = documentLabel.replace(/\s+/g, " ").trim().slice(0, 180) || "Pièce de la checklist";
+  const safeDetails = (details ?? "").replace(/\s+/g, " ").trim().slice(0, 1_500);
+  return [
+    `Demande de clarification — pièce : ${safeLabel}`,
+    safeDetails || "Pouvez-vous préciser ce qui est attendu pour cette pièce ?",
+  ].join("\n\n");
+}
+
 function customRequirementState(requirement: CustomRequirement, documents: ChecklistDocument[]) {
   if (requirement.status === "approved") return { kind: "verified" as const, label: "Validé par l’agence", tone: "border-emerald-200 bg-emerald-50", Icon: CheckCircle2 };
   if (requirement.status === "rejected") return { kind: "replace" as const, label: "À remplacer", tone: "border-rose-200 bg-rose-50", Icon: AlertCircle };
@@ -118,12 +127,14 @@ export default function DossierDocumentChecklist({
   documents,
   projectType,
   onOpenDocuments,
+  onRequestClarification,
   customRequirements = [],
 }: {
   destination?: string | null;
   documents: ChecklistDocument[];
   projectType?: string | null;
   onOpenDocuments?: () => void;
+  onRequestClarification?: (documentLabel: string) => void;
   customRequirements?: CustomRequirement[];
 }) {
   const requirements = getRequirements(destination, projectType);
@@ -177,6 +188,7 @@ export default function DossierDocumentChecklist({
                   {requirement.detail && <span className="mt-1 block text-xs text-gray-600">{requirement.detail}</span>}
                   {dueAt && <span className="mt-1 block text-xs font-medium text-slate-700">À déposer avant le {new Date(dueAt).toLocaleDateString("fr-FR")}</span>}
                   {(state.kind === "missing" || state.kind === "replace") && onOpenDocuments && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-blue-800" onClick={onOpenDocuments}>Déposer cette pièce</Button>}
+                  {onRequestClarification && <Button type="button" variant="link" className="mt-1 h-auto px-0 py-0 text-xs font-bold text-slate-700" onClick={() => onRequestClarification(requirement.label)} aria-label={`Demander une clarification sur ${requirement.label}`}><CircleHelp className="mr-1 h-3.5 w-3.5" aria-hidden="true" />Demander une précision</Button>}
                 </div>
               </div>
             );
