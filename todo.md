@@ -1736,3 +1736,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Présenter les pièces demandées dans l’espace candidat et rappeler le dépôt sécurisé sans envoyer de décision automatique.
 - [x] Corriger la remontée des pièces déposées vers la file administrative et assurer leur traçabilité.
 - [x] Tester les flux d’activation, dépôt, accès administratif et confidentialité avant publication.
+
+## Checklist documentaire dynamique de l’espace candidat
+- [x] Auditer les règles documentaires par dossier et les composants de checklist existants.
+- [x] Calculer les pièces requises, déposées, à compléter et à revoir à partir des données accessibles au candidat, sans exposer de données internes.
+- [x] Afficher la checklist dynamique et ses raccourcis de dépôt dans l’espace candidat.
+- [x] Tester les statuts de pièces, les raccourcis et l’accès candidat avant publication.

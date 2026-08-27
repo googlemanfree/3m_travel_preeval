@@ -165,6 +165,7 @@ export default function EvaluationSpace() {
     documentType: document.documentType ?? document.fileType,
     documentName: document.documentName ?? document.fileName,
     verificationStatus: document.verificationStatus,
+    status: document.status,
   }));
   const latestEvaluation = evaluations[0] as any;
   const evaluationStatusLabel = cProfile.evaluationDeclarationStatus === "validated"
@@ -417,7 +418,7 @@ export default function EvaluationSpace() {
                   <div><h3 className="text-lg font-bold text-gray-900">Documents à compléter</h3><p className="text-sm text-gray-600">Les pièces complémentaires dépendent de votre destination et restent à confirmer par l’agence.</p></div>
                   <Button type="button" variant="outline" onClick={() => { setActiveTab("documents"); setLocation("/mon-espace?section=documents"); }}><FileText className="mr-2 h-4 w-4" />Ajouter mes documents</Button>
                 </div>
-                <DossierDocumentChecklist destination={cProfile.destination} documents={checklistDocuments} />
+                <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} onOpenDocuments={() => switchToSection("documents")} />
               </section>
 
               {/* Résumé des dernières activités */}
@@ -957,7 +958,7 @@ Ce rapport est généré automatiquement par l'espace client
 
           {activeTab === "documents" && (
             <div className="space-y-6">
-              <DossierDocumentChecklist destination={cProfile.destination} documents={checklistDocuments} />
+              <DossierDocumentChecklist destination={cProfile.destination} projectType={latestEvaluation?.projectType} documents={checklistDocuments} onOpenDocuments={() => switchToSection("documents")} />
               {agencyDocuments && agencyDocuments.length > 0 && (
                 <AgencyDocumentsPanel documents={agencyDocuments as any[]} candidateName={cProfile.fullName} candidateEmail={cProfile.email} dossierNumber={cProfile.dossierNumber} />
               )}
