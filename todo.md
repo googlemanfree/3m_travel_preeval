@@ -1720,6 +1720,6 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 
 ## Alertes de revue et gestion des modèles
 - [x] Auditer les travaux planifiés, les notifications internes et les modèles administratifs existants.
-- [ ] Alerter les conseillers autorisés avant les échéances de revue à 24 heures, sans communication candidate automatique.
+- [x] Alerter les conseillers autorisés avant les échéances de revue à 24 heures, sans communication candidate automatique.
 - [x] Permettre aux administrateurs de créer, modifier et supprimer des modèles de réponse de manière auditée.
 - [x] Vérifier les autorisations, l’idempotence des alertes, l’assainissement des modèles et les parcours administratifs.
