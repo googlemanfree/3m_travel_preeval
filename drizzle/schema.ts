@@ -120,7 +120,17 @@ export const evaluations = mysqlTable("evaluations", {
   message: text("message"),
   cvFileUrl: text("cvFileUrl"),
   cvFileName: varchar("cvFileName", { length: 255 }),
+  referenceCode: varchar("referenceCode", { length: 32 }).unique(),
   status: mysqlEnum("status", ["pending", "reviewed", "contacted", "closed"]).default("pending").notNull(),
+  reviewDeadline: timestamp("reviewDeadline"),
+  receiptSentAt: timestamp("receiptSentAt"),
+  reviewDraft: text("reviewDraft"),
+  reviewDraftUpdatedAt: timestamp("reviewDraftUpdatedAt"),
+  reviewDraftUpdatedBy: varchar("reviewDraftUpdatedBy", { length: 320 }),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: varchar("reviewedBy", { length: 320 }),
+  reviewNote: text("reviewNote"),
+  finalResponseSentAt: timestamp("finalResponseSentAt"),
   aiReportContent: text("aiReportContent"),
   aiProcessedAt: timestamp("aiProcessedAt"),
   aiProcessingError: text("aiProcessingError"),
@@ -130,6 +140,25 @@ export const evaluations = mysqlTable("evaluations", {
 
 export type Evaluation = typeof evaluations.$inferSelect;
 export type InsertEvaluation = typeof evaluations.$inferInsert;
+
+/**
+ * Historique immuable des modifications et validations humaines d’une évaluation.
+ * Aucun brouillon, résultat ou message final ne peut être diffusé sans événement
+ * de validation associé à un administrateur identifié.
+ */
+export const evaluationReviewEvents = mysqlTable("evaluation_review_events", {
+  id: int("id").autoincrement().primaryKey(),
+  evaluationId: int("evaluationId").notNull(),
+  adminEmail: varchar("adminEmail", { length: 320 }).notNull(),
+  action: varchar("action", { length: 40 }).notNull(),
+  note: text("note"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("idx_evaluation_review_events_evaluation_created").on(table.evaluationId, table.createdAt),
+  index("idx_evaluation_review_events_admin_created").on(table.adminEmail, table.createdAt),
+]);
+export type EvaluationReviewEvent = typeof evaluationReviewEvents.$inferSelect;
+export type InsertEvaluationReviewEvent = typeof evaluationReviewEvents.$inferInsert;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ESPACE CANDIDAT

@@ -16,6 +16,7 @@ import {
   Loader,
   RefreshCw,
   Search,
+  Send,
   SlidersHorizontal,
   Sparkles,
   TrendingUp,
@@ -61,6 +62,11 @@ type DashboardItem = {
   employmentStatus?: string | null;
   maritalStatus?: string | null;
   status?: string | null;
+  referenceCode?: string | null;
+  reviewDeadline?: Date | string | null;
+  reviewDraft?: string | null;
+  reviewedAt?: Date | string | null;
+  finalResponseSentAt?: Date | string | null;
   priorVisaRefusal?: boolean | null;
   criminalRecord?: boolean | null;
   familyAbroad?: boolean | null;
@@ -188,7 +194,7 @@ function buildPdf(items: DashboardItem[]) {
 }
 
 function statusOptionsFor(item: DashboardItem) {
-  if (item.type === "evaluation") return ["pending", "reviewed", "contacted", "closed"];
+  if (item.type === "evaluation") return ["pending", "contacted", "closed"];
   if (item.type === "consultation") return ["pending_ai", "pending_review", "validated_sent", "rejected"];
   return [];
 }
@@ -220,6 +226,8 @@ export default function AdminAIEvaluationDashboard() {
       await historyQuery.refetch();
     },
   });
+  const saveReviewDraft = trpc.aiEvaluationManagement.saveEvaluationReviewDraft.useMutation({ onSuccess: async () => { await refetch(); } });
+  const validateAndSend = trpc.aiEvaluationManagement.validateAndSendEvaluationResponse.useMutation({ onSuccess: async () => { await refetch(); } });
 
   const items = (data?.items ?? []) as DashboardItem[];
   const summary = data?.summary;
@@ -235,6 +243,10 @@ export default function AdminAIEvaluationDashboard() {
   const [acquisitionSourceFilter, setAcquisitionSourceFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [reviewDraft, setReviewDraft] = useState("");
+  const [reviewReason, setReviewReason] = useState("");
+  const [deliveryNotice, setDeliveryNotice] = useState<string | null>(null);
   const pageSize = 15;
 
   const options = useMemo(() => ({
@@ -314,6 +326,27 @@ export default function AdminAIEvaluationDashboard() {
     updateStatus.mutate({ sessionToken, evaluationType: item.type === "consultation" ? "consultation" : "evaluation", evaluationId: numericId, newStatus });
   };
 
+  const openReview = (item: DashboardItem) => {
+    setEditingId(item.id);
+    setReviewDraft(item.reviewDraft ?? "");
+    setReviewReason("");
+    setDeliveryNotice(null);
+  };
+
+  const evaluationNumericId = (item: DashboardItem) => Number(item.id.split("-").at(-1));
+
+  const saveDraft = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    if (!Number.isInteger(evaluationId)) return;
+    saveReviewDraft.mutate({ sessionToken, evaluationId, draft: reviewDraft, reason: reviewReason });
+  };
+
+  const validateResponse = (item: DashboardItem) => {
+    const evaluationId = evaluationNumericId(item);
+    if (!Number.isInteger(evaluationId)) return;
+    validateAndSend.mutate({ sessionToken, evaluationId, validationNote: reviewReason }, { onSuccess: (result) => setDeliveryNotice(result.delivered ? "Réponse validée et envoyée au candidat." : "Réponse validée, mais l’e-mail n’a pas été envoyé. Réessayez depuis cette fiche."), onError: (error) => setDeliveryNotice(error.message) });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
       <div className="print:hidden"><Navbar /></div>
@@ -357,8 +390,15 @@ export default function AdminAIEvaluationDashboard() {
             <div className="min-w-0 flex-1">
               <div className="mb-1 flex flex-wrap items-center gap-2"><p className="font-semibold text-gray-900">{item.fullName}</p><Badge className={priorityStyle.badge}>{item.priority === "haute" ? "Priorité haute" : item.priority === "moyenne" ? "Priorité moyenne" : "Priorité basse"}</Badge><span className="text-xs text-gray-400">{item.typeLabel ?? TYPE_LABELS[item.type] ?? item.type}</span>{item.hasConverted && <Badge className="bg-green-100 text-green-800">✓ Converti</Badge>}</div>
               <p className="text-xs text-gray-500">{item.email} — {new Date(item.createdAt).toLocaleDateString("fr-FR")}</p>
+              {item.referenceCode && <p className="mt-1 text-xs font-semibold text-slate-700">Référence : {item.referenceCode}</p>}
               <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600"><span className="rounded bg-slate-100 px-2 py-1">Pays : {displayValue(item.destinationCountry)}</span><span className="rounded bg-slate-100 px-2 py-1">Études : {displayValue(item.educationLevel)}</span><span className="rounded bg-slate-100 px-2 py-1">Emploi : {displayValue(item.employmentStatus)}</span><span className="rounded bg-slate-100 px-2 py-1">Statut : {displayValue(item.status)}</span><span className="rounded bg-indigo-50 px-2 py-1 font-semibold text-indigo-800">Source : {ACQUISITION_LABELS[item.acquisitionSource ?? "direct"] ?? "Accès direct"}</span>{item.acquisitionCampaign && <span className="rounded bg-cyan-50 px-2 py-1 text-cyan-800">Campagne : {item.acquisitionCampaign}</span>}</div>
               <p className="mt-2 flex items-center gap-1 text-sm text-gray-700"><TrendingUp className="h-3 w-3 flex-shrink-0 text-blue-500" /> {item.suggestedAction}</p>
+              {item.type === "evaluation" && <div className="mt-3 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-semibold text-indigo-950">Réponse candidat — validation humaine requise</p><Button type="button" size="sm" variant="outline" onClick={() => openReview(item)} disabled={Boolean(item.reviewedAt)}>{item.reviewedAt ? "Réponse validée" : item.reviewDraft ? "Modifier la réponse" : "Préparer la réponse"}</Button></div>
+                {item.reviewDeadline && !item.reviewedAt && <p className="mt-1 text-xs text-indigo-800">Échéance interne : {new Date(item.reviewDeadline).toLocaleString("fr-FR")}</p>}
+                {item.reviewedAt && <p className="mt-1 text-xs text-emerald-800">Validation enregistrée le {new Date(item.reviewedAt).toLocaleString("fr-FR")}{item.finalResponseSentAt ? " — e-mail envoyé" : " — diffusion à vérifier"}.</p>}
+                {editingId === item.id && <div className="mt-3 space-y-2"><label className="block text-xs font-medium text-slate-700">Projet de réponse<textarea value={reviewDraft} onChange={(event) => setReviewDraft(event.target.value)} rows={6} maxLength={8000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-900" placeholder="Rédigez une réponse factuelle, sans promesse de visa, emploi, admission ou délai garanti." /></label><label className="block text-xs font-medium text-slate-700">Motif de modification / validation<input value={reviewReason} onChange={(event) => setReviewReason(event.target.value)} maxLength={800} className="mt-1 h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900" placeholder="Ex. informations relues avec le candidat" /></label><div className="flex flex-wrap gap-2"><Button type="button" size="sm" onClick={() => saveDraft(item)} disabled={saveReviewDraft.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}>Enregistrer le brouillon</Button><Button type="button" size="sm" className="gap-1 bg-emerald-700 hover:bg-emerald-800" onClick={() => validateResponse(item)} disabled={validateAndSend.isPending || reviewDraft.trim().length < 20 || reviewReason.trim().length < 8}><Send className="h-3.5 w-3.5" /> Valider puis envoyer</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditingId(null)}>Annuler</Button></div>{deliveryNotice && <p role="status" className="text-xs text-slate-700">{deliveryNotice}</p>}</div>}
+              </div>}
               {statusOptions.length > 0 ? <label className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-slate-600">Action rapide<select aria-label={`Modifier le statut de ${item.fullName}`} value={item.status ?? ""} onChange={(event) => changeStatus(item, event.target.value)} disabled={updateStatus.isPending} className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800"><option value="" disabled>Choisir</option>{statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}</select></label> : <span className="mt-3 inline-block text-xs text-slate-500">Statut géré par le moteur de scoring</span>}
             </div>
             <div className="w-full flex-shrink-0 sm:w-48"><AIScoreGauge score={typeof item.score === "number" ? item.score : null} compact label="Score IA" /></div>

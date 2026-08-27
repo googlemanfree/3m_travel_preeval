@@ -15,12 +15,14 @@ import { getDb } from "../db";
 import {
   adminActivityLogs,
   evaluations,
+  evaluationReviewEvents,
   luxembourgEvaluations,
   studyVisaEvaluations,
   consultationRequests,
   applications,
 } from "../../drizzle/schema";
 import { requireValidAdminSession } from "./adminAuth";
+import { sendValidatedEvaluationResponseEmail } from "../emailService";
 
 type Priority = "haute" | "moyenne" | "basse";
 type EvaluationType = "evaluation" | "luxembourg" | "etudes" | "consultation";
@@ -48,6 +50,11 @@ interface UnifiedItem {
   familyAbroad?: boolean | null;
   acquisitionSource?: "facebook" | "whatsapp" | "direct" | "other" | null;
   acquisitionCampaign?: string | null;
+  referenceCode?: string | null;
+  reviewDeadline?: Date | null;
+  reviewDraft?: string | null;
+  reviewedAt?: Date | null;
+  finalResponseSentAt?: Date | null;
 }
 
 function computePriority(args: { score: number | null; hasConverted: boolean; ageHours: number; needsAdminAction: boolean }): { priority: Priority; suggestedAction: string } {
@@ -73,6 +80,13 @@ const exportInput = z.object({
   details: z.string().max(5000).optional(),
 });
 
+const reviewDraftInput = z.object({
+  sessionToken: z.string().min(1),
+  evaluationId: z.number().int().positive(),
+  draft: z.string().trim().min(20, "Le projet de réponse doit contenir au moins 20 caractères.").max(8000),
+  reason: z.string().trim().min(8, "Indiquez le motif de la modification.").max(800),
+});
+
 export const aiEvaluationManagementRouter = router({
   getUnifiedDashboard: publicProcedure
     .input(z.object({ sessionToken: z.string(), limit: z.number().min(1).max(1000).default(500) }))
@@ -96,7 +110,8 @@ export const aiEvaluationManagementRouter = router({
 
       for (const e of genEvals) {
         const hasConverted = convertedEmails.has(e.email.toLowerCase());
-        const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: false });
+        const reviewOverdue = Boolean(e.reviewDeadline && new Date(e.reviewDeadline).getTime() <= now && !e.reviewedAt);
+        const { priority, suggestedAction } = computePriority({ score: null, hasConverted, ageHours: ageHours(e.createdAt), needsAdminAction: !e.reviewedAt || reviewOverdue });
         items.push({
           id: `evaluation-${e.id}`, type: "evaluation", typeLabel: "Pré-évaluation", fullName: e.fullName, email: e.email,
           createdAt: e.createdAt, score: null, hasConverted, priority, suggestedAction,
@@ -104,6 +119,7 @@ export const aiEvaluationManagementRouter = router({
           educationLevel: e.educationLevel, employmentStatus: e.employmentStatus, maritalStatus: e.maritalStatus,
           status: e.status, priorVisaRefusal: e.priorVisaRefusal, criminalRecord: e.criminalRecord, familyAbroad: e.familyAbroad,
           acquisitionSource: e.acquisitionSource, acquisitionCampaign: e.acquisitionCampaign,
+          referenceCode: e.referenceCode, reviewDeadline: e.reviewDeadline, reviewDraft: e.reviewDraft, reviewedAt: e.reviewedAt, finalResponseSentAt: e.finalResponseSentAt,
         });
       }
 
@@ -148,7 +164,7 @@ export const aiEvaluationManagementRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
 
       if (input.evaluationType === "evaluation") {
-        const allowed = ["pending", "reviewed", "contacted", "closed"] as const;
+        const allowed = ["pending", "contacted", "closed"] as const;
         if (!allowed.includes(input.newStatus as (typeof allowed)[number])) throw new TRPCError({ code: "BAD_REQUEST", message: "Statut invalide pour cette évaluation." });
         const current = await db.select({ status: evaluations.status }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
         if (!current[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
@@ -166,7 +182,43 @@ export const aiEvaluationManagementRouter = router({
       return { success: true, status: input.newStatus };
     }),
 
-  recordExport: publicProcedure
+    saveEvaluationReviewDraft: publicProcedure
+      .input(reviewDraftInput)
+      .mutation(async ({ input }) => {
+        const admin = await requireValidAdminSession(input.sessionToken);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+        const current = await db.select({ id: evaluations.id, reviewedAt: evaluations.reviewedAt }).from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
+        if (!current[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        if (current[0].reviewedAt) throw new TRPCError({ code: "BAD_REQUEST", message: "Cette réponse est déjà validée. Créez une nouvelle évaluation pour toute reprise." });
+        await db.update(evaluations).set({ reviewDraft: input.draft, reviewDraftUpdatedAt: new Date(), reviewDraftUpdatedBy: admin.email }).where(eq(evaluations.id, input.evaluationId));
+        await db.insert(evaluationReviewEvents).values({ evaluationId: input.evaluationId, adminEmail: admin.email, action: "draft_saved", note: input.reason });
+        return { success: true };
+      }),
+
+    validateAndSendEvaluationResponse: publicProcedure
+      .input(z.object({ sessionToken: z.string().min(1), evaluationId: z.number().int().positive(), validationNote: z.string().trim().min(8, "Indiquez la décision ou le motif de validation.").max(800) }))
+      .mutation(async ({ input }) => {
+        const admin = await requireValidAdminSession(input.sessionToken);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Base de données indisponible." });
+        const current = await db.select().from(evaluations).where(eq(evaluations.id, input.evaluationId)).limit(1);
+        const evaluation = current[0];
+        if (!evaluation) throw new TRPCError({ code: "NOT_FOUND", message: "Évaluation introuvable." });
+        if (!evaluation.reviewDraft?.trim()) throw new TRPCError({ code: "BAD_REQUEST", message: "Enregistrez un projet de réponse avant de le valider." });
+        if (!evaluation.reviewedAt) {
+          await db.update(evaluations).set({ status: "reviewed", reviewedAt: new Date(), reviewedBy: admin.email, reviewNote: input.validationNote }).where(eq(evaluations.id, input.evaluationId));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "validated", note: input.validationNote });
+        }
+        const delivered = await sendValidatedEvaluationResponseEmail({ to: evaluation.email, fullName: evaluation.fullName, referenceCode: evaluation.referenceCode ?? `EVAL-${evaluation.id}`, response: evaluation.reviewDraft });
+        if (delivered) {
+          await db.update(evaluations).set({ finalResponseSentAt: new Date() }).where(eq(evaluations.id, evaluation.id));
+          await db.insert(evaluationReviewEvents).values({ evaluationId: evaluation.id, adminEmail: admin.email, action: "response_sent", note: "Réponse validée envoyée par e-mail." });
+        }
+        return { success: true, delivered };
+      }),
+
+    recordExport: publicProcedure
     .input(exportInput)
     .mutation(async ({ input }) => {
       const admin = await requireValidAdminSession(input.sessionToken);

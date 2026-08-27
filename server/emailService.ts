@@ -548,7 +548,7 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; color: #172033;">
           <div style="background: linear-gradient(135deg, #123b70 0%, #2563eb 100%); padding: 28px 32px; color: white;">
-            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">Prime Travel Service</p>
+            <p style="margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; opacity: .85;">3M Travel &amp; Services</p>
             <h1 style="margin: 0; font-size: 24px;">${safeTitle}</h1>
           </div>
           <div style="padding: 28px 32px; background: #f8fafc;">
@@ -571,4 +571,37 @@ export async function sendClientNotificationEmail(input: ClientNotificationEmail
     console.error("Failed to send client notification email:", error);
     return false;
   }
+}
+
+export async function sendEvaluationReceptionEmail(input: {
+  to: string;
+  fullName: string;
+  referenceCode: string;
+  destinationCountry?: string | null;
+}): Promise<boolean> {
+  const destination = input.destinationCountry ? ` pour ${input.destinationCountry}` : "";
+  return sendClientNotificationEmail({
+    to: input.to,
+    fullName: input.fullName,
+    title: "Votre évaluation a bien été reçue",
+    body: `Votre référence est ${input.referenceCode}. Votre demande${destination} est transmise à l’équipe pour une revue humaine. L’objectif de revue est de 24 heures ; ce délai reste indicatif et aucune décision de visa, d’admission ou d’emploi n’est automatique.`,
+    actionUrl: "/mon-espace",
+    sourceLabel: "3M Travel & Services",
+  });
+}
+
+export async function sendValidatedEvaluationResponseEmail(input: {
+  to: string;
+  fullName: string;
+  referenceCode: string;
+  response: string;
+}): Promise<boolean> {
+  return sendClientNotificationEmail({
+    to: input.to,
+    fullName: input.fullName,
+    title: "Votre évaluation a été examinée",
+    body: `Référence ${input.referenceCode}\n\n${input.response}\n\nCette réponse a été révisée par un conseiller. Consultez votre espace pour la suite du dossier.`,
+    actionUrl: "/mon-espace",
+    sourceLabel: "3M Travel & Services",
+  });
 }

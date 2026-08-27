@@ -1687,3 +1687,13 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Renforcer les questionnaires par pays avec les éléments administratifs pertinents et sources officielles
 - [x] Tester les deux parcours, les préremplissages pays et les limites de confidentialité, puis publier
 - [x] Masquer les widgets flottants sur l’évaluation mobile afin de dégager tous les champs du formulaire
+
+## Évaluation sous 24 heures et réponses validées
+- [x] Auditer le modèle transmis, les scores, les délais, les messages et la file de validation actuels
+- [x] Définir une réception immédiate et un objectif de revue sous 24 heures sans décision automatique
+- [x] Créer des modèles e-mail, espace client et admin cohérents, sans promesse ni donnée non vérifiée
+- [x] Renforcer la file de validation immédiate côté administrateur avec état, responsable, échéance et audit
+- [x] N’envoyer toute réponse finale qu’après validation humaine explicite
+- [x] Permettre à un administrateur autorisé de modifier une évaluation avant validation avec motif et audit
+- [x] Tester les délais, les autorisations, les synchronisations et les modèles, puis publier
+- [x] Persister chaque référence d’évaluation avant son envoi et la rendre résoluble dans le suivi client

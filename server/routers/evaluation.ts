@@ -7,7 +7,7 @@ import { storagePut } from "../storage";
 import { notifyOwner } from "../_core/notification";
 import { generateDossierCode } from "../utils/generateDossierCode";
 import { getConfirmationEmailHTML, getConfirmationEmailText } from "../utils/confirmationEmail";
-import { sendEmail } from "../_core/email";
+import { sendEvaluationReceptionEmail } from "../emailService";
 import { extractCVFieldsForForm, extractCVFieldsFromImage, extractTextFromPDF, generateAIEvaluationReport, getPdfPageCount } from "../aiEvaluationService";
 import { computeDestinationScore } from "../destinationScoringEngine";
 import { generateGeminiEvaluationDraft } from "../geminiEvaluationDraftService";
@@ -177,6 +177,8 @@ export const evaluationRouter = router({
         throw new Error("Base de données non disponible");
       }
 
+      const dossierCode = generateDossierCode();
+      const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Créer un enregistrement d'évaluation multi-projets
       const evaluationData = {
         fullName: input.fullName,
@@ -219,6 +221,8 @@ export const evaluationRouter = router({
         }),
         cvFileUrl: undefined,
         cvFileName: undefined,
+        referenceCode: dossierCode,
+        reviewDeadline,
         status: "pending" as const,
       };
 
@@ -258,26 +262,17 @@ export const evaluationRouter = router({
         console.warn("[MultiProjectEvaluation] Notification failed:", notifErr);
       }
 
-      // Générer le code dossier
-      const dossierCode = generateDossierCode();
-
-      // Envoyer l'email de confirmation
-      try {
-        const emailHTML = getConfirmationEmailHTML({
-          fullName: input.fullName,
-          dossierCode,
-          projectType: input.projectType,
-        });
-        await sendEmail({
-          to: input.email,
-          subject: `Confirmation - Numéro de dossier ${dossierCode}`,
-          html: emailHTML,
-        });
-      } catch (emailErr) {
-        console.warn("[MultiProjectEvaluation] Email confirmation failed:", emailErr);
+      const emailSent = await sendEvaluationReceptionEmail({
+        to: input.email,
+        fullName: input.fullName,
+        referenceCode: dossierCode,
+        destinationCountry: input.destinationCountry,
+      });
+      if (emailSent) {
+        await db.update(evaluations).set({ receiptSentAt: new Date() }).where(eq(evaluations.id, evaluationId));
       }
 
-      return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre demande a été soumise avec succès. Vérifiez votre email pour le numéro de dossier.", dossierCode };
+      return { success: true, evaluationId, documentUploadToken: createEvaluationUploadToken(evaluationId, input.email), message: "Votre évaluation est reçue et placée en revue humaine.", dossierCode, reviewDeadline, emailSent };
     }),
 
   uploadSupportingDocument: publicProcedure.input(z.object({ evaluationId: z.number().int().positive(), email: z.string().email(), uploadToken: z.string().min(30), documentType: evaluationDocumentTypeEnum, fileName: z.string().min(1).max(180), mimeType: z.string().refine((value) => ALLOWED_EVALUATION_DOCUMENT_MIME_TYPES.has(value), "Format non autorisé."), sizeBytes: z.number().int().positive().max(MAX_EVALUATION_DOCUMENT_BYTES), fileBase64: z.string().min(8) })).mutation(async ({ input }) => {
@@ -335,6 +330,8 @@ export const evaluationRouter = router({
         }
       }
 
+      const dossierCode = generateDossierCode();
+      const reviewDeadline = new Date(Date.now() + 24 * 60 * 60 * 1000);
       // Insérer en base de données
       const inserted = await db.insert(evaluations).values({
         fullName: input.fullName,
@@ -373,6 +370,8 @@ export const evaluationRouter = router({
         message: input.message,
         cvFileUrl: cvFileUrl,
         cvFileName: cvFileName,
+        referenceCode: dossierCode,
+        reviewDeadline,
         status: "pending",
       }).$returningId();
 
@@ -474,19 +473,17 @@ export const evaluationRouter = router({
         console.warn("[Evaluation] Notification failed:", notifErr);
       }
 
-      let emailSent = false;
-      try {
-        await sendEmail({
-          to: input.email,
-          subject: "Confirmation de réception de votre évaluation — 3M Travel & Services",
-          html: `<p>Bonjour <strong>${input.fullName}</strong>,</p><p>Nous avons bien reçu votre évaluation de profil${input.destinationCountry ? ` pour ${input.destinationCountry}` : ""}.</p><p>Votre demande est enregistrée. Le résultat sera disponible dans votre espace candidat et notre équipe vous recontactera si nécessaire.</p><p>Cordialement,<br>L’équipe 3M Travel & Services</p>`,
-        });
-        emailSent = true;
-      } catch (emailErr) {
-        logger.error("evaluation.candidate_confirmation_failed", { email: input.email }, emailErr);
+      const emailSent = await sendEvaluationReceptionEmail({
+        to: input.email,
+        fullName: input.fullName,
+        referenceCode: dossierCode,
+        destinationCountry: input.destinationCountry,
+      });
+      if (emailSent && evaluationId) {
+        await db.update(evaluations).set({ receiptSentAt: new Date() }).where(eq(evaluations.id, evaluationId));
       }
 
-      return { success: true, message: "Votre demande a été soumise avec succès.", emailSent };
+      return { success: true, message: "Votre évaluation est reçue et placée en revue humaine.", emailSent, dossierCode, reviewDeadline };
     }),
 
   /**
