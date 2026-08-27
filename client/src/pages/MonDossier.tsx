@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { useCandidateAuth } from "@/hooks/useCandidateAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +37,6 @@ interface DossierData {
   id: number;
   dossierNumber: string;
   fullName: string;
-  email: string;
   destination: string;
   visaType: string | null;
   formulaChosen: string;
@@ -46,13 +46,6 @@ interface DossierData {
   emailVerified: boolean;
   agreementSigned: boolean;
   agreementSignedAt: number | null;
-  adminNote: string | null;
-  passportUrl: string | null;
-  cvUrl: string | null;
-  diplomaUrl: string | null;
-  documentsUrls: string | null;
-  scoringTotal: number | null;
-  scoringBadge: string | null;
   procedureTracking: {
     destination: string | null;
     procedure: string | null;
@@ -153,10 +146,12 @@ function isStepActive(stepKey: string, dossier: DossierData): boolean {
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function MonDossier() {
+  const { candidate, isAuthenticated } = useCandidateAuth();
   const [dossierNumber, setDossierNumber] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [credentials, setCredentials] = useState<{ dossierNumber: string; email: string } | null>(null);
+  const [autoTrackingEnabled, setAutoTrackingEnabled] = useState(true);
   const [message, setMessage] = useState("");
   const [sendingMessage, setSendingMessage] = useState(false);
   const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
@@ -170,6 +165,21 @@ export default function MonDossier() {
       retry: false,
     }
   );
+  const myDossierQuery = trpc.candidate.getMyDossierData.useQuery(undefined, {
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const activeDossierNumber = myDossierQuery.data?.data?.application?.dossierNumber;
+    const candidateEmail = candidate?.email;
+    if (!autoTrackingEnabled || credentials || !activeDossierNumber || !candidateEmail) return;
+
+    setDossierNumber(activeDossierNumber);
+    setEmail(candidateEmail);
+    setCredentials({ dossierNumber: activeDossierNumber, email: candidateEmail });
+    setSubmitted(true);
+  }, [autoTrackingEnabled, candidate?.email, credentials, myDossierQuery.data?.data?.application?.dossierNumber]);
 
   const sendMessageMutation = trpc.application.sendCandidateMessage.useMutation({
     onSuccess: () => {
@@ -243,9 +253,41 @@ export default function MonDossier() {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Suivi de mon dossier</h1>
             <p className="text-gray-500 max-w-lg mx-auto">
-              Consultez l'état d'avancement de votre dossier en temps réel. Accès sécurisé par numéro de dossier et email.
+              Consultez l'état d'avancement de votre dossier. Votre dossier actif est ouvert automatiquement depuis votre espace connecté ; sinon, utilisez votre numéro et votre adresse e-mail.
             </p>
           </div>
+
+          {isAuthenticated && myDossierQuery.isLoading ? (
+            <div className="mb-6 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-center text-sm font-medium text-blue-900" role="status" aria-live="polite">
+              Recherche de votre dossier associé…
+            </div>
+          ) : null}
+
+          {isAuthenticated && myDossierQuery.data?.data?.application?.dossierNumber ? (
+            <div className="mb-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-white px-5 py-4 text-center shadow-sm sm:flex-row sm:text-left">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">Dossier associé à votre compte</p>
+                <p className="mt-1 font-mono text-base font-black text-slate-900">{myDossierQuery.data.data.application.dossierNumber}</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-blue-200 text-blue-800 hover:bg-blue-50"
+                onClick={() => {
+                  const activeDossierNumber = myDossierQuery.data?.data?.application?.dossierNumber;
+                  const candidateEmail = candidate?.email;
+                  if (!activeDossierNumber || !candidateEmail) return;
+                  setAutoTrackingEnabled(true);
+                  setDossierNumber(activeDossierNumber);
+                  setEmail(candidateEmail);
+                  setCredentials({ dossierNumber: activeDossierNumber, email: candidateEmail });
+                  setSubmitted(true);
+                }}
+              >
+                Suivre ce dossier
+              </Button>
+            </div>
+          ) : null}
 
           {/* Formulaire de connexion */}
           {!submitted || error ? (
@@ -269,7 +311,7 @@ export default function MonDossier() {
                       onChange={(e) => setDossierNumber(e.target.value)}
                       className="mt-1"
                     />
-                    <p className="text-xs text-gray-400 mt-1">Reçu dans votre email de confirmation</p>
+                    <p className="text-xs text-gray-400 mt-1">Reçu dans votre e-mail de confirmation</p>
                   </div>
                   <div>
                     <Label htmlFor="email" className="text-sm font-medium">
@@ -319,7 +361,7 @@ export default function MonDossier() {
                 documentsReceivedAt={undefined}
                 submittedToAgenciesAt={undefined}
                 dossierNumber={dossier.dossierNumber}
-                email={dossier.email}
+                email={credentials?.email ?? candidate?.email ?? ""}
                 onPaymentSuccess={() => {
                   // Recharger le dossier après le paiement
                   window.location.reload();
@@ -370,15 +412,6 @@ export default function MonDossier() {
                         })}
                       </p>
                     </div>
-                    {dossier.scoringTotal !== null && (
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Score d'éligibilité</p>
-                        <p className="font-bold text-blue-700 text-lg">{dossier.scoringTotal}/100</p>
-                        {dossier.scoringBadge && (
-                          <Badge variant="outline" className="text-xs mt-1">{dossier.scoringBadge}</Badge>
-                        )}
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -496,92 +529,6 @@ export default function MonDossier() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Note admin (si présente) */}
-              {dossier.adminNote && (
-                <Card className="shadow-md border-0 border-l-4 border-l-blue-500">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-blue-600" />
-                      Messages de votre conseiller
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {dossier.adminNote.split("\n\n").map((block, i) => {
-                        const isAdvisor = block.startsWith("[RÉPONSE CONSEILLER");
-                        const isCandidate = block.startsWith("[MSG CANDIDAT");
-                        return (
-                          <div
-                            key={i}
-                            className={`p-3 rounded-lg text-sm ${
-                              isAdvisor
-                                ? "bg-blue-50 border border-blue-100"
-                                : isCandidate
-                                ? "bg-gray-50 border border-gray-100"
-                                : "bg-gray-50"
-                            }`}
-                          >
-                            <pre className="whitespace-pre-wrap font-sans text-gray-700">{block}</pre>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Documents soumis */}
-              {(dossier.passportUrl || dossier.cvUrl || dossier.diplomaUrl) && (
-                <Card className="shadow-md border-0">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      Documents soumis
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {dossier.passportUrl && (
-                        <a
-                          href={dossier.passportUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
-                        >
-                          <Download className="w-4 h-4" />
-                          Passeport
-                          <ChevronRight className="w-3 h-3 ml-auto" />
-                        </a>
-                      )}
-                      {dossier.cvUrl && (
-                        <a
-                          href={dossier.cvUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
-                        >
-                          <Download className="w-4 h-4" />
-                          CV
-                          <ChevronRight className="w-3 h-3 ml-auto" />
-                        </a>
-                      )}
-                      {dossier.diplomaUrl && (
-                        <a
-                          href={dossier.diplomaUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium text-gray-700 hover:text-blue-700"
-                        >
-                          <Download className="w-4 h-4" />
-                          Diplôme
-                          <ChevronRight className="w-3 h-3 ml-auto" />
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Prochaines étapes */}
               <Card className="shadow-md border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -755,6 +702,7 @@ export default function MonDossier() {
                   onClick={() => {
                     setCredentials(null);
                     setSubmitted(false);
+                    setAutoTrackingEnabled(false);
                     setDossierNumber("");
                     setEmail("");
                   }}

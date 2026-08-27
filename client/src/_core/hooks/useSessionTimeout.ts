@@ -2,82 +2,83 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
 
-const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes en millisecondes
-const WARNING_TIME = 2 * 60 * 1000; // Avertissement 2 minutes avant la déconnexion
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
+const WARNING_TIME_MS = 15 * 60 * 1000;
+const SESSION_EXPIRY_KEY = "3m_platform_session_expires_at";
+
+function getPlatformSessionExpiry() {
+  const stored = Number(localStorage.getItem(SESSION_EXPIRY_KEY) ?? "0");
+  if (Number.isFinite(stored) && stored > Date.now()) return stored;
+  const expiresAt = Date.now() + SESSION_DURATION_MS;
+  localStorage.setItem(SESSION_EXPIRY_KEY, String(expiresAt));
+  return expiresAt;
+}
 
 export function useSessionTimeout() {
   const { logout, isAuthenticated } = useAuth();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  const sessionExpiresAtRef = useRef<number | null>(null);
   const hasShownWarningRef = useRef<boolean>(false);
 
-  // Réinitialiser le timer d'inactivité
-  const resetInactivityTimer = useCallback(() => {
-    if (!isAuthenticated) return;
-
-    // Effacer les timers précédents
+  const clearTimers = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+  }, []);
 
-    // Réinitialiser le flag d'avertissement
+  // La durée est fixe : l’activité ne la prolonge pas au-delà de 24 h.
+  const scheduleSessionExpiry = useCallback(() => {
+    if (!isAuthenticated) return;
+    clearTimers();
     hasShownWarningRef.current = false;
-    lastActivityRef.current = Date.now();
+    const expiresAt = getPlatformSessionExpiry();
+    sessionExpiresAtRef.current = expiresAt;
+    const remainingMs = expiresAt - Date.now();
 
-    // Avertissement 2 minutes avant la déconnexion
+    if (remainingMs <= 0) {
+      localStorage.removeItem(SESSION_EXPIRY_KEY);
+      logout();
+      return;
+    }
+
+    // Avertissement avant l'expiration stricte de la session de 24 heures.
     warningTimeoutRef.current = setTimeout(() => {
       if (!hasShownWarningRef.current) {
         hasShownWarningRef.current = true;
         toast.warning(
-          'Votre session expirera dans 2 minutes en raison de l\'inactivité. Cliquez pour rester connecté.',
+          'Votre session expire bientôt. Enregistrez votre travail puis reconnectez-vous si nécessaire.',
           {
-            duration: 120000, // 2 minutes
-            action: {
-              label: 'Rester connecté',
-              onClick: () => resetInactivityTimer(),
-            },
+            duration: WARNING_TIME_MS,
           }
         );
       }
-    }, INACTIVITY_TIMEOUT - WARNING_TIME);
+    }, Math.max(0, remainingMs - WARNING_TIME_MS));
 
-    // Déconnexion automatique après 15 minutes
+    // Déconnexion après 24 h, sauf déconnexion explicite antérieure.
     timeoutRef.current = setTimeout(() => {
-      toast.info('Vous avez été déconnecté en raison de l\'inactivité.');
+      localStorage.removeItem(SESSION_EXPIRY_KEY);
+      toast.info('Votre session de 24 heures est arrivée à expiration.');
       logout();
-    }, INACTIVITY_TIMEOUT);
-  }, [isAuthenticated, logout]);
+    }, remainingMs);
+  }, [clearTimers, isAuthenticated, logout]);
 
-  // Détecter l'activité utilisateur
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      localStorage.removeItem(SESSION_EXPIRY_KEY);
+      sessionExpiresAtRef.current = null;
+      clearTimers();
+      return;
+    }
 
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    scheduleSessionExpiry();
 
-    const handleActivity = () => {
-      resetInactivityTimer();
-    };
-
-    // Ajouter les écouteurs d'événements
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity);
-    });
-
-    // Initialiser le timer au montage
-    resetInactivityTimer();
-
-    // Nettoyer les écouteurs
     return () => {
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      clearTimers();
     };
-  }, [isAuthenticated, resetInactivityTimer]);
+  }, [clearTimers, isAuthenticated, scheduleSessionExpiry]);
 
   return {
-    lastActivityTime: lastActivityRef.current,
-    resetTimer: resetInactivityTimer,
+    sessionExpiresAt: sessionExpiresAtRef.current,
+    refreshSessionTimer: scheduleSessionExpiry,
   };
 }

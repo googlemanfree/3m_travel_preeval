@@ -1003,7 +1003,7 @@ export const applicationRouter = router({
    */
   getDossierStatus: publicProcedure
     .input(z.object({
-      dossierNumber: z.string().min(5),
+      dossierNumber: z.string().trim().min(5).max(80),
       email: z.string().email(),
     }))
     .query(async ({ input }) => {
@@ -1015,11 +1015,11 @@ export const applicationRouter = router({
         .where(eq(applications.dossierNumber, input.dossierNumber))
         .limit(1);
       if (!app) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'Dossier introuvable. Vérifiez le numéro et l\'email.' });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
       }
       // Vérification email pour sécuriser l'accès
       if (app.email.toLowerCase() !== input.email.toLowerCase()) {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Email incorrect pour ce dossier.' });
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Les informations de suivi ne correspondent à aucun dossier accessible.' });
       }
       const [caseRecord] = await db
         .select({
@@ -1066,12 +1066,12 @@ export const applicationRouter = router({
           };
         })()
         : null;
-      // Retourner les infos sans données sensibles (OTP, etc.)
+      // Vue de suivi : aucun lien de document privé, note interne, score ou
+      // autre donnée sensible ne doit être remis par ce point d'accès.
       return {
         id: app.id,
         dossierNumber: app.dossierNumber,
         fullName: app.fullName,
-        email: app.email,
         destination: app.destination,
         visaType: app.visaType,
         formulaChosen: app.formulaChosen,
@@ -1081,13 +1081,6 @@ export const applicationRouter = router({
         emailVerified: app.emailVerified,
         agreementSigned: app.agreementSigned,
         agreementSignedAt: app.agreementSignedAt,
-        adminNote: app.adminNote,
-        passportUrl: app.passportUrl,
-        cvUrl: app.cvUrl,
-        diplomaUrl: app.diplomaUrl,
-        documentsUrls: app.documentsUrls,
-        scoringTotal: app.scoringTotal,
-        scoringBadge: app.scoringBadge,
         procedureTracking,
         createdAt: app.createdAt,
         updatedAt: app.updatedAt,

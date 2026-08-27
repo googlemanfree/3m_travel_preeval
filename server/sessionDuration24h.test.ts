@@ -30,6 +30,14 @@ describe("sessions de 24 heures", () => {
     expect(auth).toContain("expiresAt <= Date.now()");
   });
 
+  it("ne coupe plus la session plateforme au bout de quinze minutes et conserve une échéance fixe de 24 heures", () => {
+    const timeoutHook = read("client/src/_core/hooks/useSessionTimeout.ts");
+    expect(timeoutHook).toContain("const SESSION_DURATION_MS = 24 * 60 * 60 * 1000");
+    expect(timeoutHook).toContain('const SESSION_EXPIRY_KEY = "3m_platform_session_expires_at"');
+    expect(timeoutHook).not.toContain("15 * 60 * 1000; // 15 minutes");
+    expect(timeoutHook).toContain("La durée est fixe");
+  });
+
   it("expose des raccourcis internes sans dépendre de l’historique du navigateur", () => {
     const dashboard = read("client/src/pages/ClientDashboard.tsx");
     expect(dashboard).toContain("Étape suivante");

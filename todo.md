@@ -1611,3 +1611,11 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter un filtre accessible limitant les résultats aux portails institutionnels vérifiés
 - [x] Permettre de sélectionner puis comparer exactement deux destinations côte à côte
 - [x] Tester les filtres, la comparaison, les contrôles clavier et les routes, puis publier
+
+## Suivi de dossier, navigation et persistance de session
+- [x] Auditer les numéros de dossier, routes de suivi et contrôles d’accès client et administrateur existants
+- [x] Rendre les numéros de dossier visibles et directement exploitables dans l’espace client
+- [x] Ajouter un suivi par numéro de dossier et e-mail avec réponse non divulguante et accès contrôlé
+- [x] Ajouter des raccourcis internes accessibles dans les espaces client et administrateur
+- [x] Configurer ou confirmer la persistance de session à 24 heures avec déconnexion manuelle immédiate
+- [x] Tester les autorisations, la navigation, l’expiration et la déconnexion, puis publier
