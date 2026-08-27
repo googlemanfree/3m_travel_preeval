@@ -11,7 +11,7 @@ import { procedures107Complete } from '@/data/procedures107Complete';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedPdfUrl } from '@shared/pdfResources';
 import { getProcedureVisualSources } from '@/data/procedureVisuals';
-import { getPublicDestinationPath } from '@/lib/publicDestinationCatalog';
+import { getPublicDestinationDetail, getPublicDestinationPath } from '@/lib/publicDestinationCatalog';
 import { trpc } from '@/lib/trpc';
 // CanadaScoreSimulator déplacé vers la section /canada dédiée
 
@@ -61,7 +61,15 @@ export default function ProceduresAdvanced() {
   // Filter countries
   const filteredCountries = useMemo(() => {
     let filtered = procedures107Complete.filter(country => {
-      const matchesSearch = country.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const normalizedQuery = searchQuery.trim().toLocaleLowerCase('fr');
+      const searchableVisa = visaChecklistLabels[country.visaType as keyof typeof visaChecklistLabels] ?? country.visaType;
+      const matchesSearch = !normalizedQuery || [
+        country.name,
+        country.id,
+        country.region,
+        country.visaType,
+        searchableVisa,
+      ].some((value) => value.toLocaleLowerCase('fr').includes(normalizedQuery));
       const matchesRegion = selectedRegion === 'Tous' || country.region === selectedRegion;
       const matchesVisaType = visaType === 'tous' || country.visaType === visaType;
       const matchesDifficulty = difficultyFilter === 'tous' || country.difficulty === difficultyFilter;
@@ -564,8 +572,12 @@ export default function ProceduresAdvanced() {
               const isSelected = selectedForComparison.includes(country.id);
               const destinationMedia = mediaByDestination.get(country.id);
               const procedureVisual = getProcedureVisualSources(country);
+              const destinationDetail = getPublicDestinationDetail(country.id);
               const procedureImage = destinationMedia?.imageUrl ?? procedureVisual.desktop;
               const procedureMobileImage = destinationMedia?.imageUrl ? undefined : procedureVisual.mobile;
+              const officialPortal = destinationDetail?.consular.officialPortalUrl;
+              const officialPortalLabel = destinationDetail?.consular.officialPortalLabel ?? 'Portail institutionnel';
+              const verifiedAt = destinationDetail?.consular.officialVerifiedAt ?? destinationDetail?.lastUpdatedAt;
 
               return (
                 <motion.div
@@ -667,6 +679,26 @@ export default function ProceduresAdvanced() {
                             {highlight}
                           </Badge>
                         ))}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
+                        <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                          <Clock className="h-3.5 w-3.5 text-blue-700" aria-hidden="true" />
+                          {verifiedAt ? `Dernière vérification : ${verifiedAt}` : 'Date de vérification à confirmer'}
+                        </div>
+                        {officialPortal ? (
+                          <a
+                            href={officialPortal}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="mt-1 inline-flex items-center gap-1 font-bold text-blue-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+                          >
+                            Source officielle : {officialPortalLabel} <ExternalLink className="h-3 w-3" aria-hidden="true" />
+                          </a>
+                        ) : (
+                          <p className="mt-1 text-amber-800">Source officielle en cours de vérification par l’administration.</p>
+                        )}
                       </div>
 
                       {/* Buttons Container */}

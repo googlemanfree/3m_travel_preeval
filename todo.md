@@ -1580,3 +1580,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Construire des pages pays avec emblème, visuel, étapes et liens officiels sans inventer de conditions
 - [x] Relier chaque sélection ou bouton Détails à une route canonique fonctionnelle
 - [x] Tester les pages, liens et CTA sur mobile/tablette/desktop, puis publier
+
+## Annuaire de procédures enrichi
+- [x] Créer ou mettre à jour une compétence réutilisable de recherche et présentation de procédures pays
+- [x] Ajouter une recherche et des filtres par pays et type de visa dans l’annuaire
+- [x] Harmoniser les emblèmes nationaux et visuels représentatifs des fiches destination
+- [x] Afficher une date de mise à jour et une source officielle vérifiable sur chaque fiche
+- [x] Tester la recherche, les filtres, la navigation et les rendus responsive, puis publier
