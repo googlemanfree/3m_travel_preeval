@@ -1717,3 +1717,9 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Ajouter la grille Luxembourg comme indicateur interne de préparation vérifiable, sans inéligibilité ou réorientation automatiques.
 - [x] Tester droits, audits, modèles, relances, indicateurs SLA et garde-fous Luxembourg avant publication.
 - [x] Corriger le doublon de navigation constaté sur la vue administrateur d’évaluations, sans modifier les parcours publics.
+
+## Alertes de revue et gestion des modèles
+- [x] Auditer les travaux planifiés, les notifications internes et les modèles administratifs existants.
+- [ ] Alerter les conseillers autorisés avant les échéances de revue à 24 heures, sans communication candidate automatique.
+- [x] Permettre aux administrateurs de créer, modifier et supprimer des modèles de réponse de manière auditée.
+- [x] Vérifier les autorisations, l’idempotence des alertes, l’assainissement des modèles et les parcours administratifs.

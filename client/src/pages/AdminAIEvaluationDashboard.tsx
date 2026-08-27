@@ -100,6 +100,16 @@ type ActivityLog = {
   createdAt: Date | string;
 };
 
+type ManagedResponseTemplate = {
+  id: number;
+  name: string;
+  scope: "candidate_message" | "evaluation_message" | "general";
+  language: "fr" | "en";
+  contentHtml: string;
+  contentText: string;
+  updatedAt: Date | string;
+};
+
 function csvCell(value: unknown) {
   const text = value === null || value === undefined ? "" : String(value);
   return `"${text.replace(/"/g, '""')}"`;
@@ -252,6 +262,10 @@ export default function AdminAIEvaluationDashboard() {
     { sessionToken },
     { enabled: !!sessionToken, refetchInterval: false },
   );
+  const managedTemplatesQuery = trpc.richTextTemplates.list.useQuery(
+    { sessionToken, scope: "evaluation_message" },
+    { enabled: !!sessionToken, refetchInterval: false },
+  );
   const updateStatus = trpc.aiEvaluationManagement.updateEvaluationStatus.useMutation({
     onSuccess: async () => {
       await refetch();
@@ -267,12 +281,16 @@ export default function AdminAIEvaluationDashboard() {
   const validateAndSend = trpc.aiEvaluationManagement.validateAndSendEvaluationResponse.useMutation({ onSuccess: async () => { await refetch(); } });
   const retryPreparation = trpc.aiEvaluationManagement.retryEvaluationPreparation.useMutation({ onSuccess: async () => { await refetch(); } });
   const applyResponseTemplate = trpc.aiEvaluationManagement.applyResponseTemplate.useMutation();
+  const createManagedTemplate = trpc.richTextTemplates.create.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
+  const updateManagedTemplate = trpc.richTextTemplates.update.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
+  const deleteManagedTemplate = trpc.richTextTemplates.delete.useMutation({ onSuccess: async () => { await managedTemplatesQuery.refetch(); } });
 
   const items = (data?.items ?? []) as DashboardItem[];
   const summary = data?.summary;
   const reviewSla = data?.reviewSla;
   const reviewSlaMaximum = Math.max(1, ...(reviewSla?.days.flatMap((day) => [day.received, day.reviewed]) ?? [1]));
   const history = (historyQuery.data ?? []) as ActivityLog[];
+  const managedTemplates = (managedTemplatesQuery.data ?? []) as ManagedResponseTemplate[];
   const [search, setSearch] = useState("");
   const [scoreSort, setScoreSort] = useState<"default" | "desc" | "asc">("default");
   const [scoreFilter, setScoreFilter] = useState<"all" | "scored" | "pending">("all");
@@ -290,6 +308,13 @@ export default function AdminAIEvaluationDashboard() {
   const [selectedTemplateKey, setSelectedTemplateKey] = useState<"travail" | "etudes" | "tourisme" | "">("");
   const [preparationNotice, setPreparationNotice] = useState<{ itemId: string; message: string } | null>(null);
   const [deliveryNotice, setDeliveryNotice] = useState<string | null>(null);
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
+  const [managedTemplateId, setManagedTemplateId] = useState<number | null>(null);
+  const [managedTemplateName, setManagedTemplateName] = useState("");
+  const [managedTemplateLanguage, setManagedTemplateLanguage] = useState<"fr" | "en">("fr");
+  const [managedTemplateContent, setManagedTemplateContent] = useState("");
+  const [managedTemplateReason, setManagedTemplateReason] = useState("");
+  const [managedTemplateNotice, setManagedTemplateNotice] = useState<string | null>(null);
   const pageSize = 15;
 
   const options = useMemo(() => ({
@@ -419,6 +444,69 @@ export default function AdminAIEvaluationDashboard() {
     retryPreparation.mutate({ sessionToken, evaluationId, reason }, { onSuccess: () => setPreparationNotice({ itemId: item.id, message: "Nouveau brouillon préparé. Relisez-le avant toute réponse." }), onError: (error) => setPreparationNotice({ itemId: item.id, message: error.message }) });
   };
 
+  const clearManagedTemplateForm = () => {
+    setManagedTemplateId(null);
+    setManagedTemplateName("");
+    setManagedTemplateLanguage("fr");
+    setManagedTemplateContent("");
+    setManagedTemplateReason("");
+  };
+
+  const editManagedTemplate = (template: ManagedResponseTemplate) => {
+    setManagedTemplateId(template.id);
+    setManagedTemplateName(template.name);
+    setManagedTemplateLanguage(template.language);
+    setManagedTemplateContent(template.contentText);
+    setManagedTemplateReason("");
+    setManagedTemplateNotice(null);
+  };
+
+  const saveManagedTemplate = () => {
+    const name = managedTemplateName.trim();
+    const contentHtml = managedTemplateContent.trim();
+    if (name.length < 3 || contentHtml.length < 3) {
+      setManagedTemplateNotice("Le nom et le contenu du modèle sont requis.");
+      return;
+    }
+    if (managedTemplateId === null) {
+      createManagedTemplate.mutate({ sessionToken, name, scope: "evaluation_message", language: managedTemplateLanguage, contentHtml }, {
+        onSuccess: () => { clearManagedTemplateForm(); setManagedTemplateNotice("Modèle créé. Il reste à relire avant chaque validation candidate."); },
+        onError: (error) => setManagedTemplateNotice(error.message),
+      });
+      return;
+    }
+    if (managedTemplateReason.trim().length < 8) {
+      setManagedTemplateNotice("Indiquez un motif d’au moins 8 caractères pour modifier un modèle.");
+      return;
+    }
+    updateManagedTemplate.mutate({ sessionToken, id: managedTemplateId, name, scope: "evaluation_message", language: managedTemplateLanguage, contentHtml, reason: managedTemplateReason.trim() }, {
+      onSuccess: () => { clearManagedTemplateForm(); setManagedTemplateNotice("Modèle modifié et journalisé."); },
+      onError: (error) => setManagedTemplateNotice(error.message),
+    });
+  };
+
+  const removeManagedTemplate = (template: ManagedResponseTemplate) => {
+    const reason = window.prompt(`Motif de suppression du modèle « ${template.name} » (8 caractères minimum) :`)?.trim() ?? "";
+    if (reason.length < 8 || !window.confirm(`Supprimer le modèle « ${template.name} » ? Cette action sera journalisée.`)) return;
+    deleteManagedTemplate.mutate({ sessionToken, id: template.id, reason }, {
+      onSuccess: () => {
+        if (managedTemplateId === template.id) clearManagedTemplateForm();
+        setManagedTemplateNotice("Modèle supprimé et journalisé.");
+      },
+      onError: (error) => setManagedTemplateNotice(error.message),
+    });
+  };
+
+  const applyManagedTemplate = (item: DashboardItem, templateId: string) => {
+    const template = managedTemplates.find((entry) => entry.id === Number(templateId));
+    if (!template) return;
+    if (reviewDraft.trim() && !window.confirm("Remplacer le projet de réponse affiché par ce modèle ? Les modifications non enregistrées seront perdues.")) return;
+    setEditingId(item.id);
+    setReviewDraft(template.contentText);
+    setReviewReason("");
+    setDeliveryNotice(`Modèle « ${template.name} » chargé. Relisez-le, adaptez-le puis enregistrez avec un motif.`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 print:bg-white">
       <div className="mx-auto max-w-7xl px-4 py-10">
@@ -429,12 +517,15 @@ export default function AdminAIEvaluationDashboard() {
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
             <Button variant="outline" onClick={() => void refetch()} disabled={isFetching} className="gap-2"><RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} /> Actualiser</Button>
+            <Button variant="outline" onClick={() => { setIsTemplateManagerOpen((open) => !open); setManagedTemplateNotice(null); }} className="gap-2"><FileText className="h-4 w-4" /> Modèles de réponse</Button>
             <Button variant="outline" onClick={downloadCsv} disabled={!visibleItems.length || recordExport.isPending} className="gap-2"><Download className="h-4 w-4" /> CSV</Button>
             <Button onClick={openPdfPreview} disabled={!visibleItems.length} className="gap-2 bg-blue-700 hover:bg-blue-800"><FileText className="h-4 w-4" /> Prévisualiser PDF</Button>
           </div>
         </div>
 
         {!sessionToken && <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 print:hidden">Session admin introuvable — reconnectez-vous sur /admin/login.</div>}
+
+        {isTemplateManagerOpen && <Card className="mb-6 border-t-4 border-[#C8A451] p-5 print:hidden"><div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-800">Bibliothèque interne</p><h2 className="mt-1 text-xl font-black text-[#0B2A52]">Modèles de réponses d’évaluation</h2><p className="mt-1 max-w-3xl text-sm text-slate-600">Les modèles facilitent la relecture, mais ne constituent jamais une réponse automatique : chaque contenu reste modifiable et doit être validé par un conseiller avant toute diffusion.</p></div><Button type="button" variant="ghost" size="sm" onClick={() => { setIsTemplateManagerOpen(false); clearManagedTemplateForm(); }}>Fermer</Button></div><div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]"><div className="space-y-2"><div className="flex items-center justify-between"><h3 className="text-sm font-bold text-slate-900">Modèles enregistrés</h3><Button type="button" variant="outline" size="sm" onClick={clearManagedTemplateForm}>Nouveau modèle</Button></div>{managedTemplatesQuery.isLoading ? <p className="text-sm text-slate-500">Chargement des modèles…</p> : managedTemplates.length === 0 ? <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">Aucun modèle enregistré pour le moment.</p> : <div className="space-y-2">{managedTemplates.map((template) => <div key={template.id} className="rounded-md border border-slate-200 bg-white p-3"><div className="flex flex-wrap items-start justify-between gap-2"><div><p className="text-sm font-semibold text-slate-900">{template.name}</p><p className="mt-1 text-xs text-slate-500">{template.language === "fr" ? "Français" : "English"} · mis à jour le {new Date(template.updatedAt).toLocaleString("fr-FR")}</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => editManagedTemplate(template)}>Modifier</Button><Button type="button" size="sm" variant="outline" className="text-red-700 hover:text-red-800" onClick={() => removeManagedTemplate(template)} disabled={deleteManagedTemplate.isPending}>Supprimer</Button></div></div></div>)}</div>}</div><div className="rounded-md border border-slate-200 bg-slate-50/70 p-4"><h3 className="text-sm font-bold text-slate-900">{managedTemplateId === null ? "Créer un modèle" : "Modifier le modèle"}</h3><div className="mt-3 grid gap-3"><label className="text-xs font-medium text-slate-700">Nom du modèle<input value={managedTemplateName} onChange={(event) => setManagedTemplateName(event.target.value)} maxLength={120} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900" placeholder="Ex. Réponse initiale — projet professionnel" /></label><label className="text-xs font-medium text-slate-700">Langue<select value={managedTemplateLanguage} onChange={(event) => setManagedTemplateLanguage(event.target.value as "fr" | "en")} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"><option value="fr">Français</option><option value="en">English</option></select></label><label className="text-xs font-medium text-slate-700">Contenu du modèle<textarea value={managedTemplateContent} onChange={(event) => setManagedTemplateContent(event.target.value)} rows={9} maxLength={12000} className="mt-1 w-full rounded-md border border-slate-300 bg-white p-3 text-sm text-slate-900" placeholder="Rédigez une information factuelle, sans score, décision d’éligibilité, garantie ou réorientation automatique." /></label>{managedTemplateId !== null && <label className="text-xs font-medium text-slate-700">Motif de modification<input value={managedTemplateReason} onChange={(event) => setManagedTemplateReason(event.target.value)} maxLength={500} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900" placeholder="Ex. mise à jour après revue interne" /></label>}<div className="flex flex-wrap gap-2"><Button type="button" onClick={saveManagedTemplate} disabled={createManagedTemplate.isPending || updateManagedTemplate.isPending}>{managedTemplateId === null ? "Créer le modèle" : "Enregistrer les modifications"}</Button>{managedTemplateId !== null && <Button type="button" variant="ghost" onClick={clearManagedTemplateForm}>Annuler</Button>}</div>{managedTemplateNotice && <p role="status" className="text-xs text-slate-700">{managedTemplateNotice}</p>}</div></div></div></Card>}
 
         <Card className="mb-6 p-4 print:hidden">
           <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-900"><SlidersHorizontal className="h-4 w-4 text-blue-600" /> Filtres des évaluations</div>

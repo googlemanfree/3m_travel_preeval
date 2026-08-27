@@ -15,6 +15,7 @@ import { handleEvaluationBilanJob } from "../scheduled/evaluationBilanJob";
 import { handleComplianceMonthlyReportJob } from "../scheduled/complianceMonthlyReportJob";
 import { handlePassportPendingWeeklyAlertJob } from "../scheduled/passportPendingWeeklyAlertJob";
 import { handleExternalLinkCheckJob } from "../scheduled/externalLinkCheckJob";
+import { handleEvaluationReviewDeadlineAlertJob } from "../scheduled/evaluationReviewDeadlineAlertJob";
 import { initEvaluationCron } from "../cron/evaluationCron";
 import { requireCronSecret } from "./scheduledAuth";
 import { appRouter } from "../routers";
@@ -77,6 +78,9 @@ async function startServer() {
   });
   app.post("/api/scheduled/external-link-check", (req, res) => {
     void handleExternalLinkCheckJob(req, res);
+  });
+  app.post("/api/scheduled/evaluation-review-deadline-alerts", (req, res) => {
+    void handleEvaluationReviewDeadlineAlertJob(req, res);
   });
   app.get("/api/evaluation-email/open/:token.gif", async (req, res) => {
     const transparentGif = Buffer.from("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", "base64");

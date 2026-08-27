@@ -123,6 +123,7 @@ export const evaluations = mysqlTable("evaluations", {
   referenceCode: varchar("referenceCode", { length: 32 }).unique(),
   status: mysqlEnum("status", ["pending", "reviewed", "contacted", "closed"]).default("pending").notNull(),
   reviewDeadline: timestamp("reviewDeadline"),
+  reviewDeadlineAlertedAt: timestamp("reviewDeadlineAlertedAt"),
   receiptSentAt: timestamp("receiptSentAt"),
   reviewDraft: text("reviewDraft"),
   reviewDraftUpdatedAt: timestamp("reviewDraftUpdatedAt"),
@@ -779,7 +780,7 @@ export const insuranceRequests = mysqlTable("insurance_requests", {
  */
 export const adminNotifications = mysqlTable("admin_notifications", {
   id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["new_evaluation", "new_contact_message", "new_document", "payment_received", "simulator_load_failed"]).notNull(),
+  type: mysqlEnum("type", ["new_evaluation", "new_contact_message", "new_document", "payment_received", "simulator_load_failed", "evaluation_review_deadline"]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
   relatedId: varchar("relatedId", { length: 100 }),
