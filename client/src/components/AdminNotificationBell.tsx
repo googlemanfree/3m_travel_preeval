@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, X, FileText, Mail, CheckCircle2 } from "lucide-react";
+import { Bell, X, FileText, Mail, CheckCircle2, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ const ICONS: Record<string, any> = {
   new_contact_message: Mail,
   new_document: FileText,
   payment_received: CheckCircle2,
+  simulator_load_failed: AlertTriangle,
 };
 
 function timeAgo(date: string | Date): string {

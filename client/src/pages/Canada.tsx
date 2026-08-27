@@ -1,11 +1,13 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ServicePageShell, ServiceSection } from "@/components/ServicePageShell";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { PlaneTakeoff, Building2, MapPinned, BriefcaseBusiness, HeartHandshake, Flag, Target, FileCheck2, Sparkles, UsersRound, AlertCircle, ArrowRight, CheckCircle2, Unlock, GraduationCap, Plane, Globe2, ExternalLink } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 
-const CanadaScoreSimulator = React.lazy(() => import("@/components/CanadaScoreSimulator"));
+const createCanadaScoreSimulator = () => React.lazy(() => import("@/components/CanadaScoreSimulator"));
 
 const pathways = [
   { title: "Entrée express", icon: PlaneTakeoff, tag: "Résidence permanente", text: "IRCC gère trois programmes : Catégorie de l’expérience canadienne, Programme des travailleurs qualifiés (fédéral) et Programme des travailleurs de métiers spécialisés. Le profil est classé dans un bassin et une invitation dépend des rondes et du classement." },
@@ -56,6 +58,9 @@ const supportSteps = [
 export default function Canada() {
   const [scoreCompleted, setScoreCompleted] = useState(false);
   const [showSimulator, setShowSimulator] = useState(false);
+  const [simulatorAttempt, setSimulatorAttempt] = useState(0);
+  const CanadaScoreSimulator = useMemo(createCanadaScoreSimulator, [simulatorAttempt]);
+  const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();
 
   return (
     <ServicePageShell
@@ -117,9 +122,15 @@ export default function Canada() {
           </div>
 
           {showSimulator ? (
-            <Suspense fallback={<div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm font-semibold text-blue-900" role="status">Chargement du simulateur Canada…</div>}>
-              <CanadaScoreSimulator />
-            </Suspense>
+            <SimulatorRetryBoundary
+              label="Le simulateur Canada"
+              onRetry={() => setSimulatorAttempt((attempt) => attempt + 1)}
+              onFailure={() => reportSimulatorFailure.mutate({ route: "/canada", simulator: "canada_score" })}
+            >
+              <Suspense fallback={<div className="rounded-xl border border-blue-200 bg-blue-50 p-5 text-sm font-semibold text-blue-900" role="status">Chargement du simulateur Canada…</div>}>
+                <CanadaScoreSimulator key={simulatorAttempt} />
+              </Suspense>
+            </SimulatorRetryBoundary>
           ) : (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
               <p className="text-sm font-semibold text-blue-950">Le simulateur détaillé se charge uniquement à votre demande afin de préserver un accès rapide à la page.</p>

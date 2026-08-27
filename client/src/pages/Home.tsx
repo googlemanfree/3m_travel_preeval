@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from 'wouter';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +31,7 @@ import TravelSearchHero from "@/components/TravelSearchHero";
 import { PublicFAQ } from "@/components/PublicFAQ";
 import ApprovedReviewsSection from "@/components/ApprovedReviewsSection";
 import { SimpleMultiProjectForm } from "@/components/SimpleMultiProjectForm";
+import { SimulatorRetryBoundary } from "@/components/SimulatorRetryBoundary";
 import { FlightBookingFAQ } from "@/components/FlightBookingFAQ";
 
 import { EvaluationFormModal } from "@/components/EvaluationFormModal";
@@ -39,7 +40,7 @@ import AureolQuestionField from "@/components/AureolQuestionField";
 import FacebookFeedSection from "@/components/FacebookFeedSection";
 import ProfileVerificationModule from "@/components/ProfileVerificationModule";
 
-const SimulatorExpress = lazy(() => import("@/components/SimulatorExpress").then((module) => ({ default: module.SimulatorExpress })));
+const createSimulatorExpress = () => lazy(() => import("@/components/SimulatorExpress").then((module) => ({ default: module.SimulatorExpress })));
 
 // ─── Composant Barre de Recherche avec Auto-complétion ────────────────────────
 import { searchCountries, countriesData } from '@/data/countriesData';
@@ -423,6 +424,9 @@ export default function Home() {
   const { isAuthenticated } = useCandidateAuth();
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [showExpressSimulator, setShowExpressSimulator] = useState(false);
+  const [expressSimulatorAttempt, setExpressSimulatorAttempt] = useState(0);
+  const SimulatorExpress = useMemo(createSimulatorExpress, [expressSimulatorAttempt]);
+  const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<DestinationCategory | null>(null);
@@ -1332,9 +1336,15 @@ export default function Home() {
 
       {/* ─── SIMULATEUR EXPRESS 30 SECONDES ────────────────────────────────────── */}
       {showExpressSimulator ? (
-        <Suspense fallback={<section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du simulateur express…</section>}>
-          <SimulatorExpress />
-        </Suspense>
+        <SimulatorRetryBoundary
+          label="Le simulateur express"
+          onRetry={() => setExpressSimulatorAttempt((attempt) => attempt + 1)}
+          onFailure={() => reportSimulatorFailure.mutate({ route: "/", simulator: "express" })}
+        >
+          <Suspense fallback={<section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du simulateur express…</section>}>
+            <SimulatorExpress key={expressSimulatorAttempt} />
+          </Suspense>
+        </SimulatorRetryBoundary>
       ) : (
         <section className="mx-auto max-w-4xl rounded-2xl border border-blue-200 bg-blue-50 p-6 text-center">
           <h2 className="text-xl font-black text-slate-950">Simulateur express</h2>

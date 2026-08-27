@@ -68,10 +68,10 @@ const NAV_COPY = {
 
 const nativeLinkClass = (highlight?: boolean) =>
   highlight
-    ? "min-h-10 w-auto justify-start px-1.5 py-2 text-[11px] font-bold text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5"
-    : "min-h-10 w-auto justify-start px-1.5 py-2 text-[11px] font-semibold text-slate-700 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-2.5";
+    ? "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-black text-white bg-gradient-to-r from-[#c39231] to-[#e8c56f] hover:from-[#b1832b] hover:to-[#d5a84b] rounded-xl transition-all duration-200 shadow-sm hover:shadow-md inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3"
+    : "min-h-11 w-auto justify-start px-2.5 py-2.5 text-[13px] font-bold text-slate-800 hover:text-[#0a2b5c] hover:bg-white rounded-xl transition-all duration-200 shadow-none hover:shadow-sm inline-flex items-center gap-1.5 whitespace-nowrap 2xl:w-auto 2xl:justify-start 2xl:px-3";
 
-const authButtonClass = "inline-flex h-11 w-[118px] items-center justify-center rounded-xl px-2 text-center text-xs font-bold transition-all duration-200 active:scale-95 whitespace-nowrap";
+const authButtonClass = "inline-flex h-12 w-[132px] items-center justify-center rounded-xl px-3 text-center text-sm font-black transition-all duration-200 active:scale-95 whitespace-nowrap";
 const mobileAuthButtonClass = "flex min-h-12 w-full items-center justify-center rounded-xl px-4 py-3 text-center font-bold transition-all duration-200";
 
 export default function Navbar() {
@@ -168,7 +168,7 @@ export default function Navbar() {
                 title={copy(item.label)}
                 className={nativeLinkClass(item.highlight)}
               >
-                <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                 <span className="inline">{copy(item.label)}</span>
               </a>
               );

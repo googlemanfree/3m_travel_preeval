@@ -20,7 +20,7 @@ import { logger } from "../_core/logger";
  * (évaluation, contact...) quand un événement notable survient.
  */
 export async function notifyAdmins(input: {
-  type: "new_evaluation" | "new_contact_message" | "new_document" | "payment_received";
+  type: "new_evaluation" | "new_contact_message" | "new_document" | "payment_received" | "simulator_load_failed";
   title: string;
   message: string;
   relatedId?: string;

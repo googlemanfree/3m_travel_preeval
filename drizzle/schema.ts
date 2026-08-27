@@ -691,7 +691,7 @@ export const insuranceRequests = mysqlTable("insurance_requests", {
  */
 export const adminNotifications = mysqlTable("admin_notifications", {
   id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["new_evaluation", "new_contact_message", "new_document", "payment_received"]).notNull(),
+  type: mysqlEnum("type", ["new_evaluation", "new_contact_message", "new_document", "payment_received", "simulator_load_failed"]).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   message: text("message").notNull(),
   relatedId: varchar("relatedId", { length: 100 }),

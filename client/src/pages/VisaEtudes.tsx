@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, CheckCircle, FileText, Users, Award, ArrowRight, AlertCircle, Globe, Clock, MessageCircle, Landmark } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -6,11 +6,16 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Link } from 'wouter';
 
 import StudyAbroadIllustration from '@/components/illustrations/StudyAbroadIllustration';
+import { trpc } from '@/lib/trpc';
+import { SimulatorRetryBoundary } from '@/components/SimulatorRetryBoundary';
 
-const StudyVisaEvaluationWidget = lazy(() => import('@/components/StudyVisaEvaluationWidget'));
+const createStudyVisaEvaluationWidget = () => lazy(() => import('@/components/StudyVisaEvaluationWidget'));
 
 export default function VisaEtudes() {
   const [showStudyEvaluation, setShowStudyEvaluation] = useState(false);
+  const [studySimulatorAttempt, setStudySimulatorAttempt] = useState(0);
+  const StudyVisaEvaluationWidget = useMemo(createStudyVisaEvaluationWidget, [studySimulatorAttempt]);
+  const reportSimulatorFailure = trpc.simulatorDiagnostics.reportFailure.useMutation();
   // Informations factuelles sur les démarches propres à chaque destination.
   // Campus France, uni-assist, etc. sont des plateformes officielles réelles
   // gérées par les autorités de chaque pays — 3M Travel n'en est pas
@@ -140,9 +145,15 @@ export default function VisaEtudes() {
           <p className="text-gray-600">Répondez à ces quelques questions pour obtenir une estimation immédiate, gratuite et sans engagement.</p>
         </div>
         {showStudyEvaluation ? (
-          <Suspense fallback={<div className="mx-auto max-w-2xl rounded-2xl border border-blue-200 bg-white p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du questionnaire études…</div>}>
-            <StudyVisaEvaluationWidget />
-          </Suspense>
+          <SimulatorRetryBoundary
+            label="Le questionnaire Études"
+            onRetry={() => setStudySimulatorAttempt((attempt) => attempt + 1)}
+            onFailure={() => reportSimulatorFailure.mutate({ route: "/etudes", simulator: "study_evaluation" })}
+          >
+            <Suspense fallback={<div className="mx-auto max-w-2xl rounded-2xl border border-blue-200 bg-white p-6 text-center text-sm font-semibold text-blue-900" role="status">Chargement du questionnaire études…</div>}>
+              <StudyVisaEvaluationWidget key={studySimulatorAttempt} />
+            </Suspense>
+          </SimulatorRetryBoundary>
         ) : (
           <div className="mx-auto max-w-2xl rounded-2xl border border-blue-200 bg-white p-6 text-center shadow-sm">
             <p className="text-sm leading-6 text-slate-700">Ouvrez le questionnaire détaillé lorsque vous êtes prêt à renseigner votre projet d’études.</p>

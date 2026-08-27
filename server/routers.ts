@@ -78,6 +78,7 @@ import { digitalServicesRouter } from "./routers/digitalServices";
 import { jinkoHotelSearchRouter } from "./routers/jinkoHotelSearch";
 import { footerEngagementRouter } from "./routers/footerEngagement";
 import { placementPortalRouter } from "./routers/placementPortal";
+import { simulatorDiagnosticsRouter } from "./routers/simulatorDiagnostics";
 
 // Import des nouveaux routeurs créés
 import { candidateRouter as candidateRouterNew } from "./routers/candidateRouter";
@@ -162,6 +163,7 @@ export const appRouter = router({
   jinkoHotels: jinkoHotelSearchRouter,
   footerEngagement: footerEngagementRouter,
   placementPortal: placementPortalRouter,
+  simulatorDiagnostics: simulatorDiagnosticsRouter,
   evisaFavorites: evisaFavoritesRouter,
   evisaReviews: evisaReviewsRouter,
   reassurance: reassuranceRouter,

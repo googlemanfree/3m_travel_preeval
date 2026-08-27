@@ -1557,3 +1557,10 @@ Ce lien doit être utilisé dans la navigation, le pied de page ou les zones de 
 - [x] Corriger les liens statiques et CTA inactifs de Schengen et Études
 - [x] Ajouter des tests de navigation automatisés pour les CTA Canada
 - [x] Tester les pages, les liens et le rendu avant publication
+
+## Lisibilité, reprise de simulateur et CTA mobile
+- [x] Agrandir et clarifier la navigation et les zones interactives de l’en-tête
+- [x] Ajouter un bouton de réessai accessible pour les erreurs de chargement des simulateurs
+- [x] Signaler les erreurs de chargement de simulateur dans l’espace administrateur
+- [x] Ajouter des tests navigateur mobile pour les CTA publics
+- [x] Tester la lisibilité, l’accessibilité et les parcours de reprise avant publication
